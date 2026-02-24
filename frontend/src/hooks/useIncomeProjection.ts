@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
-import type { IncomeProjectionRow, IncomeSummaryStats, ProfileState, IncomeState, CpfHousingMode } from '@/lib/types'
+import type { IncomeProjectionRow, IncomeSummaryStats, ProfileState, IncomeState, CpfHousingMode, HouseholdIncomeProjectionRow } from '@/lib/types'
 import type { IncomeProjectionParams } from '@/lib/calculations/income'
-import { generateIncomeProjection, calculateIncomeSummary } from '@/lib/calculations/income'
+import { generateIncomeProjection, calculateIncomeSummary, generateHouseholdIncomeProjection } from '@/lib/calculations/income'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
 import { validateCrossStoreRules } from '@/lib/validation/rules'
 
 /** Derive CPF housing params from property store (single source of truth) */
@@ -82,24 +83,136 @@ export function buildProjectionParams(
 }
 
 interface IncomeProjectionResult {
-  projection: IncomeProjectionRow[] | null
+  projection: IncomeProjectionRow[] | HouseholdIncomeProjectionRow[] | null
   summary: IncomeSummaryStats | null
   hasErrors: boolean
   errors: Record<string, string>
+  isHousehold: boolean
+  personProjections?: Array<{ personId: string; projection: IncomeProjectionRow[] }> // Per-person projections when in household mode
 }
 
 /**
- * Derived hook: reads profile + income stores, checks validation,
- * computes full year-by-year income projection and summary stats.
+ * Derived hook: reads profile + income stores OR household store (when in household mode),
+ * checks validation, computes full year-by-year income projection and summary stats.
  * Returns null projection/summary when upstream validation fails.
  */
 export function useIncomeProjection(): IncomeProjectionResult {
   const profile = useProfileStore()
   const income = useIncomeStore()
   const property = usePropertyStore()
+  const household = useHouseholdStore()
   const cpfHousing = deriveCpfHousingFromProperty(property)
 
   return useMemo(() => {
+    // Check if we're in household mode
+    if (household.householdMode && household.persons.length > 0) {
+      // HOUSEHOLD MODE: Generate projection for each person, then aggregate
+      const householdErrors = household.validationErrors
+      if (Object.keys(householdErrors).length > 0) {
+        return { projection: null, summary: null, hasErrors: true, errors: householdErrors, isHousehold: true }
+      }
+
+      // Generate projection for each person
+      const personProjections: Array<{ personId: string; projection: IncomeProjectionRow[] }> = []
+
+      for (const person of household.persons) {
+        // Each person has their own CPF housing deduction
+        const personCpfHousingMonthly = person.cpf.mortgageCpfMonthly
+        const personProjection = generateIncomeProjection({
+          currentAge: person.profile.currentAge,
+          retirementAge: person.profile.retirementAge,
+          lifeExpectancy: person.profile.lifeExpectancy,
+          salaryModel: person.income.salaryModel,
+          annualSalary: person.income.annualSalary,
+          salaryGrowthRate: person.income.salaryGrowthRate,
+          realisticPhases: person.income.realisticPhases,
+          promotionJumps: person.income.promotionJumps,
+          momEducation: person.income.momEducation,
+          momAdjustment: person.income.momAdjustment,
+          employerCpfEnabled: person.income.employerCpfEnabled,
+          incomeStreams: person.income.incomeStreams,
+          lifeEvents: person.income.lifeEvents,
+          lifeEventsEnabled: person.income.lifeEventsEnabled,
+          annualExpenses: profile.annualExpenses, // Shared at household level
+          inflation: profile.inflation, // Shared assumption
+          personalReliefs: person.income.personalReliefs,
+          srsAnnualContribution: person.income.srsAnnualContribution,
+          initialCpfOA: person.cpf.cpfOA,
+          initialCpfSA: person.cpf.cpfSA,
+          initialCpfMA: person.cpf.cpfMA,
+          initialCpfRA: person.cpf.cpfRA,
+          cpfLifeStartAge: person.cpf.cpfLifeStartAge,
+          cpfLifePlan: person.cpf.cpfLifePlan,
+          cpfRetirementSum: person.cpf.cpfRetirementSum,
+          cpfHousingMode: personCpfHousingMonthly > 0 ? 'simple' : 'none',
+          cpfHousingMonthly: personCpfHousingMonthly,
+          cpfMortgageYearsLeft: property.existingMortgageRemainingYears,
+          cpfLifeActualMonthlyPayout: person.cpf.cpfLifeActualMonthlyPayout,
+          residencyStatus: person.profile.residencyStatus,
+          srsBalance: person.income.srsBalance,
+          srsInvestmentReturn: person.income.srsInvestmentReturn,
+          srsDrawdownStartAge: person.income.srsDrawdownStartAge,
+        })
+
+        personProjections.push({
+          personId: person.profile.id,
+          projection: personProjection,
+        })
+      }
+
+      // Aggregate into household projection
+      const householdProjection = generateHouseholdIncomeProjection({
+        persons: personProjections,
+        annualExpenses: profile.annualExpenses,
+        inflation: profile.inflation,
+      })
+
+      // Calculate summary based on household totals
+      const summary: IncomeSummaryStats = {
+        peakEarningAge: 0,
+        peakEarningAmount: 0,
+        lifetimeEarnings: 0,
+        averageSavingsRate: 0,
+        totalCpfContributions: 0,
+        incomeReplacementRatio: 0,
+      }
+
+      // Compute summary stats from household projection
+      if (householdProjection.length > 0) {
+        let peak = 0
+        let peakAge = 0
+        let totalEarnings = 0
+        let totalCpf = 0
+
+        for (const row of householdProjection) {
+          totalEarnings += row.totalGross
+          totalCpf += row.totalCpfEmployee + row.totalCpfEmployer
+          if (row.totalGross > peak) {
+            peak = row.totalGross
+            peakAge = row.age
+          }
+        }
+
+        summary.peakEarningAge = peakAge
+        summary.peakEarningAmount = peak
+        summary.lifetimeEarnings = totalEarnings
+        summary.totalCpfContributions = totalCpf
+        summary.averageSavingsRate = totalEarnings > 0
+          ? householdProjection[householdProjection.length - 1]?.totalCumulativeSavings / totalEarnings
+          : 0
+      }
+
+      return {
+        projection: householdProjection,
+        summary,
+        hasErrors: false,
+        errors: {},
+        isHousehold: true,
+        personProjections // Include per-person projections for CPF section
+      }
+    }
+
+    // SINGLE-PERSON MODE: Use existing logic
     const profileErrors = profile.validationErrors
     const incomeErrors = income.validationErrors
     const crossStoreErrors = validateCrossStoreRules(
@@ -118,7 +231,7 @@ export function useIncomeProjection(): IncomeProjectionResult {
     const allErrors = { ...profileErrors, ...incomeErrors, ...crossStoreErrors }
 
     if (Object.keys(allErrors).length > 0) {
-      return { projection: null, summary: null, hasErrors: true, errors: allErrors }
+      return { projection: null, summary: null, hasErrors: true, errors: allErrors, isHousehold: false }
     }
 
     const projection = generateIncomeProjection({
@@ -169,8 +282,11 @@ export function useIncomeProjection(): IncomeProjectionResult {
 
     const summary = calculateIncomeSummary(projection, profile.annualExpenses)
 
-    return { projection, summary, hasErrors: false, errors: {} }
+    return { projection, summary, hasErrors: false, errors: {}, isHousehold: false }
   }, [
+    household.householdMode,
+    household.persons,
+    household.validationErrors,
     profile.currentAge,
     profile.retirementAge,
     profile.lifeExpectancy,

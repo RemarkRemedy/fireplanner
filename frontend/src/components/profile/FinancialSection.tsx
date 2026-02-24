@@ -1,5 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useProfileStore } from '@/stores/useProfileStore'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
+import { useUIStore } from '@/stores/useUIStore'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { PercentInput } from '@/components/shared/PercentInput'
 import { NumberInput } from '@/components/shared/NumberInput'
@@ -11,96 +13,218 @@ import { Plus, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { cn } from '@/lib/utils'
+import { PersonIndicator } from '@/components/shared/PersonIndicator'
 
 export function FinancialSection() {
   const store = useProfileStore()
+  const household = useHouseholdStore()
+  const selectedPersonId = useUIStore((s) => s.selectedPersonId)
   const { lockedAssets, addLockedAsset, removeLockedAsset, updateLockedAsset, currentAge } = useProfileStore()
   const mode = useEffectiveMode('section-net-worth')
+
+  const isHouseholdMode = household.householdMode && household.persons.length > 0
+
+  // Get selected person data (for CPF and SRS fields which are per-person)
+  const selectedPerson = isHouseholdMode
+    ? household.persons.find((p) => p.profile.id === (selectedPersonId || household.persons[0]?.profile.id))
+    : null
+
+  // CPF balances - per person
+  const cpfOA = selectedPerson ? selectedPerson.cpf.cpfOA : store.cpfOA
+  const cpfSA = selectedPerson ? selectedPerson.cpf.cpfSA : store.cpfSA
+  const cpfMA = selectedPerson ? selectedPerson.cpf.cpfMA : store.cpfMA
+  const cpfRA = selectedPerson ? selectedPerson.cpf.cpfRA : store.cpfRA
+
+  // SRS fields - per person
+  const srsBalance = selectedPerson ? selectedPerson.income.srsBalance : store.srsBalance
+  const srsAnnualContribution = selectedPerson ? selectedPerson.income.srsAnnualContribution : store.srsAnnualContribution
+  const srsInvestmentReturn = selectedPerson ? selectedPerson.income.srsInvestmentReturn : store.srsInvestmentReturn
+  const srsDrawdownStartAge = selectedPerson ? selectedPerson.income.srsDrawdownStartAge : store.srsDrawdownStartAge
+  const residencyStatus = selectedPerson ? selectedPerson.profile.residencyStatus : store.residencyStatus
+
+  // Setter functions for CPF
+  const setCpfOA = (v: number) => {
+    if (selectedPerson) {
+      household.updatePersonCpf(selectedPerson.profile.id, { cpfOA: v })
+    } else {
+      store.setField('cpfOA', v)
+    }
+  }
+  const setCpfSA = (v: number) => {
+    if (selectedPerson) {
+      household.updatePersonCpf(selectedPerson.profile.id, { cpfSA: v })
+    } else {
+      store.setField('cpfSA', v)
+    }
+  }
+  const setCpfMA = (v: number) => {
+    if (selectedPerson) {
+      household.updatePersonCpf(selectedPerson.profile.id, { cpfMA: v })
+    } else {
+      store.setField('cpfMA', v)
+    }
+  }
+  const setCpfRA = (v: number) => {
+    if (selectedPerson) {
+      household.updatePersonCpf(selectedPerson.profile.id, { cpfRA: v })
+    } else {
+      store.setField('cpfRA', v)
+    }
+  }
+
+  // Setter functions for SRS
+  const setSrsBalance = (v: number) => {
+    if (selectedPerson) {
+      household.updatePersonIncome(selectedPerson.profile.id, { srsBalance: v })
+    } else {
+      store.setField('srsBalance', v)
+    }
+  }
+  const setSrsAnnualContribution = (v: number) => {
+    if (selectedPerson) {
+      household.updatePersonIncome(selectedPerson.profile.id, { srsAnnualContribution: v })
+    } else {
+      store.setField('srsAnnualContribution', v)
+    }
+  }
+  const setSrsInvestmentReturn = (v: number) => {
+    if (selectedPerson) {
+      household.updatePersonIncome(selectedPerson.profile.id, { srsInvestmentReturn: v })
+    } else {
+      store.setField('srsInvestmentReturn', v)
+    }
+  }
+  const setSrsDrawdownStartAge = (v: number) => {
+    if (selectedPerson) {
+      household.updatePersonIncome(selectedPerson.profile.id, { srsDrawdownStartAge: v })
+    } else {
+      store.setField('srsDrawdownStartAge', v)
+    }
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Financial Snapshot</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <CurrencyInput
-            label="Liquid Net Worth"
-            value={store.liquidNetWorth}
-            onChange={(v) => store.setField('liquidNetWorth', v)}
-            error={store.validationErrors.liquidNetWorth}
-            tooltip="Cash + investments (excludes CPF and property equity)"
-          />
+      <CardContent className="space-y-6">
+        {/* Household Assets Section */}
+        {isHouseholdMode && (
+          <div>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+              Household Assets
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CurrencyInput
+                label="Liquid Net Worth"
+                value={store.liquidNetWorth}
+                onChange={(v) => store.setField('liquidNetWorth', v)}
+                error={store.validationErrors.liquidNetWorth}
+                tooltip="Cash + investments (excludes CPF and property equity). Shared at household level."
+              />
+            </div>
+          </div>
+        )}
 
-          <CurrencyInput
-            label="CPF OA Balance"
-            value={store.cpfOA}
-            onChange={(v) => store.setField('cpfOA', v)}
-            error={store.validationErrors.cpfOA}
-            tooltip="CPF Ordinary Account balance"
-          />
-
-          <CurrencyInput
-            label="CPF SA Balance"
-            value={store.cpfSA}
-            onChange={(v) => store.setField('cpfSA', v)}
-            error={store.validationErrors.cpfSA}
-            tooltip="CPF Special Account balance"
-          />
-
-          <CurrencyInput
-            label="CPF MA Balance"
-            value={store.cpfMA}
-            onChange={(v) => store.setField('cpfMA', v)}
-            error={store.validationErrors.cpfMA}
-            tooltip="CPF Medisave Account balance"
-          />
-
-          <CurrencyInput
-            label="SRS Balance"
-            value={store.srsBalance}
-            onChange={(v) => store.setField('srsBalance', v)}
-            error={store.validationErrors.srsBalance}
-            tooltip="Supplementary Retirement Scheme balance"
-          />
-
-          <CurrencyInput
-            label="SRS Annual Contribution"
-            value={store.srsAnnualContribution}
-            onChange={(v) => store.setField('srsAnnualContribution', v)}
-            error={store.validationErrors.srsAnnualContribution}
-            tooltip={
-              store.residencyStatus === 'foreigner'
-                ? 'Annual SRS contribution (max $35,700 for foreigners)'
-                : 'Annual SRS contribution (max $15,300 for citizens/PR)'
-            }
-          />
-
-          {mode === 'advanced' && (
-            <PercentInput
-              label="SRS Investment Return"
-              value={store.srsInvestmentReturn}
-              onChange={(v) => store.setField('srsInvestmentReturn', v)}
-              error={store.validationErrors.srsInvestmentReturn}
-              tooltip="Expected return on SRS investments. Default 4% assumes a balanced portfolio."
-            />
+        {/* Individual Assets Section (or main section in single-person mode) */}
+        <div>
+          {isHouseholdMode && (
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Individual Assets
+              </h3>
+              <PersonIndicator />
+            </div>
           )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {!isHouseholdMode && (
+              <CurrencyInput
+                label="Liquid Net Worth"
+                value={store.liquidNetWorth}
+                onChange={(v) => store.setField('liquidNetWorth', v)}
+                error={store.validationErrors.liquidNetWorth}
+                tooltip="Cash + investments (excludes CPF and property equity)"
+              />
+            )}
 
-          {mode === 'advanced' && (
-            <NumberInput
-              label="SRS Drawdown Start Age"
-              value={store.srsDrawdownStartAge}
-              onChange={(v) => store.setField('srsDrawdownStartAge', v)}
-              error={store.validationErrors.srsDrawdownStartAge}
-              tooltip="Age to begin SRS withdrawals (10-year drawdown window). Default 63 is the statutory retirement age."
-              integer
-              min={55}
-              max={75}
+            <CurrencyInput
+              label="CPF OA Balance"
+              value={cpfOA}
+              onChange={setCpfOA}
+              error={store.validationErrors.cpfOA}
+              tooltip="CPF Ordinary Account balance"
             />
-          )}
 
-          {store.srsAnnualContribution > 0 && (
-            <div className="flex items-center gap-3 pb-1">
+            <CurrencyInput
+              label="CPF SA Balance"
+              value={cpfSA}
+              onChange={setCpfSA}
+              error={store.validationErrors.cpfSA}
+              tooltip="CPF Special Account balance"
+            />
+
+            <CurrencyInput
+              label="CPF MA Balance"
+              value={cpfMA}
+              onChange={setCpfMA}
+              error={store.validationErrors.cpfMA}
+              tooltip="CPF Medisave Account balance"
+            />
+
+            <CurrencyInput
+              label="CPF RA Balance"
+              value={cpfRA}
+              onChange={setCpfRA}
+              error={store.validationErrors.cpfRA}
+              tooltip="CPF Retirement Account balance"
+            />
+
+            <CurrencyInput
+              label="SRS Balance"
+              value={srsBalance}
+              onChange={setSrsBalance}
+              error={store.validationErrors.srsBalance}
+              tooltip="Supplementary Retirement Scheme balance"
+            />
+
+            <CurrencyInput
+              label="SRS Annual Contribution"
+              value={srsAnnualContribution}
+              onChange={setSrsAnnualContribution}
+              error={store.validationErrors.srsAnnualContribution}
+              tooltip={
+                residencyStatus === 'foreigner'
+                  ? 'Annual SRS contribution (max $35,700 for foreigners)'
+                  : 'Annual SRS contribution (max $15,300 for citizens/PR)'
+              }
+            />
+
+            {mode === 'advanced' && (
+              <PercentInput
+                label="SRS Investment Return"
+                value={srsInvestmentReturn}
+                onChange={setSrsInvestmentReturn}
+                error={store.validationErrors.srsInvestmentReturn}
+                tooltip="Expected return on SRS investments. Default 4% assumes a balanced portfolio."
+              />
+            )}
+
+            {mode === 'advanced' && (
+              <NumberInput
+                label="SRS Drawdown Start Age"
+                value={srsDrawdownStartAge}
+                onChange={setSrsDrawdownStartAge}
+                error={store.validationErrors.srsDrawdownStartAge}
+                tooltip="Age to begin SRS withdrawals (10-year drawdown window). Default 63 is the statutory retirement age."
+                integer
+                min={55}
+                max={75}
+              />
+            )}
+          </div>
+
+          {srsAnnualContribution > 0 && (
+            <div className="flex items-center gap-3 pb-1 mt-4">
               <Switch
                 id="srs-post-fire-toggle"
                 checked={store.srsPostFireEnabled}

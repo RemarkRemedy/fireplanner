@@ -12,6 +12,12 @@ import { validateIncomeField } from '@/lib/validation/schemas'
 import { computeTotalReliefs, type ReliefBreakdown } from '@/lib/data/taxBrackets'
 import { useProfileStore } from '@/stores/useProfileStore'
 
+/**
+ * IncomeStore: Legacy single-person store
+ *
+ * For multi-person support, use useHouseholdStore instead.
+ * This store remains for backward compatibility and single-person mode.
+ */
 interface IncomeActions {
   setField: <K extends keyof Omit<IncomeState, 'validationErrors' | 'incomeStreams' | 'lifeEvents' | 'realisticPhases' | 'promotionJumps'>>(
     field: K,

@@ -8,6 +8,8 @@ import {
 } from '@tanstack/react-table'
 import { useCpfProjection, type CpfProjectionRow } from '@/hooks/useCpfProjection'
 import { useProfileStore } from '@/stores/useProfileStore'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
+import { useUIStore } from '@/stores/useUIStore'
 import { formatCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
@@ -23,7 +25,13 @@ function optionalCurrencyCell(value: number): string {
 }
 
 export function CpfProjectionTable() {
-  const { rows, hasErrors } = useCpfProjection()
+  const household = useHouseholdStore()
+  const selectedPersonId = useUIStore((s) => s.selectedPersonId)
+
+  // In household mode, pass the selected person ID to get their specific projection
+  const personId = household.householdMode ? (selectedPersonId || household.persons[0]?.profile.id) : undefined
+  const { rows, hasErrors } = useCpfProjection(personId)
+
   const retirementAge = useProfileStore((s) => s.retirementAge)
 
   const hasHousingDeduction = rows?.some((r) => r.oaHousingDeduction > 0) ?? false

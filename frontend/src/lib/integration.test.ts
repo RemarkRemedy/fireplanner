@@ -8,6 +8,7 @@ import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
 import { useUIStore } from '@/stores/useUIStore'
 import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useIncomeProjection } from '@/hooks/useIncomeProjection'
@@ -21,6 +22,7 @@ beforeEach(() => {
   useIncomeStore.getState().reset()
   useAllocationStore.getState().reset()
   usePropertyStore.getState().reset()
+  useHouseholdStore.getState().reset()
   useUIStore.setState({
     sectionOrder: 'goal-first',
     cpfEnabled: true,
@@ -372,12 +374,12 @@ describe('Journey: Cross-store validation propagation', () => {
     expect(cpf.current.rows).toBeNull()
   })
 
-  it('income errors do not block FIRE calculations (fallback to profile income)', () => {
+  it('income validation errors block FIRE calculations', () => {
     useIncomeStore.getState().setField('annualSalary', -1) // Invalid
     const { result } = renderHook(() => useFireCalculations())
-    // Should still compute using profile.annualIncome as fallback
-    expect(result.current.hasErrors).toBe(false)
-    expect(result.current.metrics).not.toBeNull()
+    // Income validation errors should propagate
+    expect(result.current.hasErrors).toBe(true)
+    expect(result.current.metrics).toBeNull()
   })
 
   it('allocation errors do not block FIRE calculations (fallback to manual return)', () => {

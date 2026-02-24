@@ -11,6 +11,7 @@ import {
 import type { ProjectionRow, WithdrawalStrategyType } from '@/lib/types'
 import { useProjection } from '@/hooks/useProjection'
 import { useProfileStore } from '@/stores/useProfileStore'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -83,6 +84,8 @@ export function ProjectionPage() {
   const retirementAge = useProfileStore((s) => s.retirementAge)
   const currentAge = useProfileStore((s) => s.currentAge)
   const inflation = useProfileStore((s) => s.inflation)
+  const household = useHouseholdStore()
+  const isHouseholdMode = household.householdMode && household.persons.length > 0
   const srsBalance = useProfileStore((s) => s.srsBalance)
   const srsAnnualContribution = useProfileStore((s) => s.srsAnnualContribution)
   const hasSrs = srsBalance > 0 || srsAnnualContribution > 0
@@ -820,13 +823,21 @@ export function ProjectionPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                FIRE Achieved
+                {isHouseholdMode ? 'Household FIRE Achieved' : 'FIRE Achieved'}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">
-                {displaySummary.fireAchievedAge !== null ? `Age ${displaySummary.fireAchievedAge}` : 'Not reached'}
-              </p>
+              {isHouseholdMode ? (
+                <p className="text-2xl font-bold">
+                  {displaySummary.fireAchievedAge !== null
+                    ? `In ${displaySummary.fireAchievedAge - currentAge} years`
+                    : 'Not reached'}
+                </p>
+              ) : (
+                <p className="text-2xl font-bold">
+                  {displaySummary.fireAchievedAge !== null ? `Age ${displaySummary.fireAchievedAge}` : 'Not reached'}
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -838,7 +849,13 @@ export function ProjectionPage() {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">{formatCurrency(displaySummary.peakTotalNW)}</p>
-              <p className="text-xs text-muted-foreground">at age {displaySummary.peakTotalNWAge}</p>
+              {isHouseholdMode ? (
+                <p className="text-xs text-muted-foreground">
+                  in {displaySummary.peakTotalNWAge - currentAge} years
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">at age {displaySummary.peakTotalNWAge}</p>
+              )}
             </CardContent>
           </Card>
 
@@ -863,12 +880,23 @@ export function ProjectionPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className={cn(
-                'text-2xl font-bold',
-                displaySummary.portfolioDepletedAge !== null && 'text-destructive',
-              )}>
-                {displaySummary.portfolioDepletedAge !== null ? `Age ${displaySummary.portfolioDepletedAge}` : 'Never'}
-              </p>
+              {isHouseholdMode ? (
+                <p className={cn(
+                  'text-2xl font-bold',
+                  displaySummary.portfolioDepletedAge !== null && 'text-destructive',
+                )}>
+                  {displaySummary.portfolioDepletedAge !== null
+                    ? `In ${displaySummary.portfolioDepletedAge - currentAge} years`
+                    : 'Never'}
+                </p>
+              ) : (
+                <p className={cn(
+                  'text-2xl font-bold',
+                  displaySummary.portfolioDepletedAge !== null && 'text-destructive',
+                )}>
+                  {displaySummary.portfolioDepletedAge !== null ? `Age ${displaySummary.portfolioDepletedAge}` : 'Never'}
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -877,16 +905,33 @@ export function ProjectionPage() {
       {displaySummary && (() => {
         const { fireAchievedAge, peakTotalNW, peakTotalNWAge, portfolioDepletedAge, terminalTotalNW } = displaySummary
         const depleted = portfolioDepletedAge !== null
+        const yearsToFire = fireAchievedAge ? fireAchievedAge - currentAge : null
+        const yearsToPeak = peakTotalNWAge - currentAge
+        const yearsToDepleted = portfolioDepletedAge ? portfolioDepletedAge - currentAge : null
 
         let narrative: string
-        if (fireAchievedAge !== null && !depleted) {
-          narrative = `At your current savings rate, you reach financial independence at age ${fireAchievedAge}. Your portfolio peaks at ${formatCurrency(peakTotalNW)} at age ${peakTotalNWAge} and ends at ${formatCurrency(terminalTotalNW)}.`
-        } else if (fireAchievedAge !== null && depleted) {
-          narrative = `You reach financial independence at age ${fireAchievedAge}, but your portfolio depletes at age ${portfolioDepletedAge}. Consider reducing spending or adjusting your withdrawal strategy.`
-        } else if (!depleted) {
-          narrative = `Your portfolio does not reach the FIRE target within the projection period, but never depletes. It peaks at ${formatCurrency(peakTotalNW)} at age ${peakTotalNWAge}.`
+        if (isHouseholdMode) {
+          // Household mode narrative
+          if (fireAchievedAge !== null && !depleted) {
+            narrative = `At your current household savings rate, you reach financial independence in ${yearsToFire} years. Your portfolio peaks at ${formatCurrency(peakTotalNW)} in ${yearsToPeak} years and ends at ${formatCurrency(terminalTotalNW)}.`
+          } else if (fireAchievedAge !== null && depleted) {
+            narrative = `You reach household financial independence in ${yearsToFire} years, but your portfolio depletes in ${yearsToDepleted} years. Consider reducing spending or adjusting your withdrawal strategy.`
+          } else if (!depleted) {
+            narrative = `Your household portfolio does not reach the FIRE target within the projection period, but never depletes. It peaks at ${formatCurrency(peakTotalNW)} in ${yearsToPeak} years.`
+          } else {
+            narrative = `Your household portfolio does not reach the FIRE target and depletes in ${yearsToDepleted} years. Consider increasing savings or extending your working years.`
+          }
         } else {
-          narrative = `Your portfolio does not reach the FIRE target and depletes at age ${portfolioDepletedAge}. Consider increasing savings or extending your working years.`
+          // Single-person mode narrative
+          if (fireAchievedAge !== null && !depleted) {
+            narrative = `At your current savings rate, you reach financial independence at age ${fireAchievedAge}. Your portfolio peaks at ${formatCurrency(peakTotalNW)} at age ${peakTotalNWAge} and ends at ${formatCurrency(terminalTotalNW)}.`
+          } else if (fireAchievedAge !== null && depleted) {
+            narrative = `You reach financial independence at age ${fireAchievedAge}, but your portfolio depletes at age ${portfolioDepletedAge}. Consider reducing spending or adjusting your withdrawal strategy.`
+          } else if (!depleted) {
+            narrative = `Your portfolio does not reach the FIRE target within the projection period, but never depletes. It peaks at ${formatCurrency(peakTotalNW)} at age ${peakTotalNWAge}.`
+          } else {
+            narrative = `Your portfolio does not reach the FIRE target and depletes at age ${portfolioDepletedAge}. Consider increasing savings or extending your working years.`
+          }
         }
 
         return (

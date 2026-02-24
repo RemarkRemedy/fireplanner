@@ -8,6 +8,8 @@ import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
+import { useIncomeProjection } from '@/hooks/useIncomeProjection'
 import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 
 interface FireCalculationsResult {
@@ -27,6 +29,8 @@ export function useFireCalculations(): FireCalculationsResult {
   const income = useIncomeStore()
   const allocation = useAllocationStore()
   const property = usePropertyStore()
+  const household = useHouseholdStore()
+  const { projection: incomeProjection, hasErrors: projectionHasErrors, isHousehold } = useIncomeProjection()
 
   return useMemo(() => {
     const profileErrors = profile.validationErrors
@@ -36,52 +40,28 @@ export function useFireCalculations(): FireCalculationsResult {
       return { metrics: null, hasErrors: true, errors: profileErrors }
     }
 
-    const cpfTotal = profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
+    // If income projection has errors, don't compute
+    if (projectionHasErrors) {
+      return { metrics: null, hasErrors: true, errors: {} }
+    }
 
-    // Try to get effective income from income projection
+    // Calculate CPF total and effective income based on mode
+    let cpfTotal = 0
     let effectiveIncome = profile.annualIncome
-    const incomeErrors = income.validationErrors
-    const incomeHasErrors = Object.keys(incomeErrors).length > 0
 
-    if (!incomeHasErrors) {
-      const projection = generateIncomeProjection({
-        currentAge: profile.currentAge,
-        retirementAge: profile.retirementAge,
-        lifeExpectancy: profile.lifeExpectancy,
-        salaryModel: income.salaryModel,
-        annualSalary: income.annualSalary,
-        salaryGrowthRate: income.salaryGrowthRate,
-        realisticPhases: income.realisticPhases,
-        promotionJumps: income.promotionJumps,
-        momEducation: income.momEducation,
-        momAdjustment: income.momAdjustment,
-        employerCpfEnabled: income.employerCpfEnabled,
-        incomeStreams: income.incomeStreams,
-        lifeEvents: income.lifeEvents,
-        lifeEventsEnabled: income.lifeEventsEnabled,
-        annualExpenses: profile.annualExpenses,
-        inflation: profile.inflation,
-        personalReliefs: income.personalReliefs,
-        srsAnnualContribution: profile.srsAnnualContribution,
-        initialCpfOA: profile.cpfOA,
-        initialCpfSA: profile.cpfSA,
-        initialCpfMA: profile.cpfMA,
-        initialCpfRA: profile.cpfRA,
-        cpfLifeStartAge: profile.cpfLifeStartAge,
-        cpfLifePlan: profile.cpfLifePlan,
-        cpfRetirementSum: profile.cpfRetirementSum,
-        cpfHousingMode: (property.mortgageCpfMonthly > 0 ? 'simple' : 'none') as CpfHousingMode,
-        cpfHousingMonthly: property.mortgageCpfMonthly * (property.ownershipPercent ?? 1),
-        cpfMortgageYearsLeft: property.existingMortgageRemainingYears,
-        cpfTopUpOA: profile.cpfTopUpOA,
-        cpfTopUpSA: profile.cpfTopUpSA,
-        cpfTopUpMA: profile.cpfTopUpMA,
-        lockedAssets: profile.lockedAssets,
-        expenseAdjustments: profile.expenseAdjustments,
-      })
+    if (isHousehold && household.householdMode && incomeProjection && incomeProjection.length > 0) {
+      // HOUSEHOLD MODE: Use aggregated data from household projection
+      const firstRow = incomeProjection[0] as import('@/lib/types').HouseholdIncomeProjectionRow
+      cpfTotal = firstRow.totalCpfOA + firstRow.totalCpfSA + firstRow.totalCpfMA + firstRow.totalCpfRA
+      effectiveIncome = firstRow.totalGross
+    } else {
+      // SINGLE-PERSON MODE: Use profile store CPF
+      cpfTotal = profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
 
-      if (projection.length > 0) {
-        effectiveIncome = projection[0].totalGross
+      // Try to get effective income from income projection
+      if (incomeProjection && incomeProjection.length > 0) {
+        const firstRow = incomeProjection[0] as import('@/lib/types').IncomeProjectionRow
+        effectiveIncome = firstRow.totalGross
       }
     }
 
@@ -139,6 +119,11 @@ export function useFireCalculations(): FireCalculationsResult {
 
     return { metrics, hasErrors: false, errors: {} }
   }, [
+    household.householdMode,
+    household.persons,
+    incomeProjection,
+    projectionHasErrors,
+    isHousehold,
     profile.currentAge,
     profile.retirementAge,
     profile.lifeExpectancy,
@@ -167,19 +152,6 @@ export function useFireCalculations(): FireCalculationsResult {
     property.mortgageCpfMonthly,
     property.existingMortgageRemainingYears,
     profile.validationErrors,
-    income.salaryModel,
-    income.annualSalary,
-    income.salaryGrowthRate,
-    income.realisticPhases,
-    income.promotionJumps,
-    income.momEducation,
-    income.momAdjustment,
-    income.employerCpfEnabled,
-    income.incomeStreams,
-    income.lifeEvents,
-    income.lifeEventsEnabled,
-    income.personalReliefs,
-    income.validationErrors,
     allocation.currentWeights,
     allocation.returnOverrides,
     allocation.validationErrors,

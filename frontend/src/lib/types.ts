@@ -104,14 +104,64 @@ export interface RetirementWithdrawal {
 }
 
 // ============================================================
-// CPF OA Withdrawal (lump-sum transfer to liquid portfolio)
+// Multi-Person / Household Support
 // ============================================================
 
-export interface CpfOaWithdrawal {
+export interface PersonIncomeState {
   id: string
-  label: string
-  amount: number
-  age: number  // must be >= 55
+  name: string  // e.g., "You", "Spouse", "Partner"
+  salaryModel: SalaryModel
+  annualSalary: number
+  salaryGrowthRate: number
+  employerCpfEnabled: boolean
+  incomeStreams: IncomeStream[]
+  lifeEvents: LifeEvent[]
+  realisticPhases: CareerPhase[]
+  promotionJumps: PromotionJump[]
+  momEducation: EducationLevel
+  momAdjustment: number
+  lifeEventsEnabled: boolean
+  personalReliefs: number
+  reliefBreakdown: import('@/lib/data/taxBrackets').ReliefBreakdown | null
+  srsAnnualContribution: number
+  srsBalance: number
+  srsInvestmentReturn: number
+  srsDrawdownStartAge: number
+}
+
+export interface PersonCpfState {
+  cpfOA: number
+  cpfSA: number
+  cpfMA: number
+  cpfRA: number
+  cpfLifeStartAge: number
+  cpfLifePlan: CpfLifePlan
+  cpfRetirementSum: CpfRetirementSum
+  cpfLifeActualMonthlyPayout: number
+  mortgageCpfMonthly: number  // Monthly CPF OA used for mortgage payment
+}
+
+export interface PersonProfile {
+  id: string
+  name: string
+  currentAge: number
+  retirementAge: number
+  lifeExpectancy: number
+  residencyStatus: ResidencyStatus
+  retirementPhase: RetirementPhase | null
+}
+
+export interface Person {
+  profile: PersonProfile
+  income: PersonIncomeState
+  cpf: PersonCpfState
+  healthcare: HealthcareConfig
+}
+
+export interface HouseholdState {
+  persons: Person[]
+  householdMode: boolean  // true = multi-person, false = single-person (legacy)
+  validationErrors: ValidationErrors
 }
 
 // ============================================================
@@ -348,6 +398,30 @@ export interface IncomeSummaryStats {
   averageSavingsRate: number
   totalCpfContributions: number
   incomeReplacementRatio: number
+}
+
+export interface HouseholdIncomeProjectionRow {
+  year: number
+  age: number  // For household view, this is the primary person's age
+  // Per-person breakdown (keyed by person ID)
+  personData: Record<string, IncomeProjectionRow>
+  // Household aggregates
+  totalGross: number
+  totalTax: number
+  totalCpfEmployee: number
+  totalCpfEmployer: number
+  totalNet: number
+  totalAnnualSavings: number
+  totalCumulativeSavings: number
+  totalCpfOA: number
+  totalCpfSA: number
+  totalCpfMA: number
+  totalCpfRA: number
+  totalCpfisOA: number
+  totalCpfisSA: number
+  totalCpfisReturn: number
+  totalCpfLifePayout: number
+  totalCpfOaHousingDeduction: number
 }
 
 // ============================================================

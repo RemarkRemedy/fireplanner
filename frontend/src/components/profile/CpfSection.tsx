@@ -11,29 +11,76 @@ import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { PercentInput } from '@/components/shared/PercentInput'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
+import { useUIStore } from '@/stores/useUIStore'
 import { useIncomeProjection } from '@/hooks/useIncomeProjection'
 import { useEffectiveMode } from '@/hooks/useEffectiveMode'
 import { calculateCpfContribution, calculateBrsFrsErs, estimateCpfLifePayout, calculateCpfLifePayoutAtAge, getRetirementSumAmount } from '@/lib/calculations/cpf'
-import type { CpfLifePlan, CpfRetirementSum } from '@/lib/types'
+import type { CpfLifePlan, CpfRetirementSum, PersonCpfState } from '@/lib/types'
 import { getCpfRatesForAge, RETIREMENT_SUM_BASE_YEAR, BRS_BASE, FRS_BASE, ERS_BASE, SA_INTEREST_RATE, CPFIS_OA_RETENTION, CPFIS_SA_RETENTION } from '@/lib/data/cpfRates'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
+import { PersonIndicator } from '@/components/shared/PersonIndicator'
 import { CpfProjectionTable } from '@/components/cpf/CpfProjectionTable'
 import { CpfAssumptionsPanel } from '@/components/cpf/CpfAssumptionsPanel'
 import { cn, formatCurrency, formatPercent } from '@/lib/utils'
 
 export function CpfSection() {
-  const {
-    currentAge, annualIncome, cpfOA, cpfSA, cpfMA, cpfRA,
-    cpfLifeStartAge, cpfLifePlan, cpfRetirementSum,
-    lifeStage, retirementPhase, cpfLifeActualMonthlyPayout,
-    cpfisEnabled, cpfisOaReturn, cpfisSaReturn,
-    cpfOaWithdrawals,
-    addCpfOaWithdrawal, removeCpfOaWithdrawal, updateCpfOaWithdrawal,
-    cpfTopUpOA, cpfTopUpSA, cpfTopUpMA,
-    validationErrors, setField,
-  } = useProfileStore()
-  const incomeStreams = useIncomeStore((s) => s.incomeStreams)
+  const profile = useProfileStore()
+  const income = useIncomeStore()
+  const household = useHouseholdStore()
+  const selectedPersonId = useUIStore((s) => s.selectedPersonId)
+  const property = usePropertyStore()
   const mode = useEffectiveMode('section-cpf')
+
+  // Get data from household store if in household mode, otherwise from profile/income store
+  const selectedPerson = household.householdMode
+    ? household.persons.find((p) => p.profile.id === (selectedPersonId || household.persons[0]?.profile.id))
+    : null
+
+  const currentAge = selectedPerson ? selectedPerson.profile.currentAge : profile.currentAge
+  const annualIncome = selectedPerson ? selectedPerson.income.annualSalary : profile.annualIncome
+  const cpfOA = selectedPerson ? selectedPerson.cpf.cpfOA : profile.cpfOA
+  const cpfSA = selectedPerson ? selectedPerson.cpf.cpfSA : profile.cpfSA
+  const cpfMA = selectedPerson ? selectedPerson.cpf.cpfMA : profile.cpfMA
+  const cpfRA = selectedPerson ? selectedPerson.cpf.cpfRA : profile.cpfRA
+  const cpfLifeStartAge = selectedPerson ? selectedPerson.cpf.cpfLifeStartAge : profile.cpfLifeStartAge
+  const cpfLifePlan = selectedPerson ? selectedPerson.cpf.cpfLifePlan : profile.cpfLifePlan
+  const cpfRetirementSum = selectedPerson ? selectedPerson.cpf.cpfRetirementSum : profile.cpfRetirementSum
+  const cpfLifeActualMonthlyPayout = selectedPerson ? selectedPerson.cpf.cpfLifeActualMonthlyPayout : profile.cpfLifeActualMonthlyPayout
+
+  // CPFIS fields - these are global, not per-person
+  const cpfisEnabled = profile.cpfisEnabled
+  const cpfisOaReturn = profile.cpfisOaReturn
+  const cpfisSaReturn = profile.cpfisSaReturn
+  const cpfOaWithdrawals = profile.cpfOaWithdrawals
+  const addCpfOaWithdrawal = profile.addCpfOaWithdrawal
+  const removeCpfOaWithdrawal = profile.removeCpfOaWithdrawal
+  const updateCpfOaWithdrawal = profile.updateCpfOaWithdrawal
+  const setField = profile.setField
+  const cpfTopUpOA = profile.cpfTopUpOA
+  const cpfTopUpSA = profile.cpfTopUpSA
+  const cpfTopUpMA = profile.cpfTopUpMA
+
+  const lifeStage = profile.lifeStage
+  const retirementPhase = selectedPerson ? selectedPerson.profile.retirementPhase : profile.retirementPhase
+  const validationErrors = profile.validationErrors
+
+  const incomeStreams = selectedPerson ? selectedPerson.income.incomeStreams : income.incomeStreams
+
+  // Setter functions that work with both modes
+  const setCpfField = <K extends keyof PersonCpfState>(field: K, value: PersonCpfState[K]) => {
+    if (selectedPerson) {
+      household.updatePersonCpf(selectedPerson.profile.id, { [field]: value })
+    } else {
+      // mortgageCpfMonthly is not in ProfileState, it's in PropertyStore
+      // For other CPF fields, use profile.setField
+      if (field === 'mortgageCpfMonthly') {
+        property.setField('mortgageCpfMonthly', value as number)
+      } else {
+        profile.setField(field as any, value)
+      }
+    }
+  }
 
   // Phase-aware rendering only applies to post-fire users
   const isPostFire = lifeStage === 'post-fire'
@@ -65,16 +112,29 @@ export function CpfSection() {
   const totalCpf = cpfOA + cpfSA + cpfMA + cpfRA
 
   // Project SA at 55 to check if user can reach selected retirement sum
-  const { projection } = useIncomeProjection()
+  const { projection, personProjections } = useIncomeProjection()
+
+  // In household mode, get the projection for the selected person
+  const effectiveProjection = useMemo(() => {
+    if (household.householdMode && selectedPerson && personProjections) {
+      const personProj = personProjections.find(p => p.personId === selectedPerson.profile.id)
+      return personProj?.projection || null
+    }
+    return projection
+  }, [household.householdMode, selectedPerson, personProjections, projection])
 
   // RA earns 4% interest from age 55 until CPF LIFE starts — must compound to get realistic payout
   const raGrowthFactor = Math.pow(1 + SA_INTEREST_RATE, Math.max(0, cpfLifeStartAge - 55))
 
   // Projected payout: prefer actual projection (accounts for interest, contributions, extra interest)
   const projectedPayout = (() => {
-    if (projection) {
-      const row = projection.find((r) => r.age === cpfLifeStartAge)
-      if (row && row.cpfLifePayout > 0) return row.cpfLifePayout
+    if (effectiveProjection) {
+      const row = effectiveProjection.find((r) => r.age === cpfLifeStartAge)
+      if (row) {
+        // effectiveProjection is always IncomeProjectionRow[] (single-person format)
+        const payout = row.cpfLifePayout || 0
+        if (payout > 0) return payout
+      }
     }
     // Fallback: compound retirement sum at 4% from 55 to CPF LIFE start age
     return calculateCpfLifePayoutAtAge(retirementSumAmount * raGrowthFactor, cpfLifePlan, cpfLifeStartAge, cpfLifeStartAge)
@@ -83,15 +143,17 @@ export function CpfSection() {
   const retirementSumShortfall = useMemo(() => {
     // Only relevant for pre-55 users
     if (currentAge >= 55) return null
-    if (!projection) return null
+    if (!effectiveProjection) return null
 
     // Find projected CPF balances at age 54 (last year before 55 transfer)
-    const rowAt54 = projection.find((r) => r.age === 54)
+    const rowAt54 = effectiveProjection.find((r) => r.age === 54)
     if (!rowAt54) return null
 
     // At 55, OA + SA can be consolidated into RA
+    // effectiveProjection is always IncomeProjectionRow[] (single-person format)
     const availableForRA = rowAt54.cpfOA + rowAt54.cpfSA
-    if (availableForRA >= retirementSumAmount) return null
+
+    if (isNaN(availableForRA) || availableForRA >= retirementSumAmount) return null
 
     return {
       shortfall: retirementSumAmount - availableForRA,
@@ -99,7 +161,7 @@ export function CpfSection() {
       requiredAmount: retirementSumAmount,
     }
     // eslint-disable-next-line react-hooks/preserve-manual-memoization -- retirementSumAmount is a derived primitive, not mutable
-  }, [projection, currentAge, retirementSumAmount])
+  }, [effectiveProjection, currentAge, retirementSumAmount])
 
   // 65+ phase: single card with monthly payout input
   if (effectivePhase === '65-plus') {
@@ -117,7 +179,7 @@ export function CpfSection() {
             <CurrencyInput
               label="Monthly Payout"
               value={cpfLifeActualMonthlyPayout}
-              onChange={(v) => setField('cpfLifeActualMonthlyPayout', v)}
+              onChange={(v) => setCpfField('cpfLifeActualMonthlyPayout', v)}
               error={validationErrors.cpfLifeActualMonthlyPayout}
               tooltip="Your actual CPF LIFE monthly payout amount"
             />
@@ -138,14 +200,17 @@ export function CpfSection() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">CPF LIFE Configuration</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2">
+          CPF LIFE Configuration
+          <PersonIndicator />
+        </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="max-w-sm">
             <CurrencyInput
               label="Retirement Account (RA) Balance"
               value={cpfRA}
-              onChange={(v) => setField('cpfRA', v)}
+              onChange={(v) => setCpfField('cpfRA', v)}
               error={validationErrors.cpfRA}
               tooltip="Your CPF Retirement Account balance. At 55, your SA was transferred to the RA per CPF rules. The RA funds your CPF LIFE payouts."
             />
@@ -164,7 +229,7 @@ export function CpfSection() {
                 min={65}
                 max={75}
                 value={cpfLifeStartAge}
-                onChange={(v) => setField('cpfLifeStartAge', v)}
+                onChange={(v) => setCpfField('cpfLifeStartAge', v)}
                 className="h-8 border-blue-300"
               />
               {validationErrors.cpfLifeStartAge && (
@@ -175,7 +240,7 @@ export function CpfSection() {
               <Label className="text-xs">Plan Type</Label>
               <Select
                 value={cpfLifePlan}
-                onValueChange={(v) => setField('cpfLifePlan', v as CpfLifePlan)}
+                onValueChange={(v) => setCpfField('cpfLifePlan', v as CpfLifePlan)}
               >
                 <SelectTrigger className="h-8 border-blue-300">
                   <SelectValue />
@@ -191,7 +256,7 @@ export function CpfSection() {
               <Label className="text-xs">Retirement Sum</Label>
               <Select
                 value={cpfRetirementSum}
-                onValueChange={(v) => setField('cpfRetirementSum', v as CpfRetirementSum)}
+                onValueChange={(v) => setCpfField('cpfRetirementSum', v as CpfRetirementSum)}
               >
                 <SelectTrigger className="h-8 border-blue-300">
                   <SelectValue />
@@ -234,7 +299,10 @@ export function CpfSection() {
     <>
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Current CPF Status</CardTitle>
+        <CardTitle className="text-lg flex items-center gap-2">
+          Current CPF Status
+          <PersonIndicator />
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Current rates — Advanced only */}
@@ -324,7 +392,7 @@ export function CpfSection() {
       </CardContent>
     </Card>
 
-    {/* Voluntary Top-Ups */}
+    {/* Voluntary Top-Ups - global, not per-person */}
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Voluntary Top-Ups</CardTitle>
@@ -334,21 +402,21 @@ export function CpfSection() {
           <CurrencyInput
             label="Annual SA Top-Up (RSTU)"
             value={cpfTopUpSA}
-            onChange={(v) => setField('cpfTopUpSA', v)}
+            onChange={(v) => profile.setField('cpfTopUpSA', v)}
             error={validationErrors.cpfTopUpSA}
             tooltip="Cash top-up to SA (or RA if 55+). Up to $8,000/year qualifies for tax relief. Source: IRAS."
           />
           <CurrencyInput
             label="Annual MA Top-Up"
             value={cpfTopUpMA}
-            onChange={(v) => setField('cpfTopUpMA', v)}
+            onChange={(v) => profile.setField('cpfTopUpMA', v)}
             error={validationErrors.cpfTopUpMA}
             tooltip="Voluntary MediSave contribution. Capped at BHS ($79,000) minus your current MA balance each year."
           />
           <CurrencyInput
             label="Annual OA Top-Up"
             value={cpfTopUpOA}
-            onChange={(v) => setField('cpfTopUpOA', v)}
+            onChange={(v) => profile.setField('cpfTopUpOA', v)}
             error={validationErrors.cpfTopUpOA}
             tooltip="Voluntary cash top-up to OA. No specific tax relief for OA top-ups."
           />
@@ -361,7 +429,10 @@ export function CpfSection() {
 
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">CPF Planning</CardTitle>
+        <CardTitle className="text-lg flex items-center gap-2">
+          CPF Planning
+          <PersonIndicator />
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* BRS/FRS/ERS projections */}
@@ -446,7 +517,7 @@ export function CpfSection() {
                 min={65}
                 max={75}
                 value={cpfLifeStartAge}
-                onChange={(v) => setField('cpfLifeStartAge', v)}
+                onChange={(v) => setCpfField('cpfLifeStartAge', v)}
                 className="h-8 border-blue-300"
               />
               {validationErrors.cpfLifeStartAge && (
@@ -457,7 +528,7 @@ export function CpfSection() {
               <Label className="text-xs">Plan Type</Label>
               <Select
                 value={cpfLifePlan}
-                onValueChange={(v) => setField('cpfLifePlan', v as CpfLifePlan)}
+                onValueChange={(v) => setCpfField('cpfLifePlan', v as CpfLifePlan)}
               >
                 <SelectTrigger className="h-8 border-blue-300">
                   <SelectValue />
@@ -473,7 +544,7 @@ export function CpfSection() {
               <Label className="text-xs">Retirement Sum</Label>
               <Select
                 value={cpfRetirementSum}
-                onValueChange={(v) => setField('cpfRetirementSum', v as CpfRetirementSum)}
+                onValueChange={(v) => setCpfField('cpfRetirementSum', v as CpfRetirementSum)}
               >
                 <SelectTrigger className="h-8 border-blue-300">
                   <SelectValue />
@@ -501,7 +572,7 @@ export function CpfSection() {
             </p>
           )}
 
-          {retirementSumShortfall && (
+          {retirementSumShortfall && !isNaN(retirementSumShortfall.shortfall) && (
             <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded text-sm text-amber-800 dark:text-amber-200 space-y-1">
               <p className="font-medium">
                 Projected CPF shortfall of {formatCurrency(retirementSumShortfall.shortfall)}

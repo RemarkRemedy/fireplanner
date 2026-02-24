@@ -5,26 +5,75 @@ import {
   flexRender,
   createColumnHelper,
 } from '@tanstack/react-table'
-import type { IncomeProjectionRow } from '@/lib/types'
+import type { IncomeProjectionRow, HouseholdIncomeProjectionRow } from '@/lib/types'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
+import { useUIStore } from '@/stores/useUIStore'
 import { formatCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
 const columnHelper = createColumnHelper<IncomeProjectionRow>()
 
 interface ProjectionTableProps {
-  data: IncomeProjectionRow[]
+  data: IncomeProjectionRow[] | HouseholdIncomeProjectionRow[]
   retirementAge: number
+}
+
+// Type guard to check if this is a household projection
+function isHouseholdProjection(data: IncomeProjectionRow[] | HouseholdIncomeProjectionRow[]): data is HouseholdIncomeProjectionRow[] {
+  if (data.length === 0) return false
+  return 'personData' in data[0]
+}
+
+// Convert household projection to single-person format for display
+// In household mode, show per-person data based on selected person
+function convertToDisplayFormat(
+  data: IncomeProjectionRow[] | HouseholdIncomeProjectionRow[],
+  selectedPersonId: string | null
+): IncomeProjectionRow[] {
+  if (!isHouseholdProjection(data)) {
+    return data
+  }
+
+  // If no person selected or person not found, use first person
+  const personId = selectedPersonId || Object.keys(data[0]?.personData || {})[0]
+  if (!personId) return []
+
+  // Extract the selected person's data from each row
+  return data.map((row) => {
+    const personData = row.personData[personId]
+    if (!personData) {
+      // Fallback if person not found in this row
+      const firstPersonData = Object.values(row.personData)[0]
+      return firstPersonData || {} as IncomeProjectionRow
+    }
+    return personData
+  })
 }
 
 export function ProjectionTable({ data, retirementAge }: ProjectionTableProps) {
   const [expanded, setExpanded] = useState(false)
-  const displayData = useMemo(
-    () => expanded ? data : data.slice(0, 5),
-    [expanded, data]
+  const household = useHouseholdStore()
+  const selectedPersonId = useUIStore((s) => s.selectedPersonId)
+  const isHouseholdMode = household.householdMode && household.persons.length > 0
+
+  // Get the selected person ID for household mode
+  const effectivePersonId = isHouseholdMode
+    ? (selectedPersonId || household.persons[0]?.profile.id)
+    : null
+
+  // Convert household projection to display format (per-person)
+  const convertedData = useMemo(
+    () => convertToDisplayFormat(data, effectivePersonId),
+    [data, effectivePersonId]
   )
 
-  const hasRA = data.some((r) => r.cpfRA > 0)
-  const hasCpfis = data.some((r) => r.cpfisOA > 0 || r.cpfisSA > 0)
+  const displayData = useMemo(
+    () => expanded ? convertedData : convertedData.slice(0, 5),
+    [expanded, convertedData]
+  )
+
+  const hasRA = convertedData.some((r) => r.cpfRA > 0)
+  const hasCpfis = convertedData.some((r) => r.cpfisOA > 0 || r.cpfisSA > 0)
 
   const columns = useMemo(() => {
     const cols = [
@@ -135,8 +184,23 @@ export function ProjectionTable({ data, retirementAge }: ProjectionTableProps) {
     getCoreRowModel: getCoreRowModel(),
   })
 
+  // Get selected person's name for display
+  const selectedPerson = isHouseholdMode
+    ? household.persons.find((p) => p.profile.id === effectivePersonId)
+    : null
+
   return (
     <div>
+      {isHouseholdMode && selectedPerson && (
+        <div className="mb-2 p-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded text-sm">
+          <span className="text-blue-700 dark:text-blue-300">
+            📊 Showing projection for: <span className="font-semibold">{selectedPerson.profile.name}</span>
+          </span>
+          <span className="text-blue-600 dark:text-blue-400 ml-2 text-xs">
+            (Use the person dropdown above to switch between individuals)
+          </span>
+        </div>
+      )}
       <div className={cn('border rounded-md overflow-auto', expanded && 'max-h-[600px]')}>
         <table className="w-full text-sm">
           <thead className="sticky top-0 bg-background border-b z-20">

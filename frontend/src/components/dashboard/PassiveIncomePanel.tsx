@@ -11,16 +11,35 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { usePassiveIncomeSummary } from '@/hooks/usePassiveIncomeSummary'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
+import { useProfileStore } from '@/stores/useProfileStore'
 import { formatCurrency, formatPercent } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { useMemo } from 'react'
 
 export function PassiveIncomePanel() {
   const data = usePassiveIncomeSummary()
   const isMobile = useIsMobile()
+  const household = useHouseholdStore()
+  const profile = useProfileStore()
+  const isHouseholdMode = household.householdMode && household.persons.length > 0
 
   if (!data) return null
 
   const hasIncome = data.sources.length > 0
+
+  // Transform data to show calendar years in household mode
+  const chartData = useMemo(() => {
+    if (!isHouseholdMode) return data.yearlyBreakdown
+
+    const currentYear = new Date().getFullYear()
+    const yearsToRetirement = Math.max(0, profile.retirementAge - profile.currentAge)
+
+    return data.yearlyBreakdown.map((row, index) => ({
+      ...row,
+      displayLabel: currentYear + yearsToRetirement + index,
+    }))
+  }, [data.yearlyBreakdown, isHouseholdMode, profile.retirementAge, profile.currentAge])
 
   return (
     <Card>
@@ -89,11 +108,11 @@ export function PassiveIncomePanel() {
               aria-label="Stacked area chart showing passive income sources over retirement years with expense reference line"
             >
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data.yearlyBreakdown}>
+                <AreaChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
-                    dataKey="age"
-                    label={{ value: 'Age', position: 'insideBottom', offset: -5 }}
+                    dataKey={isHouseholdMode ? 'displayLabel' : 'age'}
+                    label={{ value: isHouseholdMode ? 'Year' : 'Age', position: 'insideBottom', offset: -5 }}
                   />
                   <YAxis
                     tickFormatter={(v: number) => formatCurrency(v)}

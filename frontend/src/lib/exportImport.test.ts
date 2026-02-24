@@ -311,9 +311,9 @@ describe('importFromJson', () => {
     const result = await importFromJson(jsonFile(data))
 
     expect(result.success).toBe(true)
-    // Should warn about the 5 missing stores
+    // Should warn about the 6 missing stores (including household store)
     const missingWarnings = result.warnings.filter(w => w.includes('not present'))
-    expect(missingWarnings.length).toBe(5)
+    expect(missingWarnings.length).toBe(6)
   })
 
   it('calls window.location.reload() on success', async () => {

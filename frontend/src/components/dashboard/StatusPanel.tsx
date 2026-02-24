@@ -18,6 +18,7 @@ interface StatusPanelProps {
   deviationPct: number | null
   showProjectionNumber: boolean
   deviationFactors: string[]
+  isHouseholdMode?: boolean
 }
 
 type MetricAccent = 'primary' | 'success' | 'warning'
@@ -62,19 +63,20 @@ export function StatusPanel(props: StatusPanelProps) {
       accent: getProgressAccent(props.progress),
     },
     {
-      label: 'Years to FIRE',
+      label: props.isHouseholdMode ? 'Years to Household FIRE' : 'Years to FIRE',
       value: props.yearsToFire != null
         ? <AnimatedNumber value={props.yearsToFire} format={(n) => `${Math.round(n)} years`} />
         : '—',
       accent: 'primary',
     },
-    {
+    // Only show FIRE Age in single-person mode
+    ...(props.isHouseholdMode ? [] : [{
       label: 'FIRE Age',
       value: props.fireAge != null
         ? <AnimatedNumber value={props.fireAge} format={(n) => `Age ${Math.round(n)}`} />
         : '—',
-      accent: 'primary',
-    },
+      accent: 'primary' as MetricAccent,
+    }]),
     {
       label: 'Coast FIRE Number',
       value: props.coastFireNumber != null
@@ -137,7 +139,11 @@ export function StatusPanel(props: StatusPanelProps) {
       </div>
       {depletesBeforeDeath && (
         <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 px-3 py-2 text-sm text-amber-800 dark:text-amber-200">
-          <span className="font-medium">Portfolio runs out at age {props.portfolioDepletedAge}</span> — that's {shortfallYears} {shortfallYears === 1 ? 'year' : 'years'} short of your life expectancy ({props.lifeExpectancy}).
+          <span className="font-medium">
+            {props.isHouseholdMode
+              ? `Portfolio runs out in ${props.portfolioDepletedAge} years`
+              : `Portfolio runs out at age ${props.portfolioDepletedAge}`}
+          </span> — that's {shortfallYears} {shortfallYears === 1 ? 'year' : 'years'} short of your life expectancy ({props.lifeExpectancy}).
           Consider reducing expenses, saving more, or adjusting your withdrawal strategy.
         </div>
       )}

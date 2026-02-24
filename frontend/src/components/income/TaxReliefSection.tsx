@@ -4,8 +4,11 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
+import { PersonIndicator } from '@/components/shared/PersonIndicator'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useProfileStore } from '@/stores/useProfileStore'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
+import { useUIStore } from '@/stores/useUIStore'
 import { formatCurrency } from '@/lib/utils'
 import {
   computeTotalReliefs,
@@ -34,18 +37,48 @@ const PARENT_OPTIONS: { value: ParentReliefType; label: string; amount: string }
 
 export function TaxReliefSection() {
   const income = useIncomeStore()
-  const currentAge = useProfileStore((s) => s.currentAge)
-  const residencyStatus = useProfileStore((s) => s.residencyStatus)
-  const srsAnnualContribution = useProfileStore((s) => s.srsAnnualContribution)
-  const cpfTopUpSA = useProfileStore((s) => s.cpfTopUpSA)
-  const breakdown = income.reliefBreakdown
+  const profile = useProfileStore()
+  const household = useHouseholdStore()
+  const selectedPersonId = useUIStore((s) => s.selectedPersonId)
+
+  // Get data from household store if in household mode, otherwise from income/profile stores
+  const selectedPerson = household.householdMode
+    ? household.persons.find((p) => p.profile.id === (selectedPersonId || household.persons[0]?.profile.id))
+    : null
+
+  const personalReliefs = selectedPerson ? selectedPerson.income.personalReliefs : income.personalReliefs
+  const reliefBreakdown = selectedPerson ? selectedPerson.income.reliefBreakdown : income.reliefBreakdown
+  const annualSalary = selectedPerson ? selectedPerson.income.annualSalary : income.annualSalary
+  const currentAge = selectedPerson ? selectedPerson.profile.currentAge : profile.currentAge
+  const residencyStatus = selectedPerson ? selectedPerson.profile.residencyStatus : profile.residencyStatus
+  const srsAnnualContribution = selectedPerson ? selectedPerson.income.srsAnnualContribution : profile.srsAnnualContribution
+  const cpfTopUpSA = profile.cpfTopUpSA
+
+  const breakdown = reliefBreakdown
   const isDetailed = breakdown !== null
+
+  // Setter functions
+  const setPersonalReliefs = (v: number) => {
+    if (selectedPerson) {
+      household.updatePersonIncome(selectedPerson.profile.id, { personalReliefs: v })
+    } else {
+      income.setField('personalReliefs', v)
+    }
+  }
+
+  const setReliefBreakdown = (bd: typeof reliefBreakdown) => {
+    if (selectedPerson) {
+      household.updatePersonIncome(selectedPerson.profile.id, { reliefBreakdown: bd })
+    } else {
+      income.setReliefBreakdown(bd)
+    }
+  }
 
   // Auto-compute CPF employee contribution from current salary + age
   const cpfEmployee = useMemo(() => {
-    const cpf = calculateCpfContribution(income.annualSalary, currentAge)
+    const cpf = calculateCpfContribution(annualSalary, currentAge)
     return cpf.employee
-  }, [income.annualSalary, currentAge])
+  }, [annualSalary, currentAge])
 
   // Auto-compute SRS deduction (capped per residency)
   const srsDeduction = useMemo(
@@ -55,8 +88,8 @@ export function TaxReliefSection() {
 
   // Auto-compute RSTU deduction (capped at $8,000, only applies with active salary)
   const rstuDeduction = useMemo(
-    () => income.annualSalary > 0 ? Math.min(cpfTopUpSA ?? 0, RSTU_TAX_RELIEF_CAP) : 0,
-    [cpfTopUpSA, income.annualSalary]
+    () => annualSalary > 0 ? Math.min(cpfTopUpSA ?? 0, RSTU_TAX_RELIEF_CAP) : 0,
+    [cpfTopUpSA, annualSalary]
   )
 
   const toggleMode = useCallback((detailed: boolean) => {
@@ -65,28 +98,28 @@ export function TaxReliefSection() {
       const bd = getDefaultBreakdown(currentAge)
       // Set otherReliefs to make total match current personalReliefs
       const baseTotal = computeTotalReliefs(bd, currentAge)
-      const diff = Math.max(0, income.personalReliefs - baseTotal)
-      income.setReliefBreakdown({ ...bd, otherReliefs: diff })
+      const diff = Math.max(0, personalReliefs - baseTotal)
+      setReliefBreakdown({ ...bd, otherReliefs: diff })
     } else {
       // Switch to Simple: keep current personalReliefs, clear breakdown
-      income.setReliefBreakdown(null)
+      setReliefBreakdown(null)
     }
-  }, [currentAge, income])
+  }, [currentAge, personalReliefs, setReliefBreakdown])
 
   const updateBreakdown = useCallback(<K extends keyof ReliefBreakdown>(
     key: K,
     value: ReliefBreakdown[K],
   ) => {
     if (!breakdown) return
-    income.setReliefBreakdown({ ...breakdown, [key]: value })
-  }, [breakdown, income])
+    setReliefBreakdown({ ...breakdown, [key]: value })
+  }, [breakdown, setReliefBreakdown])
 
   const earnedIncome = useMemo(() => earnedIncomeReliefForAge(currentAge), [currentAge])
 
   const computedTotal = useMemo(() => {
-    if (!breakdown) return income.personalReliefs
+    if (!breakdown) return personalReliefs
     return computeTotalReliefs(breakdown, currentAge)
-  }, [breakdown, currentAge, income.personalReliefs])
+  }, [breakdown, currentAge, personalReliefs])
 
   const isOverCap = computedTotal >= RELIEF_AMOUNTS.reliefCap
 
@@ -95,6 +128,7 @@ export function TaxReliefSection() {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           Personal Tax Reliefs
+          <PersonIndicator />
           <InfoTooltip text="Annual personal tax reliefs reduce your chargeable income. Use Simple mode for a single number, or Detailed mode for a breakdown of individual IRAS reliefs (YA 2025)." />
         </CardTitle>
       </CardHeader>
@@ -128,8 +162,8 @@ export function TaxReliefSection() {
           <div className="max-w-sm">
             <CurrencyInput
               label="Personal Reliefs"
-              value={income.personalReliefs}
-              onChange={(v) => income.setField('personalReliefs', v)}
+              value={personalReliefs}
+              onChange={setPersonalReliefs}
               error={income.validationErrors.personalReliefs}
               tooltip="Annual personal tax reliefs (earned income, NSman, spouse, children, parents, etc.). Do NOT include CPF or SRS here — those are deducted automatically below."
             />

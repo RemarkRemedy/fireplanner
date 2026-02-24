@@ -79,3 +79,41 @@ export function calculateSrsDeduction(
   const cap = residencyStatus === 'foreigner' ? SRS_ANNUAL_CAP_FOREIGNER : SRS_ANNUAL_CAP
   return Math.min(Math.max(0, srsContribution), cap)
 }
+
+/**
+ * Calculate household tax by summing individual tax liabilities.
+ * Singapore does not have joint filing — each person is taxed separately.
+ */
+export function calculateHouseholdTax(params: {
+  persons: Array<{
+    totalIncome: number
+    cpfEmployee: number
+    srsContribution: number
+    personalReliefs: number
+    residencyStatus: 'citizen' | 'pr' | 'foreigner'
+  }>
+}): {
+  totalTaxPayable: number
+  individualTaxResults: TaxResult[]
+} {
+  const individualTaxResults: TaxResult[] = []
+  let totalTaxPayable = 0
+
+  for (const person of params.persons) {
+    const chargeableIncome = calculateChargeableIncome(
+      person.totalIncome,
+      person.cpfEmployee,
+      person.srsContribution,
+      person.personalReliefs,
+      person.residencyStatus
+    )
+    const taxResult = calculateProgressiveTax(chargeableIncome)
+    individualTaxResults.push(taxResult)
+    totalTaxPayable += taxResult.taxPayable
+  }
+
+  return {
+    totalTaxPayable,
+    individualTaxResults,
+  }
+}

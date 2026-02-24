@@ -5,12 +5,14 @@ import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
 
 beforeEach(() => {
   useProfileStore.getState().reset()
   useIncomeStore.getState().reset()
   useAllocationStore.getState().reset()
   usePropertyStore.getState().reset()
+  useHouseholdStore.getState().reset()
 })
 
 describe('useFireCalculations', () => {
@@ -141,11 +143,12 @@ describe('useFireCalculations', () => {
     expect(withManual.current.metrics).not.toBeNull()
   })
 
-  it('falls back to profile income when income has errors', () => {
+  it('returns null when income has validation errors', () => {
     useIncomeStore.getState().setField('annualSalary', -1) // Invalid
     const { result } = renderHook(() => useFireCalculations())
-    // Should still compute (using profile.annualIncome as fallback)
-    expect(result.current.metrics).not.toBeNull()
+    // Income validation errors should propagate
+    expect(result.current.hasErrors).toBe(true)
+    expect(result.current.metrics).toBeNull()
   })
 
   it('cpfTotal includes cpfRA in progress calculation', () => {

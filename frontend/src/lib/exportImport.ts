@@ -15,6 +15,7 @@ const STORE_KEYS = [
   'fireplanner-simulation',
   'fireplanner-withdrawal',
   'fireplanner-property',
+  'fireplanner-household',
 ]
 
 interface ExportData {

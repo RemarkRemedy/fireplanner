@@ -80,6 +80,7 @@ import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useUIStore } from '@/stores/useUIStore'
 import { useUpdateNudges } from '@/hooks/useUpdateNudges'
@@ -293,6 +294,8 @@ function ExpensesContent() {
   const expensesError = useProfileStore((s) => s.validationErrors.annualExpenses)
   const adjustmentError = useProfileStore((s) => s.validationErrors.retirementSpendingAdjustment)
   const validationErrors = useProfileStore((s) => s.validationErrors)
+  const household = useHouseholdStore()
+  const isHouseholdMode = household.householdMode && household.persons.length > 0
   const mode = useEffectiveMode('section-expenses')
 
   const effectiveRetirement = getEffectiveExpenses(retirementAge, annualExpenses, expenseAdjustments, lifeExpectancy)
@@ -324,7 +327,12 @@ function ExpensesContent() {
         <CardHeader>
           <CardTitle className="text-lg">Current Spending</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
+          {isHouseholdMode && (
+            <div className="p-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded text-sm text-blue-700 dark:text-blue-300">
+              💡 In household mode, expenses are shared at the household level. Income and CPF are tracked separately for each person.
+            </div>
+          )}
           <div className="max-w-sm">
             <CurrencyInput
               label="Annual Expenses (excl. healthcare & mortgage)"
@@ -784,6 +792,14 @@ function PropertyContent() {
   const setField = usePropertyStore((s) => s.setField)
   const validationErrors = usePropertyStore((s) => s.validationErrors)
 
+  const household = useHouseholdStore()
+  const isHouseholdMode = household.householdMode && household.persons.length > 0
+
+  // Calculate total CPF contributions from all persons in household mode
+  const totalPersonCpfMonthly = isHouseholdMode
+    ? household.persons.reduce((sum, p) => sum + (p.cpf.mortgageCpfMonthly || 0), 0)
+    : mortgageCpfMonthly
+
   const [propertyStatus, setPropertyStatus] = useState<PropertyStatus>(() =>
     derivePropertyStatus(ownsProperty, existingMortgageBalance, existingMonthlyPayment)
   )
@@ -911,18 +927,55 @@ function PropertyContent() {
                       error={validationErrors.existingMonthlyPayment}
                       tooltip="Monthly mortgage repayment amount (principal + interest)"
                     />
-                    <CurrencyInput
-                      label="Of which, CPF OA"
-                      value={mortgageCpfMonthly}
-                      onChange={(v) => setField('mortgageCpfMonthly', v)}
-                      error={validationErrors.mortgageCpfMonthly}
-                      tooltip="Portion of monthly mortgage paid from CPF OA. This reduces your OA balance growth. The remainder is paid from cash/savings."
-                    />
-                    <div className="md:col-span-2 p-2 bg-muted/50 rounded text-sm">
-                      <span className="text-muted-foreground">Cash portion: </span>
-                      <span className="font-semibold">{formatCurrency(Math.max(0, existingMonthlyPayment - mortgageCpfMonthly))}/mo</span>
-                      <span className="text-muted-foreground"> (deducted from savings)</span>
-                    </div>
+                    {!isHouseholdMode ? (
+                      <>
+                        <CurrencyInput
+                          label="Of which, CPF OA"
+                          value={mortgageCpfMonthly}
+                          onChange={(v) => setField('mortgageCpfMonthly', v)}
+                          error={validationErrors.mortgageCpfMonthly}
+                          tooltip="Portion of monthly mortgage paid from CPF OA. This reduces your OA balance growth. The remainder is paid from cash/savings."
+                        />
+                        <div className="md:col-span-2 p-2 bg-muted/50 rounded text-sm">
+                          <span className="text-muted-foreground">Cash portion: </span>
+                          <span className="font-semibold">{formatCurrency(Math.max(0, existingMonthlyPayment - mortgageCpfMonthly))}/mo</span>
+                          <span className="text-muted-foreground"> (deducted from savings)</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="md:col-span-2 space-y-3">
+                        <div className="text-sm font-medium">CPF OA Contributions (per person)</div>
+                        {household.persons.map((person) => (
+                          <div key={person.profile.id} className="flex items-center gap-3">
+                            <div className="w-32 text-sm font-medium text-muted-foreground">
+                              {person.profile.name}:
+                            </div>
+                            <CurrencyInput
+                              label=""
+                              value={person.cpf.mortgageCpfMonthly}
+                              onChange={(v) => household.updatePersonCpf(person.profile.id, { mortgageCpfMonthly: v })}
+                              tooltip={`${person.profile.name}'s monthly CPF OA contribution to mortgage`}
+                            />
+                          </div>
+                        ))}
+                        <div className="p-2 bg-muted/50 rounded text-sm space-y-1">
+                          <div>
+                            <span className="text-muted-foreground">Total CPF OA: </span>
+                            <span className="font-semibold">{formatCurrency(totalPersonCpfMonthly)}/mo</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Cash portion: </span>
+                            <span className="font-semibold">{formatCurrency(Math.max(0, existingMonthlyPayment - totalPersonCpfMonthly))}/mo</span>
+                            <span className="text-muted-foreground"> (deducted from savings)</span>
+                          </div>
+                        </div>
+                        {totalPersonCpfMonthly > existingMonthlyPayment && (
+                          <div className="p-2 bg-destructive/10 border border-destructive/30 rounded text-sm text-destructive">
+                            ⚠️ Total CPF contributions ({formatCurrency(totalPersonCpfMonthly)}/mo) exceed monthly payment ({formatCurrency(existingMonthlyPayment)}/mo)
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <PercentInput
                       label="Mortgage Interest Rate"
                       value={existingMortgageRate}

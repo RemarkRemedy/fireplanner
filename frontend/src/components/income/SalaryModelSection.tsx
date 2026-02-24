@@ -6,27 +6,106 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { PercentInput } from '@/components/shared/PercentInput'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
+import { PersonIndicator } from '@/components/shared/PersonIndicator'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useProfileStore } from '@/stores/useProfileStore'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
+import { useUIStore } from '@/stores/useUIStore'
 import { useEffectiveMode } from '@/hooks/useEffectiveMode'
 import { calculateSimpleSalary, calculateRealisticSalary, calculateDataDrivenSalary } from '@/lib/calculations/income'
 import { formatCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
-import type { SalaryModel, CareerPhase, PromotionJump } from '@/lib/types'
+import type { SalaryModel, CareerPhase, PromotionJump, EducationLevel } from '@/lib/types'
 import { trackEvent } from '@/lib/analytics'
 
 export function SalaryModelSection() {
   const income = useIncomeStore()
   const profile = useProfileStore()
-  const errors = income.validationErrors
+  const household = useHouseholdStore()
+  const selectedPersonId = useUIStore((s) => s.selectedPersonId)
   const mode = useEffectiveMode('section-income')
+
+  // Get data from household store if in household mode, otherwise from income store
+  const selectedPerson = household.householdMode
+    ? household.persons.find((p) => p.profile.id === (selectedPersonId || household.persons[0]?.profile.id))
+    : null
+
+  const salaryModel = selectedPerson ? selectedPerson.income.salaryModel : income.salaryModel
+  const annualSalary = selectedPerson ? selectedPerson.income.annualSalary : income.annualSalary
+  const salaryGrowthRate = selectedPerson ? selectedPerson.income.salaryGrowthRate : income.salaryGrowthRate
+  const realisticPhases = selectedPerson ? selectedPerson.income.realisticPhases : income.realisticPhases
+  const promotionJumps = selectedPerson ? selectedPerson.income.promotionJumps : income.promotionJumps
+  const momEducation = selectedPerson ? selectedPerson.income.momEducation : income.momEducation
+  const momAdjustment = selectedPerson ? selectedPerson.income.momAdjustment : income.momAdjustment
+  const currentAge = selectedPerson ? selectedPerson.profile.currentAge : profile.currentAge
+  const retirementAge = selectedPerson ? selectedPerson.profile.retirementAge : profile.retirementAge
+
+  const errors = income.validationErrors
+
+  // Setter functions that work with both modes
+  const setSalaryModel = (v: SalaryModel) => {
+    if (selectedPerson) {
+      household.updatePersonIncome(selectedPerson.profile.id, { salaryModel: v })
+    } else {
+      income.setField('salaryModel', v)
+    }
+  }
+
+  const setAnnualSalary = (v: number) => {
+    if (selectedPerson) {
+      household.updatePersonIncome(selectedPerson.profile.id, { annualSalary: v })
+    } else {
+      income.setField('annualSalary', v)
+    }
+  }
+
+  const setSalaryGrowthRate = (v: number) => {
+    if (selectedPerson) {
+      household.updatePersonIncome(selectedPerson.profile.id, { salaryGrowthRate: v })
+    } else {
+      income.setField('salaryGrowthRate', v)
+    }
+  }
+
+  const setRealisticPhases = (v: CareerPhase[]) => {
+    if (selectedPerson) {
+      household.updatePersonIncome(selectedPerson.profile.id, { realisticPhases: v })
+    } else {
+      income.setRealisticPhases(v)
+    }
+  }
+
+  const setPromotionJumps = (v: PromotionJump[]) => {
+    if (selectedPerson) {
+      household.updatePersonIncome(selectedPerson.profile.id, { promotionJumps: v })
+    } else {
+      income.setPromotionJumps(v)
+    }
+  }
+
+  const setMomEducation = (v: EducationLevel) => {
+    if (selectedPerson) {
+      household.updatePersonIncome(selectedPerson.profile.id, { momEducation: v })
+    } else {
+      income.setField('momEducation', v)
+    }
+  }
+
+  const setMomAdjustment = (v: number) => {
+    if (selectedPerson) {
+      household.updatePersonIncome(selectedPerson.profile.id, { momAdjustment: v })
+    } else {
+      income.setField('momAdjustment', v)
+    }
+  }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg flex items-center">
+        <CardTitle className="text-lg flex items-center gap-2">
           Salary Model
           <InfoTooltip text="Choose how your salary is projected over time" />
+          <PersonIndicator />
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -34,8 +113,8 @@ export function SalaryModelSection() {
           <div className="space-y-1">
             <Label className="text-sm">Model</Label>
             <Select
-              value={income.salaryModel}
-              onValueChange={(v) => { income.setField('salaryModel', v as SalaryModel); trackEvent('salary_model_changed', { model: v }) }}
+              value={salaryModel}
+              onValueChange={(v) => { setSalaryModel(v as SalaryModel); trackEvent('salary_model_changed', { model: v }) }}
             >
               <SelectTrigger className="border-blue-300">
                 <SelectValue />
@@ -50,38 +129,38 @@ export function SalaryModelSection() {
         )}
 
         {/* Simple mode: always show Simple panel. Advanced: show selected model. */}
-        {(mode === 'simple' || income.salaryModel === 'simple') && (
+        {(mode === 'simple' || salaryModel === 'simple') && (
           <SimplePanel
-            salary={income.annualSalary}
-            growthRate={income.salaryGrowthRate}
-            currentAge={profile.currentAge}
-            retirementAge={profile.retirementAge}
-            onSalaryChange={(v) => income.setField('annualSalary', v)}
-            onGrowthChange={(v) => income.setField('salaryGrowthRate', v)}
+            salary={annualSalary}
+            growthRate={salaryGrowthRate}
+            currentAge={currentAge}
+            retirementAge={retirementAge}
+            onSalaryChange={setAnnualSalary}
+            onGrowthChange={setSalaryGrowthRate}
             errors={errors}
           />
         )}
 
-        {mode === 'advanced' && income.salaryModel === 'realistic' && (
+        {mode === 'advanced' && salaryModel === 'realistic' && (
           <RealisticPanel
-            salary={income.annualSalary}
-            currentAge={profile.currentAge}
-            phases={income.realisticPhases}
-            promotionJumps={income.promotionJumps}
-            onSalaryChange={(v) => income.setField('annualSalary', v)}
-            onPhasesChange={income.setRealisticPhases}
-            onJumpsChange={income.setPromotionJumps}
+            salary={annualSalary}
+            currentAge={currentAge}
+            phases={realisticPhases}
+            promotionJumps={promotionJumps}
+            onSalaryChange={setAnnualSalary}
+            onPhasesChange={setRealisticPhases}
+            onJumpsChange={setPromotionJumps}
             errors={errors}
           />
         )}
 
-        {mode === 'advanced' && income.salaryModel === 'data-driven' && (
+        {mode === 'advanced' && salaryModel === 'data-driven' && (
           <DataDrivenPanel
-            currentAge={profile.currentAge}
-            education={income.momEducation}
-            adjustment={income.momAdjustment}
-            onEducationChange={(v) => income.setField('momEducation', v)}
-            onAdjustmentChange={(v) => income.setField('momAdjustment', v)}
+            currentAge={currentAge}
+            education={momEducation}
+            adjustment={momAdjustment}
+            onEducationChange={setMomEducation}
+            onAdjustmentChange={setMomAdjustment}
             errors={errors}
           />
         )}

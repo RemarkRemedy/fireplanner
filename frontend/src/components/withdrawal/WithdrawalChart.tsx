@@ -1,7 +1,10 @@
+import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import type { DeterministicComparisonResult } from '@/lib/calculations/withdrawal'
 import type { WithdrawalStrategyType } from '@/lib/types'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
+import { useProfileStore } from '@/stores/useProfileStore'
 import { getStrategyLabel } from '@/hooks/useWithdrawalComparison'
 import { formatCurrency } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -27,19 +30,43 @@ interface WithdrawalChartProps {
 
 export function WithdrawalChart({ results }: WithdrawalChartProps) {
   const isMobile = useIsMobile()
+  const household = useHouseholdStore()
+  const profile = useProfileStore()
+  const isHouseholdMode = household.householdMode && household.persons.length > 0
+
   const strategies = Object.keys(results.yearResults) as WithdrawalStrategyType[]
   if (strategies.length === 0) return null
 
   // Build chart data: one row per year with withdrawal for each strategy
   const firstStrategy = strategies[0]
   const years = results.yearResults[firstStrategy]
-  const data = years.map((yr, i) => {
-    const row: Record<string, number> = { age: yr.age }
-    for (const s of strategies) {
-      row[s] = results.yearResults[s][i]?.withdrawal ?? 0
+
+  const data = useMemo(() => {
+    if (!isHouseholdMode) {
+      return years.map((yr, i) => {
+        const row: Record<string, number> = { age: yr.age }
+        for (const s of strategies) {
+          row[s] = results.yearResults[s][i]?.withdrawal ?? 0
+        }
+        return row
+      })
     }
-    return row
-  })
+
+    // In household mode, show calendar years
+    const currentYear = new Date().getFullYear()
+    const yearsToRetirement = Math.max(0, profile.retirementAge - profile.currentAge)
+
+    return years.map((yr, i) => {
+      const row: Record<string, number> = {
+        age: yr.age,
+        displayYear: currentYear + yearsToRetirement + i,
+      }
+      for (const s of strategies) {
+        row[s] = results.yearResults[s][i]?.withdrawal ?? 0
+      }
+      return row
+    })
+  }, [years, strategies, results, isHouseholdMode, profile])
 
   return (
     <Card>
@@ -51,7 +78,10 @@ export function WithdrawalChart({ results }: WithdrawalChartProps) {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="age" label={{ value: 'Age', position: 'insideBottom', offset: -5 }} />
+            <XAxis
+              dataKey={isHouseholdMode ? 'displayYear' : 'age'}
+              label={{ value: isHouseholdMode ? 'Year' : 'Age', position: 'insideBottom', offset: -5 }}
+            />
             <YAxis tickFormatter={(v: number) => formatCurrency(v)} width={90} />
             <Tooltip trigger={isMobile ? 'click' : undefined} formatter={(value: number) => formatCurrency(value)} />
             <Legend formatter={(value: string) => getStrategyLabel(value as WithdrawalStrategyType)} />

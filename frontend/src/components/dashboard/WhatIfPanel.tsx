@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { SlidersHorizontal, RotateCcw, AlertTriangle, Plus } from 'lucide-react'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
 import { useWhatIfMetrics, type WhatIfOverrides } from '@/hooks/useWhatIfMetrics'
 import {
   useDisruptionImpact,
@@ -119,6 +120,8 @@ const MAX_EVENTS = 4
 
 function SlidersTab() {
   const profile = useProfileStore()
+  const household = useHouseholdStore()
+  const isHouseholdMode = household.householdMode && household.persons.length > 0
   const [overrides, setOverrides] = useState<WhatIfOverrides>({})
   const { baseMetrics, deltas } = useWhatIfMetrics(overrides)
 
@@ -189,7 +192,10 @@ function SlidersTab() {
 
       {/* Delta summary */}
       {deltas && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
+        <div className={cn(
+          'grid gap-4 pt-4 border-t',
+          isHouseholdMode ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-4'
+        )}>
           <div>
             <p className="text-xs text-muted-foreground">FIRE Number</p>
             <p className="text-sm font-semibold tabular-nums">
@@ -198,7 +204,7 @@ function SlidersTab() {
             </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Years to FIRE</p>
+            <p className="text-xs text-muted-foreground">{isHouseholdMode ? 'Years to Household FIRE' : 'Years to FIRE'}</p>
             <p className="text-sm font-semibold tabular-nums">
               {isFinite(baseMetrics.yearsToFire + (isNaN(deltas.yearsToFire) ? 0 : deltas.yearsToFire))
                 ? `${(baseMetrics.yearsToFire + (isNaN(deltas.yearsToFire) ? 0 : deltas.yearsToFire)).toFixed(1)} yrs`
@@ -208,17 +214,19 @@ function SlidersTab() {
               )}
             </p>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">FIRE Age</p>
-            <p className="text-sm font-semibold tabular-nums">
-              {isFinite(baseMetrics.fireAge + (isNaN(deltas.fireAge) ? 0 : deltas.fireAge))
-                ? `Age ${Math.round(baseMetrics.fireAge + (isNaN(deltas.fireAge) ? 0 : deltas.fireAge))}`
-                : 'Never'}
-              {!isNaN(deltas.fireAge) && (
-                <DeltaBadge value={deltas.fireAge} format={(v) => `${v.toFixed(1)} yrs`} invert />
-              )}
-            </p>
-          </div>
+          {!isHouseholdMode && (
+            <div>
+              <p className="text-xs text-muted-foreground">FIRE Age</p>
+              <p className="text-sm font-semibold tabular-nums">
+                {isFinite(baseMetrics.fireAge + (isNaN(deltas.fireAge) ? 0 : deltas.fireAge))
+                  ? `Age ${Math.round(baseMetrics.fireAge + (isNaN(deltas.fireAge) ? 0 : deltas.fireAge))}`
+                  : 'Never'}
+                {!isNaN(deltas.fireAge) && (
+                  <DeltaBadge value={deltas.fireAge} format={(v) => `${v.toFixed(1)} yrs`} invert />
+                )}
+              </p>
+            </div>
+          )}
           <div>
             <p className="text-xs text-muted-foreground">Portfolio at Retirement</p>
             <p className="text-sm font-semibold tabular-nums">
@@ -248,6 +256,8 @@ function SlidersTab() {
 function DisruptionsTab() {
   const profile = useProfileStore()
   const income = useIncomeStore()
+  const household = useHouseholdStore()
+  const isHouseholdMode = household.householdMode && household.persons.length > 0
   const {
     selectedIndex,
     startAge,
@@ -340,9 +350,12 @@ function DisruptionsTab() {
 
       {/* Impact delta cards */}
       {deltas && disruptedMetrics && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t">
+        <div className={cn(
+          'grid gap-4 pt-4 border-t',
+          isHouseholdMode ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3'
+        )}>
           <div>
-            <p className="text-xs text-muted-foreground">Years to FIRE</p>
+            <p className="text-xs text-muted-foreground">{isHouseholdMode ? 'Years to Household FIRE' : 'Years to FIRE'}</p>
             <p className="text-sm font-semibold tabular-nums">
               {isFinite(baseMetrics.yearsToFire + (isNaN(deltas.yearsToFire) ? 0 : deltas.yearsToFire))
                 ? `${(baseMetrics.yearsToFire + (isNaN(deltas.yearsToFire) ? 0 : deltas.yearsToFire)).toFixed(1)} yrs`
@@ -352,17 +365,19 @@ function DisruptionsTab() {
               )}
             </p>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">FIRE Age</p>
-            <p className="text-sm font-semibold tabular-nums">
-              {isFinite(baseMetrics.fireAge + (isNaN(deltas.fireAge) ? 0 : deltas.fireAge))
-                ? `Age ${Math.round(baseMetrics.fireAge + (isNaN(deltas.fireAge) ? 0 : deltas.fireAge))}`
-                : 'Never'}
-              {!isNaN(deltas.fireAge) && (
-                <DeltaBadge value={deltas.fireAge} format={(v) => `${v.toFixed(1)} yrs`} invert />
-              )}
-            </p>
-          </div>
+          {!isHouseholdMode && (
+            <div>
+              <p className="text-xs text-muted-foreground">FIRE Age</p>
+              <p className="text-sm font-semibold tabular-nums">
+                {isFinite(baseMetrics.fireAge + (isNaN(deltas.fireAge) ? 0 : deltas.fireAge))
+                  ? `Age ${Math.round(baseMetrics.fireAge + (isNaN(deltas.fireAge) ? 0 : deltas.fireAge))}`
+                  : 'Never'}
+                {!isNaN(deltas.fireAge) && (
+                  <DeltaBadge value={deltas.fireAge} format={(v) => `${v.toFixed(1)} yrs`} invert />
+                )}
+              </p>
+            </div>
+          )}
           <div>
             <p className="text-xs text-muted-foreground">Portfolio at Retirement</p>
             <p className="text-sm font-semibold tabular-nums">

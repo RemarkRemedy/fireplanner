@@ -3,6 +3,7 @@ import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useProjection } from '@/hooks/useProjection'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useAdjustedFireNumber } from '@/hooks/useAdjustedFireNumber'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
 
 interface DashboardMetrics {
   fireNumber: number | null
@@ -19,6 +20,7 @@ interface DashboardMetrics {
   deviationPct: number | null
   showProjectionNumber: boolean
   deviationFactors: string[]
+  isHouseholdMode: boolean
 }
 
 /**
@@ -31,6 +33,8 @@ export function useDashboardMetrics(): DashboardMetrics {
   const { summary: projSummary } = useProjection()
   const profile = useProfileStore()
   const adjusted = useAdjustedFireNumber()
+  const household = useHouseholdStore()
+  const isHouseholdMode = household.householdMode && household.persons.length > 0
 
   return useMemo(() => {
     if (!metrics) {
@@ -49,6 +53,7 @@ export function useDashboardMetrics(): DashboardMetrics {
         deviationPct: null,
         showProjectionNumber: false,
         deviationFactors: [],
+        isHouseholdMode,
       }
     }
 
@@ -59,6 +64,14 @@ export function useDashboardMetrics(): DashboardMetrics {
       ? Math.max(0, projFireAge - profile.currentAge)
       : metrics.yearsToFire
 
+    // Calculate total net worth - aggregate household CPF and SRS in household mode
+    const totalNetWorth = isHouseholdMode
+      ? profile.liquidNetWorth +
+        household.persons.reduce((sum, p) =>
+          sum + p.cpf.cpfOA + p.cpf.cpfSA + p.cpf.cpfMA + p.cpf.cpfRA +
+          (p.income.srsBalance || 0), 0)
+      : profile.liquidNetWorth + profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA + (profile.srsBalance || 0)
+
     return {
       fireNumber: metrics.fireNumber,
       progress: metrics.progress,
@@ -67,13 +80,28 @@ export function useDashboardMetrics(): DashboardMetrics {
       coastFireNumber: metrics.coastFireNumber,
       baristaFireIncome: metrics.baristaFireIncome,
       savingsRate: metrics.savingsRate,
-      totalNetWorth: profile.liquidNetWorth + profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA,
+      totalNetWorth,
       portfolioDepletedAge: projSummary?.portfolioDepletedAge ?? null,
       lifeExpectancy: profile.lifeExpectancy,
       projectionFireNumber: adjusted.projectionFireNumber,
       deviationPct: adjusted.deviationPct,
       showProjectionNumber: adjusted.showProjectionNumber,
       deviationFactors: adjusted.deviationFactors,
+      isHouseholdMode,
     }
-  }, [metrics, projSummary, adjusted, profile.currentAge, profile.lifeExpectancy, profile.liquidNetWorth, profile.cpfOA, profile.cpfSA, profile.cpfMA, profile.cpfRA])
+  }, [
+    metrics,
+    projSummary,
+    adjusted,
+    profile.currentAge,
+    profile.lifeExpectancy,
+    profile.liquidNetWorth,
+    profile.cpfOA,
+    profile.cpfSA,
+    profile.cpfMA,
+    profile.cpfRA,
+    profile.srsBalance,
+    isHouseholdMode,
+    household.persons,
+  ])
 }

@@ -5,6 +5,15 @@ import { validateProfileField } from '@/lib/validation/schemas'
 import { validateProfileConsistency } from '@/lib/validation/rules'
 import { interpolateOopMultiplier } from '@/lib/data/healthcareOop'
 
+/**
+ * ProfileStore: Legacy single-person store
+ *
+ * For multi-person support, use useHouseholdStore instead.
+ * This store remains for:
+ * 1. Backward compatibility with existing users
+ * 2. Household-level settings (expenses, FIRE targets, assumptions)
+ * 3. Single-person mode (when householdMode = false)
+ */
 interface ProfileActions {
   setField: <K extends keyof Omit<ProfileState, 'validationErrors'>>(
     field: K,

@@ -3,17 +3,30 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
+import { useUIStore } from '@/stores/useUIStore'
 import { calculateProgressiveTax, calculateChargeableIncome } from '@/lib/calculations/tax'
 import { getCpfRatesForAge, OW_CEILING_ANNUAL } from '@/lib/data/cpfRates'
 import { SRS_ANNUAL_CAP, SRS_ANNUAL_CAP_FOREIGNER, earnedIncomeReliefForAge } from '@/lib/data/taxBrackets'
 import { formatCurrency } from '@/lib/utils'
 
 export function SrsTaxPlanningCard() {
-  const annualIncome = useProfileStore((s) => s.annualIncome)
-  const currentAge = useProfileStore((s) => s.currentAge)
-  const srsAnnualContribution = useProfileStore((s) => s.srsAnnualContribution)
-  const residencyStatus = useProfileStore((s) => s.residencyStatus)
-  const personalReliefs = useIncomeStore((s) => s.personalReliefs)
+  const profileStore = useProfileStore()
+  const incomeStore = useIncomeStore()
+  const household = useHouseholdStore()
+  const selectedPersonId = useUIStore((s) => s.selectedPersonId)
+  const isHouseholdMode = household.householdMode && household.persons.length > 0
+
+  // Get data from selected person in household mode, or from profile/income stores
+  const selectedPerson = isHouseholdMode
+    ? household.persons.find((p) => p.profile.id === (selectedPersonId || household.persons[0]?.profile.id))
+    : null
+
+  const annualIncome = selectedPerson ? selectedPerson.income.annualSalary : profileStore.annualIncome
+  const currentAge = selectedPerson ? selectedPerson.profile.currentAge : profileStore.currentAge
+  const srsAnnualContribution = selectedPerson ? (selectedPerson.income.srsAnnualContribution || 0) : profileStore.srsAnnualContribution
+  const residencyStatus = selectedPerson ? selectedPerson.profile.residencyStatus : profileStore.residencyStatus
+  const personalReliefs = selectedPerson ? selectedPerson.income.personalReliefs : incomeStore.personalReliefs
 
   const data = useMemo(() => {
     const srsCap = residencyStatus === 'foreigner' ? SRS_ANNUAL_CAP_FOREIGNER : SRS_ANNUAL_CAP
@@ -58,8 +71,9 @@ export function SrsTaxPlanningCard() {
     }
   }, [annualIncome, currentAge, srsAnnualContribution, residencyStatus, personalReliefs])
 
-  // Don't show if income is too low for SRS to matter
-  if (data.maxSavings <= 0) return null
+  // Don't show if income is too low for SRS to matter (only in single-person mode)
+  // In household mode, always show to avoid confusion when switching persons
+  if (!isHouseholdMode && data.maxSavings <= 0) return null
 
   const scrollToNetWorth = () => {
     const el = document.getElementById('section-net-worth')
@@ -77,7 +91,19 @@ export function SrsTaxPlanningCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {!data.isContributing ? (
+        {isHouseholdMode && selectedPerson && (
+          <div className="p-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded text-sm">
+            <span className="text-blue-700 dark:text-blue-300">
+              📊 Showing SRS tax planning for: <span className="font-semibold">{selectedPerson.profile.name}</span>
+            </span>
+          </div>
+        )}
+        {data.maxSavings <= 0 ? (
+          <p className="text-sm text-muted-foreground">
+            {selectedPerson ? selectedPerson.profile.name : 'You'} {selectedPerson ? 'has' : 'have'} income below the tax threshold.
+            SRS contributions would not provide any tax benefit at this income level.
+          </p>
+        ) : !data.isContributing ? (
           <>
             <p className="text-sm text-muted-foreground">
               You're not currently contributing to SRS. Contributing the maximum{' '}

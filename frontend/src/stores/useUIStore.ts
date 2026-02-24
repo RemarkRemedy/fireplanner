@@ -22,6 +22,7 @@ interface UIState {
   lastSeenDataVintage: string | null
   showNewPurchase: boolean
   collapsedSections: string[]
+  selectedPersonId: string | null  // For household mode: which person's data to show in income/CPF sections
 }
 
 interface UIActions {
@@ -50,6 +51,7 @@ const DEFAULT_UI: UIState = {
   lastSeenDataVintage: null,
   showNewPurchase: false,
   collapsedSections: [],
+  selectedPersonId: null,
 }
 
 export const useUIStore = create<UIState & UIActions>()(
@@ -148,6 +150,7 @@ export const useUIStore = create<UIState & UIActions>()(
         if (version < 9) {
           state.showNewPurchase = false
           state.collapsedSections = []
+          state.selectedPersonId = null
         }
         return state
       },

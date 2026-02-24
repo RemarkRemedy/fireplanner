@@ -8,9 +8,9 @@ import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
+import { useIncomeProjection } from '@/hooks/useIncomeProjection'
 import { calculatePortfolioReturn } from '@/lib/calculations/portfolio'
-import { generateIncomeProjection } from '@/lib/calculations/income'
-import type { CpfHousingMode } from '@/lib/types'
 import { calculateOneTimeCost, calculateRecurringCost, type TimeCostBaseInput } from '@/lib/calculations/timeCost'
 import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 import { formatCurrency } from '@/lib/utils'
@@ -23,6 +23,9 @@ export function TimeCostPanel() {
   const income = useIncomeStore()
   const allocation = useAllocationStore()
   const property = usePropertyStore()
+  const household = useHouseholdStore()
+  const isHouseholdMode = household.householdMode && household.persons.length > 0
+  const { projection, hasErrors } = useIncomeProjection()
 
   const [mode, setMode] = useState<CostMode>('one-time')
   const [oneTimeAmount, setOneTimeAmount] = useState(50000)
@@ -32,41 +35,15 @@ export function TimeCostPanel() {
   const baseInput = useMemo<TimeCostBaseInput | null>(() => {
     if (Object.keys(profile.validationErrors).length > 0) return null
 
-    const cpfTotal = profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
+    // Aggregate CPF for household mode
+    const cpfTotal = isHouseholdMode
+      ? household.persons.reduce((sum, p) => sum + p.cpf.cpfOA + p.cpf.cpfSA + p.cpf.cpfMA + p.cpf.cpfRA, 0)
+      : profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
 
+    // Get effective income from projection
     let effectiveIncome = profile.annualIncome
-    if (Object.keys(income.validationErrors).length === 0) {
-      const projection = generateIncomeProjection({
-        currentAge: profile.currentAge,
-        retirementAge: profile.retirementAge,
-        lifeExpectancy: profile.lifeExpectancy,
-        salaryModel: income.salaryModel,
-        annualSalary: income.annualSalary,
-        salaryGrowthRate: income.salaryGrowthRate,
-        realisticPhases: income.realisticPhases,
-        promotionJumps: income.promotionJumps,
-        momEducation: income.momEducation,
-        momAdjustment: income.momAdjustment,
-        employerCpfEnabled: income.employerCpfEnabled,
-        incomeStreams: income.incomeStreams,
-        lifeEvents: income.lifeEvents,
-        lifeEventsEnabled: income.lifeEventsEnabled,
-        annualExpenses: profile.annualExpenses,
-        inflation: profile.inflation,
-        personalReliefs: income.personalReliefs,
-        srsAnnualContribution: profile.srsAnnualContribution,
-        initialCpfOA: profile.cpfOA,
-        initialCpfSA: profile.cpfSA,
-        initialCpfMA: profile.cpfMA,
-        initialCpfRA: profile.cpfRA,
-        cpfLifeStartAge: profile.cpfLifeStartAge,
-        cpfLifePlan: profile.cpfLifePlan,
-        cpfRetirementSum: profile.cpfRetirementSum,
-        cpfHousingMode: (property.mortgageCpfMonthly > 0 ? 'simple' : 'none') as CpfHousingMode,
-        cpfHousingMonthly: property.mortgageCpfMonthly,
-        cpfMortgageYearsLeft: property.existingMortgageRemainingYears,
-      })
-      if (projection.length > 0) effectiveIncome = projection[0].totalGross
+    if (!hasErrors && projection && projection.length > 0) {
+      effectiveIncome = projection[0].totalGross
     }
 
     let expectedReturn = profile.expectedReturn
@@ -89,7 +66,7 @@ export function TimeCostPanel() {
       retirementAge: profile.retirementAge,
       currentAge: profile.currentAge,
     }
-  }, [profile, income, allocation, property])
+  }, [profile, income, allocation, property, household, isHouseholdMode, projection, hasErrors])
 
   const result = useMemo(() => {
     if (!baseInput) return null

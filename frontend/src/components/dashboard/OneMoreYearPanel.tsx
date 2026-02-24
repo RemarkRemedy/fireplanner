@@ -1,9 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CalendarPlus } from 'lucide-react'
 import { useOneMoreYear, type RiskLevel } from '@/hooks/useOneMoreYear'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
+import { useProfileStore } from '@/stores/useProfileStore'
 import { formatCurrency, formatPercent } from '@/lib/utils'
 import { cn } from '@/lib/utils'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
 const RISK_STYLES: Record<RiskLevel, { bg: string; text: string; label: string }> = {
   safe: {
@@ -25,9 +27,16 @@ const RISK_STYLES: Record<RiskLevel, { bg: string; text: string; label: string }
 
 export function OneMoreYearPanel() {
   const { scenarios, hasData } = useOneMoreYear()
+  const household = useHouseholdStore()
+  const profile = useProfileStore()
+  const isHouseholdMode = household.householdMode && household.persons.length > 0
   const [isOpen, setIsOpen] = useState(false)
 
   if (!hasData) return null
+
+  // Calculate calendar year from years offset for household mode
+  const currentYear = useMemo(() => new Date().getFullYear(), [])
+  const yearsFromNow = Math.max(0, profile.retirementAge - profile.currentAge)
 
   return (
     <Card>
@@ -66,13 +75,17 @@ export function OneMoreYearPanel() {
               <tbody>
                 {scenarios.map((s) => {
                   const risk = RISK_STYLES[s.riskLevel]
+                  const scenarioYearsFromNow = yearsFromNow + s.yearsExtra
+                  const calendarYear = currentYear + scenarioYearsFromNow
                   return (
                     <tr key={s.yearsExtra} className={cn('border-b last:border-0', s.yearsExtra === 0 && 'bg-muted/30')}>
                       <td className="py-3 pr-4">
                         <span className="font-medium">
                           {s.yearsExtra === 0 ? 'Planned' : `+${s.yearsExtra} year${s.yearsExtra > 1 ? 's' : ''}`}
                         </span>
-                        <span className="text-muted-foreground ml-1.5">Age {s.retirementAge}</span>
+                        <span className="text-muted-foreground ml-1.5">
+                          {isHouseholdMode ? `Year ${calendarYear}` : `Age ${s.retirementAge}`}
+                        </span>
                       </td>
                       <td className="py-3 pr-4 text-right tabular-nums">
                         {formatCurrency(s.portfolioAtRetirement)}
@@ -103,6 +116,8 @@ export function OneMoreYearPanel() {
           <div className="md:hidden grid grid-cols-1 gap-3">
             {scenarios.map((s) => {
               const risk = RISK_STYLES[s.riskLevel]
+              const scenarioYearsFromNow = yearsFromNow + s.yearsExtra
+              const calendarYear = currentYear + scenarioYearsFromNow
               return (
                 <div
                   key={s.yearsExtra}
@@ -114,7 +129,9 @@ export function OneMoreYearPanel() {
                   <div className="flex items-center justify-between">
                     <span className="font-medium">
                       {s.yearsExtra === 0 ? 'Planned' : `+${s.yearsExtra} year${s.yearsExtra > 1 ? 's' : ''}`}
-                      <span className="text-muted-foreground ml-1.5 font-normal">Age {s.retirementAge}</span>
+                      <span className="text-muted-foreground ml-1.5 font-normal">
+                        {isHouseholdMode ? `Year ${calendarYear}` : `Age ${s.retirementAge}`}
+                      </span>
                     </span>
                     <span className={cn('text-xs font-medium px-2 py-0.5 rounded', risk.bg, risk.text)}>
                       {risk.label}

@@ -747,6 +747,103 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
 /**
  * Calculate summary statistics from a complete income projection.
  */
+/**
+ * Generate household income projection by combining multiple persons.
+ * Returns HouseholdIncomeProjectionRow[] with per-person breakdown + aggregates.
+ */
+export function generateHouseholdIncomeProjection(params: {
+  persons: Array<{
+    personId: string
+    projection: IncomeProjectionRow[]
+  }>
+  annualExpenses: number
+  inflation: number
+}): import('@/lib/types').HouseholdIncomeProjectionRow[] {
+  const { persons, annualExpenses, inflation } = params
+
+  if (persons.length === 0) return []
+
+  // Find the longest projection (to handle different life expectancies)
+  const maxLength = Math.max(...persons.map(p => p.projection.length))
+
+  const householdRows: import('@/lib/types').HouseholdIncomeProjectionRow[] = []
+
+  for (let i = 0; i < maxLength; i++) {
+    const personData: Record<string, IncomeProjectionRow> = {}
+    let totalGross = 0
+    let totalTax = 0
+    let totalCpfEmployee = 0
+    let totalCpfEmployer = 0
+    let totalNet = 0
+    let totalCpfOA = 0
+    let totalCpfSA = 0
+    let totalCpfMA = 0
+    let totalCpfRA = 0
+    let totalCpfisOA = 0
+    let totalCpfisSA = 0
+    let totalCpfisReturn = 0
+    let totalCpfLifePayout = 0
+    let totalCpfOaHousingDeduction = 0
+
+    // Aggregate across all persons for this year
+    for (const { personId, projection } of persons) {
+      const row = projection[i]
+      if (row) {
+        personData[personId] = row
+        totalGross += row.totalGross
+        totalTax += row.sgTax
+        totalCpfEmployee += row.cpfEmployee
+        totalCpfEmployer += row.cpfEmployer
+        totalNet += row.totalNet
+        totalCpfOA += row.cpfOA
+        totalCpfSA += row.cpfSA
+        totalCpfMA += row.cpfMA
+        totalCpfRA += row.cpfRA
+        totalCpfisOA += row.cpfisOA
+        totalCpfisSA += row.cpfisSA
+        totalCpfisReturn += row.cpfisReturn
+        totalCpfLifePayout += row.cpfLifePayout
+        totalCpfOaHousingDeduction += row.cpfOaHousingDeduction
+      }
+    }
+
+    // Household savings = combined net income - shared expenses
+    const primaryPerson = persons[0]?.projection[i]
+    const inflationAdjustedExpenses = primaryPerson
+      ? annualExpenses * Math.pow(1 + inflation, primaryPerson.year)
+      : annualExpenses
+
+    const totalAnnualSavings = Math.max(0, totalNet - inflationAdjustedExpenses)
+    const totalCumulativeSavings = i > 0
+      ? householdRows[i - 1].totalCumulativeSavings + totalAnnualSavings
+      : totalAnnualSavings
+
+    householdRows.push({
+      year: primaryPerson?.year ?? i,
+      age: primaryPerson?.age ?? 0,  // Primary person's age
+      personData,
+      totalGross,
+      totalTax,
+      totalCpfEmployee,
+      totalCpfEmployer,
+      totalNet,
+      totalAnnualSavings,
+      totalCumulativeSavings,
+      totalCpfOA,
+      totalCpfSA,
+      totalCpfMA,
+      totalCpfRA,
+      totalCpfisOA,
+      totalCpfisSA,
+      totalCpfisReturn,
+      totalCpfLifePayout,
+      totalCpfOaHousingDeduction,
+    })
+  }
+
+  return householdRows
+}
+
 export function calculateIncomeSummary(
   projection: IncomeProjectionRow[],
   annualExpenses: number

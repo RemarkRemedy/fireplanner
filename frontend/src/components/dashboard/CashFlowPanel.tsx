@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,6 +13,8 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { useCashFlowChart, type CashFlowPhase, type CashFlowRow } from '@/hooks/useCashFlowChart'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
+import { useProfileStore } from '@/stores/useProfileStore'
 import { ChartSkeleton } from '@/components/shared/ChartSkeleton'
 import { formatCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -63,9 +65,12 @@ interface CustomTooltipProps {
   active?: boolean
   payload?: TooltipPayloadItem[]
   label?: number
+  isHouseholdMode?: boolean
+  currentYear?: number
+  currentAge?: number
 }
 
-function CashFlowTooltip({ active, payload, label }: CustomTooltipProps) {
+function CashFlowTooltip({ active, payload, label, isHouseholdMode, currentYear, currentAge }: CustomTooltipProps) {
   if (!active || !payload || payload.length === 0) return null
 
   // Exclude the net cash flow overlay line from income/outflow breakdown
@@ -74,9 +79,15 @@ function CashFlowTooltip({ active, payload, label }: CustomTooltipProps) {
   const outflows = series.filter((p) => p.value < 0)
   const netCashFlow = series.reduce((sum, p) => sum + p.value, 0)
 
+  // Calculate calendar year for household mode
+  const yearsFromNow = label ? label - (currentAge || 0) : 0
+  const calendarYear = currentYear && yearsFromNow >= 0 ? currentYear + yearsFromNow : null
+
   return (
     <div className="bg-background border rounded-lg shadow-lg p-3 text-sm max-w-xs">
-      <p className="font-medium mb-2">Age {label}</p>
+      <p className="font-medium mb-2">
+        {isHouseholdMode && calendarYear ? `Year ${calendarYear}` : `Age ${label}`}
+      </p>
 
       {income.length > 0 && (
         <div className="mb-2">
@@ -149,6 +160,10 @@ export function CashFlowPanel() {
   const [phase, setPhase] = useState<CashFlowPhase>('all')
   const data = useCashFlowChart(phase)
   const isMobile = useIsMobile()
+  const household = useHouseholdStore()
+  const profile = useProfileStore()
+  const isHouseholdMode = household.householdMode && household.persons.length > 0
+  const currentYear = useMemo(() => new Date().getFullYear(), [])
 
   if (!data) {
     return (
@@ -199,13 +214,28 @@ export function CashFlowPanel() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="age"
-                label={{ value: 'Age', position: 'insideBottom', offset: -5 }}
+                label={{ value: isHouseholdMode ? 'Year' : 'Age', position: 'insideBottom', offset: -5 }}
+                tickFormatter={(age: number) => {
+                  if (!isHouseholdMode) return age.toString()
+                  const yearsFromNow = age - profile.currentAge
+                  return (currentYear + yearsFromNow).toString()
+                }}
               />
               <YAxis
                 tickFormatter={(v: number) => formatCurrency(v)}
                 width={90}
               />
-              <Tooltip trigger={isMobile ? 'click' : undefined} content={<CashFlowTooltip />} />
+              <Tooltip
+                trigger={isMobile ? 'click' : undefined}
+                content={(props) => (
+                  <CashFlowTooltip
+                    {...props}
+                    isHouseholdMode={isHouseholdMode}
+                    currentYear={currentYear}
+                    currentAge={profile.currentAge}
+                  />
+                )}
+              />
 
               {/* Zero line */}
               <ReferenceLine y={0} stroke="#94a3b8" strokeWidth={1.5} />

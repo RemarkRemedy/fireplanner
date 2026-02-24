@@ -5,6 +5,7 @@ import {
   calculateChargeableIncome,
   calculateEffectiveTaxRate,
   calculateSrsDeduction,
+  calculateHouseholdTax,
 } from './tax'
 import {
   computeTotalReliefs,
@@ -315,5 +316,105 @@ describe('computeTotalReliefs', () => {
     }, 30)
     // $1K + $5.5K × 2 = $12K
     expect(total).toBe(12000)
+  })
+
+  it('calculates tax for very high income (last bracket)', () => {
+    // Test extremely high income to hit the last bracket with Infinity upper bound
+    // Top bracket starts at $1,000,000 with 24% rate
+    const r = calculateProgressiveTax(2_000_000)
+    expect(r.taxPayable).toBeGreaterThan(0)
+    expect(r.marginalRate).toBe(0.24) // Highest bracket rate
+    expect(r.effectiveRate).toBeLessThan(0.24) // Effective < marginal due to progressive structure
+  })
+})
+
+describe('calculateHouseholdTax', () => {
+  it('sums tax from multiple persons correctly', () => {
+    const result = calculateHouseholdTax({
+      persons: [
+        {
+          totalIncome: 100000,
+          cpfEmployee: 20000,
+          srsContribution: 15300,
+          personalReliefs: 10000,
+          residencyStatus: 'citizen',
+        },
+        {
+          totalIncome: 80000,
+          cpfEmployee: 16000,
+          srsContribution: 10000,
+          personalReliefs: 8000,
+          residencyStatus: 'pr',
+        },
+      ],
+    })
+
+    expect(result.individualTaxResults).toHaveLength(2)
+    expect(result.totalTaxPayable).toBeGreaterThan(0)
+
+    // Verify that totalTaxPayable equals sum of individual taxes
+    const sum = result.individualTaxResults.reduce((acc, r) => acc + r.taxPayable, 0)
+    expect(result.totalTaxPayable).toBeCloseTo(sum, 2)
+  })
+
+  it('handles single person household', () => {
+    const result = calculateHouseholdTax({
+      persons: [
+        {
+          totalIncome: 60000,
+          cpfEmployee: 12000,
+          srsContribution: 0,
+          personalReliefs: 5000,
+          residencyStatus: 'citizen',
+        },
+      ],
+    })
+
+    expect(result.individualTaxResults).toHaveLength(1)
+    expect(result.totalTaxPayable).toBeGreaterThan(0)
+  })
+
+  it('handles foreigner with higher SRS cap', () => {
+    const result = calculateHouseholdTax({
+      persons: [
+        {
+          totalIncome: 150000,
+          cpfEmployee: 0, // Foreigners typically don't contribute to CPF
+          srsContribution: 35700, // Foreigner cap
+          personalReliefs: 5000,
+          residencyStatus: 'foreigner',
+        },
+      ],
+    })
+
+    expect(result.individualTaxResults).toHaveLength(1)
+    expect(result.totalTaxPayable).toBeGreaterThan(0)
+    // Foreigner SRS deduction should be capped at 35700
+    expect(result.individualTaxResults[0].chargeableIncome).toBe(150000 - 35700 - 5000)
+  })
+
+  it('handles multiple persons with zero tax liability', () => {
+    const result = calculateHouseholdTax({
+      persons: [
+        {
+          totalIncome: 15000,
+          cpfEmployee: 3000,
+          srsContribution: 0,
+          personalReliefs: 1000,
+          residencyStatus: 'citizen',
+        },
+        {
+          totalIncome: 18000,
+          cpfEmployee: 3600,
+          srsContribution: 0,
+          personalReliefs: 1000,
+          residencyStatus: 'citizen',
+        },
+      ],
+    })
+
+    expect(result.individualTaxResults).toHaveLength(2)
+    // Both persons have chargeable income below $20K threshold
+    expect(result.totalTaxPayable).toBe(0)
   })
 })

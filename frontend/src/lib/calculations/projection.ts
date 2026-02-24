@@ -8,6 +8,7 @@
 
 import type {
   IncomeProjectionRow,
+  HouseholdIncomeProjectionRow,
   ProjectionRow,
   ProjectionSummary,
   WithdrawalStrategyType,
@@ -42,8 +43,72 @@ import {
   floorCeiling,
 } from './withdrawal'
 
+// Helper to normalize household or single projection row
+function normalizeIncomeRow(row: IncomeProjectionRow | HouseholdIncomeProjectionRow): IncomeProjectionRow {
+  if ('personData' in row) {
+    // It's a household row - convert to single format using aggregates from all persons
+    const persons = Object.values(row.personData)
+    const firstPerson = persons[0]
+
+    // Aggregate income streams across all persons
+    const salary = persons.reduce((sum, p) => sum + (p.salary || 0), 0)
+    const rentalIncome = persons.reduce((sum, p) => sum + (p.rentalIncome || 0), 0)
+    const investmentIncome = persons.reduce((sum, p) => sum + (p.investmentIncome || 0), 0)
+    const businessIncome = persons.reduce((sum, p) => sum + (p.businessIncome || 0), 0)
+    const governmentIncome = persons.reduce((sum, p) => sum + (p.governmentIncome || 0), 0)
+    const cpfLifePayout = persons.reduce((sum, p) => sum + (p.cpfLifePayout || 0), 0)
+    const srsBalance = persons.reduce((sum, p) => sum + (p.srsBalance || 0), 0)
+    const srsContribution = persons.reduce((sum, p) => sum + (p.srsContribution || 0), 0)
+    const srsWithdrawal = persons.reduce((sum, p) => sum + (p.srsWithdrawal || 0), 0)
+    const srsTaxableWithdrawal = persons.reduce((sum, p) => sum + (p.srsTaxableWithdrawal || 0), 0)
+    const cpfOaWithdrawal = persons.reduce((sum, p) => sum + (p.cpfOaWithdrawal || 0), 0)
+    const cpfisOA = persons.reduce((sum, p) => sum + (p.cpfisOA || 0), 0)
+    const cpfisSA = persons.reduce((sum, p) => sum + (p.cpfisSA || 0), 0)
+    const cpfisReturn = persons.reduce((sum, p) => sum + (p.cpfisReturn || 0), 0)
+
+    return {
+      year: row.year,
+      age: row.age,
+      salary,
+      rentalIncome,
+      investmentIncome,
+      businessIncome,
+      governmentIncome,
+      totalGross: row.totalGross,
+      sgTax: row.totalTax,
+      cpfEmployee: row.totalCpfEmployee,
+      cpfEmployer: row.totalCpfEmployer,
+      totalNet: row.totalNet,
+      annualSavings: row.totalAnnualSavings,
+      cumulativeSavings: row.totalCumulativeSavings,
+      cpfOA: row.totalCpfOA,
+      cpfSA: row.totalCpfSA,
+      cpfMA: row.totalCpfMA,
+      cpfRA: row.totalCpfRA,
+      isRetired: firstPerson?.isRetired ?? false,
+      activeLifeEvents: [],
+      cpfLifePayout,
+      cpfOaHousingDeduction: 0,
+      cpfOaShortfall: 0,
+      cpfLifeAnnuityPremium: 0,
+      cpfOaWithdrawal,
+      cpfisOA,
+      cpfisSA,
+      cpfisReturn,
+      srsBalance,
+      srsContribution,
+      srsWithdrawal,
+      srsTaxableWithdrawal,
+      cashReserveTarget: 0,
+      cashReserveBalance: 0,
+      investedSavings: 0,
+    }
+  }
+  return row
+}
+
 export interface ProjectionParams {
-  incomeProjection: IncomeProjectionRow[]
+  incomeProjection: IncomeProjectionRow[] | HouseholdIncomeProjectionRow[]
   currentAge: number
   retirementAge: number
   lifeExpectancy: number
@@ -336,8 +401,9 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     const age = currentAge + i
     const year = i
     const isRetired = age > retirementAge
-    const incomeRow = incomeProjection[i]
-    if (!incomeRow) break
+    const rawIncomeRow = incomeProjection[i]
+    if (!rawIncomeRow) break
+    const incomeRow = normalizeIncomeRow(rawIncomeRow)
 
     // Track retirement year (0-indexed from first retired year)
     if (isRetired) retirementYearCounter++

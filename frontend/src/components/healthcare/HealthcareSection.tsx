@@ -6,7 +6,10 @@ import { Input } from '@/components/ui/input'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { PercentInput } from '@/components/shared/PercentInput'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
+import { PersonIndicator } from '@/components/shared/PersonIndicator'
 import { useProfileStore } from '@/stores/useProfileStore'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
+import { useUIStore } from '@/stores/useUIStore'
 import { formatCurrency } from '@/lib/utils'
 import { calculateHealthcareCostAtAge, ISP_TIER_ORDER } from '@/lib/calculations/healthcare'
 import { interpolateOopMultiplier } from '@/lib/data/healthcareOop'
@@ -27,13 +30,21 @@ const OOP_MODEL_OPTIONS: { value: OopModel; label: string }[] = [
 const PREVIEW_AGES = [40, 50, 60, 70, 80, 90]
 
 export function HealthcareSection() {
-  const config = useProfileStore((s) => s.healthcareConfig)
-  const retirementAge = useProfileStore((s) => s.retirementAge)
-  const currentAge = useProfileStore((s) => s.currentAge)
-  const setField = useProfileStore((s) => s.setField)
-  const validationErrors = useProfileStore((s) => s.validationErrors)
+  const profileStore = useProfileStore()
+  const household = useHouseholdStore()
+  const selectedPersonId = useUIStore((s) => s.selectedPersonId)
 
-  const hasDowngrade = config.ispDowngradeTier !== undefined && config.ispDowngradeAge !== undefined
+  // Get selected person data
+  const selectedPerson = household.householdMode
+    ? household.persons.find((p) => p.profile.id === (selectedPersonId || household.persons[0]?.profile.id))
+    : null
+
+  const config = selectedPerson ? (selectedPerson.healthcare || profileStore.healthcareConfig) : profileStore.healthcareConfig
+  const retirementAge = selectedPerson ? selectedPerson.profile.retirementAge : profileStore.retirementAge
+  const currentAge = selectedPerson ? selectedPerson.profile.currentAge : profileStore.currentAge
+  const validationErrors = profileStore.validationErrors
+
+  const hasDowngrade = config?.ispDowngradeTier !== undefined && config?.ispDowngradeAge !== undefined
 
   const updateConfig = useCallback(
     <K extends keyof HealthcareConfig>(key: K, value: HealthcareConfig[K]) => {
@@ -46,9 +57,13 @@ export function HealthcareSection() {
           updated.ispDowngradeAge = undefined
         }
       }
-      setField('healthcareConfig', updated)
+      if (selectedPerson) {
+        household.updatePersonHealthcare(selectedPerson.profile.id, updated)
+      } else {
+        profileStore.setField('healthcareConfig', updated)
+      }
     },
-    [config, setField],
+    [config, selectedPerson, household, profileStore],
   )
 
   // Scale OOP presets to the user's current age
@@ -81,6 +96,7 @@ export function HealthcareSection() {
         <CardTitle className="text-lg flex items-center gap-2">
           <div className="flex items-center gap-2 flex-1">
             Healthcare & Insurance
+            <PersonIndicator />
             <InfoTooltip text="Model Singapore healthcare costs including MediShield Life, Integrated Shield Plans, CareShield LIFE, and out-of-pocket expenses. Costs are age-dependent and increase with age." />
           </div>
           <Switch
@@ -154,18 +170,27 @@ export function HealthcareSection() {
                     if (checked) {
                       // Default to 'none' tier at age 70 (or currentAge + 1 if older)
                       const defaultAge = Math.max(currentAge + 1, 70)
-                      updateConfig('ispDowngradeTier', 'none')
-                      setField('healthcareConfig', {
+                      const updated = {
                         ...config,
-                        ispDowngradeTier: 'none',
+                        ispDowngradeTier: 'none' as IspTierOption,
                         ispDowngradeAge: defaultAge,
-                      })
+                      }
+                      if (selectedPerson) {
+                        household.updatePersonHealthcare(selectedPerson.profile.id, updated)
+                      } else {
+                        profileStore.setField('healthcareConfig', updated)
+                      }
                     } else {
-                      setField('healthcareConfig', {
+                      const updated = {
                         ...config,
                         ispDowngradeTier: undefined,
                         ispDowngradeAge: undefined,
-                      })
+                      }
+                      if (selectedPerson) {
+                        household.updatePersonHealthcare(selectedPerson.profile.id, updated)
+                      } else {
+                        profileStore.setField('healthcareConfig', updated)
+                      }
                     }
                   }}
                 />

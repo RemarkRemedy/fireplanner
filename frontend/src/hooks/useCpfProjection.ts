@@ -1,9 +1,36 @@
 import { useMemo } from 'react'
 import { useIncomeProjection } from '@/hooks/useIncomeProjection'
 import { useProfileStore } from '@/stores/useProfileStore'
+import { useHouseholdStore } from '@/stores/useHouseholdStore'
 import { calculateBrsFrsErs } from '@/lib/calculations/cpf'
 import { RETIREMENT_SUM_BASE_YEAR, BRS_BASE, FRS_BASE, ERS_BASE } from '@/lib/data/cpfRates'
 import { formatCurrency } from '@/lib/utils'
+import type { IncomeProjectionRow, HouseholdIncomeProjectionRow } from '@/lib/types'
+
+// Helper to extract CPF values from either single or household projection rows
+function getCpfValue(row: IncomeProjectionRow | HouseholdIncomeProjectionRow, field: 'cpfOA' | 'cpfSA' | 'cpfMA' | 'cpfRA' | 'cpfEmployee' | 'cpfEmployer' | 'cpfLifePayout' | 'cpfOaHousingDeduction' | 'cpfOaShortfall' | 'cpfLifeAnnuityPremium' | 'cpfisOA' | 'cpfisSA' | 'cpfisReturn'): number {
+  if ('cpfOA' in row) {
+    // Single-person projection
+    return row[field] ?? 0
+  } else {
+    // Household projection - map to total fields
+    const householdField = field === 'cpfOA' ? 'totalCpfOA' :
+                           field === 'cpfSA' ? 'totalCpfSA' :
+                           field === 'cpfMA' ? 'totalCpfMA' :
+                           field === 'cpfRA' ? 'totalCpfRA' :
+                           field === 'cpfEmployee' ? 'totalCpfEmployee' :
+                           field === 'cpfEmployer' ? 'totalCpfEmployer' :
+                           field === 'cpfLifePayout' ? 'totalCpfLifePayout' :
+                           field === 'cpfOaHousingDeduction' ? 'totalCpfOaHousingDeduction' :
+                           field === 'cpfisOA' ? 'totalCpfisOA' :
+                           field === 'cpfisSA' ? 'totalCpfisSA' :
+                           field === 'cpfisReturn' ? 'totalCpfisReturn' : null
+    if (householdField && householdField in row) {
+      return (row as HouseholdIncomeProjectionRow)[householdField as keyof HouseholdIncomeProjectionRow] as number ?? 0
+    }
+    return 0
+  }
+}
 
 export interface CpfProjectionRow {
   age: number
@@ -29,18 +56,41 @@ export interface CpfProjectionRow {
  * Derived hook: reads CPF data from income projection rows and
  * reshapes for CPF-specific table display. Annotates milestone years
  * when total CPF crosses BRS/FRS/ERS thresholds or CPF LIFE starts.
+ *
+ * @param personId - Optional person ID for household mode. If provided, uses that person's projection.
  */
-export function useCpfProjection(): {
+export function useCpfProjection(personId?: string): {
   rows: CpfProjectionRow[] | null
   hasErrors: boolean
 } {
-  const { projection, hasErrors } = useIncomeProjection()
-  const cpfLifeStartAge = useProfileStore((s) => s.cpfLifeStartAge)
-  const cpfLifePlan = useProfileStore((s) => s.cpfLifePlan)
-  const currentAge = useProfileStore((s) => s.currentAge)
+  const { projection, hasErrors, personProjections, isHousehold } = useIncomeProjection()
+  const household = useHouseholdStore()
+  const profileStore = useProfileStore()
+
+  // In household mode, find the person's projection
+  const effectiveProjection = useMemo(() => {
+    if (isHousehold && personId && personProjections) {
+      const personProj = personProjections.find(p => p.personId === personId)
+      return personProj?.projection || null
+    }
+    // In single-person mode, use the main projection
+    if (!isHousehold) {
+      return projection as IncomeProjectionRow[] | null
+    }
+    // In household mode without personId, return null (shouldn't happen)
+    return null
+  }, [isHousehold, personId, personProjections, projection])
+
+  // Get CPF settings for the selected person (or from profile store in single mode)
+  const selectedPerson = household.householdMode && personId
+    ? household.persons.find(p => p.profile.id === personId)
+    : null
+  const cpfLifeStartAge = selectedPerson?.cpf.cpfLifeStartAge || profileStore.cpfLifeStartAge
+  const cpfLifePlan = selectedPerson?.cpf.cpfLifePlan || profileStore.cpfLifePlan
+  const currentAge = selectedPerson?.profile.currentAge || profileStore.currentAge
 
   return useMemo(() => {
-    if (hasErrors || !projection || projection.length === 0) {
+    if (hasErrors || !effectiveProjection || effectiveProjection.length === 0) {
       return { rows: null, hasErrors: true }
     }
 
@@ -55,18 +105,18 @@ export function useCpfProjection(): {
     let payoutsFromAnnuity = 0
     let raFullyDepleted = false
 
-    const rows: CpfProjectionRow[] = projection.map((row, i) => {
-      const prevRow = i > 0 ? projection[i - 1] : null
+    const rows: CpfProjectionRow[] = effectiveProjection.map((row, i) => {
+      const prevRow = i > 0 ? effectiveProjection[i - 1] : null
       const prevTotal = prevRow
-        ? prevRow.cpfOA + prevRow.cpfSA + prevRow.cpfMA + prevRow.cpfRA
+        ? getCpfValue(prevRow, 'cpfOA') + getCpfValue(prevRow, 'cpfSA') + getCpfValue(prevRow, 'cpfMA') + getCpfValue(prevRow, 'cpfRA')
         : 0
-      const totalBalance = row.cpfOA + row.cpfSA + row.cpfMA + row.cpfRA
+      const totalBalance = getCpfValue(row, 'cpfOA') + getCpfValue(row, 'cpfSA') + getCpfValue(row, 'cpfMA') + getCpfValue(row, 'cpfRA')
       // Retirement balance excludes MA — MediSave cannot fund BRS/FRS/ERS
-      const retirementBalance = row.cpfOA + row.cpfSA + row.cpfRA
-      const annualContribution = row.cpfEmployee + row.cpfEmployer
+      const retirementBalance = getCpfValue(row, 'cpfOA') + getCpfValue(row, 'cpfSA') + getCpfValue(row, 'cpfRA')
+      const annualContribution = getCpfValue(row, 'cpfEmployee') + getCpfValue(row, 'cpfEmployer')
       // Interest approximation: balance change minus contributions, plus housing deductions
       const annualInterest = i > 0
-        ? totalBalance - prevTotal - annualContribution + row.cpfOaHousingDeduction
+        ? totalBalance - prevTotal - annualContribution + getCpfValue(row, 'cpfOaHousingDeduction')
         : 0
 
       let milestone: CpfProjectionRow['milestone'] = null
@@ -87,34 +137,38 @@ export function useCpfProjection(): {
         milestone = 'cpfLifeStart'
         cpfLifeStarted = true
       }
-      if (row.age === 55 && row.cpfRA > 0 && milestone === null) {
+      const cpfRA = getCpfValue(row, 'cpfRA')
+      const cpfLifePayout = getCpfValue(row, 'cpfLifePayout')
+      const cpfLifeAnnuityPremium = getCpfValue(row, 'cpfLifeAnnuityPremium')
+
+      if (row.age === 55 && cpfRA > 0 && milestone === null) {
         milestone = 'raCreated'
       }
 
       // Track annuity premium from the LIFE start row
-      if (row.cpfLifeAnnuityPremium > 0) {
-        annuityPremium = row.cpfLifeAnnuityPremium
+      if (cpfLifeAnnuityPremium > 0) {
+        annuityPremium = cpfLifeAnnuityPremium
       }
 
       // Compute bequest: what beneficiaries inherit if passing occurs at this age
       let bequest = 0
       if (row.age >= cpfLifeStartAge && annuityPremium > 0) {
         if (cpfLifePlan === 'basic') {
-          if (row.cpfRA > 0) {
+          if (cpfRA > 0) {
             // RA still has funds → payouts come from RA, annuity premium untouched
-            bequest = row.cpfRA + annuityPremium
+            bequest = cpfRA + annuityPremium
           } else {
             // RA depleted → payouts now come from annuity pool
             if (!raFullyDepleted) {
               raFullyDepleted = true
               payoutsFromAnnuity = 0
             }
-            payoutsFromAnnuity += row.cpfLifePayout
+            payoutsFromAnnuity += cpfLifePayout
             bequest = Math.max(0, annuityPremium - payoutsFromAnnuity)
           }
         } else {
           // Standard/Escalating: cpfRA = 0, ALL payouts from annuity pool
-          payoutsFromAnnuity += row.cpfLifePayout
+          payoutsFromAnnuity += cpfLifePayout
           bequest = Math.max(0, annuityPremium - payoutsFromAnnuity)
         }
       }
@@ -131,27 +185,27 @@ export function useCpfProjection(): {
         const years = Math.max(0, 55 - currentAge) + Math.max(0, new Date().getFullYear() - RETIREMENT_SUM_BASE_YEAR)
         milestoneFormula = `ERS at 55: ${formatCurrency(ERS_BASE)} (${RETIREMENT_SUM_BASE_YEAR}) × 1.035^${years} = ${formatCurrency(brsFrsErs.ers)}`
       } else if (milestone === 'raCreated') {
-        const prevSA = prevRow ? prevRow.cpfSA : 0
+        const prevSA = prevRow ? getCpfValue(prevRow, 'cpfSA') : 0
         milestoneFormula = `SA (${formatCurrency(prevSA)}) → RA. Target: FRS = ${formatCurrency(brsFrsErs.frs)}`
       } else if (milestone === 'cpfLifeStart') {
-        milestoneFormula = `RA at ${row.age}: ${formatCurrency(totalBalance)}. ${cpfLifePlan.charAt(0).toUpperCase() + cpfLifePlan.slice(1)} plan. Payout: ${formatCurrency(row.cpfLifePayout / 12)}/mo (${formatCurrency(row.cpfLifePayout)}/yr)`
+        milestoneFormula = `RA at ${row.age}: ${formatCurrency(totalBalance)}. ${cpfLifePlan.charAt(0).toUpperCase() + cpfLifePlan.slice(1)} plan. Payout: ${formatCurrency(cpfLifePayout / 12)}/mo (${formatCurrency(cpfLifePayout)}/yr)`
       }
 
       return {
         age: row.age,
-        oaBalance: row.cpfOA,
-        saBalance: row.cpfSA,
-        maBalance: row.cpfMA,
-        raBalance: row.cpfRA,
+        oaBalance: getCpfValue(row, 'cpfOA'),
+        saBalance: getCpfValue(row, 'cpfSA'),
+        maBalance: getCpfValue(row, 'cpfMA'),
+        raBalance: cpfRA,
         totalBalance,
         annualContribution,
         annualInterest: Math.max(0, annualInterest),
-        cpfLifePayout: row.cpfLifePayout,
-        oaHousingDeduction: row.cpfOaHousingDeduction,
-        oaShortfall: row.cpfOaShortfall,
-        cpfisOA: row.cpfisOA,
-        cpfisSA: row.cpfisSA,
-        cpfisReturn: row.cpfisReturn,
+        cpfLifePayout,
+        oaHousingDeduction: getCpfValue(row, 'cpfOaHousingDeduction'),
+        oaShortfall: getCpfValue(row, 'cpfOaShortfall'),
+        cpfisOA: getCpfValue(row, 'cpfisOA'),
+        cpfisSA: getCpfValue(row, 'cpfisSA'),
+        cpfisReturn: getCpfValue(row, 'cpfisReturn'),
         bequest,
         milestone,
         milestoneFormula,
@@ -159,5 +213,5 @@ export function useCpfProjection(): {
     })
 
     return { rows, hasErrors: false }
-  }, [projection, hasErrors, currentAge, cpfLifeStartAge, cpfLifePlan])
+  }, [effectiveProjection, hasErrors, currentAge, cpfLifeStartAge, cpfLifePlan])
 }
