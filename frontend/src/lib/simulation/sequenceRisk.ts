@@ -110,6 +110,7 @@ function runSingleScenario(
   postRetirementIncome: number[],
   crisisReturns: number[] | null,
   oneTimeWithdrawals?: { year: number; amount: number }[],
+  annualExpensesAtRetirement?: number,
 ): SingleScenarioResult {
   const nCrisis = crisisReturns !== null ? crisisReturns.length : 0
 
@@ -149,7 +150,11 @@ function runSingleScenario(
   const prevBalances: number[] = new Array(nSims).fill(initialPortfolio)
 
   const swr = resolveInitialRate(strategyParams)
-  const initialWithdrawalAmount = initialPortfolio * swr
+  // Use user's actual retirement expenses when available;
+  // fall back to portfolio × SWR rate when no expenses are specified.
+  const initialWithdrawalAmount = (annualExpensesAtRetirement && annualExpensesAtRetirement > 0)
+    ? annualExpensesAtRetirement
+    : initialPortfolio * swr
 
   for (let t = 0; t < nYearsDecum; t++) {
     for (let s = 0; s < nSims; s++) {
@@ -261,6 +266,7 @@ interface RunMitigationParams {
   postRetirementIncome: number[]
   crisisReturns: number[]
   oneTimeWithdrawals?: { year: number; amount: number }[]
+  annualExpensesAtRetirement?: number
   mitigationName: string
   mitigationDesc: string
   baselineCrisisRate: number
@@ -295,6 +301,7 @@ function runMitigation(p: RunMitigationParams): MitigationImpact {
     effIncome,
     null,
     p.oneTimeWithdrawals,
+    p.annualExpensesAtRetirement,
   )
 
   // Crisis run for this mitigation
@@ -316,6 +323,7 @@ function runMitigation(p: RunMitigationParams): MitigationImpact {
     effIncome,
     p.crisisReturns,
     p.oneTimeWithdrawals,
+    p.annualExpensesAtRetirement,
   )
 
   return {
@@ -357,6 +365,7 @@ export function runSequenceRisk(params: SequenceRiskEngineParams): SequenceRiskE
     inflation,
     postRetirementIncome,
     oneTimeWithdrawals,
+    annualExpensesAtRetirement,
     crisis,
   } = params
 
@@ -387,6 +396,7 @@ export function runSequenceRisk(params: SequenceRiskEngineParams): SequenceRiskE
     postRetirementIncome,
     null,
     oneTimeWithdrawals,
+    annualExpensesAtRetirement,
   )
 
   // --- Crisis scenario ---
@@ -408,6 +418,7 @@ export function runSequenceRisk(params: SequenceRiskEngineParams): SequenceRiskE
     postRetirementIncome,
     crisisReturns.length > 0 ? crisisReturns : null,
     oneTimeWithdrawals,
+    annualExpensesAtRetirement,
   )
 
   const baselineCrisisRate = crisisResult.success_rate
@@ -446,6 +457,7 @@ export function runSequenceRisk(params: SequenceRiskEngineParams): SequenceRiskE
     postRetirementIncome,
     crisisReturns,
     oneTimeWithdrawals,
+    annualExpensesAtRetirement,
     mitigationName: 'Conservative Allocation',
     mitigationDesc:
       'Shift 20% from equities to bonds throughout retirement to reduce volatility exposure.',
@@ -459,7 +471,9 @@ export function runSequenceRisk(params: SequenceRiskEngineParams): SequenceRiskE
   // Reduce invested portfolio by that amount (floored at 50% of original),
   // and add back cash buffer spread over the first 2 decumulation years.
   // ============================================================
-  const annualExpenseEst = initialPortfolio * resolveInitialRate(strategyParams)
+  const annualExpenseEst = (annualExpensesAtRetirement && annualExpensesAtRetirement > 0)
+    ? annualExpensesAtRetirement
+    : initialPortfolio * resolveInitialRate(strategyParams)
   const cashBuffer = annualExpenseEst * 2
   const reducedPortfolio = Math.max(
     initialPortfolio - cashBuffer,
@@ -496,6 +510,7 @@ export function runSequenceRisk(params: SequenceRiskEngineParams): SequenceRiskE
     postRetirementIncome,
     crisisReturns,
     oneTimeWithdrawals,
+    annualExpensesAtRetirement,
     mitigationName: 'Cash Buffer (2 Years)',
     mitigationDesc:
       'Hold 2 years of expenses in cash outside the portfolio, drawing from buffer in early crisis years.',
@@ -534,6 +549,9 @@ export function runSequenceRisk(params: SequenceRiskEngineParams): SequenceRiskE
     postRetirementIncome,
     crisisReturns,
     oneTimeWithdrawals,
+    annualExpensesAtRetirement: annualExpensesAtRetirement
+      ? annualExpensesAtRetirement * 0.85
+      : undefined,
     mitigationName: 'Flexible Spending (-15%)',
     mitigationDesc:
       'Reduce withdrawal rate by 15% to preserve capital during market downturns.',

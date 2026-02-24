@@ -388,10 +388,16 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
       const decumYear = t - nYearsAccum
 
       if (decumYear === 0) {
-        // Set initial withdrawal at start of retirement based on median balance
-        const retirementBalances = balances.map((b) => b[t])
-        const medianBalance = percentile(retirementBalances, 50)
-        initialWithdrawalAmount = medianBalance * swr
+        // Use user's actual retirement expenses when available;
+        // fall back to portfolio × SWR rate when no expenses are specified.
+        // This matches the deterministic comparison logic in withdrawal.ts.
+        if (annualExpensesAtRetirement > 0) {
+          initialWithdrawalAmount = annualExpensesAtRetirement
+        } else {
+          const retirementBalances = balances.map((b) => b[t])
+          const medianBalance = percentile(retirementBalances, 50)
+          initialWithdrawalAmount = medianBalance * swr
+        }
       }
 
       // Initialize retirement cash bucket

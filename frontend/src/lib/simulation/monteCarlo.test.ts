@@ -805,30 +805,26 @@ describe('retirement cash bucket mitigation', () => {
     // Bucket = 120K carved from 1M → portfolio starts at 880K
     // Year 0 balance in percentile bands is post-carve
     expect(result.percentile_bands.p50[0]).toBeCloseTo(880_000, -3)
-    // Withdrawal = 1M * 0.04 = 40K (based on pre-carve median balance)
-    // Year 0: 40K < 120K bucket → fully absorbed by bucket
-    // Portfolio grows unencumbered: 880K * (1 + ~0.07) ≈ 941,600
-    // Year-1 balance should reflect growth WITHOUT 40K withdrawal from portfolio
+    // Withdrawal = 60K (annualExpensesAtRetirement, not portfolio * SWR)
+    // Year 0: 60K < 120K bucket → fully absorbed by bucket
+    // Portfolio grows unencumbered: 880K * (1 + ~0.07) (minus any refill)
     const year1Balance = result.percentile_bands.p50[1]
-    // Without bucket, balance would be (880K - 40K) * 1.07 ≈ 898,800
-    // With bucket absorbing withdrawal, balance ≈ 880K * 1.07 = 941,600 (minus any refill)
-    expect(year1Balance).toBeGreaterThan(900_000)
+    // Without bucket, balance would be (880K - 60K) * 1.07 ≈ 877,400
+    // With bucket absorbing withdrawal, portfolio should be higher
+    expect(year1Balance).toBeGreaterThan(877_000)
   })
 
   it('portfolio grows unencumbered while bucket absorbs withdrawals', () => {
-    // Bucket = 120K, withdrawal = 40K/yr, portfolio starts at 880K
-    // Year 0→1: bucket absorbs 40K withdrawal, portfolio grows at ~7%
-    // So year-1 balance ≈ 880K * 1.07 ≈ 941K (minus any bucket refill)
-    // Without bucket, year-1 ≈ (1M - 40K) * 1.07 ≈ 1.027M
+    // Bucket = 120K, withdrawal = 60K/yr (annualExpensesAtRetirement), portfolio starts at 880K
+    // Year 0→1: bucket absorbs 60K withdrawal, portfolio grows at ~7%
     const result = runMonteCarlo(deterministicBucketParams)
     const year0 = result.percentile_bands.p50[0]  // ~880K after carve
     const year1 = result.percentile_bands.p50[1]
 
-    // The key mechanism: portfolio grew from ~880K WITHOUT a 40K withdrawal deducted
-    // If withdrawal had come from portfolio, year1 ≈ (880K - 40K) * 1.07 = 898.8K
-    // With bucket absorbing it, year1 ≈ 880K * 1.07 = 941.6K (minus refill)
-    // So year1 should be significantly above what it would be without bucket protection
-    const withoutProtection = (year0 - 40_000) * 1.07  // ~898K
+    // The key mechanism: portfolio grew from ~880K WITHOUT a 60K withdrawal deducted
+    // If withdrawal had come from portfolio, year1 ≈ (880K - 60K) * 1.07 = 877.4K
+    // With bucket absorbing it, year1 should be higher
+    const withoutProtection = (year0 - 60_000) * 1.07  // ~877K
     expect(year1).toBeGreaterThan(withoutProtection)
   })
 
