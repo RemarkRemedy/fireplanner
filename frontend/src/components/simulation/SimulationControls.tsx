@@ -213,6 +213,22 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
                   This produces a wider range of starting portfolios at retirement, which is why success rates
                   and safe withdrawal rates tend to be lower. It is the more complete and realistic analysis.
                 </p>
+                <p>
+                  <strong>A note on volatility drag:</strong> Expected mode uses the arithmetic mean return (e.g. 8%),
+                  but real compounding with volatile returns produces a lower median outcome. A portfolio with
+                  8% average return and 15% volatility actually compounds at roughly 6.9% on average. This means
+                  Expected mode is slightly optimistic, not truly the &ldquo;50th percentile&rdquo; path. The further you
+                  are from retirement, the more this gap compounds.
+                </p>
+                <p className="font-medium">Reading your results:</p>
+                <ul className="list-disc list-inside space-y-1 ml-1">
+                  <li>If your success rate is high under Random but low under Expected, your withdrawal strategy
+                  may be too aggressive for average-case savings.</li>
+                  <li>If Expected shows a high success rate but Random is much lower, pre-retirement market
+                  risk is a significant factor. Consider a more conservative accumulation allocation or a
+                  larger savings buffer.</li>
+                  <li>If both show similar rates, your plan is robust regardless of pre-retirement luck.</li>
+                </ul>
               </div>
             )}
           </div>
