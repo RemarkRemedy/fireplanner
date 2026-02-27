@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { X, AlertTriangle, Info } from 'lucide-react'
@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { StrategyParamsSection } from '@/components/withdrawal/StrategyParamsSection'
 import { ComparisonTable } from '@/components/withdrawal/ComparisonTable'
 import { WithdrawalChart } from '@/components/withdrawal/WithdrawalChart'
@@ -51,6 +52,13 @@ export function WithdrawalPage() {
 
   // Explore portfolio hook for balance toggle
   const explore = useExplorePortfolio()
+
+  // Auto-migrate away from disabled fireTarget mode
+  useEffect(() => {
+    if (explore.balanceMode === 'fireTarget') {
+      explore.setBalanceMode('myPlan')
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Wire the explore balance into the deterministic comparison
   const { results, hasErrors, errors } = useWithdrawalComparison({
@@ -220,17 +228,21 @@ export function WithdrawalPage() {
             >
               My Plan
             </button>
-            <button
-              onClick={() => explore.setBalanceMode('fireTarget')}
-              className={cn(
-                'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                explore.balanceMode === 'fireTarget'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              FIRE Target
-            </button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    disabled
+                    className="rounded-md px-3 py-1.5 text-sm font-medium cursor-not-allowed opacity-40 text-muted-foreground"
+                  >
+                    FIRE Target
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Temporarily disabled — calculation uses incorrect retirement horizon. Fix in progress.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <Badge variant="outline" className="text-xs font-normal">
             {explore.label}
