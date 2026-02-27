@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import type { AnalysisMode } from '@/lib/types'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { Badge } from '@/components/ui/badge'
@@ -9,7 +10,7 @@ import {
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
-const MODES: { value: AnalysisMode; label: string; tooltip: string }[] = [
+const MODES: { value: AnalysisMode; label: string; tooltip: string; disabled?: boolean }[] = [
   {
     value: 'myPlan',
     label: 'My Plan',
@@ -18,7 +19,8 @@ const MODES: { value: AnalysisMode; label: string; tooltip: string }[] = [
   {
     value: 'fireTarget',
     label: 'FIRE Target',
-    tooltip: 'Tests whether your FIRE target (expenses \u00f7 SWR) survives through retirement.',
+    tooltip: 'Temporarily disabled — calculation uses incorrect retirement horizon. Fix in progress.',
+    disabled: true,
   },
 ]
 
@@ -30,7 +32,13 @@ export function AnalysisModeToggle({ portfolioLabel }: AnalysisModeToggleProps) 
   const analysisMode = useSimulationStore((s) => s.analysisMode)
   const setField = useSimulationStore((s) => s.setField)
 
-  const activeMode = MODES.find((m) => m.value === analysisMode)
+  // Force myPlan if user had fireTarget selected (disabled due to calculation bug)
+  const effectiveMode = analysisMode === 'fireTarget' ? 'myPlan' : analysisMode
+  useEffect(() => {
+    if (analysisMode === 'fireTarget') setField('analysisMode', 'myPlan')
+  }, [analysisMode, setField])
+
+  const activeMode = MODES.find((m) => m.value === effectiveMode)
 
   return (
     <div className="space-y-1.5">
@@ -40,12 +48,15 @@ export function AnalysisModeToggle({ portfolioLabel }: AnalysisModeToggleProps) 
             <Tooltip key={mode.value}>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => setField('analysisMode', mode.value)}
+                  onClick={() => { if (!mode.disabled) setField('analysisMode', mode.value) }}
+                  disabled={mode.disabled}
                   className={cn(
                     'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                    analysisMode === mode.value
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
+                    mode.disabled
+                      ? 'cursor-not-allowed opacity-40'
+                      : effectiveMode === mode.value
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
                   )}
                 >
                   {mode.label}
