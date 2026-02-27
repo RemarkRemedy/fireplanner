@@ -184,9 +184,9 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr>
-                    <th className="border border-border bg-muted/50 px-3 py-2 font-medium w-[140px]"></th>
-                    <th className="border border-border bg-muted/50 px-3 py-2 font-medium">Expected</th>
-                    <th className="border border-border bg-muted/50 px-3 py-2 font-medium">Random</th>
+                    <th className="border border-border bg-muted/50 px-3 py-2 font-medium text-foreground w-[140px]"></th>
+                    <th className="border border-border bg-muted/50 px-3 py-2 font-medium text-foreground">Expected</th>
+                    <th className="border border-border bg-muted/50 px-3 py-2 font-medium text-foreground">Random</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -226,10 +226,11 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
               </div>
               <div className="rounded-md border border-border bg-background p-3 space-y-1">
                 <p className="font-medium text-foreground">Reading your results</p>
-                <ul className="list-disc list-inside space-y-0.5">
-                  <li><strong>High Expected, low Random:</strong> pre-retirement market risk is your bottleneck.</li>
-                  <li><strong>Both similar:</strong> plan is robust regardless of pre-retirement luck.</li>
-                  <li><strong>High Random, low Expected:</strong> withdrawal strategy may be too aggressive.</li>
+                <p className="mb-1">&ldquo;High&rdquo; means a high success rate (e.g. 90%+). &ldquo;Low&rdquo; means a noticeably lower success rate. Run both modes and compare:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li><strong>High Expected, low Random:</strong> your withdrawal strategy works if you reach your target, but pre-retirement market risk could leave you short. Consider a more conservative accumulation allocation or a larger savings buffer.</li>
+                  <li><strong>Both similar:</strong> your plan is robust. Pre-retirement luck doesn&rsquo;t significantly change the outcome.</li>
+                  <li><strong>High Random, low Expected:</strong> even with market variability you&rsquo;re fine, but your withdrawal rate may be too aggressive for the average-case portfolio. Consider a lower withdrawal rate.</li>
                 </ul>
               </div>
             </div>
