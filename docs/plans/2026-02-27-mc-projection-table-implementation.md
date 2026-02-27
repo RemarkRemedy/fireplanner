@@ -29,6 +29,12 @@
 12. **Dynamic Tailwind classes purged** — Use static class mapping instead of template literal.
 13. **Unused `reset` prop** — Only pass props `MonteCarloTab` actually uses.
 
+### Round 3 (Codex review #3)
+14. **`mc.data` type narrowing** — `hasResults` guard (`!!mc.data`) doesn't narrow `mc.data` from `MonteCarloResult | undefined`. Use non-null assertion (`mc.data!`) in the JSX where `hasResults` gates rendering.
+15. **`buildProjectionColumns` unused params** — If `retirementAge` or `hasMortgage` aren't used inside the column builder, TypeScript strict mode flags them. Prefix with `_` or use them.
+16. **Unused `ProjectionRow` import** — `MCProjectionTable` imports `ProjectionRow` but doesn't use it directly (it's the generic on table rows, handled implicitly). Remove unused import.
+17. **Missing `yearlyReturnsOffset` regression test** — Add explicit test for fireTarget mode offset behavior (MC starts at retirementAge, projection starts at currentAge).
+
 ---
 
 ## Task 1: Add `RepresentativePath` type, `extractPaths` flag, and update MC engine
@@ -378,7 +384,7 @@ Extract from `ProjectionPage.tsx`:
 - `optionalCurrencyCell` (lines 76-78)
 - The full column array from the `useMemo` (lines 312-530+)
 
-Wrap the column array in a function:
+Wrap the column array in a function. **Note:** Both `retirementAge` and `hasMortgage` MUST be used inside the column builder (e.g., `retirementAge` for retirement-row highlighting, `hasMortgage` for conditional mortgage columns). Verify these are referenced when extracting from ProjectionPage's useMemo. If the existing useMemo reads them from closure instead of parameters, thread them through explicitly.
 
 ```typescript
 export function buildProjectionColumns(
@@ -386,7 +392,9 @@ export function buildProjectionColumns(
   hasMortgage: boolean,
 ): ColumnDef<ProjectionRow, number | string>[] {
   return [
-    // Copy the full column array from ProjectionPage.tsx useMemo
+    // Copy the full column array from ProjectionPage.tsx useMemo.
+    // Ensure retirementAge and hasMortgage are referenced inside
+    // (they were previously read from component scope).
   ]
 }
 ```
@@ -604,7 +612,7 @@ import {
   flexRender,
   type VisibilityState,
 } from '@tanstack/react-table'
-import type { MonteCarloResult, ProjectionRow } from '@/lib/types'
+import type { MonteCarloResult } from '@/lib/types'
 import { generateProjection } from '@/lib/calculations/projection'
 import { useProjection } from '@/hooks/useProjection'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -890,7 +898,10 @@ const gridColsClass: Record<number, string> = {
 
   {hasResults && (
     <TabsContent value="mc-projection">
-      <MCProjectionTable result={mc.data} isStale={mc.isStale} />
+      {/* mc.data is guaranteed non-null here because hasResults = !!mc.data,
+          but TypeScript doesn't narrow through a boolean variable.
+          Use non-null assertion (!) since the guard is right above. */}
+      <MCProjectionTable result={mc.data!} isStale={mc.isStale} />
     </TabsContent>
   )}
 
@@ -926,6 +937,7 @@ projection under that market scenario.
 
 **Files:**
 - Modify: `frontend/src/lib/simulation/monteCarlo.test.ts` (add edge case tests)
+- Modify: `frontend/src/lib/calculations/projection.test.ts` (add offset regression test)
 
 **Step 1: Add edge case tests**
 
@@ -965,6 +977,49 @@ describe('representative paths edge cases', () => {
     const result = runMonteCarlo(params as MonteCarloEngineParams)
     expect(result.representative_paths).toBeUndefined()
     expect(result.representative_paths_start_age).toBeUndefined()
+  })
+})
+```
+
+**Step 1b: Add yearlyReturnsOffset regression test (issue #17)**
+
+File: `frontend/src/lib/calculations/projection.test.ts`
+
+This test verifies that in fireTarget mode (MC starts at retirementAge), the offset parameter correctly aligns MC returns to the projection timeline. Without the offset, pre-retirement years would try to read MC returns at negative indices.
+
+```typescript
+describe('yearlyReturnsOffset alignment', () => {
+  it('pre-offset years use deterministic return, offset years use MC returns', () => {
+    // Simulate fireTarget mode: MC starts at retirementAge (e.g., age 55),
+    // projection starts at currentAge (e.g., age 30). Offset = 25.
+    const retirementAge = validParams.retirementAge  // e.g., 55
+    const currentAge = validParams.currentAge          // e.g., 30
+    const offset = retirementAge - currentAge          // 25
+
+    const nMCYears = validParams.lifeExpectancy - retirementAge  // decumulation years
+    const mcReturns = Array(nMCYears).fill(0.25)  // extremely high to be distinguishable
+
+    const result = generateProjection({
+      ...validParams,
+      yearlyReturns: mcReturns,
+      yearlyReturnsOffset: offset,
+    })
+
+    // Baseline without MC override
+    const baseline = generateProjection(validParams)
+
+    // Pre-retirement rows (age < retirementAge) should match baseline exactly
+    // because mcIndex = yearIndex - offset < 0 → falls back to deterministic
+    for (let age = currentAge; age < retirementAge; age++) {
+      const mcRow = result.rows.find(r => r.age === age)!
+      const baseRow = baseline.rows.find(r => r.age === age)!
+      expect(mcRow.liquidNW).toBe(baseRow.liquidNW)
+    }
+
+    // Post-retirement rows should differ (MC returns of 25% vs deterministic)
+    const mcRetired = result.rows.find(r => r.age === retirementAge + 1)!
+    const baseRetired = baseline.rows.find(r => r.age === retirementAge + 1)!
+    expect(mcRetired.liquidNW).not.toBe(baseRetired.liquidNW)
   })
 })
 ```
