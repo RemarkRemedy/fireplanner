@@ -14,6 +14,7 @@ describe('useSimulationStore', () => {
       expect(state.nSimulations).toBe(10000)
       expect(state.analysisMode).toBe('myPlan')
       expect(state.withdrawalBasis).toBe('expenses')
+      expect(state.deterministicAccumulation).toBe(false)
     })
 
     it('has no validation errors', () => {
@@ -166,6 +167,22 @@ describe('useSimulationStore', () => {
       }
       const migrated = migrate!(oldState, 4) as unknown as Record<string, unknown>
       expect(migrated.withdrawalBasis).toBe('rate')
+    })
+
+    it('v5→v6: adds deterministicAccumulation defaulting to false', () => {
+      const { migrate } = useSimulationStore.persist.getOptions()
+      const oldState: Record<string, unknown> = {
+        mcMethod: 'parametric',
+        selectedStrategy: 'constant_dollar',
+        strategyParams: { constant_dollar: { swr: 0.04 } },
+        nSimulations: 10000,
+        analysisMode: 'myPlan',
+        withdrawalBasis: 'expenses',
+        lastMCSuccessRate: null,
+        lastBacktestSuccessRate: null,
+      }
+      const migrated = migrate!(oldState, 5) as unknown as Record<string, unknown>
+      expect(migrated.deterministicAccumulation).toBe(false)
     })
   })
 })

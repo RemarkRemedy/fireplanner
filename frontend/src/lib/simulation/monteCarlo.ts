@@ -20,7 +20,7 @@ import {
   type HistoricalReturnRow,
 } from '@/lib/data/historicalReturnsFull.ts'
 import { ASSET_CLASSES } from '@/lib/data/historicalReturns.ts'
-import type { MonteCarloResult, PercentileBands, TerminalStats, FailureDistribution, SpendingMetrics, HistogramBucket, HistogramSnapshot, RetirementMitigationConfig } from '@/lib/types.ts'
+import type { MonteCarloResult, PercentileBands, TerminalStats, FailureDistribution, SpendingMetrics, HistogramBucket, HistogramSnapshot, RetirementMitigationConfig, RepresentativePath } from '@/lib/types.ts'
 
 // ============================================================
 // Types
@@ -48,6 +48,8 @@ export interface MonteCarloEngineParams {
   retirementMitigation?: RetirementMitigationConfig
   annualExpensesAtRetirement?: number  // needed to compute bucket target
   withdrawalBasis: 'expenses' | 'rate'
+  extractPaths?: boolean  // when true, extract representative paths for projection replay
+  deterministicAccumulation?: boolean  // when true, use expected return during accumulation (all sims get identical pre-retirement path)
 }
 
 export type MonteCarloEngineResult = Omit<
@@ -304,6 +306,12 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
 
   const retirementMitigation = params.retirementMitigation ?? { type: 'none' as const }
   const annualExpensesAtRetirement = params.annualExpensesAtRetirement ?? 0
+  const deterministicAccumulation = params.deterministicAccumulation ?? false
+
+  // Weighted-average expected portfolio return (used when deterministicAccumulation is true)
+  const expectedPortfolioReturn = deterministicAccumulation
+    ? weights.reduce((sum, w, i) => sum + w * expectedReturns[i], 0)
+    : 0  // unused when stochastic
 
   const rng = new SeededRNG(seed ?? 42)
 
@@ -381,8 +389,11 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
       const savings = t < annualSavings.length ? annualSavings[t] : 0
       for (let s = 0; s < nSims; s++) {
         const adjustedBalance = balances[s][t] + adjustments[t]
+        const returnRate = deterministicAccumulation
+          ? expectedPortfolioReturn
+          : portfolioReturns[s][t]
         balances[s][t + 1] =
-          adjustedBalance * (1 + portfolioReturns[s][t] - expenseRatio) + savings
+          adjustedBalance * (1 + returnRate - expenseRatio) + savings
       }
     } else {
       // DECUMULATION: subtract withdrawals
@@ -659,6 +670,62 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
     }
   })
 
+  // ---- Extract representative paths (gated to avoid overhead in SWR optimizer) ----
+  let representativePaths: RepresentativePath[] | undefined
+  if (params.extractPaths) {
+    const TARGET_PERCENTILES = [10, 25, 50, 75, 90]
+    representativePaths = []
+
+    // Choose selection point: retirement-age balance for normal mode,
+    // terminal balance for fireTarget mode (nYearsAccum = 0, all sims
+    // have the same initial balance so retirement-age percentiles collapse).
+    // When deterministicAccumulation is true, all sims have identical retirement-age
+    // balances, so selecting by retirement balance would collapse all percentiles to
+    // the same sim. Use terminal wealth instead to get meaningful post-retirement spread.
+    const selectionYearIdx = (nYearsAccum > 0 && !deterministicAccumulation)
+      ? nYearsAccum
+      : nYearsTotal
+    const selCol: number[] = new Array(nSims)
+    for (let s = 0; s < nSims; s++) {
+      selCol[s] = balances[s][selectionYearIdx]
+    }
+
+    // Also capture retirement-age balance for display purposes
+    const retYearIdx = nYearsAccum
+
+    for (const pct of TARGET_PERCENTILES) {
+      const targetVal = percentile(selCol, pct)
+
+      // Find the sim whose balance at the selection point is closest
+      let bestSim = 0
+      let bestDist = Math.abs(selCol[0] - targetVal)
+      for (let s = 1; s < nSims; s++) {
+        const dist = Math.abs(selCol[s] - targetVal)
+        if (dist < bestDist) {
+          bestDist = dist
+          bestSim = s
+        }
+      }
+
+      const returns = portfolioReturns[bestSim].slice(0, nYearsTotal)
+      // When deterministic accumulation was used, the actual balance computation
+      // used expectedPortfolioReturn during pre-retirement years, not the random
+      // per-sim returns. Override yearlyReturns to match so projection table replay
+      // produces identical balances to the MC engine.
+      if (deterministicAccumulation) {
+        for (let t = 0; t < nYearsAccum; t++) {
+          returns[t] = expectedPortfolioReturn
+        }
+      }
+      representativePaths.push({
+        percentile: pct,
+        simIndex: bestSim,
+        yearlyReturns: returns,
+        retirementBalance: balances[bestSim][retYearIdx],
+      })
+    }
+  }
+
   return {
     success_rate: successRate,
     percentile_bands: percentileBands,
@@ -667,5 +734,7 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
     withdrawal_bands: withdrawalBands,
     spending_metrics: spendingMetrics,
     histogram_snapshots: histogramSnapshots,
+    representative_paths: representativePaths,
+    representative_paths_start_age: params.extractPaths ? currentAge : undefined,
   }
 }

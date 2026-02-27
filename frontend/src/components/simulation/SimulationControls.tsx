@@ -1,10 +1,14 @@
 import { useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 import { useSimulationStore } from '@/stores/useSimulationStore'
+import { useProfileStore } from '@/stores/useProfileStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import type { MonteCarloMethod, WithdrawalStrategyType } from '@/lib/types'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
@@ -38,8 +42,12 @@ interface SimulationControlsProps {
 
 export function SimulationControls({ onRun, isPending, canRun, validationErrors }: SimulationControlsProps) {
   const simulation = useSimulationStore()
+  const currentAge = useProfileStore((s) => s.currentAge)
+  const retirementAge = useProfileStore((s) => s.retirementAge)
   const mode = useEffectiveMode('section-stress-test')
   const strategies = mode === 'advanced' ? ALL_STRATEGIES : SIMPLE_STRATEGIES
+
+  const [learnMoreOpen, setLearnMoreOpen] = useState(false)
 
   const errorMessages = Object.values(validationErrors)
   const disabledReason = !canRun
@@ -108,10 +116,129 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
               onChange={(e) => simulation.setField('nSimulations', Number(e.target.value))}
             />
           </div>
+
+          {/* Pre-retirement returns toggle */}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <Label className="text-sm font-medium shrink-0">
+                Pre-retirement returns
+              </Label>
+              {currentAge >= retirementAge ? (
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="inline-flex rounded-lg border bg-muted p-0.5 opacity-50 cursor-not-allowed">
+                        <button disabled className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground">Expected</button>
+                        <button disabled className="rounded-md px-3 py-1.5 text-sm font-medium bg-background text-foreground shadow-sm">Random</button>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>Not applicable: you are already in retirement</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <div className="inline-flex rounded-lg border bg-muted p-0.5">
+                  <button
+                    onClick={() => simulation.setField('deterministicAccumulation', true)}
+                    className={cn(
+                      'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                      simulation.deterministicAccumulation
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Expected
+                  </button>
+                  <button
+                    onClick={() => simulation.setField('deterministicAccumulation', false)}
+                    className={cn(
+                      'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                      !simulation.deterministicAccumulation
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Random
+                  </button>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {simulation.deterministicAccumulation
+                ? 'Assumes average market luck until retirement. Every simulation starts decumulation with the same portfolio.'
+                : 'Considers both lucky and unlucky markets before retirement. Some simulations arrive with much more, others much less. More realistic, but produces lower success rates.'}
+            </p>
+            <button
+              onClick={() => setLearnMoreOpen(!learnMoreOpen)}
+              className="text-xs text-muted-foreground/70 hover:text-muted-foreground flex items-center gap-0.5 mt-0.5"
+            >
+              <ChevronRight className={cn('h-3 w-3 transition-transform', learnMoreOpen && 'rotate-90')} />
+              {learnMoreOpen ? 'Show less' : 'Learn more'}
+            </button>
+          </div>
         </div>
 
-        <StrategyParams />
+        {learnMoreOpen && (
+          <div className="text-xs text-muted-foreground space-y-4 rounded-lg border bg-muted/30 p-4">
+            {/* Comparison table — full-width, bordered cells */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border border-border bg-muted/50 px-3 py-2 font-medium text-foreground w-[140px]"></th>
+                    <th className="border border-border bg-muted/50 px-3 py-2 font-medium text-foreground">Expected</th>
+                    <th className="border border-border bg-muted/50 px-3 py-2 font-medium text-foreground">Random</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-border px-3 py-2 font-medium bg-muted/30">How it works</td>
+                    <td className="border border-border px-3 py-2">Uses the average (mean) return every year. You are neither lucky nor unlucky. Every simulation arrives at retirement with the same portfolio.</td>
+                    <td className="border border-border px-3 py-2">Draws different returns each year per simulation. Some sims hit bull runs, others crash right before retirement. Wide range of starting portfolios.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-border px-3 py-2 font-medium bg-muted/30">Question answered</td>
+                    <td className="border border-border px-3 py-2">If I hit my savings target, does retirement survive?</td>
+                    <td className="border border-border px-3 py-2">What is my real end-to-end probability?</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-border px-3 py-2 font-medium bg-muted/30">Risk captured</td>
+                    <td className="border border-border px-3 py-2">Withdrawal strategy only</td>
+                    <td className="border border-border px-3 py-2">All sources (accumulation + decumulation)</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-border px-3 py-2 font-medium bg-muted/30">Conservative?</td>
+                    <td className="border border-border px-3 py-2">Less</td>
+                    <td className="border border-border px-3 py-2">More</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Volatility drag + reading results */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="rounded-md border border-border bg-background p-3 space-y-1">
+                <p className="font-medium text-foreground">Volatility drag</p>
+                <p>
+                  Expected mode uses the arithmetic mean return (e.g. 8%), but volatile returns compound lower.
+                  A portfolio with 8% mean and 15% volatility actually grows at ~6.9%. So Expected is slightly
+                  optimistic. The further from retirement, the more this gap compounds.
+                </p>
+              </div>
+              <div className="rounded-md border border-border bg-background p-3 space-y-1">
+                <p className="font-medium text-foreground">Reading your results</p>
+                <p className="mb-1">&ldquo;High&rdquo; means a high success rate (e.g. 90%+). &ldquo;Low&rdquo; means a noticeably lower success rate. Run both modes and compare:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li><strong>High Expected, low Random:</strong> your withdrawal strategy works if you reach your target, but pre-retirement market risk could leave you short. Consider a more conservative accumulation allocation or a larger savings buffer.</li>
+                  <li><strong>Both similar:</strong> your plan is robust. Pre-retirement luck doesn&rsquo;t significantly change the outcome.</li>
+                  <li><strong>High Random, low Expected:</strong> even with market variability you&rsquo;re fine, but your withdrawal rate may be too aggressive for the average-case portfolio. Consider a lower withdrawal rate.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
         <WithdrawalBasisToggle />
+        <StrategyParams />
 
         <div className="flex items-center gap-3">
           <Button
@@ -149,6 +276,9 @@ function StrategyParams() {
     vanguard_dynamic: new Set(['swr']),
   }
 
+  // Grey out rate fields when "My Expenses" is selected (rate is unused)
+  const rateDisabled = withdrawalBasis === 'expenses'
+
   const setParam = (field: string, value: number) => {
     simulation.setStrategyParam(
       strategy,
@@ -171,7 +301,7 @@ function StrategyParams() {
     <>
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       {strategy === 'constant_dollar' && (
-        <ParamInput label="SWR" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} />
+        <ParamInput label="SWR" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} disabled={rateDisabled} />
       )}
       {strategy === 'vpw' && (
         <>
@@ -181,7 +311,7 @@ function StrategyParams() {
       )}
       {strategy === 'guardrails' && (
         <>
-          <ParamInput label="Initial Rate" value={(params as { initialRate: number }).initialRate * 100} onChange={(v) => setParam('initialRate', v / 100)} suffix="%" step={0.1} />
+          <ParamInput label="Initial Rate" value={(params as { initialRate: number }).initialRate * 100} onChange={(v) => setParam('initialRate', v / 100)} suffix="%" step={0.1} disabled={rateDisabled} />
           <ParamInput label="Ceiling Trigger" value={(params as { ceilingTrigger: number }).ceilingTrigger * 100} onChange={(v) => setParam('ceilingTrigger', v / 100)} suffix="%" step={1} />
           <ParamInput label="Floor Trigger" value={(params as { floorTrigger: number }).floorTrigger * 100} onChange={(v) => setParam('floorTrigger', v / 100)} suffix="%" step={1} />
           <ParamInput label="Adjustment" value={(params as { adjustmentSize: number }).adjustmentSize * 100} onChange={(v) => setParam('adjustmentSize', v / 100)} suffix="%" step={1} />
@@ -189,7 +319,7 @@ function StrategyParams() {
       )}
       {strategy === 'vanguard_dynamic' && (
         <>
-          <ParamInput label="SWR" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} />
+          <ParamInput label="SWR" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} disabled={rateDisabled} />
           <ParamInput label="Ceiling" value={(params as { ceiling: number }).ceiling * 100} onChange={(v) => setParam('ceiling', v / 100)} suffix="%" step={0.1} />
           <ParamInput label="Floor" value={(params as { floor: number }).floor * 100} onChange={(v) => setParam('floor', v / 100)} suffix="%" step={0.1} />
         </>
@@ -256,7 +386,7 @@ function StrategyParams() {
   )
 }
 
-function ParamInput({ label, value, onChange, prefix, suffix, step, tooltip }: {
+function ParamInput({ label, value, onChange, prefix, suffix, step, tooltip, disabled }: {
   label: string
   value: number
   onChange: (v: number) => void
@@ -264,9 +394,10 @@ function ParamInput({ label, value, onChange, prefix, suffix, step, tooltip }: {
   suffix?: string
   step?: number
   tooltip?: string
+  disabled?: boolean
 }) {
   return (
-    <div className="space-y-1">
+    <div className={cn('space-y-1', disabled && 'opacity-50')}>
       <Label className="text-xs">
         {label}
         {tooltip && <InfoTooltip text={tooltip} />}
@@ -279,6 +410,7 @@ function ParamInput({ label, value, onChange, prefix, suffix, step, tooltip }: {
           className="h-8 text-sm"
           value={parseFloat(value.toPrecision(12))}
           step={step}
+          disabled={disabled}
           onChange={(e) => onChange(Number(e.target.value))}
         />
         {suffix && <span className="text-sm text-muted-foreground">{suffix}</span>}

@@ -655,6 +655,13 @@ export interface HistogramSnapshot {
   nBuckets: number
 }
 
+export interface RepresentativePath {
+  percentile: number
+  simIndex: number
+  yearlyReturns: number[]   // gross portfolio returns per year (subtract expenseRatio when replaying)
+  retirementBalance: number
+}
+
 export interface MonteCarloResult {
   success_rate: number
   percentile_bands: PercentileBands
@@ -664,6 +671,8 @@ export interface MonteCarloResult {
   withdrawal_bands?: PercentileBands
   spending_metrics?: SpendingMetrics
   histogram_snapshots?: HistogramSnapshot[]
+  representative_paths?: RepresentativePath[]
+  representative_paths_start_age?: number  // the currentAge used by MC (may differ from profile.currentAge in fireTarget mode)
   n_simulations: number
   computation_time_ms: number
   cached: boolean
@@ -674,8 +683,10 @@ export interface SimulationState {
   selectedStrategy: WithdrawalStrategyType
   strategyParams: StrategyParamsMap
   nSimulations: number
+  /** @deprecated No longer read by any consumer. Kept for migration compatibility. */
   analysisMode: AnalysisMode
   withdrawalBasis: WithdrawalBasis
+  deterministicAccumulation: boolean  // when true, pre-retirement uses expected returns
   lastMCSuccessRate: number | null
   lastBacktestSuccessRate: number | null
   validationErrors: ValidationErrors

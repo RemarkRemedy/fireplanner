@@ -104,9 +104,14 @@ const AFTER_INPUTS_GROUPS: { title: string; items: NavItem[] }[] = [
     ],
   },
   {
+    title: 'EXPLORE',
+    items: [
+      { label: 'Withdrawal Strategies', path: '/withdrawal', icon: <Banknote className="h-4 w-4" /> },
+    ],
+  },
+  {
     title: 'ANALYSIS',
     items: [
-      { label: 'Withdrawal', path: '/withdrawal', icon: <Banknote className="h-4 w-4" /> },
       { label: 'Stress Test', path: '/stress-test', icon: <ShieldAlert className="h-4 w-4" /> },
     ],
   },
@@ -471,7 +476,7 @@ export function Sidebar() {
           { label: 'Plan', path: '/projection', icon: <TableProperties className="h-5 w-5" /> },
           { label: 'Test', path: '/stress-test', icon: <ShieldAlert className="h-5 w-5" /> },
           { label: 'Dash', path: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-          { label: 'Withdraw', path: '/withdrawal', icon: <Banknote className="h-5 w-5" /> },
+          { label: 'Strategies', path: '/withdrawal', icon: <Banknote className="h-5 w-5" /> },
         ].map((item) => (
           <NavLink
             key={item.path}

@@ -78,7 +78,8 @@ export function optimizeSwr(
     // Strip annualExpensesAtRetirement so the optimizer can vary withdrawal
     // rate via strategyParams. If expenses were passed through, every
     // iteration would compute the same fixed withdrawal regardless of SWR.
-    const { annualExpensesAtRetirement: _, ...restBaseParams } = baseParams
+    // Also strip extractPaths to avoid ~45x redundant path extractions during binary search.
+    const { annualExpensesAtRetirement: _, extractPaths: __, ...restBaseParams } = baseParams
     const params: MonteCarloEngineParams = {
       ...restBaseParams,
       strategyParams: sp,

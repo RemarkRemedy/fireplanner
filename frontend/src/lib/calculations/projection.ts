@@ -93,6 +93,12 @@ export interface ProjectionParams {
   cpfLifeStartAge: number
   cpfLifePlan: CpfLifePlan
   withdrawalBasis: 'expenses' | 'rate'
+  yearlyReturns?: number[]  // MC-sourced GROSS portfolio returns per year.
+                             // Indexed from yearlyReturnsOffset (default 0).
+                             // Gross = before expense ratio. Projection subtracts expenseRatio once.
+  yearlyReturnsOffset?: number  // Age offset: yearlyReturns[0] corresponds to (currentAge + offset).
+                                 // Default 0 (MC and projection start at same age).
+                                 // Set to (retirementAge - currentAge) in fireTarget mode.
 }
 
 export interface ProjectionResult {
@@ -248,6 +254,8 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     healthcareConfig,
     cpfLifeStartAge,
     cpfLifePlan,
+    yearlyReturns,
+    yearlyReturnsOffset = 0,
   } = params
 
   const rows: ProjectionRow[] = []
@@ -349,7 +357,14 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
 
     // Return rate (nominal, net of expense ratio)
     let returnRate: number
-    if (usePortfolioReturn && assetReturns.length === weights.length) {
+    const mcIndex = i - yearlyReturnsOffset
+    if (yearlyReturns && mcIndex >= 0 && mcIndex < yearlyReturns.length) {
+      // MC-sourced gross return for this year. Subtract expense ratio here,
+      // matching the deterministic path where expenseRatio is also subtracted.
+      // portfolioReturns in MC are gross (fee applied in balance transitions),
+      // so this is a single deduction, not double-counting.
+      returnRate = yearlyReturns[mcIndex] - expenseRatio
+    } else if (usePortfolioReturn && assetReturns.length === weights.length) {
       returnRate = calculatePortfolioReturn(weights, assetReturns) - expenseRatio
     } else {
       returnRate = expectedReturn - expenseRatio

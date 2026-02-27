@@ -1,9 +1,6 @@
 import { useMemo } from 'react'
-import type { AnalysisMode } from '@/lib/types'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { useSimulationStore } from '@/stores/useSimulationStore'
-import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { projectPortfolioAtRetirement } from '@/lib/calculations/fire'
 import { calculatePortfolioReturn, interpolateGlidePath } from '@/lib/calculations/portfolio'
 import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
@@ -14,33 +11,27 @@ interface AnalysisPortfolioResult {
   initialPortfolio: number
   retirementPortfolio: number
   allocationWeights: number[]
-  analysisMode: AnalysisMode
   portfolioLabel: string
-  skipAccumulation: boolean
 }
 
 /**
- * Central hook for analysis pages. Returns the starting portfolio and allocation
- * weights based on the selected analysis mode.
+ * Central hook for Stress Test / analysis pages. Returns the starting portfolio
+ * and allocation weights using My Plan values (current NW, projected retirement
+ * portfolio, current allocation weights).
  *
- * - myPlan: today's total NW as initialPortfolio (MC uses accumulation phase),
- *   deterministically projected NW as retirementPortfolio (for BT/SR)
- * - fireTarget: FIRE number for both initialPortfolio and retirementPortfolio,
- *   retirement-age weights, skips accumulation
+ * Always operates in My Plan mode — the fireTarget branch was removed as part
+ * of the Explore + Stress Test redesign. The future Explore page will have its
+ * own useExplorePortfolio hook with local state.
  */
 export function useAnalysisPortfolio(): AnalysisPortfolioResult {
   const profile = useProfileStore()
   const allocation = useAllocationStore()
-  const simulation = useSimulationStore()
-  const { metrics } = useFireCalculations()
-
-  const analysisMode = simulation.analysisMode
 
   return useMemo(() => {
     const currentWeights = allocation.currentWeights
     const totalNW = profile.liquidNetWorth + profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
 
-    // Compute retirement-age weights (for fireTarget and myPlan's retirementPortfolio)
+    // Compute retirement-age weights (used for portfolio return calculation)
     const retirementWeights = getRetirementAgeWeights(
       allocation.glidePathConfig.enabled,
       allocation.glidePathConfig,
@@ -49,19 +40,7 @@ export function useAnalysisPortfolio(): AnalysisPortfolioResult {
       profile.retirementAge,
     )
 
-    if (analysisMode === 'fireTarget') {
-      const fireNumber = metrics?.fireNumber ?? 0
-      return {
-        initialPortfolio: fireNumber,
-        retirementPortfolio: fireNumber,
-        allocationWeights: retirementWeights,
-        analysisMode,
-        portfolioLabel: `FIRE Target: ${formatCurrency(fireNumber)}`,
-        skipAccumulation: true,
-      }
-    }
-
-    // myPlan mode: compute deterministic projection for BT/SR
+    // Compute deterministic projection for BT/SR
     let portfolioReturn = profile.expectedReturn
     const allocationValid = Object.keys(allocation.validationErrors).length === 0
     if (profile.usePortfolioReturn && allocationValid) {
@@ -85,12 +64,9 @@ export function useAnalysisPortfolio(): AnalysisPortfolioResult {
       initialPortfolio: totalNW,
       retirementPortfolio: projected,
       allocationWeights: currentWeights,
-      analysisMode,
       portfolioLabel: `${formatCurrency(totalNW)} today → ~${formatCurrency(projected)} at age ${profile.retirementAge}`,
-      skipAccumulation: false,
     }
   }, [
-    analysisMode,
     profile.liquidNetWorth,
     profile.cpfOA,
     profile.cpfSA,
@@ -111,7 +87,6 @@ export function useAnalysisPortfolio(): AnalysisPortfolioResult {
     allocation.glidePathConfig,
     allocation.returnOverrides,
     allocation.validationErrors,
-    metrics?.fireNumber,
   ])
 }
 

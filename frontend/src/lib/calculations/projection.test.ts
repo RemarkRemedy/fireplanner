@@ -2522,4 +2522,110 @@ describe('generateProjection', () => {
       expect(firstRetiredRow.withdrawalAmount).toBeCloseTo(30000, 0)
     })
   })
+
+  describe('yearlyReturns override', () => {
+    it('uses provided yearly returns instead of expected return', () => {
+      const params = makeParams({
+        currentAge: 30, retirementAge: 40, lifeExpectancy: 50,
+        expectedReturn: 0.05, expenseRatio: 0,
+      })
+      params.incomeProjection = generateMockIncomeProjection({
+        currentAge: 30, retirementAge: 40, lifeExpectancy: 50,
+      })
+      const baseResult = generateProjection(params)
+
+      // Create a return sequence that's dramatically different (all 20%)
+      const nYears = 50 - 30
+      const highReturns = Array(nYears).fill(0.20)
+
+      const overrideResult = generateProjection({
+        ...params,
+        yearlyReturns: highReturns,
+      })
+
+      // With 20% annual returns, the portfolio should be much larger
+      const baseRetirement = baseResult.rows.find(r => r.age === 40)!
+      const overrideRetirement = overrideResult.rows.find(r => r.age === 40)!
+      expect(overrideRetirement.liquidNW).toBeGreaterThan(baseRetirement.liquidNW)
+    })
+
+    it('deterministic columns remain identical regardless of yearlyReturns', () => {
+      const params = makeParams({
+        currentAge: 30, retirementAge: 40, lifeExpectancy: 50,
+        expenseRatio: 0,
+      })
+      params.incomeProjection = generateMockIncomeProjection({
+        currentAge: 30, retirementAge: 40, lifeExpectancy: 50,
+      })
+      const nYears = 50 - 30
+      const result1 = generateProjection({ ...params, yearlyReturns: Array(nYears).fill(0.05) })
+      const result2 = generateProjection({ ...params, yearlyReturns: Array(nYears).fill(0.15) })
+
+      // Income, CPF contributions, tax should be identical
+      for (let i = 0; i < result1.rows.length; i++) {
+        expect(result1.rows[i].salary).toBe(result2.rows[i].salary)
+        expect(result1.rows[i].cpfEmployee).toBe(result2.rows[i].cpfEmployee)
+        expect(result1.rows[i].sgTax).toBe(result2.rows[i].sgTax)
+      }
+    })
+
+    it('falls back to deterministic return when yearlyReturns is shorter than timeline', () => {
+      const params = makeParams({
+        currentAge: 30, retirementAge: 40, lifeExpectancy: 50,
+        expenseRatio: 0,
+      })
+      params.incomeProjection = generateMockIncomeProjection({
+        currentAge: 30, retirementAge: 40, lifeExpectancy: 50,
+      })
+      const nYears = 50 - 30
+      const shortReturns = Array(nYears).fill(0.10) // exactly nYears, one short of totalYears+1
+      const result = generateProjection({ ...params, yearlyReturns: shortReturns })
+      // Should not throw, should produce valid rows
+      expect(result.rows).toHaveLength(nYears + 1)
+    })
+  })
+
+  describe('yearlyReturnsOffset alignment', () => {
+    it('pre-offset years use deterministic return, offset years use MC returns', () => {
+      // Simulate fireTarget mode: MC starts at retirementAge (40),
+      // projection starts at currentAge (30). Offset = 10.
+      const currentAge = 30
+      const retirementAge = 40
+      const lifeExpectancy = 50
+      const offset = retirementAge - currentAge // 10
+
+      const params = makeParams({
+        currentAge, retirementAge, lifeExpectancy,
+        expectedReturn: 0.05, expenseRatio: 0,
+      })
+      params.incomeProjection = generateMockIncomeProjection({
+        currentAge, retirementAge, lifeExpectancy,
+      })
+
+      const nMCYears = lifeExpectancy - retirementAge // 10
+      const mcReturns = Array(nMCYears).fill(0.25) // extremely high to be distinguishable
+
+      const result = generateProjection({
+        ...params,
+        yearlyReturns: mcReturns,
+        yearlyReturnsOffset: offset,
+      })
+
+      // Baseline without MC override
+      const baseline = generateProjection(params)
+
+      // Pre-retirement rows (age < retirementAge) should match baseline exactly
+      // because mcIndex = yearIndex - offset < 0 → falls back to deterministic
+      for (let age = currentAge; age < retirementAge; age++) {
+        const mcRow = result.rows.find(r => r.age === age)!
+        const baseRow = baseline.rows.find(r => r.age === age)!
+        expect(mcRow.liquidNW).toBe(baseRow.liquidNW)
+      }
+
+      // Post-retirement rows should differ (MC returns of 25% vs 5% deterministic)
+      const mcRetired = result.rows.find(r => r.age === retirementAge + 1)!
+      const baseRetired = baseline.rows.find(r => r.age === retirementAge + 1)!
+      expect(mcRetired.liquidNW).not.toBe(baseRetired.liquidNW)
+    })
+  })
 })

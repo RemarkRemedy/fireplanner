@@ -12,6 +12,44 @@ export interface ChangelogEntry {
 /** Newest first. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-02-28',
+    category: 'feature',
+    title: 'Explore + Stress Test redesign',
+    description:
+      'The navigation has been restructured into EXPLORE and ANALYSIS sections. The Withdrawal Strategies page now has its own Monte Carlo simulation tab for decumulation-only testing with a My Plan balance toggle. The Stress Test page now always uses your actual portfolio (My Plan) and adds a new "Expected vs Random" pre-retirement returns toggle to control whether accumulation uses average returns or randomized returns.',
+    affectedSections: ['section-stress-test', 'section-withdrawal'],
+    insight:
+      'The old "My Plan / FIRE Target" toggle coupled two independent concerns: starting balance and stochastic vs deterministic pre-retirement returns. The redesign separates them: Withdrawal Strategies handles balance exploration (My Plan vs FIRE Target), while Stress Test focuses on simulation methodology (Expected vs Random pre-retirement returns).',
+  },
+  {
+    date: '2026-02-28',
+    category: 'feature',
+    title: 'MC Projection Table',
+    description:
+      'The Stress Test page now includes a Projection Table tab that shows year-by-year portfolio, income, expenses, CPF, and tax projections driven by Monte Carlo representative paths. Switch between P10/P25/P50/P75/P90 percentiles to see how different market outcomes affect your financial trajectory. Pre-retirement rows use deterministic projections; post-retirement rows use the selected MC path.',
+    affectedSections: ['section-stress-test'],
+    insight:
+      'Rather than showing 10,000 paths, the table picks 5 representative simulations closest to each percentile\'s terminal wealth. Switching percentiles changes portfolio and withdrawal columns but keeps income, CPF, and tax identical since those are deterministic.',
+  },
+  {
+    date: '2026-02-28',
+    category: 'feature',
+    title: 'Pre-retirement returns: Expected vs Random with educational guide',
+    description:
+      'The pre-retirement returns toggle now uses plain labels ("Expected" and "Random" instead of "Stochastic") with inline helper text explaining what each mode does. An expandable "Learn more" section includes a comparison table, a note on volatility drag, and guidance on how to interpret your results when comparing both modes.',
+    affectedSections: ['section-stress-test'],
+    insight:
+      'Expected mode uses the arithmetic mean return, which is slightly optimistic due to volatility drag (an 8% mean with 15% volatility compounds at ~6.9%). Random mode is the more complete analysis that captures pre-retirement sequence risk. If Expected shows high success but Random is much lower, pre-retirement market risk is your bottleneck.',
+  },
+  {
+    date: '2026-02-28',
+    category: 'fix',
+    title: 'Simulation controls layout and consistency improvements',
+    description:
+      'Replaced the Radix ToggleGroup with pill-style toggles matching the rest of the site. Moved "My Expenses / Custom Rate" above the strategy parameters so the high-level basis choice comes before the rate fields. SWR and initial rate fields are now greyed out when "My Expenses" is selected since the rate is unused in that mode.',
+    affectedSections: ['section-stress-test', 'section-withdrawal'],
+  },
+  {
     date: '2026-02-27',
     category: 'fix',
     title: 'FIRE Target mode disabled (incorrect simulation horizon)',
@@ -583,4 +621,4 @@ export const CHANGELOG: ChangelogEntry[] = [
 ]
 
 /** Bump this string whenever any data file is updated. Triggers the banner for returning users. */
-export const DATA_VINTAGE = '2026-02-27'
+export const DATA_VINTAGE = '2026-02-28'

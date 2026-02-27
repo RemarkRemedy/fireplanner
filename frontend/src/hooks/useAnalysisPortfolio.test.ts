@@ -23,7 +23,7 @@ beforeEach(() => {
 })
 
 describe('useAnalysisPortfolio', () => {
-  describe('myPlan mode', () => {
+  describe('My Plan mode (always)', () => {
     it('initialPortfolio = total NW (liquid + CPF)', () => {
       useProfileStore.setState({
         ...useProfileStore.getState(),
@@ -33,11 +33,8 @@ describe('useAnalysisPortfolio', () => {
         cpfMA: 30000,
         validationErrors: {},
       })
-      useSimulationStore.setState({ ...useSimulationStore.getState(), analysisMode: 'myPlan' })
       const { result } = renderHook(() => useAnalysisPortfolio())
       expect(result.current.initialPortfolio).toBe(680000)
-      expect(result.current.analysisMode).toBe('myPlan')
-      expect(result.current.skipAccumulation).toBe(false)
     })
 
     it('initialPortfolio includes cpfRA', () => {
@@ -50,7 +47,6 @@ describe('useAnalysisPortfolio', () => {
         cpfRA: 150000,
         validationErrors: {},
       })
-      useSimulationStore.setState({ ...useSimulationStore.getState(), analysisMode: 'myPlan' })
       const { result } = renderHook(() => useAnalysisPortfolio())
       // 500K + 100K + 0 + 30K + 150K = 780K
       expect(result.current.initialPortfolio).toBe(780000)
@@ -72,51 +68,26 @@ describe('useAnalysisPortfolio', () => {
         expenseRatio: 0.003,
         validationErrors: {},
       })
-      useSimulationStore.setState({ ...useSimulationStore.getState(), analysisMode: 'myPlan' })
       const { result } = renderHook(() => useAnalysisPortfolio())
       expect(result.current.retirementPortfolio).toBeGreaterThan(100000)
     })
 
     it('uses current allocation weights', () => {
       useAllocationStore.getState().applyTemplate('aggressive')
-      useSimulationStore.setState({ ...useSimulationStore.getState(), analysisMode: 'myPlan' })
       const { result } = renderHook(() => useAnalysisPortfolio())
       // Aggressive template should have high equity
       expect(result.current.allocationWeights[0]).toBeGreaterThan(0.3) // US equities
     })
 
     it('portfolioLabel includes "today" text', () => {
-      useSimulationStore.setState({ ...useSimulationStore.getState(), analysisMode: 'myPlan' })
       const { result } = renderHook(() => useAnalysisPortfolio())
       expect(result.current.portfolioLabel).toContain('today')
     })
-  })
 
-  describe('fireTarget mode', () => {
-    it('initialPortfolio = FIRE number', () => {
-      useProfileStore.setState({
-        ...useProfileStore.getState(),
-        annualExpenses: 48000,
-        swr: 0.04,
-        fireNumberBasis: 'today',
-        validationErrors: {},
-      })
-      useSimulationStore.setState({ ...useSimulationStore.getState(), analysisMode: 'fireTarget' })
+    it('does not return analysisMode or skipAccumulation fields', () => {
       const { result } = renderHook(() => useAnalysisPortfolio())
-      expect(result.current.initialPortfolio).toBe(1200000) // 48K / 0.04
-      expect(result.current.retirementPortfolio).toBe(1200000)
-    })
-
-    it('skipAccumulation is true', () => {
-      useSimulationStore.setState({ ...useSimulationStore.getState(), analysisMode: 'fireTarget' })
-      const { result } = renderHook(() => useAnalysisPortfolio())
-      expect(result.current.skipAccumulation).toBe(true)
-    })
-
-    it('portfolioLabel includes "FIRE Target"', () => {
-      useSimulationStore.setState({ ...useSimulationStore.getState(), analysisMode: 'fireTarget' })
-      const { result } = renderHook(() => useAnalysisPortfolio())
-      expect(result.current.portfolioLabel).toContain('FIRE Target')
+      expect(result.current).not.toHaveProperty('analysisMode')
+      expect(result.current).not.toHaveProperty('skipAccumulation')
     })
   })
 
@@ -129,7 +100,6 @@ describe('useAnalysisPortfolio', () => {
         validationErrors: {},
       })
       useAllocationStore.getState().applyTemplate('aggressive')
-      useSimulationStore.setState({ ...useSimulationStore.getState(), analysisMode: 'myPlan' })
       const { result } = renderHook(() => useAnalysisPortfolio())
       // Aggressive allocation has higher return than 5%
       expect(result.current.retirementPortfolio).toBeGreaterThan(0)
@@ -146,17 +116,17 @@ describe('useAnalysisPortfolio', () => {
         ...useAllocationStore.getState(),
         validationErrors: { weights: 'Must sum to 100%' },
       })
-      useSimulationStore.setState({ ...useSimulationStore.getState(), analysisMode: 'myPlan' })
       const { result } = renderHook(() => useAnalysisPortfolio())
       expect(result.current.retirementPortfolio).toBeGreaterThan(0)
     })
   })
 
   describe('glide path', () => {
-    it('uses target weights in fireTarget mode when glide path enabled', () => {
+    it('uses current weights for allocationWeights (glide path affects portfolio return only)', () => {
+      const currentWeights = [0.6, 0.1, 0.1, 0.1, 0.05, 0.05, 0, 0]
       useAllocationStore.setState({
         ...useAllocationStore.getState(),
-        currentWeights: [0.6, 0.1, 0.1, 0.1, 0.05, 0.05, 0, 0],
+        currentWeights,
         targetWeights: [0.3, 0.05, 0.05, 0.4, 0.05, 0.05, 0.05, 0.05],
         glidePathConfig: {
           enabled: true,
@@ -170,10 +140,9 @@ describe('useAnalysisPortfolio', () => {
         retirementAge: 65,
         validationErrors: {},
       })
-      useSimulationStore.setState({ ...useSimulationStore.getState(), analysisMode: 'fireTarget' })
       const { result } = renderHook(() => useAnalysisPortfolio())
-      // At retirement age = endAge, should use target weights
-      expect(result.current.allocationWeights).toEqual([0.3, 0.05, 0.05, 0.4, 0.05, 0.05, 0.05, 0.05])
+      // My Plan mode always returns current weights for allocationWeights
+      expect(result.current.allocationWeights).toEqual(currentWeights)
     })
   })
 })

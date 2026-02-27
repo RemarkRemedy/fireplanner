@@ -24,7 +24,7 @@ interface SimulationActions {
 
 const SIMULATION_DATA_KEYS = [
   'mcMethod', 'selectedStrategy', 'strategyParams', 'nSimulations', 'analysisMode',
-  'lastMCSuccessRate', 'lastBacktestSuccessRate', 'withdrawalBasis',
+  'lastMCSuccessRate', 'lastBacktestSuccessRate', 'withdrawalBasis', 'deterministicAccumulation',
 ] as const
 
 const DEFAULT_STRATEGY_PARAMS: StrategyParamsMap = {
@@ -49,6 +49,7 @@ const DEFAULT_SIMULATION: Omit<SimulationState, 'validationErrors'> = {
   nSimulations: 10000,
   analysisMode: 'myPlan',
   withdrawalBasis: 'expenses',
+  deterministicAccumulation: false,
   lastMCSuccessRate: null,
   lastBacktestSuccessRate: null,
 }
@@ -115,7 +116,7 @@ export const useSimulationStore = create<SimulationState & SimulationActions>()(
     }),
     {
       name: 'fireplanner-simulation',
-      version: 5,
+      version: 6,
       migrate: (persisted: unknown, version: number) => {
         const state = persisted as Record<string, unknown>
         if (version < 2) {
@@ -144,6 +145,10 @@ export const useSimulationStore = create<SimulationState & SimulationActions>()(
         if (version < 5) {
           // v4 → v5: add withdrawalBasis field, default to 'expenses' for existing users
           state.withdrawalBasis ??= 'expenses'
+        }
+        if (version < 6) {
+          // v5 → v6: add deterministicAccumulation field
+          state.deterministicAccumulation ??= false
         }
         return state as unknown as SimulationState
       },

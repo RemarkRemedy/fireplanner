@@ -9,7 +9,6 @@ import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
-import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
 import { validateWithdrawalCrossStoreRules } from '@/lib/validation/rules'
 import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
@@ -32,9 +31,7 @@ export function useWithdrawalComparison(opts?: { initialPortfolioOverride?: numb
   const profile = useProfileStore()
   const allocation = useAllocationStore()
   const withdrawal = useWithdrawalStore()
-  const analysisMode = useSimulationStore((s) => s.analysisMode)
   const activeStrategy = useSimulationStore((s) => s.selectedStrategy)
-  const analysisPortfolio = useAnalysisPortfolio()
 
   return useMemo(() => {
     const profileErrors = profile.validationErrors
@@ -68,12 +65,9 @@ export function useWithdrawalComparison(opts?: { initialPortfolioOverride?: numb
     const yearsToRetirement = Math.max(0, profile.retirementAge - profile.currentAge)
     const netReturn = expectedReturn - profile.expenseRatio
 
-    // In myPlan mode, prefer the projection-derived override (full income engine)
-    // over the simplified compound growth formula.
-    // In fireTarget mode, the analysis hook already computes the target portfolio.
-    const initialPortfolio = analysisMode === 'myPlan'
-      ? (opts?.initialPortfolioOverride ?? profile.liquidNetWorth * (1 + netReturn) ** yearsToRetirement)
-      : analysisPortfolio.initialPortfolio
+    // Prefer the projection-derived override (full income engine) over the
+    // simplified compound growth formula when provided (e.g. from Explore page).
+    const initialPortfolio = opts?.initialPortfolioOverride ?? profile.liquidNetWorth * (1 + netReturn) ** yearsToRetirement
 
     const effectiveRetirementBase = getEffectiveExpenses(profile.retirementAge, profile.annualExpenses, profile.expenseAdjustments, profile.lifeExpectancy)
     const retirementExpenses = effectiveRetirementBase
@@ -115,9 +109,7 @@ export function useWithdrawalComparison(opts?: { initialPortfolioOverride?: numb
     withdrawal.selectedStrategies,
     withdrawal.strategyParams,
     withdrawal.validationErrors,
-    analysisMode,
     activeStrategy,
-    analysisPortfolio.initialPortfolio,
     opts?.initialPortfolioOverride,
     profile.expenseAdjustments,
   ])

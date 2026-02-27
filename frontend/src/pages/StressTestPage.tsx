@@ -4,11 +4,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { AlertTriangle, ChevronDown, ChevronRight, CheckCircle2, Info, ShieldAlert } from 'lucide-react'
+import { AlertTriangle, ChevronDown, ChevronRight, Info } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AnalysisModeToggle } from '@/components/shared/AnalysisModeToggle'
 import { WithdrawalBasisToggle } from '@/components/shared/WithdrawalBasisToggle'
-import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
+import { InterpretationCallout } from '@/components/shared/InterpretationCallout'
 import { formatCurrency, cn } from '@/lib/utils'
 import type { PercentileBands } from '@/lib/types'
 import { useEffectiveMode } from '@/hooks/useEffectiveMode'
@@ -25,6 +24,7 @@ import { PortfolioHistogram } from '@/components/simulation/PortfolioHistogram'
 import { FanChart } from '@/components/simulation/FanChart'
 import { FailureDistributionChart } from '@/components/simulation/FailureDistributionChart'
 import { useMonteCarloQuery } from '@/hooks/useMonteCarloQuery'
+import { MCProjectionTable } from '@/components/simulation/MCProjectionTable'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 
@@ -45,42 +45,28 @@ import { formatPercent } from '@/lib/utils'
 import type { CrisisScenario } from '@/lib/types'
 import { trackEvent } from '@/lib/analytics'
 
-function InterpretationCallout({ level, message }: { level: 'success' | 'warning' | 'danger'; message: string }) {
-  const styles = {
-    success: 'border-green-300 bg-green-50 dark:bg-green-900/20 dark:border-green-700 text-green-800 dark:text-green-200',
-    warning: 'border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200',
-    danger: 'border-red-300 bg-red-50 dark:bg-red-900/20 dark:border-red-700 text-red-800 dark:text-red-200',
-  }
-  const icons = {
-    success: <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />,
-    warning: <Info className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />,
-    danger: <ShieldAlert className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />,
-  }
-
-  return (
-    <div className={`flex items-start gap-2 rounded-md border p-3 ${styles[level]}`}>
-      {icons[level]}
-      <p className="text-sm">{message}</p>
-    </div>
-  )
-}
-
 function TabIntro({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-sm text-muted-foreground">{children}</p>
   )
 }
 
-function MonteCarloTab({ isAdvanced }: { isAdvanced: boolean }) {
-  const { mutate, data, isPending, error, canRun, validationErrors, isStale } = useMonteCarloQuery()
+interface MonteCarloTabProps {
+  isAdvanced: boolean
+  mutate: () => void
+  data: import('@/lib/types').MonteCarloResult | undefined
+  isPending: boolean
+  error: Error | null
+  canRun: boolean
+  validationErrors: Record<string, string>
+  isStale: boolean
+}
+
+function MonteCarloTab({
+  isAdvanced, mutate, data, isPending, error, canRun, validationErrors, isStale,
+}: MonteCarloTabProps) {
   const retirementAge = useProfileStore((s) => s.retirementAge)
   const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
-  const setSimField = useSimulationStore((s) => s.setField)
-
-  // Persist last MC success rate
-  useEffect(() => {
-    if (data) setSimField('lastMCSuccessRate', data.success_rate)
-  }, [data, setSimField])
 
   const mcInterpretation = data ? (() => {
     const rate = data.success_rate
@@ -544,11 +530,17 @@ function SequenceRiskTab() {
 
 export function StressTestPage() {
   usePageMeta({ title: 'Stress Test — SG FIRE Planner', description: 'Monte Carlo simulation, historical backtesting, and sequence risk analysis for your Singapore retirement plan.', path: '/stress-test' })
-  const { portfolioLabel } = useAnalysisPortfolio()
   const stressMode = useEffectiveMode('section-stress-test')
   const stressNudge = useSectionNudge('section-stress-test')
   const setSectionMode = useUIStore((s) => s.setSectionMode)
   const isStressAdvanced = stressMode === 'advanced'
+  const mc = useMonteCarloQuery()
+  const setSimField = useSimulationStore((s) => s.setField)
+
+  // Persist last MC success rate (lifted from MonteCarloTab so it updates even when tab is inactive)
+  useEffect(() => {
+    if (mc.data) setSimField('lastMCSuccessRate', mc.data.success_rate)
+  }, [mc.data, setSimField])
 
   return (
     <div className="space-y-6">
@@ -595,18 +587,45 @@ export function StressTestPage() {
         />
       )}
 
-      <AnalysisModeToggle portfolioLabel={portfolioLabel} />
-
       <Tabs defaultValue="monte-carlo" onValueChange={(tab) => trackEvent('stress_test_tab_changed', { tab })}>
-        <TabsList className={`grid w-full ${isStressAdvanced ? 'grid-cols-3' : 'grid-cols-1'}`}>
-          <TabsTrigger value="monte-carlo">Monte Carlo</TabsTrigger>
-          {isStressAdvanced && <TabsTrigger value="backtest">Historical Backtest</TabsTrigger>}
-          {isStressAdvanced && <TabsTrigger value="sequence-risk">Sequence Risk</TabsTrigger>}
-        </TabsList>
+        {(() => {
+          // Static Tailwind class mapping — dynamic template literals get purged
+          const hasResults = !!mc.data
+          const tabCount = 1 + (hasResults ? 1 : 0) + (isStressAdvanced ? 2 : 0)
+          const gridColsClass: Record<number, string> = {
+            1: 'grid-cols-1',
+            2: 'grid-cols-2',
+            3: 'grid-cols-3',
+            4: 'grid-cols-4',
+          }
+          return (
+            <TabsList className={`grid w-full ${gridColsClass[tabCount] ?? 'grid-cols-1'}`}>
+              <TabsTrigger value="monte-carlo">Monte Carlo</TabsTrigger>
+              {hasResults && <TabsTrigger value="mc-projection">Projection Table</TabsTrigger>}
+              {isStressAdvanced && <TabsTrigger value="backtest">Historical Backtest</TabsTrigger>}
+              {isStressAdvanced && <TabsTrigger value="sequence-risk">Sequence Risk</TabsTrigger>}
+            </TabsList>
+          )
+        })()}
 
         <TabsContent value="monte-carlo">
-          <MonteCarloTab isAdvanced={isStressAdvanced} />
+          <MonteCarloTab
+            isAdvanced={isStressAdvanced}
+            mutate={mc.mutate}
+            data={mc.data}
+            isPending={mc.isPending}
+            error={mc.error}
+            canRun={mc.canRun}
+            validationErrors={mc.validationErrors}
+            isStale={mc.isStale}
+          />
         </TabsContent>
+
+        {mc.data && (
+          <TabsContent value="mc-projection">
+            <MCProjectionTable result={mc.data!} isStale={mc.isStale} />
+          </TabsContent>
+        )}
 
         {isStressAdvanced && (
           <TabsContent value="backtest">
@@ -620,6 +639,13 @@ export function StressTestPage() {
           </TabsContent>
         )}
       </Tabs>
+
+      <p className="text-xs text-muted-foreground mt-4">
+        Want to explore withdrawal strategies in isolation?{' '}
+        <Link to="/withdrawal" className="text-primary hover:underline">
+          Withdrawal Strategies &rarr;
+        </Link>
+      </p>
     </div>
   )
 }
