@@ -12,6 +12,7 @@ import { PercentInput } from '@/components/shared/PercentInput'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useHouseholdStore } from '@/stores/useHouseholdStore'
+import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useUIStore } from '@/stores/useUIStore'
 import { useIncomeProjection } from '@/hooks/useIncomeProjection'
 import { useEffectiveMode } from '@/hooks/useEffectiveMode'
@@ -115,12 +116,15 @@ export function CpfSection() {
   const { projection, personProjections } = useIncomeProjection()
 
   // In household mode, get the projection for the selected person
-  const effectiveProjection = useMemo(() => {
+  // Note: personProjections always contains IncomeProjectionRow[], so effectiveProjection is always single-person format
+  const effectiveProjection = useMemo((): import('@/lib/types').IncomeProjectionRow[] | null => {
     if (household.householdMode && selectedPerson && personProjections) {
       const personProj = personProjections.find(p => p.personId === selectedPerson.profile.id)
       return personProj?.projection || null
     }
-    return projection
+    // In single-person mode, projection could be either type, but since household mode is false,
+    // it will be IncomeProjectionRow[]
+    return projection as import('@/lib/types').IncomeProjectionRow[] | null
   }, [household.householdMode, selectedPerson, personProjections, projection])
 
   // RA earns 4% interest from age 55 until CPF LIFE starts — must compound to get realistic payout
@@ -695,12 +699,12 @@ export function CpfSection() {
                 <Plus className="h-4 w-4 mr-1" />
                 Add OA Withdrawal
               </Button>
-              {cpfOaWithdrawals.length > 0 && projection && (
+              {cpfOaWithdrawals.length > 0 && effectiveProjection && (
                 <div className="mt-2 p-2 bg-muted/50 rounded text-xs text-muted-foreground">
                   {(() => {
                     const ages = cpfOaWithdrawals.map(w => w.age).sort((a, b) => a - b)
                     const firstAge = ages[0]
-                    const row = projection.find(r => r.age === firstAge)
+                    const row = effectiveProjection.find(r => r.age === firstAge)
                     if (row) {
                       return `Projected OA balance at age ${firstAge}: ${formatCurrency(row.cpfOA)}`
                     }

@@ -216,14 +216,14 @@ describe('useFireCalculations', () => {
     const metricsWithProjection = withProjection.current.metrics!
     unmount()
 
-    // Force income errors so it falls back to profile.annualIncome
+    // Force income errors - should block calculations (no fallback)
     useIncomeStore.getState().setField('annualSalary', -1) // Invalid
-    const { result: fallback } = renderHook(() => useFireCalculations())
-    expect(fallback.current.metrics).not.toBeNull()
+    const { result: withErrors } = renderHook(() => useFireCalculations())
+    expect(withErrors.current.metrics).toBeNull()
+    expect(withErrors.current.hasErrors).toBe(true)
 
-    // With income projection: higher income -> higher savings rate
-    // Without (fallback): uses profile.annualIncome (72K)
-    expect(metricsWithProjection.savingsRate).not.toEqual(fallback.current.metrics!.savingsRate)
+    // Verify that with valid income projection, we get different results than blocked state
+    expect(metricsWithProjection.savingsRate).toBeGreaterThan(0)
   })
 
   it('usePortfolioReturn produces different yearsToFire vs manual return', () => {

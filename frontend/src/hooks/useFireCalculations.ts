@@ -1,11 +1,9 @@
 import { useMemo } from 'react'
-import type { FireMetrics, CpfHousingMode } from '@/lib/types'
+import type { FireMetrics } from '@/lib/types'
 import { calculateAllFireMetrics } from '@/lib/calculations/fire'
 import { computeCashReserveOffset } from '@/lib/calculations/cashReserve'
 import { calculatePortfolioReturn } from '@/lib/calculations/portfolio'
-import { generateIncomeProjection } from '@/lib/calculations/income'
 import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useHouseholdStore } from '@/stores/useHouseholdStore'
@@ -26,7 +24,6 @@ interface FireCalculationsResult {
  */
 export function useFireCalculations(): FireCalculationsResult {
   const profile = useProfileStore()
-  const income = useIncomeStore()
   const allocation = useAllocationStore()
   const property = usePropertyStore()
   const household = useHouseholdStore()

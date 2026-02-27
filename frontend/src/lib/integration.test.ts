@@ -97,7 +97,11 @@ describe('Journey: Fresh Graduate (age 25, $48K income, $30K expenses)', () => {
 
   it('CPF contributions appear in working years', () => {
     const { result } = renderHook(() => useIncomeProjection())
-    const first = result.current.projection![0]
+    const { projection, isHousehold } = result.current
+    expect(projection).not.toBeNull()
+    expect(isHousehold).toBe(false)
+    const singleProjection = projection as import('@/lib/types').IncomeProjectionRow[]
+    const first = singleProjection[0]
     expect(first.cpfEmployee).toBeGreaterThan(0)
     expect(first.cpfEmployer).toBeGreaterThan(0)
   })
@@ -195,7 +199,11 @@ describe('Journey: Mid-Career Professional (age 35, $180K, CPF + property)', () 
 
   it('income projection first year has correct salary', () => {
     const { result } = renderHook(() => useIncomeProjection())
-    const firstRow = result.current.projection![0]
+    const { projection, isHousehold } = result.current
+    expect(projection).not.toBeNull()
+    expect(isHousehold).toBe(false)
+    const singleProjection = projection as import('@/lib/types').IncomeProjectionRow[]
+    const firstRow = singleProjection[0]
     expect(firstRow.salary).toBeGreaterThanOrEqual(180000)
   })
 })

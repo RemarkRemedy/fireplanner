@@ -108,19 +108,25 @@ describe('useIncomeProjection', () => {
 
   it('CPF contributions appear in projection rows', () => {
     const { result } = renderHook(() => useIncomeProjection())
-    const projection = result.current.projection!
-    // First row (working age) should have CPF contributions
-    const workingRow = projection[0]
+    const { projection, isHousehold } = result.current
+    expect(projection).not.toBeNull()
+    expect(isHousehold).toBe(false) // Using legacy stores, so single-person mode
+    // In single-person mode, projection is IncomeProjectionRow[]
+    const singleProjection = projection as import('@/lib/types').IncomeProjectionRow[]
+    const workingRow = singleProjection[0]
     expect(workingRow.cpfEmployee).toBeGreaterThan(0)
     expect(workingRow.cpfEmployer).toBeGreaterThan(0)
   })
 
   it('post-retirement rows have zero salary', () => {
     const { result } = renderHook(() => useIncomeProjection())
-    const projection = result.current.projection!
+    const { projection, isHousehold } = result.current
     const profile = useProfileStore.getState()
-    // Find a post-retirement row
-    const postRetRow = projection.find(r => r.age > profile.retirementAge)
+    expect(projection).not.toBeNull()
+    expect(isHousehold).toBe(false) // Using legacy stores, so single-person mode
+    // In single-person mode, projection is IncomeProjectionRow[]
+    const singleProjection = projection as import('@/lib/types').IncomeProjectionRow[]
+    const postRetRow = singleProjection.find(r => r.age > profile.retirementAge)
     if (postRetRow) {
       expect(postRetRow.salary).toBe(0)
     }

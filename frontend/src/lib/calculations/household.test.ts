@@ -4,7 +4,6 @@ import {
   generateHouseholdIncomeProjection,
   DEFAULT_CAREER_PHASES,
 } from './income'
-import type { IncomeProjectionRow } from '@/lib/types'
 
 describe('generateHouseholdIncomeProjection', () => {
   const baseParams = {

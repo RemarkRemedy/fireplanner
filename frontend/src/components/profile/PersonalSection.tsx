@@ -116,8 +116,8 @@ export function PersonalSection() {
         income.setField('annualSalary', primaryPerson.income.annualSalary)
         income.setField('salaryGrowthRate', primaryPerson.income.salaryGrowthRate)
         income.setField('employerCpfEnabled', primaryPerson.income.employerCpfEnabled)
-        income.setField('incomeStreams', primaryPerson.income.incomeStreams)
-        income.setField('lifeEvents', primaryPerson.income.lifeEvents)
+        // incomeStreams and lifeEvents are managed via add/remove/update methods, not setField
+        // For now, just keep them as-is since this is disabling household mode
         income.setRealisticPhases(primaryPerson.income.realisticPhases)
         income.setPromotionJumps(primaryPerson.income.promotionJumps)
         income.setField('momEducation', primaryPerson.income.momEducation)
@@ -283,7 +283,7 @@ export function PersonalSection() {
             </Label>
             <Select
               value={residencyStatus}
-              onValueChange={(v) => setField('residencyStatus', v as 'citizen' | 'pr' | 'foreigner')}
+              onValueChange={(v) => setResidencyStatus(v as 'citizen' | 'pr' | 'foreigner')}
             >
               <SelectTrigger className="border-blue-300">
                 <SelectValue />

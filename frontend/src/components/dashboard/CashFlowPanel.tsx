@@ -54,16 +54,9 @@ const SERIES_CONFIG: SeriesConfig[] = [
 // Custom Tooltip
 // ============================================================
 
-interface TooltipPayloadItem {
-  name: string
-  value: number
-  color: string
-  dataKey: string
-}
-
 interface CustomTooltipProps {
   active?: boolean
-  payload?: TooltipPayloadItem[]
+  payload?: any[]
   label?: number
   isHouseholdMode?: boolean
   currentYear?: number
@@ -75,9 +68,9 @@ function CashFlowTooltip({ active, payload, label, isHouseholdMode, currentYear,
 
   // Exclude the net cash flow overlay line from income/outflow breakdown
   const series = payload.filter((p) => p.dataKey !== 'netCashFlow')
-  const income = series.filter((p) => p.value > 0)
-  const outflows = series.filter((p) => p.value < 0)
-  const netCashFlow = series.reduce((sum, p) => sum + p.value, 0)
+  const income = series.filter((p) => typeof p.value === 'number' && p.value > 0)
+  const outflows = series.filter((p) => typeof p.value === 'number' && p.value < 0)
+  const netCashFlow = series.reduce((sum, p) => sum + (typeof p.value === 'number' ? p.value : 0), 0)
 
   // Calculate calendar year for household mode
   const yearsFromNow = label ? label - (currentAge || 0) : 0
@@ -102,7 +95,7 @@ function CashFlowTooltip({ active, payload, label, isHouseholdMode, currentYear,
                 {item.name}
               </span>
               <span className="font-medium tabular-nums text-green-600">
-                +{formatCurrency(item.value)}
+                +{formatCurrency(typeof item.value === 'number' ? item.value : 0)}
               </span>
             </div>
           ))}
@@ -122,7 +115,7 @@ function CashFlowTooltip({ active, payload, label, isHouseholdMode, currentYear,
                 {item.name}
               </span>
               <span className="font-medium tabular-nums text-red-600">
-                {formatCurrency(item.value)}
+                {formatCurrency(typeof item.value === 'number' ? item.value : 0)}
               </span>
             </div>
           ))}

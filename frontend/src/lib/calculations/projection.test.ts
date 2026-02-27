@@ -1523,7 +1523,7 @@ describe('generateProjection', () => {
         currentAge: 30, retirementAge: 33, lifeExpectancy: 34,
         expectedReturn: 0, initialLiquidNW: 100000,
       })
-      params.incomeProjection = params.incomeProjection.map((row) => ({
+      params.incomeProjection = (params.incomeProjection as import('@/lib/types').IncomeProjectionRow[]).map((row) => ({
         ...row,
         cpfOA: 50000,
         cpfSA: 20000,
@@ -1681,7 +1681,7 @@ describe('generateProjection', () => {
         expectedReturn: 0, initialLiquidNW: 100000,
       })
       // Set SRS fields on all income rows
-      params.incomeProjection = params.incomeProjection.map((row) => ({
+      params.incomeProjection = (params.incomeProjection as import('@/lib/types').IncomeProjectionRow[]).map((row) => ({
         ...row,
         srsBalance: 50000,
         srsContribution: 15300,

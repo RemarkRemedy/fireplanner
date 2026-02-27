@@ -62,7 +62,7 @@ export function MobileShareFab() {
 
   return (
     <div className="fixed bottom-28 right-4 z-40 md:hidden">
-      <Popover open={tooltipOpen} onOpenChange={(v) => { if (!v) handleDismiss() }}>
+      <Popover open={tooltipOpen} onOpenChange={(v: boolean) => { if (!v) handleDismiss() }}>
         <PopoverAnchor asChild>
           <Button
             size="icon"

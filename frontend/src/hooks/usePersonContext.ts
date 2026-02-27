@@ -2,7 +2,6 @@ import { useHouseholdStore } from '@/stores/useHouseholdStore'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useUIStore } from '@/stores/useUIStore'
-import type { Person } from '@/lib/types'
 
 /**
  * Hook to get the currently selected person's data or fallback to single-person stores.

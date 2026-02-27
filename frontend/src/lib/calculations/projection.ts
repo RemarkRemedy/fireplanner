@@ -99,6 +99,7 @@ function normalizeIncomeRow(row: IncomeProjectionRow | HouseholdIncomeProjection
       srsContribution,
       srsWithdrawal,
       srsTaxableWithdrawal,
+      lockedAssetUnlock: 0,
       cashReserveTarget: 0,
       cashReserveBalance: 0,
       investedSavings: 0,
@@ -386,7 +387,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
   let mediSaveAdjustedMA: number[] | null = null
   let mediSaveDepletionAge: number | null = null
   if (healthcareConfig?.enabled) {
-    const maBalanceByYear = incomeProjection.map((r) => r.cpfMA)
+    const maBalanceByYear = incomeProjection.map((r) => normalizeIncomeRow(r).cpfMA)
     const timeline = projectMediSaveTimeline(
       healthcareConfig, currentAge, lifeExpectancy, maBalanceByYear,
       healthcareConfig.mediSaveTopUpAnnual,
