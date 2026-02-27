@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Info } from 'lucide-react'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
@@ -116,47 +115,43 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
           </div>
 
           {/* Pre-retirement returns toggle */}
-          <TooltipProvider delayDuration={200}>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium flex items-center gap-1">
-                Pre-retirement returns
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    <p><strong>Expected Returns:</strong> All simulations use the same average return during accumulation. Tests: &ldquo;If savings go as planned, does retirement survive?&rdquo;</p>
-                    <p className="mt-1"><strong>Stochastic:</strong> Each simulation gets random returns from today. Captures pre-retirement sequence risk.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </Label>
-              {currentAge >= retirementAge ? (
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">
+              Pre-retirement returns
+            </Label>
+            {currentAge >= retirementAge ? (
+              <TooltipProvider delayDuration={200}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div>
-                      <ToggleGroup type="single" value="stochastic" disabled className="w-full">
+                      <ToggleGroup type="single" value="random" disabled className="w-full">
                         <ToggleGroupItem value="expected" className="flex-1 text-xs">Expected</ToggleGroupItem>
-                        <ToggleGroupItem value="stochastic" className="flex-1 text-xs">Stochastic</ToggleGroupItem>
+                        <ToggleGroupItem value="random" className="flex-1 text-xs">Random</ToggleGroupItem>
                       </ToggleGroup>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>Not applicable: you are already in retirement</TooltipContent>
                 </Tooltip>
-              ) : (
-                <ToggleGroup
-                  type="single"
-                  value={simulation.deterministicAccumulation ? 'expected' : 'stochastic'}
-                  onValueChange={(val) => {
-                    if (val) simulation.setField('deterministicAccumulation', val === 'expected')
-                  }}
-                  className="w-full"
-                >
-                  <ToggleGroupItem value="expected" className="flex-1 text-xs">Expected</ToggleGroupItem>
-                  <ToggleGroupItem value="stochastic" className="flex-1 text-xs">Stochastic</ToggleGroupItem>
-                </ToggleGroup>
-              )}
-            </div>
-          </TooltipProvider>
+              </TooltipProvider>
+            ) : (
+              <ToggleGroup
+                type="single"
+                value={simulation.deterministicAccumulation ? 'expected' : 'random'}
+                onValueChange={(val) => {
+                  if (val) simulation.setField('deterministicAccumulation', val === 'expected')
+                }}
+                className="w-full"
+              >
+                <ToggleGroupItem value="expected" className="flex-1 text-xs">Expected</ToggleGroupItem>
+                <ToggleGroupItem value="random" className="flex-1 text-xs">Random</ToggleGroupItem>
+              </ToggleGroup>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {simulation.deterministicAccumulation
+                ? 'All simulations use the same average return during accumulation. Tests: "If savings go as planned, does retirement survive?"'
+                : 'Each simulation gets random returns from today. Captures pre-retirement sequence risk.'}
+            </p>
+          </div>
         </div>
 
         <StrategyParams />
