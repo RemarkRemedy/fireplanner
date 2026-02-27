@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
@@ -123,28 +123,39 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
               <TooltipProvider delayDuration={200}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div>
-                      <ToggleGroup type="single" value="random" disabled className="w-full">
-                        <ToggleGroupItem value="expected" className="flex-1 text-xs">Expected</ToggleGroupItem>
-                        <ToggleGroupItem value="random" className="flex-1 text-xs">Random</ToggleGroupItem>
-                      </ToggleGroup>
+                    <div className="inline-flex rounded-lg border bg-muted p-0.5 opacity-50 cursor-not-allowed">
+                      <button disabled className="rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground">Expected</button>
+                      <button disabled className="rounded-md px-3 py-1.5 text-xs font-medium bg-background text-foreground shadow-sm">Random</button>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>Not applicable: you are already in retirement</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             ) : (
-              <ToggleGroup
-                type="single"
-                value={simulation.deterministicAccumulation ? 'expected' : 'random'}
-                onValueChange={(val) => {
-                  if (val) simulation.setField('deterministicAccumulation', val === 'expected')
-                }}
-                className="w-full"
-              >
-                <ToggleGroupItem value="expected" className="flex-1 text-xs">Expected</ToggleGroupItem>
-                <ToggleGroupItem value="random" className="flex-1 text-xs">Random</ToggleGroupItem>
-              </ToggleGroup>
+              <div className="inline-flex rounded-lg border bg-muted p-0.5">
+                <button
+                  onClick={() => simulation.setField('deterministicAccumulation', true)}
+                  className={cn(
+                    'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                    simulation.deterministicAccumulation
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Expected
+                </button>
+                <button
+                  onClick={() => simulation.setField('deterministicAccumulation', false)}
+                  className={cn(
+                    'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                    !simulation.deterministicAccumulation
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Random
+                </button>
+              </div>
             )}
             <p className="text-xs text-muted-foreground">
               {simulation.deterministicAccumulation
