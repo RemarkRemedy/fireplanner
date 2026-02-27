@@ -10,10 +10,26 @@
 
 ---
 
-## Task 1: Add `RepresentativePath` type and update `MonteCarloResult`
+## Review Corrections (from Codex review)
+
+This plan addresses 7 issues found during code review:
+
+1. **`data` scoping** — `useMonteCarloQuery()` is called inside `MonteCarloTab` (line 75), not in `StressTestPage`. Fixed: lift the hook to `StressTestPage` and pass props down.
+2. **Param source mismatch** — `useProjection()` uses raw store state (`profile.liquidNetWorth`, `profile.currentAge`), but MC uses analysis-mode-adjusted values (`analysisPortfolio.initialPortfolio`, possibly `skipAccumulation`). Fixed: `MCProjectionTable` uses `useProjection()` for base params BUT offsets `yearlyReturns` using `effectiveStartAge` stored with the paths. In `fireTarget` mode (skipAccumulation), pre-retirement years use deterministic returns and post-retirement uses MC returns.
+3. **Timeline off-by-one** — Projection loops `i = 0..totalYears` (inclusive, `totalYears+1` iterations), but MC generates `nYearsTotal` returns. The last row (age = lifeExpectancy) falls back to deterministic return. This is acceptable and documented.
+4. **Expense ratio** — `portfolioReturns` in MC are **gross** returns (fee subtracted during balance transitions, not baked into returns). Projection subtracts `expenseRatio` once. Correct: single deduction, no double-counting. Comments fixed.
+5. **Naming** — Consistently use `representative_paths` (snake_case matching existing `MonteCarloResult` fields like `success_rate`, `percentile_bands`).
+6. **SWR optimizer overhead** — Gate path extraction with `extractPaths` flag on `MonteCarloEngineParams`. SWR optimizer doesn't set it.
+7. **Flaky test** — Replace "distinct indices" assertion with "p10 retirement balance < p90 retirement balance" (always true by definition).
+
+---
+
+## Task 1: Add `RepresentativePath` type, `extractPaths` flag, and update MC engine
 
 **Files:**
 - Modify: `frontend/src/lib/types.ts` (near line 658)
+- Modify: `frontend/src/lib/simulation/monteCarlo.ts` (add flag to params, extract paths)
+- Modify: `frontend/src/lib/simulation/monteCarlo.test.ts`
 
 **Step 1: Write the failing test**
 
@@ -21,8 +37,8 @@ File: `frontend/src/lib/simulation/monteCarlo.test.ts`
 
 ```typescript
 describe('representative paths', () => {
-  it('returns 5 representative paths with correct percentiles', () => {
-    const params = makeDefaultParams({ nSimulations: 500 })
+  it('returns 5 representative paths with correct percentiles when extractPaths is true', () => {
+    const params = makeDefaultParams({ nSimulations: 500, extractPaths: true })
     const result = runMonteCarlo(params as MonteCarloEngineParams)
     expect(result.representative_paths).toBeDefined()
     expect(result.representative_paths).toHaveLength(5)
@@ -30,8 +46,14 @@ describe('representative paths', () => {
     expect(percentiles).toEqual([10, 25, 50, 75, 90])
   })
 
-  it('each path has yearlyReturns matching total simulation years', () => {
+  it('does NOT extract paths when extractPaths is false or omitted', () => {
     const params = makeDefaultParams({ nSimulations: 500 })
+    const result = runMonteCarlo(params as MonteCarloEngineParams)
+    expect(result.representative_paths).toBeUndefined()
+  })
+
+  it('each path has yearlyReturns matching total simulation years', () => {
+    const params = makeDefaultParams({ nSimulations: 500, extractPaths: true })
     const result = runMonteCarlo(params as MonteCarloEngineParams)
     const nYearsTotal = params.lifeExpectancy - params.currentAge // 55
     for (const path of result.representative_paths!) {
@@ -42,7 +64,7 @@ describe('representative paths', () => {
   })
 
   it('p50 path retirement balance approximately matches percentile band p50', () => {
-    const params = makeDefaultParams({ nSimulations: 1000, seed: 42 })
+    const params = makeDefaultParams({ nSimulations: 1000, seed: 42, extractPaths: true })
     const result = runMonteCarlo(params as MonteCarloEngineParams)
     const retirementYearIndex = params.retirementAge - params.currentAge // 20
     const bandP50AtRetirement = result.percentile_bands.p50[retirementYearIndex]
@@ -51,23 +73,29 @@ describe('representative paths', () => {
     // Allow 10% tolerance since we pick the nearest sim, not interpolate
     expect(p50Path.retirementBalance).toBeCloseTo(bandP50AtRetirement, -4)
   })
+
+  it('includes effectiveStartAge for timeline alignment', () => {
+    const params = makeDefaultParams({ nSimulations: 500, extractPaths: true })
+    const result = runMonteCarlo(params as MonteCarloEngineParams)
+    expect(result.representative_paths_start_age).toBe(params.currentAge)
+  })
 })
 ```
 
 **Step 2: Run test to verify it fails**
 
 Run: `cd frontend && npx vitest run src/lib/simulation/monteCarlo.test.ts --reporter verbose 2>&1 | tail -20`
-Expected: FAIL — `representative_paths` is undefined
+Expected: FAIL — `representative_paths` is undefined, `extractPaths` not in type
 
-**Step 3: Add types to `types.ts`**
+**Step 3: Add types**
 
-Add after `MonteCarloResult` (around line 670):
+In `frontend/src/lib/types.ts`, add after `MonteCarloResult` (around line 670):
 
 ```typescript
 export interface RepresentativePath {
   percentile: number
   simIndex: number
-  yearlyReturns: number[]
+  yearlyReturns: number[]   // gross portfolio returns per year (subtract expenseRatio when replaying)
   retirementBalance: number
 }
 ```
@@ -78,48 +106,78 @@ Add to `MonteCarloResult` interface:
 export interface MonteCarloResult {
   // ...existing fields...
   representative_paths?: RepresentativePath[]
+  representative_paths_start_age?: number  // the currentAge used by MC (may differ from profile.currentAge in fireTarget mode)
 }
 ```
 
-**Step 4: Implement in `monteCarlo.ts`**
-
-After the percentile bands computation (around line 543, after the `for (let y = 0; ...` loop), add representative path extraction:
+In `frontend/src/lib/simulation/monteCarlo.ts`, add to `MonteCarloEngineParams`:
 
 ```typescript
-// ---- Extract representative paths ----
-const TARGET_PERCENTILES = [10, 25, 50, 75, 90]
-const representativePaths: RepresentativePath[] = []
-
-for (const pct of TARGET_PERCENTILES) {
-  // Get the percentile value of balances at retirement age
-  const retYearIdx = nYearsAccum  // index into balances array
-  const col: number[] = new Array(nSims)
-  for (let s = 0; s < nSims; s++) {
-    col[s] = balances[s][retYearIdx]
-  }
-  const targetVal = percentile(col, pct)
-
-  // Find the sim whose retirement balance is closest
-  let bestSim = 0
-  let bestDist = Math.abs(col[0] - targetVal)
-  for (let s = 1; s < nSims; s++) {
-    const dist = Math.abs(col[s] - targetVal)
-    if (dist < bestDist) {
-      bestDist = dist
-      bestSim = s
-    }
-  }
-
-  representativePaths.push({
-    percentile: pct,
-    simIndex: bestSim,
-    yearlyReturns: portfolioReturns[bestSim].slice(0, nYearsTotal),
-    retirementBalance: balances[bestSim][retYearIdx],
-  })
+export interface MonteCarloEngineParams {
+  // ...existing fields...
+  extractPaths?: boolean  // when true, extract representative paths for projection replay
 }
 ```
 
-Add `representative_paths: representativePaths` to the return object at line ~662.
+**Step 4: Implement path extraction in `monteCarlo.ts`**
+
+After the percentile bands computation (around line 543, after the `for (let y = 0; ...` loop), add:
+
+```typescript
+// ---- Extract representative paths (gated to avoid overhead in SWR optimizer) ----
+let representativePaths: RepresentativePath[] | undefined
+if (params.extractPaths) {
+  const TARGET_PERCENTILES = [10, 25, 50, 75, 90]
+  representativePaths = []
+
+  // Collect retirement-age balances once
+  const retYearIdx = nYearsAccum  // index into balances array at retirement
+  const retCol: number[] = new Array(nSims)
+  for (let s = 0; s < nSims; s++) {
+    retCol[s] = balances[s][retYearIdx]
+  }
+
+  for (const pct of TARGET_PERCENTILES) {
+    const targetVal = percentile(retCol, pct)
+
+    // Find the sim whose retirement balance is closest to the target percentile
+    let bestSim = 0
+    let bestDist = Math.abs(retCol[0] - targetVal)
+    for (let s = 1; s < nSims; s++) {
+      const dist = Math.abs(retCol[s] - targetVal)
+      if (dist < bestDist) {
+        bestDist = dist
+        bestSim = s
+      }
+    }
+
+    representativePaths.push({
+      percentile: pct,
+      simIndex: bestSim,
+      yearlyReturns: portfolioReturns[bestSim].slice(0, nYearsTotal),
+      retirementBalance: balances[bestSim][retYearIdx],
+    })
+  }
+}
+```
+
+Update the return object (around line 662):
+
+```typescript
+return {
+  success_rate: successRate,
+  percentile_bands: percentileBands,
+  terminal_stats: terminalStats,
+  failure_distribution: failureDistribution,
+  withdrawal_bands: withdrawalBands,
+  spending_metrics: spendingMetrics,
+  histogram_snapshots: histogramSnapshots,
+  representative_paths: representativePaths,
+  representative_paths_start_age: params.extractPaths ? currentAge : undefined,
+}
+```
+
+Also update `MonteCarloEngineResult` (the `Omit` type near line 53) — since `representative_paths` and `representative_paths_start_age` are optional on `MonteCarloResult`, and the engine returns them conditionally, ensure the `Omit` type doesn't strip them. Check if these new fields need explicit inclusion.
 
 **Step 5: Run test to verify it passes**
 
@@ -131,10 +189,10 @@ Expected: PASS
 ```
 feat(simulation): extract representative paths from MC engine
 
-After running 10K simulations, identify the 5 sims closest to
-p10/p25/p50/p75/p90 at retirement age and return their yearly
-portfolio return sequences. These enable post-hoc reconstruction
-of full projection tables for each percentile scenario.
+After running 10K simulations, when extractPaths flag is set,
+identify the 5 sims closest to p10/p25/p50/p75/p90 at retirement
+age and return their yearly portfolio return sequences. Gated
+behind a flag to avoid overhead in SWR optimizer binary search.
 ```
 
 ---
@@ -184,6 +242,16 @@ describe('yearlyReturns override', () => {
       expect(result1.rows[i].sgTax).toBe(result2.rows[i].sgTax)
     }
   })
+
+  it('falls back to deterministic return when yearlyReturns is shorter than timeline', () => {
+    // Projection has totalYears+1 iterations but MC only provides totalYears returns.
+    // The last year (age = lifeExpectancy) should fall back gracefully.
+    const nYears = validParams.lifeExpectancy - validParams.currentAge
+    const shortReturns = Array(nYears).fill(0.10)  // exactly nYears, one short of totalYears+1
+    const result = generateProjection({ ...validParams, yearlyReturns: shortReturns })
+    // Should not throw, should produce valid rows
+    expect(result.rows).toHaveLength(nYears + 1)
+  })
 })
 ```
 
@@ -202,13 +270,25 @@ In `frontend/src/lib/calculations/projection.ts`, add to the interface (after li
 export interface ProjectionParams {
   // ...existing fields...
   withdrawalBasis: 'expenses' | 'rate'
-  yearlyReturns?: number[]  // MC-sourced portfolio returns per year, indexed by (age - currentAge)
+  yearlyReturns?: number[]  // MC-sourced GROSS portfolio returns per year, indexed by (age - currentAge).
+                             // These are gross returns (before expense ratio). The projection engine
+                             // subtracts expenseRatio when applying them, same as it does for deterministic returns.
 }
 ```
 
 **Step 4: Implement the override in the projection loop**
 
-In `generateProjection()`, find the return rate computation block (around lines 351-356):
+In `generateProjection()`, destructure `yearlyReturns` at the top (around line 222 where other params are destructured):
+
+```typescript
+const {
+  // ...existing destructuring...
+  withdrawalBasis,
+  yearlyReturns,
+} = params
+```
+
+Find the return rate computation block (around lines 351-356):
 
 ```typescript
 // Current code:
@@ -226,24 +306,17 @@ Replace with:
 let returnRate: number
 const yearIndex = age - currentAge
 if (yearlyReturns && yearIndex < yearlyReturns.length) {
-  // MC-sourced return for this specific year — expense ratio already factored
-  // in by the MC engine, but we apply it here to match the deterministic path format
+  // MC-sourced gross return for this year. Subtract expense ratio here,
+  // matching the deterministic path where expenseRatio is also subtracted.
+  // This is NOT double-counting: MC portfolioReturns are gross, and the MC
+  // engine applies expenseRatio in its own balance transition (line 385),
+  // but we're replaying through the projection engine which applies it here.
   returnRate = yearlyReturns[yearIndex] - expenseRatio
 } else if (usePortfolioReturn && assetReturns.length === weights.length) {
   returnRate = calculatePortfolioReturn(weights, assetReturns) - expenseRatio
 } else {
   returnRate = expectedReturn - expenseRatio
 }
-```
-
-Also destructure `yearlyReturns` from params at the top of the function where other params are destructured (around line 222):
-
-```typescript
-const {
-  // ...existing destructuring...
-  withdrawalBasis,
-  yearlyReturns,
-} = params
 ```
 
 **Step 5: Run test to verify it passes**
@@ -262,10 +335,9 @@ Expected: All existing tests still pass (the optional field doesn't affect exist
 feat(projection): support yearlyReturns override for MC-driven projections
 
 When yearlyReturns is provided in ProjectionParams, the projection
-engine uses those MC-sourced returns instead of the deterministic
-expected return. All other calculations (income, CPF, tax, expenses)
-remain identical, enabling full ProjectionRow reconstruction from
-a representative MC simulation path.
+engine uses those MC-sourced gross returns instead of the deterministic
+expected return. Expense ratio is subtracted once (not double-counted).
+All other calculations (income, CPF, tax, expenses) remain identical.
 ```
 
 ---
@@ -278,57 +350,34 @@ a representative MC simulation path.
 
 **Step 1: Extract column definitions**
 
-Create `frontend/src/components/shared/projectionColumns.tsx` containing the shared column definitions, helper functions, and group constants currently in `ProjectionPage.tsx`:
+Create `frontend/src/components/shared/projectionColumns.tsx` containing the shared column definitions, helper functions, and group constants currently in `ProjectionPage.tsx`.
+
+Extract from `ProjectionPage.tsx`:
+- `columnHelper` (line 48)
+- `ColumnGroup` type (line 50)
+- `COLUMN_GROUPS` (lines 52-59)
+- `GROUP_COLUMNS` (lines 61-68)
+- `DEFAULT_COLUMN_IDS` (line 70)
+- `currencyCell` (lines 72-74)
+- `optionalCurrencyCell` (lines 76-78)
+- The full column array from the `useMemo` (lines 312-530+)
+
+Wrap the column array in a function:
 
 ```typescript
-import {
-  createColumnHelper,
-  type ColumnDef,
-} from '@tanstack/react-table'
-import type { ProjectionRow } from '@/lib/types'
-import { formatCurrency, formatPercent } from '@/lib/utils'
-
-const columnHelper = createColumnHelper<ProjectionRow>()
-
-export type ColumnGroup = 'expensesBreakdown' | 'incomeBreakdown' | 'taxCpf' | 'cpfBalances' | 'portfolio' | 'property'
-
-export const COLUMN_GROUPS: { key: ColumnGroup; label: string }[] = [
-  { key: 'expensesBreakdown', label: 'Expenses Breakdown' },
-  { key: 'incomeBreakdown', label: 'Income Breakdown' },
-  { key: 'taxCpf', label: 'Tax & CPF' },
-  { key: 'cpfBalances', label: 'CPF Balances' },
-  { key: 'portfolio', label: 'Portfolio' },
-  { key: 'property', label: 'Property & Events' },
-]
-
-export const GROUP_COLUMNS: Record<ColumnGroup, string[]> = {
-  // Copy exact values from ProjectionPage.tsx lines 61-68
-}
-
-export const DEFAULT_COLUMN_IDS = ['age', 'totalIncome', 'annualExpenses', 'mortgageCashPayment', 'savingsOrWithdrawal', 'portfolioReturnDollar', 'liquidNW', 'cpfTotal', 'totalNW', 'fireProgress']
-
-function currencyCell(value: number): string {
-  return formatCurrency(value)
-}
-
-function optionalCurrencyCell(value: number): string {
-  return value > 0 ? formatCurrency(value) : '-'
-}
-
-// Export the full column definition builder
-// Takes retirementAge and hasMortgage as params since some columns conditionally hide
 export function buildProjectionColumns(
   retirementAge: number,
   hasMortgage: boolean,
 ): ColumnDef<ProjectionRow, number | string>[] {
-  // Copy the full column array from ProjectionPage.tsx useMemo (lines 312-530+)
-  // Return the array directly
+  return [
+    // Copy the full column array from ProjectionPage.tsx useMemo
+  ]
 }
 ```
 
 **Step 2: Update ProjectionPage.tsx to import from shared module**
 
-Replace the local column definitions in `ProjectionPage.tsx` with imports:
+Replace local definitions with imports:
 
 ```typescript
 import {
@@ -367,10 +416,130 @@ so the new MC Projection Table can reuse them without duplication.
 
 ---
 
-## Task 4: Build the `MCProjectionTable` component
+## Task 4: Lift `useMonteCarloQuery()` to `StressTestPage` and pass to `MonteCarloTab`
+
+**Files:**
+- Modify: `frontend/src/pages/StressTestPage.tsx`
+
+This is the critical fix for Codex issue #1. Currently `useMonteCarloQuery()` is called inside `MonteCarloTab` (line 75), but the projection table tab needs access to `data` from the parent `StressTestPage`.
+
+**Step 1: Lift the hook**
+
+Move `useMonteCarloQuery()` from `MonteCarloTab` to `StressTestPage`:
+
+```typescript
+export function StressTestPage() {
+  // ...existing code...
+  const { mutate, data: mcData, isPending, error, canRun, validationErrors, isStale, reset } = useMonteCarloQuery()
+
+  return (
+    // ...
+    <MonteCarloTab
+      isAdvanced={isStressAdvanced}
+      mutate={mutate}
+      data={mcData}
+      isPending={isPending}
+      error={error}
+      canRun={canRun}
+      validationErrors={validationErrors}
+      isStale={isStale}
+      reset={reset}
+    />
+    // ...
+  )
+}
+```
+
+Update `MonteCarloTab` to accept props instead of calling the hook:
+
+```typescript
+interface MonteCarloTabProps {
+  isAdvanced: boolean
+  mutate: () => void
+  data: MonteCarloResult | undefined
+  isPending: boolean
+  error: Error | null
+  canRun: boolean
+  validationErrors: Record<string, string>
+  isStale: boolean
+  reset: () => void
+}
+
+function MonteCarloTab({
+  isAdvanced,
+  mutate, data, isPending, error, canRun, validationErrors, isStale, reset,
+}: MonteCarloTabProps) {
+  // Remove: const { mutate, data, isPending, error, canRun, validationErrors, isStale } = useMonteCarloQuery()
+  // Keep everything else the same
+```
+
+**Step 2: Verify types compile and existing MC functionality works**
+
+Run: `cd frontend && npm run type-check`
+Run: `cd frontend && npm run dev -- --port 5173` and verify MC simulation still works
+
+**Step 3: Commit**
+
+```
+refactor: lift useMonteCarloQuery to StressTestPage
+
+Move the MC query hook from MonteCarloTab to its parent so the
+MC result data is accessible for the upcoming projection table tab.
+MonteCarloTab now receives data via props instead of calling the
+hook directly.
+```
+
+---
+
+## Task 5: Set `extractPaths: true` in `useMonteCarloQuery`
+
+**Files:**
+- Modify: `frontend/src/hooks/useMonteCarloQuery.ts` (line ~378)
+
+**Step 1: Add the flag**
+
+In `useMonteCarloQuery.ts`, find where `MonteCarloEngineParams` is constructed (around line 355):
+
+```typescript
+const params: MonteCarloEngineParams = {
+  // ...existing fields...
+  withdrawalBasis: simulation.withdrawalBasis,
+  extractPaths: true,  // Enable representative path extraction for projection table
+}
+```
+
+**Step 2: Verify worker passes it through**
+
+Read `simulation.worker.ts` and `workerClient.ts` to confirm:
+1. The worker passes the full params object to `runMonteCarlo()` (not cherry-picking fields)
+2. The result is returned as-is via `postMessage` (not filtering fields)
+
+The structured clone algorithm handles plain objects/arrays, so `representative_paths` will serialize correctly.
+
+**Step 3: Commit**
+
+```
+feat: enable representative path extraction in MC query hook
+```
+
+---
+
+## Task 6: Build the `MCProjectionTable` component
 
 **Files:**
 - Create: `frontend/src/components/simulation/MCProjectionTable.tsx`
+
+**IMPORTANT: Param source mismatch fix (Codex issue #2)**
+
+The MC engine may run with different params than `useProjection()` provides:
+- In `fireTarget` analysis mode: MC starts at `retirementAge` with `fireNumber` as portfolio, skipping accumulation
+- In `myPlan` mode: MC starts at `currentAge` with `liquidNetWorth + CPF`, running accumulation
+
+`useProjection()` always starts at `currentAge` with `liquidNetWorth`. This is correct for the projection replay because we WANT the full timeline. The `yearlyReturns` array from MC may be shorter than the projection timeline (in `fireTarget` mode). We handle this with `representative_paths_start_age`:
+
+- If MC started at `retirementAge` (fireTarget), the yearlyReturns only cover post-retirement years
+- We offset the returns: `yearlyReturns` index 0 corresponds to `representative_paths_start_age`, not necessarily `currentAge`
+- Pre-retirement years fall back to the deterministic return (which is fine: the user chose to skip accumulation analysis)
 
 **Step 1: Create the component**
 
@@ -382,8 +551,8 @@ import {
   flexRender,
   type VisibilityState,
 } from '@tanstack/react-table'
-import type { MonteCarloResult, ProjectionRow, RepresentativePath } from '@/lib/types'
-import { generateProjection, type ProjectionParams } from '@/lib/calculations/projection'
+import type { MonteCarloResult, ProjectionRow } from '@/lib/types'
+import { generateProjection } from '@/lib/calculations/projection'
 import { useProjection } from '@/hooks/useProjection'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -422,37 +591,58 @@ export function MCProjectionTable({ result }: MCProjectionTableProps) {
     ) ?? null
   }, [result.representative_paths, selectedPercentile])
 
-  // Generate full projection using MC returns
+  // Generate full projection using MC returns, with timeline alignment
   const rows = useMemo(() => {
     if (!selectedPath || !projectionParams) return null
+
+    // Align MC returns to projection timeline.
+    // MC may have started at a different age (fireTarget mode starts at retirementAge).
+    // Projection always starts at currentAge.
+    const mcStartAge = result.representative_paths_start_age ?? projectionParams.currentAge
+    const projStartAge = projectionParams.currentAge
+    const totalYears = projectionParams.lifeExpectancy - projStartAge
+
+    let alignedReturns: number[]
+    if (mcStartAge === projStartAge) {
+      // Common case: MC and projection share the same timeline
+      alignedReturns = selectedPath.yearlyReturns
+    } else {
+      // fireTarget mode: MC returns only cover post-retirement.
+      // Pad pre-retirement years with undefined (will fall back to deterministic).
+      const offset = mcStartAge - projStartAge
+      alignedReturns = new Array(totalYears).fill(undefined)
+      for (let i = 0; i < selectedPath.yearlyReturns.length; i++) {
+        const projIndex = offset + i
+        if (projIndex >= 0 && projIndex < totalYears) {
+          alignedReturns[projIndex] = selectedPath.yearlyReturns[i]
+        }
+      }
+    }
+
     const { rows } = generateProjection({
       ...projectionParams,
-      yearlyReturns: selectedPath.yearlyReturns,
+      yearlyReturns: alignedReturns,
     })
     return rows
-  }, [selectedPath, projectionParams])
+  }, [selectedPath, projectionParams, result.representative_paths_start_age])
 
   // Column visibility (same logic as ProjectionPage)
   const columnVisibility = useMemo((): VisibilityState => {
     const vis: VisibilityState = {}
-    // Start with all columns hidden
     for (const group of COLUMN_GROUPS) {
       for (const colId of GROUP_COLUMNS[group.key]) {
         vis[colId] = expandedGroups.has(group.key)
       }
     }
-    // Default columns always visible
     for (const id of DEFAULT_COLUMN_IDS) {
       vis[id] = true
     }
-    // Hide mortgage if no mortgage data
     if (rows && rows.every(r => r.mortgageCashPayment === 0)) {
       vis['mortgageCashPayment'] = false
     }
     return vis
   }, [expandedGroups, rows])
 
-  // Build columns (reuse shared module)
   const retirementAge = projectionParams?.retirementAge ?? 55
   const hasMortgage = rows ? rows.some(r => r.mortgageCashPayment > 0) : false
   const columns = useMemo(
@@ -600,20 +790,20 @@ Expected: Zero errors
 ```
 feat(ui): add MCProjectionTable component
 
-New component renders a full year-by-year projection table for
-a selected MC percentile scenario. Reuses shared column definitions
-and the existing generateProjection() engine with yearlyReturns
-override for instant reconstruction.
+Renders a full year-by-year projection table for a selected MC
+percentile scenario. Handles timeline alignment between MC and
+projection engines (including fireTarget analysis mode). Reuses
+shared column definitions from projectionColumns module.
 ```
 
 ---
 
-## Task 5: Wire MCProjectionTable into StressTestPage
+## Task 7: Wire MCProjectionTable into StressTestPage tabs
 
 **Files:**
-- Modify: `frontend/src/pages/StressTestPage.tsx` (lines 600-622)
+- Modify: `frontend/src/pages/StressTestPage.tsx`
 
-**Step 1: Add the new tab**
+**Step 1: Add the tab (uses lifted `mcData` from Task 4)**
 
 Import the component:
 
@@ -621,110 +811,72 @@ Import the component:
 import { MCProjectionTable } from '@/components/simulation/MCProjectionTable'
 ```
 
-Find the MonteCarloTab reference to get the MC result data. Look at how `data` flows from `useMonteCarloQuery()` (line 75) to `MonteCarloTab`. The `data` is `MonteCarloResult | undefined`.
-
-Update the Tabs section (around line 600):
+In `StressTestPage`, update the Tabs section to add the projection table tab. Since `mcData` is now available at this level (from Task 4), this works directly:
 
 ```tsx
+const hasResults = !!mcData
+
 <Tabs defaultValue="monte-carlo" onValueChange={(tab) => trackEvent('stress_test_tab_changed', { tab })}>
-  <TabsList className={`grid w-full ${isStressAdvanced ? (data ? 'grid-cols-4' : 'grid-cols-3') : (data ? 'grid-cols-2' : 'grid-cols-1')}`}>
+  <TabsList className={`grid w-full grid-cols-${
+    (hasResults ? 1 : 0) + 1 + (isStressAdvanced ? 2 : 0)
+  }`}>
     <TabsTrigger value="monte-carlo">Monte Carlo</TabsTrigger>
-    {data && <TabsTrigger value="mc-projection">Projection Table</TabsTrigger>}
+    {hasResults && <TabsTrigger value="mc-projection">Projection Table</TabsTrigger>}
     {isStressAdvanced && <TabsTrigger value="backtest">Historical Backtest</TabsTrigger>}
     {isStressAdvanced && <TabsTrigger value="sequence-risk">Sequence Risk</TabsTrigger>}
   </TabsList>
 
   <TabsContent value="monte-carlo">
-    <MonteCarloTab isAdvanced={isStressAdvanced} />
+    <MonteCarloTab
+      isAdvanced={isStressAdvanced}
+      mutate={mutate}
+      data={mcData}
+      isPending={isPending}
+      error={error}
+      canRun={canRun}
+      validationErrors={validationErrors}
+      isStale={isStale}
+      reset={reset}
+    />
   </TabsContent>
 
-  {data && (
+  {hasResults && (
     <TabsContent value="mc-projection">
-      <MCProjectionTable result={data} />
+      <MCProjectionTable result={mcData} />
     </TabsContent>
   )}
 
-  {isStressAdvanced && (
-    <TabsContent value="backtest">
-      <BacktestTab />
-    </TabsContent>
-  )}
-
-  {isStressAdvanced && (
-    <TabsContent value="sequence-risk">
-      <SequenceRiskTab />
-    </TabsContent>
-  )}
+  {/* backtest and sequence-risk tabs unchanged */}
 </Tabs>
 ```
 
-Note: The `data` variable comes from `useMonteCarloQuery()` on line 75. Verify it's in scope at the Tabs rendering location. If it's not directly accessible (e.g., it's inside `MonteCarloTab`), you may need to lift it up. Check the component structure carefully.
+Note: The dynamic `grid-cols-N` may need a safelist in Tailwind config or use explicit class mapping instead of template literal.
 
-**Step 2: Verify types compile**
+**Step 2: Verify types compile and manual test**
 
 Run: `cd frontend && npm run type-check`
-
-**Step 3: Manual verification**
-
 Run: `cd frontend && npm run dev -- --port 5173`
 
-1. Navigate to the Stress Test / Monte Carlo page
-2. Run a MC simulation
-3. Verify the "Projection Table" tab appears after simulation completes
-4. Click the tab — should show a year-by-year table with median (p50) selected
-5. Switch percentiles — table values should change (portfolio columns differ, income stays the same)
-6. Toggle column groups — should expand/collapse like the Projection page
+1. Navigate to Stress Test page
+2. Run MC simulation
+3. Verify "Projection Table" tab appears
+4. Click it — should show table with median (p50) selected
+5. Switch percentiles — portfolio columns change, income stays same
+6. Toggle column groups — expand/collapse works
 
-**Step 4: Commit**
+**Step 3: Commit**
 
 ```
 feat(ui): wire MC projection table tab into StressTestPage
 
-After running a Monte Carlo simulation, a new "Projection Table"
-tab appears alongside existing results. Users can select a
-percentile scenario to view the full year-by-year projection.
+After MC simulation completes, a new "Projection Table" tab
+appears. Users can select a percentile to see the full year-by-year
+projection under that market scenario.
 ```
 
 ---
 
-## Task 6: Pass `representative_paths` through the worker boundary
-
-**Files:**
-- Check: `frontend/src/lib/simulation/simulation.worker.ts`
-- Check: `frontend/src/lib/simulation/workerClient.ts`
-
-The worker serializes the return value of `runMonteCarlo()` via `postMessage`. Since `representative_paths` is a plain array of objects with number arrays, it should serialize automatically via the structured clone algorithm. However, verify this explicitly.
-
-**Step 1: Check worker return path**
-
-Read `simulation.worker.ts` and verify that the MC result object is passed through without field filtering. If the worker manually constructs the response (cherry-picking fields), you'll need to add `representative_paths`.
-
-**Step 2: Check workerClient deserialization**
-
-Read `workerClient.ts` and verify the result type matches. If it casts to `MonteCarloResult`, the new field should come through since it's optional.
-
-**Step 3: If changes needed, implement them**
-
-If the worker filters fields, add `representative_paths` to the pass-through.
-
-**Step 4: Integration test**
-
-Run the full app, trigger MC simulation, and verify `result.representative_paths` is populated in the browser console:
-
-```javascript
-// In browser devtools after MC completes:
-// The MCProjectionTable component will log if paths are missing
-```
-
-**Step 5: Commit (if changes were needed)**
-
-```
-fix(worker): pass representative_paths through worker boundary
-```
-
----
-
-## Task 7: End-to-end verification and edge cases
+## Task 8: End-to-end verification and edge cases
 
 **Files:**
 - Modify: `frontend/src/lib/simulation/monteCarlo.test.ts` (add edge case tests)
@@ -739,21 +891,29 @@ describe('representative paths edge cases', () => {
       retirementAge: 55,
       annualSavings: [],
       nSimulations: 100,
+      extractPaths: true,
     })
     const result = runMonteCarlo(params as MonteCarloEngineParams)
     expect(result.representative_paths).toHaveLength(5)
-    // When already retired, retirement balance = initial portfolio for all
     for (const path of result.representative_paths!) {
       expect(path.yearlyReturns).toHaveLength(35) // 90 - 55
     }
+    expect(result.representative_paths_start_age).toBe(55)
   })
 
-  it('paths have distinct sim indices for different percentiles', () => {
-    const params = makeDefaultParams({ nSimulations: 1000, seed: 42 })
+  it('p10 retirement balance is less than p90 retirement balance', () => {
+    const params = makeDefaultParams({ nSimulations: 1000, seed: 42, extractPaths: true })
     const result = runMonteCarlo(params as MonteCarloEngineParams)
-    const indices = result.representative_paths!.map(p => p.simIndex)
-    // p10 and p90 should be different sims (very unlikely to be the same)
-    expect(indices[0]).not.toBe(indices[4])
+    const p10 = result.representative_paths!.find(p => p.percentile === 10)!
+    const p90 = result.representative_paths!.find(p => p.percentile === 90)!
+    expect(p10.retirementBalance).toBeLessThan(p90.retirementBalance)
+  })
+
+  it('returns undefined paths when extractPaths is not set', () => {
+    const params = makeDefaultParams({ nSimulations: 100 })
+    const result = runMonteCarlo(params as MonteCarloEngineParams)
+    expect(result.representative_paths).toBeUndefined()
+    expect(result.representative_paths_start_age).toBeUndefined()
   })
 })
 ```
@@ -773,7 +933,8 @@ Expected: Zero errors
 ```
 test: add edge case tests for MC representative paths
 
-Cover already-retired scenario and distinct sim index verification.
+Cover already-retired scenario, percentile ordering invariant,
+and extractPaths flag gating.
 ```
 
 ---
@@ -783,26 +944,26 @@ Cover already-retired scenario and distinct sim index verification.
 | File | Action | Task |
 |------|--------|------|
 | `frontend/src/lib/types.ts` | Add `RepresentativePath`, update `MonteCarloResult` | 1 |
-| `frontend/src/lib/simulation/monteCarlo.ts` | Extract representative paths after simulation | 1 |
-| `frontend/src/lib/simulation/monteCarlo.test.ts` | Add tests for representative paths | 1, 7 |
+| `frontend/src/lib/simulation/monteCarlo.ts` | Add `extractPaths` flag, extract paths | 1 |
+| `frontend/src/lib/simulation/monteCarlo.test.ts` | Tests for paths + edge cases | 1, 8 |
 | `frontend/src/lib/calculations/projection.ts` | Add `yearlyReturns` to params + override logic | 2 |
-| `frontend/src/lib/calculations/projection.test.ts` | Add tests for yearlyReturns override | 2 |
+| `frontend/src/lib/calculations/projection.test.ts` | Tests for yearlyReturns override | 2 |
 | `frontend/src/components/shared/projectionColumns.tsx` | Extract shared column definitions | 3 |
 | `frontend/src/pages/ProjectionPage.tsx` | Import from shared columns module | 3 |
-| `frontend/src/components/simulation/MCProjectionTable.tsx` | New component | 4 |
-| `frontend/src/pages/StressTestPage.tsx` | Add projection table tab | 5 |
-| `frontend/src/lib/simulation/simulation.worker.ts` | Verify pass-through (may need change) | 6 |
-| `frontend/src/lib/simulation/workerClient.ts` | Verify type compatibility | 6 |
+| `frontend/src/pages/StressTestPage.tsx` | Lift MC hook, add projection tab | 4, 7 |
+| `frontend/src/hooks/useMonteCarloQuery.ts` | Set `extractPaths: true` | 5 |
+| `frontend/src/components/simulation/MCProjectionTable.tsx` | New component with timeline alignment | 6 |
 
 ## Dependency Graph
 
 ```
-Task 1 (MC engine) ──┐
-                      ├──► Task 4 (MCProjectionTable) ──► Task 5 (wire into page) ──► Task 7 (e2e)
-Task 2 (projection)──┘                                          ▲
-                                                                 │
-Task 3 (extract columns)────────────────────────────────────────┘
-Task 6 (worker check) ─────────────────────────────────────────┘
+Task 1 (MC engine + types) ──┐
+                               ├──► Task 6 (MCProjectionTable) ──► Task 7 (wire tab) ──► Task 8 (e2e)
+Task 2 (projection override)──┘            ▲                            ▲
+                                           │                            │
+Task 3 (extract columns)──────────────────┘                            │
+Task 4 (lift MC hook) ────────────────────────────────────────────────┘
+Task 5 (set extractPaths) ────────────────────────────────────────────┘
 ```
 
-**Parallelizable:** Tasks 1, 2, and 3 are independent and can run in parallel. Task 6 can run in parallel with Task 4.
+**Parallelizable:** Tasks 1, 2, 3, 4, and 5 are all independent and can run in parallel. Tasks 6 and 7 depend on all of them.
