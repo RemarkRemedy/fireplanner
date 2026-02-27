@@ -161,8 +161,8 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
             </div>
             <p className="text-xs text-muted-foreground">
               {simulation.deterministicAccumulation
-                ? 'Every simulation arrives at retirement with the same portfolio. Tests: "If savings go as planned, does retirement survive?"'
-                : 'Some simulations arrive at retirement with less than expected. Produces lower success rates and safe withdrawal rates, but more realistic.'}
+                ? 'Assumes average market luck until retirement. Every simulation starts decumulation with the same portfolio.'
+                : 'Considers both lucky and unlucky markets before retirement. Some simulations arrive with much more, others much less. More realistic, but produces lower success rates.'}
             </p>
           </div>
         </div>
