@@ -13,6 +13,16 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: '2026-02-27',
+    category: 'fix',
+    title: 'FIRE Target mode disabled (incorrect simulation horizon)',
+    description:
+      'The FIRE Target analysis mode has been temporarily disabled on both Withdrawal and Stress Test pages. The simulation was using the profile retirement age (e.g. 65) as the start instead of the calculated FIRE age (e.g. 42), testing the FIRE number over a much shorter period than it was designed for. This produced artificially high success rates. Users who had FIRE Target selected are automatically switched to My Plan mode.',
+    affectedSections: ['section-stress-test', 'section-withdrawal'],
+    insight:
+      'A FIRE number of $2.1M sized for 48 years of withdrawals (age 42→90) was being tested over only 25 years (age 65→90). The portfolio was nearly 2x oversized for that shorter period, so the simulation always showed ~100% success with large terminal values.',
+  },
+  {
+    date: '2026-02-27',
     category: 'feature' as const,
     title: 'Withdrawal Basis Toggle',
     description:

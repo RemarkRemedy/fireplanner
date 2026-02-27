@@ -3731,3 +3731,95 @@ describe('sumPostRetirementIncome', () => {
     expect(sumPostRetirementIncome(makeRow())).toBe(0)
   })
 })
+
+// ============================================================
+// SRS contribution impact on annual savings
+// ============================================================
+
+describe('SRS contribution deducted from annual savings', () => {
+  const baseSrsParams = {
+    currentAge: 30,
+    retirementAge: 65,
+    lifeExpectancy: 80,
+    salaryModel: 'simple' as const,
+    annualSalary: 100000,
+    salaryGrowthRate: 0,
+    realisticPhases: DEFAULT_CAREER_PHASES,
+    promotionJumps: [],
+    momEducation: 'degree' as const,
+    momAdjustment: 1.0,
+    employerCpfEnabled: true,
+    incomeStreams: [] as IncomeStream[],
+    lifeEvents: [] as LifeEvent[],
+    lifeEventsEnabled: false,
+    annualExpenses: 30000,
+    inflation: 0,
+    personalReliefs: 0,
+    residencyStatus: 'citizen' as const,
+    initialCpfOA: 0,
+    initialCpfSA: 0,
+    initialCpfMA: 0,
+    srsBalance: 0,
+    srsInvestmentReturn: 0.04,
+    srsDrawdownStartAge: 63,
+  }
+
+  it('SRS contribution reduces annual savings', () => {
+    const withSrs = generateIncomeProjection({
+      ...baseSrsParams,
+      srsAnnualContribution: 15300,
+    })
+    const withoutSrs = generateIncomeProjection({
+      ...baseSrsParams,
+      srsAnnualContribution: 0,
+    })
+
+    const row = withSrs.find(r => r.age === 30)!
+    const rowNoSrs = withoutSrs.find(r => r.age === 30)!
+
+    // Savings should be lower by approximately the SRS contribution
+    // (not exact due to SRS tax deduction effect on totalNet)
+    expect(row.annualSavings).toBeLessThan(rowNoSrs.annualSavings)
+    expect(rowNoSrs.annualSavings - row.annualSavings).toBeGreaterThan(14000)
+  })
+
+  it('capped SRS amount is deducted, not raw request', () => {
+    // Request $20,000 but citizen cap is $15,300
+    const rows = generateIncomeProjection({
+      ...baseSrsParams,
+      srsAnnualContribution: 20000,
+      residencyStatus: 'citizen',
+    })
+    const rowsCapped = generateIncomeProjection({
+      ...baseSrsParams,
+      srsAnnualContribution: 15300,
+      residencyStatus: 'citizen',
+    })
+
+    const row = rows.find(r => r.age === 30)!
+    const rowCapped = rowsCapped.find(r => r.age === 30)!
+
+    // Both should produce the same savings (both capped at $15,300)
+    expect(row.annualSavings).toBe(rowCapped.annualSavings)
+    expect(row.srsContribution).toBe(15300)
+  })
+
+  it('annual savings goes negative when contributions exceed surplus', () => {
+    // Low income: salary $50,000, expenses $30,000
+    // After CPF employee 20% ($10,000), totalNet ≈ $40,000 - tax
+    // surplus ≈ $40,000 - tax - $30,000 ≈ ~$10,000
+    // SRS $15,300 + CPF top-up $8,000 = $23,300 > surplus
+    const rows = generateIncomeProjection({
+      ...baseSrsParams,
+      annualSalary: 50000,
+      srsAnnualContribution: 15300,
+      cpfTopUpSA: 8000,
+    })
+
+    const row = rows.find(r => r.age === 30)!
+    // annualSavings should be negative: surplus can't cover both contributions
+    expect(row.annualSavings).toBeLessThan(0)
+    // But SRS and CPF contributions still happen
+    expect(row.srsContribution).toBe(15300)
+  })
+})

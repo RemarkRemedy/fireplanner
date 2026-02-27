@@ -53,10 +53,10 @@ export function TaxReliefSection() {
     [srsAnnualContribution, residencyStatus]
   )
 
-  // Auto-compute RSTU deduction (capped at $8,000)
+  // Auto-compute RSTU deduction (capped at $8,000, only applies with active salary)
   const rstuDeduction = useMemo(
-    () => Math.min(cpfTopUpSA ?? 0, RSTU_TAX_RELIEF_CAP),
-    [cpfTopUpSA]
+    () => income.annualSalary > 0 ? Math.min(cpfTopUpSA ?? 0, RSTU_TAX_RELIEF_CAP) : 0,
+    [cpfTopUpSA, income.annualSalary]
   )
 
   const toggleMode = useCallback((detailed: boolean) => {

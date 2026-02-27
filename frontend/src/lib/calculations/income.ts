@@ -672,7 +672,10 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
     const voluntaryTopUps = salary > 0
       ? (params.cpfTopUpOA ?? 0) + (params.cpfTopUpSA ?? 0) + (params.cpfTopUpMA ?? 0)
       : 0
-    const annualSavings = savingsPaused ? 0 : Math.max(0, totalNet - inflationAdjustedExpenses - voluntaryTopUps - srsContribution)
+    // Clamp expense surplus at 0 (expense shortfall handled by incomeShortfall in projection.ts),
+    // then subtract voluntary contributions — allowing negative when contributions exceed surplus
+    const surplus = Math.max(0, totalNet - inflationAdjustedExpenses)
+    const annualSavings = savingsPaused ? 0 : surplus - voluntaryTopUps - srsContribution
     cumulativeSavings += annualSavings
 
     const activeLifeEvents = getActiveLifeEventNames(age, params.lifeEvents, params.lifeEventsEnabled)
