@@ -10,17 +10,24 @@
 
 ---
 
-## Review Corrections (from Codex review)
+## Review Corrections
 
-This plan addresses 7 issues found during code review:
+### Round 1 (Codex review #1)
+1. **`data` scoping** — Lift `useMonteCarloQuery()` to `StressTestPage`, pass props to `MonteCarloTab`.
+2. **Param source mismatch** — Use `yearlyReturnsOffset` to align MC returns to projection timeline (see Task 2/6).
+3. **Timeline off-by-one** — Last row (age = lifeExpectancy) falls back to deterministic return. Acceptable.
+4. **Expense ratio** — `portfolioReturns` are gross. Projection subtracts `expenseRatio` once. No double-counting.
+5. **Naming** — `representative_paths` (snake_case).
+6. **SWR optimizer overhead** — Gate with `extractPaths` flag.
+7. **Flaky test** — Assert `p10 < p90` instead of distinct indices.
 
-1. **`data` scoping** — `useMonteCarloQuery()` is called inside `MonteCarloTab` (line 75), not in `StressTestPage`. Fixed: lift the hook to `StressTestPage` and pass props down.
-2. **Param source mismatch** — `useProjection()` uses raw store state (`profile.liquidNetWorth`, `profile.currentAge`), but MC uses analysis-mode-adjusted values (`analysisPortfolio.initialPortfolio`, possibly `skipAccumulation`). Fixed: `MCProjectionTable` uses `useProjection()` for base params BUT offsets `yearlyReturns` using `effectiveStartAge` stored with the paths. In `fireTarget` mode (skipAccumulation), pre-retirement years use deterministic returns and post-retirement uses MC returns.
-3. **Timeline off-by-one** — Projection loops `i = 0..totalYears` (inclusive, `totalYears+1` iterations), but MC generates `nYearsTotal` returns. The last row (age = lifeExpectancy) falls back to deterministic return. This is acceptable and documented.
-4. **Expense ratio** — `portfolioReturns` in MC are **gross** returns (fee subtracted during balance transitions, not baked into returns). Projection subtracts `expenseRatio` once. Correct: single deduction, no double-counting. Comments fixed.
-5. **Naming** — Consistently use `representative_paths` (snake_case matching existing `MonteCarloResult` fields like `success_rate`, `percentile_bands`).
-6. **SWR optimizer overhead** — Gate path extraction with `extractPaths` flag on `MonteCarloEngineParams`. SWR optimizer doesn't set it.
-7. **Flaky test** — Replace "distinct indices" assertion with "p10 retirement balance < p90 retirement balance" (always true by definition).
+### Round 2 (Codex review #2)
+8. **SWR optimizer still gets `extractPaths`** — `simulation.worker.ts:30` passes `e.data.params` to `optimizeSwr`, which spreads into `runMonteCarlo`. Fixed: `swrOptimizer.ts` strips `extractPaths` from baseParams alongside `annualExpensesAtRetirement`.
+9. **`undefined` holes produce NaN** — Padding aligned returns with `undefined` causes `undefined - expenseRatio = NaN`. Fixed: use `yearlyReturnsOffset` parameter on `ProjectionParams` instead of padding. The projection engine computes `mcIndex = yearIndex - offset` and falls back to deterministic when `mcIndex < 0 || mcIndex >= yearlyReturns.length`. No undefined values, type stays `number[]`.
+10. **Percentile paths collapse in fireTarget mode** — When `nYearsAccum = 0`, all sims have the same balance at index 0. Fixed: select representative paths based on terminal balance (end of simulation) when `nYearsAccum = 0`, instead of retirement-age balance.
+11. **Stale-data warning missing on projection tab** — Pass `isStale` to `MCProjectionTable`, show warning banner.
+12. **Dynamic Tailwind classes purged** — Use static class mapping instead of template literal.
+13. **Unused `reset` prop** — Only pass props `MonteCarloTab` actually uses.
 
 ---
 
@@ -130,21 +137,26 @@ if (params.extractPaths) {
   const TARGET_PERCENTILES = [10, 25, 50, 75, 90]
   representativePaths = []
 
-  // Collect retirement-age balances once
-  const retYearIdx = nYearsAccum  // index into balances array at retirement
-  const retCol: number[] = new Array(nSims)
+  // Choose selection point: retirement-age balance for normal mode,
+  // terminal balance for fireTarget mode (nYearsAccum = 0, all sims
+  // have the same initial balance so retirement-age percentiles collapse).
+  const selectionYearIdx = nYearsAccum > 0 ? nYearsAccum : nYearsTotal
+  const selCol: number[] = new Array(nSims)
   for (let s = 0; s < nSims; s++) {
-    retCol[s] = balances[s][retYearIdx]
+    selCol[s] = balances[s][selectionYearIdx]
   }
 
-  for (const pct of TARGET_PERCENTILES) {
-    const targetVal = percentile(retCol, pct)
+  // Also capture retirement-age balance for display purposes
+  const retYearIdx = nYearsAccum
 
-    // Find the sim whose retirement balance is closest to the target percentile
+  for (const pct of TARGET_PERCENTILES) {
+    const targetVal = percentile(selCol, pct)
+
+    // Find the sim whose balance at the selection point is closest
     let bestSim = 0
-    let bestDist = Math.abs(retCol[0] - targetVal)
+    let bestDist = Math.abs(selCol[0] - targetVal)
     for (let s = 1; s < nSims; s++) {
-      const dist = Math.abs(retCol[s] - targetVal)
+      const dist = Math.abs(selCol[s] - targetVal)
       if (dist < bestDist) {
         bestDist = dist
         bestSim = s
@@ -270,21 +282,25 @@ In `frontend/src/lib/calculations/projection.ts`, add to the interface (after li
 export interface ProjectionParams {
   // ...existing fields...
   withdrawalBasis: 'expenses' | 'rate'
-  yearlyReturns?: number[]  // MC-sourced GROSS portfolio returns per year, indexed by (age - currentAge).
-                             // These are gross returns (before expense ratio). The projection engine
-                             // subtracts expenseRatio when applying them, same as it does for deterministic returns.
+  yearlyReturns?: number[]  // MC-sourced GROSS portfolio returns per year.
+                             // Indexed from yearlyReturnsOffset (default 0).
+                             // Gross = before expense ratio. Projection subtracts expenseRatio once.
+  yearlyReturnsOffset?: number  // Age offset: yearlyReturns[0] corresponds to (currentAge + offset).
+                                 // Default 0 (MC and projection start at same age).
+                                 // Set to (retirementAge - currentAge) in fireTarget mode.
 }
 ```
 
 **Step 4: Implement the override in the projection loop**
 
-In `generateProjection()`, destructure `yearlyReturns` at the top (around line 222 where other params are destructured):
+In `generateProjection()`, destructure `yearlyReturns` and `yearlyReturnsOffset` at the top (around line 222 where other params are destructured):
 
 ```typescript
 const {
   // ...existing destructuring...
   withdrawalBasis,
   yearlyReturns,
+  yearlyReturnsOffset = 0,
 } = params
 ```
 
@@ -305,13 +321,13 @@ Replace with:
 ```typescript
 let returnRate: number
 const yearIndex = age - currentAge
-if (yearlyReturns && yearIndex < yearlyReturns.length) {
+const mcIndex = yearIndex - yearlyReturnsOffset
+if (yearlyReturns && mcIndex >= 0 && mcIndex < yearlyReturns.length) {
   // MC-sourced gross return for this year. Subtract expense ratio here,
   // matching the deterministic path where expenseRatio is also subtracted.
-  // This is NOT double-counting: MC portfolioReturns are gross, and the MC
-  // engine applies expenseRatio in its own balance transition (line 385),
-  // but we're replaying through the projection engine which applies it here.
-  returnRate = yearlyReturns[yearIndex] - expenseRatio
+  // portfolioReturns in MC are gross (fee applied in balance transitions),
+  // so this is a single deduction, not double-counting.
+  returnRate = yearlyReturns[mcIndex] - expenseRatio
 } else if (usePortfolioReturn && assetReturns.length === weights.length) {
   returnRate = calculatePortfolioReturn(weights, assetReturns) - expenseRatio
 } else {
@@ -430,20 +446,26 @@ Move `useMonteCarloQuery()` from `MonteCarloTab` to `StressTestPage`:
 ```typescript
 export function StressTestPage() {
   // ...existing code...
-  const { mutate, data: mcData, isPending, error, canRun, validationErrors, isStale, reset } = useMonteCarloQuery()
+  const mc = useMonteCarloQuery()
+  const setSimField = useSimulationStore((s) => s.setField)
+
+  // Move lastMCSuccessRate persistence here (was in MonteCarloTab).
+  // This ensures it updates even when the MC tab is not active.
+  useEffect(() => {
+    if (mc.data) setSimField('lastMCSuccessRate', mc.data.success_rate)
+  }, [mc.data, setSimField])
 
   return (
     // ...
     <MonteCarloTab
       isAdvanced={isStressAdvanced}
-      mutate={mutate}
-      data={mcData}
-      isPending={isPending}
-      error={error}
-      canRun={canRun}
-      validationErrors={validationErrors}
-      isStale={isStale}
-      reset={reset}
+      mutate={mc.mutate}
+      data={mc.data}
+      isPending={mc.isPending}
+      error={mc.error}
+      canRun={mc.canRun}
+      validationErrors={mc.validationErrors}
+      isStale={mc.isStale}
     />
     // ...
   )
@@ -462,14 +484,14 @@ interface MonteCarloTabProps {
   canRun: boolean
   validationErrors: Record<string, string>
   isStale: boolean
-  reset: () => void
 }
 
 function MonteCarloTab({
   isAdvanced,
-  mutate, data, isPending, error, canRun, validationErrors, isStale, reset,
+  mutate, data, isPending, error, canRun, validationErrors, isStale,
 }: MonteCarloTabProps) {
   // Remove: const { mutate, data, isPending, error, canRun, validationErrors, isStale } = useMonteCarloQuery()
+  // Remove: the useEffect for lastMCSuccessRate (moved to parent)
   // Keep everything else the same
 ```
 
@@ -491,14 +513,15 @@ hook directly.
 
 ---
 
-## Task 5: Set `extractPaths: true` in `useMonteCarloQuery`
+## Task 5: Set `extractPaths: true` in `useMonteCarloQuery` and strip in SWR optimizer
 
 **Files:**
 - Modify: `frontend/src/hooks/useMonteCarloQuery.ts` (line ~378)
+- Modify: `frontend/src/lib/simulation/swrOptimizer.ts` (line ~81)
 
-**Step 1: Add the flag**
+**Step 1: Add the flag in `useMonteCarloQuery.ts`**
 
-In `useMonteCarloQuery.ts`, find where `MonteCarloEngineParams` is constructed (around line 355):
+Find where `MonteCarloEngineParams` is constructed (around line 355):
 
 ```typescript
 const params: MonteCarloEngineParams = {
@@ -508,18 +531,46 @@ const params: MonteCarloEngineParams = {
 }
 ```
 
-**Step 2: Verify worker passes it through**
+**Step 2: Strip the flag in `swrOptimizer.ts`**
 
-Read `simulation.worker.ts` and `workerClient.ts` to confirm:
-1. The worker passes the full params object to `runMonteCarlo()` (not cherry-picking fields)
-2. The result is returned as-is via `postMessage` (not filtering fields)
+CRITICAL: `simulation.worker.ts:30` passes `e.data.params` directly to `optimizeSwr()`, which spreads them into `runMonteCarlo()` calls in a loop. Without stripping, path extraction runs ~45 times (15 iterations x 3 confidence levels).
 
-The structured clone algorithm handles plain objects/arrays, so `representative_paths` will serialize correctly.
+In `swrOptimizer.ts`, find the destructuring at line 81:
 
-**Step 3: Commit**
+```typescript
+// Current:
+const { annualExpensesAtRetirement: _, ...restBaseParams } = baseParams
+
+// Replace with:
+const { annualExpensesAtRetirement: _, extractPaths: __, ...restBaseParams } = baseParams
+```
+
+**Step 3: Write a test to verify SWR result doesn't include paths**
+
+```typescript
+// In swrOptimizer.test.ts or monteCarlo.test.ts
+it('SWR optimizer does not extract representative paths', () => {
+  const params = makeDefaultParams({ nSimulations: 100, extractPaths: true })
+  // optimizeSwr calls runMonteCarlo internally but should strip extractPaths
+  const swr = optimizeSwr(0.90, params as SwrBaseParams)
+  expect(typeof swr).toBe('number')
+  // No direct way to verify paths aren't extracted, but the test ensures
+  // optimizeSwr still works correctly when extractPaths is in the input
+})
+```
+
+**Step 4: Verify worker passes data through**
+
+The worker (`simulation.worker.ts`) passes `mcResult` via spread (`...mcResult`) at line 39, so `representative_paths` flows through. `workerClient.ts` types the response as `MonteCarloResult`, which includes the optional field. No changes needed.
+
+**Step 5: Commit**
 
 ```
-feat: enable representative path extraction in MC query hook
+feat: enable path extraction in MC hook, strip in SWR optimizer
+
+Set extractPaths: true when running MC simulation so representative
+paths are returned. Strip the flag in swrOptimizer to prevent
+extraction during binary search iterations (up to 45 calls).
 ```
 
 ---
@@ -529,17 +580,19 @@ feat: enable representative path extraction in MC query hook
 **Files:**
 - Create: `frontend/src/components/simulation/MCProjectionTable.tsx`
 
-**IMPORTANT: Param source mismatch fix (Codex issue #2)**
+**IMPORTANT: Param source and timeline alignment**
 
 The MC engine may run with different params than `useProjection()` provides:
 - In `fireTarget` analysis mode: MC starts at `retirementAge` with `fireNumber` as portfolio, skipping accumulation
 - In `myPlan` mode: MC starts at `currentAge` with `liquidNetWorth + CPF`, running accumulation
 
-`useProjection()` always starts at `currentAge` with `liquidNetWorth`. This is correct for the projection replay because we WANT the full timeline. The `yearlyReturns` array from MC may be shorter than the projection timeline (in `fireTarget` mode). We handle this with `representative_paths_start_age`:
+`useProjection()` always starts at `currentAge` with `liquidNetWorth`. This is correct for the projection replay because we WANT the full timeline. The `yearlyReturns` array from MC may be shorter than the projection timeline (in `fireTarget` mode).
 
-- If MC started at `retirementAge` (fireTarget), the yearlyReturns only cover post-retirement years
-- We offset the returns: `yearlyReturns` index 0 corresponds to `representative_paths_start_age`, not necessarily `currentAge`
-- Pre-retirement years fall back to the deterministic return (which is fine: the user chose to skip accumulation analysis)
+**Timeline alignment via `yearlyReturnsOffset`:**
+- Compute `offset = representative_paths_start_age - projectionParams.currentAge`
+- Pass `yearlyReturnsOffset: offset` to `generateProjection()`
+- The projection engine computes `mcIndex = yearIndex - offset`. When `mcIndex < 0` (pre-retirement years in fireTarget mode), it falls back to deterministic return
+- No `undefined` values, no type changes, no NaN risk
 
 **Step 1: Create the component**
 
@@ -576,9 +629,10 @@ const PERCENTILE_OPTIONS = [
 
 interface MCProjectionTableProps {
   result: MonteCarloResult
+  isStale?: boolean
 }
 
-export function MCProjectionTable({ result }: MCProjectionTableProps) {
+export function MCProjectionTable({ result, isStale }: MCProjectionTableProps) {
   const [selectedPercentile, setSelectedPercentile] = useState('50')
   const { params: projectionParams } = useProjection()
   const [expandedGroups, setExpandedGroups] = useState<Set<ColumnGroup>>(new Set())
@@ -591,37 +645,20 @@ export function MCProjectionTable({ result }: MCProjectionTableProps) {
     ) ?? null
   }, [result.representative_paths, selectedPercentile])
 
-  // Generate full projection using MC returns, with timeline alignment
+  // Generate full projection using MC returns, with timeline alignment via offset
   const rows = useMemo(() => {
     if (!selectedPath || !projectionParams) return null
 
-    // Align MC returns to projection timeline.
-    // MC may have started at a different age (fireTarget mode starts at retirementAge).
-    // Projection always starts at currentAge.
+    // Compute offset: MC may have started at a different age than projection.
+    // In fireTarget mode, MC starts at retirementAge; projection starts at currentAge.
+    // The offset tells the projection engine where yearlyReturns[0] maps to.
     const mcStartAge = result.representative_paths_start_age ?? projectionParams.currentAge
-    const projStartAge = projectionParams.currentAge
-    const totalYears = projectionParams.lifeExpectancy - projStartAge
-
-    let alignedReturns: number[]
-    if (mcStartAge === projStartAge) {
-      // Common case: MC and projection share the same timeline
-      alignedReturns = selectedPath.yearlyReturns
-    } else {
-      // fireTarget mode: MC returns only cover post-retirement.
-      // Pad pre-retirement years with undefined (will fall back to deterministic).
-      const offset = mcStartAge - projStartAge
-      alignedReturns = new Array(totalYears).fill(undefined)
-      for (let i = 0; i < selectedPath.yearlyReturns.length; i++) {
-        const projIndex = offset + i
-        if (projIndex >= 0 && projIndex < totalYears) {
-          alignedReturns[projIndex] = selectedPath.yearlyReturns[i]
-        }
-      }
-    }
+    const offset = mcStartAge - projectionParams.currentAge
 
     const { rows } = generateProjection({
       ...projectionParams,
-      yearlyReturns: alignedReturns,
+      yearlyReturns: selectedPath.yearlyReturns,
+      yearlyReturnsOffset: offset,
     })
     return rows
   }, [selectedPath, projectionParams, result.representative_paths_start_age])
@@ -688,6 +725,11 @@ export function MCProjectionTable({ result }: MCProjectionTableProps) {
 
   return (
     <Card>
+      {isStale && (
+        <div className="mx-6 mt-4 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-200">
+          Inputs have changed since this simulation was run. Re-run Monte Carlo for updated results.
+        </div>
+      )}
       <CardHeader>
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <CardTitle className="text-lg">
@@ -811,15 +853,22 @@ Import the component:
 import { MCProjectionTable } from '@/components/simulation/MCProjectionTable'
 ```
 
-In `StressTestPage`, update the Tabs section to add the projection table tab. Since `mcData` is now available at this level (from Task 4), this works directly:
+In `StressTestPage`, update the Tabs section to add the projection table tab. Since `mc.data` is now available at this level (from Task 4), this works directly:
 
 ```tsx
-const hasResults = !!mcData
+const hasResults = !!mc.data
+
+// Static Tailwind class mapping — dynamic template literals get purged
+const tabCount = 1 + (hasResults ? 1 : 0) + (isStressAdvanced ? 2 : 0)
+const gridColsClass: Record<number, string> = {
+  1: 'grid-cols-1',
+  2: 'grid-cols-2',
+  3: 'grid-cols-3',
+  4: 'grid-cols-4',
+}
 
 <Tabs defaultValue="monte-carlo" onValueChange={(tab) => trackEvent('stress_test_tab_changed', { tab })}>
-  <TabsList className={`grid w-full grid-cols-${
-    (hasResults ? 1 : 0) + 1 + (isStressAdvanced ? 2 : 0)
-  }`}>
+  <TabsList className={`grid w-full ${gridColsClass[tabCount] ?? 'grid-cols-1'}`}>
     <TabsTrigger value="monte-carlo">Monte Carlo</TabsTrigger>
     {hasResults && <TabsTrigger value="mc-projection">Projection Table</TabsTrigger>}
     {isStressAdvanced && <TabsTrigger value="backtest">Historical Backtest</TabsTrigger>}
@@ -829,28 +878,25 @@ const hasResults = !!mcData
   <TabsContent value="monte-carlo">
     <MonteCarloTab
       isAdvanced={isStressAdvanced}
-      mutate={mutate}
-      data={mcData}
-      isPending={isPending}
-      error={error}
-      canRun={canRun}
-      validationErrors={validationErrors}
-      isStale={isStale}
-      reset={reset}
+      mutate={mc.mutate}
+      data={mc.data}
+      isPending={mc.isPending}
+      error={mc.error}
+      canRun={mc.canRun}
+      validationErrors={mc.validationErrors}
+      isStale={mc.isStale}
     />
   </TabsContent>
 
   {hasResults && (
     <TabsContent value="mc-projection">
-      <MCProjectionTable result={mcData} />
+      <MCProjectionTable result={mc.data} isStale={mc.isStale} />
     </TabsContent>
   )}
 
   {/* backtest and sequence-risk tabs unchanged */}
 </Tabs>
 ```
-
-Note: The dynamic `grid-cols-N` may need a safelist in Tailwind config or use explicit class mapping instead of template literal.
 
 **Step 2: Verify types compile and manual test**
 
@@ -885,12 +931,12 @@ projection under that market scenario.
 
 ```typescript
 describe('representative paths edge cases', () => {
-  it('works when already retired (nYearsAccum = 0)', () => {
+  it('works when already retired (nYearsAccum = 0) — selects by terminal balance', () => {
     const params = makeDefaultParams({
       currentAge: 55,
       retirementAge: 55,
       annualSavings: [],
-      nSimulations: 100,
+      nSimulations: 500,
       extractPaths: true,
     })
     const result = runMonteCarlo(params as MonteCarloEngineParams)
@@ -899,9 +945,14 @@ describe('representative paths edge cases', () => {
       expect(path.yearlyReturns).toHaveLength(35) // 90 - 55
     }
     expect(result.representative_paths_start_age).toBe(55)
+    // In fireTarget mode (nYearsAccum=0), paths should be distinct
+    // because selection is by terminal balance, not collapsed initial balance
+    const p10 = result.representative_paths!.find(p => p.percentile === 10)!
+    const p90 = result.representative_paths!.find(p => p.percentile === 90)!
+    expect(p10.simIndex).not.toBe(p90.simIndex)
   })
 
-  it('p10 retirement balance is less than p90 retirement balance', () => {
+  it('p10 retirement balance is less than p90 retirement balance (normal mode)', () => {
     const params = makeDefaultParams({ nSimulations: 1000, seed: 42, extractPaths: true })
     const result = runMonteCarlo(params as MonteCarloEngineParams)
     const p10 = result.representative_paths!.find(p => p.percentile === 10)!
@@ -944,15 +995,16 @@ and extractPaths flag gating.
 | File | Action | Task |
 |------|--------|------|
 | `frontend/src/lib/types.ts` | Add `RepresentativePath`, update `MonteCarloResult` | 1 |
-| `frontend/src/lib/simulation/monteCarlo.ts` | Add `extractPaths` flag, extract paths | 1 |
+| `frontend/src/lib/simulation/monteCarlo.ts` | Add `extractPaths` flag, extract paths with fireTarget fallback | 1 |
 | `frontend/src/lib/simulation/monteCarlo.test.ts` | Tests for paths + edge cases | 1, 8 |
-| `frontend/src/lib/calculations/projection.ts` | Add `yearlyReturns` to params + override logic | 2 |
+| `frontend/src/lib/calculations/projection.ts` | Add `yearlyReturns` + `yearlyReturnsOffset` to params | 2 |
 | `frontend/src/lib/calculations/projection.test.ts` | Tests for yearlyReturns override | 2 |
 | `frontend/src/components/shared/projectionColumns.tsx` | Extract shared column definitions | 3 |
 | `frontend/src/pages/ProjectionPage.tsx` | Import from shared columns module | 3 |
-| `frontend/src/pages/StressTestPage.tsx` | Lift MC hook, add projection tab | 4, 7 |
+| `frontend/src/pages/StressTestPage.tsx` | Lift MC hook, move lastMCSuccessRate effect, add tab | 4, 7 |
 | `frontend/src/hooks/useMonteCarloQuery.ts` | Set `extractPaths: true` | 5 |
-| `frontend/src/components/simulation/MCProjectionTable.tsx` | New component with timeline alignment | 6 |
+| `frontend/src/lib/simulation/swrOptimizer.ts` | Strip `extractPaths` from baseParams | 5 |
+| `frontend/src/components/simulation/MCProjectionTable.tsx` | New component with offset-based alignment + stale warning | 6 |
 
 ## Dependency Graph
 
@@ -963,7 +1015,7 @@ Task 2 (projection override)──┘            ▲                            
                                            │                            │
 Task 3 (extract columns)──────────────────┘                            │
 Task 4 (lift MC hook) ────────────────────────────────────────────────┘
-Task 5 (set extractPaths) ────────────────────────────────────────────┘
+Task 5 (extractPaths + SWR strip) ────────────────────────────────────┘
 ```
 
 **Parallelizable:** Tasks 1, 2, 3, 4, and 5 are all independent and can run in parallel. Tasks 6 and 7 depend on all of them.
