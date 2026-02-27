@@ -174,65 +174,77 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
               <ChevronRight className={cn('h-3 w-3 transition-transform', learnMoreOpen && 'rotate-90')} />
               {learnMoreOpen ? 'Show less' : 'Learn more'}
             </button>
-            {learnMoreOpen && (
-              <div className="text-xs text-muted-foreground mt-2 space-y-2 border-l-2 border-muted pl-3">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="pb-1 pr-3 font-medium"></th>
-                      <th className="pb-1 pr-3 font-medium">Expected</th>
-                      <th className="pb-1 font-medium">Random</th>
-                    </tr>
-                  </thead>
-                  <tbody className="[&_td]:py-1 [&_td]:pr-3 [&_td]:align-top">
-                    <tr className="border-b border-muted">
-                      <td className="font-medium">Question</td>
-                      <td>If I hit my savings target, does my retirement plan survive?</td>
-                      <td>What is my real end-to-end probability of success?</td>
-                    </tr>
-                    <tr className="border-b border-muted">
-                      <td className="font-medium">Isolates</td>
-                      <td>Withdrawal strategy risk only</td>
-                      <td>All sources of risk</td>
-                    </tr>
-                    <tr>
-                      <td className="font-medium">Conservative?</td>
-                      <td>Less</td>
-                      <td>More</td>
-                    </tr>
-                  </tbody>
-                </table>
-                <p>
-                  <strong>Expected</strong> uses the average (mean) portfolio return every year before retirement.
-                  This means you are neither lucky nor unlucky, and every simulation arrives at retirement with
-                  the exact same portfolio. This isolates whether your withdrawal strategy is sound.
-                </p>
-                <p>
-                  <strong>Random</strong> draws different returns each year for each simulation, just like real markets.
-                  Some simulations experience great bull runs before retirement, others hit a crash right before.
-                  This produces a wider range of starting portfolios at retirement, which is why success rates
-                  and safe withdrawal rates tend to be lower. It is the more complete and realistic analysis.
-                </p>
-                <p>
-                  <strong>A note on volatility drag:</strong> Expected mode uses the arithmetic mean return (e.g. 8%),
-                  but real compounding with volatile returns produces a lower median outcome. A portfolio with
-                  8% average return and 15% volatility actually compounds at roughly 6.9% on average. This means
-                  Expected mode is slightly optimistic, not truly the &ldquo;50th percentile&rdquo; path. The further you
-                  are from retirement, the more this gap compounds.
-                </p>
-                <p className="font-medium">Reading your results:</p>
-                <ul className="list-disc list-inside space-y-1 ml-1">
-                  <li>If your success rate is high under Random but low under Expected, your withdrawal strategy
-                  may be too aggressive for average-case savings.</li>
-                  <li>If Expected shows a high success rate but Random is much lower, pre-retirement market
-                  risk is a significant factor. Consider a more conservative accumulation allocation or a
-                  larger savings buffer.</li>
-                  <li>If both show similar rates, your plan is robust regardless of pre-retirement luck.</li>
-                </ul>
-              </div>
-            )}
           </div>
         </div>
+
+        {learnMoreOpen && (
+          <div className="text-xs text-muted-foreground space-y-3 rounded-lg border bg-muted/30 p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="font-medium text-foreground mb-1">Expected</p>
+                <p>
+                  Uses the average (mean) return every year before retirement. You are neither lucky nor unlucky.
+                  Every simulation arrives at retirement with the exact same portfolio. Isolates whether your
+                  withdrawal strategy is sound.
+                </p>
+              </div>
+              <div>
+                <p className="font-medium text-foreground mb-1">Random</p>
+                <p>
+                  Draws different returns each year per simulation, just like real markets. Some sims hit bull
+                  runs, others crash right before retirement. Produces a wider range of starting portfolios,
+                  which is why success rates tend to be lower. The more complete analysis.
+                </p>
+              </div>
+            </div>
+
+            <table className="text-left">
+              <thead>
+                <tr className="border-b">
+                  <th className="pb-1 pr-6 font-medium"></th>
+                  <th className="pb-1 pr-6 font-medium">Expected</th>
+                  <th className="pb-1 font-medium">Random</th>
+                </tr>
+              </thead>
+              <tbody className="[&_td]:py-1 [&_td]:pr-6 [&_td]:align-top">
+                <tr className="border-b border-muted">
+                  <td className="font-medium">Question answered</td>
+                  <td>If I hit my savings target, does retirement survive?</td>
+                  <td>What is my real end-to-end probability?</td>
+                </tr>
+                <tr className="border-b border-muted">
+                  <td className="font-medium">Risk captured</td>
+                  <td>Withdrawal strategy only</td>
+                  <td>All sources (accumulation + decumulation)</td>
+                </tr>
+                <tr>
+                  <td className="font-medium">Conservative?</td>
+                  <td>Less</td>
+                  <td>More</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="font-medium text-foreground mb-1">Volatility drag</p>
+                <p>
+                  Expected mode uses the arithmetic mean return (e.g. 8%), but volatile returns compound lower.
+                  A portfolio with 8% mean and 15% volatility actually grows at ~6.9%. So Expected is slightly
+                  optimistic. The further from retirement, the more this gap compounds.
+                </p>
+              </div>
+              <div>
+                <p className="font-medium text-foreground mb-1">Reading your results</p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  <li><strong>High Expected, low Random:</strong> pre-retirement market risk is your bottleneck. Consider a more conservative accumulation allocation.</li>
+                  <li><strong>Both similar:</strong> your plan is robust regardless of pre-retirement luck.</li>
+                  <li><strong>High Random, low Expected:</strong> withdrawal strategy may be too aggressive for average-case savings.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
 
         <WithdrawalBasisToggle />
         <StrategyParams />
