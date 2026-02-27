@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -45,6 +46,8 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
   const retirementAge = useProfileStore((s) => s.retirementAge)
   const mode = useEffectiveMode('section-stress-test')
   const strategies = mode === 'advanced' ? ALL_STRATEGIES : SIMPLE_STRATEGIES
+
+  const [learnMoreOpen, setLearnMoreOpen] = useState(false)
 
   const errorMessages = Object.values(validationErrors)
   const disabledReason = !canRun
@@ -164,6 +167,54 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
                 ? 'Assumes average market luck until retirement. Every simulation starts decumulation with the same portfolio.'
                 : 'Considers both lucky and unlucky markets before retirement. Some simulations arrive with much more, others much less. More realistic, but produces lower success rates.'}
             </p>
+            <button
+              onClick={() => setLearnMoreOpen(!learnMoreOpen)}
+              className="text-xs text-muted-foreground/70 hover:text-muted-foreground flex items-center gap-0.5 mt-0.5"
+            >
+              <ChevronRight className={cn('h-3 w-3 transition-transform', learnMoreOpen && 'rotate-90')} />
+              {learnMoreOpen ? 'Show less' : 'Learn more'}
+            </button>
+            {learnMoreOpen && (
+              <div className="text-xs text-muted-foreground mt-2 space-y-2 border-l-2 border-muted pl-3">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="pb-1 pr-3 font-medium"></th>
+                      <th className="pb-1 pr-3 font-medium">Expected</th>
+                      <th className="pb-1 font-medium">Random</th>
+                    </tr>
+                  </thead>
+                  <tbody className="[&_td]:py-1 [&_td]:pr-3 [&_td]:align-top">
+                    <tr className="border-b border-muted">
+                      <td className="font-medium">Question</td>
+                      <td>If I hit my savings target, does my retirement plan survive?</td>
+                      <td>What is my real end-to-end probability of success?</td>
+                    </tr>
+                    <tr className="border-b border-muted">
+                      <td className="font-medium">Isolates</td>
+                      <td>Withdrawal strategy risk only</td>
+                      <td>All sources of risk</td>
+                    </tr>
+                    <tr>
+                      <td className="font-medium">Conservative?</td>
+                      <td>Less</td>
+                      <td>More</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p>
+                  <strong>Expected</strong> uses the average (mean) portfolio return every year before retirement.
+                  This means you are neither lucky nor unlucky, and every simulation arrives at retirement with
+                  the exact same portfolio. This isolates whether your withdrawal strategy is sound.
+                </p>
+                <p>
+                  <strong>Random</strong> draws different returns each year for each simulation, just like real markets.
+                  Some simulations experience great bull runs before retirement, others hit a crash right before.
+                  This produces a wider range of starting portfolios at retirement, which is why success rates
+                  and safe withdrawal rates tend to be lower. It is the more complete and realistic analysis.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
