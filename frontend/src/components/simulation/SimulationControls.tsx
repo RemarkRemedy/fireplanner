@@ -128,8 +128,8 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="inline-flex rounded-lg border bg-muted p-0.5 opacity-50 cursor-not-allowed">
-                        <button disabled className="rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground">Expected</button>
-                        <button disabled className="rounded-md px-3 py-1.5 text-xs font-medium bg-background text-foreground shadow-sm">Random</button>
+                        <button disabled className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground">Expected</button>
+                        <button disabled className="rounded-md px-3 py-1.5 text-sm font-medium bg-background text-foreground shadow-sm">Random</button>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>Not applicable: you are already in retirement</TooltipContent>
@@ -140,7 +140,7 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
                   <button
                     onClick={() => simulation.setField('deterministicAccumulation', true)}
                     className={cn(
-                      'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                      'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
                       simulation.deterministicAccumulation
                         ? 'bg-background text-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'
@@ -151,7 +151,7 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
                   <button
                     onClick={() => simulation.setField('deterministicAccumulation', false)}
                     className={cn(
-                      'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                      'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
                       !simulation.deterministicAccumulation
                         ? 'bg-background text-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'
