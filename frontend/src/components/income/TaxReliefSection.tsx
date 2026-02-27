@@ -18,6 +18,7 @@ import {
 } from '@/lib/data/taxBrackets'
 import { calculateCpfContribution } from '@/lib/calculations/cpf'
 import { calculateSrsDeduction } from '@/lib/calculations/tax'
+import { RSTU_TAX_RELIEF_CAP } from '@/lib/data/cpfRates'
 
 const NSMAN_OPTIONS: { value: NsmanStatus; label: string; amount: string }[] = [
   { value: 'none', label: 'Not applicable', amount: '$0' },
@@ -36,6 +37,7 @@ export function TaxReliefSection() {
   const currentAge = useProfileStore((s) => s.currentAge)
   const residencyStatus = useProfileStore((s) => s.residencyStatus)
   const srsAnnualContribution = useProfileStore((s) => s.srsAnnualContribution)
+  const cpfTopUpSA = useProfileStore((s) => s.cpfTopUpSA)
   const breakdown = income.reliefBreakdown
   const isDetailed = breakdown !== null
 
@@ -49,6 +51,12 @@ export function TaxReliefSection() {
   const srsDeduction = useMemo(
     () => calculateSrsDeduction(srsAnnualContribution, residencyStatus),
     [srsAnnualContribution, residencyStatus]
+  )
+
+  // Auto-compute RSTU deduction (capped at $8,000, only applies with active salary)
+  const rstuDeduction = useMemo(
+    () => income.annualSalary > 0 ? Math.min(cpfTopUpSA ?? 0, RSTU_TAX_RELIEF_CAP) : 0,
+    [cpfTopUpSA, income.annualSalary]
   )
 
   const toggleMode = useCallback((detailed: boolean) => {
@@ -326,13 +334,24 @@ export function TaxReliefSection() {
             </div>
           )}
 
+          {/* RSTU Deduction (SA Top-Up) */}
+          {rstuDeduction > 0 && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-1">
+                RSTU Relief (SA Top-Up)
+                <InfoTooltip text="Cash top-up to SA (or RA if 55+) qualifies for tax relief up to $8,000/year. Set your annual SA top-up in the CPF section. Do not include this in Personal Reliefs above." source="IRAS" sourceUrl="https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/tax-reliefs-rebates-and-deductions/tax-reliefs/central-provident-fund-(cpf)-cash-top-up-relief" />
+              </span>
+              <span className="font-medium text-green-700 dark:text-green-400">{formatCurrency(rstuDeduction)}</span>
+            </div>
+          )}
+
           {/* Grand Total */}
           <div className="flex items-center justify-between text-sm pt-2 border-t border-dashed">
             <span className="text-muted-foreground font-medium flex items-center gap-1">
               Total Tax Deductions
-              <InfoTooltip text="Sum of personal reliefs, CPF employee contribution, and SRS deduction — all subtracted from gross income to arrive at chargeable income." />
+              <InfoTooltip text="Sum of personal reliefs, CPF employee contribution, SRS deduction, and RSTU relief — all subtracted from gross income to arrive at chargeable income." />
             </span>
-            <span className="font-bold text-base">{formatCurrency(computedTotal + cpfEmployee + srsDeduction)}</span>
+            <span className="font-bold text-base">{formatCurrency(computedTotal + cpfEmployee + srsDeduction + rstuDeduction)}</span>
           </div>
         </div>
       </CardContent>
