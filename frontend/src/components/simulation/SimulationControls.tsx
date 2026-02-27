@@ -116,47 +116,49 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
 
           {/* Pre-retirement returns toggle */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">
-              Pre-retirement returns
-            </Label>
-            {currentAge >= retirementAge ? (
-              <TooltipProvider delayDuration={200}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="inline-flex rounded-lg border bg-muted p-0.5 opacity-50 cursor-not-allowed">
-                      <button disabled className="rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground">Expected</button>
-                      <button disabled className="rounded-md px-3 py-1.5 text-xs font-medium bg-background text-foreground shadow-sm">Random</button>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>Not applicable: you are already in retirement</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            ) : (
-              <div className="inline-flex rounded-lg border bg-muted p-0.5">
-                <button
-                  onClick={() => simulation.setField('deterministicAccumulation', true)}
-                  className={cn(
-                    'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                    simulation.deterministicAccumulation
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  Expected
-                </button>
-                <button
-                  onClick={() => simulation.setField('deterministicAccumulation', false)}
-                  className={cn(
-                    'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                    !simulation.deterministicAccumulation
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  Random
-                </button>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <Label className="text-sm font-medium shrink-0">
+                Pre-retirement returns
+              </Label>
+              {currentAge >= retirementAge ? (
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="inline-flex rounded-lg border bg-muted p-0.5 opacity-50 cursor-not-allowed">
+                        <button disabled className="rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground">Expected</button>
+                        <button disabled className="rounded-md px-3 py-1.5 text-xs font-medium bg-background text-foreground shadow-sm">Random</button>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>Not applicable: you are already in retirement</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <div className="inline-flex rounded-lg border bg-muted p-0.5">
+                  <button
+                    onClick={() => simulation.setField('deterministicAccumulation', true)}
+                    className={cn(
+                      'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                      simulation.deterministicAccumulation
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Expected
+                  </button>
+                  <button
+                    onClick={() => simulation.setField('deterministicAccumulation', false)}
+                    className={cn(
+                      'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                      !simulation.deterministicAccumulation
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Random
+                  </button>
+                </div>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
               {simulation.deterministicAccumulation
                 ? 'All simulations use the same average return during accumulation. Tests: "If savings go as planned, does retirement survive?"'
@@ -165,8 +167,8 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
           </div>
         </div>
 
-        <StrategyParams />
         <WithdrawalBasisToggle />
+        <StrategyParams />
 
         <div className="flex items-center gap-3">
           <Button
@@ -204,6 +206,9 @@ function StrategyParams() {
     vanguard_dynamic: new Set(['swr']),
   }
 
+  // Grey out rate fields when "My Expenses" is selected (rate is unused)
+  const rateDisabled = withdrawalBasis === 'expenses'
+
   const setParam = (field: string, value: number) => {
     simulation.setStrategyParam(
       strategy,
@@ -226,7 +231,7 @@ function StrategyParams() {
     <>
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       {strategy === 'constant_dollar' && (
-        <ParamInput label="SWR" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} />
+        <ParamInput label="SWR" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} disabled={rateDisabled} />
       )}
       {strategy === 'vpw' && (
         <>
@@ -236,7 +241,7 @@ function StrategyParams() {
       )}
       {strategy === 'guardrails' && (
         <>
-          <ParamInput label="Initial Rate" value={(params as { initialRate: number }).initialRate * 100} onChange={(v) => setParam('initialRate', v / 100)} suffix="%" step={0.1} />
+          <ParamInput label="Initial Rate" value={(params as { initialRate: number }).initialRate * 100} onChange={(v) => setParam('initialRate', v / 100)} suffix="%" step={0.1} disabled={rateDisabled} />
           <ParamInput label="Ceiling Trigger" value={(params as { ceilingTrigger: number }).ceilingTrigger * 100} onChange={(v) => setParam('ceilingTrigger', v / 100)} suffix="%" step={1} />
           <ParamInput label="Floor Trigger" value={(params as { floorTrigger: number }).floorTrigger * 100} onChange={(v) => setParam('floorTrigger', v / 100)} suffix="%" step={1} />
           <ParamInput label="Adjustment" value={(params as { adjustmentSize: number }).adjustmentSize * 100} onChange={(v) => setParam('adjustmentSize', v / 100)} suffix="%" step={1} />
@@ -244,7 +249,7 @@ function StrategyParams() {
       )}
       {strategy === 'vanguard_dynamic' && (
         <>
-          <ParamInput label="SWR" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} />
+          <ParamInput label="SWR" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} disabled={rateDisabled} />
           <ParamInput label="Ceiling" value={(params as { ceiling: number }).ceiling * 100} onChange={(v) => setParam('ceiling', v / 100)} suffix="%" step={0.1} />
           <ParamInput label="Floor" value={(params as { floor: number }).floor * 100} onChange={(v) => setParam('floor', v / 100)} suffix="%" step={0.1} />
         </>
@@ -311,7 +316,7 @@ function StrategyParams() {
   )
 }
 
-function ParamInput({ label, value, onChange, prefix, suffix, step, tooltip }: {
+function ParamInput({ label, value, onChange, prefix, suffix, step, tooltip, disabled }: {
   label: string
   value: number
   onChange: (v: number) => void
@@ -319,9 +324,10 @@ function ParamInput({ label, value, onChange, prefix, suffix, step, tooltip }: {
   suffix?: string
   step?: number
   tooltip?: string
+  disabled?: boolean
 }) {
   return (
-    <div className="space-y-1">
+    <div className={cn('space-y-1', disabled && 'opacity-50')}>
       <Label className="text-xs">
         {label}
         {tooltip && <InfoTooltip text={tooltip} />}
@@ -334,6 +340,7 @@ function ParamInput({ label, value, onChange, prefix, suffix, step, tooltip }: {
           className="h-8 text-sm"
           value={parseFloat(value.toPrecision(12))}
           step={step}
+          disabled={disabled}
           onChange={(e) => onChange(Number(e.target.value))}
         />
         {suffix && <span className="text-sm text-muted-foreground">{suffix}</span>}
