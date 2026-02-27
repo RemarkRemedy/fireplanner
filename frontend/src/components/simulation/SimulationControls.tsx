@@ -178,68 +178,58 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
         </div>
 
         {learnMoreOpen && (
-          <div className="text-xs text-muted-foreground space-y-3 rounded-lg border bg-muted/30 p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="font-medium text-foreground mb-1">Expected</p>
-                <p>
-                  Uses the average (mean) return every year before retirement. You are neither lucky nor unlucky.
-                  Every simulation arrives at retirement with the exact same portfolio. Isolates whether your
-                  withdrawal strategy is sound.
-                </p>
-              </div>
-              <div>
-                <p className="font-medium text-foreground mb-1">Random</p>
-                <p>
-                  Draws different returns each year per simulation, just like real markets. Some sims hit bull
-                  runs, others crash right before retirement. Produces a wider range of starting portfolios,
-                  which is why success rates tend to be lower. The more complete analysis.
-                </p>
-              </div>
+          <div className="text-xs text-muted-foreground space-y-4 rounded-lg border bg-muted/30 p-4">
+            {/* Comparison table — full-width, bordered cells */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border border-border bg-muted/50 px-3 py-2 font-medium w-[140px]"></th>
+                    <th className="border border-border bg-muted/50 px-3 py-2 font-medium">Expected</th>
+                    <th className="border border-border bg-muted/50 px-3 py-2 font-medium">Random</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-border px-3 py-2 font-medium bg-muted/30">How it works</td>
+                    <td className="border border-border px-3 py-2">Uses the average (mean) return every year. You are neither lucky nor unlucky. Every simulation arrives at retirement with the same portfolio.</td>
+                    <td className="border border-border px-3 py-2">Draws different returns each year per simulation. Some sims hit bull runs, others crash right before retirement. Wide range of starting portfolios.</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-border px-3 py-2 font-medium bg-muted/30">Question answered</td>
+                    <td className="border border-border px-3 py-2">If I hit my savings target, does retirement survive?</td>
+                    <td className="border border-border px-3 py-2">What is my real end-to-end probability?</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-border px-3 py-2 font-medium bg-muted/30">Risk captured</td>
+                    <td className="border border-border px-3 py-2">Withdrawal strategy only</td>
+                    <td className="border border-border px-3 py-2">All sources (accumulation + decumulation)</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-border px-3 py-2 font-medium bg-muted/30">Conservative?</td>
+                    <td className="border border-border px-3 py-2">Less</td>
+                    <td className="border border-border px-3 py-2">More</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
-            <table className="text-left">
-              <thead>
-                <tr className="border-b">
-                  <th className="pb-1 pr-6 font-medium"></th>
-                  <th className="pb-1 pr-6 font-medium">Expected</th>
-                  <th className="pb-1 font-medium">Random</th>
-                </tr>
-              </thead>
-              <tbody className="[&_td]:py-1 [&_td]:pr-6 [&_td]:align-top">
-                <tr className="border-b border-muted">
-                  <td className="font-medium">Question answered</td>
-                  <td>If I hit my savings target, does retirement survive?</td>
-                  <td>What is my real end-to-end probability?</td>
-                </tr>
-                <tr className="border-b border-muted">
-                  <td className="font-medium">Risk captured</td>
-                  <td>Withdrawal strategy only</td>
-                  <td>All sources (accumulation + decumulation)</td>
-                </tr>
-                <tr>
-                  <td className="font-medium">Conservative?</td>
-                  <td>Less</td>
-                  <td>More</td>
-                </tr>
-              </tbody>
-            </table>
-
+            {/* Volatility drag + reading results */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="font-medium text-foreground mb-1">Volatility drag</p>
+              <div className="rounded-md border border-border bg-background p-3 space-y-1">
+                <p className="font-medium text-foreground">Volatility drag</p>
                 <p>
                   Expected mode uses the arithmetic mean return (e.g. 8%), but volatile returns compound lower.
                   A portfolio with 8% mean and 15% volatility actually grows at ~6.9%. So Expected is slightly
                   optimistic. The further from retirement, the more this gap compounds.
                 </p>
               </div>
-              <div>
-                <p className="font-medium text-foreground mb-1">Reading your results</p>
+              <div className="rounded-md border border-border bg-background p-3 space-y-1">
+                <p className="font-medium text-foreground">Reading your results</p>
                 <ul className="list-disc list-inside space-y-0.5">
-                  <li><strong>High Expected, low Random:</strong> pre-retirement market risk is your bottleneck. Consider a more conservative accumulation allocation.</li>
-                  <li><strong>Both similar:</strong> your plan is robust regardless of pre-retirement luck.</li>
-                  <li><strong>High Random, low Expected:</strong> withdrawal strategy may be too aggressive for average-case savings.</li>
+                  <li><strong>High Expected, low Random:</strong> pre-retirement market risk is your bottleneck.</li>
+                  <li><strong>Both similar:</strong> plan is robust regardless of pre-retirement luck.</li>
+                  <li><strong>High Random, low Expected:</strong> withdrawal strategy may be too aggressive.</li>
                 </ul>
               </div>
             </div>
