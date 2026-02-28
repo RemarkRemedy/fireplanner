@@ -16,7 +16,10 @@
     "e2e": "node node_modules/@playwright/test/cli.js test",
     "e2e:ui": "node node_modules/@playwright/test/cli.js test --ui",
     "e2e:headed": "node node_modules/@playwright/test/cli.js test --headed",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name=fireplanner"
+    "deploy": "npm run build && wrangler pages deploy dist --project-name=fireplanner",
+    "dev:functions": "wrangler pages dev dist --d1 DB=sgfire-emails --port 8788",
+    "dev:full": "npm run build && npm run dev:functions",
+    "type-check:functions": "tsc --noEmit -p functions/tsconfig.json"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -59,6 +62,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260228.1",
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/typography": "^0.5.19",
