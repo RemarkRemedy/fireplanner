@@ -113,10 +113,13 @@ export const lifeEventSchema = z.object({
   cpfPause: z.boolean(),
 })
 
+export const bonusMonthsSchema = z.number().min(0).max(12)
+
 export const incomeSchema = z.object({
   salaryModel: z.enum(['simple', 'realistic', 'data-driven']),
   annualSalary: nonNegativeSchema,
   salaryGrowthRate: salaryGrowthSchema,
+  bonusMonths: bonusMonthsSchema,
   employerCpfEnabled: z.boolean(),
   incomeStreams: z.array(incomeStreamSchema),
   lifeEvents: z.array(lifeEventSchema),
@@ -235,6 +238,7 @@ export function validateIncomeField(
   const fieldSchemas: Record<string, z.ZodType> = {
     annualSalary: nonNegativeSchema,
     salaryGrowthRate: salaryGrowthSchema,
+    bonusMonths: bonusMonthsSchema,
     momAdjustment: momAdjustmentSchema,
     personalReliefs: personalReliefsSchema,
   }

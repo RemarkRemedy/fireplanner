@@ -282,6 +282,7 @@ export interface IncomeState {
   salaryModel: SalaryModel
   annualSalary: number
   salaryGrowthRate: number
+  bonusMonths: number
   employerCpfEnabled: boolean
   incomeStreams: IncomeStream[]
   lifeEvents: LifeEvent[]

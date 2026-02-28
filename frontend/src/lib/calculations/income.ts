@@ -245,6 +245,7 @@ export interface IncomeProjectionParams {
   salaryModel: SalaryModel
   annualSalary: number
   salaryGrowthRate: number
+  bonusMonths?: number
   realisticPhases: CareerPhase[]
   promotionJumps: PromotionJump[]
   momEducation: EducationLevel
@@ -378,6 +379,9 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
       salary = applyLifeEvents(salary, age, '__salary__', params.lifeEvents, params.lifeEventsEnabled)
     }
 
+    // Bonus (Additional Wages): derived from base salary, treated as AW for CPF
+    const annualBonus = (!isRetired && salary > 0) ? salary * (params.bonusMonths ?? 0) / 12 : 0
+
     // Income streams by type
     let rentalIncome = 0
     let investmentIncome = 0
@@ -385,9 +389,11 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
     let governmentIncome = 0
 
     // Track taxable stream income separately (respects each stream's taxTreatment)
-    const primarySalary = salary // Primary employment salary (always taxable)
+    // primarySalary includes bonus — both are taxable employment income
+    const primarySalary = salary + annualBonus
     let taxableStreamIncome = 0
-    let cpfApplicableSalary = salary // Primary salary is always CPF-applicable
+    // cpfApplicableSalary is base salary only (OW); bonus goes through AW ceiling separately
+    let cpfApplicableSalary = salary
 
     for (const stream of params.incomeStreams) {
       let amount = getStreamAmountAtAge(stream, age, params.inflation)
@@ -473,6 +479,9 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
       // SRS withdrawal tracked separately — not folded into governmentIncome
     }
 
+    // Include bonus in salary for totalGross display (bonus is employment income)
+    salary += annualBonus
+
     const totalGross = salary + rentalIncome + investmentIncome + businessIncome + governmentIncome + srsWithdrawal
 
     // CPF contributions (only if employed and not paused)
@@ -486,7 +495,7 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
     const cpfPaused = isCpfPaused(age, params.lifeEvents, params.lifeEventsEnabled)
 
     if (params.employerCpfEnabled && cpfApplicableSalary > 0 && !cpfPaused) {
-      const cpf = calculateCpfContribution(cpfApplicableSalary, age)
+      const cpf = calculateCpfContribution(cpfApplicableSalary, age, annualBonus)
       cpfEmployee = cpf.employee
       cpfEmployer = cpf.employer
 

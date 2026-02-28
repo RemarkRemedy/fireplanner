@@ -38,7 +38,7 @@ export const DEFAULT_CAREER_PHASES: CareerPhase[] = [
 ]
 
 const INCOME_DATA_KEYS = [
-  'salaryModel', 'annualSalary', 'salaryGrowthRate', 'employerCpfEnabled',
+  'salaryModel', 'annualSalary', 'salaryGrowthRate', 'bonusMonths', 'employerCpfEnabled',
   'incomeStreams', 'lifeEvents', 'realisticPhases', 'promotionJumps',
   'momEducation', 'momAdjustment', 'lifeEventsEnabled', 'personalReliefs',
   'reliefBreakdown',
@@ -48,6 +48,7 @@ const DEFAULT_INCOME: Omit<IncomeState, 'validationErrors'> = {
   salaryModel: 'simple',
   annualSalary: 72000,
   salaryGrowthRate: 0.03,
+  bonusMonths: 0,
   employerCpfEnabled: true,
   incomeStreams: [],
   lifeEvents: [],
@@ -75,7 +76,7 @@ function computeValidationErrors(
 
   // Field-level validation via schemas
   const scalarFields = [
-    'annualSalary', 'salaryGrowthRate', 'momAdjustment', 'personalReliefs',
+    'annualSalary', 'salaryGrowthRate', 'bonusMonths', 'momAdjustment', 'personalReliefs',
   ] as const
   for (const field of scalarFields) {
     const err = validateIncomeField(field, state[field])
@@ -180,6 +181,7 @@ function migrateV1ToV2(persisted: V1State): Omit<IncomeState, 'validationErrors'
     salaryModel: (persisted.salaryModel as IncomeState['salaryModel']) || DEFAULT_INCOME.salaryModel,
     annualSalary: persisted.annualSalary ?? DEFAULT_INCOME.annualSalary,
     salaryGrowthRate: persisted.salaryGrowthRate ?? DEFAULT_INCOME.salaryGrowthRate,
+    bonusMonths: 0,
     employerCpfEnabled: persisted.employerCpfEnabled ?? DEFAULT_INCOME.employerCpfEnabled,
     incomeStreams: migratedStreams,
     lifeEvents: migratedEvents,
@@ -316,7 +318,7 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
     }),
     {
       name: 'fireplanner-income',
-      version: 3,
+      version: 4,
       partialize: (state) => {
         const data: Record<string, unknown> = {}
         for (const key of INCOME_DATA_KEYS) {
@@ -331,6 +333,9 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
         const state = persisted as Record<string, unknown>
         if (version < 3) {
           state.reliefBreakdown = state.reliefBreakdown ?? null
+        }
+        if (version < 4) {
+          state.bonusMonths = state.bonusMonths ?? 0
         }
         return state as Omit<IncomeState, 'validationErrors'>
       },

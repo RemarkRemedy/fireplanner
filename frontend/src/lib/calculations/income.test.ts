@@ -2601,6 +2601,65 @@ describe('voluntary SA top-up FRS cap pre-55', () => {
 })
 
 // ============================================================
+// Bonus months (Additional Wages) in projection
+// ============================================================
+
+describe('generateIncomeProjection with bonusMonths', () => {
+  const bonusBaseParams = {
+    currentAge: 30,
+    retirementAge: 55,
+    lifeExpectancy: 70,
+    salaryModel: 'simple' as const,
+    annualSalary: 72000,
+    salaryGrowthRate: 0,
+    realisticPhases: DEFAULT_CAREER_PHASES,
+    promotionJumps: [],
+    momEducation: 'degree' as const,
+    momAdjustment: 1.0,
+    employerCpfEnabled: true,
+    incomeStreams: [],
+    lifeEvents: [],
+    lifeEventsEnabled: false,
+    annualExpenses: 30000,
+    inflation: 0,
+    personalReliefs: 20000,
+    srsAnnualContribution: 0,
+    initialCpfOA: 0,
+    initialCpfSA: 0,
+    initialCpfMA: 0,
+  }
+
+  it('totalGross includes bonus when bonusMonths > 0', () => {
+    const withBonus = generateIncomeProjection({ ...bonusBaseParams, bonusMonths: 2 })
+    const withoutBonus = generateIncomeProjection({ ...bonusBaseParams, bonusMonths: 0 })
+    // 2 months bonus on $72K salary = $72000 * 2/12 = $12,000
+    expect(withBonus[0].totalGross - withoutBonus[0].totalGross).toBeCloseTo(12000, 0)
+  })
+
+  it('CPF contribution increases with bonus (AW component)', () => {
+    const withBonus = generateIncomeProjection({ ...bonusBaseParams, bonusMonths: 2 })
+    const withoutBonus = generateIncomeProjection({ ...bonusBaseParams, bonusMonths: 0 })
+    // AW of $12K should attract CPF (employee 20% = $2,400, employer 17% = $2,040 at age 30)
+    expect(withBonus[0].cpfEmployee).toBeGreaterThan(withoutBonus[0].cpfEmployee)
+    expect(withBonus[0].cpfEmployer).toBeGreaterThan(withoutBonus[0].cpfEmployer)
+  })
+
+  it('defaults to zero bonus when bonusMonths omitted', () => {
+    const withoutField = generateIncomeProjection(bonusBaseParams)
+    const withZero = generateIncomeProjection({ ...bonusBaseParams, bonusMonths: 0 })
+    expect(withoutField[0].totalGross).toBe(withZero[0].totalGross)
+  })
+
+  it('no bonus in retired years', () => {
+    const params = { ...bonusBaseParams, bonusMonths: 2 }
+    const rows = generateIncomeProjection(params)
+    const retiredRow = rows.find(r => r.isRetired)!
+    // Retired row totalGross should be 0 (no salary, no bonus)
+    expect(retiredRow.totalGross).toBe(0)
+  })
+})
+
+// ============================================================
 // Locked asset unlock in projection
 // ============================================================
 

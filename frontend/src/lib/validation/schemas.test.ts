@@ -232,6 +232,7 @@ describe('incomeSchema', () => {
     salaryModel: 'simple' as const,
     annualSalary: 72000,
     salaryGrowthRate: 0.03,
+    bonusMonths: 0,
     employerCpfEnabled: true,
     incomeStreams: [],
     lifeEvents: [],
