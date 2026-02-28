@@ -13,6 +13,26 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: '2026-02-28',
+    category: 'fix',
+    title: 'CPF voluntary top-up calculations corrected',
+    description:
+      'Voluntary SA top-ups near the Full Retirement Sum were overstating tax relief and cash outflow. The RSTU tax deduction and savings calculation now use the actual capped amount deposited, not the full requested amount. Post-55 users routing SA top-ups to RA now correctly receive RSTU relief on the RA portion. Stale detection for Monte Carlo and Sequence Risk simulations also fixed to invalidate cached results when bonus months or retirement portfolio change.',
+    affectedSections: ['section-cpf', 'section-income'],
+    insight:
+      'If your SA was $213K with FRS at $220K, requesting an $8K top-up only deposited ~$7K. The old code gave you $8K in tax relief and subtracted $8K from cash savings. Post-55, the SA top-up routes to RA instead, and the RA portion now correctly qualifies for RSTU relief (up to $8K cap).',
+  },
+  {
+    date: '2026-02-28',
+    category: 'feature',
+    title: 'Bonus Months (AWS)',
+    description:
+      'Model your annual bonus as a number of months (e.g. 2.0 = 2 months AWS). Bonus is treated as Additional Wages for CPF, subject to the $102K annual ceiling. The "Annual Salary" field now clarifies it represents base salary only (12 months), excluding bonus.',
+    affectedSections: ['section-income', 'section-cpf'],
+    insight:
+      'Singapore CPF treats bonus differently from regular salary. Ordinary Wages (OW) are capped at $8K/month ($96K/year from Jan 2026). Additional Wages like AWS are subject to a separate ceiling: $102K minus total OW for the year. This means high earners may not get full CPF contributions on their bonus.',
+  },
+  {
+    date: '2026-02-28',
     category: 'feature',
     title: 'Explore + Stress Test redesign',
     description:
