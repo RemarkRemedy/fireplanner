@@ -1,5 +1,5 @@
 // exit_intent is accepted by the backend but has no frontend component yet (Phase 2)
-export const VALID_SOURCES = ['post_simulation', 'landing_page', 'exit_intent'] as const
+export const VALID_SOURCES = ['post_simulation', 'landing_page', 'exit_intent', 'contextual_nudge'] as const
 export const VALID_FEATURES = ['cpf_optimization', 'couples_planning', 'insurance_gap', 'general'] as const
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export const EMAIL_MAX_LENGTH = 254

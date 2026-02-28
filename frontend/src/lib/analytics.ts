@@ -35,6 +35,7 @@ type AnalyticsEvent =
   | 'email_signup_success'
   | 'email_signup_error'
   | 'feature_interest_selected'
+  | 'telegram_join_clicked'
 
 export function trackEvent(event: AnalyticsEvent, data?: Record<string, string | number | boolean>) {
   window.umami?.track(event, data)
