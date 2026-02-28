@@ -44,6 +44,7 @@ import { CRISIS_SCENARIOS } from '@/lib/data/crisisScenarios'
 import { formatPercent } from '@/lib/utils'
 import type { CrisisScenario } from '@/lib/types'
 import { trackEvent } from '@/lib/analytics'
+import { PostSimulationCapture } from '@/components/email/PostSimulationCapture'
 
 function TabIntro({ children }: { children: React.ReactNode }) {
   return (
@@ -130,6 +131,7 @@ function MonteCarloTab({
             <InterpretationCallout level={mcInterpretation.level} message={mcInterpretation.message} />
           )}
           <ResultsSummary result={data} />
+          <PostSimulationCapture />
           {data.spending_metrics && (
             <SpendingMetricsPanel metrics={data.spending_metrics} nSimulations={data.n_simulations} strategy={selectedStrategy} />
           )}
