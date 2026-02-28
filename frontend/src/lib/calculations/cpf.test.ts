@@ -15,12 +15,16 @@ import {
   allocatePostAge55Contribution,
   capMaAtBhs,
   getBhsAtAge,
+  getFrsForYear,
 } from './cpf'
 import {
   OA_INTEREST_RATE,
   SA_INTEREST_RATE,
   CPFIS_OA_RETENTION,
   CPFIS_SA_RETENTION,
+  FRS_BASE,
+  BRS_GROWTH_RATE,
+  RETIREMENT_SUM_BASE_YEAR,
 } from '@/lib/data/cpfRates'
 import { MEDISAVE_BHS, BHS_GROWTH_RATE, BHS_BASE_YEAR } from '@/lib/data/healthcarePremiums'
 
@@ -744,5 +748,31 @@ describe('getBhsAtAge', () => {
       ),
       { numRuns: 200 }
     )
+  })
+})
+
+// ============================================================
+// getFrsForYear — FRS projection for voluntary SA top-up cap
+// ============================================================
+
+describe('getFrsForYear', () => {
+  it('returns FRS_BASE for the base year', () => {
+    expect(getFrsForYear(RETIREMENT_SUM_BASE_YEAR)).toBe(FRS_BASE)
+  })
+
+  it('grows at 3.5% per year into the future', () => {
+    const frs2030 = getFrsForYear(RETIREMENT_SUM_BASE_YEAR + 4)
+    expect(frs2030).toBeCloseTo(FRS_BASE * Math.pow(1 + BRS_GROWTH_RATE, 4), 0)
+  })
+
+  it('returns FRS_BASE for years before the base year (clamped at 0 growth)', () => {
+    expect(getFrsForYear(RETIREMENT_SUM_BASE_YEAR - 5)).toBe(FRS_BASE)
+  })
+
+  it('is consistent with calculateBrsFrsErs for age 55 in the same year', () => {
+    const fromHelper = getFrsForYear(2030)
+    const fromProjection = calculateBrsFrsErs(55, 2030)
+    // calculateBrsFrsErs: yearsSinceBase = max(0, 2030-2026) = 4, yearsUntil55 = 0
+    expect(fromHelper).toBeCloseTo(fromProjection.frs, 0)
   })
 })

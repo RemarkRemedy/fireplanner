@@ -2527,6 +2527,80 @@ describe('voluntary CPF top-ups in projection', () => {
 })
 
 // ============================================================
+// Voluntary SA top-up FRS cap (Bug 2)
+// ============================================================
+
+describe('voluntary SA top-up FRS cap pre-55', () => {
+  const frsCapParams = {
+    currentAge: 30,
+    retirementAge: 55,
+    lifeExpectancy: 70,
+    salaryModel: 'simple' as const,
+    annualSalary: 100000,
+    salaryGrowthRate: 0,
+    realisticPhases: DEFAULT_CAREER_PHASES,
+    promotionJumps: [],
+    momEducation: 'degree' as const,
+    momAdjustment: 1.0,
+    employerCpfEnabled: true,
+    incomeStreams: [],
+    lifeEvents: [],
+    lifeEventsEnabled: false,
+    annualExpenses: 48000,
+    inflation: 0,
+    personalReliefs: 20000,
+    srsAnnualContribution: 0,
+    initialCpfOA: 50000,
+    initialCpfSA: 50000,
+    initialCpfMA: 30000,
+  }
+
+  it('SA top-up is capped when SA is near FRS', () => {
+    // Mandatory SA contrib for $100K salary at age 30 = $6,000 (6% SA rate).
+    // Start SA at $213,000 so after mandatory it's $219,000, leaving $1,400 room to FRS ($220,400).
+    const params = {
+      ...frsCapParams,
+      initialCpfSA: 213000,
+      cpfTopUpSA: 8000,
+    }
+    const withTopUp = generateIncomeProjection(params)
+    const paramsNoTopUp = { ...params, cpfTopUpSA: 0 }
+    const withoutTopUp = generateIncomeProjection(paramsNoTopUp)
+    const saDiff = withTopUp[0].cpfSA - withoutTopUp[0].cpfSA
+    // Should be ~$1,400 (FRS 220400 - post-mandatory 219000), NOT the full $8,000
+    expect(saDiff).toBeGreaterThan(0)
+    expect(saDiff).toBeLessThan(3000)
+  })
+
+  it('SA top-up is zero when SA already exceeds FRS', () => {
+    const params = {
+      ...frsCapParams,
+      initialCpfSA: 250000, // well above FRS
+      cpfTopUpSA: 8000,
+    }
+    const withTopUp = generateIncomeProjection(params)
+    const paramsNoTopUp = { ...params, cpfTopUpSA: 0 }
+    const withoutTopUp = generateIncomeProjection(paramsNoTopUp)
+    // SA top-up should have no effect when SA >= FRS
+    expect(withTopUp[0].cpfSA).toBeCloseTo(withoutTopUp[0].cpfSA, 0)
+  })
+
+  it('SA top-up is fully applied when SA is well below FRS', () => {
+    const params = {
+      ...frsCapParams,
+      initialCpfSA: 50000, // well below FRS ($220,400)
+      cpfTopUpSA: 8000,
+    }
+    const withTopUp = generateIncomeProjection(params)
+    const paramsNoTopUp = { ...params, cpfTopUpSA: 0 }
+    const withoutTopUp = generateIncomeProjection(paramsNoTopUp)
+    const saDiff = withTopUp[0].cpfSA - withoutTopUp[0].cpfSA
+    // Full $8,000 should be applied since SA is far below FRS
+    expect(saDiff).toBeGreaterThanOrEqual(8000)
+  })
+})
+
+// ============================================================
 // Locked asset unlock in projection
 // ============================================================
 

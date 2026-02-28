@@ -16,7 +16,7 @@ import type {
 } from '@/lib/types'
 import { getMomSalary } from '@/lib/data/momSalary'
 import { getEffectiveExpenses } from './expenses'
-import { calculateCpfContribution, calculateCpfExtraInterestWithAge, calculateCpfLifePayoutAtAge, getRetirementSumAmount, performAge55Transfer, allocatePostAge55Contribution, calculateCpfisInterest, capMaAtBhs, getBhsAtAge } from './cpf'
+import { calculateCpfContribution, calculateCpfExtraInterestWithAge, calculateCpfLifePayoutAtAge, getRetirementSumAmount, performAge55Transfer, allocatePostAge55Contribution, calculateCpfisInterest, capMaAtBhs, getBhsAtAge, getFrsForYear } from './cpf'
 import { calculateChargeableIncome, calculateProgressiveTax } from './tax'
 import { earnedIncomeReliefForAge, RELIEF_AMOUNTS, SRS_ANNUAL_CAP, SRS_ANNUAL_CAP_FOREIGNER } from '@/lib/data/taxBrackets'
 import {
@@ -307,6 +307,7 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
   let cumulativeSavings = 0
   let saClosed = false
   let raBalanceAtLifeStart = 0
+  const currentYear = new Date().getFullYear()
 
   // SRS lifecycle tracking
   let srsBalance = params.srsBalance ?? 0
@@ -543,7 +544,11 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
         topUpOAActual += overflow
         cpfOA += overflow
       } else {
-        topUpSAActual = topUpSA
+        // Pre-55: voluntary SA top-up capped at current year's FRS
+        const projectionYear = currentYear + (age - params.currentAge)
+        const currentYearFRS = getFrsForYear(projectionYear)
+        const saRoom = Math.max(0, currentYearFRS - cpfSA)
+        topUpSAActual = Math.min(topUpSA, saRoom)
         cpfSA += topUpSAActual
       }
 

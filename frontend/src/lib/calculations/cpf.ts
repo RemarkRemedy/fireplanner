@@ -320,6 +320,15 @@ export function projectCpfBalances(
 }
 
 /**
+ * Get the FRS for the cohort turning 55 in the given calendar year.
+ * Used to cap voluntary SA top-ups (RSTU) pre-55.
+ */
+export function getFrsForYear(year: number): number {
+  const yearsSinceBase = Math.max(0, year - RETIREMENT_SUM_BASE_YEAR)
+  return FRS_BASE * Math.pow(1 + BRS_GROWTH_RATE, yearsSinceBase)
+}
+
+/**
  * Calculate projected BRS/FRS/ERS at age 55, given 3.5% annual growth.
  *
  * Accounts for calendar time elapsed since the base data year so projections
