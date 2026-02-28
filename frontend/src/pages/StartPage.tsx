@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import type { RetirementPhase } from '@/lib/types'
 import { trackEvent } from '@/lib/analytics'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { LandingEmailSection } from '@/components/email/LandingEmailSection'
 
 type ActivePathway = 'goal-first' | 'story-first' | 'already-fire' | null
 
@@ -502,6 +503,8 @@ export function StartPage() {
           </Button>
         </div>
       )}
+
+      <LandingEmailSection />
     </div>
   )
 }
