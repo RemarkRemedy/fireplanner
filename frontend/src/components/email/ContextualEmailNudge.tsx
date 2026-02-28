@@ -31,6 +31,7 @@ export function ContextualEmailNudge({ pageId, message, hidden = false }: Contex
   const nudgeId = `email-nudge-${pageId}`
   const dismissedNudges = useUIStore((s) => s.dismissedNudges)
   const dismissNudge = useUIStore((s) => s.dismissNudge)
+  const setContextualNudgeActive = useUIStore((s) => s.setContextualNudgeActive)
   const visitCount = usePageVisitCount(pageId)
 
   const [showEmailForm, setShowEmailForm] = useState(false)
@@ -62,6 +63,12 @@ export function ContextualEmailNudge({ pageId, message, hidden = false }: Contex
       trackEvent('email_signup_shown', { source: 'contextual_nudge' })
     }
   }, [visible])
+
+  // Signal to BetaBanner that a contextual nudge with Telegram CTA is active
+  useEffect(() => {
+    setContextualNudgeActive(visible)
+    return () => setContextualNudgeActive(false)
+  }, [visible, setContextualNudgeActive])
 
   if (!visible) return null
 
