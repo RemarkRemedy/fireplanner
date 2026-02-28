@@ -534,7 +534,7 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
     let topUpOAActual = 0
     let topUpSAActual = 0
     let topUpMAActual = 0
-    let _topUpRAActual = 0
+    let topUpRAActual = 0
     if (salary > 0) {
       const topUpOA = params.cpfTopUpOA ?? 0
       const topUpSA = params.cpfTopUpSA ?? 0
@@ -547,7 +547,7 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
         // Post-55: SA top-up goes to RA (up to retirement sum target), overflow to OA
         const raRoom = Math.max(0, retirementSumTarget - cpfRA)
         const toRA = Math.min(topUpSA, raRoom)
-        _topUpRAActual += toRA
+        topUpRAActual += toRA
         cpfRA += toRA
         const overflow = topUpSA - toRA
         topUpOAActual += overflow
@@ -671,7 +671,7 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
       srsContribution,
       applicableReliefs,
       params.residencyStatus,
-      topUpSAActual
+      topUpSAActual + topUpRAActual
     )
     const taxResult = calculateProgressiveTax(chargeableIncome)
     const sgTax = taxResult.taxPayable
@@ -683,7 +683,7 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
     const effectiveBase = getEffectiveExpenses(age, params.annualExpenses, params.expenseAdjustments ?? [], params.lifeExpectancy)
     const inflationAdjustedExpenses = effectiveBase * Math.pow(1 + params.inflation, year)
     const savingsPaused = isSavingsPaused(age, params.lifeEvents, params.lifeEventsEnabled)
-    const voluntaryTopUps = topUpOAActual + topUpSAActual + topUpMAActual
+    const voluntaryTopUps = topUpOAActual + topUpSAActual + topUpMAActual + topUpRAActual
     // Clamp expense surplus at 0 (expense shortfall handled by incomeShortfall in projection.ts),
     // then subtract voluntary contributions — allowing negative when contributions exceed surplus
     const surplus = Math.max(0, totalNet - inflationAdjustedExpenses)

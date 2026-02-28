@@ -2645,6 +2645,65 @@ describe('voluntary SA top-up FRS cap pre-55', () => {
 })
 
 // ============================================================
+// Post-55 SA top-up → RA routing: tax and savings correctness
+// ============================================================
+
+describe('post-55 SA top-up routed to RA', () => {
+  const post55Params = {
+    currentAge: 56,
+    retirementAge: 65,
+    lifeExpectancy: 85,
+    salaryModel: 'simple' as const,
+    annualSalary: 100000,
+    salaryGrowthRate: 0,
+    realisticPhases: DEFAULT_CAREER_PHASES,
+    promotionJumps: [],
+    momEducation: 'degree' as const,
+    momAdjustment: 1.0,
+    employerCpfEnabled: true,
+    incomeStreams: [],
+    lifeEvents: [],
+    lifeEventsEnabled: false,
+    annualExpenses: 48000,
+    inflation: 0,
+    personalReliefs: 20000,
+    srsAnnualContribution: 0,
+    initialCpfOA: 50000,
+    initialCpfSA: 0,   // SA already transferred to RA at 55
+    initialCpfMA: 50000,
+    initialCpfRA: 100000,
+    cpfRetirementSum: 'frs' as const,
+  }
+
+  it('RA top-up reduces tax via RSTU deduction', () => {
+    // Post-55: cpfTopUpSA routes to RA. RSTU relief should apply to the RA portion.
+    const withTopUp = generateIncomeProjection({
+      ...post55Params,
+      cpfTopUpSA: 8000,
+    })
+    const withoutTopUp = generateIncomeProjection({
+      ...post55Params,
+      cpfTopUpSA: 0,
+    })
+    // Tax should be lower with RA top-up due to RSTU deduction
+    expect(withTopUp[0].sgTax).toBeLessThan(withoutTopUp[0].sgTax)
+  })
+
+  it('RA top-up is deducted from savings as cash outflow', () => {
+    const withTopUp = generateIncomeProjection({
+      ...post55Params,
+      cpfTopUpSA: 8000,
+    })
+    const withoutTopUp = generateIncomeProjection({
+      ...post55Params,
+      cpfTopUpSA: 0,
+    })
+    // Savings should be lower with top-up (cash left the bank)
+    expect(withTopUp[0].annualSavings).toBeLessThan(withoutTopUp[0].annualSavings)
+  })
+})
+
+// ============================================================
 // Bonus months (Additional Wages) in projection
 // ============================================================
 
