@@ -84,7 +84,7 @@ export function useSequenceRiskQuery(): UseSequenceRiskQueryResult {
     existingPropertyValue: propertyStore.existingPropertyValue,
     residencyForAbsd: propertyStore.residencyForAbsd,
   }), [
-    analysisPortfolio.initialPortfolio, analysisPortfolio.allocationWeights,
+    analysisPortfolio.retirementPortfolio, analysisPortfolio.allocationWeights,
     profile.retirementAge, profile.lifeExpectancy, profile.expenseRatio, profile.inflation,
     allocation.returnOverrides, allocation.stdDevOverrides,
     strategy, withdrawal.strategyParams,

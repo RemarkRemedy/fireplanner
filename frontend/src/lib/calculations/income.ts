@@ -671,7 +671,7 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
       srsContribution,
       applicableReliefs,
       params.residencyStatus,
-      (salary > 0 ? (params.cpfTopUpSA ?? 0) : 0)
+      topUpSAActual
     )
     const taxResult = calculateProgressiveTax(chargeableIncome)
     const sgTax = taxResult.taxPayable
@@ -683,9 +683,7 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
     const effectiveBase = getEffectiveExpenses(age, params.annualExpenses, params.expenseAdjustments ?? [], params.lifeExpectancy)
     const inflationAdjustedExpenses = effectiveBase * Math.pow(1 + params.inflation, year)
     const savingsPaused = isSavingsPaused(age, params.lifeEvents, params.lifeEventsEnabled)
-    const voluntaryTopUps = salary > 0
-      ? (params.cpfTopUpOA ?? 0) + (params.cpfTopUpSA ?? 0) + (params.cpfTopUpMA ?? 0)
-      : 0
+    const voluntaryTopUps = topUpOAActual + topUpSAActual + topUpMAActual
     // Clamp expense surplus at 0 (expense shortfall handled by incomeShortfall in projection.ts),
     // then subtract voluntary contributions — allowing negative when contributions exceed surplus
     const surplus = Math.max(0, totalNet - inflationAdjustedExpenses)

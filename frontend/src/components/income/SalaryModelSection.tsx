@@ -113,11 +113,11 @@ function SimplePanel({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <CurrencyInput
-        label="Annual Salary"
+        label="Annual Salary (excl. bonus)"
         value={salary}
         onChange={onSalaryChange}
         error={errors.annualSalary}
-        tooltip="Current gross annual salary before CPF and tax"
+        tooltip="Current gross annual base salary (12 months), excluding bonus. Bonus is added separately via Bonus Months below."
       />
       <PercentInput
         label="Annual Growth Rate"

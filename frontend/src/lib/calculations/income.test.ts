@@ -2555,6 +2555,50 @@ describe('voluntary SA top-up FRS cap pre-55', () => {
     initialCpfMA: 30000,
   }
 
+  it('tax uses capped SA top-up amount (not requested) when SA near FRS', () => {
+    // SA near FRS: mandatory contrib ~$6,000 pushes SA to ~$219,000.
+    // FRS ~$220,400 → only ~$1,400 room → topUpSAActual ≈ $1,400.
+    // Tax RSTU deduction must use $1,400, not the requested $8,000.
+    // Compare tax with SA near FRS vs SA well below FRS (where full $8K applies).
+    const nearFrsParams = {
+      ...frsCapParams,
+      initialCpfSA: 213000,
+      cpfTopUpSA: 8000,
+    }
+    const belowFrsParams = {
+      ...frsCapParams,
+      initialCpfSA: 50000,
+      cpfTopUpSA: 8000,
+    }
+    const nearFrs = generateIncomeProjection(nearFrsParams)
+    const belowFrs = generateIncomeProjection(belowFrsParams)
+    // When SA is well below FRS, full $8K top-up is applied → full RSTU deduction → lower tax.
+    // When SA is near FRS, only ~$1,400 is applied → smaller RSTU deduction → higher tax.
+    expect(nearFrs[0].sgTax).toBeGreaterThan(belowFrs[0].sgTax)
+  })
+
+  it('savings deduction uses capped top-up amounts when SA near FRS', () => {
+    // With SA near FRS, the capped top-up should result in higher savings
+    // (less cash deducted) compared to if we incorrectly used the full requested amount.
+    const nearFrsParams = {
+      ...frsCapParams,
+      initialCpfSA: 213000,
+      cpfTopUpSA: 8000,
+    }
+    const noTopUpParams = {
+      ...frsCapParams,
+      initialCpfSA: 213000,
+      cpfTopUpSA: 0,
+    }
+    const withTopUp = generateIncomeProjection(nearFrsParams)
+    const withoutTopUp = generateIncomeProjection(noTopUpParams)
+    // The savings difference should be roughly the capped amount (~$1,400), not $8,000.
+    // Allow some tolerance for tax effects.
+    const savingsDiff = withoutTopUp[0].annualSavings - withTopUp[0].annualSavings
+    expect(savingsDiff).toBeLessThan(3000) // well under the requested $8,000
+    expect(savingsDiff).toBeGreaterThan(0)  // some deduction still applies
+  })
+
   it('SA top-up is capped when SA is near FRS', () => {
     // Mandatory SA contrib for $100K salary at age 30 = $6,000 (6% SA rate).
     // Start SA at $213,000 so after mandatory it's $219,000, leaving $1,400 room to FRS ($220,400).
