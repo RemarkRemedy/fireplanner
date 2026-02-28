@@ -24,18 +24,27 @@ describe('validateEmailSignup', () => {
   it('rejects missing email', () => {
     const result = validateEmailSignup({ ...valid, email: '' })
     expect(result.success).toBe(false)
-    if (!result.success) expect(result.error).toContain('email')
+    if (result.success) throw new Error('Expected failure but got success')
+    expect(result.error).toContain('email')
   })
 
   it('rejects invalid email format', () => {
     const result = validateEmailSignup({ ...valid, email: 'notanemail' })
     expect(result.success).toBe(false)
-    if (!result.success) expect(result.error).toContain('email')
+    if (result.success) throw new Error('Expected failure but got success')
+    expect(result.error).toContain('email')
   })
 
   it('rejects email without domain', () => {
     const result = validateEmailSignup({ ...valid, email: 'user@' })
     expect(result.success).toBe(false)
+  })
+
+  it('accepts email exactly 254 characters', () => {
+    const exact = 'a'.repeat(249) + '@b.co'
+    expect(exact.length).toBe(254)
+    const result = validateEmailSignup({ ...valid, email: exact })
+    expect(result.success).toBe(true)
   })
 
   it('rejects email longer than 254 characters', () => {
@@ -55,7 +64,8 @@ describe('validateEmailSignup', () => {
   it('rejects invalid source', () => {
     const result = validateEmailSignup({ ...valid, source: 'invalid_source' })
     expect(result.success).toBe(false)
-    if (!result.success) expect(result.error).toContain('source')
+    if (result.success) throw new Error('Expected failure but got success')
+    expect(result.error).toContain('source')
   })
 
   it('accepts all valid sources', () => {
@@ -71,7 +81,8 @@ describe('validateEmailSignup', () => {
       feature_interest: 'invalid_feature',
     })
     expect(result.success).toBe(false)
-    if (!result.success) expect(result.error).toContain('feature_interest')
+    if (result.success) throw new Error('Expected failure but got success')
+    expect(result.error).toContain('feature_interest')
   })
 
   it('rejects empty string feature_interest', () => {
@@ -80,7 +91,8 @@ describe('validateEmailSignup', () => {
       feature_interest: '',
     })
     expect(result.success).toBe(false)
-    if (!result.success) expect(result.error).toContain('feature_interest')
+    if (result.success) throw new Error('Expected failure but got success')
+    expect(result.error).toContain('feature_interest')
   })
 
   it('accepts all valid feature_interest values', () => {

@@ -56,7 +56,7 @@ export function validateEmailSignup(input: EmailSignupInput): ValidationResult {
     data: {
       email,
       source: input.source as EmailSource,
-      feature_interest: input.feature_interest
+      feature_interest: input.feature_interest !== undefined
         ? (input.feature_interest as FeatureInterest)
         : undefined,
     },
