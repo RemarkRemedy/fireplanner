@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { CheckCircle, Loader2 } from 'lucide-react'
 import { trackEvent } from '@/lib/analytics'
-import type { EmailSource, FeatureInterest } from '@/lib/validation/emailConstants'
+import { EMAIL_MAX_LENGTH, type EmailSource, type FeatureInterest } from '@/lib/validation/emailConstants'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
 
@@ -53,14 +53,17 @@ export function EmailCaptureForm({ source, ctaLabel = 'Notify me', className }: 
       } else if (res.status === 429) {
         setStatus('error')
         setErrorMsg('Too many requests. Please try again later.')
+        trackEvent('email_signup_error', { source, reason: 'rate_limited' })
       } else {
         const data = await res.json().catch(() => ({}))
         setStatus('error')
         setErrorMsg((data as { error?: string }).error ?? 'Something went wrong. Please try again.')
+        trackEvent('email_signup_error', { source, reason: 'server_error' })
       }
     } catch {
       setStatus('error')
       setErrorMsg('Network error. Please check your connection.')
+      trackEvent('email_signup_error', { source, reason: 'network_error' })
     }
   }
 
@@ -85,10 +88,12 @@ export function EmailCaptureForm({ source, ctaLabel = 'Notify me', className }: 
           <Input
             id={`email-${source}`}
             type="email"
+            autoComplete="email"
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            maxLength={EMAIL_MAX_LENGTH}
             className="mt-1"
             disabled={status === 'loading'}
           />
@@ -120,7 +125,7 @@ export function EmailCaptureForm({ source, ctaLabel = 'Notify me', className }: 
         </fieldset>
 
         {status === 'error' && (
-          <p className="text-sm text-destructive">{errorMsg}</p>
+          <p className="text-sm text-destructive" role="alert">{errorMsg}</p>
         )}
 
         <Button type="submit" disabled={status === 'loading'} className="w-full sm:w-auto">
