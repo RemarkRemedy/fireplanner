@@ -41,11 +41,12 @@ export function TaxReliefSection() {
   const breakdown = income.reliefBreakdown
   const isDetailed = breakdown !== null
 
-  // Auto-compute CPF employee contribution from current salary + age
+  // Auto-compute CPF employee contribution from current salary + bonus + age
   const cpfEmployee = useMemo(() => {
-    const cpf = calculateCpfContribution(income.annualSalary, currentAge)
+    const annualBonus = income.annualSalary * (income.bonusMonths ?? 0) / 12
+    const cpf = calculateCpfContribution(income.annualSalary, currentAge, annualBonus)
     return cpf.employee
-  }, [income.annualSalary, currentAge])
+  }, [income.annualSalary, income.bonusMonths, currentAge])
 
   // Auto-compute SRS deduction (capped per residency)
   const srsDeduction = useMemo(

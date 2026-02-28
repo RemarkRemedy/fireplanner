@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
+import { NumberInput } from '@/components/shared/NumberInput'
 import { PercentInput } from '@/components/shared/PercentInput'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { useIncomeStore } from '@/stores/useIncomeStore'
@@ -54,10 +55,12 @@ export function SalaryModelSection() {
           <SimplePanel
             salary={income.annualSalary}
             growthRate={income.salaryGrowthRate}
+            bonusMonths={income.bonusMonths}
             currentAge={profile.currentAge}
             retirementAge={profile.retirementAge}
             onSalaryChange={(v) => income.setField('annualSalary', v)}
             onGrowthChange={(v) => income.setField('salaryGrowthRate', v)}
+            onBonusMonthsChange={(v) => income.setField('bonusMonths', v)}
             errors={errors}
           />
         )}
@@ -91,15 +94,17 @@ export function SalaryModelSection() {
 }
 
 function SimplePanel({
-  salary, growthRate, currentAge, retirementAge,
-  onSalaryChange, onGrowthChange, errors,
+  salary, growthRate, bonusMonths, currentAge, retirementAge,
+  onSalaryChange, onGrowthChange, onBonusMonthsChange, errors,
 }: {
   salary: number
   growthRate: number
+  bonusMonths: number
   currentAge: number
   retirementAge: number
   onSalaryChange: (v: number) => void
   onGrowthChange: (v: number) => void
+  onBonusMonthsChange: (v: number) => void
   errors: Record<string, string>
 }) {
   const yearsToRetirement = Math.max(0, retirementAge - currentAge)
@@ -120,6 +125,16 @@ function SimplePanel({
         onChange={onGrowthChange}
         error={errors.salaryGrowthRate}
         tooltip="Expected annual salary increase"
+      />
+      <NumberInput
+        label="Bonus Months (AWS)"
+        value={bonusMonths}
+        onChange={onBonusMonthsChange}
+        min={0}
+        max={12}
+        step={0.5}
+        error={errors.bonusMonths}
+        tooltip="Number of bonus months per year (e.g., 2.0 = 2 months). Treated as Additional Wages for CPF, subject to the $102K annual ceiling."
       />
       <div className="md:col-span-2 p-3 bg-muted/50 rounded-md">
         <span className="text-sm text-muted-foreground">Salary at retirement (age {retirementAge}): </span>
