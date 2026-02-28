@@ -95,7 +95,7 @@ export function AppLayout() {
               <p className="text-xs text-muted-foreground text-center">
                 This tool is for educational and planning purposes only. It does not constitute financial advice.
                 Results are estimates based on historical data and assumptions that may not reflect future outcomes.
-                Your data stays in your browser and is never sent to any server. Not affiliated with CPF Board or any government agency.
+                Your financial data stays in your browser and is never sent to any server. Email addresses submitted for notifications are stored separately. Not affiliated with CPF Board or any government agency.
               </p>
             </footer>
           </main>

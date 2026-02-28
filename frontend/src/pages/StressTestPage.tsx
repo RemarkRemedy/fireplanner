@@ -131,7 +131,6 @@ function MonteCarloTab({
             <InterpretationCallout level={mcInterpretation.level} message={mcInterpretation.message} />
           )}
           <ResultsSummary result={data} />
-          <PostSimulationCapture />
           {data.spending_metrics && (
             <SpendingMetricsPanel metrics={data.spending_metrics} nSimulations={data.n_simulations} strategy={selectedStrategy} />
           )}
@@ -641,6 +640,8 @@ export function StressTestPage() {
           </TabsContent>
         )}
       </Tabs>
+
+      {mc.data && <PostSimulationCapture />}
 
       <p className="text-xs text-muted-foreground mt-4">
         Want to explore withdrawal strategies in isolation?{' '}

@@ -1,66 +1,76 @@
-import { useState, useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { CheckCircle, Loader2 } from 'lucide-react'
-import { trackEvent } from '@/lib/analytics'
-import { EMAIL_MAX_LENGTH } from '@/lib/validation/emailConstants'
+import { useEmailSignup } from '@/hooks/useEmailSignup'
+import { EMAIL_MAX_LENGTH, FEATURE_OPTIONS, SIGNUP_FLAG } from '@/lib/validation/emailConstants'
 
-type Status = 'idle' | 'loading' | 'success' | 'error'
+interface LandingEmailSectionProps {
+  isReturningUser?: boolean
+}
 
-export function LandingEmailSection() {
-  const [email, setEmail] = useState('')
-  const [status, setStatus] = useState<Status>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
+export function LandingEmailSection({ isReturningUser = false }: LandingEmailSectionProps) {
+  const {
+    email, setEmail, submittedEmail, status, errorMsg, step, stepRef,
+    handleEmailSubmit, handleFeatureSelect, handleSkip, handleReset,
+  } = useEmailSignup('landing_page')
 
-  const tracked = useRef(false)
-  useEffect(() => {
-    if (!tracked.current) {
-      tracked.current = true
-      trackEvent('email_signup_shown', { source: 'landing_page' })
-    }
-  }, [])
+  // Hide entirely for users who completed the full signup flow previously
+  try { if (localStorage.getItem(SIGNUP_FLAG) === '1' && !submittedEmail) return null } catch {}
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const trimmed = email.trim().toLowerCase()
-    if (!trimmed) return
-
-    setStatus('loading')
-    setErrorMsg('')
-    trackEvent('email_signup_submitted', { source: 'landing_page' })
-
-    try {
-      const res = await fetch('/api/email-signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmed, source: 'landing_page', feature_interest: 'general' }),
-      })
-
-      if (res.ok) {
-        setStatus('success')
-        trackEvent('email_signup_success', { source: 'landing_page', feature_interest: 'general' })
-      } else if (res.status === 429) {
-        setStatus('error')
-        setErrorMsg('Too many requests. Please try again later.')
-        trackEvent('email_signup_error', { source: 'landing_page', reason: 'rate_limited' })
-      } else {
-        const data = await res.json().catch(() => ({}))
-        setStatus('error')
-        setErrorMsg((data as { error?: string }).error ?? 'Something went wrong.')
-        trackEvent('email_signup_error', { source: 'landing_page', reason: 'server_error' })
-      }
-    } catch {
-      setStatus('error')
-      setErrorMsg('Network error. Please check your connection.')
-      trackEvent('email_signup_error', { source: 'landing_page', reason: 'network_error' })
-    }
+  if (step === 'done') {
+    return (
+      <div ref={stepRef} tabIndex={-1} className="text-center py-2 outline-none" aria-live="polite">
+        <div className="flex items-center justify-center gap-2 text-green-700 dark:text-green-400">
+          <CheckCircle className="h-4 w-4" />
+          <p className="text-sm">
+            {submittedEmail
+              ? `Thanks! We'll notify ${submittedEmail} when new features launch.`
+              : "Thanks! We'll let you know when new features launch."}
+          </p>
+        </div>
+        <button
+          onClick={handleReset}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+        >
+          Use a different email?
+        </button>
+      </div>
+    )
   }
 
-  if (status === 'success') {
+  if (step === 'feature') {
     return (
-      <div className="flex items-center justify-center gap-2 text-green-700 dark:text-green-400 py-2">
-        <CheckCircle className="h-4 w-4" />
-        <p className="text-sm">Thanks! We'll let you know when new features launch.</p>
+      <div ref={stepRef} tabIndex={-1} className="space-y-3 text-center outline-none" aria-live="polite">
+        <div className="flex items-center justify-center gap-2 text-green-700 dark:text-green-400">
+          <CheckCircle className="h-4 w-4" />
+          <p className="text-sm font-medium">You're on the list!</p>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {isReturningUser
+            ? 'One more thing: which would be most useful for your planning?'
+            : 'One more thing: which feature interests you most?'}
+        </p>
+        <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Select a feature you're interested in">
+          {FEATURE_OPTIONS.map((opt) => (
+            <Button
+              key={opt.value}
+              variant="outline"
+              size="sm"
+              onClick={() => handleFeatureSelect(opt.value)}
+              className="text-xs"
+            >
+              {opt.label}
+            </Button>
+          ))}
+        </div>
+        <button
+          onClick={handleSkip}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Skip feature selection"
+        >
+          Skip
+        </button>
       </div>
     )
   }
@@ -68,12 +78,15 @@ export function LandingEmailSection() {
   return (
     <div className="space-y-2">
       <p className="text-sm text-muted-foreground text-center">
-        New calculators in development. Get notified when they launch.
+        {isReturningUser
+          ? "We're building new features based on user feedback. Get notified."
+          : 'CPF optimization, couples planning, and more calculators are in development. Get notified when they launch.'}
       </p>
-      <form onSubmit={handleSubmit} className="flex items-center gap-2 max-w-md mx-auto">
+      <form onSubmit={handleEmailSubmit} className="flex items-center gap-2 max-w-md mx-auto">
         <Input
           type="email"
           autoComplete="email"
+          aria-label="Email address"
           placeholder="you@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -83,12 +96,16 @@ export function LandingEmailSection() {
           disabled={status === 'loading'}
         />
         <Button type="submit" size="sm" disabled={status === 'loading'} className="shrink-0">
-          {status === 'loading' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Notify me'}
+          {status === 'loading' ? <><Loader2 className="h-4 w-4 animate-spin mr-1" />Sending...</> : 'Notify me'}
         </Button>
       </form>
       {status === 'error' && (
         <p className="text-xs text-destructive text-center" role="alert">{errorMsg}</p>
       )}
+      <p className="text-xs text-muted-foreground/60 text-center">
+        We will only email you about major feature launches. No spam. Unsubscribe anytime.{' '}
+        <Link to="/privacy" className="underline hover:text-muted-foreground">Privacy policy</Link>
+      </p>
     </div>
   )
 }

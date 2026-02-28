@@ -74,41 +74,39 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
     const ipHash = await hashIP(clientIP, salt)
 
-    // Rate limit: max 5 signups per IP per hour
-    // Use SQLite's datetime() to avoid timestamp format mismatch
-    // (JS toISOString = 'YYYY-MM-DDTHH:mm:ss.sssZ', SQLite CURRENT_TIMESTAMP = 'YYYY-MM-DD HH:MM:SS')
-    const { results: rateLimitRows } = await context.env.DB.prepare(
-      "SELECT COUNT(*) as cnt FROM email_signups WHERE ip_hash = ? AND created_at > datetime('now', '-1 hour')"
-    )
-      .bind(ipHash)
-      .all()
-
-    const count = Number(rateLimitRows?.[0]?.cnt ?? 0)
-    if (count >= RATE_LIMIT_MAX) {
-      return jsonResponse({ error: 'Too many requests' }, 429)
-    }
-
-    // Insert — on duplicate email, return success silently (don't leak existence)
-    try {
-      await context.env.DB.prepare(
-        'INSERT INTO email_signups (email, source, feature_interest, ip_hash) VALUES (?, ?, ?, ?)'
+    // Rate limit: max 5 new signups per IP per hour.
+    // Feature-interest upserts (step 2) are exempt since the email is already saved.
+    const isFeatureUpsert = typeof featureInterest === 'string'
+    if (!isFeatureUpsert) {
+      const { results: rateLimitRows } = await context.env.DB.prepare(
+        "SELECT COUNT(*) as cnt FROM email_signups WHERE ip_hash = ? AND created_at > datetime('now', '-1 hour')"
       )
-        .bind(
-          email,
-          body.source,
-          typeof featureInterest === 'string' ? featureInterest : null,
-          ipHash
-        )
-        .run()
-    } catch (err: unknown) {
-      // D1 does not expose SQLite error codes; matching on message text is the only option.
-      // If D1's error format changes, this falls through to the outer 500 handler.
-      const msg = err instanceof Error ? err.message : ''
-      if (msg.includes('UNIQUE constraint failed')) {
-        return jsonResponse({ success: true })
+        .bind(ipHash)
+        .all()
+
+      const count = Number(rateLimitRows?.[0]?.cnt ?? 0)
+      if (count >= RATE_LIMIT_MAX) {
+        return jsonResponse({ error: 'Too many requests' }, 429)
       }
-      throw err
     }
+
+    // Upsert — insert new signup, or update feature_interest if email already exists.
+    // This supports the two-step flow: email first, then feature interest as a follow-up.
+    // ON CONFLICT: only set feature_interest if it was previously NULL (prevents third-party overwrites).
+    // source is updated to track last interaction surface (last-touch attribution).
+    await context.env.DB.prepare(
+      `INSERT INTO email_signups (email, source, feature_interest, ip_hash) VALUES (?, ?, ?, ?)
+       ON CONFLICT(email) DO UPDATE SET
+         feature_interest = COALESCE(feature_interest, excluded.feature_interest),
+         source = excluded.source`
+    )
+      .bind(
+        email,
+        body.source,
+        isFeatureUpsert ? featureInterest : null,
+        ipHash
+      )
+      .run()
 
     return jsonResponse({ success: true })
   } catch (err) {
