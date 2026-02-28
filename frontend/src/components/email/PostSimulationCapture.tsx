@@ -14,8 +14,8 @@ export function PostSimulationCapture() {
     // Check sessionStorage and localStorage separately to avoid one failure hiding the other
     let sessionDismissed = false
     let alreadySignedUp = false
-    try { sessionDismissed = sessionStorage.getItem(SESSION_KEY) === '1' } catch {}
-    try { alreadySignedUp = localStorage.getItem(SIGNUP_FLAG) === '1' } catch {}
+    try { sessionDismissed = sessionStorage.getItem(SESSION_KEY) === '1' } catch { /* storage unavailable */ }
+    try { alreadySignedUp = localStorage.getItem(SIGNUP_FLAG) === '1' } catch { /* storage unavailable */ }
     return sessionDismissed || alreadySignedUp
   })
 
@@ -28,7 +28,7 @@ export function PostSimulationCapture() {
 
   const handleDismiss = () => {
     setDismissed(true)
-    try { sessionStorage.setItem(SESSION_KEY, '1') } catch {}
+    try { sessionStorage.setItem(SESSION_KEY, '1') } catch { /* storage unavailable */ }
   }
 
   return (

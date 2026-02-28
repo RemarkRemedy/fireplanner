@@ -17,11 +17,11 @@ function readFlag(key: string): boolean {
 }
 
 function setFlag(key: string) {
-  try { localStorage.setItem(key, '1') } catch {}
+  try { localStorage.setItem(key, '1') } catch { /* localStorage unavailable */ }
 }
 
 function removeFlag(key: string) {
-  try { localStorage.removeItem(key) } catch {}
+  try { localStorage.removeItem(key) } catch { /* localStorage unavailable */ }
 }
 
 /** Determines the initial step based on persisted flags. */

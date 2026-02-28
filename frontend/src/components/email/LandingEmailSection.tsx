@@ -16,7 +16,7 @@ export function LandingEmailSection({ isReturningUser = false }: LandingEmailSec
   } = useEmailSignup('landing_page')
 
   // Hide entirely for users who completed the full signup flow previously
-  try { if (localStorage.getItem(SIGNUP_FLAG) === '1' && !submittedEmail) return null } catch {}
+  try { if (localStorage.getItem(SIGNUP_FLAG) === '1' && !submittedEmail) return null } catch { /* localStorage unavailable */ }
 
   if (step === 'done') {
     return (
