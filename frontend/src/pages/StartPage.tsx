@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import type { RetirementPhase } from '@/lib/types'
 import { trackEvent } from '@/lib/analytics'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { LandingEmailSection } from '@/components/email/LandingEmailSection'
 
 type ActivePathway = 'goal-first' | 'story-first' | 'already-fire' | null
 
@@ -488,6 +489,8 @@ export function StartPage() {
         </div>
       )}
 
+      <LandingEmailSection isReturningUser={isReturningUser} />
+
       {/* Continue link for returning users only */}
       {isReturningUser && (
         <div className="text-center">
@@ -496,7 +499,7 @@ export function StartPage() {
               to="/inputs"
               className="text-sm text-muted-foreground hover:text-foreground"
             >
-              Welcome back — continue where you left off
+              Welcome back, continue where you left off
               <ArrowRight className="ml-1 h-3 w-3" />
             </Link>
           </Button>
@@ -588,22 +591,20 @@ function QuickResults({
       )}
 
       {/* Supporting metrics row */}
-      <div className="flex items-center justify-center gap-6 text-sm">
+      <div className="grid grid-cols-3 gap-2 text-sm text-center">
         <div>
-          <span className="text-muted-foreground">FIRE Number: </span>
-          <span className="font-semibold">
+          <span className="text-muted-foreground text-xs">FIRE Number</span>
+          <div className="font-semibold">
             ${fireNumber.toLocaleString('en-SG', { maximumFractionDigits: 0 })}
-          </span>
+          </div>
         </div>
-        <span className="text-muted-foreground">|</span>
         <div>
-          <span className="text-muted-foreground">Savings Rate: </span>
-          <span className="font-semibold">{(savingsRate * 100).toFixed(1)}%</span>
+          <span className="text-muted-foreground text-xs">Savings Rate</span>
+          <div className="font-semibold">{(savingsRate * 100).toFixed(1)}%</div>
         </div>
-        <span className="text-muted-foreground">|</span>
         <div>
-          <span className="text-muted-foreground">Progress: </span>
-          <span className="font-semibold">{pct}%</span>
+          <span className="text-muted-foreground text-xs">Progress</span>
+          <div className="font-semibold">{pct}%</div>
         </div>
       </div>
 

@@ -11,6 +11,7 @@ const DashboardPage = lazy(() => import('@/pages/DashboardPage').then(m => ({ de
 const ReferencePage = lazy(() => import('@/pages/ReferencePage').then(m => ({ default: m.ReferencePage })))
 const StressTestPage = lazy(() => import('@/pages/StressTestPage').then(m => ({ default: m.StressTestPage })))
 const ChecklistPage = lazy(() => import('@/pages/ChecklistPage').then(m => ({ default: m.ChecklistPage })))
+const PrivacyPage = lazy(() => import('@/pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })))
 
 function PageLoader() {
   return (
@@ -50,6 +51,7 @@ export const router = createBrowserRouter([
       { path: '/dashboard', element: page(DashboardPage) },
       { path: '/reference', element: page(ReferencePage) },
       { path: '/checklist', element: page(ChecklistPage) },
+      { path: '/privacy', element: page(PrivacyPage) },
       // Redirects: old input pages → /inputs with section anchors
       { path: '/profile', element: <Navigate to="/inputs#section-personal" replace /> },
       { path: '/income', element: <Navigate to="/inputs#section-income" replace /> },

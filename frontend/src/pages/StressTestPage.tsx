@@ -44,6 +44,8 @@ import { CRISIS_SCENARIOS } from '@/lib/data/crisisScenarios'
 import { formatPercent } from '@/lib/utils'
 import type { CrisisScenario } from '@/lib/types'
 import { trackEvent } from '@/lib/analytics'
+import { PostSimulationCapture } from '@/components/email/PostSimulationCapture'
+import { ContextualEmailNudge } from '@/components/email/ContextualEmailNudge'
 
 function TabIntro({ children }: { children: React.ReactNode }) {
   return (
@@ -639,6 +641,14 @@ export function StressTestPage() {
           </TabsContent>
         )}
       </Tabs>
+
+      <ContextualEmailNudge
+        pageId="stress-test"
+        message="Finding this useful? We're building section-by-section tips and guides for stress testing."
+        hidden={!!mc.data}
+      />
+
+      {mc.data && <PostSimulationCapture />}
 
       <p className="text-xs text-muted-foreground mt-4">
         Want to explore withdrawal strategies in isolation?{' '}

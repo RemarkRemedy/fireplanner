@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X, FlaskConical } from 'lucide-react'
+import { useUIStore } from '@/stores/useUIStore'
 
 const DISMISS_KEY = 'fireplanner-beta-banner-dismissed-v2'
 const TELEGRAM_URL = 'https://t.me/sgfireplannerann'
@@ -10,6 +11,7 @@ export function BetaBanner() {
   const [dismissed, setDismissed] = useState(
     () => localStorage.getItem(DISMISS_KEY) === '1'
   )
+  const nudgeActive = useUIStore((s) => s.contextualNudgeActive)
 
   if (dismissed) return null
 
@@ -26,15 +28,19 @@ export function BetaBanner() {
         <span className="text-muted-foreground">
           {' '}· Thanks for trying FIRE Planner! We're actively improving based on user feedback.{' '}
         </span>
-        <a
-          href={TELEGRAM_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-amber-700 dark:text-amber-400 hover:underline font-medium"
-        >
-          Follow updates on Telegram
-        </a>
-        <span className="text-muted-foreground"> · </span>
+        {!nudgeActive && (
+          <>
+            <a
+              href={TELEGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-amber-700 dark:text-amber-400 hover:underline font-medium"
+            >
+              Follow updates on Telegram
+            </a>
+            <span className="text-muted-foreground"> · </span>
+          </>
+        )}
         <a
           href={FEEDBACK_URL}
           target="_blank"
