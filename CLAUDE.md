@@ -179,7 +179,7 @@ Unit tests for every calculation module in `lib/calculations/`, `lib/simulation/
 - **Do not call simulation functions on the main thread.** Always use the Web Worker via `workerClient.ts`.
 - **Do not use Next.js conventions.** No `page.tsx` / `layout.tsx` nested folder routing. This is React Router v6 with Vite.
 - **Do not create a dashboard Zustand store.** Dashboard metrics are derived hooks that read from other stores. `useUIStore` handles UI-only state (active section, nudges), not dashboard data.
-- **Do not add a backend server.** All computation runs client-side. No database. No authentication. Browser-only persistence.
+- **Do not add a backend server** for computation or user data storage. All financial computation runs client-side. Browser-only persistence for user data. **Exception:** Email capture uses a single Cloudflare Pages Function (`POST /api/email-signup`) with D1 storage. Only email address, source tag, and feature interest are sent to the server. No financial data leaves the browser.
 - **Do not skip validation.** Every calculation hook must check input validity before computing.
 - **Do not import from one store inside another store's definition.** Cross-store reads happen in hooks and components, not in store definitions.
 - **Do not mix dollar bases in the same view.** When a table, chart, or comparison shows values across multiple columns/series, ALL values must be in the same dollar basis (all today's dollars OR all future/nominal dollars). If one column is inflation-adjusted to a future date, every other monetary column must be too. Project portfolios forward at expected net return, inflate expenses at the inflation rate, over the same time horizon.
