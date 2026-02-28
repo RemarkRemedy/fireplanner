@@ -69,9 +69,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const clientIP = context.request.headers.get('CF-Connecting-IP') ?? 'unknown'
     const salt = context.env.IP_HASH_SALT
     if (!salt) {
-      console.error('IP_HASH_SALT secret is not configured — IP hashing is insecure without it')
+      console.error('IP_HASH_SALT secret is not configured — aborting request')
+      return jsonResponse({ error: 'Internal server error' }, 500)
     }
-    const ipHash = await hashIP(clientIP, salt ?? '')
+    const ipHash = await hashIP(clientIP, salt)
 
     // Rate limit: max 5 signups per IP per hour
     // Use SQLite's datetime() to avoid timestamp format mismatch
@@ -82,7 +83,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       .bind(ipHash)
       .all()
 
-    const count = (rateLimitRows?.[0]?.cnt as number) ?? 0
+    const count = Number(rateLimitRows?.[0]?.cnt ?? 0)
     if (count >= RATE_LIMIT_MAX) {
       return jsonResponse({ error: 'Too many requests' }, 429)
     }
@@ -100,6 +101,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         )
         .run()
     } catch (err: unknown) {
+      // D1 does not expose SQLite error codes; matching on message text is the only option.
+      // If D1's error format changes, this falls through to the outer 500 handler.
       const msg = err instanceof Error ? err.message : ''
       if (msg.includes('UNIQUE constraint failed')) {
         return jsonResponse({ success: true })
