@@ -8,7 +8,7 @@ import { usePropertyStore } from '@/stores/usePropertyStore'
 import { validateCrossStoreRules } from '@/lib/validation/rules'
 
 /** Derive CPF housing params from property store (single source of truth) */
-function deriveCpfHousingFromProperty(property: { mortgageCpfMonthly: number; existingMortgageRemainingYears: number; ownershipPercent?: number }) {
+export function deriveCpfHousingFromProperty(property: { mortgageCpfMonthly: number; existingMortgageRemainingYears: number; ownershipPercent?: number }) {
   const pct = property.ownershipPercent ?? 1
   const scaledCpf = property.mortgageCpfMonthly * pct
   return {
@@ -21,18 +21,20 @@ function deriveCpfHousingFromProperty(property: { mortgageCpfMonthly: number; ex
 /**
  * Build projection params from store state (non-hook helper).
  * Returns null if either store has validation errors.
+ *
+ * Property state is passed explicitly (not via getState()) so callers
+ * that use this inside React hooks get reactive updates when property changes.
  */
 export function buildProjectionParams(
   profile: ProfileState,
-  income: IncomeState
+  income: IncomeState,
+  property: { mortgageCpfMonthly: number; existingMortgageRemainingYears: number; ownershipPercent?: number }
 ): IncomeProjectionParams | null {
   const profileErrors = profile.validationErrors
   const incomeErrors = income.validationErrors
   if (Object.keys(profileErrors).length > 0 || Object.keys(incomeErrors).length > 0) {
     return null
   }
-  // Read CPF housing from property store (single source of truth)
-  const property = usePropertyStore.getState()
   const cpfHousing = deriveCpfHousingFromProperty(property)
   return {
     currentAge: profile.currentAge,

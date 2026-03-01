@@ -110,7 +110,7 @@ export function useSequenceRiskQuery(): UseSequenceRiskQueryResult {
         crisisId: crisis.id,
       }))
 
-      const projectionParams = buildProjectionParams(profile, income)
+      const projectionParams = buildProjectionParams(profile, income, propertyStore)
       const postRetirementIncome: number[] = []
 
       // Property mortgage (cash portion only, mirrors projection.ts lines 98-99)

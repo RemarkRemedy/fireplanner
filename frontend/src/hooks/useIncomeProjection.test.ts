@@ -3,17 +3,20 @@ import { renderHook } from '@testing-library/react'
 import { useIncomeProjection, buildProjectionParams } from './useIncomeProjection'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
+import { usePropertyStore } from '@/stores/usePropertyStore'
 
 beforeEach(() => {
   useProfileStore.getState().reset()
   useIncomeStore.getState().reset()
+  usePropertyStore.getState().reset()
 })
 
 describe('buildProjectionParams', () => {
   it('returns params when both stores have no errors', () => {
     const profile = useProfileStore.getState()
     const income = useIncomeStore.getState()
-    const params = buildProjectionParams(profile, income)
+    const property = usePropertyStore.getState()
+    const params = buildProjectionParams(profile, income, property)
     expect(params).not.toBeNull()
     expect(params!.currentAge).toBe(profile.currentAge)
     expect(params!.salaryModel).toBe(income.salaryModel)
@@ -23,20 +26,23 @@ describe('buildProjectionParams', () => {
     useProfileStore.getState().setField('currentAge', 15) // triggers error
     const profile = useProfileStore.getState()
     const income = useIncomeStore.getState()
-    expect(buildProjectionParams(profile, income)).toBeNull()
+    const property = usePropertyStore.getState()
+    expect(buildProjectionParams(profile, income, property)).toBeNull()
   })
 
   it('returns null when income has validation errors', () => {
     useIncomeStore.getState().setField('annualSalary', -1) // triggers error
     const profile = useProfileStore.getState()
     const income = useIncomeStore.getState()
-    expect(buildProjectionParams(profile, income)).toBeNull()
+    const property = usePropertyStore.getState()
+    expect(buildProjectionParams(profile, income, property)).toBeNull()
   })
 
   it('maps all CPF fields from profile', () => {
     const profile = useProfileStore.getState()
     const income = useIncomeStore.getState()
-    const params = buildProjectionParams(profile, income)!
+    const property = usePropertyStore.getState()
+    const params = buildProjectionParams(profile, income, property)!
     expect(params.initialCpfOA).toBe(profile.cpfOA)
     expect(params.initialCpfSA).toBe(profile.cpfSA)
     expect(params.initialCpfMA).toBe(profile.cpfMA)

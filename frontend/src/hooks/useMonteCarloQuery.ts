@@ -126,7 +126,7 @@ export function useMonteCarloQuery(): UseMonteCarloQueryResult {
     mutationFn: async () => {
       setLastRunParams(currentParamsSig)
 
-      const projectionParams = buildProjectionParams(profile, income)
+      const projectionParams = buildProjectionParams(profile, income, propertyStore)
 
       // Build annual savings array from income projection
       const annualSavings: number[] = []

@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils'
 
 export function FinancialSection() {
   const store = useProfileStore()
-  const { lockedAssets, addLockedAsset, removeLockedAsset, updateLockedAsset, currentAge } = useProfileStore()
+  const { lockedAssets, addLockedAsset, removeLockedAsset, updateLockedAsset, currentAge } = store
   const mode = useEffectiveMode('section-net-worth')
 
   return (

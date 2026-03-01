@@ -8,7 +8,7 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
-import type { CpfHousingMode } from '@/lib/types'
+import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 
 export interface WhatIfOverrides {
   annualExpenses?: number
@@ -53,39 +53,9 @@ export function getBaseInputs(
 
   // Effective income from income projection
   let effectiveIncome = profile.annualIncome
-  const incomeHasErrors = Object.keys(income.validationErrors).length > 0
-  if (!incomeHasErrors) {
-    const projection = generateIncomeProjection({
-      currentAge: profile.currentAge,
-      retirementAge: profile.retirementAge,
-      lifeExpectancy: profile.lifeExpectancy,
-      salaryModel: income.salaryModel,
-      annualSalary: income.annualSalary,
-      salaryGrowthRate: income.salaryGrowthRate,
-      realisticPhases: income.realisticPhases,
-      promotionJumps: income.promotionJumps,
-      momEducation: income.momEducation,
-      momAdjustment: income.momAdjustment,
-      employerCpfEnabled: income.employerCpfEnabled,
-      incomeStreams: income.incomeStreams,
-      lifeEvents: income.lifeEvents,
-      lifeEventsEnabled: income.lifeEventsEnabled,
-      annualExpenses: profile.annualExpenses,
-      expenseAdjustments: profile.expenseAdjustments,
-      inflation: profile.inflation,
-      personalReliefs: income.personalReliefs,
-      srsAnnualContribution: profile.srsAnnualContribution,
-      initialCpfOA: profile.cpfOA,
-      initialCpfSA: profile.cpfSA,
-      initialCpfMA: profile.cpfMA,
-      initialCpfRA: profile.cpfRA,
-      cpfLifeStartAge: profile.cpfLifeStartAge,
-      cpfLifePlan: profile.cpfLifePlan,
-      cpfRetirementSum: profile.cpfRetirementSum,
-      cpfHousingMode: (property.mortgageCpfMonthly > 0 ? 'simple' : 'none') as CpfHousingMode,
-      cpfHousingMonthly: property.mortgageCpfMonthly * (property.ownershipPercent ?? 1),
-      cpfMortgageYearsLeft: property.existingMortgageRemainingYears,
-    })
+  const projectionParams = buildProjectionParams(profile, income, property)
+  if (projectionParams) {
+    const projection = generateIncomeProjection(projectionParams)
     if (projection.length > 0) {
       effectiveIncome = projection[0].totalGross
     }
@@ -101,8 +71,9 @@ export function getBaseInputs(
     expectedReturn = calculatePortfolioReturn(allocation.currentWeights, effectiveReturns)
   }
 
+  const ownershipPct = property.ownershipPercent ?? 1
   const propertyEquity = property.ownsProperty
-    ? Math.max(0, property.existingPropertyValue - property.existingMortgageBalance)
+    ? Math.max(0, property.existingPropertyValue - property.existingMortgageBalance) * ownershipPct
     : 0
 
   return {

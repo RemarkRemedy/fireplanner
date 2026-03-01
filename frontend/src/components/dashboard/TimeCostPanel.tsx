@@ -10,11 +10,10 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { calculatePortfolioReturn } from '@/lib/calculations/portfolio'
 import { generateIncomeProjection } from '@/lib/calculations/income'
-import type { CpfHousingMode } from '@/lib/types'
 import { calculateOneTimeCost, calculateRecurringCost, type TimeCostBaseInput } from '@/lib/calculations/timeCost'
 import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
-import { formatCurrency } from '@/lib/utils'
-import { cn } from '@/lib/utils'
+import { formatCurrency, cn } from '@/lib/utils'
+import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 
 type CostMode = 'one-time' | 'recurring'
 
@@ -35,37 +34,9 @@ export function TimeCostPanel() {
     const cpfTotal = profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
 
     let effectiveIncome = profile.annualIncome
-    if (Object.keys(income.validationErrors).length === 0) {
-      const projection = generateIncomeProjection({
-        currentAge: profile.currentAge,
-        retirementAge: profile.retirementAge,
-        lifeExpectancy: profile.lifeExpectancy,
-        salaryModel: income.salaryModel,
-        annualSalary: income.annualSalary,
-        salaryGrowthRate: income.salaryGrowthRate,
-        realisticPhases: income.realisticPhases,
-        promotionJumps: income.promotionJumps,
-        momEducation: income.momEducation,
-        momAdjustment: income.momAdjustment,
-        employerCpfEnabled: income.employerCpfEnabled,
-        incomeStreams: income.incomeStreams,
-        lifeEvents: income.lifeEvents,
-        lifeEventsEnabled: income.lifeEventsEnabled,
-        annualExpenses: profile.annualExpenses,
-        inflation: profile.inflation,
-        personalReliefs: income.personalReliefs,
-        srsAnnualContribution: profile.srsAnnualContribution,
-        initialCpfOA: profile.cpfOA,
-        initialCpfSA: profile.cpfSA,
-        initialCpfMA: profile.cpfMA,
-        initialCpfRA: profile.cpfRA,
-        cpfLifeStartAge: profile.cpfLifeStartAge,
-        cpfLifePlan: profile.cpfLifePlan,
-        cpfRetirementSum: profile.cpfRetirementSum,
-        cpfHousingMode: (property.mortgageCpfMonthly > 0 ? 'simple' : 'none') as CpfHousingMode,
-        cpfHousingMonthly: property.mortgageCpfMonthly,
-        cpfMortgageYearsLeft: property.existingMortgageRemainingYears,
-      })
+    const projectionParams = buildProjectionParams(profile, income, property)
+    if (projectionParams) {
+      const projection = generateIncomeProjection(projectionParams)
       if (projection.length > 0) effectiveIncome = projection[0].totalGross
     }
 
