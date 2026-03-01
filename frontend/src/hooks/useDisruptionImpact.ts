@@ -160,8 +160,10 @@ export interface DisruptionDeltas {
 }
 
 export interface DisruptionOverrides {
-  incomeImpact?: number       // 0-1, overrides template.event.incomeImpact
-  expenseReduction?: number   // 0-1, overrides resolved expenseReductionPercent
+  incomeImpact?: number            // 0-1, overrides template.event.incomeImpact
+  expenseReduction?: number        // 0-1, overrides resolved expenseReductionPercent
+  additionalAnnualExpense?: number // $/yr, overrides resolved tier cost
+  lumpSumCost?: number             // $ one-time, overrides resolved tier cost
 }
 
 export interface DisruptionImpactResult {
@@ -176,6 +178,10 @@ export interface DisruptionImpactResult {
   templateIncomeImpact: number | null
   /** Template's default expense reduction (0-1), merged from costs tier + event field */
   templateExpenseReduction: number | null
+  /** Template's default additional annual expense from tier costs */
+  templateAnnualExpense: number | null
+  /** Template's default lump sum cost from tier costs */
+  templateLumpSum: number | null
   selectTemplate: (index: number | null) => void
   setStartAge: (age: number) => void
 }
@@ -286,9 +292,10 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised', overri
       }
     }
 
-    // Resolve tiered costs for the selected template
+    // Resolve tiered costs for the selected template, with user overrides taking priority
     const resolvedCosts: CostTier = template.costs?.[costTier] ?? EMPTY_COST_TIER
-    const { additionalAnnualExpense, lumpSumCost } = resolvedCosts
+    const additionalAnnualExpense = overrides?.additionalAnnualExpense ?? resolvedCosts.additionalAnnualExpense
+    const lumpSumCost = overrides?.lumpSumCost ?? resolvedCosts.lumpSumCost
     // Expense reduction: override > tiered cost > event-level default
     const expenseReductionPercent = overrides?.expenseReduction
       ?? resolvedCosts.expenseReductionPercent
@@ -370,13 +377,17 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised', overri
     profile, income,
     template, effectiveStartAge, costTier,
     overrides?.incomeImpact, overrides?.expenseReduction,
+    overrides?.additionalAnnualExpense, overrides?.lumpSumCost,
   ])
 
   // Compute template defaults for UI pre-fill (outside useMemo to avoid recomputing everything)
+  const tierCosts = template?.costs?.[costTier]
   const templateIncomeImpact = template ? template.event.incomeImpact : null
   const templateExpenseReduction = template
-    ? (template.costs?.[costTier]?.expenseReductionPercent ?? template.event.expenseReductionPercent ?? null)
+    ? (tierCosts?.expenseReductionPercent ?? template.event.expenseReductionPercent ?? null)
     : null
+  const templateAnnualExpense = tierCosts?.additionalAnnualExpense ?? null
+  const templateLumpSum = tierCosts?.lumpSumCost ?? null
 
   return {
     selectedIndex,
@@ -388,6 +399,8 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised', overri
     hasData: result.hasData,
     templateIncomeImpact,
     templateExpenseReduction,
+    templateAnnualExpense,
+    templateLumpSum,
     selectTemplate,
     setStartAge,
   }

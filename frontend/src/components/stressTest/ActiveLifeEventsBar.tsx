@@ -143,6 +143,8 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
   const [costTier, setCostTier] = useState<CostTierKey>('subsidised')
   const [incomeOverride, setIncomeOverride] = useState<number | null>(null)
   const [expenseReductionOverride, setExpenseReductionOverride] = useState<number | null>(null)
+  const [annualExpenseOverride, setAnnualExpenseOverride] = useState<number | null>(null)
+  const [lumpSumOverride, setLumpSumOverride] = useState<number | null>(null)
 
   const {
     selectedIndex,
@@ -150,20 +152,37 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
     baseMetrics,
     disruptedMetrics,
     deltas,
-    resolvedCosts,
     templateIncomeImpact,
     templateExpenseReduction,
+    templateAnnualExpense,
+    templateLumpSum,
     selectTemplate,
     setStartAge,
   } = useDisruptionImpact(costTier, {
     incomeImpact: incomeOverride ?? undefined,
     expenseReduction: expenseReductionOverride ?? undefined,
+    additionalAnnualExpense: annualExpenseOverride ?? undefined,
+    lumpSumCost: lumpSumOverride ?? undefined,
   })
+
+  const resetAllOverrides = () => {
+    setIncomeOverride(null)
+    setExpenseReductionOverride(null)
+    setAnnualExpenseOverride(null)
+    setLumpSumOverride(null)
+  }
 
   // Wrap selectTemplate to reset overrides when template changes
   const handleSelectTemplate = (index: number | null) => {
     selectTemplate(index)
-    setIncomeOverride(null)
+    resetAllOverrides()
+  }
+
+  // Switching cost tier resets cost-related overrides (tier provides new defaults)
+  const handleCostTierChange = (tier: CostTierKey) => {
+    setCostTier(tier)
+    setAnnualExpenseOverride(null)
+    setLumpSumOverride(null)
     setExpenseReductionOverride(null)
   }
 
@@ -179,6 +198,9 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
   // Effective values for sliders (override or template default)
   const effectiveIncome = incomeOverride ?? templateIncomeImpact ?? 1
   const effectiveExpenseReduction = expenseReductionOverride ?? templateExpenseReduction ?? 0
+  const effectiveAnnualExpense = annualExpenseOverride ?? templateAnnualExpense ?? 0
+  const effectiveLumpSum = lumpSumOverride ?? templateLumpSum ?? 0
+  const hasCosts = selectedTemplate ? !!selectedTemplate.costs : false
 
   const handleAddToPlan = () => {
     if (!selectedTemplate || atEventLimit) return
@@ -195,8 +217,8 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
       affectedStreamIds: [],
       savingsPause: selectedTemplate.event.savingsPause,
       cpfPause: selectedTemplate.event.cpfPause,
-      additionalAnnualExpense: resolvedCosts?.additionalAnnualExpense,
-      lumpSumCost: resolvedCosts?.lumpSumCost,
+      additionalAnnualExpense: effectiveAnnualExpense || undefined,
+      lumpSumCost: effectiveLumpSum || undefined,
       expenseReductionPercent: effectiveExpenseReduction || undefined,
     })
 
@@ -266,11 +288,11 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
       {/* Configuration panel when template is selected */}
       {selectedTemplate && (
         <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
-          {/* Cost tier toggle — only for templates with tiered costs (health/family) */}
-          {selectedTemplate.costs && (
+          {/* Cost tier preset — only for templates with tiered costs (health/family) */}
+          {hasCosts && (
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Healthcare Cost Tier</Label>
-              <CostTierToggle value={costTier} onChange={setCostTier} />
+              <Label className="text-xs text-muted-foreground">Healthcare Cost Preset</Label>
+              <CostTierToggle value={costTier} onChange={handleCostTierChange} />
             </div>
           )}
 
@@ -346,16 +368,46 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
             />
           </div>
 
-          {/* Non-adjustable cost details (from tiered costs) */}
-          {resolvedCosts?.additionalAnnualExpense ? (
-            <p className="text-xs text-muted-foreground">
-              Additional expenses: {formatCurrency(resolvedCosts.additionalAnnualExpense)}/yr
-              {selectedTemplate.durationYears < 90 ? ` for ${selectedTemplate.durationYears} years` : ''}
-            </p>
-          ) : null}
-          {resolvedCosts?.lumpSumCost ? (
-            <p className="text-xs text-muted-foreground">One-time cost: {formatCurrency(resolvedCosts.lumpSumCost)}</p>
-          ) : null}
+          {/* Additional annual expense slider — only for templates with costs */}
+          {hasCosts && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">
+                  Additional Expenses
+                  {selectedTemplate.durationYears < 90 ? ` (${selectedTemplate.durationYears}yr)` : ''}
+                </Label>
+                <span className="text-sm font-medium tabular-nums text-blue-600 dark:text-blue-400">
+                  {effectiveAnnualExpense === 0 ? 'None' : `${formatCurrency(effectiveAnnualExpense)}/yr`}
+                </span>
+              </div>
+              <Slider
+                value={[effectiveAnnualExpense / 1000]}
+                min={0}
+                max={60}
+                step={1}
+                onValueChange={([v]) => setAnnualExpenseOverride(v * 1000)}
+              />
+            </div>
+          )}
+
+          {/* Lump sum cost slider — only for templates with costs */}
+          {hasCosts && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">One-Time Cost</Label>
+                <span className="text-sm font-medium tabular-nums text-blue-600 dark:text-blue-400">
+                  {effectiveLumpSum === 0 ? 'None' : formatCurrency(effectiveLumpSum)}
+                </span>
+              </div>
+              <Slider
+                value={[effectiveLumpSum / 1000]}
+                min={0}
+                max={30}
+                step={1}
+                onValueChange={([v]) => setLumpSumOverride(v * 1000)}
+              />
+            </div>
+          )}
         </div>
       )}
 
