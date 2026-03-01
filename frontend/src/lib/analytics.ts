@@ -44,6 +44,7 @@ type AnalyticsEvent =
   | 'checklist_reset'
   | 'page_navigated'
   | 'session_start'
+  | 'welcome_banner_cta_clicked'
 
 export function trackEvent(event: AnalyticsEvent, data?: Record<string, string | number | boolean>) {
   window.umami?.track(event, data)

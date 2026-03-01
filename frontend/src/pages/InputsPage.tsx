@@ -97,6 +97,7 @@ import { SectionNudge } from '@/components/shared/SectionNudge'
 import type { ModeSectionId } from '@/hooks/useEffectiveMode'
 
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
+import { WelcomeBanner } from '@/components/shared/WelcomeBanner'
 import { pushUndo } from '@/lib/undo'
 import { formatCurrency } from '@/lib/utils'
 import type { WithdrawalStrategyType } from '@/lib/types'
@@ -1457,6 +1458,8 @@ export function InputsPage() {
 
   return (
     <div className="space-y-10">
+      <WelcomeBanner />
+
       {/* Page header with ordering toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
