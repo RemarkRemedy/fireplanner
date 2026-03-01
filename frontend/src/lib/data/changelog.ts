@@ -12,6 +12,14 @@ export interface ChangelogEntry {
 /** Newest first. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-03-01',
+    category: 'feature',
+    title: 'Returning-user guidance and preliminary-results banner',
+    description:
+      'Returning users now see an amber banner on the Start page confirming they can safely switch paths or modes, with a direct link to the Dashboard. The Dashboard shows a preliminary-results advisory encouraging users to verify numbers in Projection and Stress Test. The advisory automatically disappears once you run your first simulation.',
+    affectedSections: ['section-dashboard'],
+  },
+  {
     date: '2026-02-28',
     category: 'fix',
     title: 'CPF voluntary top-up calculations corrected',
