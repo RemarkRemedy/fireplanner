@@ -28,8 +28,8 @@ test.describe('US-12: Property Analysis', () => {
     }
     await expect(propertySwitch).toHaveAttribute('data-state', 'checked')
 
-    // 4. Complete onboarding — click "Continue to planning"
-    await page.getByRole('button', { name: /continue to planning/i }).click()
+    // 4. Complete onboarding — click "Build my full plan"
+    await page.getByRole('button', { name: /build my full plan/i }).click()
     await expect(page).toHaveURL(/\/inputs/)
     await page.waitForLoadState('networkidle')
 

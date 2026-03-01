@@ -50,8 +50,8 @@ test.describe('US-2: Mid-Career Onboarding (Story-First)', () => {
     await expect(page.getByText('Savings Rate:').first()).toBeVisible()
     await expect(page.getByText('Progress:').first()).toBeVisible()
 
-    // Click Continue to planning
-    await page.getByRole('button', { name: /continue to planning/i }).click()
+    // Click Build my full plan
+    await page.getByRole('button', { name: /build my full plan/i }).click()
 
     // Verify navigation to /inputs
     await expectRoute(page, '/inputs')

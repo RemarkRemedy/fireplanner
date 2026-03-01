@@ -6,7 +6,7 @@ test.describe('US-14: Mobile Navigation', () => {
     // 1. Complete onboarding on mobile viewport
     await goToStart(page)
     await selectPathway(page, 'goal-first')
-    await page.getByRole('button', { name: /continue to planning/i }).click()
+    await page.getByRole('button', { name: /build my full plan/i }).click()
     await expect(page).toHaveURL(/\/inputs/)
     await page.waitForLoadState('networkidle')
 
@@ -65,7 +65,7 @@ test.describe('US-14: Mobile Navigation', () => {
     // 1. Navigate to inputs
     await goToStart(page)
     await selectPathway(page, 'story-first')
-    await page.getByRole('button', { name: /continue to planning/i }).click()
+    await page.getByRole('button', { name: /build my full plan/i }).click()
     await expect(page).toHaveURL(/\/inputs/)
     await page.waitForLoadState('networkidle')
 

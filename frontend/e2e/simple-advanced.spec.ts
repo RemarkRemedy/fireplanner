@@ -6,7 +6,7 @@ test.describe('US-13: Simple vs Advanced Mode', () => {
     // 1. Complete onboarding
     await goToStart(page)
     await selectPathway(page, 'goal-first')
-    await page.getByRole('button', { name: /continue to planning/i }).click()
+    await page.getByRole('button', { name: /build my full plan/i }).click()
     await expect(page).toHaveURL(/\/inputs/)
     await page.waitForLoadState('networkidle')
 
@@ -53,7 +53,7 @@ test.describe('US-13: Simple vs Advanced Mode', () => {
     // 1. Complete onboarding
     await goToStart(page)
     await selectPathway(page, 'story-first')
-    await page.getByRole('button', { name: /continue to planning/i }).click()
+    await page.getByRole('button', { name: /build my full plan/i }).click()
     await expect(page).toHaveURL(/\/inputs/)
     await page.waitForLoadState('networkidle')
 

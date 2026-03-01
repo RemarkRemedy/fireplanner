@@ -110,9 +110,8 @@ export function StartPage() {
   })
 
   // Show results when inputs are filled and valid
-  const showResults = draftAge >= 18 && draftIncome > 0 && draftExpenses > 0
-    && draftAnnualSavings > 0 && draftFireNumber > 0
-    && isFinite(draftYearsToFire) && draftYearsToFire >= 0
+  const showResults = draftAge >= 18 && draftIncome > 0 && draftExpenses > 0 && draftFireNumber > 0
+  const fireReachable = showResults && draftAnnualSavings > 0 && isFinite(draftYearsToFire) && draftYearsToFire >= 0
 
   const handlePathwayClick = (pathway: ActivePathway) => {
     if (activePathway === pathway) {
@@ -356,17 +355,18 @@ export function StartPage() {
                 tooltip="Cash, savings, stocks, bonds, and other investments — excluding CPF and property"
               />
             </div>
-            {showResults && <QuickResults fireNumber={draftFireNumber} yearsToFire={draftYearsToFire} fireAge={draftFireAge} savingsRate={draftSavingsRate} progress={draftProgress} projection={draftProjection} desiredRetirementAge={draftRetirementAge} />}
-            {sectionToggles}
-            <div className="flex justify-end">
+            {showResults && <QuickResults fireNumber={draftFireNumber} yearsToFire={draftYearsToFire} fireAge={draftFireAge} savingsRate={draftSavingsRate} progress={draftProgress} projection={draftProjection} desiredRetirementAge={draftRetirementAge} fireReachable={fireReachable} />}
+            <div className="flex flex-col items-end gap-1">
               <Button
                 onClick={handleGoalFirstContinue}
                 disabled={!goalFirstValid}
               >
-                Continue to planning
+                Build my full plan
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
+              <p className="text-xs text-muted-foreground mt-1">Includes CPF, property, Monte Carlo stress testing, and 12 withdrawal strategies</p>
             </div>
+            {sectionToggles}
           </CardContent>
         </Card>
       )}
@@ -409,17 +409,18 @@ export function StartPage() {
                 tooltip="Cash, savings, stocks, bonds, and other investments — excluding CPF and property"
               />
             </div>
-            {showResults && <QuickResults fireNumber={draftFireNumber} yearsToFire={draftYearsToFire} fireAge={draftFireAge} savingsRate={draftSavingsRate} progress={draftProgress} projection={draftProjection} desiredRetirementAge={draftFireAge > 65 ? 65 : undefined} />}
-            {sectionToggles}
-            <div className="flex justify-end">
+            {showResults && <QuickResults fireNumber={draftFireNumber} yearsToFire={draftYearsToFire} fireAge={draftFireAge} savingsRate={draftSavingsRate} progress={draftProgress} projection={draftProjection} desiredRetirementAge={draftFireAge > 65 ? 65 : undefined} fireReachable={fireReachable} />}
+            <div className="flex flex-col items-end gap-1">
               <Button
                 onClick={handleStoryFirstContinue}
                 disabled={!storyFirstValid}
               >
-                Continue to planning
+                Build my full plan
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
+              <p className="text-xs text-muted-foreground mt-1">Includes CPF, property, Monte Carlo stress testing, and 12 withdrawal strategies</p>
             </div>
+            {sectionToggles}
           </CardContent>
         </Card>
       )}
@@ -505,7 +506,7 @@ export function StartPage() {
         </div>
       )}
 
-      <LandingEmailSection isReturningUser={isReturningUser} />
+      {isReturningUser && <LandingEmailSection />}
 
       {/* Continue links for returning users */}
       {isReturningUser && (
@@ -536,6 +537,7 @@ function QuickResults({
   progress,
   projection,
   desiredRetirementAge,
+  fireReachable,
 }: {
   fireNumber: number
   yearsToFire: number
@@ -544,6 +546,7 @@ function QuickResults({
   progress: number
   projection: { age: number; balance: number; phase: 'accumulation' | 'decumulation' }[]
   desiredRetirementAge?: number
+  fireReachable: boolean
 }) {
   const pct = (progress * 100).toFixed(1)
 
@@ -564,7 +567,16 @@ function QuickResults({
     <div className="col-span-full mt-4 p-4 rounded-lg border bg-muted/30 space-y-3">
       {/* Hero messaging */}
       <div className="text-center space-y-1">
-        {alreadyFire ? (
+        {!fireReachable ? (
+          <>
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+              You're spending more than you earn
+            </div>
+            <div className="text-sm text-muted-foreground">
+              The full planner can model paths to close the gap.
+            </div>
+          </>
+        ) : alreadyFire ? (
           <>
             <div className="text-2xl font-bold">
               You've already reached Financial Independence!
@@ -602,7 +614,7 @@ function QuickResults({
       </div>
 
       {/* Depletion warning — shown for non-shortfall cases too (e.g. story-first with age > 65) */}
-      {depletesBeforeDeath && !hasShortfall && (
+      {fireReachable && depletesBeforeDeath && !hasShortfall && (
         <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 px-3 py-2 text-sm text-amber-800 dark:text-amber-200">
           <span className="font-medium">Portfolio runs out at age {depletionAge}</span> — that's {shortfallYears} {shortfallYears === 1 ? 'year' : 'years'} short of your life expectancy ({lifeExpectancy}).
           Consider reducing expenses, saving more, or working a few extra years.
@@ -638,8 +650,10 @@ function QuickResults({
         <span className="text-xs text-muted-foreground whitespace-nowrap">{pct}%</span>
       </div>
 
-      {/* Net worth projection chart */}
-      <QuickProjectionChart data={projection} fireNumber={fireNumber} fireAge={fireAge} />
+      {/* Net worth projection chart — only shown when FIRE is reachable */}
+      {fireReachable && (
+        <QuickProjectionChart data={projection} fireNumber={fireNumber} fireAge={fireAge} />
+      )}
 
       {/* Disclaimer */}
       <p className="text-xs text-muted-foreground">

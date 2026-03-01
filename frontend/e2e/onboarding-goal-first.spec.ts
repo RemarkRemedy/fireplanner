@@ -46,8 +46,8 @@ test.describe('US-1: Fresh Graduate Onboarding (Goal-First)', () => {
     await expect(page.getByText('Savings Rate', { exact: false })).toBeVisible()
     await expect(page.getByText('Progress', { exact: false })).toBeVisible()
 
-    // Click Continue to planning
-    await page.getByRole('button', { name: /continue to planning/i }).click()
+    // Click Build my full plan
+    await page.getByRole('button', { name: /build my full plan/i }).click()
 
     // Verify navigation to /inputs
     await expectRoute(page, '/inputs')
