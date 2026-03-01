@@ -5,11 +5,7 @@ import { CheckCircle, Loader2 } from 'lucide-react'
 import { useEmailSignup } from '@/hooks/useEmailSignup'
 import { EMAIL_MAX_LENGTH, FEATURE_OPTIONS, SIGNUP_FLAG } from '@/lib/validation/emailConstants'
 
-interface LandingEmailSectionProps {
-  isReturningUser?: boolean
-}
-
-export function LandingEmailSection({ isReturningUser = false }: LandingEmailSectionProps) {
+export function LandingEmailSection() {
   const {
     email, setEmail, submittedEmail, status, errorMsg, step, stepRef,
     handleEmailSubmit, handleFeatureSelect, handleSkip, handleReset,
@@ -47,9 +43,7 @@ export function LandingEmailSection({ isReturningUser = false }: LandingEmailSec
           <p className="text-sm font-medium">You're on the list!</p>
         </div>
         <p className="text-sm text-muted-foreground">
-          {isReturningUser
-            ? 'One more thing: which would be most useful for your planning?'
-            : 'One more thing: which feature interests you most?'}
+          One more thing: which would be most useful for your planning?
         </p>
         <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Select a feature you're interested in">
           {FEATURE_OPTIONS.map((opt) => (
@@ -78,9 +72,7 @@ export function LandingEmailSection({ isReturningUser = false }: LandingEmailSec
   return (
     <div className="space-y-2">
       <p className="text-sm text-muted-foreground text-center">
-        {isReturningUser
-          ? "We're building new features based on user feedback. Get notified."
-          : 'CPF optimization, couples planning, and more calculators are in development. Get notified when they launch.'}
+        We're building new features based on user feedback. Get notified.
       </p>
       <form onSubmit={handleEmailSubmit} className="flex items-center gap-2 max-w-md mx-auto">
         <Input

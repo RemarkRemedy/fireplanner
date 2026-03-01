@@ -7,7 +7,7 @@ import { goToStart, selectPathway, fillCurrencyInput } from './helpers'
 async function goToNetWorth(page: import('@playwright/test').Page) {
   await goToStart(page)
   await selectPathway(page, 'goal-first')
-  await page.getByRole('button', { name: /continue to planning/i }).click()
+  await page.getByRole('button', { name: /build my full plan/i }).click()
   await expect(page).toHaveURL(/\/inputs/)
   await page.waitForLoadState('networkidle')
 

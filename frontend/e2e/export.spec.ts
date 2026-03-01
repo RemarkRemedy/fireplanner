@@ -18,7 +18,7 @@ async function completeOnboarding(page: import('@playwright/test').Page) {
     expenses: '50000',
     savings: '200000',
   })
-  await page.getByRole('button', { name: /continue to planning/i }).click()
+  await page.getByRole('button', { name: /build my full plan/i }).click()
   await expect(page).toHaveURL(/\/inputs/)
   await page.waitForLoadState('networkidle')
 }

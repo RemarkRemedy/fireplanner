@@ -27,6 +27,7 @@ import { WithdrawalBasisToggle } from '@/components/shared/WithdrawalBasisToggle
 import { getStrategyLabel } from '@/hooks/useWithdrawalComparison'
 import { trackEvent } from '@/lib/analytics'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { PostSimulationCapture } from '@/components/email/PostSimulationCapture'
 import {
   buildProjectionColumns,
   type ColumnGroup,
@@ -626,6 +627,8 @@ export function ProjectionPage() {
           {renderTable('max-h-[70vh]')}
         </>
       )}
+
+      {rows && rows.length > 0 && <PostSimulationCapture />}
 
       <Dialog open={expanded} onOpenChange={setExpanded}>
         <DialogContent className="max-w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-4">
