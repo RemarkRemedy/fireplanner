@@ -306,11 +306,13 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised'): Disru
         liquidNWAdjustment += baseInputs.annualExpenses * expenseReductionPercent * eventDuration
       }
     }
-    // Lump sum is always an immediate wealth shock regardless of duration.
-    // Inflate to match the event's start year (consistent with MC/SR hooks).
+    // Lump sum is always a wealth shock regardless of duration.
+    // No inflation adjustment: this model works in real terms (computeMetrics uses
+    // netRealReturn = expectedReturn - inflation - expenseRatio), so all inputs
+    // must be in today's dollars. The MC/SR engines inflate lump sums because they
+    // run year-by-year in nominal terms — that logic does not apply here.
     if (lumpSumCost) {
-      const yearsToEvent = clampedStartAge - profile.currentAge
-      liquidNWAdjustment -= lumpSumCost * Math.pow(1 + profile.inflation, yearsToEvent)
+      liquidNWAdjustment -= lumpSumCost
     }
 
     // Compute disrupted metrics with modified income AND expenses
