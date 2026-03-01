@@ -90,23 +90,41 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       }
     }
 
-    // Upsert — insert new signup, or update feature_interest if email already exists.
-    // This supports the two-step flow: email first, then feature interest as a follow-up.
-    // ON CONFLICT: only set feature_interest if it was previously NULL (prevents third-party overwrites).
-    // source is updated to track last interaction surface (last-touch attribution).
-    await context.env.DB.prepare(
-      `INSERT INTO email_signups (email, source, feature_interest, ip_hash) VALUES (?, ?, ?, ?)
-       ON CONFLICT(email) DO UPDATE SET
-         feature_interest = COALESCE(feature_interest, excluded.feature_interest),
-         source = excluded.source`
-    )
-      .bind(
-        email,
-        body.source,
-        isFeatureUpsert ? featureInterest : null,
-        ipHash
+    // Two-step flow: step 1 inserts email, step 2 updates feature_interest on the existing row.
+    // Separating INSERT from UPDATE avoids burning autoincrement IDs on conflict.
+    if (isFeatureUpsert) {
+      // Step 2: update feature_interest for an already-saved email.
+      // Only set feature_interest if it was previously NULL (prevents third-party overwrites).
+      const result = await context.env.DB.prepare(
+        `UPDATE email_signups
+         SET feature_interest = COALESCE(feature_interest, ?),
+             source = ?,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE email = ?`
       )
-      .run()
+        .bind(featureInterest, body.source, email)
+        .run()
+
+      if (!result.meta.changes) {
+        // Email not found — user cleared localStorage or hit the endpoint directly.
+        // Fall through to insert so the data isn't lost.
+        await context.env.DB.prepare(
+          `INSERT INTO email_signups (email, source, feature_interest, ip_hash) VALUES (?, ?, ?, ?)`
+        )
+          .bind(email, body.source, featureInterest, ipHash)
+          .run()
+      }
+    } else {
+      // Step 1: insert new signup. Duplicate emails get a source update only.
+      await context.env.DB.prepare(
+        `INSERT INTO email_signups (email, source, ip_hash) VALUES (?, ?, ?)
+         ON CONFLICT(email) DO UPDATE SET
+           source = excluded.source,
+           updated_at = CURRENT_TIMESTAMP`
+      )
+        .bind(email, body.source, ipHash)
+        .run()
+    }
 
     return jsonResponse({ success: true })
   } catch (err) {
