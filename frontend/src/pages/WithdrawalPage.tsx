@@ -172,7 +172,7 @@ export function WithdrawalPage() {
         </div>
         <div className="inline-flex rounded-lg border border-border p-0.5 bg-muted/30 shrink-0 mt-1">
           <button
-            onClick={() => setSectionMode('section-withdrawal', 'simple')}
+            onClick={() => { setSectionMode('section-withdrawal', 'simple'); trackEvent('section_mode_changed', { section: 'withdrawal', mode: 'simple' }) }}
             className={cn(
               'rounded-md px-3 py-1 text-xs font-medium transition-all',
               mode === 'simple'
@@ -183,7 +183,7 @@ export function WithdrawalPage() {
             Simple
           </button>
           <button
-            onClick={() => setSectionMode('section-withdrawal', 'advanced')}
+            onClick={() => { setSectionMode('section-withdrawal', 'advanced'); trackEvent('section_mode_changed', { section: 'withdrawal', mode: 'advanced' }) }}
             className={cn(
               'rounded-md px-3 py-1 text-xs font-medium transition-all',
               mode === 'advanced'

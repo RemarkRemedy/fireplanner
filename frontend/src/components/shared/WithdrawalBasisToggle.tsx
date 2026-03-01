@@ -1,5 +1,6 @@
 import type { WithdrawalBasis } from '@/lib/types'
 import { useSimulationStore } from '@/stores/useSimulationStore'
+import { trackEvent } from '@/lib/analytics'
 import {
   Tooltip,
   TooltipContent,
@@ -46,7 +47,7 @@ export function WithdrawalBasisToggle() {
               <button
                 role="radio"
                 aria-checked={withdrawalBasis === mode.value}
-                onClick={() => setField('withdrawalBasis', mode.value)}
+                onClick={() => { setField('withdrawalBasis', mode.value); trackEvent('withdrawal_basis_changed', { basis: mode.value }) }}
                 className={cn(
                   'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
                   withdrawalBasis === mode.value

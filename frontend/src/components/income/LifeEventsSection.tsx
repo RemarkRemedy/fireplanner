@@ -9,6 +9,7 @@ import { useIncomeStore } from '@/stores/useIncomeStore'
 import { cn } from '@/lib/utils'
 import type { LifeEvent } from '@/lib/types'
 import { MAX_LIFE_EVENTS } from '@/hooks/useDisruptionImpact'
+import { trackEvent } from '@/lib/analytics'
 
 function createEvent(id: string): LifeEvent {
   return {
@@ -115,6 +116,7 @@ export function LifeEventsSection() {
     if (income.lifeEvents.length >= MAX_LIFE_EVENTS) return
     const id = `event-${crypto.randomUUID()}`
     income.addLifeEvent(createEvent(id))
+    trackEvent('life_event_added', { source: 'custom' })
   }
 
   const applyTemplate = (templateName: string) => {
@@ -123,6 +125,7 @@ export function LifeEventsSection() {
     if (income.lifeEvents.length >= MAX_LIFE_EVENTS) return
     const id = `event-${crypto.randomUUID()}`
     income.addLifeEvent({ ...template, id })
+    trackEvent('life_event_added', { source: 'template', template_name: templateName })
   }
 
   return (
@@ -137,7 +140,7 @@ export function LifeEventsSection() {
             <Checkbox
               id="life-events-enabled"
               checked={income.lifeEventsEnabled}
-              onCheckedChange={(checked: boolean | 'indeterminate') => income.setField('lifeEventsEnabled', checked === true)}
+              onCheckedChange={(checked: boolean | 'indeterminate') => { income.setField('lifeEventsEnabled', checked === true); trackEvent('feature_toggle', { feature: 'life_events', enabled: checked === true }) }}
             />
             <Label htmlFor="life-events-enabled" className="text-sm cursor-pointer">Enable</Label>
           </div>
@@ -181,7 +184,7 @@ export function LifeEventsSection() {
                     errors={errors}
                     streamNames={income.incomeStreams.map((s) => ({ id: s.id, name: s.name || 'Unnamed' }))}
                     onUpdate={(updates) => income.updateLifeEvent(event.id, updates)}
-                    onRemove={() => income.removeLifeEvent(event.id)}
+                    onRemove={() => { income.removeLifeEvent(event.id); trackEvent('life_event_removed') }}
                   />
                 ))}
                 {income.lifeEvents.length < MAX_LIFE_EVENTS && (

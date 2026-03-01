@@ -559,7 +559,7 @@ export function StressTestPage() {
           </div>
           <div className="inline-flex rounded-lg border border-border p-0.5 bg-muted/30 shrink-0 mt-1">
             <button
-              onClick={() => setSectionMode('section-stress-test', 'simple')}
+              onClick={() => { setSectionMode('section-stress-test', 'simple'); trackEvent('section_mode_changed', { section: 'stress-test', mode: 'simple' }) }}
               className={cn(
                 'rounded-md px-3 py-1 text-xs font-medium transition-all',
                 stressMode === 'simple'
@@ -570,7 +570,7 @@ export function StressTestPage() {
               Simple
             </button>
             <button
-              onClick={() => setSectionMode('section-stress-test', 'advanced')}
+              onClick={() => { setSectionMode('section-stress-test', 'advanced'); trackEvent('section_mode_changed', { section: 'stress-test', mode: 'advanced' }) }}
               className={cn(
                 'rounded-md px-3 py-1 text-xs font-medium transition-all',
                 stressMode === 'advanced'

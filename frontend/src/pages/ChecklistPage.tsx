@@ -34,13 +34,15 @@ export function ChecklistPage() {
 
   const handleToggle = useCallback((id: string) => {
     toggleItem(id)
-    setChecked(getCheckedItems())
-    trackEvent('checklist_item_toggled')
+    const updated = getCheckedItems()
+    setChecked(updated)
+    trackEvent('checklist_item_toggled', { item_id: id, checked: !!updated[id] })
   }, [])
 
   const handleReset = useCallback(() => {
     resetChecklist()
     setChecked({})
+    trackEvent('checklist_reset')
   }, [])
 
   return (

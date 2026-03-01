@@ -36,6 +36,12 @@ type AnalyticsEvent =
   | 'email_signup_error'
   | 'feature_interest_selected'
   | 'telegram_join_clicked'
+  | 'life_event_added'
+  | 'life_event_removed'
+  | 'withdrawal_basis_changed'
+  | 'section_mode_changed'
+  | 'scenario_deleted'
+  | 'checklist_reset'
 
 export function trackEvent(event: AnalyticsEvent, data?: Record<string, string | number | boolean>) {
   window.umami?.track(event, data)

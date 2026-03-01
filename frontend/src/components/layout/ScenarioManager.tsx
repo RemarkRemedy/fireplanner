@@ -64,6 +64,7 @@ export function ScenarioManager() {
   const handleDelete = (id: string, name: string) => {
     deleteScenario(id)
     toast.success(`Deleted "${name}"`)
+    trackEvent('scenario_deleted')
     refresh()
   }
 

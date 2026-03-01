@@ -393,7 +393,7 @@ export function ProjectionPage() {
           </div>
           <div className="inline-flex rounded-lg border border-border p-0.5 bg-muted/30 shrink-0 mt-1">
             <button
-              onClick={() => setSectionMode('section-projection', 'simple')}
+              onClick={() => { setSectionMode('section-projection', 'simple'); trackEvent('section_mode_changed', { section: 'projection', mode: 'simple' }) }}
               className={cn(
                 'rounded-md px-3 py-1 text-xs font-medium transition-all',
                 mode === 'simple'
@@ -404,7 +404,7 @@ export function ProjectionPage() {
               Simple
             </button>
             <button
-              onClick={() => setSectionMode('section-projection', 'advanced')}
+              onClick={() => { setSectionMode('section-projection', 'advanced'); trackEvent('section_mode_changed', { section: 'projection', mode: 'advanced' }) }}
               className={cn(
                 'rounded-md px-3 py-1 text-xs font-medium transition-all',
                 mode === 'advanced'
@@ -421,7 +421,7 @@ export function ProjectionPage() {
             <span className="text-sm font-medium whitespace-nowrap">Withdrawal Strategy:</span>
             <Select
               value={activeStrategy}
-              onValueChange={(v) => setSimField('selectedStrategy', v as WithdrawalStrategyType)}
+              onValueChange={(v) => { setSimField('selectedStrategy', v as WithdrawalStrategyType); trackEvent('strategy_selected', { strategy: v, context: 'projection' }) }}
             >
               <SelectTrigger className="w-[280px]">
                 <SelectValue />
