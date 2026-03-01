@@ -5,19 +5,12 @@ import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet'
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { AlertTriangle, ExternalLink, Info, Plus, RotateCcw, X } from 'lucide-react'
+import { AlertTriangle, ChevronUp, ExternalLink, Info, Plus, RotateCcw, X } from 'lucide-react'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import {
@@ -132,7 +125,7 @@ function CostTierToggle({ value, onChange }: { value: CostTierKey; onChange: (v:
 }
 
 // ============================================================
-// Template Picker (Sheet Body)
+// Life Event Configurator (Inline Expandable)
 // ============================================================
 
 const CATEGORY_ORDER = ['career', 'health', 'family'] as const
@@ -144,7 +137,7 @@ const CATEGORY_LABELS: Record<Category, string> = {
   family: 'Family',
 }
 
-function LifeEventSheetBody({ onClose }: { onClose: () => void }) {
+function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
   const profile = useProfileStore()
   const income = useIncomeStore()
   const [costTier, setCostTier] = useState<CostTierKey>('subsidised')
@@ -193,7 +186,7 @@ function LifeEventSheetBody({ onClose }: { onClose: () => void }) {
       income.setField('lifeEventsEnabled', true)
     }
     selectTemplate(null)
-    onClose()
+    onCollapse()
   }
 
   // Group templates by category
@@ -205,6 +198,22 @@ function LifeEventSheetBody({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">Life Event Scenarios</h3>
+        <button
+          onClick={onCollapse}
+          className="rounded-sm p-1 hover:bg-muted transition-colors"
+          aria-label="Close life event configurator"
+        >
+          <ChevronUp className="h-4 w-4" />
+        </button>
+      </div>
+
+      <p className="text-sm text-muted-foreground">
+        Tip: Run a Monte Carlo or Sequence Risk simulation first to see your baseline results,
+        then add life events here to see how disruptions could affect your plan.
+      </p>
+
       <div className="flex items-start gap-2 text-sm text-muted-foreground">
         <Info className="h-4 w-4 mt-0.5 shrink-0" />
         <p>
@@ -390,7 +399,7 @@ function LifeEventSheetBody({ onClose }: { onClose: () => void }) {
 // ============================================================
 
 export function ActiveLifeEventsBar() {
-  const [sheetOpen, setSheetOpen] = useState(false)
+  const [expanded, setExpanded] = useState(false)
   const lifeEvents = useIncomeStore((s) => s.lifeEvents)
   const removeLifeEvent = useIncomeStore((s) => s.removeLifeEvent)
 
@@ -398,48 +407,51 @@ export function ActiveLifeEventsBar() {
   const atLimit = eventCount >= MAX_LIFE_EVENTS
 
   return (
-    <div className="flex flex-wrap items-center gap-2 py-2">
-      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
-        Life Events ({eventCount}/{MAX_LIFE_EVENTS}):
-      </span>
+    <div className="space-y-0">
+      <div className="flex flex-wrap items-center gap-2 py-2">
+        <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+          Life Events ({eventCount}/{MAX_LIFE_EVENTS}):
+        </span>
 
-      {eventCount === 0 && (
-        <span className="text-xs italic text-muted-foreground">None active</span>
+        {eventCount === 0 && (
+          <span className="text-xs italic text-muted-foreground">None active</span>
+        )}
+
+        {lifeEvents.map((event) => (
+          <EventChip
+            key={event.id}
+            event={event}
+            onRemove={() => removeLifeEvent(event.id)}
+          />
+        ))}
+
+        <Button
+          variant={expanded ? 'default' : 'outline'}
+          size="sm"
+          className="h-7 text-xs"
+          disabled={atLimit && !expanded}
+          onClick={() => setExpanded((v) => !v)}
+          title={atLimit && !expanded ? `Maximum ${MAX_LIFE_EVENTS} life events reached` : 'Add a life event scenario'}
+        >
+          {expanded ? (
+            <>
+              <ChevronUp className="h-3 w-3 mr-1" />
+              Close
+            </>
+          ) : (
+            <>
+              <Plus className="h-3 w-3 mr-1" />
+              Add Life Event
+            </>
+          )}
+        </Button>
+      </div>
+
+      {expanded && (
+        <div className="mt-3 border rounded-lg bg-muted/30 p-4">
+          <LifeEventConfigurator onCollapse={() => setExpanded(false)} />
+        </div>
       )}
-
-      {lifeEvents.map((event) => (
-        <EventChip
-          key={event.id}
-          event={event}
-          onRemove={() => removeLifeEvent(event.id)}
-        />
-      ))}
-
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-7 text-xs"
-        disabled={atLimit}
-        onClick={() => setSheetOpen(true)}
-        title={atLimit ? `Maximum ${MAX_LIFE_EVENTS} life events reached` : 'Add a life event scenario'}
-      >
-        <Plus className="h-3 w-3 mr-1" />
-        Add Life Event
-      </Button>
-
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Life Event Scenarios</SheetTitle>
-            <SheetDescription>
-              Preview the impact of life disruptions on your FIRE plan
-            </SheetDescription>
-          </SheetHeader>
-          <div className="mt-4">
-            <LifeEventSheetBody onClose={() => setSheetOpen(false)} />
-          </div>
-        </SheetContent>
-      </Sheet>
     </div>
   )
 }
