@@ -141,6 +141,8 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
   const profile = useProfileStore()
   const income = useIncomeStore()
   const [costTier, setCostTier] = useState<CostTierKey>('subsidised')
+  const [incomeOverride, setIncomeOverride] = useState<number | null>(null)
+  const [expenseReductionOverride, setExpenseReductionOverride] = useState<number | null>(null)
 
   const {
     selectedIndex,
@@ -149,9 +151,21 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
     disruptedMetrics,
     deltas,
     resolvedCosts,
+    templateIncomeImpact,
+    templateExpenseReduction,
     selectTemplate,
     setStartAge,
-  } = useDisruptionImpact(costTier)
+  } = useDisruptionImpact(costTier, {
+    incomeImpact: incomeOverride ?? undefined,
+    expenseReduction: expenseReductionOverride ?? undefined,
+  })
+
+  // Wrap selectTemplate to reset overrides when template changes
+  const handleSelectTemplate = (index: number | null) => {
+    selectTemplate(index)
+    setIncomeOverride(null)
+    setExpenseReductionOverride(null)
+  }
 
   if (!baseMetrics) return null
 
@@ -161,6 +175,10 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
   const lifeEventsCount = income.lifeEvents.length
   const atEventLimit = lifeEventsCount >= MAX_LIFE_EVENTS
   const selectedTemplate = selectedIndex !== null ? DISRUPTION_TEMPLATES[selectedIndex] : null
+
+  // Effective values for sliders (override or template default)
+  const effectiveIncome = incomeOverride ?? templateIncomeImpact ?? 1
+  const effectiveExpenseReduction = expenseReductionOverride ?? templateExpenseReduction ?? 0
 
   const handleAddToPlan = () => {
     if (!selectedTemplate || atEventLimit) return
@@ -173,19 +191,19 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
       name: selectedTemplate.event.name,
       startAge: clampedStartAge,
       endAge,
-      incomeImpact: selectedTemplate.event.incomeImpact,
+      incomeImpact: effectiveIncome,
       affectedStreamIds: [],
       savingsPause: selectedTemplate.event.savingsPause,
       cpfPause: selectedTemplate.event.cpfPause,
       additionalAnnualExpense: resolvedCosts?.additionalAnnualExpense,
       lumpSumCost: resolvedCosts?.lumpSumCost,
-      expenseReductionPercent: resolvedCosts?.expenseReductionPercent,
+      expenseReductionPercent: effectiveExpenseReduction || undefined,
     })
 
     if (!income.lifeEventsEnabled) {
       income.setField('lifeEventsEnabled', true)
     }
-    selectTemplate(null)
+    handleSelectTemplate(null)
     onCollapse()
   }
 
@@ -221,9 +239,6 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
         </p>
       </div>
 
-      {/* Cost tier toggle */}
-      <CostTierToggle value={costTier} onChange={setCostTier} />
-
       {/* Scenario cards grouped by category */}
       {grouped.map(({ category, label, templates }) => (
         <div key={category} className="space-y-2">
@@ -234,7 +249,7 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
                 key={tmpl.label}
                 variant={selectedIndex === tmpl.index ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => selectTemplate(selectedIndex === tmpl.index ? null : tmpl.index)}
+                onClick={() => handleSelectTemplate(selectedIndex === tmpl.index ? null : tmpl.index)}
                 className="text-xs"
                 aria-label={`${selectedIndex === tmpl.index ? 'Deselect' : 'Select'} ${tmpl.label} scenario`}
                 aria-pressed={selectedIndex === tmpl.index}
@@ -248,9 +263,18 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
         </div>
       ))}
 
-      {/* Age slider + impact breakdown when template is selected */}
+      {/* Configuration panel when template is selected */}
       {selectedTemplate && (
         <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+          {/* Cost tier toggle — only for templates with tiered costs (health/family) */}
+          {selectedTemplate.costs && (
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Healthcare Cost Tier</Label>
+              <CostTierToggle value={costTier} onChange={setCostTier} />
+            </div>
+          )}
+
+          {/* Disruption start age */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-sm">Disruption Start Age</Label>
@@ -276,13 +300,53 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
             )}
           </div>
 
-          {/* Impact breakdown */}
-          {selectedTemplate.event.incomeImpact === 0 && selectedTemplate.event.savingsPause && (
-            <p className="text-xs text-muted-foreground">Income: Paused (0% of salary)</p>
-          )}
-          {selectedTemplate.event.incomeImpact > 0 && selectedTemplate.event.incomeImpact < 1 && (
-            <p className="text-xs text-muted-foreground">Income: Reduced to {(selectedTemplate.event.incomeImpact * 100).toFixed(0)}%</p>
-          )}
+          {/* Income level slider */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm">Income Level</Label>
+              <span className="text-sm font-medium tabular-nums text-blue-600 dark:text-blue-400">
+                {effectiveIncome === 0 ? 'Paused (0%)' : `${Math.round(effectiveIncome * 100)}% of salary`}
+              </span>
+            </div>
+            <Slider
+              value={[effectiveIncome * 100]}
+              min={0}
+              max={100}
+              step={5}
+              onValueChange={([v]) => setIncomeOverride(v / 100)}
+            />
+          </div>
+
+          {/* Expense reduction slider */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm">
+                Expense Reduction
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="inline h-3 w-3 ml-1 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p className="text-sm">Reductions apply to base expenses before adding event costs. Multiple overlapping reductions compound multiplicatively.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </Label>
+              <span className="text-sm font-medium tabular-nums text-blue-600 dark:text-blue-400">
+                {effectiveExpenseReduction === 0 ? 'None' : `${Math.round(effectiveExpenseReduction * 100)}% cut`}
+              </span>
+            </div>
+            <Slider
+              value={[effectiveExpenseReduction * 100]}
+              min={0}
+              max={50}
+              step={5}
+              onValueChange={([v]) => setExpenseReductionOverride(v / 100)}
+            />
+          </div>
+
+          {/* Non-adjustable cost details (from tiered costs) */}
           {resolvedCosts?.additionalAnnualExpense ? (
             <p className="text-xs text-muted-foreground">
               Additional expenses: {formatCurrency(resolvedCosts.additionalAnnualExpense)}/yr
@@ -291,21 +355,6 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
           ) : null}
           {resolvedCosts?.lumpSumCost ? (
             <p className="text-xs text-muted-foreground">One-time cost: {formatCurrency(resolvedCosts.lumpSumCost)}</p>
-          ) : null}
-          {resolvedCosts?.expenseReductionPercent ? (
-            <p className="text-xs text-muted-foreground">
-              Lifestyle reduction: {(resolvedCosts.expenseReductionPercent * 100).toFixed(0)}% lower expenses
-              <TooltipProvider delayDuration={200}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="inline h-3 w-3 ml-1 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    <p className="text-sm">Reductions apply to base expenses before adding costs. Multiple overlapping reductions compound multiplicatively (e.g. two 20% reductions = 36% total).</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </p>
           ) : null}
         </div>
       )}
@@ -367,7 +416,7 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => selectTemplate(null)}
+            onClick={() => handleSelectTemplate(null)}
           >
             <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
             Reset

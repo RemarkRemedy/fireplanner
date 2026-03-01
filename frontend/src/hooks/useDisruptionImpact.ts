@@ -49,7 +49,7 @@ export const DISRUPTION_TEMPLATES: DisruptionTemplate[] = [
     category: 'career',
     defaultAgeOffset: 2,
     durationYears: 1,
-    event: { name: 'Job Loss (6 months)', incomeImpact: 0, savingsPause: true, cpfPause: true },
+    event: { name: 'Job Loss (6 months)', incomeImpact: 0, savingsPause: true, cpfPause: true, expenseReductionPercent: 0.20 },
     probability: 0.15,
     probabilitySource: 'MOM Retrenchment Statistics 2024',
   },
@@ -58,7 +58,7 @@ export const DISRUPTION_TEMPLATES: DisruptionTemplate[] = [
     category: 'career',
     defaultAgeOffset: 2,
     durationYears: 2,
-    event: { name: 'Job Loss (12 months)', incomeImpact: 0, savingsPause: true, cpfPause: true },
+    event: { name: 'Job Loss (12 months)', incomeImpact: 0, savingsPause: true, cpfPause: true, expenseReductionPercent: 0.20 },
     probability: 0.15,
     probabilitySource: 'MOM Retrenchment Statistics 2024',
   },
@@ -93,7 +93,7 @@ export const DISRUPTION_TEMPLATES: DisruptionTemplate[] = [
     category: 'career',
     defaultAgeOffset: 3,
     durationYears: 2,
-    event: { name: 'Recession Pay Cut', incomeImpact: 0.8, savingsPause: false, cpfPause: false },
+    event: { name: 'Recession Pay Cut', incomeImpact: 0.8, savingsPause: false, cpfPause: false, expenseReductionPercent: 0.10 },
     probability: 0.15,
     probabilitySource: 'MOM Labour Market Report 2024',
   },
@@ -159,6 +159,11 @@ export interface DisruptionDeltas {
   portfolioAtRetirement: number
 }
 
+export interface DisruptionOverrides {
+  incomeImpact?: number       // 0-1, overrides template.event.incomeImpact
+  expenseReduction?: number   // 0-1, overrides resolved expenseReductionPercent
+}
+
 export interface DisruptionImpactResult {
   selectedIndex: number | null
   startAge: number
@@ -167,6 +172,10 @@ export interface DisruptionImpactResult {
   deltas: DisruptionDeltas | null
   resolvedCosts: CostTier | null
   hasData: boolean
+  /** Template's default income impact (0-1), for pre-filling UI sliders */
+  templateIncomeImpact: number | null
+  /** Template's default expense reduction (0-1), merged from costs tier + event field */
+  templateExpenseReduction: number | null
   selectTemplate: (index: number | null) => void
   setStartAge: (age: number) => void
 }
@@ -175,7 +184,7 @@ export interface DisruptionImpactResult {
 // Hook: useDisruptionImpact
 // ============================================================
 
-export function useDisruptionImpact(costTier: CostTierKey = 'subsidised'): DisruptionImpactResult {
+export function useDisruptionImpact(costTier: CostTierKey = 'subsidised', overrides?: DisruptionOverrides): DisruptionImpactResult {
   const profile = useProfileStore()
   const income = useIncomeStore()
   // Allocation and property are read inside useMemo via .getState() rather than
@@ -236,12 +245,13 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised'): Disru
     // Create the disruption event (clamp endAge to lifeExpectancy for permanent events)
     const clampedStartAge = Math.max(profile.currentAge + 1, effectiveStartAge)
     const endAge = Math.min(profile.lifeExpectancy, clampedStartAge + template.durationYears)
+    const effectiveIncomeImpact = overrides?.incomeImpact ?? template.event.incomeImpact
     const disruptionEvent: LifeEvent = {
       id: 'disruption-preview',
       name: template.event.name,
       startAge: clampedStartAge,
       endAge,
-      incomeImpact: template.event.incomeImpact,
+      incomeImpact: effectiveIncomeImpact,
       affectedStreamIds: [],
       savingsPause: template.event.savingsPause,
       cpfPause: template.event.cpfPause,
@@ -278,7 +288,11 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised'): Disru
 
     // Resolve tiered costs for the selected template
     const resolvedCosts: CostTier = template.costs?.[costTier] ?? EMPTY_COST_TIER
-    const { additionalAnnualExpense, lumpSumCost, expenseReductionPercent } = resolvedCosts
+    const { additionalAnnualExpense, lumpSumCost } = resolvedCosts
+    // Expense reduction: override > tiered cost > event-level default
+    const expenseReductionPercent = overrides?.expenseReduction
+      ?? resolvedCosts.expenseReductionPercent
+      ?? template.event.expenseReductionPercent
 
     // Compute expense impact from resolved tier costs
     // Distinguish permanent vs temporary events using durationYears (not event timing):
@@ -352,11 +366,17 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised'): Disru
       resolvedCosts,
       hasData: true,
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- allocation/property read via .getState() intentionally
   }, [
     profile, income,
     template, effectiveStartAge, costTier,
+    overrides?.incomeImpact, overrides?.expenseReduction,
   ])
+
+  // Compute template defaults for UI pre-fill (outside useMemo to avoid recomputing everything)
+  const templateIncomeImpact = template ? template.event.incomeImpact : null
+  const templateExpenseReduction = template
+    ? (template.costs?.[costTier]?.expenseReductionPercent ?? template.event.expenseReductionPercent ?? null)
+    : null
 
   return {
     selectedIndex,
@@ -366,6 +386,8 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised'): Disru
     deltas: result.deltas,
     resolvedCosts: result.resolvedCosts ?? null,
     hasData: result.hasData,
+    templateIncomeImpact,
+    templateExpenseReduction,
     selectTemplate,
     setStartAge,
   }
