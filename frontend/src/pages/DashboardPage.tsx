@@ -9,6 +9,7 @@ import { RiskDashboard } from '@/components/dashboard/RiskDashboard'
 import { EmptyDashboardState } from '@/components/dashboard/EmptyDashboardState'
 import { StrategyCard } from '@/components/dashboard/StrategyCard'
 import { PassiveIncomePanel } from '@/components/dashboard/PassiveIncomePanel'
+import { TrajectoryPanel } from '@/components/dashboard/TrajectoryPanel'
 import { useDashboardMetrics } from '@/hooks/useDashboardMetrics'
 import { useSectionCompletion, type SectionId } from '@/hooks/useSectionCompletion'
 import { useSimulationStore } from '@/stores/useSimulationStore'
@@ -80,6 +81,9 @@ export function DashboardPage() {
         <>
           <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '0ms' }}>
             <StatusPanel {...metrics} />
+          </div>
+          <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '40ms' }}>
+            <TrajectoryPanel />
           </div>
           <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '80ms' }}>
             <WhatIfPanel />

@@ -104,17 +104,19 @@ describe('StartPage', () => {
   })
 
   it('shows returning user link only when localStorage has profile', () => {
-    // No profile — link should not appear
+    // No profile — links should not appear
     localStorage.removeItem('fireplanner-profile')
     const { unmount } = renderStartPage()
-    expect(screen.queryByText(/continue where you left off/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/continue inputs/i)).not.toBeInTheDocument()
     unmount()
 
-    // Set profile — link should appear
+    // Set profile — returning user guidance and action buttons should appear
     localStorage.setItem('fireplanner-profile', '{}')
     renderStartPage()
-    const continueLink = screen.getByText(/continue where you left off/i)
+    const continueLink = screen.getByText(/continue inputs/i)
     expect(continueLink.closest('a')).toHaveAttribute('href', '/inputs')
+    const dashboardLink = screen.getByText(/view dashboard/i)
+    expect(dashboardLink.closest('a')).toHaveAttribute('href', '/dashboard')
     localStorage.removeItem('fireplanner-profile')
   })
 

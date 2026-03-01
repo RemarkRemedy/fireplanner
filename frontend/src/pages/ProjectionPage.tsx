@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils'
 import { Link } from 'react-router-dom'
 import { AlertTriangle } from 'lucide-react'
 import { NWChartView } from '@/components/projection/NWChartView'
-import { TableIcon, BarChart3, Maximize2 } from 'lucide-react'
+import { Maximize2 } from 'lucide-react'
 import { useEffectiveMode } from '@/hooks/useEffectiveMode'
 import { useUIStore } from '@/stores/useUIStore'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -80,7 +80,6 @@ export function ProjectionPage() {
   const hasLockedUnlock = rows?.some((r) => r.lockedAssetUnlock > 0) ?? false
   const hasHealthcareBreakdown = rows?.some((r) => r.healthcareCashOutlay > 0) ?? false
 
-  const [viewMode, setViewMode] = useState<'table' | 'chart'>('table')
   const [activeGroups, setActiveGroups] = useState<Set<ColumnGroup>>(new Set())
 
   const mode = useEffectiveMode('section-projection')
@@ -570,29 +569,9 @@ export function ProjectionPage() {
 
       {displayRows && displayRows.length > 0 && (
         <>
+          <NWChartView rows={displayRows} retirementAge={retirementAge} />
+
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
-              <button
-                onClick={() => setViewMode('table')}
-                className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                  viewMode === 'table'
-                    ? 'bg-background shadow-sm text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <TableIcon className="h-3.5 w-3.5" /> Table
-              </button>
-              <button
-                onClick={() => setViewMode('chart')}
-                className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                  viewMode === 'chart'
-                    ? 'bg-background shadow-sm text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <BarChart3 className="h-3.5 w-3.5" /> Chart
-              </button>
-            </div>
             <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
               <button
                 onClick={() => { setUIField('dollarBasis', 'real'); trackEvent('dollar_basis_changed', { basis: 'real' }) }}
@@ -619,16 +598,14 @@ export function ProjectionPage() {
                 Nominal $
               </button>
             </div>
-            {viewMode === 'table' && (
-              <button
-                onClick={() => setExpanded(true)}
-                className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                title="Expand table"
-              >
-                <Maximize2 className="h-4 w-4" />
-              </button>
-            )}
-            {viewMode === 'table' && COLUMN_GROUPS.map((group) => (
+            <button
+              onClick={() => setExpanded(true)}
+              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              title="Expand table"
+            >
+              <Maximize2 className="h-4 w-4" />
+            </button>
+            {COLUMN_GROUPS.map((group) => (
               <Button
                 key={group.key}
                 variant={activeGroups.has(group.key) ? 'default' : 'outline'}
@@ -638,21 +615,15 @@ export function ProjectionPage() {
                 {group.label}
               </Button>
             ))}
-            {viewMode === 'table' && mode === 'simple' && (
+            {mode === 'simple' && (
               <span className="hidden sm:inline text-xs text-muted-foreground">
                 Toggle columns or switch to Advanced for all
               </span>
             )}
           </div>
 
-          {viewMode === 'chart' ? (
-            <NWChartView rows={displayRows} retirementAge={retirementAge} />
-          ) : (
-          <>
           <p className="text-xs text-muted-foreground md:hidden">Tap toggles to show more columns</p>
           {renderTable('max-h-[70vh]')}
-          </>
-          )}
         </>
       )}
 
