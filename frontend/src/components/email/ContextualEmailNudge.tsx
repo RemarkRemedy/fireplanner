@@ -114,14 +114,15 @@ export function ContextualEmailNudge({ pageId, message, hidden = false }: Contex
         trackEvent('email_signup_error', { source: 'contextual_nudge', reason: 'rate_limited' })
       } else {
         const data = await res.json().catch(() => ({}))
+        const msg = (data as { error?: string }).error ?? 'Unknown'
         setStatus('error')
-        setErrorMsg((data as { error?: string }).error ?? 'Something went wrong.')
-        trackEvent('email_signup_error', { source: 'contextual_nudge', reason: 'server_error' })
+        setErrorMsg(msg === 'Unknown' ? 'Something went wrong.' : msg)
+        trackEvent('email_signup_error', { source: 'contextual_nudge', reason: 'server_error', status: String(res.status), detail: msg })
       }
-    } catch {
+    } catch (err) {
       setStatus('error')
       setErrorMsg('Network error. Please check your connection.')
-      trackEvent('email_signup_error', { source: 'contextual_nudge', reason: 'network_error' })
+      trackEvent('email_signup_error', { source: 'contextual_nudge', reason: 'network_error', detail: String(err) })
     }
   }
 
