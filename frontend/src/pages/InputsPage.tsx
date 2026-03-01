@@ -99,6 +99,7 @@ import type { ModeSectionId } from '@/hooks/useEffectiveMode'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { WelcomeBanner } from '@/components/shared/WelcomeBanner'
 import { ProjectionCTA } from '@/components/shared/ProjectionCTA'
+import { QuickModeBanner } from '@/components/shared/QuickModeBanner'
 import { pushUndo } from '@/lib/undo'
 import { formatCurrency } from '@/lib/utils'
 import type { WithdrawalStrategyType } from '@/lib/types'
@@ -196,6 +197,8 @@ const ALREADY_FIRE_ORDER: SectionId[] = [
   'section-cpf',
   'section-income',
 ]
+
+const QUICK_SECTIONS = new Set<SectionId>(['section-personal', 'section-income', 'section-expenses', 'section-net-worth'])
 
 // --- Individual section content components ---
 
@@ -1263,9 +1266,10 @@ export function InputsPage() {
   const sectionOrder = useUIStore((s) => s.sectionOrder)
   const cpfEnabled = useUIStore((s) => s.cpfEnabled)
   const propertyEnabled = useUIStore((s) => s.propertyEnabled)
-  const setSectionOrder = useUIStore((s) => s.setField)
+  const setUIField = useUIStore((s) => s.setField)
   const collapsedSectionsArr = useUIStore((s) => s.collapsedSections)
   const toggleSection = useUIStore((s) => s.toggleSection)
+  const quickModeActive = useUIStore((s) => s.quickModeActive)
   const { sections: sectionCompletion } = useSectionCompletion()
 
   const resetIncomeRaw = useIncomeStore((s) => s.reset)
@@ -1353,6 +1357,18 @@ export function InputsPage() {
     requestAnimationFrame(tryScroll)
     return () => { if (timerId) clearTimeout(timerId) }
   }, [location.hash])
+
+  // Auto-activate quick mode for first-time mobile users with default values
+  useEffect(() => {
+    const currentAge = useProfileStore.getState().currentAge
+    const annualIncome = useProfileStore.getState().annualIncome
+    const liquidNetWorth = useProfileStore.getState().liquidNetWorth
+    const isDefaults = currentAge === 30 && annualIncome === 72000 && liquidNetWorth === 0
+    const isMobile = window.matchMedia('(max-width: 767px)').matches
+    if (isDefaults && isMobile) {
+      useUIStore.getState().setField('quickModeActive', true)
+    }
+  }, [])
 
   const sections: Record<SectionId, SectionDef> = {
     'section-personal': {
@@ -1450,16 +1466,17 @@ export function InputsPage() {
       ? ALREADY_FIRE_ORDER
       : STORY_FIRST_ORDER
 
-  const order = baseOrder.filter((id) => !hiddenSections.has(id))
+  const order = baseOrder.filter((id) => !hiddenSections.has(id) && (!quickModeActive || QUICK_SECTIONS.has(id)))
 
   const visibleSections = Object.entries(sectionCompletion)
-    .filter(([id]) => !hiddenSections.has(id as SectionId))
+    .filter(([id]) => !hiddenSections.has(id as SectionId) && (!quickModeActive || QUICK_SECTIONS.has(id as SectionId)))
   const completedCount = visibleSections.filter(([, s]) => s.isComplete).length
   const totalSections = visibleSections.length
 
   return (
     <div className="space-y-10">
       <WelcomeBanner />
+      {quickModeActive && <QuickModeBanner />}
 
       {/* Page header with ordering toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -1480,7 +1497,7 @@ export function InputsPage() {
           <button
             role="radio"
             aria-checked={sectionOrder === 'goal-first'}
-            onClick={() => setSectionOrder('sectionOrder', 'goal-first')}
+            onClick={() => setUIField('sectionOrder', 'goal-first')}
             className={`flex-1 px-2 md:px-3 py-2.5 md:py-1.5 text-sm md:text-xs font-medium rounded-md whitespace-nowrap transition-colors ${
               sectionOrder === 'goal-first'
                 ? 'bg-background shadow-sm text-foreground'
@@ -1492,7 +1509,7 @@ export function InputsPage() {
           <button
             role="radio"
             aria-checked={sectionOrder === 'story-first'}
-            onClick={() => setSectionOrder('sectionOrder', 'story-first')}
+            onClick={() => setUIField('sectionOrder', 'story-first')}
             className={`flex-1 px-2 md:px-3 py-2.5 md:py-1.5 text-sm md:text-xs font-medium rounded-md whitespace-nowrap transition-colors ${
               sectionOrder === 'story-first'
                 ? 'bg-background shadow-sm text-foreground'
@@ -1504,7 +1521,7 @@ export function InputsPage() {
           <button
             role="radio"
             aria-checked={sectionOrder === 'already-fire'}
-            onClick={() => setSectionOrder('sectionOrder', 'already-fire')}
+            onClick={() => setUIField('sectionOrder', 'already-fire')}
             className={`flex-1 px-2 md:px-3 py-2.5 md:py-1.5 text-sm md:text-xs font-medium rounded-md whitespace-nowrap transition-colors ${
               sectionOrder === 'already-fire'
                 ? 'bg-background shadow-sm text-foreground'
@@ -1571,31 +1588,54 @@ export function InputsPage() {
         )
       })}
 
+      {quickModeActive && (
+        <Card className="border-dashed border-2 border-muted-foreground/20 hover:border-muted-foreground/40 transition-colors cursor-pointer"
+          onClick={() => { setUIField('quickModeActive', false); trackEvent('quick_mode_expanded') }}>
+          <CardContent className="py-6 md:py-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Show CPF, Property, Healthcare, and more
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {quickModeActive && (
+        <div className="flex justify-center">
+          <Button asChild size="lg">
+            <Link to="/projection">
+              See my FIRE plan <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      )}
+
       {/* What's Next CTA */}
-      <Card className="bg-primary/5 border-primary/20">
-        <CardContent className="py-6 md:py-6">
-          <h3 className="text-lg font-semibold mb-1">
-            {completedCount >= 5 ? 'Looking good! Ready to test your plan?' : 'Explore your projections'}
-          </h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            {completedCount >= 5
-              ? 'Your inputs are well-customized. See how your plan holds up under different scenarios.'
-              : 'You can view projections at any time — even with default values. Customize more sections for personalized results.'}
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Button asChild>
-              <Link to="/projection">
-                View Projection <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/stress-test">
-                Stress Test <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {!quickModeActive && (
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="py-6 md:py-6">
+            <h3 className="text-lg font-semibold mb-1">
+              {completedCount >= 5 ? 'Looking good! Ready to test your plan?' : 'Explore your projections'}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {completedCount >= 5
+                ? 'Your inputs are well-customized. See how your plan holds up under different scenarios.'
+                : 'You can view projections at any time — even with default values. Customize more sections for personalized results.'}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button asChild>
+                <Link to="/projection">
+                  View Projection <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/stress-test">
+                  Stress Test <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <ConfirmDialog
         open={pendingReset !== null}
