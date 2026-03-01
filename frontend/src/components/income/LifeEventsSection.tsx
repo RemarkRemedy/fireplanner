@@ -8,8 +8,7 @@ import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { cn } from '@/lib/utils'
 import type { LifeEvent } from '@/lib/types'
-
-const MAX_EVENTS = 4
+import { MAX_LIFE_EVENTS } from '@/hooks/useDisruptionImpact'
 
 function createEvent(id: string): LifeEvent {
   return {
@@ -113,7 +112,7 @@ export function LifeEventsSection() {
   const errors = income.validationErrors
 
   const addEvent = () => {
-    if (income.lifeEvents.length >= MAX_EVENTS) return
+    if (income.lifeEvents.length >= MAX_LIFE_EVENTS) return
     const id = `event-${crypto.randomUUID()}`
     income.addLifeEvent(createEvent(id))
   }
@@ -121,7 +120,7 @@ export function LifeEventsSection() {
   const applyTemplate = (templateName: string) => {
     const template = EVENT_TEMPLATES[templateName]
     if (!template) return
-    if (income.lifeEvents.length >= MAX_EVENTS) return
+    if (income.lifeEvents.length >= MAX_LIFE_EVENTS) return
     const id = `event-${crypto.randomUUID()}`
     income.addLifeEvent({ ...template, id })
   }
@@ -159,7 +158,7 @@ export function LifeEventsSection() {
                   variant="outline"
                   size="sm"
                   onClick={() => applyTemplate(name)}
-                  disabled={income.lifeEvents.length >= MAX_EVENTS}
+                  disabled={income.lifeEvents.length >= MAX_LIFE_EVENTS}
                 >
                   {name}
                 </Button>
@@ -185,7 +184,7 @@ export function LifeEventsSection() {
                     onRemove={() => income.removeLifeEvent(event.id)}
                   />
                 ))}
-                {income.lifeEvents.length < MAX_EVENTS && (
+                {income.lifeEvents.length < MAX_LIFE_EVENTS && (
                   <Button variant="outline" size="sm" onClick={addEvent}>
                     Add Event
                   </Button>

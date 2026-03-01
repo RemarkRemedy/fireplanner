@@ -46,6 +46,8 @@ import type { CrisisScenario } from '@/lib/types'
 import { trackEvent } from '@/lib/analytics'
 import { PostSimulationCapture } from '@/components/email/PostSimulationCapture'
 import { ContextualEmailNudge } from '@/components/email/ContextualEmailNudge'
+import { ActiveLifeEventsBar } from '@/components/stressTest/ActiveLifeEventsBar'
+import { useIncomeStore } from '@/stores/useIncomeStore'
 
 function TabIntro({ children }: { children: React.ReactNode }) {
   return (
@@ -538,6 +540,7 @@ export function StressTestPage() {
   const isStressAdvanced = stressMode === 'advanced'
   const mc = useMonteCarloQuery()
   const setSimField = useSimulationStore((s) => s.setField)
+  const lifeEventCount = useIncomeStore((s) => s.lifeEvents.length)
 
   // Persist last MC success rate (lifted from MonteCarloTab so it updates even when tab is inactive)
   useEffect(() => {
@@ -588,6 +591,16 @@ export function StressTestPage() {
           actionLabel={stressNudge.actionLabel}
         />
       )}
+
+      <AnalysisModeToggle portfolioLabel={portfolioLabel} />
+
+      {isStressAdvanced ? (
+        <ActiveLifeEventsBar />
+      ) : lifeEventCount > 0 ? (
+        <p className="text-xs text-muted-foreground">
+          {lifeEventCount} life event{lifeEventCount !== 1 ? 's' : ''} active (switch to Advanced mode to manage)
+        </p>
+      ) : null}
 
       <Tabs defaultValue="monte-carlo" onValueChange={(tab) => trackEvent('stress_test_tab_changed', { tab })}>
         {(() => {
@@ -640,6 +653,7 @@ export function StressTestPage() {
             <SequenceRiskTab />
           </TabsContent>
         )}
+
       </Tabs>
 
       <ContextualEmailNudge

@@ -20,9 +20,10 @@ import type {
   HealthcareConfig,
   CpfLifePlan,
   ExpenseAdjustment,
+  LifeEvent,
 } from '@/lib/types'
 import { getBalaFactor } from '@/lib/data/balaTable'
-import { sumPostRetirementIncome } from './income'
+import { sumPostRetirementIncome, getLifeEventExpenseImpact } from './income'
 import { getEffectiveExpenses } from './expenses'
 import { calculateParentSupportAtAge } from './fire'
 import { calculateBrsFrsErs } from './cpf'
@@ -89,6 +90,9 @@ export interface ProjectionParams {
   financialGoals?: FinancialGoal[]
   // Expense adjustments (age-based spending changes)
   expenseAdjustments?: ExpenseAdjustment[]
+  // Life events (for expense impact calculation)
+  lifeEvents?: LifeEvent[]
+  lifeEventsEnabled?: boolean
   // CPF LIFE (for bequest + milestone computation)
   cpfLifeStartAge: number
   cpfLifePlan: CpfLifePlan
@@ -472,7 +476,10 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     }
 
     const effectiveBase = getEffectiveExpenses(age, annualExpenses, params.expenseAdjustments ?? [], lifeExpectancy)
-    const baseExpenses = isRetired ? effectiveBase * retirementSpendingAdjustment : effectiveBase
+    // Apply life event expense impacts (additional costs, lifestyle reductions)
+    const { adjustedExpense: lifeEventAdjustedBase, lumpSum: lifeEventLumpSum } =
+      getLifeEventExpenseImpact(age, effectiveBase, params.lifeEvents ?? [], params.lifeEventsEnabled ?? false)
+    const baseExpenses = isRetired ? lifeEventAdjustedBase * retirementSpendingAdjustment : lifeEventAdjustedBase
     const inflationAdjustedExpenses = baseExpenses * Math.pow(1 + inflation, year) + parentSupportExpense + downsizingRentExpense + healthcareCashOutlay
 
     if (!isRetired) {
@@ -483,7 +490,8 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       const extraExpenses = parentSupportExpense + healthcareCashOutlay + downsizingRentExpense
       // When income < base expenses, income projection clamps annualSavings to max(0, ...).
       // The shortfall must still be deducted from the portfolio.
-      const baseExpInflated = effectiveBase * Math.pow(1 + inflation, year)
+      // Use life-event-adjusted base to match income.ts savings calculation.
+      const baseExpInflated = lifeEventAdjustedBase * Math.pow(1 + inflation, year)
       const incomeShortfall = Math.max(0, baseExpInflated - incomeRow.totalNet)
 
       // Financial goals that fall in this year (pre-retirement)
@@ -498,9 +506,11 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
         }
       }
 
+      // Life event lump sum costs (inflation-adjusted one-time hits)
+      const inflatedLumpSum = lifeEventLumpSum * Math.pow(1 + inflation, year)
       const adjustedSavings = incomeRow.annualSavings + netPropertyCashflow - extraExpenses - incomeShortfall - goalDeduction
       portfolioReturnDollar = startLiquidNW * returnRate
-      const rawLiquidNW = startLiquidNW * (1 + returnRate) + adjustedSavings
+      const rawLiquidNW = startLiquidNW * (1 + returnRate) + adjustedSavings - inflatedLumpSum
       goalShortfallAmount = rawLiquidNW < 0 && goalDeduction > 0
         ? Math.min(goalDeduction, -rawLiquidNW)
         : 0
@@ -560,6 +570,10 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
         }
       }
       oneTimeWithdrawalTotal += goalDeduction
+
+      // Life event lump sum costs during retirement
+      const inflatedLumpSumRet = lifeEventLumpSum * Math.pow(1 + inflation, year)
+      oneTimeWithdrawalTotal += inflatedLumpSumRet
 
       // Expense gap is always computed (for display in both modes)
       const expenseGap = Math.max(0, inflationAdjustedExpenses - postRetirementIncome)

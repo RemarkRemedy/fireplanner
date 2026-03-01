@@ -4,6 +4,7 @@ import { generateProjection, type ProjectionParams } from '@/lib/calculations/pr
 import { calculatePortfolioReturn } from '@/lib/calculations/portfolio'
 import { getPropertyRentalIncome, computeLbsProceeds } from '@/lib/calculations/hdb'
 import { useProfileStore } from '@/stores/useProfileStore'
+import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
@@ -28,6 +29,7 @@ interface ProjectionResult {
  */
 export function useProjection(): ProjectionResult {
   const profile = useProfileStore()
+  const income = useIncomeStore()
   const allocation = useAllocationStore()
   const simulation = useSimulationStore()
   const property = usePropertyStore()
@@ -122,6 +124,8 @@ export function useProjection(): ProjectionResult {
       cpfLifeStartAge: profile.cpfLifeStartAge,
       cpfLifePlan: profile.cpfLifePlan,
       expenseAdjustments: profile.expenseAdjustments,
+      lifeEvents: income.lifeEvents,
+      lifeEventsEnabled: income.lifeEventsEnabled,
     }
 
     const { rows, summary } = generateProjection(projectionParams)
@@ -180,5 +184,7 @@ export function useProjection(): ProjectionResult {
     profile.cpfLifeStartAge,
     profile.cpfLifePlan,
     profile.expenseAdjustments,
+    income.lifeEvents,
+    income.lifeEventsEnabled,
   ])
 }

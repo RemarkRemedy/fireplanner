@@ -2,6 +2,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useProfileStore } from '@/stores/useProfileStore'
+import type { MaritalStatus } from '@/lib/types'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { cn } from '@/lib/utils'
@@ -99,7 +100,7 @@ export function PersonalSection() {
             </Label>
             <Select
               value={maritalStatus}
-              onValueChange={(v) => setField('maritalStatus', v as 'single' | 'married')}
+              onValueChange={(v) => setField('maritalStatus', v as MaritalStatus)}
             >
               <SelectTrigger className="border-blue-300">
                 <SelectValue />
@@ -107,6 +108,8 @@ export function PersonalSection() {
               <SelectContent>
                 <SelectItem value="single">Single</SelectItem>
                 <SelectItem value="married">Married</SelectItem>
+                <SelectItem value="divorced">Divorced</SelectItem>
+                <SelectItem value="widowed">Widowed</SelectItem>
               </SelectContent>
             </Select>
           </div>

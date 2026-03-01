@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { runMonteCarloWorker, flattenStrategyParams } from '@/lib/simulation/workerClient'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
-import { sumPostRetirementIncome } from '@/lib/calculations/income'
+import { sumPostRetirementIncome, getLifeEventExpenseImpact } from '@/lib/calculations/income'
 import { getPropertyRentalIncome } from '@/lib/calculations/hdb'
 import { calculateParentSupportAtAge } from '@/lib/calculations/fire'
 import { calculateHealthcareCostAtAge } from '@/lib/calculations/healthcare'
@@ -247,10 +247,13 @@ export function useMonteCarloQuery(): UseMonteCarloQueryResult {
             const extraExpenses = parentSupportExpense + healthcareCashOutlay + downsizingRentForYear
 
             // Income shortfall correction (mirrors projection.ts:470-471)
+            // Include life event expense impacts for consistent shortfall detection
             const effectiveBase = getEffectiveExpenses(
               row.age, profile.annualExpenses, profile.expenseAdjustments ?? [], profile.lifeExpectancy
             )
-            const baseExpInflated = effectiveBase * Math.pow(1 + profile.inflation, year)
+            const { adjustedExpense: lifeEventAdjustedBase, lumpSum: lifeEventLumpSum } =
+              getLifeEventExpenseImpact(row.age, effectiveBase, income.lifeEvents, income.lifeEventsEnabled)
+            const baseExpInflated = lifeEventAdjustedBase * Math.pow(1 + profile.inflation, year)
             const incomeShortfall = Math.max(0, baseExpInflated - row.totalNet)
 
             // Financial goal deductions (mirrors projection.ts:474-483)
@@ -268,6 +271,13 @@ export function useMonteCarloQuery(): UseMonteCarloQueryResult {
             const adjustedSavings = row.annualSavings + netPropertyCashflow
               - extraExpenses - incomeShortfall - goalDeduction
             annualSavings.push(adjustedSavings)
+
+            // Life event lump sum costs — deduct from portfolio at event start
+            if (lifeEventLumpSum > 0) {
+              const mcYear = row.age - effectiveStartAge
+              const inflatedLumpSum = lifeEventLumpSum * Math.pow(1 + profile.inflation, year)
+              portfolioAdjustments.push({ year: mcYear, amount: -inflatedLumpSum })
+            }
 
             // Lump-sum injections: CPF OA withdrawals + locked asset unlocks (mirrors projection.ts:364-367)
             if (row.cpfOaWithdrawal > 0 || row.lockedAssetUnlock > 0) {
@@ -302,11 +312,30 @@ export function useMonteCarloQuery(): UseMonteCarloQueryResult {
               cpfOaShortfallForYear = row.cpfOaShortfall
             }
 
+            // Life event expense impacts during retirement — model as income offsets
+            // (additionalExpense reduces effective income, expenseReduction increases it)
+            const retEffectiveBase = getEffectiveExpenses(
+              row.age, profile.annualExpenses, profile.expenseAdjustments ?? [], profile.lifeExpectancy
+            )
+            const { adjustedExpense: retLifeEventExpense, lumpSum: retLumpSum } =
+              getLifeEventExpenseImpact(row.age, retEffectiveBase, income.lifeEvents, income.lifeEventsEnabled)
+            // Net expense delta: positive means MORE spending → reduce effective income
+            const retYear = row.age - profile.currentAge
+            const lifeEventExpenseDelta = (retLifeEventExpense - retEffectiveBase) * Math.pow(1 + profile.inflation, retYear)
+
             // Subtract mortgage/rent from income — this increases the net withdrawal
             // from the portfolio, matching projection.ts line 556 behavior
             const netIncome = sumPostRetirementIncome(row, rentalForYear)
               - mortgageForYear - cpfOaShortfallForYear - downsizingRentForYear
+              - lifeEventExpenseDelta
             postRetirementIncome.push(netIncome)
+
+            // Lump sum costs during retirement — deduct from portfolio
+            if (retLumpSum > 0) {
+              const mcYear = row.age - effectiveStartAge
+              const inflatedLumpSum = retLumpSum * Math.pow(1 + profile.inflation, retYear)
+              portfolioAdjustments.push({ year: mcYear, amount: -inflatedLumpSum })
+            }
           }
         }
       }

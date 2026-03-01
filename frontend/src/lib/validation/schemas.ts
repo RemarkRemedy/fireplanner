@@ -29,7 +29,7 @@ export const profileSchema = z.object({
   retirementAge: retirementAgeSchema,
   lifeExpectancy: lifeExpectancySchema,
   lifeStage: z.enum(['pre-fire', 'post-fire']),
-  maritalStatus: z.enum(['single', 'married']),
+  maritalStatus: z.enum(['single', 'married', 'divorced', 'widowed']),
   residencyStatus: z.enum(['citizen', 'pr', 'foreigner']),
 
   annualIncome: nonNegativeSchema,
@@ -111,6 +111,9 @@ export const lifeEventSchema = z.object({
   affectedStreamIds: z.array(z.string()),
   savingsPause: z.boolean(),
   cpfPause: z.boolean(),
+  additionalAnnualExpense: z.number().min(0).optional(),
+  lumpSumCost: z.number().min(0).optional(),
+  expenseReductionPercent: z.number().min(0).max(1).optional(),
 })
 
 export const bonusMonthsSchema = z.number().min(0).max(12)

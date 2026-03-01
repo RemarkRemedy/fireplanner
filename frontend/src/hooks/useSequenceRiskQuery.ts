@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import { runSequenceRiskWorker, flattenStrategyParams } from '@/lib/simulation/workerClient'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
 import type { CrisisScenario, SequenceRiskResult } from '@/lib/types'
-import { sumPostRetirementIncome } from '@/lib/calculations/income'
+import { sumPostRetirementIncome, getLifeEventExpenseImpact } from '@/lib/calculations/income'
 import { getPropertyRentalIncome } from '@/lib/calculations/hdb'
 import {
   outstandingMortgageAtAge,
@@ -212,11 +212,28 @@ export function useSequenceRiskQuery(): UseSequenceRiskQueryResult {
               cpfOaShortfallForYear = row.cpfOaShortfall
             }
 
+            // Life event expense impacts during retirement
+            const retEffectiveBase = getEffectiveExpenses(
+              row.age, profile.annualExpenses, profile.expenseAdjustments ?? [], profile.lifeExpectancy
+            )
+            const { adjustedExpense: retLifeEventExpense, lumpSum: retLumpSum } =
+              getLifeEventExpenseImpact(row.age, retEffectiveBase, income.lifeEvents, income.lifeEventsEnabled)
+            const retYear = row.age - profile.currentAge
+            const lifeEventExpenseDelta = (retLifeEventExpense - retEffectiveBase) * Math.pow(1 + profile.inflation, retYear)
+
             // Subtract mortgage/rent from income — this increases the net withdrawal
             // from the portfolio, matching projection.ts line 556 behavior
             const netIncome = sumPostRetirementIncome(row, rentalForYear)
               - mortgageForYear - cpfOaShortfallForYear - downsizingRentForYear
+              - lifeEventExpenseDelta
             postRetirementIncome.push(netIncome)
+
+            // Lump sum costs during retirement — deduct from portfolio
+            if (retLumpSum > 0) {
+              const yearOffset = row.age - profile.retirementAge
+              const inflatedLumpSum = retLumpSum * Math.pow(1 + profile.inflation, retYear)
+              portfolioInjections.push({ year: yearOffset, amount: -inflatedLumpSum })
+            }
           }
         }
       }

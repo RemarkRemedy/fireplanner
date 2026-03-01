@@ -28,6 +28,10 @@ beforeEach(() => {
 })
 
 describe('useSequenceRiskQuery stale detection', () => {
+  // Note: Full isStale=true verification requires a completed simulation run via Web Worker,
+  // which is not available in unit tests. These tests verify the hook includes lifeEvents
+  // in its dependency chain (rerenders on mutation) and doesn't crash.
+
   it('includes lifeEvents in param signature (mutating lifeEvents triggers re-render)', () => {
     const { result, rerender } = renderHook(() => useSequenceRiskQuery(), { wrapper })
 
@@ -49,8 +53,9 @@ describe('useSequenceRiskQuery stale detection', () => {
 
     rerender()
 
-    // Hook should still work — no data yet so isStale stays false
+    // Pre-run: isStale is always false (no data to compare against).
     expect(result.current.data).toBeUndefined()
+    expect(result.current.isStale).toBe(false)
     expect(result.current.canRun).toBe(true)
   })
 

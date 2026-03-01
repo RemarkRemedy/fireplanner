@@ -4,7 +4,7 @@
 
 export type LifeStage = 'pre-fire' | 'post-fire'
 export type FireType = 'regular' | 'lean' | 'fat' | 'coast' | 'barista'
-export type MaritalStatus = 'single' | 'married'
+export type MaritalStatus = 'single' | 'married' | 'divorced' | 'widowed'
 export type ResidencyStatus = 'citizen' | 'pr' | 'foreigner'
 export type SalaryModel = 'simple' | 'realistic' | 'data-driven'
 export type RebalanceFrequency = 'annual' | 'semi-annual' | 'quarterly'
@@ -276,6 +276,10 @@ export interface LifeEvent {
   affectedStreamIds: string[]
   savingsPause: boolean
   cpfPause: boolean
+  // Expense impacts (optional, for stress test scenarios)
+  additionalAnnualExpense?: number  // extra yearly cost (medical, care)
+  lumpSumCost?: number              // one-time cost at startAge
+  expenseReductionPercent?: number   // lifestyle reduction (0.15 = 15% less)
 }
 
 export interface IncomeState {

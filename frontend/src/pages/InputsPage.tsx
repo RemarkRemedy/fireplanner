@@ -25,6 +25,7 @@ import { CashReserveSection } from '@/components/profile/CashReserveSection'
 import { SalaryModelSection } from '@/components/income/SalaryModelSection'
 import { IncomeStreamsSection } from '@/components/income/IncomeStreamsSection'
 import { LifeEventsSection } from '@/components/income/LifeEventsSection'
+import { ExpenseLifeEventsSection } from '@/components/expenses/ExpenseLifeEventsSection'
 import { ProjectionTable } from '@/components/income/ProjectionTable'
 import { SummaryPanel } from '@/components/income/SummaryPanel'
 import { TaxReliefSection } from '@/components/income/TaxReliefSection'
@@ -513,6 +514,8 @@ function ExpensesContent() {
           )}
         </CardContent>
       </Card>
+
+      {mode === 'advanced' && <ExpenseLifeEventsSection />}
 
       <Card>
         <CardHeader>

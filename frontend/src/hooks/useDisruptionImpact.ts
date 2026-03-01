@@ -11,43 +11,124 @@ import { usePropertyStore } from '@/stores/usePropertyStore'
 // Disruption Template Types
 // ============================================================
 
+export interface CostTier {
+  additionalAnnualExpense?: number
+  lumpSumCost?: number
+  /** Decimal fraction: 0.15 = 15% reduction. Matches schema z.number().min(0).max(1). */
+  expenseReductionPercent?: number
+}
+
+export type CostTierKey = 'subsidised' | 'private'
+
+export const MAX_LIFE_EVENTS = 4
+
+const EMPTY_COST_TIER: CostTier = {}
+
 export interface DisruptionTemplate {
   label: string
+  category: 'career' | 'health' | 'family'
   event: Omit<LifeEvent, 'id' | 'startAge' | 'endAge' | 'affectedStreamIds'>
   defaultAgeOffset: number
   durationYears: number
+  // Probability context (displayed, not used in simulation)
+  probability?: number          // cumulative probability (0.25 = 25%)
+  probabilityByAge?: number     // "by age X" qualifier
+  probabilitySource?: string    // citation
+  // Tiered expense impacts (subsidised = B2/C ward, private = A/B1 ward)
+  costs?: Record<CostTierKey, CostTier>
 }
 
 export const DISRUPTION_TEMPLATES: DisruptionTemplate[] = [
   {
     label: 'Job Loss (6 months)',
+    category: 'career',
     defaultAgeOffset: 2,
     durationYears: 1,
     event: { name: 'Job Loss (6 months)', incomeImpact: 0, savingsPause: true, cpfPause: true },
+    probability: 0.15,
+    probabilitySource: 'MOM Retrenchment Statistics 2024',
   },
   {
     label: 'Job Loss (12 months)',
+    category: 'career',
     defaultAgeOffset: 2,
     durationYears: 2,
     event: { name: 'Job Loss (12 months)', incomeImpact: 0, savingsPause: true, cpfPause: true },
+    probability: 0.15,
+    probabilitySource: 'MOM Retrenchment Statistics 2024',
   },
   {
     label: 'Partial Disability',
+    category: 'health',
     defaultAgeOffset: 5,
     durationYears: 3,
     event: { name: 'Partial Disability', incomeImpact: 0.5, savingsPause: false, cpfPause: false },
+    costs: {
+      subsidised: { additionalAnnualExpense: 12000, lumpSumCost: 3000 },
+      private: { additionalAnnualExpense: 20000, lumpSumCost: 5000 },
+    },
   },
   {
     label: 'Parent Care',
+    category: 'family',
     defaultAgeOffset: 10,
     durationYears: 5,
     event: { name: 'Parent Care', incomeImpact: 0.8, savingsPause: false, cpfPause: false },
+    costs: {
+      subsidised: { additionalAnnualExpense: 16000, lumpSumCost: 3000 },
+      private: { additionalAnnualExpense: 36000, lumpSumCost: 5000 },
+    },
   },
   {
     label: 'Recession Pay Cut',
+    category: 'career',
     defaultAgeOffset: 3,
     durationYears: 2,
     event: { name: 'Recession Pay Cut', incomeImpact: 0.8, savingsPause: false, cpfPause: false },
+    probability: 0.15,
+    probabilitySource: 'MOM Labour Market Report 2024',
+  },
+  {
+    label: 'Death of Spouse',
+    category: 'family',
+    defaultAgeOffset: 15,
+    durationYears: 99, // permanent — endAge MUST be clamped to lifeExpectancy (Codex fix #1)
+    event: { name: 'Death of Spouse', incomeImpact: 0.5, savingsPause: false, cpfPause: false },
+    probability: 0.03,
+    probabilityByAge: 55,
+    probabilitySource: 'SingStat Complete Life Tables 2023',
+    costs: {
+      subsidised: { lumpSumCost: 10000, expenseReductionPercent: 0.15 },
+      private: { lumpSumCost: 15000, expenseReductionPercent: 0.15 },
+    },
+  },
+  {
+    label: 'Critical Illness',
+    category: 'health',
+    defaultAgeOffset: 15,
+    durationYears: 2,
+    event: { name: 'Critical Illness', incomeImpact: 0, savingsPause: true, cpfPause: true },
+    probability: 0.25,
+    probabilityByAge: 65,
+    probabilitySource: 'LIA Singapore Protection Gap Study 2022',
+    costs: {
+      subsidised: { additionalAnnualExpense: 15000, lumpSumCost: 8000 },
+      private: { additionalAnnualExpense: 50000, lumpSumCost: 20000 },
+    },
+  },
+  {
+    label: 'Permanent Disability',
+    category: 'health',
+    defaultAgeOffset: 15,
+    durationYears: 99, // permanent — endAge MUST be clamped to lifeExpectancy
+    event: { name: 'Permanent Disability', incomeImpact: 0, savingsPause: true, cpfPause: true },
+    probability: 0.05,
+    probabilityByAge: 65,
+    probabilitySource: 'MOH Principal Causes of Death & Disability Reports',
+    costs: {
+      subsidised: { additionalAnnualExpense: 20000, lumpSumCost: 10000 },
+      private: { additionalAnnualExpense: 50000, lumpSumCost: 15000 },
+    },
   },
 ]
 
@@ -75,6 +156,7 @@ export interface DisruptionImpactResult {
   baseMetrics: DisruptionMetrics | null
   disruptedMetrics: DisruptionMetrics | null
   deltas: DisruptionDeltas | null
+  resolvedCosts: CostTier | null
   hasData: boolean
   selectTemplate: (index: number | null) => void
   setStartAge: (age: number) => void
@@ -84,7 +166,7 @@ export interface DisruptionImpactResult {
 // Hook: useDisruptionImpact
 // ============================================================
 
-export function useDisruptionImpact(): DisruptionImpactResult {
+export function useDisruptionImpact(costTier: CostTierKey = 'subsidised'): DisruptionImpactResult {
   const profile = useProfileStore()
   const income = useIncomeStore()
   const allocation = useAllocationStore()
@@ -118,6 +200,7 @@ export function useDisruptionImpact(): DisruptionImpactResult {
         baseMetrics: null,
         disruptedMetrics: null,
         deltas: null,
+        resolvedCosts: null,
         hasData: false,
       }
     }
@@ -131,13 +214,14 @@ export function useDisruptionImpact(): DisruptionImpactResult {
         baseMetrics,
         disruptedMetrics: null,
         deltas: null,
+        resolvedCosts: null,
         hasData: true,
       }
     }
 
-    // Create the disruption event
+    // Create the disruption event (clamp endAge to lifeExpectancy for permanent events)
     const clampedStartAge = Math.max(profile.currentAge + 1, effectiveStartAge)
-    const endAge = clampedStartAge + template.durationYears
+    const endAge = Math.min(profile.lifeExpectancy, clampedStartAge + template.durationYears)
     const disruptionEvent: LifeEvent = {
       id: 'disruption-preview',
       name: template.event.name,
@@ -149,12 +233,14 @@ export function useDisruptionImpact(): DisruptionImpactResult {
       cpfPause: template.event.cpfPause,
     }
 
-    // Recompute income projection with disruption event appended
+    // Recompute income projections to compare base vs disrupted across all working years.
+    // Using projection[0] alone would miss disruptions at future ages since it only
+    // reflects current-age income. Instead, compare total working-year income and
+    // derive the average annual income loss for the steady-state FIRE model.
     const incomeHasErrors = Object.keys(income.validationErrors).length > 0
     let disruptedIncome = baseInputs.annualIncome
     if (!incomeHasErrors) {
-      const allEvents = [...income.lifeEvents, disruptionEvent]
-      const projection = generateIncomeProjection({
+      const commonProjectionParams = {
         currentAge: profile.currentAge,
         retirementAge: profile.retirementAge,
         lifeExpectancy: profile.lifeExpectancy,
@@ -167,8 +253,6 @@ export function useDisruptionImpact(): DisruptionImpactResult {
         momAdjustment: income.momAdjustment,
         employerCpfEnabled: income.employerCpfEnabled,
         incomeStreams: income.incomeStreams,
-        lifeEvents: allEvents,
-        lifeEventsEnabled: true, // Force enabled for disruption preview
         annualExpenses: profile.annualExpenses,
         expenseAdjustments: profile.expenseAdjustments,
         inflation: profile.inflation,
@@ -184,16 +268,87 @@ export function useDisruptionImpact(): DisruptionImpactResult {
         cpfHousingMode: profile.cpfHousingMode,
         cpfHousingMonthly: profile.cpfHousingMonthly,
         cpfMortgageYearsLeft: profile.cpfMortgageYearsLeft,
+      }
+
+      // Base projection (with store's existing life events)
+      const baseProjection = generateIncomeProjection({
+        ...commonProjectionParams,
+        lifeEvents: income.lifeEvents,
+        lifeEventsEnabled: income.lifeEventsEnabled,
       })
-      if (projection.length > 0) {
-        disruptedIncome = projection[0].totalGross
+
+      // Disrupted projection (with disruption event appended, forced enabled)
+      const allEvents = [...income.lifeEvents, disruptionEvent]
+      const disruptedProjection = generateIncomeProjection({
+        ...commonProjectionParams,
+        lifeEvents: allEvents,
+        lifeEventsEnabled: true,
+      })
+
+      // Compare total working-year income to derive average annual loss
+      const baseWorking = baseProjection.filter(r => !r.isRetired)
+      const disruptedWorking = disruptedProjection.filter(r => !r.isRetired)
+      if (baseWorking.length > 0 && disruptedWorking.length > 0) {
+        const baseTotalIncome = baseWorking.reduce((s, r) => s + r.totalGross, 0)
+        const disruptedTotalIncome = disruptedWorking.reduce((s, r) => s + r.totalGross, 0)
+        const avgAnnualLoss = (baseTotalIncome - disruptedTotalIncome) / baseWorking.length
+        disruptedIncome = baseInputs.annualIncome - avgAnnualLoss
       }
     }
 
-    // Compute disrupted metrics with modified income
+    // Resolve tiered costs for the selected template
+    const resolvedCosts: CostTier = template.costs?.[costTier] ?? EMPTY_COST_TIER
+    const { additionalAnnualExpense, lumpSumCost, expenseReductionPercent } = resolvedCosts
+
+    // Compute expense impact from resolved tier costs
+    // Distinguish permanent vs temporary events using durationYears (not event timing):
+    // - Permanent (durationYears >= 90, e.g. Death of Spouse, Permanent Disability):
+    //   modify annualExpenses → changes FIRE Number + savings rate
+    // - Temporary (durationYears < 90, e.g. Critical Illness 2yr):
+    //   model total cost as wealth shock → FIRE Number unchanged
+    // Using durationYears ensures a 2-year illness at age 64 isn't wrongly treated
+    // as permanent just because it overlaps retirement at 65.
+    const PERMANENT_DURATION_THRESHOLD = 90
+    const clampedEndAge = Math.min(profile.lifeExpectancy, clampedStartAge + template.durationYears)
+    const isPermanentExpenseChange = template.durationYears >= PERMANENT_DURATION_THRESHOLD
+
+    let disruptedExpenses = baseInputs.annualExpenses
+    let liquidNWAdjustment = 0
+
+    if (isPermanentExpenseChange) {
+      // Permanent: modify annualExpenses directly (correctly changes savings rate AND FIRE number)
+      // IMPORTANT (Codex fix #3): Apply lifestyle reduction FIRST (to base expenses only),
+      // THEN add event-specific costs. Otherwise the reduction incorrectly discounts medical costs.
+      if (expenseReductionPercent) {
+        disruptedExpenses *= (1 - expenseReductionPercent)
+      }
+      if (additionalAnnualExpense) {
+        disruptedExpenses += additionalAnnualExpense
+      }
+    } else {
+      // Temporary: model total event cost as a wealth shock to liquidNetWorth
+      const eventDuration = clampedEndAge - clampedStartAge
+      if (additionalAnnualExpense) {
+        liquidNWAdjustment -= additionalAnnualExpense * eventDuration
+      }
+      if (expenseReductionPercent) {
+        // Temporary expense reduction = net savings during event period
+        liquidNWAdjustment += baseInputs.annualExpenses * expenseReductionPercent * eventDuration
+      }
+    }
+    // Lump sum is always an immediate wealth shock regardless of duration.
+    // Inflate to match the event's start year (consistent with MC/SR hooks).
+    if (lumpSumCost) {
+      const yearsToEvent = clampedStartAge - profile.currentAge
+      liquidNWAdjustment -= lumpSumCost * Math.pow(1 + profile.inflation, yearsToEvent)
+    }
+
+    // Compute disrupted metrics with modified income AND expenses
     const disruptedInputs = {
       ...baseInputs,
       annualIncome: disruptedIncome,
+      annualExpenses: disruptedExpenses,
+      liquidNetWorth: baseInputs.liquidNetWorth + liquidNWAdjustment,
     }
     const disruptedMetrics = computeMetrics(disruptedInputs)
 
@@ -213,11 +368,12 @@ export function useDisruptionImpact(): DisruptionImpactResult {
       baseMetrics,
       disruptedMetrics,
       deltas,
+      resolvedCosts,
       hasData: true,
     }
   }, [
     profile, income, allocation, property,
-    template, effectiveStartAge,
+    template, effectiveStartAge, costTier,
   ])
 
   return {
@@ -226,6 +382,7 @@ export function useDisruptionImpact(): DisruptionImpactResult {
     baseMetrics: result.baseMetrics,
     disruptedMetrics: result.disruptedMetrics,
     deltas: result.deltas,
+    resolvedCosts: result.resolvedCosts ?? null,
     hasData: result.hasData,
     selectTemplate,
     setStartAge,

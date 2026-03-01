@@ -454,6 +454,64 @@ If you die without a will (non-Muslim):
 *Costs are indicative estimates based on publicly available data from MOH, MSF, and AIC as of 2024.*`,
   },
   {
+    id: 'life-event-costs',
+    title: 'Life Event Cost Benchmarks',
+    content: `Major life events — serious illness, disability, death of a spouse, or job loss — can derail even a well-funded FIRE plan. The figures below are Singapore-specific benchmarks to help you stress-test your plan against realistic shock scenarios.
+
+### Subsidised vs Private Healthcare
+
+Singapore's public healthcare system uses a tiered ward structure. B2/C ward patients receive heavy government subsidies and are covered primarily by MediShield Life. A/B1 ward patients pay closer to market rates but can offset costs with an Integrated Shield Plan (ISP). The out-of-pocket (OOP) figures below represent what remains after applicable insurance payouts.
+
+### Critical Illness Costs (Out-of-Pocket, SGD)
+
+| Condition | Subsidised OOP (B2/C + MediShield Life) | Private OOP (A/B1 + ISP) |
+|---|---|---|
+| AMI (Heart Attack) | $5,000 – $15,000 | $30,000 – $80,000 |
+| Stroke | $8,000 – $20,000 | $40,000 – $100,000 |
+| Cancer (first year, incl. chemo/radiation) | $10,000 – $30,000 | $50,000 – $150,000 |
+
+*Source: MOH DRG fee benchmarks 2023. Figures include acute hospitalisation, procedures, and one year of follow-up. Excludes ongoing maintenance therapy.*
+
+### Disability and Long-Term Care Costs (Monthly, SGD)
+
+Disability costs are ongoing rather than one-off, making them particularly damaging to a retirement portfolio. CareShield Life provides a base payout for severe disability; supplements can increase this.
+
+| Care Type | Subsidised | Private |
+|---|---|---|
+| Foreign Domestic Worker | $1,000/mo + levy | $1,000/mo + levy |
+| Day care centre | $500 – $1,500/mo | $500 – $1,500/mo |
+| Nursing home | $1,500 – $2,500/mo | $3,000 – $4,500/mo |
+| CareShield Life offset | –$600/mo (if eligible) | –$600/mo (if eligible) |
+
+*Source: Agency for Integrated Care (AIC) and MOH, 2024. FDW levy of ~$300/mo applies regardless of ward class.*
+
+### Funeral Costs
+
+The median funeral in Singapore costs approximately **$10,000**, with a range of $5,000 to $25,000 depending on religion, tradition, and number of days. Buddhist/Taoist multi-day ceremonies and Christian/Catholic services with embalming tend toward the higher end; Muslim funerals are typically at the lower end. An emergency cash reserve of $15,000–$25,000 is a common planning rule of thumb to cover both funeral costs and estate administration fees.
+
+*Source: SingStat Household Expenditure Survey.*
+
+### Income Disruption: Retrenchment Recovery
+
+Retrenchment mid-FIRE-journey is the most common shock for people in their 40s and 50s. MOM data shows recovery is generally achievable but not immediate:
+
+- **55%** of retrenched workers find re-employment within 6 months
+- **74%** find re-employment within 12 months
+- Median income recovery: **85–95%** of previous salary
+- Workers aged 50+ typically take 2–4 months longer than those under 40
+
+In the stress-test tool, model retrenchment as a 1–2 year income gap combined with a 10–15% permanent salary reduction to capture both time-out-of-market and re-employment salary reset effects.
+
+*Source: MOM Labour Force Survey 2023.*
+
+### Sources
+
+- [MOH Fee Benchmarks](https://www.moh.gov.sg/cost-financing/fee-benchmarks-and-bill-amount-information)
+- [MOM Retrenchment Statistics](https://stats.mom.gov.sg/Pages/Retrenchment-Summary-Table.aspx)
+- [NRDO Cancer Registry](https://www.nrdo.gov.sg/publications/cancer)
+- [LIA Singapore](https://www.lia.org.sg)`,
+  },
+  {
     id: 'how-to',
     title: 'How to Use This Tool',
     content: `**Step 1: Start Here** — Choose a pathway (Goal-first, Story-first, or Already FIRE) to set up your initial profile.

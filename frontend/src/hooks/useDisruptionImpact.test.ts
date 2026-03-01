@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useDisruptionImpact, DISRUPTION_TEMPLATES } from './useDisruptionImpact'
+import { useDisruptionImpact, DISRUPTION_TEMPLATES, MAX_LIFE_EVENTS } from './useDisruptionImpact'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
@@ -85,8 +85,8 @@ describe('useDisruptionImpact', () => {
     expect(result.current.disruptedMetrics).toBeNull()
   })
 
-  it('DISRUPTION_TEMPLATES has 5 templates', () => {
-    expect(DISRUPTION_TEMPLATES).toHaveLength(5)
+  it('DISRUPTION_TEMPLATES has 8 templates', () => {
+    expect(DISRUPTION_TEMPLATES).toHaveLength(8)
   })
 
   it('each template has required fields', () => {
@@ -159,6 +159,61 @@ describe('useDisruptionImpact', () => {
     // Job loss sets incomeImpact: 0 (zero income) and savingsPause: true,
     // which should reduce the portfolio at retirement.
     expect(result.current.deltas!.portfolioAtRetirement).toBeLessThanOrEqual(0)
+  })
+
+  it('MAX_LIFE_EVENTS is 4', () => {
+    expect(MAX_LIFE_EVENTS).toBe(4)
+  })
+
+  it('templates with costs have both subsidised and private tiers', () => {
+    const templatesWithCosts = DISRUPTION_TEMPLATES.filter(t => t.costs)
+    expect(templatesWithCosts.length).toBeGreaterThan(0)
+    for (const tmpl of templatesWithCosts) {
+      expect(tmpl.costs).toHaveProperty('subsidised')
+      expect(tmpl.costs).toHaveProperty('private')
+    }
+  })
+
+  it('resolves subsidised tier costs for Critical Illness', () => {
+    const criticalIllnessIdx = DISRUPTION_TEMPLATES.findIndex(t => t.label === 'Critical Illness')
+    const { result } = renderHook(() => useDisruptionImpact('subsidised'))
+
+    act(() => {
+      result.current.selectTemplate(criticalIllnessIdx)
+    })
+
+    expect(result.current.resolvedCosts).not.toBeNull()
+    expect(result.current.resolvedCosts!.additionalAnnualExpense).toBe(15000)
+    expect(result.current.resolvedCosts!.lumpSumCost).toBe(8000)
+  })
+
+  it('resolves private tier costs for Critical Illness', () => {
+    const criticalIllnessIdx = DISRUPTION_TEMPLATES.findIndex(t => t.label === 'Critical Illness')
+    const { result } = renderHook(() => useDisruptionImpact('private'))
+
+    act(() => {
+      result.current.selectTemplate(criticalIllnessIdx)
+    })
+
+    expect(result.current.resolvedCosts).not.toBeNull()
+    expect(result.current.resolvedCosts!.additionalAnnualExpense).toBe(50000)
+    expect(result.current.resolvedCosts!.lumpSumCost).toBe(20000)
+  })
+
+  it('returns null resolvedCosts when no template selected', () => {
+    const { result } = renderHook(() => useDisruptionImpact())
+    expect(result.current.resolvedCosts).toBeNull()
+  })
+
+  it('returns empty resolvedCosts for templates without costs (e.g., Job Loss)', () => {
+    const { result } = renderHook(() => useDisruptionImpact())
+
+    act(() => {
+      result.current.selectTemplate(0) // Job Loss (6 months) has no costs
+    })
+
+    // resolvedCosts should be an empty object (no expense fields)
+    expect(result.current.resolvedCosts).toEqual({})
   })
 
   it('disruption impact differs based on template severity', () => {
