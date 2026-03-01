@@ -592,8 +592,6 @@ export function StressTestPage() {
         />
       )}
 
-      <AnalysisModeToggle portfolioLabel={portfolioLabel} />
-
       {isStressAdvanced ? (
         <ActiveLifeEventsBar />
       ) : lifeEventCount > 0 ? (
