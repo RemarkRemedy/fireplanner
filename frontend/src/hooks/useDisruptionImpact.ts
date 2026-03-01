@@ -68,6 +68,8 @@ export const DISRUPTION_TEMPLATES: DisruptionTemplate[] = [
     defaultAgeOffset: 5,
     durationYears: 3,
     event: { name: 'Partial Disability', incomeImpact: 0.5, savingsPause: false, cpfPause: false },
+    // No probability: "partial disability" is a spectrum with no standard Singapore incidence data.
+    // Permanent Disability has MOH data (5% by 65); partial is not separately tracked.
     costs: {
       subsidised: { additionalAnnualExpense: 12000, lumpSumCost: 3000 },
       private: { additionalAnnualExpense: 20000, lumpSumCost: 5000 },
@@ -79,6 +81,8 @@ export const DISRUPTION_TEMPLATES: DisruptionTemplate[] = [
     defaultAgeOffset: 10,
     durationYears: 5,
     event: { name: 'Parent Care', incomeImpact: 0.8, savingsPause: false, cpfPause: false },
+    // No probability: depends on parents' ages/health, not the user's own actuarial risk.
+    // A user-facing probability would be misleading.
     costs: {
       subsidised: { additionalAnnualExpense: 16000, lumpSumCost: 3000 },
       private: { additionalAnnualExpense: 36000, lumpSumCost: 5000 },
@@ -174,8 +178,11 @@ export interface DisruptionImpactResult {
 export function useDisruptionImpact(costTier: CostTierKey = 'subsidised'): DisruptionImpactResult {
   const profile = useProfileStore()
   const income = useIncomeStore()
-  const allocation = useAllocationStore()
-  const property = usePropertyStore()
+  // Allocation and property are read inside useMemo via .getState() rather than
+  // subscribing at the hook level. This avoids re-running the expensive useMemo
+  // when unrelated allocation/property fields change. Safe because this hook is
+  // only mounted inside the life events Sheet, and allocation/property are edited
+  // on a different page — any navigation triggers a fresh mount.
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [customStartAge, setCustomStartAge] = useState<number | null>(null)
@@ -210,7 +217,9 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised'): Disru
       }
     }
 
-    // Compute base metrics
+    // Compute base metrics (read allocation/property at compute time, not via subscription)
+    const allocation = useAllocationStore.getState()
+    const property = usePropertyStore.getState()
     const baseInputs = getBaseInputs(profile, income, allocation, property)
     const baseMetrics = computeMetrics(baseInputs)
 
@@ -343,8 +352,9 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised'): Disru
       resolvedCosts,
       hasData: true,
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- allocation/property read via .getState() intentionally
   }, [
-    profile, income, allocation, property,
+    profile, income,
     template, effectiveStartAge, costTier,
   ])
 

@@ -227,6 +227,8 @@ function LifeEventSheetBody({ onClose }: { onClose: () => void }) {
                 size="sm"
                 onClick={() => selectTemplate(selectedIndex === tmpl.index ? null : tmpl.index)}
                 className="text-xs"
+                aria-label={`${selectedIndex === tmpl.index ? 'Deselect' : 'Select'} ${tmpl.label} scenario`}
+                aria-pressed={selectedIndex === tmpl.index}
               >
                 {selectedIndex === tmpl.index && <AlertTriangle className="h-3 w-3 mr-1" />}
                 {tmpl.label}
