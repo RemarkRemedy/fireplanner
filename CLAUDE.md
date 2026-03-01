@@ -186,6 +186,46 @@ Unit tests for every calculation module in `lib/calculations/`, `lib/simulation/
 - **Do not change the calculation engine without updating the display layer, or vice versa.** Tax deductions, CPF contributions, and other auto-computed values appear in both the engine (`lib/calculations/`) and UI summary panels (e.g., `TaxReliefSection`'s "Auto-calculated deductions"). When adding, removing, or modifying a deduction or parameter in one layer, update the other in the same commit. The RSTU bug (Feb 2026) was caused by the engine correctly deducting SA top-ups from chargeable income while the UI panel never displayed or totalled the deduction.
 - **Do not deploy to production without explicit user approval.** Only deploy to production when the user explicitly says "deploy to production". The word "deploy" alone is not sufficient — it must specifically reference production. Preview/branch deployments for testing are fine without approval, but production deploys require an unambiguous go-ahead.
 
+## Coding Conventions
+
+These conventions reduce ambiguity for AI agents and maintain consistency across the codebase.
+
+### Zustand Store Access
+Always use **selector functions** when reading from stores in components:
+```typescript
+// GOOD — subscribes only to fields used
+const currentAge = useProfileStore((s) => s.currentAge)
+const swr = useProfileStore((s) => s.swr)
+
+// BAD — subscribes to everything, re-renders on any change
+const store = useProfileStore()
+const { currentAge, swr } = useProfileStore()
+```
+
+### Form Inputs
+Always use the shared input wrappers from `components/shared/` instead of raw `<Input type="number">`:
+- `<CurrencyInput>` for dollar amounts
+- `<NumberInput>` for plain numbers
+- `<PercentInput>` for percentages
+
+These handle cursor-jump prevention, comma formatting, blue border convention, and validation error display.
+
+### Shared Helpers (canonical locations)
+| Pattern | Canonical Location | Do NOT |
+|---------|-------------------|--------|
+| Projection params | `buildProjectionParams()` in `hooks/useIncomeProjection.ts` | Build params inline |
+| CPF housing mode | `deriveCpfHousingFromProperty()` in `hooks/useIncomeProjection.ts` | Derive inline |
+| Effective returns/stdDevs | `getEffectiveReturns()` / `getEffectiveStdDevs()` in `lib/calculations/portfolio.ts` | `ASSET_CLASSES.map(...)` inline |
+| Expenses at retirement | `getExpensesAtRetirement()` in `lib/calculations/expenses.ts` | `getEffectiveExpenses() * Math.pow(...)` inline |
+| Withdrawal strategy colors | `WITHDRAWAL_STRATEGY_COLORS` in `lib/chartTheme.ts` | Define colors locally |
+| DeltaBadge (good/bad indicator) | `components/shared/DeltaBadge.tsx` | Define inline in components |
+
+### File Organization
+- **Pure functions** belong in `lib/`, not `hooks/`. If a function doesn't call React hooks, it's not a hook.
+- **Data arrays and constants** belong in `lib/data/`, not `hooks/`.
+- **JSX-free files** should use `.ts`, not `.tsx`. Only use `.tsx` in `components/` and `pages/`.
+- **Import paths:** Always use `@/` aliases without file extensions. Exception: Web Worker imports in `lib/simulation/` use explicit `.ts` extensions for module compatibility.
+
 ## Development Commands
 
 ```bash
