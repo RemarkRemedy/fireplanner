@@ -12,7 +12,6 @@ describe('useSimulationStore', () => {
       expect(state.mcMethod).toBe('parametric')
       expect(state.selectedStrategy).toBe('constant_dollar')
       expect(state.nSimulations).toBe(10000)
-      expect(state.analysisMode).toBe('myPlan')
       expect(state.withdrawalBasis).toBe('expenses')
       expect(state.deterministicAccumulation).toBe(false)
     })
@@ -43,10 +42,6 @@ describe('useSimulationStore', () => {
       expect(useSimulationStore.getState().validationErrors.nSimulations).toBeTruthy()
     })
 
-    it('sets analysis mode', () => {
-      useSimulationStore.getState().setField('analysisMode', 'fireTarget')
-      expect(useSimulationStore.getState().analysisMode).toBe('fireTarget')
-    })
   })
 
   describe('setStrategyParam', () => {

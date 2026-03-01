@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type {
-  AnalysisMode,
   WithdrawalStrategyType,
   StrategyParamsMap,
   SimulationState,
@@ -23,7 +22,7 @@ interface SimulationActions {
 }
 
 const SIMULATION_DATA_KEYS = [
-  'mcMethod', 'selectedStrategy', 'strategyParams', 'nSimulations', 'analysisMode',
+  'mcMethod', 'selectedStrategy', 'strategyParams', 'nSimulations',
   'lastMCSuccessRate', 'lastBacktestSuccessRate', 'withdrawalBasis', 'deterministicAccumulation',
 ] as const
 
@@ -47,7 +46,6 @@ const DEFAULT_SIMULATION: Omit<SimulationState, 'validationErrors'> = {
   selectedStrategy: 'constant_dollar',
   strategyParams: DEFAULT_STRATEGY_PARAMS,
   nSimulations: 10000,
-  analysisMode: 'myPlan',
   withdrawalBasis: 'expenses',
   deterministicAccumulation: false,
   lastMCSuccessRate: null,
@@ -120,11 +118,11 @@ export const useSimulationStore = create<SimulationState & SimulationActions>()(
       migrate: (persisted: unknown, version: number) => {
         const state = persisted as Record<string, unknown>
         if (version < 2) {
-          // v1 → v2: 3 modes → 2 modes
-          const old = state.analysisMode as string
-          const migrated: AnalysisMode =
-            old === 'fireNumber' ? 'fireTarget' : 'myPlan'
-          state.analysisMode = migrated
+          // v1 → v2: 3 modes → 2 modes (analysisMode was removed in v6+ but migration runs for old data)
+          const old = state.analysisMode as string | undefined
+          if (old !== undefined) {
+            state.analysisMode = old === 'fireNumber' ? 'fireTarget' : 'myPlan'
+          }
         }
         if (version < 3) {
           // v2 → v3: add last success rates
