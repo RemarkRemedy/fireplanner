@@ -14,6 +14,16 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     date: '2026-03-01',
     category: 'feature',
+    title: 'Life events inline configurator with adjustable parameters',
+    description:
+      'The life events configurator now expands inline below the event chips bar instead of opening a side panel. All scenario parameters are adjustable via sliders: income level (0-100%), expense reduction (0-50%), additional annual expenses ($0-60K/yr), and one-time costs ($0-30K). The healthcare cost tier toggle (Subsidised/Private) now acts as a preset that pre-fills the cost sliders, and only appears for health and family scenarios. Career scenarios (Job Loss, Recession Pay Cut) now include a default expense reduction (10-20%) reflecting natural spending cuts during income disruption.',
+    affectedSections: ['section-stress-test'],
+    insight:
+      'Templates provide sensible defaults from Singapore government data (MOM, MOH, SingStat), but everyone\'s situation is different. The sliders let you customize: maybe your employer offers 3 months severance (set income to 100% for the first year), or you have a large emergency fund that covers medical costs (set lump sum to $0). The delta cards update in real time as you drag.',
+  },
+  {
+    date: '2026-03-01',
+    category: 'feature',
     title: 'Returning-user guidance and preliminary-results banner',
     description:
       'Returning users now see an amber banner on the Start page confirming they can safely switch paths or modes, with a direct link to the Dashboard. The Dashboard shows a preliminary-results advisory encouraging users to verify numbers in Projection and Stress Test. The advisory automatically disappears once you run your first simulation.',
