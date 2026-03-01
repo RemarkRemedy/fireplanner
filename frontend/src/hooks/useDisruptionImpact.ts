@@ -252,7 +252,7 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised'): Disru
     // reflects current-age income. Instead, compare total working-year income and
     // derive the average annual income loss for the steady-state FIRE model.
     let disruptedIncome = baseInputs.annualIncome
-    const baseParams = buildProjectionParams(profile, income)
+    const baseParams = buildProjectionParams(profile, income, property)
     if (baseParams) {
       // Base projection (with store's existing life events)
       const baseProjection = generateIncomeProjection(baseParams)
