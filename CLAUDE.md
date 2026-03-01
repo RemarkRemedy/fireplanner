@@ -31,7 +31,6 @@ Singapore FIRE (Financial Independence, Retire Early) + Property + Investment Re
 | shadcn/ui | latest |
 | Recharts | 2.x |
 | D3.js | 7.x |
-| React Hook Form | 7.x |
 | Zod | 3.x |
 | TanStack Table | 8.x |
 
@@ -191,7 +190,7 @@ Unit tests for every calculation module in `lib/calculations/`, `lib/simulation/
 These conventions reduce ambiguity for AI agents and maintain consistency across the codebase.
 
 ### Zustand Store Access
-Always use **selector functions** when reading from stores in components:
+Use **selector functions** when reading from stores in components. Existing code may still use full-store subscriptions — migrate when touching those files, but don't refactor solely for this.
 ```typescript
 // GOOD — subscribes only to fields used
 const currentAge = useProfileStore((s) => s.currentAge)
@@ -221,7 +220,7 @@ These handle cursor-jump prevention, comma formatting, blue border convention, a
 | DeltaBadge (good/bad indicator) | `components/shared/DeltaBadge.tsx` | Define inline in components |
 
 ### File Organization
-- **Pure functions** belong in `lib/`, not `hooks/`. If a function doesn't call React hooks, it's not a hook.
+- **Pure functions** belong in `lib/`, not `hooks/`. If a function doesn't call React hooks, it's not a hook. Known exception: `buildProjectionParams` and `deriveCpfHousingFromProperty` live in `hooks/useIncomeProjection.ts` for co-location with the hook that uses them — do not move these, but do not add new pure functions to `hooks/`.
 - **Data arrays and constants** belong in `lib/data/`, not `hooks/`.
 - **JSX-free files** should use `.ts`, not `.tsx`. Only use `.tsx` in `components/` and `pages/`.
 - **Import paths:** Always use `@/` aliases without file extensions. Exception: Web Worker imports in `lib/simulation/` use explicit `.ts` extensions for module compatibility.
