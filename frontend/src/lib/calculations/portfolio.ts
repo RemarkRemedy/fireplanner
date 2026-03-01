@@ -1,5 +1,15 @@
 import type { PortfolioStats, GlidePathConfig, GlidePathMethod } from '@/lib/types'
-import { RISK_FREE_RATE } from '@/lib/data/historicalReturns'
+import { ASSET_CLASSES, RISK_FREE_RATE } from '@/lib/data/historicalReturns'
+
+/** Get effective returns per asset class, applying user overrides where set */
+export function getEffectiveReturns(returnOverrides: (number | null)[]): number[] {
+  return ASSET_CLASSES.map((ac, i) => returnOverrides[i] ?? ac.expectedReturn)
+}
+
+/** Get effective std devs per asset class, applying user overrides where set */
+export function getEffectiveStdDevs(stdDevOverrides: (number | null)[]): number[] {
+  return ASSET_CLASSES.map((ac, i) => stdDevOverrides[i] ?? ac.stdDev)
+}
 
 /**
  * Portfolio expected return: SUMPRODUCT of weights and returns.

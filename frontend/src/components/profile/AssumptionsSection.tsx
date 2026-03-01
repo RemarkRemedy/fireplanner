@@ -6,8 +6,7 @@ import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { PercentInput } from '@/components/shared/PercentInput'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
-import { calculatePortfolioReturn } from '@/lib/calculations/portfolio'
-import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
+import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { cn } from '@/lib/utils'
 import type { RebalanceFrequency } from '@/lib/types'
 
@@ -19,10 +18,7 @@ export function AssumptionsSection() {
     const hasErrors = Object.keys(allocation.validationErrors).length > 0
 
     if (!hasErrors) {
-      const effectiveReturns = ASSET_CLASSES.map((ac, i) =>
-        allocation.returnOverrides[i] ?? ac.expectedReturn
-      )
-      const ret = calculatePortfolioReturn(allocation.currentWeights, effectiveReturns)
+      const ret = calculatePortfolioReturn(allocation.currentWeights, getEffectiveReturns(allocation.returnOverrides))
       return {
         portfolioReturn: ret,
         portfolioReturnDisplay: (ret * 100).toFixed(1),

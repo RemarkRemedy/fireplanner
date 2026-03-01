@@ -1,14 +1,14 @@
 import { useMemo } from 'react'
-import type { FireMetrics, CpfHousingMode } from '@/lib/types'
+import type { FireMetrics } from '@/lib/types'
 import { calculateAllFireMetrics } from '@/lib/calculations/fire'
 import { computeCashReserveOffset } from '@/lib/calculations/cashReserve'
-import { calculatePortfolioReturn } from '@/lib/calculations/portfolio'
+import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
-import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
+import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 
 interface FireCalculationsResult {
   metrics: FireMetrics | null
@@ -40,46 +40,9 @@ export function useFireCalculations(): FireCalculationsResult {
 
     // Try to get effective income from income projection
     let effectiveIncome = profile.annualIncome
-    const incomeErrors = income.validationErrors
-    const incomeHasErrors = Object.keys(incomeErrors).length > 0
-
-    if (!incomeHasErrors) {
-      const projection = generateIncomeProjection({
-        currentAge: profile.currentAge,
-        retirementAge: profile.retirementAge,
-        lifeExpectancy: profile.lifeExpectancy,
-        salaryModel: income.salaryModel,
-        annualSalary: income.annualSalary,
-        salaryGrowthRate: income.salaryGrowthRate,
-        realisticPhases: income.realisticPhases,
-        promotionJumps: income.promotionJumps,
-        momEducation: income.momEducation,
-        momAdjustment: income.momAdjustment,
-        employerCpfEnabled: income.employerCpfEnabled,
-        incomeStreams: income.incomeStreams,
-        lifeEvents: income.lifeEvents,
-        lifeEventsEnabled: income.lifeEventsEnabled,
-        annualExpenses: profile.annualExpenses,
-        inflation: profile.inflation,
-        personalReliefs: income.personalReliefs,
-        srsAnnualContribution: profile.srsAnnualContribution,
-        initialCpfOA: profile.cpfOA,
-        initialCpfSA: profile.cpfSA,
-        initialCpfMA: profile.cpfMA,
-        initialCpfRA: profile.cpfRA,
-        cpfLifeStartAge: profile.cpfLifeStartAge,
-        cpfLifePlan: profile.cpfLifePlan,
-        cpfRetirementSum: profile.cpfRetirementSum,
-        cpfHousingMode: (property.mortgageCpfMonthly > 0 ? 'simple' : 'none') as CpfHousingMode,
-        cpfHousingMonthly: property.mortgageCpfMonthly * (property.ownershipPercent ?? 1),
-        cpfMortgageYearsLeft: property.existingMortgageRemainingYears,
-        cpfTopUpOA: profile.cpfTopUpOA,
-        cpfTopUpSA: profile.cpfTopUpSA,
-        cpfTopUpMA: profile.cpfTopUpMA,
-        lockedAssets: profile.lockedAssets,
-        expenseAdjustments: profile.expenseAdjustments,
-      })
-
+    const projectionParams = buildProjectionParams(profile, income, property)
+    if (projectionParams) {
+      const projection = generateIncomeProjection(projectionParams)
       if (projection.length > 0) {
         effectiveIncome = projection[0].totalGross
       }
@@ -91,10 +54,7 @@ export function useFireCalculations(): FireCalculationsResult {
     const allocationHasErrors = Object.keys(allocationErrors).length > 0
 
     if (profile.usePortfolioReturn && !allocationHasErrors) {
-      const effectiveReturns = ASSET_CLASSES.map((ac, i) =>
-        allocation.returnOverrides[i] ?? ac.expectedReturn
-      )
-      expectedReturn = calculatePortfolioReturn(allocation.currentWeights, effectiveReturns)
+      expectedReturn = calculatePortfolioReturn(allocation.currentWeights, getEffectiveReturns(allocation.returnOverrides))
     }
 
     // Compute property equity from existing property (scaled by ownership %)
@@ -138,64 +98,6 @@ export function useFireCalculations(): FireCalculationsResult {
     })
 
     return { metrics, hasErrors: false, errors: {} }
-  }, [
-    profile.currentAge,
-    profile.retirementAge,
-    profile.lifeExpectancy,
-    profile.annualIncome,
-    profile.annualExpenses,
-    profile.liquidNetWorth,
-    profile.cpfOA,
-    profile.cpfSA,
-    profile.cpfMA,
-    profile.cpfRA,
-    profile.swr,
-    profile.expectedReturn,
-    profile.usePortfolioReturn,
-    profile.inflation,
-    profile.expenseRatio,
-    profile.fireType,
-    profile.fireNumberBasis,
-    profile.retirementSpendingAdjustment,
-    profile.srsAnnualContribution,
-    profile.cpfLifeStartAge,
-    profile.cpfLifePlan,
-    profile.cpfRetirementSum,
-    profile.cpfTopUpOA,
-    profile.cpfTopUpSA,
-    profile.cpfTopUpMA,
-    property.mortgageCpfMonthly,
-    property.existingMortgageRemainingYears,
-    profile.validationErrors,
-    income.salaryModel,
-    income.annualSalary,
-    income.salaryGrowthRate,
-    income.realisticPhases,
-    income.promotionJumps,
-    income.momEducation,
-    income.momAdjustment,
-    income.employerCpfEnabled,
-    income.incomeStreams,
-    income.lifeEvents,
-    income.lifeEventsEnabled,
-    income.personalReliefs,
-    income.validationErrors,
-    allocation.currentWeights,
-    allocation.returnOverrides,
-    allocation.validationErrors,
-    property.ownsProperty,
-    property.existingPropertyValue,
-    property.existingMortgageBalance,
-    property.ownershipPercent,
-    profile.parentSupportEnabled,
-    profile.parentSupport,
-    profile.healthcareConfig,
-    profile.cashReserveEnabled,
-    profile.cashReserveMode,
-    profile.cashReserveFixedAmount,
-    profile.cashReserveMonths,
-    profile.cashReserveReturn,
-    profile.lockedAssets,
-    profile.expenseAdjustments,
-  ])
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/preserve-manual-memoization -- Uses buildProjectionParams which reads many store fields; whole refs avoid stale omissions
+  }, [profile, income, allocation, property])
 }

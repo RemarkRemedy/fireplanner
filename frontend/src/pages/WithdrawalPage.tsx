@@ -30,7 +30,8 @@ import { cn } from '@/lib/utils'
 import type { WithdrawalStrategyType, MonteCarloResult } from '@/lib/types'
 import type { MonteCarloEngineParams } from '@/lib/simulation/monteCarlo'
 import { runMonteCarloWorker, flattenStrategyParams } from '@/lib/simulation/workerClient'
-import { ASSET_CLASSES, CORRELATION_MATRIX } from '@/lib/data/historicalReturns'
+import { CORRELATION_MATRIX } from '@/lib/data/historicalReturns'
+import { getEffectiveReturns, getEffectiveStdDevs } from '@/lib/calculations/portfolio'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
 import { trackEvent } from '@/lib/analytics'
 import { usePageMeta } from '@/hooks/usePageMeta'
@@ -117,8 +118,8 @@ export function WithdrawalPage() {
     return {
       initialPortfolio: explore.initialPortfolio,
       allocationWeights: explore.allocationWeights,
-      expectedReturns: ASSET_CLASSES.map((ac, i) => allocation.returnOverrides[i] ?? ac.expectedReturn),
-      stdDevs: ASSET_CLASSES.map((ac, i) => allocation.stdDevOverrides[i] ?? ac.stdDev),
+      expectedReturns: getEffectiveReturns(allocation.returnOverrides),
+      stdDevs: getEffectiveStdDevs(allocation.stdDevOverrides),
       correlationMatrix: CORRELATION_MATRIX,
       currentAge: explore.startAge,
       retirementAge: explore.startAge,       // forces pure decumulation (nYearsAccum = 0)

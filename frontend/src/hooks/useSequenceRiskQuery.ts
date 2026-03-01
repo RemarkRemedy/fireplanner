@@ -15,7 +15,8 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
-import { ASSET_CLASSES, CORRELATION_MATRIX } from '@/lib/data/historicalReturns'
+import { CORRELATION_MATRIX } from '@/lib/data/historicalReturns'
+import { getEffectiveReturns, getEffectiveStdDevs } from '@/lib/calculations/portfolio'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
@@ -110,7 +111,7 @@ export function useSequenceRiskQuery(): UseSequenceRiskQueryResult {
         crisisId: crisis.id,
       }))
 
-      const projectionParams = buildProjectionParams(profile, income)
+      const projectionParams = buildProjectionParams(profile, income, propertyStore)
       const postRetirementIncome: number[] = []
 
       // Property mortgage (cash portion only, mirrors projection.ts lines 98-99)
@@ -241,12 +242,8 @@ export function useSequenceRiskQuery(): UseSequenceRiskQueryResult {
         }
       }
 
-      const expectedReturns = ASSET_CLASSES.map((ac, i) =>
-        allocation.returnOverrides[i] ?? ac.expectedReturn
-      )
-      const stdDevs = ASSET_CLASSES.map((ac, i) =>
-        allocation.stdDevOverrides[i] ?? ac.stdDev
-      )
+      const expectedReturns = getEffectiveReturns(allocation.returnOverrides)
+      const stdDevs = getEffectiveStdDevs(allocation.stdDevOverrides)
 
       // Convert retirement withdrawals to year-offset based one-time withdrawals
       // Expand durationYears > 1 into multiple year entries

@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import type { PortfolioStats } from '@/lib/types'
-import { calculatePortfolioStats, getGlidePathAllocations } from '@/lib/calculations/portfolio'
+import { calculatePortfolioStats, getGlidePathAllocations, getEffectiveReturns, getEffectiveStdDevs } from '@/lib/calculations/portfolio'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { validateAllocationCrossStoreRules } from '@/lib/validation/rules'
-import { ASSET_CLASSES, CORRELATION_MATRIX } from '@/lib/data/historicalReturns'
+import { CORRELATION_MATRIX } from '@/lib/data/historicalReturns'
 
 interface PortfolioStatsResult {
   currentStats: PortfolioStats | null
@@ -43,12 +43,8 @@ export function usePortfolioStats(): PortfolioStatsResult {
     }
 
     // Effective returns and stdDevs (use overrides where set)
-    const effectiveReturns = ASSET_CLASSES.map((ac, i) =>
-      allocation.returnOverrides[i] ?? ac.expectedReturn
-    )
-    const effectiveStdDevs = ASSET_CLASSES.map((ac, i) =>
-      allocation.stdDevOverrides[i] ?? ac.stdDev
-    )
+    const effectiveReturns = getEffectiveReturns(allocation.returnOverrides)
+    const effectiveStdDevs = getEffectiveStdDevs(allocation.stdDevOverrides)
 
     const statsParams = {
       returns: effectiveReturns,

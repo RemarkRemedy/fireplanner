@@ -1,14 +1,13 @@
 import { useMemo } from 'react'
 import { projectPortfolioAtRetirement } from '@/lib/calculations/fire'
-import { calculatePortfolioReturn } from '@/lib/calculations/portfolio'
+import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
-import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
-import type { CpfHousingMode } from '@/lib/types'
+import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 
 export type RiskLevel = 'safe' | 'marginal' | 'risky'
 
@@ -54,48 +53,16 @@ export function useOneMoreYear(): OneMoreYearResult {
 
     // Effective income
     let effectiveIncome = profile.annualIncome
-    if (Object.keys(income.validationErrors).length === 0) {
-      const projection = generateIncomeProjection({
-        currentAge: profile.currentAge,
-        retirementAge: profile.retirementAge,
-        lifeExpectancy: profile.lifeExpectancy,
-        salaryModel: income.salaryModel,
-        annualSalary: income.annualSalary,
-        salaryGrowthRate: income.salaryGrowthRate,
-        realisticPhases: income.realisticPhases,
-        promotionJumps: income.promotionJumps,
-        momEducation: income.momEducation,
-        momAdjustment: income.momAdjustment,
-        employerCpfEnabled: income.employerCpfEnabled,
-        incomeStreams: income.incomeStreams,
-        lifeEvents: income.lifeEvents,
-        lifeEventsEnabled: income.lifeEventsEnabled,
-        annualExpenses: profile.annualExpenses,
-        expenseAdjustments: profile.expenseAdjustments,
-        inflation: profile.inflation,
-        personalReliefs: income.personalReliefs,
-        srsAnnualContribution: profile.srsAnnualContribution,
-        initialCpfOA: profile.cpfOA,
-        initialCpfSA: profile.cpfSA,
-        initialCpfMA: profile.cpfMA,
-        initialCpfRA: profile.cpfRA,
-        cpfLifeStartAge: profile.cpfLifeStartAge,
-        cpfLifePlan: profile.cpfLifePlan,
-        cpfRetirementSum: profile.cpfRetirementSum,
-        cpfHousingMode: (property.mortgageCpfMonthly > 0 ? 'simple' : 'none') as CpfHousingMode,
-        cpfHousingMonthly: property.mortgageCpfMonthly * (property.ownershipPercent ?? 1),
-        cpfMortgageYearsLeft: property.existingMortgageRemainingYears,
-      })
+    const projectionParams = buildProjectionParams(profile, income, property)
+    if (projectionParams) {
+      const projection = generateIncomeProjection(projectionParams)
       if (projection.length > 0) effectiveIncome = projection[0].totalGross
     }
 
     // Expected return
     let expectedReturn = profile.expectedReturn
     if (profile.usePortfolioReturn && Object.keys(allocation.validationErrors).length === 0) {
-      const effectiveReturns = ASSET_CLASSES.map((ac, i) =>
-        allocation.returnOverrides[i] ?? ac.expectedReturn
-      )
-      expectedReturn = calculatePortfolioReturn(allocation.currentWeights, effectiveReturns)
+      expectedReturn = calculatePortfolioReturn(allocation.currentWeights, getEffectiveReturns(allocation.returnOverrides))
     }
 
     const netRealReturn = expectedReturn - profile.inflation - profile.expenseRatio

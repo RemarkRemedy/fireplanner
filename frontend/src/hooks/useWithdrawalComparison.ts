@@ -4,13 +4,12 @@ import {
   runDeterministicComparison,
   type DeterministicComparisonResult,
 } from '@/lib/calculations/withdrawal'
-import { calculatePortfolioReturn } from '@/lib/calculations/portfolio'
+import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { validateWithdrawalCrossStoreRules } from '@/lib/validation/rules'
-import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
 
 interface WithdrawalComparisonResult {
@@ -54,10 +53,7 @@ export function useWithdrawalComparison(opts?: { initialPortfolioOverride?: numb
     let expectedReturn = profile.expectedReturn
     const allocationErrors = allocation.validationErrors
     if (profile.usePortfolioReturn && Object.keys(allocationErrors).length === 0) {
-      const effectiveReturns = ASSET_CLASSES.map((ac, i) =>
-        allocation.returnOverrides[i] ?? ac.expectedReturn
-      )
-      expectedReturn = calculatePortfolioReturn(allocation.currentWeights, effectiveReturns)
+      expectedReturn = calculatePortfolioReturn(allocation.currentWeights, getEffectiveReturns(allocation.returnOverrides))
     }
 
     // Project everything to retirement age (nominal/future dollars).
