@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Info } from 'lucide-react'
+import { Info, FlaskConical } from 'lucide-react'
 import { StatusPanel } from '@/components/dashboard/StatusPanel'
 import { WhatIfPanel } from '@/components/dashboard/WhatIfPanel'
 import { TimeCostPanel } from '@/components/dashboard/TimeCostPanel'
@@ -53,6 +53,18 @@ export function DashboardPage() {
                 </Link>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {!isEmpty && (
+        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 p-3">
+          <FlaskConical className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+          <div className="text-sm text-amber-800 dark:text-amber-200">
+            These results are preliminary estimates. Verify your year-by-year numbers in{' '}
+            <Link to="/projection" className="font-medium underline hover:no-underline">Projection</Link>, then{' '}
+            <Link to="/stress-test" className="font-medium underline hover:no-underline">Stress Test</Link>{' '}
+            your plan to see how it holds up against life's uncertainties.
           </div>
         </div>
       )}

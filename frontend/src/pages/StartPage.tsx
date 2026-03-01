@@ -6,7 +6,7 @@ import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useUIStore } from '@/stores/useUIStore'
 import { calculateFireNumber, calculateYearsToFire, projectNetWorthPath } from '@/lib/calculations/fire'
-import { Target, TrendingUp, CheckCircle, Clock, CalendarClock, Landmark, ArrowRight, Building, Heart } from 'lucide-react'
+import { Target, TrendingUp, CheckCircle, Clock, CalendarClock, Landmark, ArrowRight, Building, Heart, Info } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { QuickProjectionChart } from '@/components/shared/QuickProjectionChart'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
@@ -254,6 +254,22 @@ export function StartPage() {
         </p>
       </div>
 
+      {/* Returning user guidance */}
+      {isReturningUser && (
+        <div className="flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 p-4">
+          <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+          <div className="text-sm text-amber-800 dark:text-amber-200">
+            <p>
+              Want to switch your path or mode? Go ahead — your existing inputs are safe.
+              To see your results, head to the{' '}
+              <Link to="/dashboard" className="font-medium underline hover:no-underline">
+                Dashboard
+              </Link>.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Pathway cards */}
       <div className="grid grid-cols-1 @2xl:grid-cols-3 gap-4">
         {pathwayCards.map(({ key, label, description, icon: Icon }, index) => (
@@ -491,15 +507,18 @@ export function StartPage() {
 
       <LandingEmailSection isReturningUser={isReturningUser} />
 
-      {/* Continue link for returning users only */}
+      {/* Continue links for returning users */}
       {isReturningUser && (
-        <div className="text-center">
-          <Button variant="ghost" size="sm" asChild>
-            <Link
-              to="/inputs"
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Welcome back, continue where you left off
+        <div className="flex justify-center gap-3">
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/inputs">
+              Continue inputs
+              <ArrowRight className="ml-1 h-3 w-3" />
+            </Link>
+          </Button>
+          <Button size="sm" asChild>
+            <Link to="/dashboard">
+              View Dashboard
               <ArrowRight className="ml-1 h-3 w-3" />
             </Link>
           </Button>
