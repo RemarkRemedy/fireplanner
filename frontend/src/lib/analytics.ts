@@ -42,6 +42,8 @@ type AnalyticsEvent =
   | 'section_mode_changed'
   | 'scenario_deleted'
   | 'checklist_reset'
+  | 'page_navigated'
+  | 'session_start'
 
 export function trackEvent(event: AnalyticsEvent, data?: Record<string, string | number | boolean>) {
   window.umami?.track(event, data)

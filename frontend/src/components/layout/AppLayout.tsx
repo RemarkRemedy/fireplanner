@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+import { trackEvent } from '@/lib/analytics'
 import { Toaster } from 'sonner'
 import { HelpCircle } from 'lucide-react'
 import { Sidebar } from './Sidebar'
@@ -65,6 +66,37 @@ export function AppLayout() {
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [location.pathname])
+
+  // Track page navigations with previous page for funnel analysis
+  const prevPathRef = useRef<string | null>(null)
+  useEffect(() => {
+    const from = prevPathRef.current
+    if (from !== null && from !== location.pathname) {
+      trackEvent('page_navigated', { page: location.pathname, from })
+    }
+    prevPathRef.current = location.pathname
+  }, [location.pathname])
+
+  // Session start: fire once per browser session with retention data
+  useEffect(() => {
+    const SESSION_KEY = 'fireplanner-session-active'
+    const LAST_VISIT_KEY = 'fireplanner-last-visit'
+    const VISIT_COUNT_KEY = 'fireplanner-visit-count'
+
+    if (sessionStorage.getItem(SESSION_KEY)) return
+    sessionStorage.setItem(SESSION_KEY, '1')
+
+    const now = Date.now()
+    const lastVisit = localStorage.getItem(LAST_VISIT_KEY)
+    const visitCount = parseInt(localStorage.getItem(VISIT_COUNT_KEY) ?? '0', 10) + 1
+    const returning = lastVisit !== null
+    const daysSinceLast = lastVisit ? Math.floor((now - parseInt(lastVisit, 10)) / 86_400_000) : 0
+
+    localStorage.setItem(LAST_VISIT_KEY, String(now))
+    localStorage.setItem(VISIT_COUNT_KEY, String(visitCount))
+
+    trackEvent('session_start', { returning, days_since_last: daysSinceLast, visit_count: visitCount })
+  }, [])
 
   const showStats = STATS_ROUTES.includes(location.pathname)
   const isBottom = statsPosition === 'bottom'
