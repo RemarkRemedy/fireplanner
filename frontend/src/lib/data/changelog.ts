@@ -24,6 +24,14 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     date: '2026-03-01',
     category: 'feature',
+    title: 'Portfolio trajectory chart on Dashboard',
+    description:
+      'The Dashboard now shows a portfolio trajectory chart plotting your projected net worth from today through retirement. The Projection page chart has been moved above the table for better visibility.',
+    affectedSections: ['section-dashboard'],
+  },
+  {
+    date: '2026-03-01',
+    category: 'feature',
     title: 'Returning-user guidance and preliminary-results banner',
     description:
       'Returning users now see an amber banner on the Start page confirming they can safely switch paths or modes, with a direct link to the Dashboard. The Dashboard shows a preliminary-results advisory encouraging users to verify numbers in Projection and Stress Test. The advisory automatically disappears once you run your first simulation.',
