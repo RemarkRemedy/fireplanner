@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -98,6 +98,7 @@ import type { ModeSectionId } from '@/hooks/useEffectiveMode'
 
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { WelcomeBanner } from '@/components/shared/WelcomeBanner'
+import { ProjectionCTA } from '@/components/shared/ProjectionCTA'
 import { pushUndo } from '@/lib/undo'
 import { formatCurrency } from '@/lib/utils'
 import type { WithdrawalStrategyType } from '@/lib/types'
@@ -1520,51 +1521,53 @@ export function InputsPage() {
         const section = sections[sectionId]
         const isCollapsed = collapsedSections.has(sectionId)
         return (
-          <section
-            key={sectionId}
-            id={sectionId}
-            className="scroll-mt-16"
-          >
-            {index > 0 && <div className="border-t-2 border-border mb-6" />}
-            <div className="space-y-2 mb-4">
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => toggleSection(sectionId)}
-                  className="flex items-center gap-2 text-left"
-                >
-                  {isCollapsed ? (
-                    <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                  ) : (
-                    <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
+          <Fragment key={sectionId}>
+            <section
+              id={sectionId}
+              className="scroll-mt-16"
+            >
+              {index > 0 && <div className="border-t-2 border-border mb-6" />}
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => toggleSection(sectionId)}
+                    className="flex items-center gap-2 text-left"
+                  >
+                    {isCollapsed ? (
+                      <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
+                    ) : (
+                      <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
+                    )}
+                    <div>
+                      <h2 className="text-2xl font-bold flex items-center gap-2">
+                        {section.title}
+                        {sectionCompletion[sectionId]?.isComplete ? (
+                          <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-muted-foreground/40 shrink-0" />
+                        )}
+                      </h2>
+                      <p className="text-muted-foreground text-sm">{section.description}</p>
+                    </div>
+                  </button>
+                  {!isCollapsed && (
+                    <Button variant="outline" size="sm" className="shrink-0" onClick={section.onReset}>
+                      {section.resetLabel}
+                    </Button>
                   )}
-                  <div>
-                    <h2 className="text-2xl font-bold flex items-center gap-2">
-                      {section.title}
-                      {sectionCompletion[sectionId]?.isComplete ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
-                      ) : (
-                        <Circle className="h-5 w-5 text-muted-foreground/40 shrink-0" />
-                      )}
-                    </h2>
-                    <p className="text-muted-foreground text-sm">{section.description}</p>
-                  </div>
-                </button>
-                {!isCollapsed && (
-                  <Button variant="outline" size="sm" className="shrink-0" onClick={section.onReset}>
-                    {section.resetLabel}
-                  </Button>
-                )}
+                </div>
+                {!isCollapsed && sectionId !== 'section-expenses' && <SectionModeLink sectionId={sectionId} />}
+                {!isCollapsed && sectionId !== 'section-expenses' && <UpdateNudges sectionId={sectionId} />}
+                {!isCollapsed && sectionId !== 'section-expenses' && <SectionNudgeWrapper sectionId={sectionId} />}
               </div>
-              {!isCollapsed && sectionId !== 'section-expenses' && <SectionModeLink sectionId={sectionId} />}
-              {!isCollapsed && sectionId !== 'section-expenses' && <UpdateNudges sectionId={sectionId} />}
-              {!isCollapsed && sectionId !== 'section-expenses' && <SectionNudgeWrapper sectionId={sectionId} />}
-            </div>
-            {!isCollapsed && (
-              <div className="space-y-6">
-                {section.content}
-              </div>
-            )}
-          </section>
+              {!isCollapsed && (
+                <div className="space-y-6">
+                  {section.content}
+                </div>
+              )}
+            </section>
+            {index === 2 && <ProjectionCTA />}
+          </Fragment>
         )
       })}
 
