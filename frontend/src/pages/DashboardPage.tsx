@@ -11,6 +11,7 @@ import { StrategyCard } from '@/components/dashboard/StrategyCard'
 import { PassiveIncomePanel } from '@/components/dashboard/PassiveIncomePanel'
 import { useDashboardMetrics } from '@/hooks/useDashboardMetrics'
 import { useSectionCompletion, type SectionId } from '@/hooks/useSectionCompletion'
+import { useSimulationStore } from '@/stores/useSimulationStore'
 import { usePageMeta } from '@/hooks/usePageMeta'
 
 const KEY_SECTIONS: { id: SectionId; label: string }[] = [
@@ -25,6 +26,10 @@ export function DashboardPage() {
   const metrics = useDashboardMetrics()
   const isEmpty = metrics.fireNumber === null
   const { sections } = useSectionCompletion()
+
+  const lastMC = useSimulationStore((s) => s.lastMCSuccessRate)
+  const lastBT = useSimulationStore((s) => s.lastBacktestSuccessRate)
+  const hasRunSimulation = lastMC !== null || lastBT !== null
 
   const uncustomized = KEY_SECTIONS.filter((s) => !sections[s.id].isComplete)
 
@@ -57,7 +62,7 @@ export function DashboardPage() {
         </div>
       )}
 
-      {!isEmpty && (
+      {!isEmpty && !hasRunSimulation && (
         <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 p-3">
           <FlaskConical className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
           <div className="text-sm text-amber-800 dark:text-amber-200">
