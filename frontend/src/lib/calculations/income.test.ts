@@ -462,6 +462,30 @@ describe('getLifeEventExpenseImpact', () => {
     const result = getLifeEventExpenseImpact(40, 60000, [event1, event2], true)
     expect(result.lumpSum).toBe(13000) // 8K + 5K
   })
+
+  it('produces identical results regardless of event ordering (order-independence)', () => {
+    // Event A: adds $30K/yr medical costs
+    const eventA: LifeEvent = {
+      id: 'a', name: 'Critical Illness', startAge: 40, endAge: 42,
+      incomeImpact: 1, affectedStreamIds: [], savingsPause: false, cpfPause: false,
+      additionalAnnualExpense: 30000,
+    }
+    // Event B: 15% lifestyle reduction
+    const eventB: LifeEvent = {
+      id: 'b', name: 'Death of Spouse', startAge: 38, endAge: 99,
+      incomeImpact: 1, affectedStreamIds: [], savingsPause: false, cpfPause: false,
+      expenseReductionPercent: 0.15,
+    }
+    const orderAB = getLifeEventExpenseImpact(40, 60000, [eventA, eventB], true)
+    const orderBA = getLifeEventExpenseImpact(40, 60000, [eventB, eventA], true)
+
+    // Both orderings must produce identical results:
+    // Base 60K * (1 - 0.15) = 51K + 30K = 81K
+    expect(orderAB.adjustedExpense).toBe(81000)
+    expect(orderBA.adjustedExpense).toBe(81000)
+    expect(orderAB.adjustedExpense).toBe(orderBA.adjustedExpense)
+    expect(orderAB.lumpSum).toBe(orderBA.lumpSum)
+  })
 })
 
 // ============================================================

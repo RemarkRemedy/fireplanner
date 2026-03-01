@@ -24,6 +24,7 @@ import {
   useDisruptionImpact,
   DISRUPTION_TEMPLATES,
   MAX_LIFE_EVENTS,
+  PERMANENT_DURATION_THRESHOLD,
 } from '@/hooks/useDisruptionImpact'
 import type { CostTierKey } from '@/hooks/useDisruptionImpact'
 import type { LifeEvent } from '@/lib/types'
@@ -60,7 +61,7 @@ function ProbabilityBadge({ probability, byAge }: { probability?: number; byAge?
 }
 
 function EventChip({ event, onRemove }: { event: LifeEvent; onRemove: () => void }) {
-  const isPermanent = (event.endAge - event.startAge) > 50
+  const isPermanent = (event.endAge - event.startAge) >= PERMANENT_DURATION_THRESHOLD
   // endAge is exclusive in the engine (age < endAge), so display last active age
   const lastActiveAge = event.endAge - 1
   const ageLabel = isPermanent
@@ -249,13 +250,19 @@ function LifeEventSheetBody({ onClose }: { onClose: () => void }) {
                   : ' (permanent)'}
               </span>
             </div>
-            <Slider
-              value={[startAge]}
-              min={currentAge + 1}
-              max={Math.max(currentAge + 1, retirementAge - 1)}
-              step={1}
-              onValueChange={([v]) => setStartAge(v)}
-            />
+            {currentAge + 1 < Math.max(currentAge + 1, retirementAge - 1) ? (
+              <Slider
+                value={[startAge]}
+                min={currentAge + 1}
+                max={Math.max(currentAge + 1, retirementAge - 1)}
+                step={1}
+                onValueChange={([v]) => setStartAge(v)}
+              />
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Disruption starts at age {currentAge + 1}
+              </p>
+            )}
           </div>
 
           {/* Impact breakdown */}

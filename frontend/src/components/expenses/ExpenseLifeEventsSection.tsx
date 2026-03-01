@@ -80,7 +80,7 @@ export function ExpenseLifeEventsSection() {
     const id = `event-${crypto.randomUUID()}`
     income.addLifeEvent({
       id,
-      name: '',
+      name: 'Custom Event',
       startAge: Math.min(lifeExpectancy - 1, currentAge + 5),
       endAge: Math.min(lifeExpectancy, currentAge + 7),
       incomeImpact: 1,

@@ -2,6 +2,7 @@ import { useMemo, useState, useCallback } from 'react'
 import type { LifeEvent } from '@/lib/types'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { getBaseInputs, computeMetrics } from '@/hooks/useWhatIfMetrics'
+import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
@@ -23,6 +24,10 @@ export type CostTierKey = 'subsidised' | 'private'
 export const MAX_LIFE_EVENTS = 4
 
 const EMPTY_COST_TIER: CostTier = {}
+
+/** Duration threshold (years) above which a life event is treated as permanent.
+ *  Used by both the calculation engine and UI display (EventChip). */
+export const PERMANENT_DURATION_THRESHOLD = 90
 
 export interface DisruptionTemplate {
   label: string
@@ -237,50 +242,16 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised'): Disru
     // Using projection[0] alone would miss disruptions at future ages since it only
     // reflects current-age income. Instead, compare total working-year income and
     // derive the average annual income loss for the steady-state FIRE model.
-    const incomeHasErrors = Object.keys(income.validationErrors).length > 0
     let disruptedIncome = baseInputs.annualIncome
-    if (!incomeHasErrors) {
-      const commonProjectionParams = {
-        currentAge: profile.currentAge,
-        retirementAge: profile.retirementAge,
-        lifeExpectancy: profile.lifeExpectancy,
-        salaryModel: income.salaryModel,
-        annualSalary: income.annualSalary,
-        salaryGrowthRate: income.salaryGrowthRate,
-        realisticPhases: income.realisticPhases,
-        promotionJumps: income.promotionJumps,
-        momEducation: income.momEducation,
-        momAdjustment: income.momAdjustment,
-        employerCpfEnabled: income.employerCpfEnabled,
-        incomeStreams: income.incomeStreams,
-        annualExpenses: profile.annualExpenses,
-        expenseAdjustments: profile.expenseAdjustments,
-        inflation: profile.inflation,
-        personalReliefs: income.personalReliefs,
-        srsAnnualContribution: profile.srsAnnualContribution,
-        initialCpfOA: profile.cpfOA,
-        initialCpfSA: profile.cpfSA,
-        initialCpfMA: profile.cpfMA,
-        initialCpfRA: profile.cpfRA,
-        cpfLifeStartAge: profile.cpfLifeStartAge,
-        cpfLifePlan: profile.cpfLifePlan,
-        cpfRetirementSum: profile.cpfRetirementSum,
-        cpfHousingMode: profile.cpfHousingMode,
-        cpfHousingMonthly: profile.cpfHousingMonthly,
-        cpfMortgageYearsLeft: profile.cpfMortgageYearsLeft,
-      }
-
+    const baseParams = buildProjectionParams(profile, income)
+    if (baseParams) {
       // Base projection (with store's existing life events)
-      const baseProjection = generateIncomeProjection({
-        ...commonProjectionParams,
-        lifeEvents: income.lifeEvents,
-        lifeEventsEnabled: income.lifeEventsEnabled,
-      })
+      const baseProjection = generateIncomeProjection(baseParams)
 
       // Disrupted projection (with disruption event appended, forced enabled)
       const allEvents = [...income.lifeEvents, disruptionEvent]
       const disruptedProjection = generateIncomeProjection({
-        ...commonProjectionParams,
+        ...baseParams,
         lifeEvents: allEvents,
         lifeEventsEnabled: true,
       })
@@ -308,7 +279,6 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised'): Disru
     //   model total cost as wealth shock → FIRE Number unchanged
     // Using durationYears ensures a 2-year illness at age 64 isn't wrongly treated
     // as permanent just because it overlaps retirement at 65.
-    const PERMANENT_DURATION_THRESHOLD = 90
     const clampedEndAge = Math.min(profile.lifeExpectancy, clampedStartAge + template.durationYears)
     const isPermanentExpenseChange = template.durationYears >= PERMANENT_DURATION_THRESHOLD
 

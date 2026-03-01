@@ -312,8 +312,11 @@ export function useMonteCarloQuery(): UseMonteCarloQueryResult {
               cpfOaShortfallForYear = row.cpfOaShortfall
             }
 
-            // Life event expense impacts during retirement — model as income offsets
-            // (additionalExpense reduces effective income, expenseReduction increases it)
+            // Life event expense impacts during retirement — model as income offsets.
+            // We compute only the *delta* (change vs base expenses), not the full adjusted amount.
+            // retirementSpendingAdjustment is NOT applied here because it's already embedded
+            // in the base withdrawal amount used by the MC engine. Life event costs are additive
+            // on top of that base, so applying the adjustment again would double-count it.
             const retEffectiveBase = getEffectiveExpenses(
               row.age, profile.annualExpenses, profile.expenseAdjustments ?? [], profile.lifeExpectancy
             )

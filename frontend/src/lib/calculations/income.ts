@@ -259,18 +259,25 @@ export function getLifeEventExpenseImpact(
   let adjusted = baseExpense
   let lumpSum = 0
 
+  // Two-pass algorithm ensures order-independence when events overlap:
+  // Pass 1: Apply all reductions multiplicatively to the base expense.
+  //         Multiple reductions compound (e.g. two 20% reductions = 36% total).
+  // Pass 2: Sum all additional costs and add to the reduced base.
+  //         Medical/care costs are never discounted by lifestyle reductions.
   for (const event of lifeEvents) {
     if (age >= event.startAge && age < event.endAge) {
-      // Apply reduction to base expenses first (lifestyle downgrade).
-      // Clamp to [0, 1] defensively — schema validates but store mutations don't.
       const reduction = Math.max(0, Math.min(1, event.expenseReductionPercent ?? 0))
       if (reduction > 0) {
         adjusted *= (1 - reduction)
       }
-      // Then add event-specific costs (medical, care, etc.)
+    }
+  }
+  let totalAdditions = 0
+  for (const event of lifeEvents) {
+    if (age >= event.startAge && age < event.endAge) {
       const addition = Math.max(0, event.additionalAnnualExpense ?? 0)
       if (addition > 0) {
-        adjusted += addition
+        totalAdditions += addition
       }
     }
     // Lump sum only at event start
@@ -279,6 +286,7 @@ export function getLifeEventExpenseImpact(
       if (lump > 0) lumpSum += lump
     }
   }
+  adjusted += totalAdditions
 
   return { adjustedExpense: adjusted, lumpSum }
 }

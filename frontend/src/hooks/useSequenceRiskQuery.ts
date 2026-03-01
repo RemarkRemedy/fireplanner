@@ -212,7 +212,10 @@ export function useSequenceRiskQuery(): UseSequenceRiskQueryResult {
               cpfOaShortfallForYear = row.cpfOaShortfall
             }
 
-            // Life event expense impacts during retirement
+            // Life event expense impacts during retirement — delta approach only.
+            // retirementSpendingAdjustment is NOT applied here because it's already embedded
+            // in the base withdrawal amount used by the SR engine. Life event costs are additive
+            // on top of that base, so applying the adjustment again would double-count it.
             const retEffectiveBase = getEffectiveExpenses(
               row.age, profile.annualExpenses, profile.expenseAdjustments ?? [], profile.lifeExpectancy
             )
