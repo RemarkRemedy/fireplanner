@@ -123,7 +123,7 @@ export const useUIStore = create<UIState & UIActions>()(
       partialize: (state) => {
         // Exclude transient fields from persistence
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { contextualNudgeActive, ...persisted } = state
+        const { contextualNudgeActive, quickModeActive, ...persisted } = state
         return persisted
       },
       migrate: (persisted, version) => {
