@@ -481,8 +481,13 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
         </div>
       )}
 
-      {/* Learn more link */}
-      <div className="pt-2 border-t">
+      {/* Hints and links */}
+      <div className="pt-2 border-t space-y-1">
+        <p className="text-xs text-muted-foreground">
+          To adjust an added event, remove it above and re-add with new values, or edit directly in{' '}
+          <Link to="/inputs" className="text-primary hover:underline">Inputs</Link>{' '}
+          (Advanced mode &gt; Income / Expenses).
+        </p>
         <Link
           to="/reference#life-event-costs"
           className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
