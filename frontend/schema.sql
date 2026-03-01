@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS email_signups (
   source TEXT NOT NULL,
   feature_interest TEXT,
   ip_hash TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT NULL
 );
 
 -- Note: email already has a UNIQUE constraint which creates an implicit index.

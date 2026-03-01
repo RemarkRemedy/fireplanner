@@ -7,6 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 LIMIT="${1:-20}"
+if ! [[ "$LIMIT" =~ ^[0-9]+$ ]]; then echo "Error: count must be a number"; exit 1; fi
 
 echo "=== Email Signups (latest $LIMIT) ==="
 npx wrangler d1 execute sgfire-emails --remote \

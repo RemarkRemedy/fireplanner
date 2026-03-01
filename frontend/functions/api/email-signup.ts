@@ -108,8 +108,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       if (!result.meta.changes) {
         // Email not found — user cleared localStorage or hit the endpoint directly.
         // Fall through to insert so the data isn't lost.
+        // Use ON CONFLICT to handle the rare race where two concurrent step-2 requests
+        // both see 0 changes and attempt INSERT simultaneously.
         await context.env.DB.prepare(
-          `INSERT INTO email_signups (email, source, feature_interest, ip_hash) VALUES (?, ?, ?, ?)`
+          `INSERT INTO email_signups (email, source, feature_interest, ip_hash) VALUES (?, ?, ?, ?)
+           ON CONFLICT(email) DO UPDATE SET
+             feature_interest = COALESCE(feature_interest, excluded.feature_interest),
+             updated_at = CURRENT_TIMESTAMP`
         )
           .bind(email, body.source, featureInterest, ipHash)
           .run()
