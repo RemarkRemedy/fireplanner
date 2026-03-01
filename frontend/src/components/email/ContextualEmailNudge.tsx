@@ -158,7 +158,7 @@ export function ContextualEmailNudge({ pageId, message, hidden = false }: Contex
             </div>
             {showEmailForm && (
               <div className="space-y-1.5">
-                <form onSubmit={handleEmailSubmit} className="flex items-center gap-2">
+                <form onSubmit={handleEmailSubmit} className="flex items-center gap-2 max-w-xs">
                   <Input
                     type="email"
                     autoComplete="email"
