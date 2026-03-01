@@ -41,11 +41,18 @@ export function useChartColors(): ChartColors {
   }), [])
 }
 
-export const STRATEGY_COLORS = [
-  'hsl(var(--chart-strategy-1))',
-  'hsl(var(--chart-strategy-2))',
-  'hsl(var(--chart-strategy-3))',
-  'hsl(var(--chart-strategy-4))',
-  'hsl(var(--chart-strategy-5))',
-  'hsl(var(--chart-strategy-6))',
-] as const
+/** Hex color for each withdrawal strategy ID — used by withdrawal charts */
+export const WITHDRAWAL_STRATEGY_COLORS: Record<string, string> = {
+  constant_dollar: '#2563eb',
+  vpw: '#16a34a',
+  guardrails: '#ea580c',
+  vanguard_dynamic: '#9333ea',
+  cape_based: '#dc2626',
+  floor_ceiling: '#0891b2',
+  percent_of_portfolio: '#d97706',
+  one_over_n: '#059669',
+  sensible_withdrawals: '#7c3aed',
+  ninety_five_percent: '#be185d',
+  endowment: '#0d9488',
+  hebeler_autopilot: '#6366f1',
+}

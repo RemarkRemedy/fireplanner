@@ -22,6 +22,22 @@ export function getEffectiveExpenses(
   return Math.max(0, total)
 }
 
+/**
+ * Get annual expenses at retirement in nominal (future) dollars.
+ * Applies expense adjustments at retirementAge, then inflates forward.
+ */
+export function getExpensesAtRetirement(
+  retirementAge: number,
+  currentAge: number,
+  annualExpenses: number,
+  expenseAdjustments: ExpenseAdjustment[],
+  lifeExpectancy: number,
+  inflation: number
+): number {
+  const base = getEffectiveExpenses(retirementAge, annualExpenses, expenseAdjustments, lifeExpectancy)
+  return base * Math.pow(1 + inflation, Math.max(0, retirementAge - currentAge))
+}
+
 export interface ExpensePhase {
   fromAge: number
   toAge: number

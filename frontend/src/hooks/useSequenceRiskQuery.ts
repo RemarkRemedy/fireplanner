@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { runSequenceRiskWorker, flattenStrategyParams } from '@/lib/simulation/workerClient'
-import { getEffectiveExpenses } from '@/lib/calculations/expenses'
+import { getEffectiveExpenses, getExpensesAtRetirement } from '@/lib/calculations/expenses'
 import type { CrisisScenario, SequenceRiskResult } from '@/lib/types'
 import { sumPostRetirementIncome, getLifeEventExpenseImpact } from '@/lib/calculations/income'
 import { getPropertyRentalIncome } from '@/lib/calculations/hdb'
@@ -275,7 +275,7 @@ export function useSequenceRiskQuery(): UseSequenceRiskQueryResult {
         oneTimeWithdrawals: oneTimeWithdrawals.length > 0 ? oneTimeWithdrawals : undefined,
         portfolioInjections: portfolioInjections.length > 0 ? portfolioInjections : undefined,
         retirementMitigation: profile.retirementMitigation,
-        annualExpensesAtRetirement: getEffectiveExpenses(profile.retirementAge, profile.annualExpenses, profile.expenseAdjustments, profile.lifeExpectancy) * Math.pow(1 + profile.inflation, Math.max(0, profile.retirementAge - profile.currentAge)),
+        annualExpensesAtRetirement: getExpensesAtRetirement(profile.retirementAge, profile.currentAge, profile.annualExpenses, profile.expenseAdjustments, profile.lifeExpectancy, profile.inflation),
         withdrawalBasis: simulation.withdrawalBasis,
       }
 

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { runMonteCarloWorker, flattenStrategyParams } from '@/lib/simulation/workerClient'
-import { getEffectiveExpenses } from '@/lib/calculations/expenses'
+import { getEffectiveExpenses, getExpensesAtRetirement } from '@/lib/calculations/expenses'
 import { sumPostRetirementIncome, getLifeEventExpenseImpact } from '@/lib/calculations/income'
 import { getPropertyRentalIncome } from '@/lib/calculations/hdb'
 import { calculateParentSupportAtAge } from '@/lib/calculations/fire'
@@ -403,7 +403,7 @@ export function useMonteCarloQuery(): UseMonteCarloQueryResult {
         inflation: profile.inflation,
         portfolioAdjustments,
         retirementMitigation: profile.retirementMitigation,
-        annualExpensesAtRetirement: getEffectiveExpenses(profile.retirementAge, profile.annualExpenses, profile.expenseAdjustments, profile.lifeExpectancy) * Math.pow(1 + profile.inflation, Math.max(0, profile.retirementAge - profile.currentAge)),
+        annualExpensesAtRetirement: getExpensesAtRetirement(profile.retirementAge, profile.currentAge, profile.annualExpenses, profile.expenseAdjustments, profile.lifeExpectancy, profile.inflation),
         withdrawalBasis: simulation.withdrawalBasis,
         extractPaths: true,  // Enable representative path extraction for projection table
         deterministicAccumulation: simulation.deterministicAccumulation,

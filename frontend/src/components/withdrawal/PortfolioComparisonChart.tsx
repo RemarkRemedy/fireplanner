@@ -5,21 +5,7 @@ import type { WithdrawalStrategyType } from '@/lib/types'
 import { getStrategyLabel } from '@/hooks/useWithdrawalComparison'
 import { formatCurrency } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/useIsMobile'
-
-const STRATEGY_COLORS: Record<string, string> = {
-  constant_dollar: '#2563eb',
-  vpw: '#16a34a',
-  guardrails: '#ea580c',
-  vanguard_dynamic: '#9333ea',
-  cape_based: '#dc2626',
-  floor_ceiling: '#0891b2',
-  percent_of_portfolio: '#d97706',
-  one_over_n: '#059669',
-  sensible_withdrawals: '#7c3aed',
-  ninety_five_percent: '#be185d',
-  endowment: '#0d9488',
-  hebeler_autopilot: '#6366f1',
-}
+import { WITHDRAWAL_STRATEGY_COLORS } from '@/lib/chartTheme'
 
 interface PortfolioComparisonChartProps {
   results: DeterministicComparisonResult
@@ -60,7 +46,7 @@ export function PortfolioComparisonChart({ results }: PortfolioComparisonChartPr
                 key={s}
                 type="monotone"
                 dataKey={s}
-                stroke={STRATEGY_COLORS[s] ?? '#666'}
+                stroke={WITHDRAWAL_STRATEGY_COLORS[s] ?? '#666'}
                 strokeWidth={2}
                 dot={false}
               />
