@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { trackEvent } from '@/lib/analytics'
 import { Toaster } from 'sonner'
 import { HelpCircle } from 'lucide-react'
@@ -37,7 +37,16 @@ export function AppLayout() {
   const statsPosition = useUIStore((s) => s.statsPosition)
   const helpPanelOpen = useUIStore((s) => s.helpPanelOpen)
   const location = useLocation()
+  const navigate = useNavigate()
   const isDesktop = useIsDesktop()
+
+  // Strip trailing slashes so Umami and React Router see consistent paths
+  // (Cloudflare Pages adds trailing slashes to pre-rendered routes)
+  useEffect(() => {
+    if (location.pathname !== '/' && location.pathname.endsWith('/')) {
+      navigate(location.pathname.slice(0, -1) + location.search + location.hash, { replace: true })
+    }
+  }, [location.pathname, location.search, location.hash, navigate])
 
   // Global keyboard shortcuts
   useEffect(() => {
