@@ -16,6 +16,7 @@ import {
   capMaAtBhs,
   getBhsAtAge,
   getFrsForYear,
+  estimateCpfBalancesFromAge,
 } from './cpf'
 import {
   OA_INTEREST_RATE,
@@ -774,5 +775,52 @@ describe('getFrsForYear', () => {
     const fromProjection = calculateBrsFrsErs(55, 2030)
     // calculateBrsFrsErs: yearsSinceBase = max(0, 2030-2026) = 4, yearsUntil55 = 0
     expect(fromHelper).toBeCloseTo(fromProjection.frs, 0)
+  })
+})
+
+// ============================================================
+// estimateCpfBalancesFromAge — rough CPF balance estimator
+// ============================================================
+
+describe('estimateCpfBalancesFromAge', () => {
+  it('returns zero for career start age = current age (no working years)', () => {
+    const result = estimateCpfBalancesFromAge(22, 72000, 22)
+    expect(result.oa).toBe(0)
+    expect(result.sa).toBe(0)
+    expect(result.ma).toBe(0)
+  })
+
+  it('returns positive balances for age 30 with $72K salary in reasonable ranges', () => {
+    const result = estimateCpfBalancesFromAge(30, 72000, 22, 0.03)
+    // 8-year career with ~$72K current salary (23% OA rate + interest compounding)
+    expect(result.oa).toBeGreaterThan(30000)
+    expect(result.oa).toBeLessThan(200000)
+    expect(result.sa).toBeGreaterThan(0)
+    expect(result.ma).toBeGreaterThan(0)
+    // OA should be largest (23% allocation vs 6% SA and 8% MA)
+    expect(result.oa).toBeGreaterThan(result.sa)
+  })
+
+  it('returns higher balances for higher salary (same age)', () => {
+    const low = estimateCpfBalancesFromAge(30, 72000, 22, 0.03)
+    const high = estimateCpfBalancesFromAge(30, 120000, 22, 0.03)
+    expect(high.oa).toBeGreaterThan(low.oa)
+    expect(high.sa).toBeGreaterThan(low.sa)
+    expect(high.ma).toBeGreaterThan(low.ma)
+  })
+
+  it('returns higher balances for older age (same salary)', () => {
+    const young = estimateCpfBalancesFromAge(30, 72000, 22, 0.03)
+    const older = estimateCpfBalancesFromAge(40, 72000, 22, 0.03)
+    expect(older.oa).toBeGreaterThan(young.oa)
+    expect(older.sa).toBeGreaterThan(young.sa)
+    expect(older.ma).toBeGreaterThan(young.ma)
+  })
+
+  it('handles edge case: salary = 0 (should return all zeros)', () => {
+    const result = estimateCpfBalancesFromAge(30, 0, 22, 0.03)
+    expect(result.oa).toBe(0)
+    expect(result.sa).toBe(0)
+    expect(result.ma).toBe(0)
   })
 })

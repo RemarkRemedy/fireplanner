@@ -436,6 +436,65 @@ export function getRetirementSumAmount(
 }
 
 /**
+ * Estimate CPF OA/SA/MA balances based on age, salary, career start age, and salary growth.
+ *
+ * This is a rough estimate for users who don't know their CPF balances.
+ * It simulates year-by-year contributions and interest from careerStartAge to currentAge.
+ *
+ * Simplifications vs. reality:
+ * - Skips MA BHS cap overflow and age-55 SA→RA transfer
+ * - Assumes continuous employment with steady salary growth
+ * - Extra interest applied using under-55 rules throughout
+ */
+export function estimateCpfBalancesFromAge(
+  currentAge: number,
+  annualSalary: number,
+  careerStartAge: number = 22,
+  salaryGrowthRate: number = 0.03,
+): { oa: number; sa: number; ma: number } {
+  if (currentAge <= careerStartAge || annualSalary <= 0) {
+    return { oa: 0, sa: 0, ma: 0 }
+  }
+
+  // Back-project salary to career start
+  const yearsWorked = currentAge - careerStartAge
+  const salaryAtStart = annualSalary / Math.pow(1 + salaryGrowthRate, yearsWorked)
+
+  let oa = 0
+  let sa = 0
+  let ma = 0
+
+  for (let yearIndex = 0; yearIndex < yearsWorked; yearIndex++) {
+    const age = careerStartAge + yearIndex
+    const salary = salaryAtStart * Math.pow(1 + salaryGrowthRate, yearIndex)
+
+    // Add contributions for this year
+    const contribution = calculateCpfContribution(salary, age)
+    oa += contribution.oaAllocation
+    sa += contribution.saAllocation
+    ma += contribution.maAllocation
+
+    // Apply base interest at end of year
+    const oaInterest = oa * OA_INTEREST_RATE
+    const saInterest = sa * SA_INTEREST_RATE
+    const maInterest = ma * MA_INTEREST_RATE
+
+    // Apply extra interest (simplified: under-55 rules throughout)
+    const extraInterest = calculateCpfExtraInterest(oa, sa, ma, age)
+
+    oa += oaInterest
+    sa += saInterest + extraInterest // Extra interest credited to SA for under-55
+    ma += maInterest
+  }
+
+  return {
+    oa: Math.round(oa),
+    sa: Math.round(sa),
+    ma: Math.round(ma),
+  }
+}
+
+/**
  * Auto-detect which retirement sum level fits the user's projected SA at 55.
  * BRS requires property ownership with long remaining lease.
  */

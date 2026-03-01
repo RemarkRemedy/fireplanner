@@ -13,13 +13,14 @@ import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useIncomeProjection } from '@/hooks/useIncomeProjection'
 import { useEffectiveMode } from '@/hooks/useEffectiveMode'
-import { calculateCpfContribution, calculateBrsFrsErs, estimateCpfLifePayout, calculateCpfLifePayoutAtAge, getRetirementSumAmount } from '@/lib/calculations/cpf'
+import { calculateCpfContribution, calculateBrsFrsErs, estimateCpfLifePayout, calculateCpfLifePayoutAtAge, getRetirementSumAmount, estimateCpfBalancesFromAge } from '@/lib/calculations/cpf'
 import type { CpfLifePlan, CpfRetirementSum } from '@/lib/types'
 import { getCpfRatesForAge, RETIREMENT_SUM_BASE_YEAR, BRS_BASE, FRS_BASE, ERS_BASE, SA_INTEREST_RATE, CPFIS_OA_RETENTION, CPFIS_SA_RETENTION } from '@/lib/data/cpfRates'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { CpfProjectionTable } from '@/components/cpf/CpfProjectionTable'
 import { CpfAssumptionsPanel } from '@/components/cpf/CpfAssumptionsPanel'
 import { cn, formatCurrency, formatPercent } from '@/lib/utils'
+import { trackEvent } from '@/lib/analytics'
 
 export function CpfSection() {
   const {
@@ -287,6 +288,46 @@ export function CpfSection() {
         )}
 
         {mode === 'advanced' && <Separator />}
+
+        {/* CPF balance estimator — pre-55 users only */}
+        {currentAge < 55 && (
+          <div>
+            {cpfOA === 0 && cpfSA === 0 && cpfMA === 0 ? (
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const est = estimateCpfBalancesFromAge(currentAge, annualIncome)
+                    setField('cpfOA', est.oa)
+                    setField('cpfSA', est.sa)
+                    setField('cpfMA', est.ma)
+                    trackEvent('cpf_estimated_from_age')
+                  }}
+                >
+                  Estimate from your age &amp; salary
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Rough estimate assuming career from age 22 with 3% annual salary growth. Check your CPF statement for exact balances.
+                </p>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="text-xs text-muted-foreground underline hover:text-foreground"
+                onClick={() => {
+                  const est = estimateCpfBalancesFromAge(currentAge, annualIncome)
+                  setField('cpfOA', est.oa)
+                  setField('cpfSA', est.sa)
+                  setField('cpfMA', est.ma)
+                  trackEvent('cpf_estimated_from_age')
+                }}
+              >
+                Re-estimate from age &amp; salary
+              </button>
+            )}
+          </div>
+        )}
 
         {/* CPF balance summary */}
         <div>
