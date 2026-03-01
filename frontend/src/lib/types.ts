@@ -9,7 +9,6 @@ export type ResidencyStatus = 'citizen' | 'pr' | 'foreigner'
 export type SalaryModel = 'simple' | 'realistic' | 'data-driven'
 export type RebalanceFrequency = 'annual' | 'semi-annual' | 'quarterly'
 export type FireNumberBasis = 'today' | 'retirement' | 'fireAge'
-export type AnalysisMode = 'myPlan' | 'fireTarget'
 export type WithdrawalBasis = 'expenses' | 'rate'
 export type IncomeStreamType = 'employment' | 'rental' | 'investment' | 'business' | 'government'
 export type GrowthModel = 'fixed' | 'inflation-linked' | 'none'
@@ -688,8 +687,6 @@ export interface SimulationState {
   selectedStrategy: WithdrawalStrategyType
   strategyParams: StrategyParamsMap
   nSimulations: number
-  /** @deprecated No longer read by any consumer. Kept for migration compatibility. */
-  analysisMode: AnalysisMode
   withdrawalBasis: WithdrawalBasis
   deterministicAccumulation: boolean  // when true, pre-retirement uses expected returns
   lastMCSuccessRate: number | null
