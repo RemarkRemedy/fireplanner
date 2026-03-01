@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { ProjectionRow, ProjectionSummary } from '@/lib/types'
 import { generateProjection, type ProjectionParams } from '@/lib/calculations/projection'
-import { calculatePortfolioReturn } from '@/lib/calculations/portfolio'
+import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { getPropertyRentalIncome, computeLbsProceeds } from '@/lib/calculations/hdb'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
@@ -9,7 +9,6 @@ import { useSimulationStore } from '@/stores/useSimulationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useIncomeProjection } from '@/hooks/useIncomeProjection'
 import { useFireCalculations } from '@/hooks/useFireCalculations'
-import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 
 interface ProjectionResult {
   rows: ProjectionRow[] | null
@@ -43,9 +42,7 @@ export function useProjection(): ProjectionResult {
     }
 
     // Compute effective asset returns (with overrides applied)
-    const assetReturns = ASSET_CLASSES.map((ac, i) =>
-      allocation.returnOverrides[i] ?? ac.expectedReturn
-    )
+    const assetReturns = getEffectiveReturns(allocation.returnOverrides)
 
     // Determine effective expected return
     const allocationErrors = allocation.validationErrors

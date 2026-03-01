@@ -2,8 +2,7 @@ import { useMemo } from 'react'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { projectPortfolioAtRetirement } from '@/lib/calculations/fire'
-import { calculatePortfolioReturn, interpolateGlidePath } from '@/lib/calculations/portfolio'
-import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
+import { calculatePortfolioReturn, interpolateGlidePath, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
 import { formatCurrency } from '@/lib/utils'
 
@@ -44,10 +43,7 @@ export function useAnalysisPortfolio(): AnalysisPortfolioResult {
     let portfolioReturn = profile.expectedReturn
     const allocationValid = Object.keys(allocation.validationErrors).length === 0
     if (profile.usePortfolioReturn && allocationValid) {
-      const effectiveReturns = ASSET_CLASSES.map((ac, i) =>
-        allocation.returnOverrides[i] ?? ac.expectedReturn
-      )
-      portfolioReturn = calculatePortfolioReturn(retirementWeights, effectiveReturns)
+      portfolioReturn = calculatePortfolioReturn(retirementWeights, getEffectiveReturns(allocation.returnOverrides))
     }
     const netRealReturn = portfolioReturn - profile.inflation - profile.expenseRatio
     const currentExpenses = getEffectiveExpenses(profile.currentAge, profile.annualExpenses, profile.expenseAdjustments, profile.lifeExpectancy)

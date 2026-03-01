@@ -1,12 +1,11 @@
 import { useMemo } from 'react'
 import { projectPortfolioAtRetirement } from '@/lib/calculations/fire'
-import { calculatePortfolioReturn } from '@/lib/calculations/portfolio'
+import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
-import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 
@@ -63,10 +62,7 @@ export function useOneMoreYear(): OneMoreYearResult {
     // Expected return
     let expectedReturn = profile.expectedReturn
     if (profile.usePortfolioReturn && Object.keys(allocation.validationErrors).length === 0) {
-      const effectiveReturns = ASSET_CLASSES.map((ac, i) =>
-        allocation.returnOverrides[i] ?? ac.expectedReturn
-      )
-      expectedReturn = calculatePortfolioReturn(allocation.currentWeights, effectiveReturns)
+      expectedReturn = calculatePortfolioReturn(allocation.currentWeights, getEffectiveReturns(allocation.returnOverrides))
     }
 
     const netRealReturn = expectedReturn - profile.inflation - profile.expenseRatio

@@ -8,10 +8,9 @@ import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
-import { calculatePortfolioReturn } from '@/lib/calculations/portfolio'
+import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { calculateOneTimeCost, calculateRecurringCost, type TimeCostBaseInput } from '@/lib/calculations/timeCost'
-import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 import { formatCurrency, cn } from '@/lib/utils'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 
@@ -42,10 +41,7 @@ export function TimeCostPanel() {
 
     let expectedReturn = profile.expectedReturn
     if (profile.usePortfolioReturn && Object.keys(allocation.validationErrors).length === 0) {
-      const effectiveReturns = ASSET_CLASSES.map((ac, i) =>
-        allocation.returnOverrides[i] ?? ac.expectedReturn
-      )
-      expectedReturn = calculatePortfolioReturn(allocation.currentWeights, effectiveReturns)
+      expectedReturn = calculatePortfolioReturn(allocation.currentWeights, getEffectiveReturns(allocation.returnOverrides))
     }
 
     const netRealReturn = expectedReturn - profile.inflation - profile.expenseRatio

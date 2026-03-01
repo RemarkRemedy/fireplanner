@@ -13,8 +13,9 @@ import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
-import { ASSET_CLASSES, CORRELATION_MATRIX } from '@/lib/data/historicalReturns'
+import { CORRELATION_MATRIX } from '@/lib/data/historicalReturns'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
+import { getEffectiveReturns, getEffectiveStdDevs } from '@/lib/calculations/portfolio'
 import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
 import {
   outstandingMortgageAtAge,
@@ -336,12 +337,8 @@ export function useMonteCarloQuery(): UseMonteCarloQueryResult {
       }
 
       // Get effective returns and std devs (with overrides)
-      const expectedReturns = ASSET_CLASSES.map((ac, i) =>
-        allocation.returnOverrides[i] ?? ac.expectedReturn
-      )
-      const stdDevs = ASSET_CLASSES.map((ac, i) =>
-        allocation.stdDevOverrides[i] ?? ac.stdDev
-      )
+      const expectedReturns = getEffectiveReturns(allocation.returnOverrides)
+      const stdDevs = getEffectiveStdDevs(allocation.stdDevOverrides)
 
       // Convert retirement withdrawals to negative portfolio adjustments
       // Expand durationYears > 1 into multiple year entries

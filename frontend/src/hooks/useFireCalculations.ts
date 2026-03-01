@@ -2,13 +2,12 @@ import { useMemo } from 'react'
 import type { FireMetrics } from '@/lib/types'
 import { calculateAllFireMetrics } from '@/lib/calculations/fire'
 import { computeCashReserveOffset } from '@/lib/calculations/cashReserve'
-import { calculatePortfolioReturn } from '@/lib/calculations/portfolio'
+import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
-import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 
 interface FireCalculationsResult {
@@ -55,10 +54,7 @@ export function useFireCalculations(): FireCalculationsResult {
     const allocationHasErrors = Object.keys(allocationErrors).length > 0
 
     if (profile.usePortfolioReturn && !allocationHasErrors) {
-      const effectiveReturns = ASSET_CLASSES.map((ac, i) =>
-        allocation.returnOverrides[i] ?? ac.expectedReturn
-      )
-      expectedReturn = calculatePortfolioReturn(allocation.currentWeights, effectiveReturns)
+      expectedReturn = calculatePortfolioReturn(allocation.currentWeights, getEffectiveReturns(allocation.returnOverrides))
     }
 
     // Compute property equity from existing property (scaled by ownership %)
