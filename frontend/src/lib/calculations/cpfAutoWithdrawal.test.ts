@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeCpfAutoFallback, type CpfAutoFallbackInput, type CpfAutoFallbackResult } from './cpfAutoWithdrawal'
+import { computeCpfAutoFallback, type CpfAutoFallbackInput } from './cpfAutoWithdrawal'
 import { FRS_BASE, BRS_GROWTH_RATE, RETIREMENT_SUM_BASE_YEAR } from '@/lib/data/cpfRates'
 
 describe('computeCpfAutoFallback', () => {
