@@ -693,7 +693,7 @@ export function CpfSection() {
             <div>
               <h4 className="text-sm font-medium flex items-center mb-3">
                 CPF Auto-Withdrawal Rules
-                <InfoTooltip text="Configure automatic CPF withdrawal behavior. When enabled, the projection will automatically draw from your CPF when your liquid portfolio runs out, rather than showing premature depletion." />
+                <InfoTooltip text="Configure automatic CPF withdrawal behavior when your liquid portfolio runs out. Without these features, the projection may show $0 liquid assets for decades while CPF holds hundreds of thousands untouched — an unrealistic scenario for most retirees." />
               </h4>
 
               <div className="space-y-3">
@@ -705,7 +705,7 @@ export function CpfSection() {
                     className="rounded border-gray-300"
                   />
                   Auto-withdraw from CPF when portfolio runs out
-                  <InfoTooltip text="When your liquid portfolio hits $0, automatically withdraw from CPF OA (and optionally SA) to cover expenses. Only applies from age 55 onwards. FRS retention is enforced." />
+                  <InfoTooltip text="When your liquid portfolio hits $0, automatically withdraw from CPF OA (and optionally SA) to cover living expenses. Only applies from age 55 onwards, and FRS is always preserved for CPF LIFE. On by default because most retirees would tap CPF rather than go unfunded. Uncheck to see a worst-case scenario where CPF is left entirely untouched (e.g. for bequest planning)." />
                 </label>
 
                 {cpfAutoFallback && (
@@ -717,7 +717,7 @@ export function CpfSection() {
                       className="rounded border-gray-300"
                     />
                     Include SA excess above FRS
-                    <InfoTooltip text="After OA is depleted, also withdraw from SA balance that exceeds the Full Retirement Sum. SA earns 4% vs OA's 2.5%, so OA is always used first." />
+                    <InfoTooltip text="After OA is depleted, also withdraw from SA balance that exceeds the Full Retirement Sum (FRS). OA is always used first since SA earns 4% vs OA's 2.5%. On by default to maximise fallback capacity. Uncheck if you want to preserve your full SA for higher CPF LIFE payouts, or if you plan to pledge property to reduce your Required Amount." />
                   </label>
                 )}
 
@@ -729,7 +729,7 @@ export function CpfSection() {
                     className="rounded border-gray-300"
                   />
                   Count uninvested CPF as bond allocation
-                  <InfoTooltip text="Treat uninvested CPF (earning guaranteed 2.5-4%) as satisfying part of your bond/cash target. This lets the liquid portfolio tilt more toward equities. CPFIS-invested CPF counts as equity, not bonds." />
+                  <InfoTooltip text="Treat uninvested CPF (earning guaranteed 2.5-4%) as part of your bond/fixed-income allocation. This prevents over-allocating to bonds in your liquid portfolio when CPF already serves that role. On by default because CPF functions like a high-quality bond. Uncheck if you prefer to manage your liquid portfolio independently of CPF, or if you invest your CPF via CPFIS (which counts as equity, not bonds)." />
                 </label>
 
                 {cpfVirtualRebalancing && (
@@ -742,6 +742,7 @@ export function CpfSection() {
                         onChange={() => setField('cpfVirtualRebalancingMode', 'from55')}
                       />
                       From age 55 only
+                      <InfoTooltip text="Only count CPF as bonds from age 55, when funds become accessible. This is the recommended default since CPF is legally locked before 55 — counting illiquid funds as bonds could lead to an overly aggressive liquid portfolio you can't rebalance." />
                     </label>
                     <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
@@ -751,6 +752,7 @@ export function CpfSection() {
                         onChange={() => setField('cpfVirtualRebalancingMode', 'always')}
                       />
                       Always (illiquid before 55)
+                      <InfoTooltip text="Count CPF as bonds at all ages. Use this if you are already over 55, or if you want to see the theoretical portfolio tilt assuming full CPF access. Before 55, CPF is illiquid, so the rebalancing is purely notional." />
                     </label>
                   </div>
                 )}
