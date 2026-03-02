@@ -22,6 +22,7 @@ interface UIState {
   lastSeenDataVintage: string | null
   showNewPurchase: boolean
   collapsedSections: string[]
+  quickModeActive: boolean
   // Transient (not persisted): true when a contextual engagement nudge is visible
   contextualNudgeActive: boolean
 }
@@ -53,6 +54,7 @@ const DEFAULT_UI: UIState = {
   lastSeenDataVintage: null,
   showNewPurchase: false,
   collapsedSections: [],
+  quickModeActive: false,
   contextualNudgeActive: false,
 }
 
@@ -117,11 +119,11 @@ export const useUIStore = create<UIState & UIActions>()(
     }),
     {
       name: 'fireplanner-ui',
-      version: 9,
+      version: 10,
       partialize: (state) => {
         // Exclude transient fields from persistence
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { contextualNudgeActive, ...persisted } = state
+        const { contextualNudgeActive, quickModeActive, ...persisted } = state
         return persisted
       },
       migrate: (persisted, version) => {
@@ -160,6 +162,9 @@ export const useUIStore = create<UIState & UIActions>()(
         if (version < 9) {
           state.showNewPurchase = false
           state.collapsedSections = []
+        }
+        if (version < 10) {
+          state.quickModeActive = false
         }
         return state
       },

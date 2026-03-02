@@ -24,8 +24,8 @@ test.describe('US-11: CPF Section Toggles', () => {
     }
     await expect(cpfSwitch).toHaveAttribute('data-state', 'checked')
 
-    // 5. Click "Continue to planning"
-    await page.getByRole('button', { name: /continue to planning/i }).click()
+    // 5. Click "Build my full plan"
+    await page.getByRole('button', { name: /build my full plan/i }).click()
 
     // 6. Should be on /inputs
     await expect(page).toHaveURL(/\/inputs/)
@@ -62,8 +62,8 @@ test.describe('US-11: CPF Section Toggles', () => {
     }
     await expect(cpfSwitch).toHaveAttribute('data-state', 'unchecked')
 
-    // 4. Click "Continue to planning"
-    await page.getByRole('button', { name: /continue to planning/i }).click()
+    // 4. Click "Build my full plan"
+    await page.getByRole('button', { name: /build my full plan/i }).click()
 
     // 5. Should be on /inputs
     await expect(page).toHaveURL(/\/inputs/)

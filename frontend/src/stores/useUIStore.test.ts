@@ -247,4 +247,32 @@ describe('useUIStore', () => {
       expect(nudges).toEqual(['migration-fireplanner-income-v3', 'custom-nudge'])
     })
   })
+
+  describe('quickModeActive', () => {
+    it('defaults to false', () => {
+      expect(useUIStore.getState().quickModeActive).toBe(false)
+    })
+
+    it('can be toggled via setField', () => {
+      useUIStore.getState().setField('quickModeActive', true)
+      expect(useUIStore.getState().quickModeActive).toBe(true)
+      useUIStore.getState().setField('quickModeActive', false)
+      expect(useUIStore.getState().quickModeActive).toBe(false)
+    })
+
+    it('v9→v10 migration sets quickModeActive to false', () => {
+      const { migrate } = useUIStore.persist.getOptions()
+      const state: Record<string, unknown> = {
+        sectionOrder: 'goal-first',
+        cpfEnabled: true,
+        propertyEnabled: false,
+        healthcareEnabled: false,
+        mode: 'simple',
+        showNewPurchase: false,
+        collapsedSections: [],
+      }
+      const migrated = migrate!(state, 9) as Record<string, unknown>
+      expect(migrated.quickModeActive).toBe(false)
+    })
+  })
 })

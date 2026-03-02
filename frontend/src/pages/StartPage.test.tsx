@@ -48,7 +48,7 @@ describe('StartPage', () => {
     await user.click(screen.getByText('I know when I want to retire'))
     // Goal-first form has "Desired Retirement Age" label
     expect(screen.getByText('Desired Retirement Age')).toBeInTheDocument()
-    expect(screen.getByText('Continue to planning')).toBeInTheDocument()
+    expect(screen.getByText('Build my full plan')).toBeInTheDocument()
   })
 
   it('shows story-first form when clicking second pathway', async () => {
@@ -57,7 +57,7 @@ describe('StartPage', () => {
     await user.click(screen.getByText("Show me what's possible"))
     // Story-first form has "Annual Income" label
     expect(screen.getByText('Annual Income')).toBeInTheDocument()
-    expect(screen.getByText('Continue to planning')).toBeInTheDocument()
+    expect(screen.getByText('Build my full plan')).toBeInTheDocument()
   })
 
   it('shows already-fire form with CPF phase cards when clicking third pathway', async () => {
@@ -126,7 +126,7 @@ describe('StartPage', () => {
     await user.click(screen.getByText('I know when I want to retire'))
 
     // Find the Continue button
-    const continueButton = screen.getByRole('button', { name: /Continue to planning/i })
+    const continueButton = screen.getByRole('button', { name: /Build my full plan/i })
 
     // Default ages: current=30, retirement=55 — should be enabled
     expect(continueButton).not.toBeDisabled()

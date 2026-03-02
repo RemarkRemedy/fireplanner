@@ -31,7 +31,7 @@ async function quickOnboarding(page: import('@playwright/test').Page) {
   // Wait for results to appear before continuing
   await expect(page.getByText('FIRE Number:').first()).toBeVisible({ timeout: 5000 })
 
-  await page.getByRole('button', { name: /continue to planning/i }).click()
+  await page.getByRole('button', { name: /build my full plan/i }).click()
   await expectRoute(page, '/inputs')
   await page.waitForLoadState('networkidle')
 }
