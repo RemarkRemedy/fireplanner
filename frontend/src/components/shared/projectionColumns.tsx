@@ -40,6 +40,7 @@ export const GROUP_COLUMNS: Record<ColumnGroup, string[]> = {
     'cpfOA', 'cpfSA', 'cpfMA', 'cpfRA', 'cpfInterest',
     'cpfOaHousingDeduction', 'cpfOaShortfall', 'cpfLifePayout',
     'cpfBequest', 'cpfMilestone',
+    'cpfAutoOaWithdrawal', 'cpfAutoSaWithdrawal', 'cpfCountedAsBonds',
   ],
   portfolio: [
     'portfolioReturnPct', 'withdrawalAmount', 'maxPermittedWithdrawal',
@@ -354,6 +355,21 @@ export function buildProjectionColumns(
         return labels[v as string] ?? '-'
       },
     }) as ColumnDef<ProjectionRow, number | string>,
+    columnHelper.accessor('cpfAutoOaWithdrawal', {
+      id: 'cpfAutoOaWithdrawal',
+      header: 'Auto OA W/D',
+      cell: (info) => optionalCurrencyCell(info.getValue()),
+    }),
+    columnHelper.accessor('cpfAutoSaWithdrawal', {
+      id: 'cpfAutoSaWithdrawal',
+      header: 'Auto SA W/D',
+      cell: (info) => optionalCurrencyCell(info.getValue()),
+    }),
+    columnHelper.accessor('cpfCountedAsBonds', {
+      id: 'cpfCountedAsBonds',
+      header: 'CPF as Bonds',
+      cell: (info) => optionalCurrencyCell(info.getValue()),
+    }),
 
     // ── Expanded: Portfolio ───────────────────────────────────────────
     columnHelper.accessor('portfolioReturnPct', {
