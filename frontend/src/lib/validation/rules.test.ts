@@ -30,6 +30,7 @@ describe('validateProfileConsistency edge cases', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors.cpfLifeStartAge).toBeTruthy()
@@ -49,6 +50,7 @@ describe('validateProfileConsistency edge cases', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors['parentSupport_ps1_startAge']).toBeTruthy()
@@ -68,6 +70,7 @@ describe('validateProfileConsistency edge cases', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors['parentSupport_ps1_endAge']).toBeTruthy()
@@ -89,6 +92,7 @@ describe('validateProfileConsistency edge cases', () => {
       },
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors['healthcareConfig.oopBaseAmount']).toBeTruthy()
@@ -110,6 +114,7 @@ describe('validateProfileConsistency edge cases', () => {
       },
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors['healthcareConfig.mediSaveTopUpAnnual']).toBeTruthy()
@@ -131,6 +136,7 @@ describe('validateProfileConsistency edge cases', () => {
       },
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors['healthcareConfig.oopBaseAmount']).toBeUndefined()
@@ -297,6 +303,7 @@ describe('retirement withdrawal cross-store validation', () => {
         { id: 'rw1', label: 'Too early', amount: 50000, age: 60, durationYears: 1, inflationAdjusted: true },
       ],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors['retirementWithdrawal_rw1_age']).toBeTruthy()
@@ -316,6 +323,7 @@ describe('retirement withdrawal cross-store validation', () => {
         { id: 'rw1', label: 'Eldercare', amount: 2000, age: 85, durationYears: 10, inflationAdjusted: true },
       ],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors['retirementWithdrawal_rw1_durationYears']).toBeTruthy()
@@ -336,6 +344,7 @@ describe('retirement withdrawal cross-store validation', () => {
         { id: 'rw2', label: 'Eldercare', amount: 2000, age: 75, durationYears: 10, inflationAdjusted: false },
       ],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors['retirementWithdrawal_rw1_age']).toBeUndefined()
@@ -359,6 +368,7 @@ describe('retirement withdrawal cross-store validation', () => {
         { id: 'rw1', label: 'Boundary', amount: 10000, age: 80, durationYears: 10, inflationAdjusted: true },
       ],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     // 80 + 10 = 90 = lifeExpectancy → the condition is > lifeExpectancy, so exactly equal should pass
@@ -381,6 +391,7 @@ describe('financial goals validation', () => {
       financialGoals: [
         { id: 'g1', label: 'Bad', amount: 0, targetAge: 40, durationYears: 1, priority: 'important', inflationAdjusted: true, category: 'other' },
       ],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors['goal_g1_amount']).toBeTruthy()
@@ -400,6 +411,7 @@ describe('financial goals validation', () => {
       financialGoals: [
         { id: 'g1', label: 'Past', amount: 50000, targetAge: 30, durationYears: 1, priority: 'important', inflationAdjusted: true, category: 'wedding' },
       ],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors['goal_g1_age']).toBeTruthy()
@@ -419,6 +431,7 @@ describe('financial goals validation', () => {
       financialGoals: [
         { id: 'g1', label: 'Long', amount: 100000, targetAge: 85, durationYears: 10, priority: 'essential', inflationAdjusted: false, category: 'education' },
       ],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors['goal_g1_duration']).toBeTruthy()
@@ -439,6 +452,7 @@ describe('financial goals validation', () => {
         { id: 'g1', label: 'Wedding', amount: 50000, targetAge: 35, durationYears: 1, priority: 'important', inflationAdjusted: true, category: 'wedding' },
         { id: 'g2', label: 'Education', amount: 200000, targetAge: 50, durationYears: 4, priority: 'essential', inflationAdjusted: true, category: 'education' },
       ],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors['goal_g1_amount']).toBeUndefined()
@@ -463,6 +477,7 @@ describe('financial goals validation', () => {
       financialGoals: [
         { id: 'g1', label: 'Too Late', amount: 50000, targetAge: 95, durationYears: 1, priority: 'nice-to-have', inflationAdjusted: false, category: 'travel' },
       ],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors['goal_g1_age']).toBeTruthy()
@@ -482,6 +497,7 @@ describe('financial goals validation', () => {
       financialGoals: [
         { id: 'g1', label: 'Zero Dur', amount: 50000, targetAge: 40, durationYears: 0, priority: 'important', inflationAdjusted: true, category: 'other' },
       ],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors['goal_g1_duration']).toBeTruthy()
@@ -501,6 +517,7 @@ describe('locked assets cross-store rules', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
       lockedAssets: [{ id: '1', name: 'Test', amount: 10000, unlockAge: 30, growthRate: 0 }],
     })
@@ -519,6 +536,7 @@ describe('locked assets cross-store rules', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
       lockedAssets: [{ id: '1', name: 'Test', amount: 10000, unlockAge: 55, growthRate: 0 }],
     })
@@ -537,6 +555,7 @@ describe('locked assets cross-store rules', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
       lockedAssets: [{ id: '1', name: 'Test', amount: 10000, unlockAge: 95, growthRate: 0 }],
     })
@@ -562,6 +581,7 @@ describe('locked assets cross-store rules', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
       lockedAssets,
     })
@@ -582,6 +602,7 @@ describe('expense adjustment validation', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
       expenseAdjustments: [{ id: 'ea1', label: 'Kids', amount: 12000, startAge: 40, endAge: 40 }],
     })
@@ -600,6 +621,7 @@ describe('expense adjustment validation', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
       expenseAdjustments: [{ id: 'ea1', label: 'Care', amount: 5000, startAge: 60, endAge: 95 }],
     })
@@ -618,6 +640,7 @@ describe('expense adjustment validation', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
       expenseAdjustments: [{ id: 'ea1', label: 'Kids', amount: 12000, startAge: 35, endAge: 55 }],
     })
@@ -639,6 +662,7 @@ describe('expense adjustment validation', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
       expenseAdjustments,
     })
@@ -657,6 +681,7 @@ describe('expense adjustment validation', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
       expenseAdjustments: [{ id: 'ea1', label: 'Ongoing', amount: 5000, startAge: 40, endAge: null }],
     })
@@ -677,6 +702,7 @@ describe('CPF OA withdrawal validation', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [
         { id: 'ow1', label: 'Too early', amount: 50000, age: 50 },
       ],
@@ -696,6 +722,7 @@ describe('CPF OA withdrawal validation', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [
         { id: 'ow1', label: 'Too late', amount: 50000, age: 95 },
       ],
@@ -715,6 +742,7 @@ describe('CPF OA withdrawal validation', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [
         { id: 'ow1', label: 'Zero', amount: 0, age: 55 },
       ],
@@ -734,6 +762,7 @@ describe('CPF OA withdrawal validation', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [
         { id: 'ow1', label: 'OA at 55', amount: 50000, age: 55 },
         { id: 'ow2', label: 'OA at 60', amount: 30000, age: 60 },

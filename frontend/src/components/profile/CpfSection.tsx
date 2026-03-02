@@ -295,7 +295,7 @@ export function CpfSection() {
 
         {/* CPF balance estimator */}
         {(
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <button
               type="button"
               className="text-xs text-muted-foreground underline hover:text-foreground"
@@ -311,6 +311,12 @@ export function CpfSection() {
                 ? 'Estimate from age & salary'
                 : 'Re-estimate from age & salary'}
             </button>
+            <InfoTooltip
+              text={`Simulates a ${currentAge - 22}-year career from age 22 to ${currentAge}, back-projecting your current $${annualIncome.toLocaleString()} salary at 3% annual growth. For each year: applies age-bracket CPF contribution rates (with OW ceiling), credits OA interest (2.5%), SA interest (4%), MA interest (4%), extra interest (1% on first $60K), and redirects MA excess above BHS to SA. Does not account for housing withdrawals, career gaps, or CPFIS investments. Check your CPF statement for exact balances.`}
+              formula="Starting salary = Current salary / (1.03)^years worked. Each year: contributions + interest + extra interest, then MA capped at BHS with overflow to SA."
+              source="CPF Board"
+              sourceUrl="https://www.cpf.gov.sg/member/cpf-overview"
+            />
             {(cpfOA !== 0 || cpfSA !== 0 || cpfMA !== 0) && (
               <button
                 type="button"

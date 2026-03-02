@@ -303,6 +303,7 @@ describe('validateProfileConsistency', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(Object.keys(errors)).toHaveLength(0)
@@ -320,6 +321,7 @@ describe('validateProfileConsistency', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors.retirementAge).toBeTruthy()
@@ -337,6 +339,7 @@ describe('validateProfileConsistency', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors.lifeExpectancy).toBeTruthy()
@@ -354,6 +357,7 @@ describe('validateProfileConsistency', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(Object.keys(errors).length).toBeGreaterThanOrEqual(2)
@@ -371,6 +375,7 @@ describe('validateProfileConsistency', () => {
       healthcareConfig: defaultHealthcareConfig,
       retirementWithdrawals: [],
       financialGoals: [],
+      cpfMA: 0,
       cpfOaWithdrawals: [],
     })
     expect(errors.retirementAge).toBeUndefined()
