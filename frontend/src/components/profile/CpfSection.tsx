@@ -33,6 +33,10 @@ export function CpfSection() {
     cpfTopUpOA, cpfTopUpSA, cpfTopUpMA,
     validationErrors, setField,
   } = useProfileStore()
+  const cpfAutoFallback = useProfileStore((s) => s.cpfAutoFallback)
+  const cpfAutoFallbackIncludeSA = useProfileStore((s) => s.cpfAutoFallbackIncludeSA)
+  const cpfVirtualRebalancing = useProfileStore((s) => s.cpfVirtualRebalancing)
+  const cpfVirtualRebalancingMode = useProfileStore((s) => s.cpfVirtualRebalancingMode)
   const incomeStreams = useIncomeStore((s) => s.incomeStreams)
   const mode = useEffectiveMode('section-cpf')
 
@@ -678,6 +682,79 @@ export function CpfSection() {
                   })()}
                 </div>
               )}
+            </div>
+          </>
+        )}
+
+        {/* CPF Auto-Withdrawal Rules — Advanced only */}
+        {mode === 'advanced' && (
+          <>
+            <Separator />
+            <div>
+              <h4 className="text-sm font-medium flex items-center mb-3">
+                CPF Auto-Withdrawal Rules
+                <InfoTooltip text="Configure automatic CPF withdrawal behavior. When enabled, the projection will automatically draw from your CPF when your liquid portfolio runs out, rather than showing premature depletion." />
+              </h4>
+
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={cpfAutoFallback}
+                    onChange={(e) => setField('cpfAutoFallback', e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  Auto-withdraw from CPF when portfolio runs out
+                  <InfoTooltip text="When your liquid portfolio hits $0, automatically withdraw from CPF OA (and optionally SA) to cover expenses. Only applies from age 55 onwards. FRS retention is enforced." />
+                </label>
+
+                {cpfAutoFallback && (
+                  <label className="flex items-center gap-2 text-sm cursor-pointer ml-6">
+                    <input
+                      type="checkbox"
+                      checked={cpfAutoFallbackIncludeSA}
+                      onChange={(e) => setField('cpfAutoFallbackIncludeSA', e.target.checked)}
+                      className="rounded border-gray-300"
+                    />
+                    Include SA excess above FRS
+                    <InfoTooltip text="After OA is depleted, also withdraw from SA balance that exceeds the Full Retirement Sum. SA earns 4% vs OA's 2.5%, so OA is always used first." />
+                  </label>
+                )}
+
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={cpfVirtualRebalancing}
+                    onChange={(e) => setField('cpfVirtualRebalancing', e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  Count uninvested CPF as bond allocation
+                  <InfoTooltip text="Treat uninvested CPF (earning guaranteed 2.5-4%) as satisfying part of your bond/cash target. This lets the liquid portfolio tilt more toward equities. CPFIS-invested CPF counts as equity, not bonds." />
+                </label>
+
+                {cpfVirtualRebalancing && (
+                  <div className="ml-6 space-y-1">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="radio"
+                        name="cpfRebalMode"
+                        checked={cpfVirtualRebalancingMode === 'from55'}
+                        onChange={() => setField('cpfVirtualRebalancingMode', 'from55')}
+                      />
+                      From age 55 only
+                    </label>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="radio"
+                        name="cpfRebalMode"
+                        checked={cpfVirtualRebalancingMode === 'always'}
+                        onChange={() => setField('cpfVirtualRebalancingMode', 'always')}
+                      />
+                      Always (illiquid before 55)
+                    </label>
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )}
