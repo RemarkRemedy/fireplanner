@@ -293,68 +293,70 @@ export function CpfSection() {
 
         {mode === 'advanced' && <Separator />}
 
-        {/* CPF balance estimator — pre-55 users only */}
-        {currentAge < 55 && (
-          <div>
-            {cpfOA === 0 && cpfSA === 0 && cpfMA === 0 ? (
-              <div className="space-y-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const est = estimateCpfBalancesFromAge(currentAge, annualIncome)
-                    setField('cpfOA', est.oa)
-                    setField('cpfSA', est.sa)
-                    setField('cpfMA', est.ma)
-                    trackEvent('cpf_estimated_from_age')
-                  }}
-                >
-                  Estimate from your age &amp; salary
-                </Button>
-                <p className="text-xs text-muted-foreground">
-                  Rough estimate assuming career from age 22 with 3% annual salary growth. Check your CPF statement for exact balances.
-                </p>
-              </div>
-            ) : (
+        {/* CPF balance estimator */}
+        {(
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <button
+              type="button"
+              className="text-xs text-muted-foreground underline hover:text-foreground"
+              onClick={() => {
+                const est = estimateCpfBalancesFromAge(currentAge, annualIncome)
+                setField('cpfOA', est.oa)
+                setField('cpfSA', est.sa)
+                setField('cpfMA', est.ma)
+                trackEvent('cpf_estimated_from_age')
+              }}
+            >
+              {cpfOA === 0 && cpfSA === 0 && cpfMA === 0
+                ? 'Estimate from age & salary'
+                : 'Re-estimate from age & salary'}
+            </button>
+            {(cpfOA !== 0 || cpfSA !== 0 || cpfMA !== 0) && (
               <button
                 type="button"
                 className="text-xs text-muted-foreground underline hover:text-foreground"
                 onClick={() => {
-                  const est = estimateCpfBalancesFromAge(currentAge, annualIncome)
-                  setField('cpfOA', est.oa)
-                  setField('cpfSA', est.sa)
-                  setField('cpfMA', est.ma)
-                  trackEvent('cpf_estimated_from_age')
+                  setField('cpfOA', 0)
+                  setField('cpfSA', 0)
+                  setField('cpfMA', 0)
                 }}
               >
-                Re-estimate from age &amp; salary
+                Clear
               </button>
             )}
           </div>
         )}
 
-        {/* CPF balance summary */}
+        {/* CPF balance inputs */}
         <div>
           <h4 className="text-sm font-medium mb-2">Current CPF Balances</h4>
           <div className={cn('grid gap-2 text-sm', currentAge >= 55 ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4')}>
-            <div className="p-2 bg-muted/50 rounded">
-              <div className="text-xs text-muted-foreground">OA</div>
-              <div className="font-semibold text-green-600">{formatCurrency(cpfOA)}</div>
-            </div>
-            <div className="p-2 bg-muted/50 rounded">
-              <div className="text-xs text-muted-foreground">SA</div>
-              <div className="font-semibold text-green-600">{formatCurrency(cpfSA)}</div>
-            </div>
+            <CurrencyInput
+              label="OA"
+              value={cpfOA}
+              onChange={(v) => setField('cpfOA', v)}
+              error={validationErrors.cpfOA}
+            />
+            <CurrencyInput
+              label="SA"
+              value={cpfSA}
+              onChange={(v) => setField('cpfSA', v)}
+              error={validationErrors.cpfSA}
+            />
             {currentAge >= 55 && (
-              <div className="p-2 bg-muted/50 rounded">
-                <div className="text-xs text-muted-foreground">RA</div>
-                <div className="font-semibold text-green-600">{formatCurrency(cpfRA)}</div>
-              </div>
+              <CurrencyInput
+                label="RA"
+                value={cpfRA}
+                onChange={(v) => setField('cpfRA', v)}
+                error={validationErrors.cpfRA}
+              />
             )}
-            <div className="p-2 bg-muted/50 rounded">
-              <div className="text-xs text-muted-foreground">MA</div>
-              <div className="font-semibold text-green-600">{formatCurrency(cpfMA)}</div>
-            </div>
+            <CurrencyInput
+              label="MA"
+              value={cpfMA}
+              onChange={(v) => setField('cpfMA', v)}
+              error={validationErrors.cpfMA}
+            />
             <div className="p-2 bg-muted/50 rounded">
               <div className="text-xs text-muted-foreground">Total</div>
               <div className="font-semibold text-green-600">{formatCurrency(totalCpf)}</div>
