@@ -71,7 +71,7 @@ export function NWChartView({ rows, retirementAge }: NWChartViewProps) {
             label={{ value: 'Retire', position: 'top', fontSize: 11 }}
           />
           <Area
-            type="monotone"
+            type="linear"
             dataKey="liquidNW"
             stackId="1"
             fill="hsl(210, 80%, 60%)"
@@ -80,7 +80,7 @@ export function NWChartView({ rows, retirementAge }: NWChartViewProps) {
             name="liquidNW"
           />
           <Area
-            type="monotone"
+            type="linear"
             dataKey="cpfTotal"
             stackId="1"
             fill="hsl(150, 60%, 50%)"
@@ -89,7 +89,7 @@ export function NWChartView({ rows, retirementAge }: NWChartViewProps) {
             name="cpfTotal"
           />
           <Area
-            type="monotone"
+            type="linear"
             dataKey="cpfBequest"
             stackId="1"
             fill="hsl(150, 40%, 72%)"
@@ -98,7 +98,7 @@ export function NWChartView({ rows, retirementAge }: NWChartViewProps) {
             name="cpfBequest"
           />
           <Area
-            type="monotone"
+            type="linear"
             dataKey="propertyEquity"
             stackId="1"
             fill="hsl(35, 80%, 55%)"
