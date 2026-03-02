@@ -45,6 +45,14 @@ import {
 import { computeCpfAutoFallback } from './cpfAutoWithdrawal'
 import { computeVirtualRebalancing } from './cpfVirtualRebalancing'
 
+// TODO: [Deferred] Approach C — Unified Two-Bucket Engine
+// Replace the current single-portfolio simulation model with explicit liquid + CPF bucket
+// management in MC, backtest, and sequence risk engines. This would allow:
+// - Stochastic CPF withdrawal timing in Monte Carlo
+// - Stress testing of CPF drawdown strategies
+// - Optimal withdrawal sequencing under different market conditions
+// See: docs/plans/2026-03-02-cpf-auto-withdrawal-design.md
+
 export interface ProjectionParams {
   incomeProjection: IncomeProjectionRow[]
   currentAge: number
