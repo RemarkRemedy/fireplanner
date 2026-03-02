@@ -485,6 +485,13 @@ export function estimateCpfBalancesFromAge(
     oa += oaInterest
     sa += saInterest + extraInterest // Extra interest credited to SA for under-55
     ma += maInterest
+
+    // Cap MA at BHS — excess overflows to SA (CPF Board rule)
+    const bhs = getBhsAtAge(age, currentAge)
+    if (ma > bhs) {
+      sa += ma - bhs
+      ma = bhs
+    }
   }
 
   return {
