@@ -220,6 +220,13 @@ export interface ProfileState {
   cpfisOaReturn: number   // expected return on invested OA portion (above retention)
   cpfisSaReturn: number   // expected return on invested SA portion (above retention)
 
+  // CPF Auto-Withdrawal (fallback when liquid NW depleted, age >= 55)
+  cpfAutoFallback: boolean
+  cpfAutoFallbackIncludeSA: boolean
+  // Virtual Rebalancing (count uninvested CPF as bond/cash allocation)
+  cpfVirtualRebalancing: boolean
+  cpfVirtualRebalancingMode: 'from55' | 'always'
+
   // Retirement One-Time Withdrawals
   retirementWithdrawals: RetirementWithdrawal[]
 
@@ -921,6 +928,9 @@ export interface ProjectionRow {
   cpfOaHousingDeduction: number
   cpfOaShortfall: number
   cpfOaWithdrawal: number
+  cpfAutoOaWithdrawal: number      // auto-fallback amount from OA this year
+  cpfAutoSaWithdrawal: number      // auto-fallback amount from SA this year
+  cpfCountedAsBonds: number        // dollar amount of uninvested CPF counted toward bond allocation
   cpfisOA: number
   cpfisSA: number
   cpfisReturn: number

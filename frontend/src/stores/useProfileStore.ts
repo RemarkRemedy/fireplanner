@@ -43,6 +43,8 @@ const PROFILE_DATA_KEYS = [
   'cpfLifeStartAge', 'cpfLifePlan', 'cpfRetirementSum',
   // cpfHousingMode, cpfHousingMonthly, cpfMortgageYearsLeft — DEPRECATED: now derived from property store
   'cpfOaWithdrawals', 'cpfisEnabled', 'cpfisOaReturn', 'cpfisSaReturn',
+  'cpfAutoFallback', 'cpfAutoFallbackIncludeSA',
+  'cpfVirtualRebalancing', 'cpfVirtualRebalancingMode',
   'parentSupportEnabled', 'parentSupport',
   'healthcareConfig',
   'retirementWithdrawals',
@@ -110,6 +112,10 @@ const DEFAULT_PROFILE: Omit<ProfileState, 'validationErrors'> = {
   cpfisEnabled: false,
   cpfisOaReturn: 0.04,
   cpfisSaReturn: 0.05,
+  cpfAutoFallback: true,
+  cpfAutoFallbackIncludeSA: true,
+  cpfVirtualRebalancing: true,
+  cpfVirtualRebalancingMode: 'from55' as const,
   parentSupportEnabled: false,
   parentSupport: [],
   healthcareConfig: DEFAULT_HEALTHCARE_CONFIG,
@@ -444,7 +450,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
     }),
     {
       name: 'fireplanner-profile',
-      version: 20,
+      version: 21,
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>
         if (version < 2) {
@@ -545,6 +551,12 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
         }
         if (version < 20) {
           if (state.expenseAdjustments === undefined) state.expenseAdjustments = []
+        }
+        if (version < 21) {
+          state.cpfAutoFallback = state.cpfAutoFallback ?? true
+          state.cpfAutoFallbackIncludeSA = state.cpfAutoFallbackIncludeSA ?? true
+          state.cpfVirtualRebalancing = state.cpfVirtualRebalancing ?? true
+          state.cpfVirtualRebalancingMode = state.cpfVirtualRebalancingMode ?? 'from55'
         }
         return state
       },
