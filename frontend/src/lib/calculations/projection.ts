@@ -42,6 +42,7 @@ import {
   capeBased,
   floorCeiling,
 } from './withdrawal'
+import { computeCpfAutoFallback } from './cpfAutoWithdrawal'
 
 export interface ProjectionParams {
   incomeProjection: IncomeProjectionRow[]
@@ -103,6 +104,9 @@ export interface ProjectionParams {
   yearlyReturnsOffset?: number  // Age offset: yearlyReturns[0] corresponds to (currentAge + offset).
                                  // Default 0 (MC and projection start at same age).
                                  // Set to (retirementAge - currentAge) in fireTarget mode.
+  // CPF Auto-Withdrawal
+  cpfAutoFallback?: boolean
+  cpfAutoFallbackIncludeSA?: boolean
 }
 
 export interface ProjectionResult {
@@ -397,6 +401,8 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     let goalShortfallAmount = 0
     let retirementWithdrawalTotal = 0
     let retirementWithdrawalShortfallAmount = 0
+    let cpfAutoOaWithdrawalAmount = 0
+    let cpfAutoSaWithdrawalAmount = 0
 
     // Parent support at this age (uses its own growth rate, not inflation)
     const parentSupportExpense = parentSupportEnabled
@@ -601,9 +607,33 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       portfolioReturnDollar = afterDraw * returnRate
       const rawPostRetLiquidNW = afterDraw * (1 + returnRate)
 
+      // CPF Auto-Fallback: withdraw from CPF OA/SA when liquid NW would go negative
+      let adjustedLiquidNW = rawPostRetLiquidNW
+
+      if (params.cpfAutoFallback && rawPostRetLiquidNW < 0 && age >= 55) {
+        const fallback = computeCpfAutoFallback({
+          shortfall: Math.abs(rawPostRetLiquidNW),
+          cpfOA: incomeRow.cpfOA,
+          cpfSA: incomeRow.cpfSA,
+          cpfRA: incomeRow.cpfRA,
+          cpfisOA: incomeRow.cpfisOA,
+          cpfisSA: incomeRow.cpfisSA,
+          age,
+          currentYear: new Date().getFullYear() + i,
+          includeSA: params.cpfAutoFallbackIncludeSA ?? false,
+        })
+        cpfAutoOaWithdrawalAmount = fallback.oaWithdrawal
+        cpfAutoSaWithdrawalAmount = fallback.saWithdrawal
+        adjustedLiquidNW = rawPostRetLiquidNW + fallback.totalWithdrawal
+
+        // Deduct from CPF balances in the income row (mutates for downstream tracking)
+        incomeRow.cpfOA -= fallback.oaWithdrawal
+        incomeRow.cpfSA -= fallback.saWithdrawal
+      }
+
       // Proportionally attribute deficit to goals and retirement withdrawals
-      if (rawPostRetLiquidNW < 0) {
-        const deficit = -rawPostRetLiquidNW
+      if (adjustedLiquidNW < 0) {
+        const deficit = -adjustedLiquidNW
         const totalOneTime = goalDeduction + retirementWithdrawalTotal
         if (totalOneTime > 0) {
           const oneTimeShare = Math.min(totalOneTime, deficit)
@@ -615,7 +645,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
             : 0
         }
       }
-      liquidNW = Math.max(0, rawPostRetLiquidNW)
+      liquidNW = Math.max(0, adjustedLiquidNW)
 
       // Feed uncapped strategy amount back for strategy continuity
       prevWithdrawal = strategyWithdrawal
@@ -737,8 +767,8 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       cpfBequest,
       cpfMilestone,
       cpfOaWithdrawal: incomeRow.cpfOaWithdrawal,
-      cpfAutoOaWithdrawal: 0,
-      cpfAutoSaWithdrawal: 0,
+      cpfAutoOaWithdrawal: cpfAutoOaWithdrawalAmount,
+      cpfAutoSaWithdrawal: cpfAutoSaWithdrawalAmount,
       cpfCountedAsBonds: 0,
       cpfisOA: incomeRow.cpfisOA,
       cpfisSA: incomeRow.cpfisSA,

@@ -2628,4 +2628,102 @@ describe('generateProjection', () => {
       expect(mcRetired.liquidNW).not.toBe(baseRetired.liquidNW)
     })
   })
+
+  describe('CPF auto-fallback withdrawal', () => {
+    it('withdraws from CPF OA when liquid NW hits zero', () => {
+      const incomeRows = generateMockIncomeProjection({
+        currentAge: 55,
+        retirementAge: 54,
+        lifeExpectancy: 65,
+        annualSavings: 0,
+        salary: 0,
+        cpfOA: 300000,
+      })
+      // One-time retirement withdrawals push netPortfolioDraw above startLiquidNW,
+      // making rawPostRetLiquidNW go negative and triggering CPF auto-fallback.
+      const result = generateProjection(makeParams({
+        currentAge: 55,
+        retirementAge: 54,
+        lifeExpectancy: 65,
+        initialLiquidNW: 100000,
+        annualExpenses: 50000,
+        expectedReturn: 0,
+        incomeProjection: incomeRows,
+        cpfAutoFallback: true,
+        cpfAutoFallbackIncludeSA: false,
+        retirementWithdrawals: [
+          { id: 'test-rw', label: 'Test', age: 56, amount: 80000, durationYears: 1, inflationAdjusted: false },
+        ],
+      }))
+
+      const depletedRows = result.rows.filter(r => r.isRetired && r.cpfAutoOaWithdrawal > 0)
+      expect(depletedRows.length).toBeGreaterThan(0)
+
+      // At age 56, the $80K one-time withdrawal + $50K expenses exceed portfolio,
+      // so CPF OA should supply the shortfall
+      const row56 = result.rows.find(r => r.age === 56)!
+      expect(row56.cpfAutoOaWithdrawal).toBeGreaterThan(0)
+      expect(row56.liquidNW).toBeGreaterThanOrEqual(0)
+      // CPF OA should be reduced by the withdrawal amount
+      expect(row56.cpfOA).toBeLessThan(300000)
+    })
+
+    it('does not withdraw when cpfAutoFallback is disabled', () => {
+      const incomeRows = generateMockIncomeProjection({
+        currentAge: 55,
+        retirementAge: 54,
+        lifeExpectancy: 65,
+        annualSavings: 0,
+        salary: 0,
+        cpfOA: 300000,
+      })
+      // Same scenario that triggers fallback when enabled, but with flag off
+      const result = generateProjection(makeParams({
+        currentAge: 55,
+        retirementAge: 54,
+        lifeExpectancy: 65,
+        initialLiquidNW: 100000,
+        annualExpenses: 50000,
+        expectedReturn: 0,
+        incomeProjection: incomeRows,
+        cpfAutoFallback: false,
+        cpfAutoFallbackIncludeSA: false,
+        retirementWithdrawals: [
+          { id: 'test-rw', label: 'Test', age: 56, amount: 80000, durationYears: 1, inflationAdjusted: false },
+        ],
+      }))
+
+      const autoWithdrawals = result.rows.filter(r => r.cpfAutoOaWithdrawal > 0)
+      expect(autoWithdrawals.length).toBe(0)
+    })
+
+    it('does not withdraw before age 55', () => {
+      const incomeRows = generateMockIncomeProjection({
+        currentAge: 50,
+        retirementAge: 49,
+        lifeExpectancy: 60,
+        annualSavings: 0,
+        salary: 0,
+        cpfOA: 300000,
+      })
+      // One-time withdrawal at age 52 (before 55) should NOT trigger CPF auto-fallback
+      const result = generateProjection(makeParams({
+        currentAge: 50,
+        retirementAge: 49,
+        lifeExpectancy: 60,
+        initialLiquidNW: 100000,
+        annualExpenses: 50000,
+        expectedReturn: 0,
+        incomeProjection: incomeRows,
+        cpfAutoFallback: true,
+        cpfAutoFallbackIncludeSA: false,
+        retirementWithdrawals: [
+          { id: 'test-rw', label: 'Test', age: 52, amount: 80000, durationYears: 1, inflationAdjusted: false },
+        ],
+      }))
+
+      const before55 = result.rows.filter(r => r.age < 55 && r.cpfAutoOaWithdrawal > 0)
+      expect(before55.length).toBe(0)
+    })
+  })
 })
