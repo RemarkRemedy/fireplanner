@@ -34,7 +34,6 @@ export function CpfSection() {
     validationErrors, setField,
   } = useProfileStore()
   const cpfAutoFallback = useProfileStore((s) => s.cpfAutoFallback)
-  const cpfAutoFallbackIncludeSA = useProfileStore((s) => s.cpfAutoFallbackIncludeSA)
   const cpfVirtualRebalancing = useProfileStore((s) => s.cpfVirtualRebalancing)
   const cpfVirtualRebalancingMode = useProfileStore((s) => s.cpfVirtualRebalancingMode)
   const incomeStreams = useIncomeStore((s) => s.incomeStreams)
@@ -715,19 +714,6 @@ export function CpfSection() {
                   Auto-withdraw from CPF when portfolio runs out
                   <InfoTooltip text="When your liquid portfolio hits $0, automatically withdraw from CPF OA (and optionally SA) to cover living expenses. Only applies from age 55 onwards, and FRS is always preserved for CPF LIFE. On by default because most retirees would tap CPF rather than go unfunded. Uncheck to see a worst-case scenario where CPF is left entirely untouched (e.g. for bequest planning)." />
                 </label>
-
-                {cpfAutoFallback && (
-                  <label className="flex items-center gap-2 text-sm cursor-pointer ml-6">
-                    <input
-                      type="checkbox"
-                      checked={cpfAutoFallbackIncludeSA}
-                      onChange={(e) => setField('cpfAutoFallbackIncludeSA', e.target.checked)}
-                      className="rounded border-gray-300"
-                    />
-                    Include SA excess above FRS
-                    <InfoTooltip text="After OA is depleted, also withdraw from SA balance that exceeds the Full Retirement Sum (FRS). OA is always used first since SA earns 4% vs OA's 2.5%. On by default to maximise fallback capacity. Uncheck if you want to preserve your full SA for higher CPF LIFE payouts, or if you plan to pledge property to reduce your Required Amount." />
-                  </label>
-                )}
 
                 <label className="flex items-center gap-2 text-sm cursor-pointer">
                   <input

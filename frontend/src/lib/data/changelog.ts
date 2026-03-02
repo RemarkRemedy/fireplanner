@@ -12,6 +12,32 @@ export interface ChangelogEntry {
 /** Newest first. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-03-03',
+    category: 'fix',
+    title: 'CPF estimator now caps MA at Basic Healthcare Sum',
+    description:
+      'The CPF balance estimator now enforces the BHS cap during the year-by-year simulation. When MA exceeds the BHS for the simulated age, the excess automatically overflows to SA — matching actual CPF Board rules. Previously the estimator accumulated MA without limit, producing unrealistically high MA balances.',
+    affectedSections: ['section-cpf'],
+    insight:
+      'The Basic Healthcare Sum (BHS) is $73,100 in 2025 and grows 4.5% per year, freezing at the value when you turn 65. In practice, once your MA hits BHS each year, subsequent MA contributions are redirected to your SA. This overflow is a significant source of SA growth for higher-income earners.',
+  },
+  {
+    date: '2026-03-03',
+    category: 'feature',
+    title: 'CPF balances are now editable with BHS validation',
+    description:
+      'CPF OA, SA, RA, and MA balances can now be directly edited after estimation. A "Clear" link resets all balances to $0. The MA input validates against the current Basic Healthcare Sum — values exceeding the BHS are flagged with an inline error.',
+    affectedSections: ['section-cpf'],
+  },
+  {
+    date: '2026-03-03',
+    category: 'fix',
+    title: 'Removed "Include SA excess above FRS" toggle',
+    description:
+      'The SA account is closed at age 55 when balances transfer to the Retirement Account (RA). The toggle to include SA excess above FRS in auto-withdrawal was misleading for post-55 users and has been removed from the CPF section.',
+    affectedSections: ['section-cpf'],
+  },
+  {
     date: '2026-03-02',
     category: 'feature',
     title: 'CPF LIFE bequest shown on projection chart',
@@ -29,7 +55,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       'A new "Estimate from your age & salary" button in the CPF section back-projects your OA/SA/MA balances based on your current age and salary, assuming career start at 22 with 3% annual salary growth. Uses actual CPF contribution rates and age-bracket allocation rules.',
     affectedSections: ['section-cpf'],
     insight:
-      'CPF had the highest section reset rate in analytics because most users don\'t know their exact OA/SA/MA split. This one-click estimate gives a reasonable starting point. The disclaimer warns it skips MA BHS cap overflow and age-55 transfer logic, so users should refine with their actual CPF statement.',
+      'CPF had the highest section reset rate in analytics because most users don\'t know their exact OA/SA/MA split. This one-click estimate gives a reasonable starting point with BHS cap enforcement and SA overflow. Users should still refine with their actual CPF statement for age-55 RA transfer amounts.',
   },
   {
     date: '2026-03-02',
