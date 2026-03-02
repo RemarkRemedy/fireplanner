@@ -41,7 +41,7 @@ export function ProjectionCTA() {
       <CardContent className="py-5 md:py-5">
         <p className="text-sm text-foreground pr-6">
           Your plan so far: FIRE at age{' '}
-          <span className="font-semibold">{metrics.fireAge}</span> with{' '}
+          <span className="font-semibold">{Math.round(metrics.fireAge)}</span> with{' '}
           <span className="font-semibold">
             ${metrics.fireNumber.toLocaleString('en-SG', { maximumFractionDigits: 0 })}
           </span>{' '}
