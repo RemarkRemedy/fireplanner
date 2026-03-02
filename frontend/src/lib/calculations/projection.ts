@@ -43,6 +43,7 @@ import {
   floorCeiling,
 } from './withdrawal'
 import { computeCpfAutoFallback } from './cpfAutoWithdrawal'
+import { computeVirtualRebalancing } from './cpfVirtualRebalancing'
 
 export interface ProjectionParams {
   incomeProjection: IncomeProjectionRow[]
@@ -107,6 +108,9 @@ export interface ProjectionParams {
   // CPF Auto-Withdrawal
   cpfAutoFallback?: boolean
   cpfAutoFallbackIncludeSA?: boolean
+  // CPF Virtual Rebalancing
+  cpfVirtualRebalancing?: boolean
+  cpfVirtualRebalancingMode?: 'from55' | 'always'
 }
 
 export interface ProjectionResult {
@@ -363,6 +367,27 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     const weights = getWeightsAtAge(age, isRetired, currentWeights, targetWeights, glidePathConfig)
     const allocationWeights = [...weights]  // defensive copy — getWeightsAtAge may return shared refs
 
+    // Virtual rebalancing: count uninvested CPF as bond allocation
+    let cpfCountedAsBondsAmount = 0
+    let effectiveWeights = weights
+    if (params.cpfVirtualRebalancing && isRetired) {
+      const rebalResult = computeVirtualRebalancing({
+        weights,
+        liquidNW,
+        cpfOA: incomeRow.cpfOA,
+        cpfSA: incomeRow.cpfSA,
+        cpfRA: incomeRow.cpfRA,
+        cpfisOA: incomeRow.cpfisOA,
+        cpfisSA: incomeRow.cpfisSA,
+        age,
+        currentYear: new Date().getFullYear() + i,
+        mode: params.cpfVirtualRebalancingMode ?? 'from55',
+        includeSA: params.cpfAutoFallbackIncludeSA ?? true,
+      })
+      effectiveWeights = rebalResult.adjustedWeights
+      cpfCountedAsBondsAmount = rebalResult.cpfCountedAsBonds
+    }
+
     // Return rate (nominal, net of expense ratio)
     let returnRate: number
     const mcIndex = i - yearlyReturnsOffset
@@ -373,7 +398,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       // so this is a single deduction, not double-counting.
       returnRate = yearlyReturns[mcIndex] - expenseRatio
     } else if (usePortfolioReturn && assetReturns.length === weights.length) {
-      returnRate = calculatePortfolioReturn(weights, assetReturns) - expenseRatio
+      returnRate = calculatePortfolioReturn(effectiveWeights, assetReturns) - expenseRatio
     } else {
       returnRate = expectedReturn - expenseRatio
     }
@@ -769,7 +794,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       cpfOaWithdrawal: incomeRow.cpfOaWithdrawal,
       cpfAutoOaWithdrawal: cpfAutoOaWithdrawalAmount,
       cpfAutoSaWithdrawal: cpfAutoSaWithdrawalAmount,
-      cpfCountedAsBonds: 0,
+      cpfCountedAsBonds: cpfCountedAsBondsAmount,
       cpfisOA: incomeRow.cpfisOA,
       cpfisSA: incomeRow.cpfisSA,
       cpfisReturn: incomeRow.cpfisReturn,

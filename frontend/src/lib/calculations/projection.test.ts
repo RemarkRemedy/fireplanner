@@ -2726,4 +2726,73 @@ describe('generateProjection', () => {
       expect(before55.length).toBe(0)
     })
   })
+
+  describe('CPF virtual rebalancing', () => {
+    it('adjusts allocation weights when CPF counted as bonds', () => {
+      const incomeRows = generateMockIncomeProjection({
+        currentAge: 55,
+        retirementAge: 55,
+        lifeExpectancy: 60,
+        annualSavings: 0,
+        salary: 0,
+        cpfOA: 300000,
+      })
+      const result = generateProjection(makeParams({
+        currentAge: 55,
+        retirementAge: 55,
+        lifeExpectancy: 60,
+        initialLiquidNW: 800000,
+        annualExpenses: 40000,
+        usePortfolioReturn: true,
+        assetReturns: [0.10, 0.08, 0.09, 0.04, 0.07, 0.03, 0.02, 0.04],
+        currentWeights: [0.30, 0.10, 0.20, 0.20, 0.05, 0.05, 0.05, 0.05],
+        targetWeights: [0.30, 0.10, 0.20, 0.20, 0.05, 0.05, 0.05, 0.05],
+        incomeProjection: incomeRows,
+        cpfVirtualRebalancing: true,
+        cpfVirtualRebalancingMode: 'from55',
+      }))
+
+      // Check that cpfCountedAsBonds is populated
+      const retiredRows = result.rows.filter(r => r.isRetired)
+      expect(retiredRows.some(r => r.cpfCountedAsBonds > 0)).toBe(true)
+
+      // Compare: rebalancing should produce higher liquid NW (more equity = higher returns)
+      const noRebal = generateProjection(makeParams({
+        currentAge: 55,
+        retirementAge: 55,
+        lifeExpectancy: 60,
+        initialLiquidNW: 800000,
+        annualExpenses: 40000,
+        usePortfolioReturn: true,
+        assetReturns: [0.10, 0.08, 0.09, 0.04, 0.07, 0.03, 0.02, 0.04],
+        currentWeights: [0.30, 0.10, 0.20, 0.20, 0.05, 0.05, 0.05, 0.05],
+        targetWeights: [0.30, 0.10, 0.20, 0.20, 0.05, 0.05, 0.05, 0.05],
+        incomeProjection: incomeRows,
+        cpfVirtualRebalancing: false,
+      }))
+
+      const lastRebal = result.rows[result.rows.length - 1]
+      const lastNoRebal = noRebal.rows[noRebal.rows.length - 1]
+      expect(lastRebal.liquidNW).toBeGreaterThan(lastNoRebal.liquidNW)
+    })
+
+    it('does not rebalance when disabled', () => {
+      const incomeRows = generateMockIncomeProjection({
+        currentAge: 55,
+        retirementAge: 55,
+        lifeExpectancy: 60,
+        cpfOA: 300000,
+      })
+      const result = generateProjection(makeParams({
+        currentAge: 55,
+        retirementAge: 55,
+        lifeExpectancy: 60,
+        incomeProjection: incomeRows,
+        cpfVirtualRebalancing: false,
+      }))
+
+      const rows = result.rows.filter(r => r.cpfCountedAsBonds > 0)
+      expect(rows.length).toBe(0)
+    })
+  })
 })
