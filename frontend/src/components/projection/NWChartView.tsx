@@ -46,7 +46,11 @@ export function NWChartView({ rows, retirementAge }: NWChartViewProps) {
             label={{ value: 'Age', position: 'insideBottom', offset: -5, fontSize: 12 }}
           />
           <YAxis
-            tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
+            tickFormatter={(v: number) =>
+              v >= 1_000_000 || v <= -1_000_000
+                ? `$${(v / 1_000_000).toFixed(v % 1_000_000 === 0 ? 0 : 1)}M`
+                : `$${(v / 1000).toFixed(0)}k`
+            }
             tick={{ fontSize: 12 }}
             width={70}
           />
