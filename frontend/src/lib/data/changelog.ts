@@ -12,6 +12,71 @@ export interface ChangelogEntry {
 /** Newest first. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-03-02',
+    category: 'feature',
+    title: 'CPF LIFE bequest shown on projection chart',
+    description:
+      'The net worth projection chart now shows CPF LIFE bequest value as a separate light-green stacked area. Previously, annuitizing your RA into CPF LIFE caused a jarring visual cliff in the chart. The bequest area fills the gap, gradually declining as payouts accumulate. Tooltip shows the exact bequest value at each age.',
+    affectedSections: ['section-projection'],
+    insight:
+      'CPF LIFE bequest is the unused premium returned to beneficiaries if the annuitant passes away. For Standard plan, the full RA is annuitized at the start age and the bequest equals the premium minus cumulative payouts received. After ~15 years of payouts, the bequest reaches $0, meaning CPF LIFE has paid for itself.',
+  },
+  {
+    date: '2026-03-02',
+    category: 'feature',
+    title: 'CPF balance estimator from age and salary',
+    description:
+      'A new "Estimate from your age & salary" button in the CPF section back-projects your OA/SA/MA balances based on your current age and salary, assuming career start at 22 with 3% annual salary growth. Uses actual CPF contribution rates and age-bracket allocation rules.',
+    affectedSections: ['section-cpf'],
+    insight:
+      'CPF had the highest section reset rate in analytics because most users don\'t know their exact OA/SA/MA split. This one-click estimate gives a reasonable starting point. The disclaimer warns it skips MA BHS cap overflow and age-55 transfer logic, so users should refine with their actual CPF statement.',
+  },
+  {
+    date: '2026-03-02',
+    category: 'feature',
+    title: 'Mobile quick mode for first-time users',
+    description:
+      'First-time mobile visitors now see a streamlined 4-section view (Personal, Income, Expenses, Net Worth) instead of all 8 sections. An expander card reveals CPF, Property, Healthcare, and more. Quick mode auto-activates for mobile users with default profile values.',
+    affectedSections: ['section-personal', 'section-income', 'section-expenses', 'section-net-worth'],
+  },
+  {
+    date: '2026-03-02',
+    category: 'feature',
+    title: 'Inline FIRE CTA on inputs page',
+    description:
+      'A contextual card between the 3rd and 4th input sections shows your current FIRE age and number with a link to the full projection. Dismissible per session.',
+    affectedSections: ['section-projection'],
+  },
+  {
+    date: '2026-03-02',
+    category: 'feature',
+    title: 'Welcome banner for deep-linked visitors',
+    description:
+      'First-time visitors who land directly on the inputs page now see a blue info banner explaining what the tool is, with a link to the guided setup. Only shows when all profile fields are at defaults.',
+  },
+  {
+    date: '2026-03-02',
+    category: 'feature',
+    title: 'Streamlined onboarding flow',
+    description:
+      'The "Continue to planning" button is now "Build my full plan" with a subtitle listing key features. Section toggles moved below the CTA. Users with expenses exceeding income see a helpful message instead of broken Infinity values.',
+  },
+  {
+    date: '2026-03-02',
+    category: 'feature',
+    title: 'Email prompt moved to post-value moment',
+    description:
+      'First-time visitors no longer see an email signup form on the landing page. The email capture now appears at the bottom of the Projection page after users have seen their full year-by-year trajectory. Returning users still see it on the landing page.',
+  },
+  {
+    date: '2026-03-02',
+    category: 'fix',
+    title: 'Projection chart Y-axis formatting and interpolation',
+    description:
+      'Y-axis ticks now show $1.5M instead of $1500k for values above $1M. Chart interpolation changed from monotone cubic to linear to prevent visual overlap artifacts at the CPF LIFE enrollment transition.',
+    affectedSections: ['section-projection'],
+  },
+  {
     date: '2026-03-01',
     category: 'feature',
     title: 'Life events inline configurator with adjustable parameters',
@@ -667,4 +732,4 @@ export const CHANGELOG: ChangelogEntry[] = [
 ]
 
 /** Bump this string whenever any data file is updated. Triggers the banner for returning users. */
-export const DATA_VINTAGE = '2026-02-28'
+export const DATA_VINTAGE = '2026-03-02'
