@@ -38,7 +38,7 @@ export function NWChartView({ rows, retirementAge }: NWChartViewProps) {
   return (
     <div className="border rounded-md p-4" role="img" aria-label="Net worth projection chart">
       <ResponsiveContainer width="100%" height={400}>
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+        <AreaChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
           <XAxis
             dataKey="age"
