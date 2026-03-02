@@ -641,11 +641,19 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       const rawPostRetLiquidNW = afterDraw * (1 + returnRate)
 
       // CPF Auto-Fallback: withdraw from CPF OA/SA when liquid NW would go negative
+      // or when there's an unfunded expense gap (actualDraw was capped at startLiquidNW).
+      // Without this, once liquid NW hits $0, the draw cap masks the shortfall
+      // and auto-fallback never triggers.
+      const uncappedDraw = params.withdrawalBasis === 'rate'
+        ? Math.max(0, strategyWithdrawal - postRetirementIncome)
+        : expenseGap
+      const unfundedShortfall = Math.max(0, uncappedDraw - actualDraw)
+      const totalShortfall = Math.max(0, -rawPostRetLiquidNW) + unfundedShortfall
       let adjustedLiquidNW = rawPostRetLiquidNW
 
-      if (params.cpfAutoFallback && rawPostRetLiquidNW < 0 && age >= 55) {
+      if (params.cpfAutoFallback && totalShortfall > 0 && age >= 55) {
         const fallback = computeCpfAutoFallback({
-          shortfall: Math.abs(rawPostRetLiquidNW),
+          shortfall: totalShortfall,
           cpfOA: incomeRow.cpfOA,
           cpfSA: incomeRow.cpfSA,
           cpfRA: incomeRow.cpfRA,
@@ -657,7 +665,10 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
         })
         cpfAutoOaWithdrawalAmount = fallback.oaWithdrawal
         cpfAutoSaWithdrawalAmount = fallback.saWithdrawal
-        adjustedLiquidNW = rawPostRetLiquidNW + fallback.totalWithdrawal
+        // The portion covering unfunded expenses goes to spending (not the portfolio).
+        // Only the portion covering negative rawPostRetLiquidNW adds to liquid NW.
+        const portfolioTopUp = Math.min(fallback.totalWithdrawal, Math.max(0, -rawPostRetLiquidNW))
+        adjustedLiquidNW = rawPostRetLiquidNW + portfolioTopUp
 
         // Deduct from CPF balances in the income row (mutates for downstream tracking)
         incomeRow.cpfOA -= fallback.oaWithdrawal
