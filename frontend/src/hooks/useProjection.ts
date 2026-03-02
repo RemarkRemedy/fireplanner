@@ -123,6 +123,10 @@ export function useProjection(): ProjectionResult {
       expenseAdjustments: profile.expenseAdjustments,
       lifeEvents: income.lifeEvents,
       lifeEventsEnabled: income.lifeEventsEnabled,
+      cpfAutoFallback: profile.cpfAutoFallback,
+      cpfAutoFallbackIncludeSA: profile.cpfAutoFallbackIncludeSA,
+      cpfVirtualRebalancing: profile.cpfVirtualRebalancing,
+      cpfVirtualRebalancingMode: profile.cpfVirtualRebalancingMode,
     }
 
     const { rows, summary } = generateProjection(projectionParams)
@@ -181,6 +185,10 @@ export function useProjection(): ProjectionResult {
     profile.cpfLifeStartAge,
     profile.cpfLifePlan,
     profile.expenseAdjustments,
+    profile.cpfAutoFallback,
+    profile.cpfAutoFallbackIncludeSA,
+    profile.cpfVirtualRebalancing,
+    profile.cpfVirtualRebalancingMode,
     income.lifeEvents,
     income.lifeEventsEnabled,
   ])

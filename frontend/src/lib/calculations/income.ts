@@ -347,6 +347,11 @@ export interface IncomeProjectionParams {
   lockedAssets?: LockedAsset[]
   // Expense adjustments (age-based spending changes)
   expenseAdjustments?: ExpenseAdjustment[]
+  // CPF auto-withdrawal (passed through to ProjectionParams)
+  cpfAutoFallback?: boolean
+  cpfAutoFallbackIncludeSA?: boolean
+  cpfVirtualRebalancing?: boolean
+  cpfVirtualRebalancingMode?: 'from55' | 'always'
 }
 
 /**
