@@ -34,6 +34,7 @@ export interface BacktestEngineParams {
   strategyParams: Record<string, number>
   inflation: number
   oneTimeWithdrawals?: { year: number; amount: number }[]  // year-offset → amount
+  postRetirementIncome?: number[]  // per-year income that reduces net withdrawal (CPF LIFE, rental, etc.)
   retirementMitigation?: RetirementMitigationConfig
   annualExpensesAtRetirement?: number
   withdrawalBasis: 'expenses' | 'rate'
@@ -158,6 +159,7 @@ function runSingleWindow(
   oneTimeWithdrawals?: { year: number; amount: number }[],
   annualExpensesAtRetirement: number = 0,
   withdrawalBasis: 'expenses' | 'rate' = 'expenses',
+  postRetirementIncome?: number[],
 ): WindowResult {
   let portfolio = initialPortfolio
   // Use user's actual retirement expenses when available and withdrawalBasis is 'expenses';
@@ -195,7 +197,7 @@ function runSingleWindow(
       ? portfolio - prevPortfolio + prevWithdrawal
       : 0
 
-    let withdrawal = computeWithdrawal(strategy, {
+    const withdrawal = computeWithdrawal(strategy, {
       portfolio,
       year: y,
       remainingYears: remaining,
@@ -211,16 +213,19 @@ function runSingleWindow(
     const oneTime = (oneTimeWithdrawals ?? [])
       .filter(w => w.year === y)
       .reduce((sum, w) => sum + w.amount, 0)
-    withdrawal += oneTime
 
-    // Cap withdrawal at current portfolio value
-    withdrawal = Math.min(withdrawal, portfolio)
-    totalWithdrawn += withdrawal
-    prevWithdrawal = withdrawal
+    // Subtract post-retirement income (CPF LIFE, rental, etc.)
+    // Matches MC engine (monteCarlo.ts:457) and SR engine (sequenceRisk.ts:204) patterns
+    const income = postRetirementIncome?.[y] ?? 0
+    let netWithdrawal = Math.max(0, (withdrawal + oneTime) - income)
+    netWithdrawal = Math.min(netWithdrawal, portfolio)
+
+    totalWithdrawn += netWithdrawal
+    prevWithdrawal = withdrawal  // gross, for strategy feedback (inflation-adjusted constant dollar, etc.)
     prevPortfolio = portfolio
     prevYearReturn = ret
 
-    portfolio = (portfolio - withdrawal) * (1 + ret - expenseRatio)
+    portfolio = (portfolio - netWithdrawal) * (1 + ret - expenseRatio)
 
     if (portfolio < minBalance) {
       minBalance = portfolio
@@ -282,6 +287,7 @@ export function runDetailedWindow(
     withdrawalStrategy,
     strategyParams,
     oneTimeWithdrawals,
+    postRetirementIncome,
     annualExpensesAtRetirement,
     withdrawalBasis,
   } = params
@@ -360,15 +366,17 @@ export function runDetailedWindow(
     const oneTime = (oneTimeWithdrawals ?? [])
       .filter(w => w.year === y)
       .reduce((sum, w) => sum + w.amount, 0)
-    withdrawal += oneTime
 
-    // Cap withdrawal at current portfolio value
-    withdrawal = Math.min(withdrawal, portfolio)
-    prevWithdrawal = withdrawal
+    // Subtract post-retirement income (CPF LIFE, rental, etc.)
+    const income = postRetirementIncome?.[y] ?? 0
+    let netWithdrawal = Math.max(0, (withdrawal + oneTime) - income)
+    netWithdrawal = Math.min(netWithdrawal, portfolio)
+
+    prevWithdrawal = withdrawal  // gross, for strategy feedback
     prevPortfolio = portfolio
     prevYearReturn = ret
 
-    portfolio = (portfolio - withdrawal) * (1 + ret - expenseRatio)
+    portfolio = (portfolio - netWithdrawal) * (1 + ret - expenseRatio)
 
     if (portfolio <= 0) {
       survived = false
@@ -377,7 +385,7 @@ export function runDetailedWindow(
 
     outYears.push(years[idx])
     outBalances.push(Math.max(0, portfolio))
-    outWithdrawals.push(withdrawal)
+    outWithdrawals.push(netWithdrawal)
     outReturns.push(ret)
     outInflation.push(inf)
   }
@@ -430,6 +438,7 @@ export function runBacktest(params: BacktestEngineParams): BacktestEngineResult 
     withdrawalStrategy,
     strategyParams,
     oneTimeWithdrawals,
+    postRetirementIncome,
     annualExpensesAtRetirement,
     withdrawalBasis,
   } = params
@@ -463,6 +472,7 @@ export function runBacktest(params: BacktestEngineParams): BacktestEngineResult 
       oneTimeWithdrawals,
       annualExpensesAtRetirement,
       withdrawalBasis,
+      postRetirementIncome,
     )
 
     results.push({

@@ -561,3 +561,62 @@ describe('annualExpensesAtRetirement', () => {
     expect(heatmap.success_rates[0][0]).not.toBe(heatmap.success_rates[1][0])
   })
 })
+
+// ---------------------------------------------------------------------------
+// postRetirementIncome
+// ---------------------------------------------------------------------------
+
+describe('postRetirementIncome', () => {
+  it('improves survival rate when income offsets withdrawals', () => {
+    // Without income: 4% SWR on $1M = $40K/year withdrawal
+    const baseResult = runBacktest(PARAMS)
+
+    // With $20K/year income: net withdrawal drops to ~$20K/year
+    const incomeArray = Array.from({ length: 30 }, () => 20_000)
+    const withIncome = runBacktest({
+      ...PARAMS,
+      postRetirementIncome: incomeArray,
+    })
+
+    // Income should improve or maintain survival rate
+    expect(withIncome.summary.success_rate).toBeGreaterThanOrEqual(baseResult.summary.success_rate)
+  })
+
+  it('produces identical results when undefined (backward compat)', () => {
+    const withoutIncome = runBacktest(PARAMS)
+    const withUndefined = runBacktest({ ...PARAMS, postRetirementIncome: undefined })
+    const withEmpty = runBacktest({ ...PARAMS, postRetirementIncome: [] })
+
+    expect(withUndefined.summary.success_rate).toBe(withoutIncome.summary.success_rate)
+    expect(withEmpty.summary.success_rate).toBe(withoutIncome.summary.success_rate)
+  })
+
+  it('negative income increases effective withdrawal', () => {
+    // Negative income (e.g., mortgage exceeds rental) means portfolio must fund MORE
+    const negativeIncome = Array.from({ length: 30 }, () => -10_000)
+    const baseResult = runBacktest(PARAMS)
+    const withNegative = runBacktest({
+      ...PARAMS,
+      postRetirementIncome: negativeIncome,
+    })
+
+    // Negative income should worsen or maintain survival rate
+    expect(withNegative.summary.success_rate).toBeLessThanOrEqual(baseResult.summary.success_rate)
+  })
+
+  it('works with detailed window', () => {
+    const incomeArray = Array.from({ length: 30 }, () => 15_000)
+    const detailed = runDetailedWindow(
+      { ...PARAMS, postRetirementIncome: incomeArray },
+      1970,
+    )
+
+    // Detailed window should return valid data
+    expect(detailed.yearlyWithdrawals.length).toBeGreaterThan(0)
+    // With income, net withdrawals should be less than without income
+    const detailedNoIncome = runDetailedWindow(PARAMS, 1970)
+    const avgWithIncome = detailed.yearlyWithdrawals.reduce((a, b) => a + b, 0) / detailed.yearlyWithdrawals.length
+    const avgWithout = detailedNoIncome.yearlyWithdrawals.reduce((a, b) => a + b, 0) / detailedNoIncome.yearlyWithdrawals.length
+    expect(avgWithIncome).toBeLessThanOrEqual(avgWithout)
+  })
+})
