@@ -437,7 +437,16 @@ export function buildProjectionColumns(
           header: `${ASSET_SHORT_LABELS[ac.key]} (%)`,
           cell: (info) => {
             const v = info.getValue()
-            return v > 0 ? `${v.toFixed(1)}%` : '-'
+            if (v <= 0) return '-'
+            const isRebalanced = info.row.original.cpfCountedAsBonds > 0
+            if (isRebalanced) {
+              return (
+                <span title="Adjusted for CPF virtual rebalancing — differs from target allocation">
+                  {v.toFixed(1)}%*
+                </span>
+              )
+            }
+            return `${v.toFixed(1)}%`
           },
         },
       ),

@@ -280,6 +280,7 @@ export function MCProjectionTable({ result, isStale }: MCProjectionTableProps) {
                       key={g.key}
                       colSpan={groupVisibleCount[g.key]}
                       className="px-2 py-1 text-center text-xs font-semibold text-primary/80 border-b border-l-2 border-l-border"
+                      title={g.key === 'portfolioBreakdown' ? 'Per-asset values and weights. When CPF Virtual Rebalancing is on, weights marked with * reflect the effective allocation after treating uninvested CPF as bonds.' : undefined}
                     >
                       {g.label}
                     </th>
