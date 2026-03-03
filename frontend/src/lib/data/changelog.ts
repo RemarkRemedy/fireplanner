@@ -23,6 +23,44 @@ export const CHANGELOG: ChangelogEntry[] = [
   },
   {
     date: '2026-03-03',
+    category: 'feature',
+    title: 'Glide path allocation wired into all simulation engines',
+    description:
+      'Monte Carlo (parametric and bootstrap), historical backtest, and sequence risk stress tests now use per-year allocation weights from the glide path instead of a single static allocation. A new buildYearlyWeights() helper converts the glide path into a year-indexed vector that each engine consumes, ensuring asset-mix shifts are reflected in every simulation path.',
+    affectedSections: ['section-allocation', 'section-stress-test'],
+    insight:
+      'Previously, glide path allocation only affected the deterministic projection. Simulations assumed a fixed weight vector for the entire horizon, which overstated equity exposure in late retirement for anyone with a declining equity glide path. Now the allocation gracefully shifts year by year across all engines.',
+  },
+  {
+    date: '2026-03-03',
+    category: 'feature',
+    title: 'CPF PR graduated contribution rates and foreigner support',
+    description:
+      'CPF contributions now follow the Permanent Resident graduated schedule: Year 1 (9% total), Year 2 (24% total), and Year 3+ (full citizen rates). Foreigners receive zero CPF contributions. A new "PR months" input appears when residency is set to PR, letting users specify how long they have held PR status.',
+    affectedSections: ['section-cpf', 'section-personal'],
+    insight:
+      'Singapore PRs do not receive full CPF contributions immediately. During the first two years, employer and employee contribution rates are lower, which significantly reduces OA/SA/MA accumulation. Modelling this correctly matters for recent PRs planning to buy property with CPF or targeting FRS.',
+  },
+  {
+    date: '2026-03-03',
+    category: 'fix',
+    title: 'Post-retirement income integrated into backtest engine',
+    description:
+      'The historical backtest engine now subtracts post-retirement income (CPF LIFE payouts, rental income, part-time work) from the gross withdrawal before drawing from the portfolio. This matches the existing behaviour in Monte Carlo and sequence risk engines, reducing over-withdrawal in backtest results for users with retirement income streams.',
+    affectedSections: ['section-stress-test'],
+    insight:
+      'Without this fix, the backtest engine treated the full withdrawal amount as coming from the portfolio, ignoring any retirement income that would offset it. Users with CPF LIFE or rental income saw artificially low backtest survival rates compared to Monte Carlo results.',
+  },
+  {
+    date: '2026-03-03',
+    category: 'fix',
+    title: 'Removed vestigial existingRentalIncome field',
+    description:
+      'The property store\'s existingRentalIncome field was never read by any calculation or UI component. It has been removed from the store interface and migration upgraded to version 10 to clean up the dead field from persisted state.',
+    affectedSections: ['section-property'],
+  },
+  {
+    date: '2026-03-03',
     category: 'fix',
     title: 'CPF estimator now caps MA at Basic Healthcare Sum',
     description:
