@@ -1,4 +1,4 @@
-import type { CpfContribution, CpfProjection, CpfLifePlan, CpfRetirementSum } from '@/lib/types'
+import type { CpfContribution, CpfProjection, CpfLifePlan, CpfRetirementSum, ResidencyStatus } from '@/lib/types'
 import { MEDISAVE_BHS, BHS_BASE_YEAR, BHS_GROWTH_RATE } from '@/lib/data/healthcarePremiums'
 import {
   getCpfRatesForAge,
@@ -31,17 +31,20 @@ export type { CpfLifePlan } from '@/lib/types'
 /**
  * Calculate annual CPF contribution for a given salary and age.
  * Applies OW ceiling and AW ceiling. Bonus is treated as Additional Wages.
+ * Optional residencyStatus/prMonths for PR graduated rates and foreigners.
  */
 export function calculateCpfContribution(
   annualSalary: number,
   age: number,
-  annualBonus: number = 0
+  annualBonus: number = 0,
+  residencyStatus?: ResidencyStatus,
+  prMonths?: number,
 ): CpfContribution {
   if (annualSalary <= 0 && annualBonus <= 0) {
     return { employee: 0, employer: 0, total: 0, oaAllocation: 0, saAllocation: 0, maAllocation: 0 }
   }
 
-  const rates = getCpfRatesForAge(age)
+  const rates = getCpfRatesForAge(age, residencyStatus, prMonths)
 
   // OW (Ordinary Wages) — capped at OW_CEILING_ANNUAL (currently $96,000/year)
   const owSubjectToCpf = Math.min(annualSalary, OW_CEILING_ANNUAL)
@@ -264,6 +267,7 @@ export function capMaAtBhs(
 
 /**
  * Project CPF balances year-by-year from startAge to endAge.
+ * Optional residency params for PR graduated rates (prMonths graduates forward automatically).
  */
 export function projectCpfBalances(
   startAge: number,
@@ -272,7 +276,9 @@ export function projectCpfBalances(
   initialSA: number,
   initialMA: number,
   annualSalary: number,
-  salaryGrowth: number
+  salaryGrowth: number,
+  residencyStatus?: ResidencyStatus,
+  prMonths?: number,
 ): CpfProjection[] {
   const projections: CpfProjection[] = []
   let oa = initialOA
@@ -281,7 +287,11 @@ export function projectCpfBalances(
   let salary = annualSalary
 
   for (let age = startAge; age <= endAge; age++) {
-    const contribution = calculateCpfContribution(salary, age)
+    // Graduate PR months forward: at each projection age, PR has been PR for longer
+    const effectivePrMonths = residencyStatus === 'pr' && prMonths !== undefined
+      ? prMonths + ((age - startAge) * 12)
+      : undefined
+    const contribution = calculateCpfContribution(salary, age, 0, residencyStatus, effectivePrMonths)
 
     // Add contributions
     oa += contribution.oaAllocation
@@ -441,6 +451,9 @@ export function getRetirementSumAmount(
  * This is a rough estimate for users who don't know their CPF balances.
  * It simulates year-by-year contributions and interest from careerStartAge to currentAge.
  *
+ * For PRs, graduation is backward: prMonths is months as of currentAge, so at earlier
+ * ages the person had fewer PR months (or wasn't a PR yet → foreigner rates).
+ *
  * Simplifications vs. reality:
  * - Skips MA BHS cap overflow and age-55 SA→RA transfer
  * - Assumes continuous employment with steady salary growth
@@ -451,6 +464,8 @@ export function estimateCpfBalancesFromAge(
   annualSalary: number,
   careerStartAge: number = 22,
   salaryGrowthRate: number = 0.03,
+  residencyStatus?: ResidencyStatus,
+  prMonths?: number,
 ): { oa: number; sa: number; ma: number } {
   if (currentAge <= careerStartAge || annualSalary <= 0) {
     return { oa: 0, sa: 0, ma: 0 }
@@ -468,8 +483,19 @@ export function estimateCpfBalancesFromAge(
     const age = careerStartAge + yearIndex
     const salary = salaryAtStart * Math.pow(1 + salaryGrowthRate, yearIndex)
 
+    // Backward-looking PR graduation: at earlier ages, fewer PR months
+    let effectiveResidency = residencyStatus
+    let effectivePrMonths = prMonths
+    if (residencyStatus === 'pr' && prMonths !== undefined) {
+      effectivePrMonths = prMonths - ((currentAge - age) * 12)
+      if (effectivePrMonths < 0) {
+        effectiveResidency = 'foreigner' // Not yet a PR at this historical age
+        effectivePrMonths = undefined
+      }
+    }
+
     // Add contributions for this year
-    const contribution = calculateCpfContribution(salary, age)
+    const contribution = calculateCpfContribution(salary, age, 0, effectiveResidency, effectivePrMonths)
     oa += contribution.oaAllocation
     sa += contribution.saAllocation
     ma += contribution.maAllocation

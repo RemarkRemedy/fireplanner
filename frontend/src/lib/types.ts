@@ -149,6 +149,7 @@ export interface ProfileState {
   lifeStage: LifeStage
   maritalStatus: MaritalStatus
   residencyStatus: ResidencyStatus
+  prMonths: number // Months since becoming PR (for graduated CPF rates; 0-600)
 
   // Financial
   annualIncome: number

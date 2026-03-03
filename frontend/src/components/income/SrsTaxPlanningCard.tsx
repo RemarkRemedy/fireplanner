@@ -13,12 +13,13 @@ export function SrsTaxPlanningCard() {
   const currentAge = useProfileStore((s) => s.currentAge)
   const srsAnnualContribution = useProfileStore((s) => s.srsAnnualContribution)
   const residencyStatus = useProfileStore((s) => s.residencyStatus)
+  const prMonths = useProfileStore((s) => s.prMonths)
   const personalReliefs = useIncomeStore((s) => s.personalReliefs)
 
   const data = useMemo(() => {
     const srsCap = residencyStatus === 'foreigner' ? SRS_ANNUAL_CAP_FOREIGNER : SRS_ANNUAL_CAP
 
-    const rates = getCpfRatesForAge(currentAge)
+    const rates = getCpfRatesForAge(currentAge, residencyStatus, prMonths)
     const cpfEmployee = Math.min(annualIncome, OW_CEILING_ANNUAL) * rates.employeeRate
 
     // Strip earned income relief and only re-add it when there's actual
@@ -56,7 +57,7 @@ export function SrsTaxPlanningCard() {
       currentSavings, maxSavings, currentContrib,
       isContributing, isMaxed,
     }
-  }, [annualIncome, currentAge, srsAnnualContribution, residencyStatus, personalReliefs])
+  }, [annualIncome, currentAge, srsAnnualContribution, residencyStatus, prMonths, personalReliefs])
 
   // Don't show if income is too low for SRS to matter
   if (data.maxSavings <= 0) return null

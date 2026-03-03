@@ -325,8 +325,10 @@ export interface IncomeProjectionParams {
   cpfMortgageYearsLeft?: number
   // 65+ users can enter their actual CPF LIFE payout directly
   cpfLifeActualMonthlyPayout?: number
-  // Residency status for correct SRS cap
+  // Residency status for correct SRS cap and CPF contribution rates
   residencyStatus?: 'citizen' | 'pr' | 'foreigner'
+  // Months since becoming PR (for graduated CPF rates)
+  prMonths?: number
   // SRS lifecycle
   srsBalance?: number
   srsInvestmentReturn?: number
@@ -553,7 +555,11 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
     const cpfPaused = isCpfPaused(age, params.lifeEvents, params.lifeEventsEnabled)
 
     if (params.employerCpfEnabled && cpfApplicableSalary > 0 && !cpfPaused) {
-      const cpf = calculateCpfContribution(cpfApplicableSalary, age, annualBonus)
+      // Graduate PR months forward from currentAge
+      const effectivePrMonths = params.residencyStatus === 'pr' && params.prMonths !== undefined
+        ? params.prMonths + ((age - params.currentAge) * 12)
+        : undefined
+      const cpf = calculateCpfContribution(cpfApplicableSalary, age, annualBonus, params.residencyStatus, effectivePrMonths)
       cpfEmployee = cpf.employee
       cpfEmployer = cpf.employer
 

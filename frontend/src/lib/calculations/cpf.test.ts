@@ -26,6 +26,7 @@ import {
   FRS_BASE,
   BRS_GROWTH_RATE,
   RETIREMENT_SUM_BASE_YEAR,
+  getCpfRatesForAge,
 } from '@/lib/data/cpfRates'
 import { MEDISAVE_BHS, BHS_GROWTH_RATE, BHS_BASE_YEAR } from '@/lib/data/healthcarePremiums'
 
@@ -822,5 +823,242 @@ describe('estimateCpfBalancesFromAge', () => {
     expect(result.oa).toBe(0)
     expect(result.sa).toBe(0)
     expect(result.ma).toBe(0)
+  })
+
+  it('PR backward graduation: very recent PR (6 months) at age 30 has zero historical CPF', () => {
+    // 6 months as PR at age 30 → the earliest completed historical year is age 29
+    // At age 29: effectivePrMonths = 6 - (30-29)*12 = -6 → foreigner (zero rates)
+    // All historical years 22-29 are foreigner, so zero contributions accumulated
+    const result = estimateCpfBalancesFromAge(30, 72000, 22, 0.03, 'pr', 6)
+    expect(result.oa).toBe(0)
+    expect(result.sa).toBe(0)
+    expect(result.ma).toBe(0)
+  })
+
+  it('PR backward graduation: 18-month PR has one year at Year 1 rates', () => {
+    // 18 months as PR at age 30 → at age 29: 18-12=6 → PR Year 1 (9% total)
+    // All earlier ages: foreigner (zero rates)
+    const result = estimateCpfBalancesFromAge(30, 72000, 22, 0.03, 'pr', 18)
+    // Should have contributions from just age 29 at Year 1 rates (9% total vs 37%)
+    expect(result.oa + result.sa + result.ma).toBeGreaterThan(0)
+    const citizenResult = estimateCpfBalancesFromAge(30, 72000, 22, 0.03)
+    // Much less than citizen (1 year at 9% vs 8 years at 37%)
+    expect(result.oa + result.sa + result.ma).toBeLessThan(
+      (citizenResult.oa + citizenResult.sa + citizenResult.ma) * 0.15
+    )
+  })
+
+  it('PR Year 3+ (prMonths >= 24) matches citizen result', () => {
+    const pr = estimateCpfBalancesFromAge(30, 72000, 22, 0.03, 'pr', 120)
+    const citizen = estimateCpfBalancesFromAge(30, 72000, 22, 0.03)
+    // PR with 120 months (10 years) was PR from before career start
+    // prMonths - (30-23)*12 = 120 - 84 = 36 (still >= 24 at age 23)
+    expect(pr.oa).toBeCloseTo(citizen.oa, 0)
+    expect(pr.sa).toBeCloseTo(citizen.sa, 0)
+    expect(pr.ma).toBeCloseTo(citizen.ma, 0)
+  })
+
+  it('foreigner gets zero balances', () => {
+    const result = estimateCpfBalancesFromAge(30, 72000, 22, 0.03, 'foreigner')
+    expect(result.oa).toBe(0)
+    expect(result.sa).toBe(0)
+    expect(result.ma).toBe(0)
+  })
+})
+
+// ============================================================
+// getCpfRatesForAge — Residency-based rate lookup
+// ============================================================
+
+describe('getCpfRatesForAge', () => {
+  describe('citizen rates (default)', () => {
+    it('returns 37% for age 30 (default params = citizen)', () => {
+      const rates = getCpfRatesForAge(30)
+      expect(rates.totalRate).toBe(0.37)
+      expect(rates.employeeRate).toBe(0.20)
+      expect(rates.employerRate).toBe(0.17)
+    })
+
+    it('explicit citizen status matches default', () => {
+      const def = getCpfRatesForAge(30)
+      const explicit = getCpfRatesForAge(30, 'citizen', 24)
+      expect(def).toEqual(explicit)
+    })
+  })
+
+  describe('foreigner rates', () => {
+    it('returns zero for all age brackets', () => {
+      for (const age of [25, 35, 45, 55, 60, 65, 70, 75]) {
+        const rates = getCpfRatesForAge(age, 'foreigner')
+        expect(rates.totalRate).toBe(0)
+        expect(rates.employeeRate).toBe(0)
+        expect(rates.employerRate).toBe(0)
+        expect(rates.oaRate).toBe(0)
+        expect(rates.saRate).toBe(0)
+        expect(rates.maRate).toBe(0)
+      }
+    })
+  })
+
+  describe('PR Year 1 rates (prMonths < 12)', () => {
+    it('age 30, PR Year 1: 9% total (5% + 4%)', () => {
+      const rates = getCpfRatesForAge(30, 'pr', 6)
+      expect(rates.totalRate).toBe(0.09)
+      expect(rates.employeeRate).toBe(0.05)
+      expect(rates.employerRate).toBe(0.04)
+    })
+
+    it('age 30, PR Year 1: OA/SA/MA scaled from citizen ratios', () => {
+      const rates = getCpfRatesForAge(30, 'pr', 6)
+      const citizen = getCpfRatesForAge(30)
+      const scale = 0.09 / citizen.totalRate
+      expect(rates.oaRate).toBeCloseTo(citizen.oaRate * scale, 6)
+      expect(rates.saRate).toBeCloseTo(citizen.saRate * scale, 6)
+      expect(rates.maRate).toBeCloseTo(citizen.maRate * scale, 6)
+    })
+
+    it('age 62, PR Year 1: 8.5% total (5% + 3.5%)', () => {
+      const rates = getCpfRatesForAge(62, 'pr', 3)
+      expect(rates.totalRate).toBe(0.085)
+      expect(rates.employeeRate).toBe(0.05)
+      expect(rates.employerRate).toBe(0.035)
+    })
+
+    it('prMonths = 0 uses Year 1 rates', () => {
+      const rates = getCpfRatesForAge(30, 'pr', 0)
+      expect(rates.totalRate).toBe(0.09)
+    })
+
+    it('prMonths = 11 still uses Year 1 rates', () => {
+      const rates = getCpfRatesForAge(30, 'pr', 11)
+      expect(rates.totalRate).toBe(0.09)
+    })
+  })
+
+  describe('PR Year 2 rates (12 <= prMonths < 24)', () => {
+    it('age 30, PR Year 2: 24% total (15% + 9%)', () => {
+      const rates = getCpfRatesForAge(30, 'pr', 12)
+      expect(rates.totalRate).toBe(0.24)
+      expect(rates.employeeRate).toBe(0.15)
+      expect(rates.employerRate).toBe(0.09)
+    })
+
+    it('age 30, PR Year 2: OA/SA/MA scaled from citizen ratios', () => {
+      const rates = getCpfRatesForAge(30, 'pr', 18)
+      const citizen = getCpfRatesForAge(30)
+      const scale = 0.24 / citizen.totalRate
+      expect(rates.oaRate).toBeCloseTo(citizen.oaRate * scale, 6)
+      expect(rates.saRate).toBeCloseTo(citizen.saRate * scale, 6)
+      expect(rates.maRate).toBeCloseTo(citizen.maRate * scale, 6)
+    })
+
+    it('age 57, PR Year 2: 18.5% total (12.5% + 6%)', () => {
+      const rates = getCpfRatesForAge(57, 'pr', 18)
+      expect(rates.totalRate).toBe(0.185)
+      expect(rates.employeeRate).toBe(0.125)
+      expect(rates.employerRate).toBe(0.06)
+    })
+
+    it('age 63, PR Year 2: 11% total (7.5% + 3.5%)', () => {
+      const rates = getCpfRatesForAge(63, 'pr', 15)
+      expect(rates.totalRate).toBe(0.11)
+      expect(rates.employeeRate).toBe(0.075)
+      expect(rates.employerRate).toBe(0.035)
+    })
+
+    it('age 68, PR Year 2: 8.5% total (5% + 3.5%)', () => {
+      const rates = getCpfRatesForAge(68, 'pr', 20)
+      expect(rates.totalRate).toBe(0.085)
+      expect(rates.employeeRate).toBe(0.05)
+      expect(rates.employerRate).toBe(0.035)
+    })
+
+    it('prMonths = 12 uses Year 2 rates', () => {
+      const rates = getCpfRatesForAge(30, 'pr', 12)
+      expect(rates.totalRate).toBe(0.24)
+    })
+
+    it('prMonths = 23 still uses Year 2 rates', () => {
+      const rates = getCpfRatesForAge(30, 'pr', 23)
+      expect(rates.totalRate).toBe(0.24)
+    })
+  })
+
+  describe('PR Year 3+ (prMonths >= 24)', () => {
+    it('prMonths = 24 returns full citizen rates', () => {
+      const pr = getCpfRatesForAge(30, 'pr', 24)
+      const citizen = getCpfRatesForAge(30)
+      expect(pr).toEqual(citizen)
+    })
+
+    it('prMonths = 120 returns full citizen rates', () => {
+      const pr = getCpfRatesForAge(45, 'pr', 120)
+      const citizen = getCpfRatesForAge(45)
+      expect(pr).toEqual(citizen)
+    })
+  })
+
+  describe('allocation ratio invariants', () => {
+    it('PR allocation OA+SA+MA sums to total rate', () => {
+      const rates = getCpfRatesForAge(30, 'pr', 6)
+      expect(rates.oaRate + rates.saRate + rates.maRate).toBeCloseTo(rates.totalRate, 6)
+    })
+
+    it('PR Year 2 allocation OA+SA+MA sums to total rate', () => {
+      const rates = getCpfRatesForAge(30, 'pr', 18)
+      expect(rates.oaRate + rates.saRate + rates.maRate).toBeCloseTo(rates.totalRate, 6)
+    })
+
+    it('preserves citizen OA:SA:MA proportion for PR', () => {
+      const citizen = getCpfRatesForAge(30)
+      const pr = getCpfRatesForAge(30, 'pr', 6)
+      // OA/SA ratio should be preserved
+      const citizenOaSa = citizen.oaRate / citizen.saRate
+      const prOaSa = pr.oaRate / pr.saRate
+      expect(prOaSa).toBeCloseTo(citizenOaSa, 4)
+    })
+  })
+})
+
+// ============================================================
+// calculateCpfContribution — Residency variants
+// ============================================================
+
+describe('calculateCpfContribution (residency)', () => {
+  it('foreigner: zero contribution regardless of salary/age', () => {
+    const result = calculateCpfContribution(120000, 30, 0, 'foreigner')
+    expect(result.total).toBe(0)
+    expect(result.employee).toBe(0)
+    expect(result.employer).toBe(0)
+    expect(result.oaAllocation).toBe(0)
+    expect(result.saAllocation).toBe(0)
+    expect(result.maAllocation).toBe(0)
+  })
+
+  it('PR Year 1 (age 30): 9% of salary (OW-capped)', () => {
+    const result = calculateCpfContribution(72000, 30, 0, 'pr', 6)
+    expect(result.total).toBeCloseTo(72000 * 0.09, 0)
+    expect(result.employee).toBeCloseTo(72000 * 0.05, 0)
+    expect(result.employer).toBeCloseTo(72000 * 0.04, 0)
+  })
+
+  it('PR Year 2 (age 30): 24% of salary (OW-capped)', () => {
+    const result = calculateCpfContribution(72000, 30, 0, 'pr', 18)
+    expect(result.total).toBeCloseTo(72000 * 0.24, 0)
+    expect(result.employee).toBeCloseTo(72000 * 0.15, 0)
+    expect(result.employer).toBeCloseTo(72000 * 0.09, 0)
+  })
+
+  it('PR Year 3+: matches citizen contribution', () => {
+    const pr = calculateCpfContribution(72000, 30, 0, 'pr', 36)
+    const citizen = calculateCpfContribution(72000, 30)
+    expect(pr.total).toBe(citizen.total)
+    expect(pr.oaAllocation).toBe(citizen.oaAllocation)
+  })
+
+  it('default params (no residency) produce citizen rates', () => {
+    const explicit = calculateCpfContribution(72000, 30, 0, 'citizen', 24)
+    const defaultCall = calculateCpfContribution(72000, 30)
+    expect(explicit.total).toBe(defaultCall.total)
   })
 })

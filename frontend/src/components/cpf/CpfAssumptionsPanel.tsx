@@ -32,10 +32,12 @@ const CPF_SOURCES = {
 export function CpfAssumptionsPanel() {
   const [isOpen, setIsOpen] = useState(false)
   const currentAge = useProfileStore((s) => s.currentAge)
+  const residencyStatus = useProfileStore((s) => s.residencyStatus)
+  const prMonths = useProfileStore((s) => s.prMonths)
   const cpfLifeStartAge = useProfileStore((s) => s.cpfLifeStartAge)
   const cpfLifePlan = useProfileStore((s) => s.cpfLifePlan)
 
-  const rates = getCpfRatesForAge(currentAge)
+  const rates = getCpfRatesForAge(currentAge, residencyStatus, prMonths)
   const brsFrsErs = calculateBrsFrsErs(currentAge)
 
   const planLabels: Record<string, string> = {

@@ -31,6 +31,7 @@ export function CpfSection() {
     cpfOaWithdrawals,
     addCpfOaWithdrawal, removeCpfOaWithdrawal, updateCpfOaWithdrawal,
     cpfTopUpOA, cpfTopUpSA, cpfTopUpMA,
+    residencyStatus, prMonths,
     validationErrors, setField,
   } = useProfileStore()
   const cpfAutoFallback = useProfileStore((s) => s.cpfAutoFallback)
@@ -43,8 +44,8 @@ export function CpfSection() {
   const isPostFire = lifeStage === 'post-fire'
   const effectivePhase = isPostFire ? retirementPhase : null
 
-  const rates = getCpfRatesForAge(currentAge)
-  const contribution = calculateCpfContribution(annualIncome, currentAge)
+  const rates = getCpfRatesForAge(currentAge, residencyStatus, prMonths)
+  const contribution = calculateCpfContribution(annualIncome, currentAge, 0, residencyStatus, prMonths)
   const brsFrsErs = calculateBrsFrsErs(currentAge)
 
   // Check for manual CPF LIFE stream
@@ -299,7 +300,7 @@ export function CpfSection() {
               type="button"
               className="text-xs text-muted-foreground underline hover:text-foreground"
               onClick={() => {
-                const est = estimateCpfBalancesFromAge(currentAge, annualIncome)
+                const est = estimateCpfBalancesFromAge(currentAge, annualIncome, 22, 0.03, residencyStatus, prMonths)
                 setField('cpfOA', est.oa)
                 setField('cpfSA', est.sa)
                 setField('cpfMA', est.ma)

@@ -22,6 +22,8 @@ export function useSectionNudge(sectionId: ModeSectionId): SectionNudgeData | nu
 
   const annualIncome = useProfileStore((s) => s.annualIncome)
   const currentAge = useProfileStore((s) => s.currentAge)
+  const residencyStatus = useProfileStore((s) => s.residencyStatus)
+  const prMonths = useProfileStore((s) => s.prMonths)
   const retirementAge = useProfileStore((s) => s.retirementAge)
   const lifeExpectancy = useProfileStore((s) => s.lifeExpectancy)
   const liquidNetWorth = useProfileStore((s) => s.liquidNetWorth)
@@ -47,7 +49,7 @@ export function useSectionNudge(sectionId: ModeSectionId): SectionNudgeData | nu
         const nudgeId = 'income-srs-tax'
         if (dismissedNudges.includes(nudgeId)) return null
 
-        const rates = getCpfRatesForAge(currentAge)
+        const rates = getCpfRatesForAge(currentAge, residencyStatus, prMonths)
         const cpfEmployee = Math.min(annualIncome, OW_CEILING_ANNUAL) * rates.employeeRate
         const earnedRelief = earnedIncomeReliefForAge(currentAge)
         const chargeableWithout = Math.max(0, annualIncome - cpfEmployee - earnedRelief)
@@ -167,6 +169,7 @@ export function useSectionNudge(sectionId: ModeSectionId): SectionNudgeData | nu
     }
   }, [
     mode, sectionId, dismissedNudges, annualIncome, currentAge,
+    residencyStatus, prMonths,
     retirementAge, lifeExpectancy, liquidNetWorth, cpfOA, cpfSA, cpfMA,
     srsBalance, srsAnnualContribution, fireType, ownsProperty, propertyType,
     lastMCSuccessRate, cpfEnabled,

@@ -176,6 +176,7 @@ describe('profileSchema', () => {
     lifeStage: 'pre-fire' as const,
     maritalStatus: 'single' as const,
     residencyStatus: 'citizen' as const,
+    prMonths: 24,
     annualIncome: 72000,
     annualExpenses: 48000,
     liquidNetWorth: 100000,
@@ -802,7 +803,7 @@ describe('validateStoreData', () => {
   it('returns success for valid profile data', () => {
     const data = {
       currentAge: 35, retirementAge: 60, lifeExpectancy: 90,
-      lifeStage: 'pre-fire', maritalStatus: 'single', residencyStatus: 'citizen',
+      lifeStage: 'pre-fire', maritalStatus: 'single', residencyStatus: 'citizen', prMonths: 24,
       annualIncome: 100000, annualExpenses: 48000, liquidNetWorth: 500000,
       cpfOA: 50000, cpfSA: 30000, cpfMA: 20000, cpfRA: 0,
       srsBalance: 0, srsAnnualContribution: 0,

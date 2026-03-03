@@ -69,6 +69,7 @@ export function buildProjectionParams(
     cpfMortgageYearsLeft: cpfHousing.cpfMortgageYearsLeft,
     cpfLifeActualMonthlyPayout: profile.cpfLifeActualMonthlyPayout,
     residencyStatus: profile.residencyStatus,
+    prMonths: profile.prMonths,
     srsBalance: profile.srsBalance,
     srsInvestmentReturn: profile.srsInvestmentReturn,
     srsDrawdownStartAge: profile.srsDrawdownStartAge,
