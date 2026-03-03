@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { runMonteCarlo, resolveInitialRate, generateReturnsParametric, computeWithdrawalsForYear, type MonteCarloEngineParams } from './monteCarlo.ts'
+import { runMonteCarlo, resolveInitialRate, generateReturnsParametric, generateAssetReturnsParametric, computeWithdrawalsForYear, type MonteCarloEngineParams } from './monteCarlo.ts'
 import { CORRELATION_MATRIX, ASSET_CLASSES } from '@/lib/data/historicalReturns.ts'
 import { SeededRNG } from '@/lib/math/random.ts'
 
@@ -1126,5 +1126,129 @@ describe('deterministicAccumulation', () => {
     const retBalances = result.representative_paths!.map(p => p.retirementBalance)
     const unique = new Set(retBalances.map(b => Math.round(b)))
     expect(unique.size).toBeGreaterThan(1)
+  })
+})
+
+// ============================================================
+// Glide Path (yearlyWeights) in Monte Carlo
+// ============================================================
+
+describe('Monte Carlo glide path (yearlyWeights)', () => {
+  const baseWeights = [0.60, 0.05, 0.05, 0.15, 0.05, 0.03, 0.05, 0.02]
+  const targetWeights = [0.20, 0.03, 0.03, 0.50, 0.05, 0.05, 0.10, 0.04]
+
+  function makeGlideParams(overrides: Record<string, unknown> = {}) {
+    const nYears = 55 // 20 accum + 35 decum
+    // Simple linear glide from base to target over all years
+    const yearlyWeights = Array.from({ length: nYears }, (_, t) => {
+      const progress = t / (nYears - 1)
+      return baseWeights.map((w, i) => w + (targetWeights[i] - w) * progress)
+    })
+    return makeDefaultParams({
+      allocationWeights: baseWeights,
+      yearlyWeights,
+      nSimulations: 200,
+      ...overrides,
+    }) as MonteCarloEngineParams
+  }
+
+  it('backward compatible — no yearlyWeights returns same result', () => {
+    const params = makeDefaultParams({ nSimulations: 200, seed: 99 }) as MonteCarloEngineParams
+    const a = runMonteCarlo(params)
+    const b = runMonteCarlo(params)
+    expect(a.success_rate).toBe(b.success_rate)
+    expect(a.terminal_stats.median).toBe(b.terminal_stats.median)
+  })
+
+  it('constant yearlyWeights matches fixed weights (parametric)', () => {
+    const constantWeights = Array(55).fill(baseWeights)
+    const withGlide = runMonteCarlo(makeDefaultParams({
+      allocationWeights: baseWeights,
+      yearlyWeights: constantWeights,
+      nSimulations: 200,
+      seed: 42,
+      method: 'parametric',
+    }) as MonteCarloEngineParams)
+    const withoutGlide = runMonteCarlo(makeDefaultParams({
+      allocationWeights: baseWeights,
+      nSimulations: 200,
+      seed: 42,
+      method: 'parametric',
+    }) as MonteCarloEngineParams)
+
+    expect(withGlide.success_rate).toBeCloseTo(withoutGlide.success_rate, 5)
+    expect(withGlide.terminal_stats.median).toBeCloseTo(withoutGlide.terminal_stats.median, 0)
+  })
+
+  it('glide path produces different results from fixed weights (parametric)', () => {
+    const glideResult = runMonteCarlo(makeGlideParams({
+      seed: 42,
+      method: 'parametric',
+    }))
+    const fixedResult = runMonteCarlo(makeDefaultParams({
+      allocationWeights: baseWeights,
+      nSimulations: 200,
+      seed: 42,
+      method: 'parametric',
+    }) as MonteCarloEngineParams)
+
+    // Median terminal wealth should differ since allocation shifts over time
+    expect(glideResult.terminal_stats.median).not.toBeCloseTo(
+      fixedResult.terminal_stats.median, -1,
+    )
+  })
+
+  it('constant yearlyWeights matches fixed weights (bootstrap)', () => {
+    const constantWeights = Array(55).fill(baseWeights)
+    const withGlide = runMonteCarlo(makeDefaultParams({
+      allocationWeights: baseWeights,
+      yearlyWeights: constantWeights,
+      nSimulations: 200,
+      seed: 42,
+      method: 'bootstrap',
+    }) as MonteCarloEngineParams)
+    const withoutGlide = runMonteCarlo(makeDefaultParams({
+      allocationWeights: baseWeights,
+      nSimulations: 200,
+      seed: 42,
+      method: 'bootstrap',
+    }) as MonteCarloEngineParams)
+
+    expect(withGlide.success_rate).toBeCloseTo(withoutGlide.success_rate, 5)
+    expect(withGlide.terminal_stats.median).toBeCloseTo(withoutGlide.terminal_stats.median, 0)
+  })
+
+  it('fat-tail ignores yearlyWeights (uses fixed weights)', () => {
+    const glideResult = runMonteCarlo(makeGlideParams({
+      seed: 42,
+      method: 'fat_tail',
+    }))
+    const fixedResult = runMonteCarlo(makeDefaultParams({
+      allocationWeights: baseWeights,
+      nSimulations: 200,
+      seed: 42,
+      method: 'fat_tail',
+    }) as MonteCarloEngineParams)
+
+    // Fat-tail is univariate — yearlyWeights should have no effect
+    expect(glideResult.success_rate).toBe(fixedResult.success_rate)
+    expect(glideResult.terminal_stats.median).toBe(fixedResult.terminal_stats.median)
+  })
+
+  it('deterministic accumulation respects yearlyWeights', () => {
+    const glideResult = runMonteCarlo(makeGlideParams({
+      seed: 42,
+      deterministicAccumulation: true,
+    }))
+    const fixedResult = runMonteCarlo(makeDefaultParams({
+      allocationWeights: baseWeights,
+      nSimulations: 200,
+      seed: 42,
+      deterministicAccumulation: true,
+    }) as MonteCarloEngineParams)
+
+    // Deterministic path uses per-year expected returns with glide path
+    // Terminal stats differ because accumulation uses shifting weights
+    expect(glideResult.terminal_stats.median).not.toBe(fixedResult.terminal_stats.median)
   })
 })

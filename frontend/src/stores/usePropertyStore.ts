@@ -31,7 +31,7 @@ const PROPERTY_DATA_KEYS = [
   'rentalYield', 'mortgageRate', 'mortgageTerm', 'ltv',
   'residencyForAbsd', 'propertyCount',
   'ownsProperty', 'existingPropertyValue', 'existingMortgageBalance',
-  'existingMonthlyPayment', 'existingRentalIncome',
+  'existingMonthlyPayment',
   'existingMortgageRate', 'existingMortgageRemainingYears',
   'mortgageCpfMonthly',
   'ownershipPercent',
@@ -56,7 +56,6 @@ const DEFAULT_PROPERTY: Omit<PropertyState, 'validationErrors'> = {
   existingPropertyValue: 0,
   existingMortgageBalance: 0,
   existingMonthlyPayment: 0,
-  existingRentalIncome: 0,
   existingMortgageRate: 0.035,
   existingMortgageRemainingYears: 25,
   mortgageCpfMonthly: 0,
@@ -113,9 +112,6 @@ function computeValidationErrors(
     }
     if (state.existingMonthlyPayment < 0) {
       errors.existingMonthlyPayment = 'Monthly payment cannot be negative'
-    }
-    if (state.existingRentalIncome < 0) {
-      errors.existingRentalIncome = 'Rental income cannot be negative'
     }
     if (state.existingMortgageRate < 0 || state.existingMortgageRate > 0.15) {
       errors.existingMortgageRate = 'Mortgage rate must be between 0% and 15%'
@@ -210,7 +206,7 @@ export const usePropertyStore = create<PropertyState & PropertyActions>()(
     }),
     {
       name: 'fireplanner-property',
-      version: 9,
+      version: 10,
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>
         if (version < 2) {
@@ -218,7 +214,6 @@ export const usePropertyStore = create<PropertyState & PropertyActions>()(
           state.existingPropertyValue = state.existingPropertyValue ?? 0
           state.existingMortgageBalance = state.existingMortgageBalance ?? 0
           state.existingMonthlyPayment = state.existingMonthlyPayment ?? 0
-          state.existingRentalIncome = state.existingRentalIncome ?? 0
         }
         if (version < 3) {
           state.existingMortgageRate = state.existingMortgageRate ?? 0.035
@@ -252,6 +247,9 @@ export const usePropertyStore = create<PropertyState & PropertyActions>()(
           state.existingAppreciationRate ??= 0.03
           state.existingLeaseYears ??= 99
           state.existingApplyBalaDecay ??= true
+        }
+        if (version < 10) {
+          delete state.existingRentalIncome
         }
         return state
       },

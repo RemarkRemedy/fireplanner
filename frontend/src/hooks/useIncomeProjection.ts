@@ -69,6 +69,7 @@ export function buildProjectionParams(
     cpfMortgageYearsLeft: cpfHousing.cpfMortgageYearsLeft,
     cpfLifeActualMonthlyPayout: profile.cpfLifeActualMonthlyPayout,
     residencyStatus: profile.residencyStatus,
+    prMonths: profile.prMonths,
     srsBalance: profile.srsBalance,
     srsInvestmentReturn: profile.srsInvestmentReturn,
     srsDrawdownStartAge: profile.srsDrawdownStartAge,
@@ -81,6 +82,10 @@ export function buildProjectionParams(
     cpfTopUpMA: profile.cpfTopUpMA,
     lockedAssets: profile.lockedAssets,
     expenseAdjustments: profile.expenseAdjustments,
+    cpfAutoFallback: profile.cpfAutoFallback,
+    cpfAutoFallbackIncludeSA: profile.cpfAutoFallbackIncludeSA,
+    cpfVirtualRebalancing: profile.cpfVirtualRebalancing,
+    cpfVirtualRebalancingMode: profile.cpfVirtualRebalancingMode,
   }
 }
 
@@ -169,6 +174,10 @@ export function useIncomeProjection(): IncomeProjectionResult {
       cpfTopUpMA: profile.cpfTopUpMA,
       lockedAssets: profile.lockedAssets,
       expenseAdjustments: profile.expenseAdjustments,
+      cpfAutoFallback: profile.cpfAutoFallback,
+      cpfAutoFallbackIncludeSA: profile.cpfAutoFallbackIncludeSA,
+      cpfVirtualRebalancing: profile.cpfVirtualRebalancing,
+      cpfVirtualRebalancingMode: profile.cpfVirtualRebalancingMode,
     })
 
     const summary = calculateIncomeSummary(projection, profile.annualExpenses)
@@ -205,6 +214,10 @@ export function useIncomeProjection(): IncomeProjectionResult {
     profile.cpfTopUpMA,
     profile.lockedAssets,
     profile.expenseAdjustments,
+    profile.cpfAutoFallback,
+    profile.cpfAutoFallbackIncludeSA,
+    profile.cpfVirtualRebalancing,
+    profile.cpfVirtualRebalancingMode,
     profile.validationErrors,
     income.salaryModel,
     income.annualSalary,

@@ -31,6 +31,7 @@ export const profileSchema = z.object({
   lifeStage: z.enum(['pre-fire', 'post-fire']),
   maritalStatus: z.enum(['single', 'married', 'divorced', 'widowed']),
   residencyStatus: z.enum(['citizen', 'pr', 'foreigner']),
+  prMonths: z.number().int().min(0).max(600),
 
   annualIncome: nonNegativeSchema,
   annualExpenses: expensesSchema,

@@ -149,6 +149,7 @@ export interface ProfileState {
   lifeStage: LifeStage
   maritalStatus: MaritalStatus
   residencyStatus: ResidencyStatus
+  prMonths: number // Months since becoming PR (for graduated CPF rates; 0-600)
 
   // Financial
   annualIncome: number
@@ -219,6 +220,13 @@ export interface ProfileState {
   cpfisEnabled: boolean
   cpfisOaReturn: number   // expected return on invested OA portion (above retention)
   cpfisSaReturn: number   // expected return on invested SA portion (above retention)
+
+  // CPF Auto-Withdrawal (fallback when liquid NW depleted, age >= 55)
+  cpfAutoFallback: boolean
+  cpfAutoFallbackIncludeSA: boolean
+  // Virtual Rebalancing (count uninvested CPF as bond/cash allocation)
+  cpfVirtualRebalancing: boolean
+  cpfVirtualRebalancingMode: 'from55' | 'always'
 
   // Retirement One-Time Withdrawals
   retirementWithdrawals: RetirementWithdrawal[]
@@ -861,7 +869,6 @@ export interface PropertyState {
   existingPropertyValue: number
   existingMortgageBalance: number
   existingMonthlyPayment: number
-  existingRentalIncome: number
   existingMortgageRate: number
   existingMortgageRemainingYears: number
   mortgageCpfMonthly: number
@@ -921,6 +928,9 @@ export interface ProjectionRow {
   cpfOaHousingDeduction: number
   cpfOaShortfall: number
   cpfOaWithdrawal: number
+  cpfAutoOaWithdrawal: number      // auto-fallback amount from OA this year
+  cpfAutoSaWithdrawal: number      // auto-fallback amount from SA this year
+  cpfCountedAsBonds: number        // dollar amount of uninvested CPF counted toward bond allocation
   cpfisOA: number
   cpfisSA: number
   cpfisReturn: number
@@ -959,7 +969,8 @@ export interface ProjectionRow {
   oopExpense: number
   mediSaveDeductible: number
   // Allocation weights (N asset classes, for glide path visualization)
-  allocationWeights: number[]
+  allocationWeights: number[]           // effective weights (after CPF virtual rebalancing if active)
+  targetAllocationWeights: number[]     // target/intended weights (before CPF virtual rebalancing)
   // Expanded: other
   cumulativeSavings: number
   activeLifeEvents: string[]

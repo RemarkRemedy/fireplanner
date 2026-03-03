@@ -1,12 +1,13 @@
 import type { ValidationErrors, ProfileState, IncomeState, AllocationState, WithdrawalState } from '@/lib/types'
 import { MEDISAVE_BHS } from '@/lib/data/healthcarePremiums'
+import { getBhsAtAge } from '@/lib/calculations/cpf'
 
 /**
  * Cross-field validation rules within the profile store.
  * Returns a map of field names to error messages.
  */
 export function validateProfileConsistency(
-  profile: Pick<ProfileState, 'currentAge' | 'retirementAge' | 'lifeExpectancy' | 'lifeStage' | 'cpfLifeStartAge' | 'parentSupportEnabled' | 'parentSupport' | 'healthcareConfig' | 'retirementWithdrawals' | 'financialGoals' | 'cpfOaWithdrawals'> & { lockedAssets?: ProfileState['lockedAssets']; expenseAdjustments?: ProfileState['expenseAdjustments'] }
+  profile: Pick<ProfileState, 'currentAge' | 'retirementAge' | 'lifeExpectancy' | 'lifeStage' | 'cpfLifeStartAge' | 'cpfMA' | 'parentSupportEnabled' | 'parentSupport' | 'healthcareConfig' | 'retirementWithdrawals' | 'financialGoals' | 'cpfOaWithdrawals'> & { lockedAssets?: ProfileState['lockedAssets']; expenseAdjustments?: ProfileState['expenseAdjustments'] }
 ): ValidationErrors {
   const errors: ValidationErrors = {}
 
@@ -20,6 +21,12 @@ export function validateProfileConsistency(
 
   if (profile.cpfLifeStartAge >= profile.lifeExpectancy) {
     errors.cpfLifeStartAge = 'CPF LIFE start age must be less than life expectancy'
+  }
+
+  // MA cannot exceed BHS for current age
+  const currentBhs = getBhsAtAge(profile.currentAge, profile.currentAge)
+  if (profile.cpfMA > currentBhs) {
+    errors.cpfMA = `MA cannot exceed the Basic Healthcare Sum ($${currentBhs.toLocaleString()})`
   }
 
   // Parent support validation

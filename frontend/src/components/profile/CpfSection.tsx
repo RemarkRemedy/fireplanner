@@ -31,8 +31,12 @@ export function CpfSection() {
     cpfOaWithdrawals,
     addCpfOaWithdrawal, removeCpfOaWithdrawal, updateCpfOaWithdrawal,
     cpfTopUpOA, cpfTopUpSA, cpfTopUpMA,
+    residencyStatus, prMonths,
     validationErrors, setField,
   } = useProfileStore()
+  const cpfAutoFallback = useProfileStore((s) => s.cpfAutoFallback)
+  const cpfVirtualRebalancing = useProfileStore((s) => s.cpfVirtualRebalancing)
+  const cpfVirtualRebalancingMode = useProfileStore((s) => s.cpfVirtualRebalancingMode)
   const incomeStreams = useIncomeStore((s) => s.incomeStreams)
   const mode = useEffectiveMode('section-cpf')
 
@@ -40,8 +44,8 @@ export function CpfSection() {
   const isPostFire = lifeStage === 'post-fire'
   const effectivePhase = isPostFire ? retirementPhase : null
 
-  const rates = getCpfRatesForAge(currentAge)
-  const contribution = calculateCpfContribution(annualIncome, currentAge)
+  const rates = getCpfRatesForAge(currentAge, residencyStatus, prMonths)
+  const contribution = calculateCpfContribution(annualIncome, currentAge, 0, residencyStatus, prMonths)
   const brsFrsErs = calculateBrsFrsErs(currentAge)
 
   // Check for manual CPF LIFE stream
@@ -289,68 +293,76 @@ export function CpfSection() {
 
         {mode === 'advanced' && <Separator />}
 
-        {/* CPF balance estimator — pre-55 users only */}
-        {currentAge < 55 && (
-          <div>
-            {cpfOA === 0 && cpfSA === 0 && cpfMA === 0 ? (
-              <div className="space-y-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const est = estimateCpfBalancesFromAge(currentAge, annualIncome)
-                    setField('cpfOA', est.oa)
-                    setField('cpfSA', est.sa)
-                    setField('cpfMA', est.ma)
-                    trackEvent('cpf_estimated_from_age')
-                  }}
-                >
-                  Estimate from your age &amp; salary
-                </Button>
-                <p className="text-xs text-muted-foreground">
-                  Rough estimate assuming career from age 22 with 3% annual salary growth. Check your CPF statement for exact balances.
-                </p>
-              </div>
-            ) : (
+        {/* CPF balance estimator */}
+        {(
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <button
+              type="button"
+              className="text-xs text-muted-foreground underline hover:text-foreground"
+              onClick={() => {
+                const est = estimateCpfBalancesFromAge(currentAge, annualIncome, 22, 0.03, residencyStatus, prMonths)
+                setField('cpfOA', est.oa)
+                setField('cpfSA', est.sa)
+                setField('cpfMA', est.ma)
+                trackEvent('cpf_estimated_from_age')
+              }}
+            >
+              {cpfOA === 0 && cpfSA === 0 && cpfMA === 0
+                ? 'Estimate from age & salary'
+                : 'Re-estimate from age & salary'}
+            </button>
+            <InfoTooltip
+              text={`Simulates a ${currentAge - 22}-year career from age 22 to ${currentAge}, back-projecting your current $${annualIncome.toLocaleString()} salary at 3% annual growth. For each year: applies age-bracket CPF contribution rates (with OW ceiling), credits OA interest (2.5%), SA interest (4%), MA interest (4%), extra interest (1% on first $60K), and redirects MA excess above BHS to SA. Does not account for housing withdrawals, career gaps, or CPFIS investments. Check your CPF statement for exact balances.`}
+              formula="Starting salary = Current salary / (1.03)^years worked. Each year: contributions + interest + extra interest, then MA capped at BHS with overflow to SA."
+              source="CPF Board"
+              sourceUrl="https://www.cpf.gov.sg/member/cpf-overview"
+            />
+            {(cpfOA !== 0 || cpfSA !== 0 || cpfMA !== 0) && (
               <button
                 type="button"
                 className="text-xs text-muted-foreground underline hover:text-foreground"
                 onClick={() => {
-                  const est = estimateCpfBalancesFromAge(currentAge, annualIncome)
-                  setField('cpfOA', est.oa)
-                  setField('cpfSA', est.sa)
-                  setField('cpfMA', est.ma)
-                  trackEvent('cpf_estimated_from_age')
+                  setField('cpfOA', 0)
+                  setField('cpfSA', 0)
+                  setField('cpfMA', 0)
                 }}
               >
-                Re-estimate from age &amp; salary
+                Clear
               </button>
             )}
           </div>
         )}
 
-        {/* CPF balance summary */}
+        {/* CPF balance inputs */}
         <div>
           <h4 className="text-sm font-medium mb-2">Current CPF Balances</h4>
           <div className={cn('grid gap-2 text-sm', currentAge >= 55 ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4')}>
-            <div className="p-2 bg-muted/50 rounded">
-              <div className="text-xs text-muted-foreground">OA</div>
-              <div className="font-semibold text-green-600">{formatCurrency(cpfOA)}</div>
-            </div>
-            <div className="p-2 bg-muted/50 rounded">
-              <div className="text-xs text-muted-foreground">SA</div>
-              <div className="font-semibold text-green-600">{formatCurrency(cpfSA)}</div>
-            </div>
+            <CurrencyInput
+              label="OA"
+              value={cpfOA}
+              onChange={(v) => setField('cpfOA', v)}
+              error={validationErrors.cpfOA}
+            />
+            <CurrencyInput
+              label="SA"
+              value={cpfSA}
+              onChange={(v) => setField('cpfSA', v)}
+              error={validationErrors.cpfSA}
+            />
             {currentAge >= 55 && (
-              <div className="p-2 bg-muted/50 rounded">
-                <div className="text-xs text-muted-foreground">RA</div>
-                <div className="font-semibold text-green-600">{formatCurrency(cpfRA)}</div>
-              </div>
+              <CurrencyInput
+                label="RA"
+                value={cpfRA}
+                onChange={(v) => setField('cpfRA', v)}
+                error={validationErrors.cpfRA}
+              />
             )}
-            <div className="p-2 bg-muted/50 rounded">
-              <div className="text-xs text-muted-foreground">MA</div>
-              <div className="font-semibold text-green-600">{formatCurrency(cpfMA)}</div>
-            </div>
+            <CurrencyInput
+              label="MA"
+              value={cpfMA}
+              onChange={(v) => setField('cpfMA', v)}
+              error={validationErrors.cpfMA}
+            />
             <div className="p-2 bg-muted/50 rounded">
               <div className="text-xs text-muted-foreground">Total</div>
               <div className="font-semibold text-green-600">{formatCurrency(totalCpf)}</div>
@@ -678,6 +690,68 @@ export function CpfSection() {
                   })()}
                 </div>
               )}
+            </div>
+          </>
+        )}
+
+        {/* CPF Auto-Withdrawal Rules — Advanced only */}
+        {mode === 'advanced' && (
+          <>
+            <Separator />
+            <div>
+              <h4 className="text-sm font-medium flex items-center mb-3">
+                CPF Auto-Withdrawal Rules
+                <InfoTooltip text="Configure automatic CPF withdrawal behavior when your liquid portfolio runs out. Without these features, the projection may show $0 liquid assets for decades while CPF holds hundreds of thousands untouched — an unrealistic scenario for most retirees." />
+              </h4>
+
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={cpfAutoFallback}
+                    onChange={(e) => setField('cpfAutoFallback', e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  Auto-withdraw from CPF when portfolio runs out
+                  <InfoTooltip text="When your liquid portfolio hits $0, automatically withdraw from CPF OA (and optionally SA) to cover living expenses. Only applies from age 55 onwards, and FRS is always preserved for CPF LIFE. On by default because most retirees would tap CPF rather than go unfunded. Uncheck to see a worst-case scenario where CPF is left entirely untouched (e.g. for bequest planning)." />
+                </label>
+
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={cpfVirtualRebalancing}
+                    onChange={(e) => setField('cpfVirtualRebalancing', e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  Count uninvested CPF as bond allocation
+                  <InfoTooltip text="Treat uninvested CPF (earning guaranteed 2.5-4%) as part of your bond/fixed-income allocation. This prevents over-allocating to bonds in your liquid portfolio when CPF already serves that role. On by default because CPF functions like a high-quality bond. Uncheck if you prefer to manage your liquid portfolio independently of CPF, or if you invest your CPF via CPFIS (which counts as equity, not bonds)." />
+                </label>
+
+                {cpfVirtualRebalancing && (
+                  <div className="ml-6 space-y-1">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="radio"
+                        name="cpfRebalMode"
+                        checked={cpfVirtualRebalancingMode === 'from55'}
+                        onChange={() => setField('cpfVirtualRebalancingMode', 'from55')}
+                      />
+                      From age 55 only
+                      <InfoTooltip text="Only count CPF as bonds from age 55, when funds become accessible. This is the recommended default since CPF is legally locked before 55 — counting illiquid funds as bonds could lead to an overly aggressive liquid portfolio you can't rebalance." />
+                    </label>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="radio"
+                        name="cpfRebalMode"
+                        checked={cpfVirtualRebalancingMode === 'always'}
+                        onChange={() => setField('cpfVirtualRebalancingMode', 'always')}
+                      />
+                      Always (illiquid before 55)
+                      <InfoTooltip text="Count CPF as bonds at all ages. Use this if you are already over 55, or if you want to see the theoretical portfolio tilt assuming full CPF access. Before 55, CPF is illiquid, so the rebalancing is purely notional." />
+                    </label>
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )}

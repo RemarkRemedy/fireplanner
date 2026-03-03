@@ -20,6 +20,7 @@ import {
   DEFAULT_COLUMN_IDS,
   type ColumnGroup,
 } from '@/components/shared/projectionColumns'
+import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 
 // ── Percentile options ──────────────────────────────────────────────
 const PERCENTILE_OPTIONS = [
@@ -85,6 +86,19 @@ export function MCProjectionTable({ result, isStale }: MCProjectionTableProps) {
   const hasLifeEvents = rows?.some((r) => r.activeLifeEvents.length > 0) ?? false
   const hasLockedUnlock = rows?.some((r) => r.lockedAssetUnlock > 0) ?? false
   const hasHealthcareBreakdown = rows?.some((r) => r.healthcareCashOutlay > 0) ?? false
+  const hasVirtualRebalancing = rows?.some((r) => r.cpfCountedAsBonds > 0) ?? false
+
+  // Detect which asset classes have any non-zero weight across all rows
+  const nonZeroAssets = useMemo(() => {
+    if (!rows) return new Set<number>()
+    const active = new Set<number>()
+    for (const row of rows) {
+      for (let i = 0; i < row.allocationWeights.length; i++) {
+        if (row.allocationWeights[i] > 0) active.add(i)
+      }
+    }
+    return active
+  }, [rows])
 
   // ── Column group toggles ────────────────────────────────────────
   const toggleGroup = (group: ColumnGroup) => {
@@ -98,15 +112,6 @@ export function MCProjectionTable({ result, isStale }: MCProjectionTableProps) {
       return next
     })
   }
-
-  const groupStartColumns = useMemo(() => {
-    const s = new Set<string>()
-    for (const g of activeGroups) {
-      const cols = GROUP_COLUMNS[g]
-      if (cols.length > 0) s.add(cols[0])
-    }
-    return s
-  }, [activeGroups])
 
   // ── Column visibility ───────────────────────────────────────────
   const columnVisibility = useMemo((): VisibilityState => {
@@ -137,13 +142,38 @@ export function MCProjectionTable({ result, isStale }: MCProjectionTableProps) {
     if (!hasPropertyEquity && !hasPropertyValue) vis['propertyEquity'] = false
     if (!hasPropertyEquity && !hasPropertyValue) vis['totalNWIncProperty'] = false
     if (!hasLifeEvents) vis['activeLifeEvents'] = false
+    // Auto-hide asset breakdown columns for assets with zero weight across all rows
+    for (let i = 0; i < ASSET_CLASSES.length; i++) {
+      if (!nonZeroAssets.has(i)) {
+        vis[`asset_${ASSET_CLASSES[i].key}Value`] = false
+        vis[`asset_${ASSET_CLASSES[i].key}Pct`] = false
+        vis[`asset_${ASSET_CLASSES[i].key}TgtPct`] = false
+      }
+    }
+    // Hide target % columns when CPF virtual rebalancing is not active (target === effective)
+    if (!hasVirtualRebalancing) {
+      for (const ac of ASSET_CLASSES) {
+        vis[`asset_${ac.key}TgtPct`] = false
+      }
+    }
     return vis
   }, [
     activeGroups, hasLockedUnlock, hasHealthcareBreakdown, hasRa,
     hasOaHousing, hasOaShortfall, hasBequest, hasCpfLife, hasMilestone,
     hasMortgageCash, hasPropertyValue, hasMortgageBalance, hasPropertyEquity,
-    hasLifeEvents,
+    hasLifeEvents, nonZeroAssets, hasVirtualRebalancing,
   ])
+
+  // Set of first-column IDs for each active group — uses first *visible* column
+  const groupStartColumns = useMemo(() => {
+    const s = new Set<string>()
+    for (const g of activeGroups) {
+      const cols = GROUP_COLUMNS[g]
+      const firstVisible = cols.find((col) => columnVisibility[col] !== false)
+      if (firstVisible) s.add(firstVisible)
+    }
+    return s
+  }, [activeGroups, columnVisibility])
 
   const defaultVisibleCount = useMemo(() => {
     return DEFAULT_COLUMN_IDS.filter((id) => columnVisibility[id] !== false).length
@@ -253,11 +283,12 @@ export function MCProjectionTable({ result, isStale }: MCProjectionTableProps) {
               {activeGroups.size > 0 && (
                 <tr className="border-b bg-muted/30">
                   <th colSpan={defaultVisibleCount} className="border-b" />
-                  {COLUMN_GROUPS.filter((g) => activeGroups.has(g.key)).map((g) => (
+                  {COLUMN_GROUPS.filter((g) => activeGroups.has(g.key) && groupVisibleCount[g.key] > 0).map((g) => (
                     <th
                       key={g.key}
                       colSpan={groupVisibleCount[g.key]}
                       className="px-2 py-1 text-center text-xs font-semibold text-primary/80 border-b border-l-2 border-l-border"
+                      title={g.key === 'portfolioBreakdown' ? 'Per-asset values and weights. When CPF Virtual Rebalancing is on, weights marked with * reflect the effective allocation after treating uninvested CPF as bonds.' : undefined}
                     >
                       {g.label}
                     </th>

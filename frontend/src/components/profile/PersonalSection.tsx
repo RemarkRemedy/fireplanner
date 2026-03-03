@@ -8,7 +8,7 @@ import { NumberInput } from '@/components/shared/NumberInput'
 import { cn } from '@/lib/utils'
 
 export function PersonalSection() {
-  const { currentAge, retirementAge, lifeExpectancy, lifeStage, maritalStatus, residencyStatus, setField, validationErrors } =
+  const { currentAge, retirementAge, lifeExpectancy, lifeStage, maritalStatus, residencyStatus, prMonths, setField, validationErrors } =
     useProfileStore()
 
   return (
@@ -133,6 +133,26 @@ export function PersonalSection() {
               </SelectContent>
             </Select>
           </div>
+
+          {residencyStatus === 'pr' && (
+            <div className="space-y-1">
+              <Label className="text-sm flex items-center">
+                Months as PR
+                <InfoTooltip text="Months since obtaining PR status. CPF contribution rates are graduated: Year 1 (0-11 months) has 9% total, Year 2 (12-23 months) has 24% total, Year 3+ (24+ months) has full citizen rates." />
+              </Label>
+              <NumberInput
+                integer
+                value={prMonths}
+                onChange={(v) => setField('prMonths', v)}
+                min={0}
+                max={600}
+                className={cn('border-blue-300', validationErrors.prMonths && 'border-destructive')}
+              />
+              {validationErrors.prMonths && (
+                <p className="text-xs text-destructive">{validationErrors.prMonths}</p>
+              )}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

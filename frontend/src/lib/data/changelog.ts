@@ -12,6 +12,80 @@ export interface ChangelogEntry {
 /** Newest first. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-03-04',
+    category: 'feature',
+    title: 'Asset Breakdown column group in projection tables',
+    description:
+      'A new "Asset Breakdown" toggle in the Projection and Stress Test tables shows per-asset-class dollar values and weight percentages for each year. Zero-weight assets are auto-hidden. When CPF Virtual Rebalancing is active, effective weights are marked with * and a separate "Tgt%" column shows the original target allocation for comparison.',
+    affectedSections: ['section-projection'],
+    insight:
+      'With CPF Virtual Rebalancing enabled, your liquid portfolio runs at different weights than your target allocation because uninvested CPF balances act as bond exposure. The effective (%) column shows what the liquid portfolio actually held, while the Tgt% column shows your intended allocation. The difference is the CPF bond substitution effect.',
+  },
+  {
+    date: '2026-03-03',
+    category: 'feature',
+    title: 'Glide path allocation wired into all simulation engines',
+    description:
+      'Monte Carlo (parametric and bootstrap), historical backtest, and sequence risk stress tests now use per-year allocation weights from the glide path instead of a single static allocation. A new buildYearlyWeights() helper converts the glide path into a year-indexed vector that each engine consumes, ensuring asset-mix shifts are reflected in every simulation path.',
+    affectedSections: ['section-allocation', 'section-stress-test'],
+    insight:
+      'Previously, glide path allocation only affected the deterministic projection. Simulations assumed a fixed weight vector for the entire horizon, which overstated equity exposure in late retirement for anyone with a declining equity glide path. Now the allocation gracefully shifts year by year across all engines.',
+  },
+  {
+    date: '2026-03-03',
+    category: 'feature',
+    title: 'CPF PR graduated contribution rates and foreigner support',
+    description:
+      'CPF contributions now follow the Permanent Resident graduated schedule: Year 1 (9% total), Year 2 (24% total), and Year 3+ (full citizen rates). Foreigners receive zero CPF contributions. A new "PR months" input appears when residency is set to PR, letting users specify how long they have held PR status.',
+    affectedSections: ['section-cpf', 'section-personal'],
+    insight:
+      'Singapore PRs do not receive full CPF contributions immediately. During the first two years, employer and employee contribution rates are lower, which significantly reduces OA/SA/MA accumulation. Modelling this correctly matters for recent PRs planning to buy property with CPF or targeting FRS.',
+  },
+  {
+    date: '2026-03-03',
+    category: 'fix',
+    title: 'Post-retirement income integrated into backtest engine',
+    description:
+      'The historical backtest engine now subtracts post-retirement income (CPF LIFE payouts, rental income, part-time work) from the gross withdrawal before drawing from the portfolio. This matches the existing behaviour in Monte Carlo and sequence risk engines, reducing over-withdrawal in backtest results for users with retirement income streams.',
+    affectedSections: ['section-stress-test'],
+    insight:
+      'Without this fix, the backtest engine treated the full withdrawal amount as coming from the portfolio, ignoring any retirement income that would offset it. Users with CPF LIFE or rental income saw artificially low backtest survival rates compared to Monte Carlo results.',
+  },
+  {
+    date: '2026-03-03',
+    category: 'fix',
+    title: 'Removed vestigial existingRentalIncome field',
+    description:
+      'The property store\'s existingRentalIncome field was never read by any calculation or UI component. It has been removed from the store interface and migration upgraded to version 10 to clean up the dead field from persisted state.',
+    affectedSections: ['section-property'],
+  },
+  {
+    date: '2026-03-03',
+    category: 'fix',
+    title: 'CPF estimator now caps MA at Basic Healthcare Sum',
+    description:
+      'The CPF balance estimator now enforces the BHS cap during the year-by-year simulation. When MA exceeds the BHS for the simulated age, the excess automatically overflows to SA — matching actual CPF Board rules. Previously the estimator accumulated MA without limit, producing unrealistically high MA balances.',
+    affectedSections: ['section-cpf'],
+    insight:
+      'The Basic Healthcare Sum (BHS) is $73,100 in 2025 and grows 4.5% per year, freezing at the value when you turn 65. In practice, once your MA hits BHS each year, subsequent MA contributions are redirected to your SA. This overflow is a significant source of SA growth for higher-income earners.',
+  },
+  {
+    date: '2026-03-03',
+    category: 'feature',
+    title: 'CPF balances are now editable with BHS validation',
+    description:
+      'CPF OA, SA, RA, and MA balances can now be directly edited after estimation. A "Clear" link resets all balances to $0. The MA input validates against the current Basic Healthcare Sum — values exceeding the BHS are flagged with an inline error.',
+    affectedSections: ['section-cpf'],
+  },
+  {
+    date: '2026-03-03',
+    category: 'fix',
+    title: 'Removed "Include SA excess above FRS" toggle',
+    description:
+      'The SA account is closed at age 55 when balances transfer to the Retirement Account (RA). The toggle to include SA excess above FRS in auto-withdrawal was misleading for post-55 users and has been removed from the CPF section.',
+    affectedSections: ['section-cpf'],
+  },
+  {
     date: '2026-03-02',
     category: 'feature',
     title: 'CPF LIFE bequest shown on projection chart',
@@ -29,7 +103,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       'A new "Estimate from your age & salary" button in the CPF section back-projects your OA/SA/MA balances based on your current age and salary, assuming career start at 22 with 3% annual salary growth. Uses actual CPF contribution rates and age-bracket allocation rules.',
     affectedSections: ['section-cpf'],
     insight:
-      'CPF had the highest section reset rate in analytics because most users don\'t know their exact OA/SA/MA split. This one-click estimate gives a reasonable starting point. The disclaimer warns it skips MA BHS cap overflow and age-55 transfer logic, so users should refine with their actual CPF statement.',
+      'CPF had the highest section reset rate in analytics because most users don\'t know their exact OA/SA/MA split. This one-click estimate gives a reasonable starting point with BHS cap enforcement and SA overflow. Users should still refine with their actual CPF statement for age-55 RA transfer amounts.',
   },
   {
     date: '2026-03-02',

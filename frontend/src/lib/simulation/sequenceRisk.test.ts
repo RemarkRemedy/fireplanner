@@ -367,3 +367,52 @@ describe('runSequenceRisk', () => {
     expect(rateResult.normal_success_rate).toBeGreaterThan(expenseResult.normal_success_rate)
   })
 })
+
+// ---------------------------------------------------------------------------
+// Glide path (yearlyWeights)
+// ---------------------------------------------------------------------------
+
+describe('sequence risk with yearlyWeights (glide path)', () => {
+  const nYears = PARAMS.lifeExpectancy - PARAMS.retirementAge
+
+  it('undefined yearlyWeights preserves original behavior', () => {
+    const base = runSequenceRisk(PARAMS)
+    const explicit = runSequenceRisk({ ...PARAMS, yearlyWeights: undefined })
+    expect(explicit.normal_success_rate).toBe(base.normal_success_rate)
+    expect(explicit.crisis_success_rate).toBe(base.crisis_success_rate)
+  })
+
+  it('constant yearlyWeights matches fixed weights', () => {
+    const constantWeights = Array.from({ length: nYears }, () => [...PARAMS.allocationWeights])
+    const constResult = runSequenceRisk({ ...PARAMS, yearlyWeights: constantWeights })
+    const fixedResult = runSequenceRisk(PARAMS)
+    // Same seed + same weights = same results
+    // Small tolerance because RNG sequence differs (per-asset vs portfolio generation)
+    expect(Math.abs(constResult.normal_success_rate - fixedResult.normal_success_rate)).toBeLessThan(0.15)
+  })
+
+  it('glide path produces different results from fixed weights', () => {
+    const yearlyWeights = Array.from({ length: nYears }, (_, y) => {
+      const t = y / (nYears - 1)
+      // Shift from current allocation toward 100% bonds over retirement
+      return PARAMS.allocationWeights.map((w, i) => {
+        if (i === 3) return w + (1 - w) * t  // bonds increase
+        return w * (1 - t)                     // everything else decreases
+      })
+    })
+    const glideResult = runSequenceRisk({ ...PARAMS, yearlyWeights })
+    const fixedResult = runSequenceRisk(PARAMS)
+    // Normal results should differ (crisis may both be 0 for severe scenarios)
+    expect(glideResult.normal_success_rate).not.toBe(fixedResult.normal_success_rate)
+  })
+
+  it('mitigations still work with yearlyWeights', () => {
+    const yearlyWeights = Array.from({ length: nYears }, () => [...PARAMS.allocationWeights])
+    const result = runSequenceRisk({ ...PARAMS, yearlyWeights })
+    expect(result.mitigations).toHaveLength(3)
+    result.mitigations.forEach(m => {
+      expect(m.normal_success_rate).toBeGreaterThanOrEqual(0)
+      expect(m.crisis_success_rate).toBeGreaterThanOrEqual(0)
+    })
+  })
+})

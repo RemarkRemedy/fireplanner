@@ -27,6 +27,8 @@ interface ChartDataPoint {
 
 export function NWChartView({ rows, retirementAge }: NWChartViewProps) {
   const isMobile = useIsMobile()
+  const curveType = rows.length <= 40 ? 'monotone' : 'linear'
+
   const data: ChartDataPoint[] = rows.map((row) => ({
     age: row.age,
     liquidNW: Math.max(0, row.liquidNW),
@@ -75,7 +77,7 @@ export function NWChartView({ rows, retirementAge }: NWChartViewProps) {
             label={{ value: 'Retire', position: 'top', fontSize: 11 }}
           />
           <Area
-            type="linear"
+            type={curveType}
             dataKey="liquidNW"
             stackId="1"
             fill="hsl(210, 80%, 60%)"
@@ -84,7 +86,7 @@ export function NWChartView({ rows, retirementAge }: NWChartViewProps) {
             name="liquidNW"
           />
           <Area
-            type="linear"
+            type={curveType}
             dataKey="cpfTotal"
             stackId="1"
             fill="hsl(150, 60%, 50%)"
@@ -93,7 +95,7 @@ export function NWChartView({ rows, retirementAge }: NWChartViewProps) {
             name="cpfTotal"
           />
           <Area
-            type="linear"
+            type={curveType}
             dataKey="cpfBequest"
             stackId="1"
             fill="hsl(150, 40%, 72%)"
@@ -102,7 +104,7 @@ export function NWChartView({ rows, retirementAge }: NWChartViewProps) {
             name="cpfBequest"
           />
           <Area
-            type="linear"
+            type={curveType}
             dataKey="propertyEquity"
             stackId="1"
             fill="hsl(35, 80%, 55%)"

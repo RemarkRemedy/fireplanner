@@ -34,9 +34,11 @@ export interface BacktestEngineParams {
   strategyParams: Record<string, number>
   inflation: number
   oneTimeWithdrawals?: { year: number; amount: number }[]  // year-offset → amount
+  postRetirementIncome?: number[]  // per-year income that reduces net withdrawal (CPF LIFE, rental, etc.)
   retirementMitigation?: RetirementMitigationConfig
   annualExpensesAtRetirement?: number
   withdrawalBasis: 'expenses' | 'rate'
+  yearlyWeights?: number[][]         // per-year allocation weights for glide path (nYears × 8)
 }
 
 export interface BacktestEngineResult {
@@ -55,6 +57,13 @@ type ReturnColumn = keyof Pick<
   HistoricalReturnRow,
   'usEquities' | 'sgEquities' | 'intlEquities' | 'usBonds' | 'reits' | 'gold' | 'cash' | 'cpfBlended'
 >
+
+/** Dot product of two equal-length arrays. Used for per-year weight × asset return. */
+function dotProduct(a: number[], b: number[]): number {
+  let sum = 0
+  for (let i = 0; i < a.length; i++) sum += a[i] * b[i]
+  return sum
+}
 
 const ASSET_COLUMNS: ReturnColumn[] = [
   'usEquities',
@@ -83,8 +92,9 @@ function getPortfolioReturns(
   weights: number[],
   dataset: BacktestEngineParams['dataset'],
   blendRatio: number,
-): { portfolioReturns: number[]; inflationRates: (number | null)[]; years: number[] } {
+): { portfolioReturns: number[]; assetReturnRows: number[][]; inflationRates: (number | null)[]; years: number[] } {
   const portfolioReturns: number[] = []
+  const assetReturnRows: number[][] = []
   const inflationRates: (number | null)[] = []
   const years: number[] = []
 
@@ -114,6 +124,8 @@ function getPortfolioReturns(
     }
     // 'us_only' uses returns as-is
 
+    assetReturnRows.push(returns)
+
     // Portfolio return = dot(weights, returns)
     let portReturn = 0
     for (let i = 0; i < 8; i++) {
@@ -128,7 +140,7 @@ function getPortfolioReturns(
     years.push(row.year)
   }
 
-  return { portfolioReturns, inflationRates, years }
+  return { portfolioReturns, assetReturnRows, inflationRates, years }
 }
 
 // ============================================================
@@ -158,6 +170,9 @@ function runSingleWindow(
   oneTimeWithdrawals?: { year: number; amount: number }[],
   annualExpensesAtRetirement: number = 0,
   withdrawalBasis: 'expenses' | 'rate' = 'expenses',
+  postRetirementIncome?: number[],
+  assetReturnRows?: number[][],
+  yearlyWeights?: number[][],
 ): WindowResult {
   let portfolio = initialPortfolio
   // Use user's actual retirement expenses when available and withdrawalBasis is 'expenses';
@@ -185,7 +200,10 @@ function runSingleWindow(
       break
     }
 
-    const ret = portfolioReturns[idx]
+    // When glide path is active (yearlyWeights + assetReturnRows), compute per-year portfolio return
+    const ret = (yearlyWeights && assetReturnRows)
+      ? dotProduct(assetReturnRows[idx], yearlyWeights[y] ?? yearlyWeights[yearlyWeights.length - 1])
+      : portfolioReturns[idx]
     const rawCpi = inflationRates[idx]
     const inf = rawCpi !== null ? rawCpi : inflationFixed
     const remaining = duration - y
@@ -195,7 +213,7 @@ function runSingleWindow(
       ? portfolio - prevPortfolio + prevWithdrawal
       : 0
 
-    let withdrawal = computeWithdrawal(strategy, {
+    const withdrawal = computeWithdrawal(strategy, {
       portfolio,
       year: y,
       remainingYears: remaining,
@@ -211,16 +229,19 @@ function runSingleWindow(
     const oneTime = (oneTimeWithdrawals ?? [])
       .filter(w => w.year === y)
       .reduce((sum, w) => sum + w.amount, 0)
-    withdrawal += oneTime
 
-    // Cap withdrawal at current portfolio value
-    withdrawal = Math.min(withdrawal, portfolio)
-    totalWithdrawn += withdrawal
-    prevWithdrawal = withdrawal
+    // Subtract post-retirement income (CPF LIFE, rental, etc.)
+    // Matches MC engine (monteCarlo.ts:457) and SR engine (sequenceRisk.ts:204) patterns
+    const income = postRetirementIncome?.[y] ?? 0
+    let netWithdrawal = Math.max(0, (withdrawal + oneTime) - income)
+    netWithdrawal = Math.min(netWithdrawal, portfolio)
+
+    totalWithdrawn += netWithdrawal
+    prevWithdrawal = withdrawal  // gross, for strategy feedback (inflation-adjusted constant dollar, etc.)
     prevPortfolio = portfolio
     prevYearReturn = ret
 
-    portfolio = (portfolio - withdrawal) * (1 + ret - expenseRatio)
+    portfolio = (portfolio - netWithdrawal) * (1 + ret - expenseRatio)
 
     if (portfolio < minBalance) {
       minBalance = portfolio
@@ -282,12 +303,14 @@ export function runDetailedWindow(
     withdrawalStrategy,
     strategyParams,
     oneTimeWithdrawals,
+    postRetirementIncome,
     annualExpensesAtRetirement,
     withdrawalBasis,
+    yearlyWeights,
   } = params
   const expenses = annualExpensesAtRetirement ?? 0
 
-  const { portfolioReturns, inflationRates, years } = getPortfolioReturns(
+  const { portfolioReturns, assetReturnRows, inflationRates, years } = getPortfolioReturns(
     allocationWeights,
     dataset,
     blendRatio,
@@ -334,7 +357,10 @@ export function runDetailedWindow(
       break
     }
 
-    const ret = portfolioReturns[idx]
+    // When glide path is active, compute per-year portfolio return from asset returns
+    const ret = (yearlyWeights && assetReturnRows)
+      ? dotProduct(assetReturnRows[idx], yearlyWeights[y] ?? yearlyWeights[yearlyWeights.length - 1])
+      : portfolioReturns[idx]
     const rawCpi = inflationRates[idx]
     const inf = rawCpi !== null ? rawCpi : inflationFixed
     const remaining = retirementDuration - y
@@ -360,15 +386,17 @@ export function runDetailedWindow(
     const oneTime = (oneTimeWithdrawals ?? [])
       .filter(w => w.year === y)
       .reduce((sum, w) => sum + w.amount, 0)
-    withdrawal += oneTime
 
-    // Cap withdrawal at current portfolio value
-    withdrawal = Math.min(withdrawal, portfolio)
-    prevWithdrawal = withdrawal
+    // Subtract post-retirement income (CPF LIFE, rental, etc.)
+    const income = postRetirementIncome?.[y] ?? 0
+    let netWithdrawal = Math.max(0, (withdrawal + oneTime) - income)
+    netWithdrawal = Math.min(netWithdrawal, portfolio)
+
+    prevWithdrawal = withdrawal  // gross, for strategy feedback
     prevPortfolio = portfolio
     prevYearReturn = ret
 
-    portfolio = (portfolio - withdrawal) * (1 + ret - expenseRatio)
+    portfolio = (portfolio - netWithdrawal) * (1 + ret - expenseRatio)
 
     if (portfolio <= 0) {
       survived = false
@@ -377,7 +405,7 @@ export function runDetailedWindow(
 
     outYears.push(years[idx])
     outBalances.push(Math.max(0, portfolio))
-    outWithdrawals.push(withdrawal)
+    outWithdrawals.push(netWithdrawal)
     outReturns.push(ret)
     outInflation.push(inf)
   }
@@ -430,11 +458,13 @@ export function runBacktest(params: BacktestEngineParams): BacktestEngineResult 
     withdrawalStrategy,
     strategyParams,
     oneTimeWithdrawals,
+    postRetirementIncome,
     annualExpensesAtRetirement,
     withdrawalBasis,
+    yearlyWeights,
   } = params
 
-  const { portfolioReturns, inflationRates, years } = getPortfolioReturns(
+  const { portfolioReturns, assetReturnRows, inflationRates, years } = getPortfolioReturns(
     allocationWeights,
     dataset,
     blendRatio,
@@ -463,6 +493,9 @@ export function runBacktest(params: BacktestEngineParams): BacktestEngineResult 
       oneTimeWithdrawals,
       annualExpensesAtRetirement,
       withdrawalBasis,
+      postRetirementIncome,
+      yearlyWeights ? assetReturnRows : undefined,
+      yearlyWeights,
     )
 
     results.push({

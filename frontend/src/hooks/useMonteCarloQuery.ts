@@ -15,7 +15,7 @@ import { useSimulationStore } from '@/stores/useSimulationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { CORRELATION_MATRIX } from '@/lib/data/historicalReturns'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
-import { getEffectiveReturns, getEffectiveStdDevs } from '@/lib/calculations/portfolio'
+import { getEffectiveReturns, getEffectiveStdDevs, buildYearlyWeights } from '@/lib/calculations/portfolio'
 import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
 import {
   outstandingMortgageAtAge,
@@ -99,11 +99,14 @@ export function useMonteCarloQuery(): UseMonteCarloQueryResult {
     ownershipPercent: propertyStore.ownershipPercent,
     withdrawalBasis: simulation.withdrawalBasis,
     deterministicAccumulation: simulation.deterministicAccumulation,
+    glidePathConfig: allocation.glidePathConfig,
+    targetWeights: allocation.targetWeights,
   }), [
     analysisPortfolio.initialPortfolio, analysisPortfolio.allocationWeights,
     profile.currentAge, profile.retirementAge, profile.lifeExpectancy, profile.expenseRatio, profile.inflation,
     simulation.mcMethod, simulation.nSimulations, simulation.selectedStrategy, simulation.strategyParams,
     allocation.returnOverrides, allocation.stdDevOverrides,
+    allocation.glidePathConfig, allocation.targetWeights,
     income.annualSalary, income.salaryModel, income.bonusMonths, income.incomeStreams,
     income.lifeEvents, income.lifeEventsEnabled,
     profile.parentSupportEnabled, profile.parentSupport,
@@ -407,6 +410,15 @@ export function useMonteCarloQuery(): UseMonteCarloQueryResult {
         withdrawalBasis: simulation.withdrawalBasis,
         extractPaths: true,  // Enable representative path extraction for projection table
         deterministicAccumulation: simulation.deterministicAccumulation,
+        yearlyWeights: allocation.glidePathConfig.enabled
+          ? buildYearlyWeights(
+              profile.lifeExpectancy - profile.currentAge,
+              profile.currentAge,
+              allocation.currentWeights,
+              allocation.targetWeights,
+              allocation.glidePathConfig,
+            )
+          : undefined,
       }
 
       return runMonteCarloWorker(params)

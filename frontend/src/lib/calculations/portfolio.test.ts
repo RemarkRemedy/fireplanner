@@ -11,6 +11,7 @@ import {
   calculatePortfolioStats,
   interpolateGlidePath,
   getGlidePathAllocations,
+  buildYearlyWeights,
 } from './portfolio'
 import {
   ASSET_CLASSES,
@@ -306,6 +307,86 @@ describe('getGlidePathAllocations', () => {
       current, target
     )
     expect(result).toEqual([])
+  })
+})
+
+describe('buildYearlyWeights', () => {
+  const current = [0.6, 0.2, 0.1, 0.1, 0, 0, 0, 0]
+  const target = [0.3, 0.1, 0.1, 0.5, 0, 0, 0, 0]
+  const config = { enabled: true, method: 'linear' as const, startAge: 60, endAge: 70 }
+
+  it('returns correct number of year vectors', () => {
+    const result = buildYearlyWeights(30, 40, current, target, config)
+    expect(result).toHaveLength(30)
+  })
+
+  it('before startAge: uses currentWeights', () => {
+    const result = buildYearlyWeights(30, 40, current, target, config)
+    // Age 40-59 (indices 0-19) should be currentWeights
+    for (let i = 0; i < 20; i++) {
+      result[i].forEach((w, j) => expect(w).toBeCloseTo(current[j], 5))
+    }
+  })
+
+  it('at and after endAge: uses targetWeights', () => {
+    const result = buildYearlyWeights(40, 40, current, target, config)
+    // Age 70+ (indices 30+) should be targetWeights
+    for (let i = 30; i < 40; i++) {
+      result[i].forEach((w, j) => expect(w).toBeCloseTo(target[j], 5))
+    }
+  })
+
+  it('linear interpolation at midpoint', () => {
+    const result = buildYearlyWeights(30, 40, current, target, config)
+    // Age 65 = index 25, progress = 5/10 = 0.5
+    const mid = result[25]
+    mid.forEach((w, i) => {
+      expect(w).toBeCloseTo(current[i] + (target[i] - current[i]) * 0.5, 5)
+    })
+  })
+
+  it('slowStart interpolation curves slower at start', () => {
+    const slowConfig = { ...config, method: 'slowStart' as const }
+    const result = buildYearlyWeights(30, 40, current, target, slowConfig)
+    // At progress=0.5, slowStart gives t^2=0.25 (closer to current than linear 0.5)
+    const mid = result[25] // age 65
+    expect(mid[0]).toBeCloseTo(current[0] + (target[0] - current[0]) * 0.25, 5)
+  })
+
+  it('fastStart interpolation curves faster at start', () => {
+    const fastConfig = { ...config, method: 'fastStart' as const }
+    const result = buildYearlyWeights(30, 40, current, target, fastConfig)
+    // At progress=0.5, fastStart gives sqrt(0.5)≈0.707 (closer to target than linear 0.5)
+    const mid = result[25] // age 65
+    const expected = current[0] + (target[0] - current[0]) * Math.sqrt(0.5)
+    expect(mid[0]).toBeCloseTo(expected, 5)
+  })
+
+  it('weights sum to ~1.0 at all years', () => {
+    const result = buildYearlyWeights(40, 40, current, target, config)
+    for (const weights of result) {
+      const sum = weights.reduce((a, b) => a + b, 0)
+      expect(sum).toBeCloseTo(1.0, 5)
+    }
+  })
+
+  it('handles zero-duration glide path (startAge === endAge)', () => {
+    const zeroConfig = { ...config, startAge: 60, endAge: 60 }
+    const result = buildYearlyWeights(30, 40, current, target, zeroConfig)
+    // All ages < 60 get currentWeights, age >= 60 gets targetWeights
+    for (let i = 0; i < 20; i++) {
+      result[i].forEach((w, j) => expect(w).toBeCloseTo(current[j], 5))
+    }
+    for (let i = 20; i < 30; i++) {
+      result[i].forEach((w, j) => expect(w).toBeCloseTo(target[j], 5))
+    }
+  })
+
+  it('returns defensive copies (not reference to input arrays)', () => {
+    const result = buildYearlyWeights(5, 55, current, target, config)
+    // Mutating result should not affect input
+    result[0][0] = 999
+    expect(current[0]).toBe(0.6)
   })
 })
 

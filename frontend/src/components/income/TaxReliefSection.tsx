@@ -36,6 +36,7 @@ export function TaxReliefSection() {
   const income = useIncomeStore()
   const currentAge = useProfileStore((s) => s.currentAge)
   const residencyStatus = useProfileStore((s) => s.residencyStatus)
+  const prMonths = useProfileStore((s) => s.prMonths)
   const srsAnnualContribution = useProfileStore((s) => s.srsAnnualContribution)
   const cpfTopUpSA = useProfileStore((s) => s.cpfTopUpSA)
   const breakdown = income.reliefBreakdown
@@ -44,9 +45,9 @@ export function TaxReliefSection() {
   // Auto-compute CPF employee contribution from current salary + bonus + age
   const cpfEmployee = useMemo(() => {
     const annualBonus = income.annualSalary * (income.bonusMonths ?? 0) / 12
-    const cpf = calculateCpfContribution(income.annualSalary, currentAge, annualBonus)
+    const cpf = calculateCpfContribution(income.annualSalary, currentAge, annualBonus, residencyStatus, prMonths)
     return cpf.employee
-  }, [income.annualSalary, income.bonusMonths, currentAge])
+  }, [income.annualSalary, income.bonusMonths, currentAge, residencyStatus, prMonths])
 
   // Auto-compute SRS deduction (capped per residency)
   const srsDeduction = useMemo(

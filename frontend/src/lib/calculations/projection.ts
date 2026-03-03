@@ -42,6 +42,16 @@ import {
   capeBased,
   floorCeiling,
 } from './withdrawal'
+import { computeCpfAutoFallback } from './cpfAutoWithdrawal'
+import { computeVirtualRebalancing } from './cpfVirtualRebalancing'
+
+// TODO: [Deferred] Approach C — Unified Two-Bucket Engine
+// Replace the current single-portfolio simulation model with explicit liquid + CPF bucket
+// management in MC, backtest, and sequence risk engines. This would allow:
+// - Stochastic CPF withdrawal timing in Monte Carlo
+// - Stress testing of CPF drawdown strategies
+// - Optimal withdrawal sequencing under different market conditions
+// See: docs/plans/2026-03-02-cpf-auto-withdrawal-design.md
 
 export interface ProjectionParams {
   incomeProjection: IncomeProjectionRow[]
@@ -103,6 +113,12 @@ export interface ProjectionParams {
   yearlyReturnsOffset?: number  // Age offset: yearlyReturns[0] corresponds to (currentAge + offset).
                                  // Default 0 (MC and projection start at same age).
                                  // Set to (retirementAge - currentAge) in fireTarget mode.
+  // CPF Auto-Withdrawal
+  cpfAutoFallback?: boolean
+  cpfAutoFallbackIncludeSA?: boolean
+  // CPF Virtual Rebalancing
+  cpfVirtualRebalancing?: boolean
+  cpfVirtualRebalancingMode?: 'from55' | 'always'
 }
 
 export interface ProjectionResult {
@@ -357,25 +373,71 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
 
     // Weights for this age
     const weights = getWeightsAtAge(age, isRetired, currentWeights, targetWeights, glidePathConfig)
-    const allocationWeights = [...weights]  // defensive copy — getWeightsAtAge may return shared refs
 
-    // Return rate (nominal, net of expense ratio)
-    let returnRate: number
-    const mcIndex = i - yearlyReturnsOffset
-    if (yearlyReturns && mcIndex >= 0 && mcIndex < yearlyReturns.length) {
-      // MC-sourced gross return for this year. Subtract expense ratio here,
-      // matching the deterministic path where expenseRatio is also subtracted.
-      // portfolioReturns in MC are gross (fee applied in balance transitions),
-      // so this is a single deduction, not double-counting.
-      returnRate = yearlyReturns[mcIndex] - expenseRatio
-    } else if (usePortfolioReturn && assetReturns.length === weights.length) {
-      returnRate = calculatePortfolioReturn(weights, assetReturns) - expenseRatio
-    } else {
-      returnRate = expectedReturn - expenseRatio
+    // ── CPF start-of-year pre-fund ──────────────────────────────────
+    // When the portfolio is depleted, pre-fund from CPF at the start of
+    // the year so the withdrawn money flows through the liquid portfolio,
+    // enabling virtual rebalancing and earning returns. Without this,
+    // CPF withdrawals bypass the portfolio entirely and liquidNW stays
+    // at $0 forever after depletion.
+    //
+    // The expense/income values computed here match the main block below;
+    // duplication is intentional to avoid restructuring the 400-line loop.
+    let cpfAutoOaWithdrawalAmount = 0
+    let cpfAutoSaWithdrawalAmount = 0
+    const soldProperty = dsActive && age >= dsSellAge
+    if (
+      params.cpfAutoFallback &&
+      isRetired &&
+      liquidNW <= 0 &&
+      age >= 55 &&
+      params.withdrawalBasis !== 'rate'
+    ) {
+      const estRentalIncome = soldProperty ? 0 : annualRentalIncome
+      const estPostRetIncome = sumPostRetirementIncome(incomeRow, estRentalIncome)
+      const estBase = getEffectiveExpenses(age, annualExpenses, params.expenseAdjustments ?? [], lifeExpectancy)
+      const { adjustedExpense: estLeAdj } = getLifeEventExpenseImpact(
+        age, estBase, params.lifeEvents ?? [], params.lifeEventsEnabled ?? false,
+      )
+      const estParentSupport = parentSupportEnabled
+        ? calculateParentSupportAtAge(parentSupport, age)
+        : 0
+      const estHealthCare = healthcareConfig?.enabled
+        ? (calculateHealthcareCostAtAge(healthcareConfig, age)?.cashOutlay ?? 0)
+        : 0
+      let estDsRent = 0
+      if (soldProperty && downsizing?.scenario === 'sell-and-rent') {
+        estDsRent = dsAnnualRent * Math.pow(1 + (downsizing.rentGrowthRate ?? 0.03), age - dsSellAge)
+      }
+      const estExpenses = estLeAdj * retirementSpendingAdjustment * Math.pow(1 + inflation, year)
+        + estParentSupport + estDsRent + estHealthCare
+      const estGap = Math.max(0, estExpenses - estPostRetIncome)
+      const estMortgage = age >= mortgageEndAge ? 0 : annualMortgagePayment + incomeRow.cpfOaShortfall
+      const totalPreFundNeed = Math.max(0, estGap + estMortgage)
+
+      if (totalPreFundNeed > 0) {
+        const prefund = computeCpfAutoFallback({
+          shortfall: totalPreFundNeed,
+          cpfOA: incomeRow.cpfOA,
+          cpfSA: incomeRow.cpfSA,
+          cpfRA: incomeRow.cpfRA,
+          cpfisOA: incomeRow.cpfisOA,
+          cpfisSA: incomeRow.cpfisSA,
+          age,
+          currentYear: new Date().getFullYear() + i,
+          includeSA: params.cpfAutoFallbackIncludeSA ?? false,
+        })
+        if (prefund.totalWithdrawal > 0) {
+          liquidNW += prefund.totalWithdrawal
+          cpfAutoOaWithdrawalAmount = prefund.oaWithdrawal
+          cpfAutoSaWithdrawalAmount = prefund.saWithdrawal
+          incomeRow.cpfOA -= prefund.oaWithdrawal
+          incomeRow.cpfSA -= prefund.saWithdrawal
+        }
+      }
     }
 
     // Downsizing: inject equity or deduct shortfall at sell age (before capturing startLiquidNW)
-    const soldProperty = dsActive && age >= dsSellAge
     if (dsActive && age === dsSellAge) {
       liquidNW += dsNetEquity - dsShortfall
     }
@@ -397,6 +459,39 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     let goalShortfallAmount = 0
     let retirementWithdrawalTotal = 0
     let retirementWithdrawalShortfallAmount = 0
+
+    // Virtual rebalancing: count uninvested CPF as bond allocation
+    // Placed after startLiquidNW so pre-funded CPF money is visible.
+    let cpfCountedAsBondsAmount = 0
+    let effectiveWeights = [...weights]  // defensive copy — getWeightsAtAge may return shared refs
+    if (params.cpfVirtualRebalancing && isRetired) {
+      const rebalResult = computeVirtualRebalancing({
+        weights,
+        liquidNW: startLiquidNW,
+        cpfOA: incomeRow.cpfOA,
+        cpfSA: incomeRow.cpfSA,
+        cpfRA: incomeRow.cpfRA,
+        cpfisOA: incomeRow.cpfisOA,
+        cpfisSA: incomeRow.cpfisSA,
+        age,
+        currentYear: new Date().getFullYear() + i,
+        mode: params.cpfVirtualRebalancingMode ?? 'from55',
+        includeSA: params.cpfAutoFallbackIncludeSA ?? true,
+      })
+      effectiveWeights = rebalResult.adjustedWeights
+      cpfCountedAsBondsAmount = rebalResult.cpfCountedAsBonds
+    }
+
+    // Return rate (nominal, net of expense ratio)
+    let returnRate: number
+    const mcIndex = i - yearlyReturnsOffset
+    if (yearlyReturns && mcIndex >= 0 && mcIndex < yearlyReturns.length) {
+      returnRate = yearlyReturns[mcIndex] - expenseRatio
+    } else if (usePortfolioReturn && assetReturns.length === weights.length) {
+      returnRate = calculatePortfolioReturn(effectiveWeights, assetReturns) - expenseRatio
+    } else {
+      returnRate = expectedReturn - expenseRatio
+    }
 
     // Parent support at this age (uses its own growth rate, not inflation)
     const parentSupportExpense = parentSupportEnabled
@@ -601,9 +696,44 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       portfolioReturnDollar = afterDraw * returnRate
       const rawPostRetLiquidNW = afterDraw * (1 + returnRate)
 
+      // CPF Auto-Fallback: withdraw from CPF OA/SA when liquid NW would go negative
+      // or when there's an unfunded expense gap (actualDraw was capped at startLiquidNW).
+      // Without this, once liquid NW hits $0, the draw cap masks the shortfall
+      // and auto-fallback never triggers.
+      const uncappedDraw = params.withdrawalBasis === 'rate'
+        ? Math.max(0, strategyWithdrawal - postRetirementIncome)
+        : expenseGap
+      const unfundedShortfall = Math.max(0, uncappedDraw - actualDraw)
+      const totalShortfall = Math.max(0, -rawPostRetLiquidNW) + unfundedShortfall
+      let adjustedLiquidNW = rawPostRetLiquidNW
+
+      if (params.cpfAutoFallback && totalShortfall > 0 && age >= 55) {
+        const fallback = computeCpfAutoFallback({
+          shortfall: totalShortfall,
+          cpfOA: incomeRow.cpfOA,
+          cpfSA: incomeRow.cpfSA,
+          cpfRA: incomeRow.cpfRA,
+          cpfisOA: incomeRow.cpfisOA,
+          cpfisSA: incomeRow.cpfisSA,
+          age,
+          currentYear: new Date().getFullYear() + i,
+          includeSA: params.cpfAutoFallbackIncludeSA ?? false,
+        })
+        cpfAutoOaWithdrawalAmount += fallback.oaWithdrawal
+        cpfAutoSaWithdrawalAmount += fallback.saWithdrawal
+        // The portion covering unfunded expenses goes to spending (not the portfolio).
+        // Only the portion covering negative rawPostRetLiquidNW adds to liquid NW.
+        const portfolioTopUp = Math.min(fallback.totalWithdrawal, Math.max(0, -rawPostRetLiquidNW))
+        adjustedLiquidNW = rawPostRetLiquidNW + portfolioTopUp
+
+        // Deduct from CPF balances in the income row (mutates for downstream tracking)
+        incomeRow.cpfOA -= fallback.oaWithdrawal
+        incomeRow.cpfSA -= fallback.saWithdrawal
+      }
+
       // Proportionally attribute deficit to goals and retirement withdrawals
-      if (rawPostRetLiquidNW < 0) {
-        const deficit = -rawPostRetLiquidNW
+      if (adjustedLiquidNW < 0) {
+        const deficit = -adjustedLiquidNW
         const totalOneTime = goalDeduction + retirementWithdrawalTotal
         if (totalOneTime > 0) {
           const oneTimeShare = Math.min(totalOneTime, deficit)
@@ -615,7 +745,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
             : 0
         }
       }
-      liquidNW = Math.max(0, rawPostRetLiquidNW)
+      liquidNW = Math.max(0, adjustedLiquidNW)
 
       // Feed uncapped strategy amount back for strategy continuity
       prevWithdrawal = strategyWithdrawal
@@ -737,6 +867,9 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       cpfBequest,
       cpfMilestone,
       cpfOaWithdrawal: incomeRow.cpfOaWithdrawal,
+      cpfAutoOaWithdrawal: cpfAutoOaWithdrawalAmount,
+      cpfAutoSaWithdrawal: cpfAutoSaWithdrawalAmount,
+      cpfCountedAsBonds: cpfCountedAsBondsAmount,
       cpfisOA: incomeRow.cpfisOA,
       cpfisSA: incomeRow.cpfisSA,
       cpfisReturn: incomeRow.cpfisReturn,
@@ -765,7 +898,8 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       careShieldLifePremium: healthcareCost?.careShieldLifePremium ?? 0,
       oopExpense: healthcareCost?.oopExpense ?? 0,
       mediSaveDeductible: healthcareCost?.mediSaveDeductible ?? 0,
-      allocationWeights,
+      allocationWeights: effectiveWeights,
+      targetAllocationWeights: [...weights],  // pre-rebalancing target (defensive copy)
       cumulativeSavings: incomeRow.cumulativeSavings,
       activeLifeEvents: incomeRow.activeLifeEvents,
     })
