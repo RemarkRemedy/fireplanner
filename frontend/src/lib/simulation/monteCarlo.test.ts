@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { runMonteCarlo, resolveInitialRate, generateReturnsParametric, generateAssetReturnsParametric, computeWithdrawalsForYear, type MonteCarloEngineParams } from './monteCarlo.ts'
+import { runMonteCarlo, resolveInitialRate, generateReturnsParametric, computeWithdrawalsForYear, type MonteCarloEngineParams } from './monteCarlo.ts'
 import { CORRELATION_MATRIX, ASSET_CLASSES } from '@/lib/data/historicalReturns.ts'
 import { SeededRNG } from '@/lib/math/random.ts'
 
