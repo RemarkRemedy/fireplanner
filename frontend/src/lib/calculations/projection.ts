@@ -373,7 +373,6 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
 
     // Weights for this age
     const weights = getWeightsAtAge(age, isRetired, currentWeights, targetWeights, glidePathConfig)
-    const allocationWeights = [...weights]  // defensive copy — getWeightsAtAge may return shared refs
 
     // ── CPF start-of-year pre-fund ──────────────────────────────────
     // When the portfolio is depleted, pre-fund from CPF at the start of
@@ -464,7 +463,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     // Virtual rebalancing: count uninvested CPF as bond allocation
     // Placed after startLiquidNW so pre-funded CPF money is visible.
     let cpfCountedAsBondsAmount = 0
-    let effectiveWeights = weights
+    let effectiveWeights = [...weights]  // defensive copy — getWeightsAtAge may return shared refs
     if (params.cpfVirtualRebalancing && isRetired) {
       const rebalResult = computeVirtualRebalancing({
         weights,
@@ -899,7 +898,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       careShieldLifePremium: healthcareCost?.careShieldLifePremium ?? 0,
       oopExpense: healthcareCost?.oopExpense ?? 0,
       mediSaveDeductible: healthcareCost?.mediSaveDeductible ?? 0,
-      allocationWeights,
+      allocationWeights: effectiveWeights,
       cumulativeSavings: incomeRow.cumulativeSavings,
       activeLifeEvents: incomeRow.activeLifeEvents,
     })

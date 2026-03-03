@@ -1,6 +1,7 @@
 import { createColumnHelper, type ColumnDef } from '@tanstack/react-table'
 import type { ProjectionRow } from '@/lib/types'
 import { formatCurrency, formatPercent } from '@/lib/utils'
+import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 
 // ── Column helper ────────────────────────────────────────────────────
 export const columnHelper = createColumnHelper<ProjectionRow>()
@@ -12,6 +13,7 @@ export type ColumnGroup =
   | 'taxCpf'
   | 'cpfBalances'
   | 'portfolio'
+  | 'portfolioBreakdown'
   | 'property'
 
 export const COLUMN_GROUPS: { key: ColumnGroup; label: string }[] = [
@@ -20,8 +22,21 @@ export const COLUMN_GROUPS: { key: ColumnGroup; label: string }[] = [
   { key: 'taxCpf', label: 'Tax & CPF' },
   { key: 'cpfBalances', label: 'CPF Balances' },
   { key: 'portfolio', label: 'Portfolio' },
+  { key: 'portfolioBreakdown', label: 'Asset Breakdown' },
   { key: 'property', label: 'Property & Events' },
 ]
+
+/** Short labels for asset class column headers (compact for table display) */
+const ASSET_SHORT_LABELS: Record<string, string> = {
+  usEquities: 'US Eq',
+  sgEquities: 'SG Eq',
+  intlEquities: 'Intl Eq',
+  bonds: 'Bonds',
+  reits: 'REITs',
+  gold: 'Gold',
+  cash: 'Cash',
+  cpf: 'CPF',
+}
 
 export const GROUP_COLUMNS: Record<ColumnGroup, string[]> = {
   expensesBreakdown: [
@@ -46,6 +61,9 @@ export const GROUP_COLUMNS: Record<ColumnGroup, string[]> = {
     'portfolioReturnPct', 'withdrawalAmount', 'maxPermittedWithdrawal',
     'withdrawalExcess', 'cumulativeSavings',
   ],
+  portfolioBreakdown: ASSET_CLASSES.flatMap((ac) => [
+    `asset_${ac.key}Value`, `asset_${ac.key}Pct`,
+  ]),
   property: [
     'propertyValue', 'mortgageBalance', 'propertyEquity',
     'totalNWIncProperty', 'activeLifeEvents',
@@ -397,6 +415,33 @@ export function buildProjectionColumns(
       header: 'Cumul. Savings',
       cell: (info) => currencyCell(info.getValue()),
     }),
+
+    // ── Expanded: Asset Breakdown ──────────────────────────────────
+    // 16 columns: value ($) and weight (%) for each of the 8 asset classes.
+    // Values are computed at the display layer: liquidNW * allocationWeights[i].
+    // allocationWeights are dimensionless ratios — NOT deflated in displayRows.
+    // So deflatedLiquidNW * weight = correct real-dollar value automatically.
+    ...ASSET_CLASSES.flatMap((ac, i) => [
+      columnHelper.accessor(
+        (row) => row.allocationWeights[i] > 0 ? row.liquidNW * row.allocationWeights[i] : 0,
+        {
+          id: `asset_${ac.key}Value`,
+          header: `${ASSET_SHORT_LABELS[ac.key]} ($)`,
+          cell: (info) => info.getValue() > 0 ? currencyCell(info.getValue()) : '-',
+        },
+      ),
+      columnHelper.accessor(
+        (row) => row.allocationWeights[i] * 100,
+        {
+          id: `asset_${ac.key}Pct`,
+          header: `${ASSET_SHORT_LABELS[ac.key]} (%)`,
+          cell: (info) => {
+            const v = info.getValue()
+            return v > 0 ? `${v.toFixed(1)}%` : '-'
+          },
+        },
+      ),
+    ]) as ColumnDef<ProjectionRow, number | string>[],
 
     // ── Property & Events ────────────────────────────────────────────
     columnHelper.accessor('propertyValue', {
