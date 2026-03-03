@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 /** Newest first. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-03-04',
+    category: 'feature',
+    title: 'Asset Breakdown column group in projection tables',
+    description:
+      'A new "Asset Breakdown" toggle in the Projection and Stress Test tables shows per-asset-class dollar values and weight percentages for each year. Zero-weight assets are auto-hidden. When CPF Virtual Rebalancing is active, effective weights are marked with * and a separate "Tgt%" column shows the original target allocation for comparison.',
+    affectedSections: ['section-projection'],
+    insight:
+      'With CPF Virtual Rebalancing enabled, your liquid portfolio runs at different weights than your target allocation because uninvested CPF balances act as bond exposure. The effective (%) column shows what the liquid portfolio actually held, while the Tgt% column shows your intended allocation. The difference is the CPF bond substitution effect.',
+  },
+  {
     date: '2026-03-03',
     category: 'fix',
     title: 'CPF estimator now caps MA at Basic Healthcare Sum',
