@@ -18,6 +18,7 @@ import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
+import { buildYearlyWeights } from '@/lib/calculations/portfolio'
 import { trackEvent } from '@/lib/analytics'
 
 export interface BacktestConfig {
@@ -134,12 +135,15 @@ export function useBacktestQuery(): UseBacktestQueryResult {
     ownershipPercent: propertyStore.ownershipPercent,
     existingPropertyValue: propertyStore.existingPropertyValue,
     residencyForAbsd: propertyStore.residencyForAbsd,
+    glidePathConfig: allocation.glidePathConfig,
+    targetWeights: allocation.targetWeights,
   }), [
     analysisPortfolio.retirementPortfolio, analysisPortfolio.allocationWeights,
     config.swr, config.retirementDuration, config.dataset, config.blendRatio,
     profile.expenseRatio, strategy, withdrawal.strategyParams, profile.inflation,
     profile.retirementWithdrawals, profile.annualExpenses, profile.expenseAdjustments,
     simulation.withdrawalBasis,
+    allocation.glidePathConfig, allocation.targetWeights,
     income.lifeEvents, income.lifeEventsEnabled,
     profile.parentSupportEnabled, profile.parentSupport,
     profile.healthcareConfig, profile.financialGoals,
@@ -281,12 +285,22 @@ export function useBacktestQuery(): UseBacktestQueryResult {
       retirementMitigation: profile.retirementMitigation,
       annualExpensesAtRetirement: getExpensesAtRetirement(profile.retirementAge, profile.currentAge, profile.annualExpenses, profile.expenseAdjustments, profile.lifeExpectancy, profile.inflation),
       withdrawalBasis: simulation.withdrawalBasis,
+      yearlyWeights: allocation.glidePathConfig.enabled
+        ? buildYearlyWeights(
+            config.retirementDuration,
+            profile.retirementAge,
+            allocation.currentWeights,
+            allocation.targetWeights,
+            allocation.glidePathConfig,
+          )
+        : undefined,
     }
   }, [
     analysisPortfolio.retirementPortfolio, analysisPortfolio.allocationWeights,
     config, strategy, withdrawal.strategyParams,
     simulation.withdrawalBasis,
     income, propertyStore, profile,
+    allocation.glidePathConfig, allocation.currentWeights, allocation.targetWeights,
   ])
 
   // Base mutation (no heatmap — fast)

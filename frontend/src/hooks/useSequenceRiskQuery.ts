@@ -16,7 +16,7 @@ import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { CORRELATION_MATRIX } from '@/lib/data/historicalReturns'
-import { getEffectiveReturns, getEffectiveStdDevs } from '@/lib/calculations/portfolio'
+import { getEffectiveReturns, getEffectiveStdDevs, buildYearlyWeights } from '@/lib/calculations/portfolio'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
@@ -84,10 +84,13 @@ export function useSequenceRiskQuery(): UseSequenceRiskQueryResult {
     ownershipPercent: propertyStore.ownershipPercent,
     existingPropertyValue: propertyStore.existingPropertyValue,
     residencyForAbsd: propertyStore.residencyForAbsd,
+    glidePathConfig: allocation.glidePathConfig,
+    targetWeights: allocation.targetWeights,
   }), [
     analysisPortfolio.retirementPortfolio, analysisPortfolio.allocationWeights,
     profile.retirementAge, profile.lifeExpectancy, profile.expenseRatio, profile.inflation,
     allocation.returnOverrides, allocation.stdDevOverrides,
+    allocation.glidePathConfig, allocation.targetWeights,
     strategy, withdrawal.strategyParams,
     profile.retirementWithdrawals, profile.annualExpenses, profile.expenseAdjustments,
     income.lifeEvents, income.lifeEventsEnabled,
@@ -277,6 +280,15 @@ export function useSequenceRiskQuery(): UseSequenceRiskQueryResult {
         retirementMitigation: profile.retirementMitigation,
         annualExpensesAtRetirement: getExpensesAtRetirement(profile.retirementAge, profile.currentAge, profile.annualExpenses, profile.expenseAdjustments, profile.lifeExpectancy, profile.inflation),
         withdrawalBasis: simulation.withdrawalBasis,
+        yearlyWeights: allocation.glidePathConfig.enabled
+          ? buildYearlyWeights(
+              profile.lifeExpectancy - profile.retirementAge,
+              profile.retirementAge,
+              allocation.currentWeights,
+              allocation.targetWeights,
+              allocation.glidePathConfig,
+            )
+          : undefined,
       }
 
       return runSequenceRiskWorker(params)

@@ -18,6 +18,7 @@ import { choleskyDecomposition, buildCovarianceMatrix } from '@/lib/math/linalg.
 import { percentile } from '@/lib/math/stats.ts'
 import {
   generateReturnsParametric,
+  generateAssetReturnsParametric,
   computeWithdrawalsForYear,
   resolveInitialRate,
 } from './monteCarlo.ts'
@@ -47,6 +48,7 @@ export interface SequenceRiskEngineParams {
   retirementMitigation?: RetirementMitigationConfig
   annualExpensesAtRetirement?: number
   withdrawalBasis: 'expenses' | 'rate'
+  yearlyWeights?: number[][]           // per-year allocation weights for glide path (nYears × 8)
   crisis: {
     id: string
     name: string
@@ -115,20 +117,32 @@ function runSingleScenario(
   annualExpensesAtRetirement?: number,
   portfolioInjections?: { year: number; amount: number }[],
   withdrawalBasis: 'expenses' | 'rate' = 'expenses',
+  yearlyWeights?: number[][],
 ): SingleScenarioResult {
   const nCrisis = crisisReturns !== null ? crisisReturns.length : 0
 
-  // Generate parametric returns for all years: [nSims][nYearsDecum]
-  const allReturns = generateReturnsParametric(
-    rng,
-    nSims,
-    nYearsDecum,
-    weights,
-    expectedReturns,
-    stdDevs,
-    correlationMatrix,
-    precomputedL,
-  )
+  // When glide path is active, generate per-asset returns and compute portfolio returns per year.
+  // Otherwise, use the existing single-weight-vector approach.
+  let allReturns: number[][]
+
+  if (yearlyWeights) {
+    const assetReturns = generateAssetReturnsParametric(
+      rng, nSims, nYearsDecum, expectedReturns, stdDevs, correlationMatrix, precomputedL,
+    )
+    // Convert per-asset returns to per-year portfolio returns using yearly weights
+    allReturns = Array.from({ length: nSims }, (_, s) =>
+      Array.from({ length: nYearsDecum }, (_, y) => {
+        const w = yearlyWeights[y] ?? yearlyWeights[yearlyWeights.length - 1]
+        let ret = 0
+        for (let a = 0; a < w.length; a++) ret += assetReturns[s][y][a] * w[a]
+        return ret
+      })
+    )
+  } else {
+    allReturns = generateReturnsParametric(
+      rng, nSims, nYearsDecum, weights, expectedReturns, stdDevs, correlationMatrix, precomputedL,
+    )
+  }
 
   // Override early years with crisis returns (applied uniformly to all sims)
   if (crisisReturns !== null && nCrisis > 0) {
@@ -293,6 +307,7 @@ interface RunMitigationParams {
   modifiedStrategyParams?: Record<string, number>
   modifiedPostRetirementIncome?: number[]
   modifiedInitialPortfolio?: number
+  yearlyWeights?: number[][]
 }
 
 function runMitigation(p: RunMitigationParams): MitigationImpact {
@@ -300,6 +315,10 @@ function runMitigation(p: RunMitigationParams): MitigationImpact {
   const effParams = p.modifiedStrategyParams ?? p.strategyParams
   const effPortfolio = p.modifiedInitialPortfolio ?? p.initialPortfolio
   const effIncome = p.modifiedPostRetirementIncome ?? p.postRetirementIncome
+  // When a mitigation modifies weights (e.g., bond tent), glide path yearlyWeights
+  // are not applicable — the mitigation replaces the entire allocation strategy.
+  // Only pass yearlyWeights when no modifiedWeights override is present.
+  const effYearlyWeights = p.modifiedWeights ? undefined : p.yearlyWeights
 
   // Normal run (no crisis) for this mitigation
   const normalResult = runSingleScenario(
@@ -323,6 +342,7 @@ function runMitigation(p: RunMitigationParams): MitigationImpact {
     p.annualExpensesAtRetirement,
     p.portfolioInjections,
     p.withdrawalBasis,
+    effYearlyWeights,
   )
 
   // Crisis run for this mitigation
@@ -347,6 +367,7 @@ function runMitigation(p: RunMitigationParams): MitigationImpact {
     p.annualExpensesAtRetirement,
     p.portfolioInjections,
     p.withdrawalBasis,
+    effYearlyWeights,
   )
 
   return {
@@ -391,6 +412,7 @@ export function runSequenceRisk(params: SequenceRiskEngineParams): SequenceRiskE
     portfolioInjections,
     annualExpensesAtRetirement,
     withdrawalBasis,
+    yearlyWeights,
     crisis,
   } = params
 
@@ -424,6 +446,7 @@ export function runSequenceRisk(params: SequenceRiskEngineParams): SequenceRiskE
     annualExpensesAtRetirement,
     portfolioInjections,
     withdrawalBasis,
+    yearlyWeights,
   )
 
   // --- Crisis scenario ---
@@ -448,6 +471,7 @@ export function runSequenceRisk(params: SequenceRiskEngineParams): SequenceRiskE
     annualExpensesAtRetirement,
     portfolioInjections,
     withdrawalBasis,
+    yearlyWeights,
   )
 
   const baselineCrisisRate = crisisResult.success_rate
@@ -494,6 +518,7 @@ export function runSequenceRisk(params: SequenceRiskEngineParams): SequenceRiskE
       'Shift 20% from equities to bonds throughout retirement to reduce volatility exposure.',
     baselineCrisisRate,
     modifiedWeights: bondTentWeights,
+    yearlyWeights,
   })
 
   // ============================================================
@@ -551,6 +576,7 @@ export function runSequenceRisk(params: SequenceRiskEngineParams): SequenceRiskE
     baselineCrisisRate,
     modifiedInitialPortfolio: reducedPortfolio,
     modifiedPostRetirementIncome: modifiedIncome,
+    yearlyWeights,
   })
 
   // ============================================================
@@ -593,6 +619,7 @@ export function runSequenceRisk(params: SequenceRiskEngineParams): SequenceRiskE
       'Reduce withdrawal rate by 15% to preserve capital during market downturns.',
     baselineCrisisRate,
     modifiedStrategyParams: flexibleParams,
+    yearlyWeights,
   })
 
   return {

@@ -38,6 +38,7 @@ export interface BacktestEngineParams {
   retirementMitigation?: RetirementMitigationConfig
   annualExpensesAtRetirement?: number
   withdrawalBasis: 'expenses' | 'rate'
+  yearlyWeights?: number[][]         // per-year allocation weights for glide path (nYears × 8)
 }
 
 export interface BacktestEngineResult {
@@ -56,6 +57,13 @@ type ReturnColumn = keyof Pick<
   HistoricalReturnRow,
   'usEquities' | 'sgEquities' | 'intlEquities' | 'usBonds' | 'reits' | 'gold' | 'cash' | 'cpfBlended'
 >
+
+/** Dot product of two equal-length arrays. Used for per-year weight × asset return. */
+function dotProduct(a: number[], b: number[]): number {
+  let sum = 0
+  for (let i = 0; i < a.length; i++) sum += a[i] * b[i]
+  return sum
+}
 
 const ASSET_COLUMNS: ReturnColumn[] = [
   'usEquities',
@@ -84,8 +92,9 @@ function getPortfolioReturns(
   weights: number[],
   dataset: BacktestEngineParams['dataset'],
   blendRatio: number,
-): { portfolioReturns: number[]; inflationRates: (number | null)[]; years: number[] } {
+): { portfolioReturns: number[]; assetReturnRows: number[][]; inflationRates: (number | null)[]; years: number[] } {
   const portfolioReturns: number[] = []
+  const assetReturnRows: number[][] = []
   const inflationRates: (number | null)[] = []
   const years: number[] = []
 
@@ -115,6 +124,8 @@ function getPortfolioReturns(
     }
     // 'us_only' uses returns as-is
 
+    assetReturnRows.push(returns)
+
     // Portfolio return = dot(weights, returns)
     let portReturn = 0
     for (let i = 0; i < 8; i++) {
@@ -129,7 +140,7 @@ function getPortfolioReturns(
     years.push(row.year)
   }
 
-  return { portfolioReturns, inflationRates, years }
+  return { portfolioReturns, assetReturnRows, inflationRates, years }
 }
 
 // ============================================================
@@ -160,6 +171,8 @@ function runSingleWindow(
   annualExpensesAtRetirement: number = 0,
   withdrawalBasis: 'expenses' | 'rate' = 'expenses',
   postRetirementIncome?: number[],
+  assetReturnRows?: number[][],
+  yearlyWeights?: number[][],
 ): WindowResult {
   let portfolio = initialPortfolio
   // Use user's actual retirement expenses when available and withdrawalBasis is 'expenses';
@@ -187,7 +200,10 @@ function runSingleWindow(
       break
     }
 
-    const ret = portfolioReturns[idx]
+    // When glide path is active (yearlyWeights + assetReturnRows), compute per-year portfolio return
+    const ret = (yearlyWeights && assetReturnRows)
+      ? dotProduct(assetReturnRows[idx], yearlyWeights[y] ?? yearlyWeights[yearlyWeights.length - 1])
+      : portfolioReturns[idx]
     const rawCpi = inflationRates[idx]
     const inf = rawCpi !== null ? rawCpi : inflationFixed
     const remaining = duration - y
@@ -290,10 +306,11 @@ export function runDetailedWindow(
     postRetirementIncome,
     annualExpensesAtRetirement,
     withdrawalBasis,
+    yearlyWeights,
   } = params
   const expenses = annualExpensesAtRetirement ?? 0
 
-  const { portfolioReturns, inflationRates, years } = getPortfolioReturns(
+  const { portfolioReturns, assetReturnRows, inflationRates, years } = getPortfolioReturns(
     allocationWeights,
     dataset,
     blendRatio,
@@ -340,7 +357,10 @@ export function runDetailedWindow(
       break
     }
 
-    const ret = portfolioReturns[idx]
+    // When glide path is active, compute per-year portfolio return from asset returns
+    const ret = (yearlyWeights && assetReturnRows)
+      ? dotProduct(assetReturnRows[idx], yearlyWeights[y] ?? yearlyWeights[yearlyWeights.length - 1])
+      : portfolioReturns[idx]
     const rawCpi = inflationRates[idx]
     const inf = rawCpi !== null ? rawCpi : inflationFixed
     const remaining = retirementDuration - y
@@ -441,9 +461,10 @@ export function runBacktest(params: BacktestEngineParams): BacktestEngineResult 
     postRetirementIncome,
     annualExpensesAtRetirement,
     withdrawalBasis,
+    yearlyWeights,
   } = params
 
-  const { portfolioReturns, inflationRates, years } = getPortfolioReturns(
+  const { portfolioReturns, assetReturnRows, inflationRates, years } = getPortfolioReturns(
     allocationWeights,
     dataset,
     blendRatio,
@@ -473,6 +494,8 @@ export function runBacktest(params: BacktestEngineParams): BacktestEngineResult 
       annualExpensesAtRetirement,
       withdrawalBasis,
       postRetirementIncome,
+      yearlyWeights ? assetReturnRows : undefined,
+      yearlyWeights,
     )
 
     results.push({

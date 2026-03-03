@@ -620,3 +620,66 @@ describe('postRetirementIncome', () => {
     expect(avgWithIncome).toBeLessThanOrEqual(avgWithout)
   })
 })
+
+// ---------------------------------------------------------------------------
+// Glide path (yearlyWeights) — per-year allocation
+// ---------------------------------------------------------------------------
+
+describe('backtest with yearlyWeights (glide path)', () => {
+  it('yearlyWeights produces different results from fixed weights', () => {
+    // Fixed: 80/20 for all years
+    const fixedResult = runBacktest({
+      ...PARAMS,
+      allocationWeights: [0.80, 0, 0, 0.20, 0, 0, 0, 0],
+    })
+
+    // Glide: start at 80/20, transition to 30/70 over the 30-year window
+    const nYears = PARAMS.retirementDuration
+    const yearlyWeights = Array.from({ length: nYears }, (_, y) => {
+      const t = y / (nYears - 1)
+      const eq = 0.80 - 0.50 * t
+      const bond = 0.20 + 0.50 * t
+      return [eq, 0, 0, bond, 0, 0, 0, 0]
+    })
+    const glideResult = runBacktest({
+      ...PARAMS,
+      allocationWeights: [0.80, 0, 0, 0.20, 0, 0, 0, 0],
+      yearlyWeights,
+    })
+
+    // Results should differ because weight allocation changes per year
+    expect(glideResult.summary.success_rate).not.toBe(fixedResult.summary.success_rate)
+  })
+
+  it('undefined yearlyWeights preserves original behavior', () => {
+    const baseResult = runBacktest(PARAMS)
+    const explicitUndefined = runBacktest({ ...PARAMS, yearlyWeights: undefined })
+    expect(explicitUndefined.summary.success_rate).toBe(baseResult.summary.success_rate)
+    expect(explicitUndefined.summary.median_ending_balance).toBe(baseResult.summary.median_ending_balance)
+  })
+
+  it('constant yearlyWeights (all same) matches fixed weights', () => {
+    const nYears = PARAMS.retirementDuration
+    const constantWeights = Array.from({ length: nYears }, () => [...PARAMS.allocationWeights])
+    const constResult = runBacktest({ ...PARAMS, yearlyWeights: constantWeights })
+    const fixedResult = runBacktest(PARAMS)
+    // Should produce identical results since per-year weights === fixed weights
+    expect(constResult.summary.success_rate).toBe(fixedResult.summary.success_rate)
+    expect(constResult.summary.median_ending_balance).toBeCloseTo(fixedResult.summary.median_ending_balance, 0)
+  })
+
+  it('runDetailedWindow respects yearlyWeights', () => {
+    const nYears = PARAMS.retirementDuration
+    const yearlyWeights = Array.from({ length: nYears }, (_, y) => {
+      const t = y / (nYears - 1)
+      return [0.60 - 0.30 * t, 0, 0, 0.40 + 0.30 * t, 0, 0, 0, 0]
+    })
+    const glideDetailed = runDetailedWindow({ ...PARAMS, yearlyWeights }, 1970)
+    const fixedDetailed = runDetailedWindow(PARAMS, 1970)
+    // Different weights should yield different yearly returns
+    const glideReturns = glideDetailed.yearlyReturns
+    const fixedReturns = fixedDetailed.yearlyReturns
+    const anyDifferent = glideReturns.some((r, i) => Math.abs(r - fixedReturns[i]) > 1e-10)
+    expect(anyDifferent).toBe(true)
+  })
+})

@@ -200,3 +200,29 @@ export function getGlidePathAllocations(
 
   return results
 }
+
+/**
+ * Build per-year weight vectors for simulation engines with glide path support.
+ * Only call this when glidePathConfig.enabled === true.
+ *
+ * Before startAge: currentWeights. After endAge: targetWeights.
+ * Between: interpolated per the configured method.
+ *
+ * Returns number[][] of length nYears, each element is a weight vector of length nAssets.
+ */
+export function buildYearlyWeights(
+  nYears: number,
+  startAge: number,
+  currentWeights: number[],
+  targetWeights: number[],
+  glidePathConfig: GlidePathConfig,
+): number[][] {
+  const duration = glidePathConfig.endAge - glidePathConfig.startAge
+  return Array.from({ length: nYears }, (_, y) => {
+    const age = startAge + y
+    if (age < glidePathConfig.startAge) return [...currentWeights]
+    if (duration <= 0 || age >= glidePathConfig.endAge) return [...targetWeights]
+    const progress = (age - glidePathConfig.startAge) / duration
+    return interpolateGlidePath(currentWeights, targetWeights, progress, glidePathConfig.method)
+  })
+}

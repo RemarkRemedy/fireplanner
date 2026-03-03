@@ -50,6 +50,7 @@ export interface MonteCarloEngineParams {
   withdrawalBasis: 'expenses' | 'rate'
   extractPaths?: boolean  // when true, extract representative paths for projection replay
   deterministicAccumulation?: boolean  // when true, use expected return during accumulation (all sims get identical pre-retirement path)
+  yearlyWeights?: number[][]  // per-year allocation weights for glide path (nTotalYears × 8, covering accum + decum)
 }
 
 export type MonteCarloEngineResult = Omit<
@@ -135,6 +136,48 @@ export function generateReturnsParametric(
 }
 
 /**
+ * Generate per-asset correlated returns via Cholesky decomposition.
+ * Returns a 3D array [nSims][nYears][nAssets] of per-asset returns.
+ * Used by engines with glide path support that need to apply per-year weights.
+ */
+export function generateAssetReturnsParametric(
+  rng: SeededRNG,
+  nSims: number,
+  nYears: number,
+  expectedReturns: number[],
+  stdDevs: number[],
+  correlationMatrix: number[][],
+  precomputedL?: number[][],
+): number[][][] {
+  const nAssets = expectedReturns.length
+  const L = precomputedL ?? choleskyDecomposition(buildCovarianceMatrix(stdDevs, correlationMatrix))
+
+  // Transpose L to get L^T
+  const LT: number[][] = Array.from({ length: nAssets }, (_, i) =>
+    Array.from({ length: nAssets }, (_, j) => L[j][i])
+  )
+
+  const assetReturns: number[][][] = Array.from({ length: nSims }, () =>
+    Array.from({ length: nYears }, () => new Array(nAssets))
+  )
+
+  for (let s = 0; s < nSims; s++) {
+    for (let y = 0; y < nYears; y++) {
+      const Z = rng.nextGaussianArray(nAssets)
+      for (let a = 0; a < nAssets; a++) {
+        let ret = expectedReturns[a]
+        for (let k = 0; k < nAssets; k++) {
+          ret += Z[k] * LT[k][a]
+        }
+        assetReturns[s][y][a] = ret
+      }
+    }
+  }
+
+  return assetReturns
+}
+
+/**
  * Generate portfolio returns by bootstrap sampling from historical data.
  * Falls back to parametric if insufficient historical data.
  */
@@ -190,6 +233,63 @@ function generateReturnsBootstrap(
   }
 
   return portfolioReturns
+}
+
+/**
+ * Generate per-asset returns by bootstrap sampling from historical data.
+ * Returns a 3D array [nSims][nYears][nAssets] for glide path support.
+ * Falls back to parametric asset returns if insufficient historical data.
+ */
+function generateAssetReturnsBootstrap(
+  rng: SeededRNG,
+  nSims: number,
+  nYears: number,
+  expectedReturns: number[],
+  stdDevs: number[],
+  correlationMatrix: number[][],
+): number[][][] {
+  const assetKeys = ASSET_CLASSES.map((ac) => ac.key)
+  const columnNames = assetKeys.map((key) => ASSET_KEY_TO_COLUMN[key])
+
+  const completeRows: number[][] = []
+  for (const row of HISTORICAL_RETURNS) {
+    const vals: number[] = []
+    let allPresent = true
+    for (const col of columnNames) {
+      const v = row[col as keyof HistoricalReturnRow]
+      if (v === null || v === undefined || typeof v !== 'number') {
+        allPresent = false
+        break
+      }
+      vals.push(v)
+    }
+    if (allPresent) {
+      completeRows.push(vals)
+    }
+  }
+
+  if (completeRows.length === 0) {
+    return generateAssetReturnsParametric(
+      rng, nSims, nYears, expectedReturns, stdDevs, correlationMatrix,
+    )
+  }
+
+  const nHistorical = completeRows.length
+  const nAssets = assetKeys.length
+  const assetReturns: number[][][] = Array.from({ length: nSims }, () =>
+    Array.from({ length: nYears }, () => new Array(nAssets))
+  )
+
+  for (let s = 0; s < nSims; s++) {
+    for (let y = 0; y < nYears; y++) {
+      const idx = rng.nextInt(nHistorical)
+      for (let a = 0; a < nAssets; a++) {
+        assetReturns[s][y][a] = completeRows[idx][a]
+      }
+    }
+  }
+
+  return assetReturns
 }
 
 /**
@@ -309,6 +409,8 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
   const deterministicAccumulation = params.deterministicAccumulation ?? false
 
   // Weighted-average expected portfolio return (used when deterministicAccumulation is true)
+  // When yearlyWeights (glide path) is present, per-year expected returns are pre-computed below
+  // after nYearsTotal is known.
   const expectedPortfolioReturn = deterministicAccumulation
     ? weights.reduce((sum, w, i) => sum + w * expectedReturns[i], 0)
     : 0  // unused when stochastic
@@ -328,26 +430,66 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
   }
 
   // Generate portfolio returns: [nSims][nYearsTotal]
+  // When yearlyWeights is present (glide path) and method supports per-asset returns,
+  // generate per-asset returns first then apply per-year weights.
+  // Fat-tail is univariate (portfolio-level) and cannot support glide path — uses fixed weights.
+  const yw = params.yearlyWeights
   let portfolioReturns: number[][]
-  switch (method) {
-    case 'parametric':
-      portfolioReturns = generateReturnsParametric(
-        rng, nSims, nYearsTotal, weights, expectedReturns, stdDevs, correlationMatrix,
-      )
-      break
-    case 'bootstrap':
-      portfolioReturns = generateReturnsBootstrap(
-        rng, nSims, nYearsTotal, weights, expectedReturns, stdDevs, correlationMatrix,
-      )
-      break
-    case 'fat_tail':
-      portfolioReturns = generateReturnsFatTail(
-        rng, nSims, nYearsTotal, weights, expectedReturns, stdDevs,
-      )
-      break
-    default:
-      throw new Error(`Unknown method: ${method}`)
+
+  if (yw && method !== 'fat_tail') {
+    // Glide path: generate per-asset returns and apply per-year weights
+    let assetReturns: number[][][]
+    switch (method) {
+      case 'parametric':
+        assetReturns = generateAssetReturnsParametric(
+          rng, nSims, nYearsTotal, expectedReturns, stdDevs, correlationMatrix,
+        )
+        break
+      case 'bootstrap':
+        assetReturns = generateAssetReturnsBootstrap(
+          rng, nSims, nYearsTotal, expectedReturns, stdDevs, correlationMatrix,
+        )
+        break
+      default:
+        throw new Error(`Unknown method: ${method}`)
+    }
+
+    portfolioReturns = Array.from({ length: nSims }, (_, s) =>
+      Array.from({ length: nYearsTotal }, (_, t) => {
+        const w = t < yw.length ? yw[t] : yw[yw.length - 1]
+        return dot(assetReturns[s][t], w)
+      })
+    )
+  } else {
+    // No glide path (or fat-tail): use fixed weights
+    switch (method) {
+      case 'parametric':
+        portfolioReturns = generateReturnsParametric(
+          rng, nSims, nYearsTotal, weights, expectedReturns, stdDevs, correlationMatrix,
+        )
+        break
+      case 'bootstrap':
+        portfolioReturns = generateReturnsBootstrap(
+          rng, nSims, nYearsTotal, weights, expectedReturns, stdDevs, correlationMatrix,
+        )
+        break
+      case 'fat_tail':
+        portfolioReturns = generateReturnsFatTail(
+          rng, nSims, nYearsTotal, weights, expectedReturns, stdDevs,
+        )
+        break
+      default:
+        throw new Error(`Unknown method: ${method}`)
+    }
   }
+
+  // Per-year expected returns for deterministic accumulation with glide path
+  const yearlyExpectedReturns: number[] | null = (deterministicAccumulation && yw)
+    ? Array.from({ length: nYearsTotal }, (_, t) => {
+        const w = t < yw.length ? yw[t] : yw[yw.length - 1]
+        return w.reduce((sum, wt, i) => sum + wt * expectedReturns[i], 0)
+      })
+    : null
 
   // Simulate paths: balances[sim][year] — (nYearsTotal + 1) entries per sim
   const balances: number[][] = Array.from({ length: nSims }, () => {
@@ -390,7 +532,7 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
       for (let s = 0; s < nSims; s++) {
         const adjustedBalance = balances[s][t] + adjustments[t]
         const returnRate = deterministicAccumulation
-          ? expectedPortfolioReturn
+          ? (yearlyExpectedReturns ? yearlyExpectedReturns[t] : expectedPortfolioReturn)
           : portfolioReturns[s][t]
         balances[s][t + 1] =
           adjustedBalance * (1 + returnRate - expenseRatio) + savings
