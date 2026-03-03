@@ -81,6 +81,7 @@ export function ProjectionPage() {
   const hasLifeEvents = rows?.some((r) => r.activeLifeEvents.length > 0) ?? false
   const hasLockedUnlock = rows?.some((r) => r.lockedAssetUnlock > 0) ?? false
   const hasHealthcareBreakdown = rows?.some((r) => r.healthcareCashOutlay > 0) ?? false
+  const hasVirtualRebalancing = rows?.some((r) => r.cpfCountedAsBonds > 0) ?? false
 
   // Detect which asset classes have any non-zero weight across all rows (for auto-hiding breakdown columns)
   const nonZeroAssets = useMemo(() => {
@@ -269,6 +270,13 @@ export function ProjectionPage() {
       if (!nonZeroAssets.has(i)) {
         vis[`asset_${ASSET_CLASSES[i].key}Value`] = false
         vis[`asset_${ASSET_CLASSES[i].key}Pct`] = false
+        vis[`asset_${ASSET_CLASSES[i].key}TgtPct`] = false
+      }
+    }
+    // Hide target % columns when CPF virtual rebalancing is not active (target === effective)
+    if (!hasVirtualRebalancing) {
+      for (const ac of ASSET_CLASSES) {
+        vis[`asset_${ac.key}TgtPct`] = false
       }
     }
     // Hide less-essential default columns on mobile to reduce horizontal scroll
@@ -278,7 +286,7 @@ export function ProjectionPage() {
       vis['fireProgress'] = vis['fireProgress'] || false
     }
     return vis
-  }, [activeGroups, isMobile, hasSrs, hasMortgageCash, hasRa, hasOaHousing, hasOaShortfall, hasBequest, hasCpfLife, hasMilestone, hasPropertyEquity, hasLifeEvents, hasLockedUnlock, hasHealthcareBreakdown, nonZeroAssets])
+  }, [activeGroups, isMobile, hasSrs, hasMortgageCash, hasRa, hasOaHousing, hasOaShortfall, hasBequest, hasCpfLife, hasMilestone, hasPropertyEquity, hasLifeEvents, hasLockedUnlock, hasHealthcareBreakdown, nonZeroAssets, hasVirtualRebalancing])
 
   // Set of first-column IDs for each active group — used to draw vertical dividers.
   // Uses first *visible* column per group (not static first element) so auto-hidden

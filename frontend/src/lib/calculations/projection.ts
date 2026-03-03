@@ -899,6 +899,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       oopExpense: healthcareCost?.oopExpense ?? 0,
       mediSaveDeductible: healthcareCost?.mediSaveDeductible ?? 0,
       allocationWeights: effectiveWeights,
+      targetAllocationWeights: [...weights],  // pre-rebalancing target (defensive copy)
       cumulativeSavings: incomeRow.cumulativeSavings,
       activeLifeEvents: incomeRow.activeLifeEvents,
     })

@@ -62,7 +62,7 @@ export const GROUP_COLUMNS: Record<ColumnGroup, string[]> = {
     'withdrawalExcess', 'cumulativeSavings',
   ],
   portfolioBreakdown: ASSET_CLASSES.flatMap((ac) => [
-    `asset_${ac.key}Value`, `asset_${ac.key}Pct`,
+    `asset_${ac.key}Value`, `asset_${ac.key}Pct`, `asset_${ac.key}TgtPct`,
   ]),
   property: [
     'propertyValue', 'mortgageBalance', 'propertyEquity',
@@ -441,12 +441,23 @@ export function buildProjectionColumns(
             const isRebalanced = info.row.original.cpfCountedAsBonds > 0
             if (isRebalanced) {
               return (
-                <span title="Adjusted for CPF virtual rebalancing — differs from target allocation">
+                <span title="Effective allocation after CPF virtual rebalancing">
                   {v.toFixed(1)}%*
                 </span>
               )
             }
             return `${v.toFixed(1)}%`
+          },
+        },
+      ),
+      columnHelper.accessor(
+        (row) => row.targetAllocationWeights[i] * 100,
+        {
+          id: `asset_${ac.key}TgtPct`,
+          header: `${ASSET_SHORT_LABELS[ac.key]} (Tgt%)`,
+          cell: (info) => {
+            const v = info.getValue()
+            return v > 0 ? `${v.toFixed(1)}%` : '-'
           },
         },
       ),

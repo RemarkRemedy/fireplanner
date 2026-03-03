@@ -969,7 +969,8 @@ export interface ProjectionRow {
   oopExpense: number
   mediSaveDeductible: number
   // Allocation weights (N asset classes, for glide path visualization)
-  allocationWeights: number[]
+  allocationWeights: number[]           // effective weights (after CPF virtual rebalancing if active)
+  targetAllocationWeights: number[]     // target/intended weights (before CPF virtual rebalancing)
   // Expanded: other
   cumulativeSavings: number
   activeLifeEvents: string[]

@@ -86,6 +86,7 @@ export function MCProjectionTable({ result, isStale }: MCProjectionTableProps) {
   const hasLifeEvents = rows?.some((r) => r.activeLifeEvents.length > 0) ?? false
   const hasLockedUnlock = rows?.some((r) => r.lockedAssetUnlock > 0) ?? false
   const hasHealthcareBreakdown = rows?.some((r) => r.healthcareCashOutlay > 0) ?? false
+  const hasVirtualRebalancing = rows?.some((r) => r.cpfCountedAsBonds > 0) ?? false
 
   // Detect which asset classes have any non-zero weight across all rows
   const nonZeroAssets = useMemo(() => {
@@ -146,6 +147,13 @@ export function MCProjectionTable({ result, isStale }: MCProjectionTableProps) {
       if (!nonZeroAssets.has(i)) {
         vis[`asset_${ASSET_CLASSES[i].key}Value`] = false
         vis[`asset_${ASSET_CLASSES[i].key}Pct`] = false
+        vis[`asset_${ASSET_CLASSES[i].key}TgtPct`] = false
+      }
+    }
+    // Hide target % columns when CPF virtual rebalancing is not active (target === effective)
+    if (!hasVirtualRebalancing) {
+      for (const ac of ASSET_CLASSES) {
+        vis[`asset_${ac.key}TgtPct`] = false
       }
     }
     return vis
@@ -153,7 +161,7 @@ export function MCProjectionTable({ result, isStale }: MCProjectionTableProps) {
     activeGroups, hasLockedUnlock, hasHealthcareBreakdown, hasRa,
     hasOaHousing, hasOaShortfall, hasBequest, hasCpfLife, hasMilestone,
     hasMortgageCash, hasPropertyValue, hasMortgageBalance, hasPropertyEquity,
-    hasLifeEvents, nonZeroAssets,
+    hasLifeEvents, nonZeroAssets, hasVirtualRebalancing,
   ])
 
   // Set of first-column IDs for each active group — uses first *visible* column
