@@ -868,7 +868,6 @@ export interface PropertyState {
   existingPropertyValue: number
   existingMortgageBalance: number
   existingMonthlyPayment: number
-  existingRentalIncome: number
   existingMortgageRate: number
   existingMortgageRemainingYears: number
   mortgageCpfMonthly: number
