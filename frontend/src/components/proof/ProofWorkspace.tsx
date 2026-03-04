@@ -133,6 +133,7 @@ export function ProofWorkspace({ mcResult, isMcResultStale }: ProofWorkspaceProp
         metricType={proofMetricType}
         chartType={proofChartType}
         blendRatio={proofBlendRatio}
+        showOutliers={proofShowOutliers}
         proxyDiagnostics={proxyDiagnostics}
         onSourceChange={(value) => {
           setField('proofSource', value)
@@ -141,6 +142,7 @@ export function ProofWorkspace({ mcResult, isMcResultStale }: ProofWorkspaceProp
         onMetricTypeChange={(value) => setField('proofMetricType', value)}
         onChartTypeChange={(value) => setField('proofChartType', value)}
         onBlendRatioChange={(value) => setField('proofBlendRatio', value)}
+        onShowOutliersChange={(value) => setField('proofShowOutliers', value)}
       />
 
       <div className="rounded-md border bg-purple-100/50 p-3 text-sm flex flex-wrap items-center gap-2 justify-between">
