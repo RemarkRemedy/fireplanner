@@ -16,13 +16,14 @@ const MAX_WIDTH = 600
 
 export function HelpPanel({ mobile = false }: { mobile?: boolean }) {
   const { pathname } = useLocation()
+  const normalizedPathname = pathname === '/planner' ? '/stress-test' : pathname
   const { activeSection } = useActiveSection()
   const toggleHelpPanel = useUIStore((s) => s.toggleHelpPanel)
   const statsPosition = useUIStore((s) => s.statsPosition)
   const isOverlay = useMediaQuery('(max-width: 1100px)')
 
   // When stats strip is fixed at the bottom on stats routes, add padding so content isn't hidden
-  const STATS_ROUTES = ['/inputs', '/projection', '/stress-test', '/dashboard']
+  const STATS_ROUTES = ['/inputs', '/projection', '/stress-test', '/planner', '/dashboard']
   const needsBottomPad = statsPosition === 'bottom' && STATS_ROUTES.includes(pathname)
   const [width, setWidth] = useState(DEFAULT_WIDTH)
   const isDragging = useRef(false)
@@ -31,8 +32,8 @@ export function HelpPanel({ mobile = false }: { mobile?: boolean }) {
 
   // Use section-specific content when on /inputs with an active section,
   // otherwise fall back to route-level content
-  const contentKey = activeSection ?? pathname
-  const faqItems = HELP_FAQ[contentKey] ?? HELP_FAQ[pathname] ?? []
+  const contentKey = activeSection ?? normalizedPathname
+  const faqItems = HELP_FAQ[contentKey] ?? HELP_FAQ[normalizedPathname] ?? []
   const sources = getSourcesForRoute(contentKey)
 
   // Friendly label matching sidebar capitalisation (FIRE, CPF are acronyms)

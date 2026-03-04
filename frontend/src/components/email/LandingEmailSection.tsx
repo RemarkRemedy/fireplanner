@@ -4,12 +4,16 @@ import { Button } from '@/components/ui/button'
 import { CheckCircle, Loader2 } from 'lucide-react'
 import { useEmailSignup } from '@/hooks/useEmailSignup'
 import { EMAIL_MAX_LENGTH, FEATURE_OPTIONS, SIGNUP_FLAG } from '@/lib/validation/emailConstants'
+import { isCompanionMode } from '@/lib/companion/isCompanionMode'
 
 export function LandingEmailSection() {
   const {
     email, setEmail, submittedEmail, status, errorMsg, step, stepRef,
     handleEmailSubmit, handleFeatureSelect, handleSkip, handleReset,
   } = useEmailSignup('landing_page')
+  const companionMode = isCompanionMode()
+
+  if (companionMode) return null
 
   // Hide entirely for users who completed the full signup flow previously
   try { if (localStorage.getItem(SIGNUP_FLAG) === '1' && !submittedEmail) return null } catch { /* localStorage unavailable */ }

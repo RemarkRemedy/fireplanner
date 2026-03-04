@@ -10,7 +10,7 @@
 
 import { SeededRNG } from '@/lib/math/random.ts'
 import { choleskyDecomposition, buildCovarianceMatrix, dot } from '@/lib/math/linalg.ts'
-import { percentile, studentTQuantile } from '@/lib/math/stats.ts'
+import { percentile, percentiles, studentTQuantile } from '@/lib/math/stats.ts'
 import {
   computeWithdrawal,
 } from '@/lib/calculations/withdrawal.ts'
@@ -45,6 +45,8 @@ export interface MonteCarloEngineParams {
   expenseRatio: number
   inflation: number
   portfolioAdjustments?: { year: number; amount: number }[]  // sparse one-time equity injections
+  forcedPortfolioReturns?: number[] // optional absolute return overrides by year index (starting now)
+  yearlyInflationRates?: number[]   // optional inflation overrides by year index (starting now)
   retirementMitigation?: RetirementMitigationConfig
   annualExpensesAtRetirement?: number  // needed to compute bucket target
   withdrawalBasis: 'expenses' | 'rate'
@@ -57,6 +59,8 @@ export type MonteCarloEngineResult = Omit<
   MonteCarloResult,
   'safe_swr' | 'n_simulations' | 'computation_time_ms' | 'cached'
 >
+
+const BAND_PERCENTILES = [5, 10, 25, 50, 75, 90, 95] as const
 
 // ============================================================
 // Helpers
@@ -483,6 +487,16 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
     }
   }
 
+  if (params.forcedPortfolioReturns && params.forcedPortfolioReturns.length > 0) {
+    for (let t = 0; t < nYearsTotal; t++) {
+      const forced = params.forcedPortfolioReturns[t]
+      if (typeof forced !== 'number' || !Number.isFinite(forced)) continue
+      for (let s = 0; s < nSims; s++) {
+        portfolioReturns[s][t] = forced
+      }
+    }
+  }
+
   // Per-year expected returns for deterministic accumulation with glide path
   const yearlyExpectedReturns: number[] | null = (deterministicAccumulation && yw)
     ? Array.from({ length: nYearsTotal }, (_, t) => {
@@ -490,6 +504,18 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
         return w.reduce((sum, wt, i) => sum + wt * expectedReturns[i], 0)
       })
     : null
+
+  function getForcedReturnForYear(yearIdx: number): number | null {
+    const forced = params.forcedPortfolioReturns?.[yearIdx]
+    return (typeof forced === 'number' && Number.isFinite(forced)) ? forced : null
+  }
+
+  function getDeterministicAccumulationReturnForYear(yearIdx: number): number {
+    const forced = getForcedReturnForYear(yearIdx)
+    if (forced !== null) return forced
+    if (yearlyExpectedReturns) return yearlyExpectedReturns[yearIdx]
+    return expectedPortfolioReturn
+  }
 
   // Simulate paths: balances[sim][year] — (nYearsTotal + 1) entries per sim
   const balances: number[][] = Array.from({ length: nSims }, () => {
@@ -524,22 +550,33 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
   // Retirement cash bucket state (one scalar per sim)
   const cashBuckets = new Float64Array(nSims)      // current bucket balance
   const cashBucketTargets = new Float64Array(nSims) // target bucket size
+  let constantDollarInflationFactor = 1
 
   for (let t = 0; t < nYearsTotal; t++) {
     if (t < nYearsAccum) {
       // ACCUMULATION: add savings, grow portfolio
       const savings = t < annualSavings.length ? annualSavings[t] : 0
+      const forcedReturn = getForcedReturnForYear(t)
       for (let s = 0; s < nSims; s++) {
         const adjustedBalance = balances[s][t] + adjustments[t]
-        const returnRate = deterministicAccumulation
-          ? (yearlyExpectedReturns ? yearlyExpectedReturns[t] : expectedPortfolioReturn)
+        const returnRate = forcedReturn ?? (deterministicAccumulation
+          ? getDeterministicAccumulationReturnForYear(t)
           : portfolioReturns[s][t]
+        )
         balances[s][t + 1] =
           adjustedBalance * (1 + returnRate - expenseRatio) + savings
       }
     } else {
       // DECUMULATION: subtract withdrawals
       const decumYear = t - nYearsAccum
+      const inflationForYear = params.yearlyInflationRates?.[t]
+      const annualInflationRate = (typeof inflationForYear === 'number' && Number.isFinite(inflationForYear))
+        ? inflationForYear
+        : inflation
+      if (strategy === 'constant_dollar' && decumYear > 0) {
+        // Variable inflation for constant-dollar must compound by year.
+        constantDollarInflationFactor *= Math.max(0, 1 + annualInflationRate)
+      }
 
       if (decumYear === 0) {
         // Use user's actual retirement expenses when available and withdrawalBasis is 'expenses';
@@ -579,18 +616,20 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
           ? currentBalance - prevBalances[s] + prevWithdrawals[s]
           : 0
 
-        const withdrawal = computeWithdrawalsForYear(
-          strategy,
-          currentBalance,
-          decumYear,
-          nYearsDecum,
-          initialWithdrawalAmount,
-          prevWithdrawals[s],
-          inflation,
-          strategyParams,
-          prevYearReturn,
-          prevYearGains,
-        )
+        const withdrawal = strategy === 'constant_dollar'
+          ? initialWithdrawalAmount * constantDollarInflationFactor
+          : computeWithdrawalsForYear(
+              strategy,
+              currentBalance,
+              decumYear,
+              nYearsDecum,
+              initialWithdrawalAmount,
+              prevWithdrawals[s],
+              annualInflationRate,
+              strategyParams,
+              prevYearReturn,
+              prevYearGains,
+            )
 
         // Subtract post-retirement income
         const income = decumYear < postRetirementIncome.length
@@ -648,13 +687,14 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
       // Record withdrawal percentiles for this decumulation year
       wb_years.push(decumYear)
       wb_ages.push(retirementAge + decumYear)
-      wb_p5.push(percentile(withdrawalCol, 5))
-      wb_p10.push(percentile(withdrawalCol, 10))
-      wb_p25.push(percentile(withdrawalCol, 25))
-      wb_p50.push(percentile(withdrawalCol, 50))
-      wb_p75.push(percentile(withdrawalCol, 75))
-      wb_p90.push(percentile(withdrawalCol, 90))
-      wb_p95.push(percentile(withdrawalCol, 95))
+      const [wp5, wp10, wp25, wp50, wp75, wp90, wp95] = percentiles(withdrawalCol, BAND_PERCENTILES)
+      wb_p5.push(wp5)
+      wb_p10.push(wp10)
+      wb_p25.push(wp25)
+      wb_p50.push(wp50)
+      wb_p75.push(wp75)
+      wb_p90.push(wp90)
+      wb_p95.push(wp95)
     }
   }
 
@@ -686,13 +726,14 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
       col[s] = balances[s][y]
     }
 
-    p5.push(percentile(col, 5))
-    p10.push(percentile(col, 10))
-    p25.push(percentile(col, 25))
-    p50.push(percentile(col, 50))
-    p75.push(percentile(col, 75))
-    p90.push(percentile(col, 90))
-    p95.push(percentile(col, 95))
+    const [cp5, cp10, cp25, cp50, cp75, cp90, cp95] = percentiles(col, BAND_PERCENTILES)
+    p5.push(cp5)
+    p10.push(cp10)
+    p25.push(cp25)
+    p50.push(cp50)
+    p75.push(cp75)
+    p90.push(cp90)
+    p95.push(cp95)
   }
 
   const percentileBands: PercentileBands = {
@@ -704,15 +745,16 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
   for (let s = 0; s < nSims; s++) {
     terminals[s] = balances[s][nYearsTotal]
   }
+  const [terminalP5, terminalP50, terminalP95] = percentiles(terminals, [5, 50, 95] as const)
   const sortedTerminals = [...terminals].sort((a, b) => a - b)
 
   const terminalStats: TerminalStats = {
-    median: percentile(terminals, 50),
+    median: terminalP50,
     mean: terminals.reduce((a, b) => a + b, 0) / nSims,
     worst: sortedTerminals[0],
     best: sortedTerminals[nSims - 1],
-    p5: percentile(terminals, 5),
-    p95: percentile(terminals, 95),
+    p5: terminalP5,
+    p95: terminalP95,
   }
 
   // Failure distribution by decade of retirement
@@ -856,16 +898,52 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
       // produces identical balances to the MC engine.
       if (deterministicAccumulation) {
         for (let t = 0; t < nYearsAccum; t++) {
-          returns[t] = expectedPortfolioReturn
+          returns[t] = getDeterministicAccumulationReturnForYear(t)
         }
       }
       representativePaths.push({
+        kind: 'percentile',
         percentile: pct,
+        label: `P${pct}`,
         simIndex: bestSim,
         yearlyReturns: returns,
         retirementBalance: balances[bestSim][retYearIdx],
       })
     }
+
+    // Worst path at selection point
+    let worstSim = 0
+    for (let s = 1; s < nSims; s++) {
+      if (selCol[s] < selCol[worstSim]) worstSim = s
+    }
+    const worstReturns = portfolioReturns[worstSim].slice(0, nYearsTotal)
+    if (deterministicAccumulation) {
+      for (let t = 0; t < nYearsAccum; t++) worstReturns[t] = getDeterministicAccumulationReturnForYear(t)
+    }
+    representativePaths.push({
+      kind: 'worst',
+      label: 'Worst',
+      simIndex: worstSim,
+      yearlyReturns: worstReturns,
+      retirementBalance: balances[worstSim][retYearIdx],
+    })
+
+    // Best path at selection point
+    let bestSimOverall = 0
+    for (let s = 1; s < nSims; s++) {
+      if (selCol[s] > selCol[bestSimOverall]) bestSimOverall = s
+    }
+    const bestReturns = portfolioReturns[bestSimOverall].slice(0, nYearsTotal)
+    if (deterministicAccumulation) {
+      for (let t = 0; t < nYearsAccum; t++) bestReturns[t] = getDeterministicAccumulationReturnForYear(t)
+    }
+    representativePaths.push({
+      kind: 'best',
+      label: 'Best',
+      simIndex: bestSimOverall,
+      yearlyReturns: bestReturns,
+      retirementBalance: balances[bestSimOverall][retYearIdx],
+    })
   }
 
   return {

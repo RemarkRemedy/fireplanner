@@ -12,6 +12,7 @@ import {
   SIGNUP_FLAG,
   EMAIL_SUBMITTED_FLAG,
 } from '@/lib/validation/emailConstants'
+import { isCompanionMode } from '@/lib/companion/isCompanionMode'
 
 interface ContextualEmailNudgeProps {
   pageId: string
@@ -28,6 +29,7 @@ function setFlag(key: string) {
 }
 
 export function ContextualEmailNudge({ pageId, message, hidden = false }: ContextualEmailNudgeProps) {
+  const companionMode = isCompanionMode()
   const nudgeId = `email-nudge-${pageId}`
   const dismissedNudges = useUIStore((s) => s.dismissedNudges)
   const dismissNudge = useUIStore((s) => s.dismissNudge)
@@ -50,6 +52,7 @@ export function ContextualEmailNudge({ pageId, message, hidden = false }: Contex
 
   // Visibility: all conditions must pass
   const visible =
+    !companionMode &&
     !hidden &&
     !alreadySignedUp &&
     hasProfile &&

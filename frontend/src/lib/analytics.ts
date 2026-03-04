@@ -1,3 +1,5 @@
+import { isCompanionMode } from '@/lib/companion/isCompanionMode'
+
 // Type declaration for Umami's global
 declare global {
   interface Window {
@@ -50,5 +52,6 @@ type AnalyticsEvent =
   | 'quick_mode_expanded'
 
 export function trackEvent(event: AnalyticsEvent, data?: Record<string, string | number | boolean>) {
+  if (isCompanionMode()) return
   window.umami?.track(event, data)
 }

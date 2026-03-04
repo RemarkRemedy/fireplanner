@@ -246,6 +246,21 @@ npm run test:coverage # Vitest with coverage report
 5. No `any` types in calculation or simulation files
 6. No hardcoded Singapore-specific values outside `lib/data/`
 
+### Git Remotes and Branching
+
+This repo uses two GitHub remotes to separate public (open-source) from private (unreleased) work:
+
+| Remote | Repo | Visibility | What gets pushed |
+|--------|------|------------|-----------------|
+| `origin` | `RemarkRemedy/fireplanner` | **Public** | Bugfixes only |
+| `private` | `RemarkRemedy/fireplanner-private` | **Private** | Everything (full backup) |
+
+**Workflow:**
+- **Bugfixes:** commit on `main`, push to both remotes (`git push-both` alias)
+- **New features:** branch off `main`, push to `private` only (`git push private feat/my-feature`). Do NOT push feature branches or feature merges to `origin`.
+
+**No new features go to `origin` until further notice.** The public repo receives bugfixes only. All feature work stays on `private`. This includes merging feature branches into `main` — after merging a feature, push `main` to `private` only, not `origin`.
+
 ## UI Patterns
 
 - **Live calculations:** Every input change recalculates client-side metrics instantly (no submit button for simple metrics).

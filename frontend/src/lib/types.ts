@@ -103,17 +103,6 @@ export interface RetirementWithdrawal {
 }
 
 // ============================================================
-// CPF OA Withdrawal (lump-sum transfer to liquid portfolio)
-// ============================================================
-
-export interface CpfOaWithdrawal {
-  id: string
-  label: string
-  amount: number
-  age: number  // must be >= 55
-}
-
-// ============================================================
 // Expense Adjustments (age-based spending changes)
 // ============================================================
 
@@ -667,8 +656,12 @@ export interface HistogramSnapshot {
   nBuckets: number
 }
 
+export type RepresentativePathKind = 'percentile' | 'best' | 'worst'
+
 export interface RepresentativePath {
-  percentile: number
+  kind: RepresentativePathKind
+  percentile?: number        // required when kind === 'percentile'
+  label?: string
   simIndex: number
   yearlyReturns: number[]   // gross portfolio returns per year (subtract expenseRatio when replaying)
   retirementBalance: number
@@ -697,6 +690,13 @@ export interface SimulationState {
   nSimulations: number
   withdrawalBasis: WithdrawalBasis
   deterministicAccumulation: boolean  // when true, pre-retirement uses expected returns
+  proofSource: ProofSource
+  proofMetricType: ProofMetricType
+  proofChartType: ProofChartType
+  proofShowOutliers: boolean
+  proofBlendRatio: number
+  proofSelectedCycle: number
+  proofSelectedYear: number
   lastMCSuccessRate: number | null
   lastBacktestSuccessRate: number | null
   validationErrors: ValidationErrors
@@ -986,6 +986,27 @@ export interface ProjectionSummary {
   totalGoalShortfall: number
   totalRetirementWithdrawalShortfall: number
   mediSaveDepletionAge: number | null
+}
+
+// ============================================================
+// Proof (Stress Test)
+// ============================================================
+
+export type ProofSource = 'mc' | 'historical_blended'
+export type ProofMetricType = 'portfolio' | 'spending'
+export type ProofChartType = 'minmaxmean' | 'time_series' | 'individual_cycles' | 'spending_vs_returns'
+export type ProofProvenance = 'actual' | 'proxy' | 'mixed'
+
+export interface ProofCycle {
+  id: string
+  label: string
+  startYear: number | null
+  yearlyReturns: number[]
+  provenance: ProofProvenance[]
+  rows: ProjectionRow[]
+  endingPortfolio: number
+  meanSpending: number
+  meanReturnPct: number
 }
 
 // ============================================================

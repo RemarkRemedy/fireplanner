@@ -93,4 +93,74 @@ test.describe('Monte Carlo Simulation', () => {
       }
     }
   })
+
+  test('scenario selector runs selected stress cases and shows comparison rows', async ({ page }) => {
+    await completeOnboarding(page)
+
+    await page.getByRole('link', { name: /stress test/i }).first().click()
+    await expect(page).toHaveURL(/\/stress-test/)
+    await page.waitForLoadState('networkidle')
+
+    await expect(page.getByText('Stress Scenarios')).toBeVisible()
+
+    const crashCheckbox = page.getByRole('checkbox', { name: /market crash/i })
+    await crashCheckbox.check()
+
+    const runButton = page.getByRole('button', { name: /run simulation/i }).first()
+    await runButton.click()
+
+    await expect(page.getByText('Simulation Results')).toBeVisible({ timeout: 45000 })
+    await expect(page.getByText('Scenario Comparison')).toBeVisible({ timeout: 45000 })
+    await expect(page.getByRole('cell', { name: /base case/i })).toBeVisible({ timeout: 45000 })
+    await expect(page.getByRole('cell', { name: /market crash/i })).toBeVisible({ timeout: 45000 })
+  })
+
+  test('companion mode runs in planner route and renders companion charts', async ({ page }) => {
+    const postedPayloads: unknown[] = []
+
+    await page.route('**/planner/snapshot?*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          avgMonthlyIncome: 4000,
+          avgMonthlyExpense: 6200,
+          avgMonthlySavings: -2200,
+          investableAssets: 60000,
+          structuralMode: 'simple',
+        }),
+      })
+    })
+
+    await page.route('**/planner/results?*', async (route) => {
+      const payload = route.request().postDataJSON()
+      postedPayloads.push(payload)
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true }),
+      })
+    })
+
+    await page.goto('/planner?token=e2e-token&companion=1')
+    await expect(page).toHaveURL(/\/planner/)
+    await expect(page.getByText(/loaded from your expense data/i)).toBeVisible({ timeout: 15000 })
+
+    const runButton = page.getByRole('button', { name: /run simulation/i }).first()
+    await expect(runButton).toBeVisible()
+    await runButton.click()
+
+    await expect(page.getByText('Simulation Results')).toBeVisible({ timeout: 45000 })
+    await expect(page.getByText('Portfolio Balance Fan Chart')).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText('Failure Distribution by Decade')).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText('Withdrawal Distribution (p10 / p50 / p90)')).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText('Saved to phone ✓')).toBeVisible({ timeout: 20000 })
+
+    await expect.poll(() => postedPayloads.length, { timeout: 15000 }).toBeGreaterThan(0)
+    const firstPayload = postedPayloads[0] as Record<string, unknown>
+    expect(firstPayload).toHaveProperty('p_success')
+    expect(firstPayload).toHaveProperty('WR_critical_50')
+    expect(firstPayload).toHaveProperty('horizonYears')
+    expect(firstPayload).toHaveProperty('allocationSummary')
+  })
 })

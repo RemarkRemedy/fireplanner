@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import * as fc from 'fast-check'
-import { percentile, studentTQuantile } from './stats'
+import { percentile, percentiles, studentTQuantile } from './stats'
 
 describe('percentile', () => {
   // numpy.percentile with method='linear' (default)
@@ -110,6 +110,26 @@ describe('percentile', () => {
         },
       ),
     )
+  })
+})
+
+describe('percentiles', () => {
+  it('matches repeated percentile() calls for common band targets', () => {
+    const data = [10, 20, 30, 40, 50, 60, 70]
+    const targets = [5, 10, 25, 50, 75, 90, 95] as const
+
+    const batch = percentiles(data, targets)
+    const individual = targets.map((target) => percentile(data, target))
+
+    expect(batch).toEqual(individual)
+  })
+
+  it('does not mutate input array', () => {
+    const data = [50, 10, 30, 20, 40]
+    const copy = [...data]
+
+    percentiles(data, [10, 50, 90])
+    expect(data).toEqual(copy)
   })
 })
 

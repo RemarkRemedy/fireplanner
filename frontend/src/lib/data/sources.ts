@@ -128,6 +128,7 @@ export const ROUTE_SOURCES: Record<string, string[]> = {
   '/inputs': ['cpf', 'tax', 'income', 'property'],
   '/projection': ['cpf', 'tax', 'income', 'historicalReturns'],
   '/stress-test': ['historicalReturns', 'crisisScenarios'],
+  '/planner': ['historicalReturns', 'crisisScenarios'],
   '/dashboard': ['cpf', 'tax', 'historicalReturns'],
   // Section-level (for /inputs sub-sections)
   'section-personal': [],

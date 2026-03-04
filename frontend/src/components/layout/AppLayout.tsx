@@ -16,9 +16,10 @@ import { tryUndo } from '@/lib/undo'
 import { BetaBanner } from '@/components/shared/BetaBanner'
 import { DataUpdateBanner } from '@/components/shared/DataUpdateBanner'
 import { MobileShareFab } from '@/components/shared/MobileShareFab'
+import { isCompanionMode } from '@/lib/companion/isCompanionMode'
 
 // Pages that show the stats strip (inputs and analysis pages, not start/reference)
-const STATS_ROUTES = ['/inputs', '/projection', '/withdrawal', '/stress-test', '/dashboard']
+const STATS_ROUTES = ['/inputs', '/projection', '/withdrawal', '/stress-test', '/dashboard', '/planner']
 
 function useIsDesktop() {
   const [isDesktop, setIsDesktop] = useState(() =>
@@ -39,6 +40,7 @@ export function AppLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const isDesktop = useIsDesktop()
+  const companionMode = isCompanionMode()
 
   // Strip trailing slashes so Umami and React Router see consistent paths
   // (Cloudflare Pages adds trailing slashes to pre-rendered routes)
@@ -128,8 +130,8 @@ export function AppLayout() {
             )}
           >
             <div className="@container container pt-14 md:pt-6 pb-6 max-w-6xl">
-              <BetaBanner />
-              <DataUpdateBanner />
+              {!companionMode && <BetaBanner />}
+              {!companionMode && <DataUpdateBanner />}
               <Outlet />
             </div>
             <footer className="container max-w-6xl pb-6 px-6">
@@ -148,7 +150,7 @@ export function AppLayout() {
       {/* Mobile FABs: Share + Help */}
       {!isDesktop && (
         <>
-          <MobileShareFab />
+          {!companionMode && <MobileShareFab />}
           <div className="fixed bottom-16 right-4 z-40 md:hidden">
             <Sheet>
               <SheetTrigger asChild>

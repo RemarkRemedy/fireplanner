@@ -10,6 +10,7 @@ import { ShareButton } from '@/components/shared/ShareButton'
 import { ScenarioManager } from './ScenarioManager'
 import { ThemeToggle } from './ThemeToggle'
 import { trackEvent } from '@/lib/analytics'
+import { getCompanionToken, isCompanionMode } from '@/lib/companion/isCompanionMode'
 import {
   User,
   DollarSign,
@@ -130,6 +131,8 @@ const AFTER_INPUTS_GROUPS: { title: string; items: NavItem[] }[] = [
   },
 ]
 
+const COMPANION_SECTION_SCROLL_KEY = 'fireplanner-companion-target-section'
+
 function StatusDot({ sectionId, sections }: { sectionId: string; sections: ReturnType<typeof useSectionCompletion>['sections'] }) {
   const section = sections[sectionId as SectionId]
   if (!section) return null
@@ -146,9 +149,19 @@ function StatusDot({ sectionId, sections }: { sectionId: string; sections: Retur
 function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const navigate = useNavigate()
+  const companionMode = isCompanionMode()
+  const companionToken = companionMode ? getCompanionToken() : null
   const sectionOrder = useUIStore((s) => s.sectionOrder)
   const { activeSection, isInputsPage } = useActiveSection()
   const { sections } = useSectionCompletion()
+
+  const companionHash = companionMode && companionToken
+    ? `#ct=${encodeURIComponent(companionToken)}`
+    : ''
+  const withCompanionHash = useCallback(
+    (path: string) => (companionHash ? `${path}${companionHash}` : path),
+    [companionHash]
+  )
 
   const cpfEnabled = useUIStore((s) => s.cpfEnabled)
   const healthcareEnabled = useUIStore((s) => s.healthcareEnabled)
@@ -166,36 +179,55 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
       : STORY_FIRST_SECTIONS
 
   const inputSections = allInputSections.filter((s) => !hiddenSectionIds.has(s.sectionId))
+  const startGroups = companionMode ? [] : NON_INPUT_GROUPS
+  const afterInputGroups = companionMode
+    ? AFTER_INPUTS_GROUPS
+      .filter((group) => group.title === 'ANALYSIS' || group.title === 'RESULTS')
+      .map((group) => ({
+        ...group,
+        items: group.items.map((item) => (
+          item.path === '/stress-test'
+            ? { ...item, path: '/planner' }
+            : item
+        )),
+      }))
+    : AFTER_INPUTS_GROUPS
 
   const handleSectionClick = useCallback(
     (sectionId: string) => {
       if (isInputsPage) {
         document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
+      } else if (companionMode) {
+        try { sessionStorage.setItem(COMPANION_SECTION_SCROLL_KEY, sectionId) } catch { /* storage unavailable */ }
+        navigate(withCompanionHash('/inputs'))
       } else {
         navigate(`/inputs#${sectionId}`)
       }
       onNavigate?.()
     },
-    [isInputsPage, navigate, onNavigate]
+    [isInputsPage, companionMode, navigate, onNavigate, withCompanionHash]
   )
 
   return (
     <nav className="flex flex-col gap-4">
       {/* START group */}
-      {NON_INPUT_GROUPS.map((group) => (
+      {startGroups.map((group) => (
         <div key={group.title}>
           <div className="text-xs font-semibold text-muted-foreground px-2 mb-1">
             {group.title}
           </div>
           <div className="flex flex-col gap-0.5">
-            {group.items.map((item) => (
+            {group.items.map((item) => {
+              const itemPath = companionMode && item.path === '/stress-test' ? '/planner' : item.path
+              const destination = withCompanionHash(itemPath)
+              return (
               <NavLink
-                key={item.path}
-                to={item.path}
+                key={`${group.title}-${destination}`}
+                to={destination}
                 onClick={onNavigate}
                 className={cn(
                   'flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors',
-                  location.pathname === item.path
+                  location.pathname === itemPath
                     ? 'bg-primary text-primary-foreground'
                     : 'hover:bg-accent'
                 )}
@@ -203,7 +235,8 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
                 {item.icon}
                 {item.label}
               </NavLink>
-            ))}
+              )
+            })}
           </div>
         </div>
       ))}
@@ -236,20 +269,23 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       {/* Remaining nav groups */}
-      {AFTER_INPUTS_GROUPS.map((group) => (
+      {afterInputGroups.map((group) => (
         <div key={group.title}>
           <div className="text-xs font-semibold text-muted-foreground px-2 mb-1">
             {group.title}
           </div>
           <div className="flex flex-col gap-0.5">
-            {group.items.map((item) => (
+            {group.items.map((item) => {
+              const itemPath = companionMode && item.path === '/stress-test' ? '/planner' : item.path
+              const destination = withCompanionHash(itemPath)
+              return (
               <NavLink
-                key={item.path}
-                to={item.path}
+                key={destination}
+                to={destination}
                 onClick={onNavigate}
                 className={cn(
                   'flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors',
-                  location.pathname === item.path
+                  location.pathname === itemPath
                     ? 'bg-primary text-primary-foreground'
                     : 'hover:bg-accent'
                 )}
@@ -257,7 +293,8 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
                 {item.icon}
                 {item.label}
               </NavLink>
-            ))}
+              )
+            })}
           </div>
         </div>
       ))}
@@ -401,14 +438,33 @@ function ModeToggle() {
 export function Sidebar() {
   const location = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const companionMode = isCompanionMode()
+  const companionToken = companionMode ? getCompanionToken() : null
+  const companionHash = companionMode && companionToken
+    ? `#ct=${encodeURIComponent(companionToken)}`
+    : ''
 
   // Handle hash-based scroll on /inputs page load
   useEffect(() => {
-    if (location.pathname === '/inputs' && location.hash) {
-      const id = location.hash.slice(1)
+    if (location.pathname !== '/inputs') return
+
+    let sectionId: string | null = null
+
+    if (location.hash && !location.hash.includes('ct=')) {
+      sectionId = location.hash.slice(1)
+    } else {
+      try {
+        sectionId = sessionStorage.getItem(COMPANION_SECTION_SCROLL_KEY)
+        if (sectionId) sessionStorage.removeItem(COMPANION_SECTION_SCROLL_KEY)
+      } catch {
+        sectionId = null
+      }
+    }
+
+    if (sectionId) {
       // Small delay to let the page render
       requestAnimationFrame(() => {
-        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
       })
     }
   }, [location.pathname, location.hash])
@@ -421,8 +477,8 @@ export function Sidebar() {
         <ModeToggle />
         <NavGroups />
         <div className="mt-auto border-t pt-3 space-y-2">
-          <ScenarioManager />
-          <DataActions />
+          {!companionMode && <ScenarioManager />}
+          {!companionMode && <DataActions />}
           <HelpButton />
           <ThemeToggle />
         </div>
@@ -460,8 +516,8 @@ export function Sidebar() {
             <ModeToggle />
             <NavGroups onNavigate={() => setDrawerOpen(false)} />
             <div className="mt-6 border-t pt-3 space-y-2">
-              <ScenarioManager />
-              <DataActions />
+              {!companionMode && <ScenarioManager />}
+              {!companionMode && <DataActions />}
               <HelpButton />
               <ThemeToggle />
             </div>
@@ -471,16 +527,25 @@ export function Sidebar() {
 
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t flex justify-around py-3 z-50">
-        {[
+        {(companionMode
+          ? [
+              { label: 'Inputs', path: '/inputs', icon: <Settings2 className="h-5 w-5" /> },
+              { label: 'Test', path: '/planner', icon: <ShieldAlert className="h-5 w-5" /> },
+              { label: 'Dash', path: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+            ]
+          : [
           { label: 'Inputs', path: '/inputs', icon: <Settings2 className="h-5 w-5" /> },
           { label: 'Plan', path: '/projection', icon: <TableProperties className="h-5 w-5" /> },
           { label: 'Test', path: '/stress-test', icon: <ShieldAlert className="h-5 w-5" /> },
           { label: 'Dash', path: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
           { label: 'Strategies', path: '/withdrawal', icon: <Banknote className="h-5 w-5" /> },
-        ].map((item) => (
+          ]
+        ).map((item) => {
+          const destination = companionHash ? `${item.path}${companionHash}` : item.path
+          return (
           <NavLink
             key={item.path}
-            to={item.path}
+            to={destination}
             className={cn(
               'flex flex-col items-center gap-0.5 text-xs min-w-[48px]',
               location.pathname === item.path
@@ -491,7 +556,8 @@ export function Sidebar() {
             {item.icon}
             {item.label}
           </NavLink>
-        ))}
+          )
+        })}
       </nav>
     </>
   )

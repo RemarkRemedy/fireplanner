@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -38,9 +38,16 @@ interface SimulationControlsProps {
   isPending: boolean
   canRun: boolean
   validationErrors: Record<string, string>
+  beforeRunControls?: ReactNode
 }
 
-export function SimulationControls({ onRun, isPending, canRun, validationErrors }: SimulationControlsProps) {
+export function SimulationControls({
+  onRun,
+  isPending,
+  canRun,
+  validationErrors,
+  beforeRunControls,
+}: SimulationControlsProps) {
   const simulation = useSimulationStore()
   const currentAge = useProfileStore((s) => s.currentAge)
   const retirementAge = useProfileStore((s) => s.retirementAge)
@@ -239,6 +246,7 @@ export function SimulationControls({ onRun, isPending, canRun, validationErrors 
 
         <WithdrawalBasisToggle />
         <StrategyParams />
+        {beforeRunControls}
 
         <div className="flex items-center gap-3">
           <Button
