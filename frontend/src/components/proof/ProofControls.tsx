@@ -48,7 +48,7 @@ export function ProofControls({
         <CardTitle>Chart Controls</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div className="space-y-2">
             <Label>Source</Label>
             <Select value={source} onValueChange={(v) => onSourceChange(v as ProofSource)}>
@@ -100,22 +100,24 @@ export function ProofControls({
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1">
-              Outliers
-              <InfoTooltip text="When enabled, the shaded band shows the full min/max range across all simulation paths. When disabled (default), it shows the 10th–90th percentile range, trimming extreme outliers for a cleaner view." />
-            </Label>
-            <div className="flex items-center gap-2 rounded-md border px-3 py-2">
-              <Checkbox
-                id="proof-show-outliers"
-                checked={showOutliers}
-                onCheckedChange={(checked) => onShowOutliersChange(checked === true)}
-              />
-              <label htmlFor="proof-show-outliers" className="text-sm cursor-pointer select-none">
-                Show Min/Max
-              </label>
+          {chartType === 'minmaxmean' && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+                Outliers
+                <InfoTooltip text="When enabled, the shaded band shows the full min/max range across all simulation paths. When disabled (default), it shows the 10th–90th percentile range, trimming extreme outliers for a cleaner view." />
+              </Label>
+              <div className="flex items-center gap-2 rounded-md border px-3 py-2">
+                <Checkbox
+                  id="proof-show-outliers"
+                  checked={showOutliers}
+                  onCheckedChange={(checked) => onShowOutliersChange(checked === true)}
+                />
+                <label htmlFor="proof-show-outliers" className="text-sm cursor-pointer select-none">
+                  Show Min/Max
+                </label>
+              </div>
             </div>
-          </div>
+          )}
 
         </div>
 
