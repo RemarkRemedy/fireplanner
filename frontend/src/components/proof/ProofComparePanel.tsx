@@ -14,6 +14,7 @@ import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 
 const STORAGE_KEY = 'fireplanner-proof-compare-v1'
+const SCHEMA_VERSION = 1
 
 export interface ProofCompareSnapshot {
   id: string
@@ -26,6 +27,7 @@ export interface ProofCompareSnapshot {
   medianTax: number
   blendRatio?: number
   createdAt: string
+  _schemaVersion?: number
 }
 
 interface ProofComparePanelProps {
@@ -56,7 +58,9 @@ function readSnapshots(): ProofCompareSnapshot[] {
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
-    return parsed.filter(isProofCompareSnapshot)
+    return parsed.filter(isProofCompareSnapshot).filter(
+      (item: ProofCompareSnapshot) => (item._schemaVersion ?? 1) === SCHEMA_VERSION,
+    )
   } catch {
     return []
   }
@@ -64,7 +68,8 @@ function readSnapshots(): ProofCompareSnapshot[] {
 
 function writeSnapshots(rows: ProofCompareSnapshot[]): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(rows))
+    const tagged = rows.map((r) => ({ ...r, _schemaVersion: SCHEMA_VERSION }))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tagged))
   } catch {
     // ignore storage write failures
   }
