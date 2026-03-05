@@ -8,6 +8,7 @@ interface CompanionResultsSummaryProps {
   actionImpacts?: ActionImpactResult[] | null
   actionImpactsPending?: boolean
   actionImpactsProgress?: { completed: number; total: number } | null
+  actionImpactsError?: string | null
 }
 
 export function CompanionResultsSummary({
@@ -15,6 +16,7 @@ export function CompanionResultsSummary({
   actionImpacts,
   actionImpactsPending,
   actionImpactsProgress,
+  actionImpactsError,
 }: CompanionResultsSummaryProps) {
   const activeRow = companion.scenarioComparisons.find(
     (row) => row.id === companion.activeScenarioId,
@@ -82,6 +84,7 @@ export function CompanionResultsSummary({
         impacts={actionImpacts}
         isPending={actionImpactsPending}
         progress={actionImpactsProgress}
+        error={actionImpactsError}
       />
     </div>
   )
@@ -152,12 +155,14 @@ function ActionImpactsSection({
   impacts,
   isPending,
   progress,
+  error,
 }: {
   impacts?: ActionImpactResult[] | null
   isPending?: boolean
   progress?: { completed: number; total: number } | null
+  error?: string | null
 }) {
-  if (!impacts && !isPending) return null
+  if (!impacts && !isPending && !error) return null
 
   const top3 = impacts?.slice(0, 3) ?? []
 
@@ -174,7 +179,12 @@ function ActionImpactsSection({
             Analyzing actions{progress ? ` (${progress.completed}/${progress.total})` : ''}...
           </div>
         )}
-        {!isPending && top3.length > 0 && (
+        {!isPending && error && (
+          <div className="text-sm text-amber-600 dark:text-amber-400">
+            {error}
+          </div>
+        )}
+        {!isPending && !error && top3.length > 0 && (
           <div className="space-y-3">
             {top3.map((impact, idx) => (
               <ActionImpactRow key={impact.lever.id} impact={impact} rank={idx + 1} />

@@ -218,4 +218,63 @@ describe('computeActionImpacts', () => {
 
     expect(impacts[0].rationale).toContain('negligible')
   })
+
+  it('handles empty lever results', () => {
+    const impacts = computeActionImpacts(baseMetrics, [])
+    expect(impacts).toHaveLength(0)
+  })
+
+  it('handles negative deltas (lever worsens outcome)', () => {
+    const impacts = computeActionImpacts(baseMetrics, [
+      { lever: ACTION_LEVERS[0], metrics: { p_success: 0.80, fail_prob_0_5y: 0.03, fail_prob_6_10y: 0.04 } },
+    ])
+
+    expect(impacts[0].delta_p_success).toBeCloseTo(-0.05)
+    expect(impacts[0].rationale).toContain('reduces')
+  })
+})
+
+describe('deterministic output bounds', () => {
+  it('extractImpactMetrics always returns values in [0, 1]', () => {
+    const edgeCases = [
+      { ...SAMPLE_RESULT, success_rate: -0.5 },
+      { ...SAMPLE_RESULT, success_rate: 2.0 },
+      { ...SAMPLE_RESULT, n_simulations: 1 },
+      { ...SAMPLE_RESULT, failure_distribution: { ...SAMPLE_RESULT.failure_distribution, counts_5y: [10000, 10000] } },
+    ]
+
+    for (const result of edgeCases) {
+      const metrics = extractImpactMetrics(result)
+      expect(metrics.p_success).toBeGreaterThanOrEqual(0)
+      expect(metrics.p_success).toBeLessThanOrEqual(1)
+      expect(metrics.fail_prob_0_5y).toBeGreaterThanOrEqual(0)
+      expect(metrics.fail_prob_0_5y).toBeLessThanOrEqual(1)
+      expect(metrics.fail_prob_6_10y).toBeGreaterThanOrEqual(0)
+      expect(metrics.fail_prob_6_10y).toBeLessThanOrEqual(1)
+    }
+  })
+
+  it('buildLeverOverrides never produces negative expenses', () => {
+    const ctx = { ...BASE_CTX, annualExpenses: 100, annualIncome: 1_000_000 }
+    const lever = ACTION_LEVERS.find((l) => l.id === 'savings_rate_up_2pp')!
+    const overrides = buildLeverOverrides(lever, ctx)
+    // 2% of 1M = 20K reduction from 100 => clamped to 0
+    expect(overrides.profileOverrides?.annualExpenses).toBeGreaterThanOrEqual(0)
+  })
+
+  it('buildLeverOverrides withdrawal scaling preserves non-negative rates', () => {
+    const withdrawalLever = ACTION_LEVERS.find((l) => l.id === 'withdrawal_down_10pct')!
+    const ctx = { ...BASE_CTX, selectedStrategy: 'constant_dollar' as const }
+    const overrides = buildLeverOverrides(withdrawalLever, ctx)
+    const swr = overrides.simulationOverrides?.strategyParams?.constant_dollar.swr ?? 0
+    expect(swr).toBeGreaterThanOrEqual(0)
+  })
+
+  it('buildLeverOverrides de-risk weights sum to approximately 1', () => {
+    const deriskLever = ACTION_LEVERS.find((l) => l.id === 'derisk_10pp')!
+    const overrides = buildLeverOverrides(deriskLever, BASE_CTX)
+    const weights = overrides.allocationWeights!
+    const sum = weights.reduce((a, b) => a + b, 0)
+    expect(sum).toBeCloseTo(1.0, 4)
+  })
 })

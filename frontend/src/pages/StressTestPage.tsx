@@ -623,6 +623,8 @@ export function StressTestPage() {
   const [actionImpacts, setActionImpacts] = useState<ActionImpactResult[] | null>(null)
   const [isActionImpactsPending, setIsActionImpactsPending] = useState(false)
   const [actionImpactsProgress, setActionImpactsProgress] = useState<{ completed: number; total: number } | null>(null)
+  const [actionImpactsError, setActionImpactsError] = useState<string | null>(null)
+  const actionImpactTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const stressScenarioComparisonRows = useMemo(
     () => selectedStressScenarioIds
@@ -697,11 +699,21 @@ export function StressTestPage() {
     overrides?: { annualExpenses?: number; retirementAge?: number },
   ) => {
     actionImpactAbortRef.current?.abort()
+    if (actionImpactTimeoutRef.current) {
+      clearTimeout(actionImpactTimeoutRef.current)
+      actionImpactTimeoutRef.current = null
+    }
     const controller = new AbortController()
     actionImpactAbortRef.current = controller
     setIsActionImpactsPending(true)
     setActionImpacts(null)
     setActionImpactsProgress(null)
+    setActionImpactsError(null)
+
+    // 15s timeout guardrail
+    actionImpactTimeoutRef.current = setTimeout(() => {
+      controller.abort('timeout')
+    }, 15_000)
 
     try {
       const profile = useProfileStore.getState()
@@ -739,8 +751,15 @@ export function StressTestPage() {
     } catch (error) {
       if (!controller.signal.aborted) {
         console.error('action_impacts_failed', error)
+        setActionImpactsError('Action impact analysis failed. Please try again.')
+      } else if (controller.signal.reason === 'timeout') {
+        setActionImpactsError('Analysis timed out after 15 seconds. Results may be partial.')
       }
     } finally {
+      if (actionImpactTimeoutRef.current) {
+        clearTimeout(actionImpactTimeoutRef.current)
+        actionImpactTimeoutRef.current = null
+      }
       if (actionImpactAbortRef.current === controller) {
         actionImpactAbortRef.current = null
         setIsActionImpactsPending(false)
@@ -771,6 +790,7 @@ export function StressTestPage() {
     // Clear previous action impacts when starting a new run
     if (companion.isCompanionMode) {
       setActionImpacts(null)
+      setActionImpactsError(null)
     }
 
     mc.mutate(overrides)
@@ -819,6 +839,10 @@ export function StressTestPage() {
       scenarioBatchAbortRef.current = null
       actionImpactAbortRef.current?.abort()
       actionImpactAbortRef.current = null
+      if (actionImpactTimeoutRef.current) {
+        clearTimeout(actionImpactTimeoutRef.current)
+        actionImpactTimeoutRef.current = null
+      }
     }
   }, [])
 
@@ -885,6 +909,7 @@ export function StressTestPage() {
             actionImpacts={actionImpacts}
             actionImpactsPending={isActionImpactsPending}
             actionImpactsProgress={actionImpactsProgress}
+            actionImpactsError={actionImpactsError}
           />
           <CompanionStressComparison
             rows={stressScenarioComparisonRows}
