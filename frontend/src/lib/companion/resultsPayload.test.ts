@@ -225,6 +225,30 @@ describe('buildPlannerResultsPayload', () => {
     const payload = buildPlannerResultsPayload({ ...BASE_INPUT, result: badResult })
     expect(payload.p_success).toBe(0)
   })
+
+  it('emits no v1 alias keys', () => {
+    const V1_ALIAS_KEYS = [
+      'WR_critical_50',
+      'WR_critical_90',
+      'WR_critical_95',
+      'horizonYears',
+      'allocationSummary',
+      'fire_age',
+      'portfolio_at_fire',
+    ]
+    const payload = buildPlannerResultsPayload(BASE_INPUT)
+    const serialized = JSON.parse(JSON.stringify(payload))
+    const keys = Object.keys(serialized)
+    for (const alias of V1_ALIAS_KEYS) {
+      expect(keys).not.toContain(alias)
+    }
+  })
+
+  it('always sets schema_version to exactly 2', () => {
+    const payload = buildPlannerResultsPayload(BASE_INPUT)
+    expect(payload.schema_version).toBe(2)
+    expect(typeof payload.schema_version).toBe('number')
+  })
 })
 
 describe('schema conformance', () => {
