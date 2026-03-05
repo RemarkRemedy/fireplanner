@@ -68,6 +68,7 @@ import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useCompanionPlannerBridge } from '@/hooks/useCompanionPlannerBridge'
 import { CompanionScenarioSwitcher } from '@/components/companion/CompanionScenarioSwitcher'
 import { CompanionResultsSummary } from '@/components/companion/CompanionResultsSummary'
+import { CompanionStressComparison } from '@/components/companion/CompanionStressComparison'
 
 const ALL_STRESS_SCENARIO_IDS = STRESS_SCENARIOS.map((s) => s.id)
 
@@ -802,6 +803,11 @@ export function StressTestPage() {
             onRunScenario={runMonteCarlo}
           />
           <CompanionResultsSummary companion={companion} />
+          <CompanionStressComparison
+            rows={stressScenarioComparisonRows}
+            isPending={isStressScenarioComparisonPending}
+            error={stressScenarioComparisonError}
+          />
         </>
       )}
 
