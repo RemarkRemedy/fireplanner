@@ -3,6 +3,7 @@ import {
   applyStressScenario,
   buildStressScenarioComparisonRow,
   buildStressScenarioRunPlan,
+  computeWorstYearDrawdown,
   type StressScenarioId,
 } from './stressScenarios'
 import type { MonteCarloEngineParams } from './monteCarlo'
@@ -97,9 +98,51 @@ describe('stressScenarios', () => {
   })
 
   it('builds comparison row with failure age from earliest failure bucket', () => {
-    const row = buildStressScenarioComparisonRow('base', BASE_RESULT, 70)
+    const row = buildStressScenarioComparisonRow('base', BASE_RESULT, 70, 40)
     expect(row.successRate).toBe(0.81)
     expect(row.medianTerminalWealth).toBe(2_300_000)
     expect(row.failureAge).toBe(80)
+    // BASE_RESULT p50 has only 1 element, decum slice has at most 1 element → null
+    expect(row.worstYearDrawdown).toBeNull()
+  })
+
+  it('computes worstYearDrawdown from decumulation-only p50 slice', () => {
+    const resultWithPath: MonteCarloResult = {
+      ...BASE_RESULT,
+      percentile_bands: {
+        ...BASE_RESULT.percentile_bands,
+        // 5 years: ages 40-44 accumulation, ages 45-49 decumulation
+        p50: [100_000, 130_000, 160_000, 200_000, 250_000, 240_000, 220_000, 230_000, 210_000, 250_000],
+      },
+    }
+    // retirementAge=45, currentAge=40 → decumStartIdx=5 → decumP50=[240k,220k,230k,210k,250k]
+    const row = buildStressScenarioComparisonRow('base', resultWithPath, 45, 40)
+    // decumP50 = [240k, 220k, 230k, 210k, 250k]
+    // Year-over-year: -8.3%, +4.5%, -8.7%, +19.0%
+    // Worst = (210k - 230k) / 230k = -0.0869...
+    expect(row.worstYearDrawdown).toBeCloseTo((210_000 - 230_000) / 230_000, 10)
+  })
+})
+
+describe('computeWorstYearDrawdown', () => {
+  it('returns null for fewer than 2 values', () => {
+    expect(computeWorstYearDrawdown([])).toBeNull()
+    expect(computeWorstYearDrawdown([100])).toBeNull()
+  })
+
+  it('returns null when there are no declines', () => {
+    expect(computeWorstYearDrawdown([100, 110, 120])).toBeNull()
+  })
+
+  it('finds the worst year-over-year decline', () => {
+    // 100 → 80 = -20%, 80 → 90 = +12.5%, 90 → 70 = -22.2%
+    const result = computeWorstYearDrawdown([100, 80, 90, 70])
+    expect(result).toBeCloseTo((70 - 90) / 90, 10)
+  })
+
+  it('skips zero-value predecessors to avoid division by zero', () => {
+    const result = computeWorstYearDrawdown([0, 100, 90])
+    // First pair skipped (prev=0), second pair: (90-100)/100 = -0.10
+    expect(result).toBeCloseTo(-0.10, 10)
   })
 })

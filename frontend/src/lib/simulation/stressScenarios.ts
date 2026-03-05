@@ -21,6 +21,7 @@ export interface StressScenarioComparisonRow {
   successRate: number
   medianTerminalWealth: number
   failureAge: number | null
+  worstYearDrawdown: number | null
 }
 
 export const STRESS_SCENARIOS: StressScenarioDefinition[] = [
@@ -153,12 +154,28 @@ function deriveFailureAge(result: MonteCarloResult, retirementAge: number): numb
   return null
 }
 
+/** Worst year-over-year % decline. Pass decumulation-only portfolio values. */
+export function computeWorstYearDrawdown(values: number[]): number | null {
+  if (values.length < 2) return null
+  let worst = 0
+  for (let i = 1; i < values.length; i++) {
+    if (values[i - 1] > 0) {
+      const dd = (values[i] - values[i - 1]) / values[i - 1]
+      if (dd < worst) worst = dd
+    }
+  }
+  return worst === 0 ? null : worst
+}
+
 export function buildStressScenarioComparisonRow(
   scenarioId: StressScenarioId,
   result: MonteCarloResult,
-  retirementAge: number
+  retirementAge: number,
+  currentAge: number,
 ): StressScenarioComparisonRow {
   const scenario = STRESS_SCENARIOS.find((item) => item.id === scenarioId)
+  const decumStartIdx = Math.max(0, retirementAge - currentAge)
+  const decumP50 = result.percentile_bands.p50.slice(decumStartIdx)
 
   return {
     scenarioId,
@@ -166,5 +183,6 @@ export function buildStressScenarioComparisonRow(
     successRate: result.success_rate,
     medianTerminalWealth: result.terminal_stats.median,
     failureAge: deriveFailureAge(result, retirementAge),
+    worstYearDrawdown: computeWorstYearDrawdown(decumP50),
   }
 }

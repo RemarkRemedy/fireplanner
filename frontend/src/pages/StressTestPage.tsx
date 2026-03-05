@@ -661,7 +661,7 @@ export function StressTestPage() {
       const rows = await Promise.all(
         runPlan.map(async (run) => {
           const result = await runMonteCarloWorker(run.params, { signal: controller.signal })
-          return buildStressScenarioComparisonRow(run.scenarioId, result, run.params.retirementAge)
+          return buildStressScenarioComparisonRow(run.scenarioId, result, run.params.retirementAge, run.params.currentAge)
         })
       )
 
@@ -711,7 +711,8 @@ export function StressTestPage() {
     const row = buildStressScenarioComparisonRow(
       'base',
       mc.data,
-      lastBaseRetirementAgeRef.current
+      lastBaseRetirementAgeRef.current,
+      useProfileStore.getState().currentAge
     )
     setStressScenarioResults((prev) => ({ ...prev, base: row }))
   }, [mc.data, selectedStressScenarioIds])
