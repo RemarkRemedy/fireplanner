@@ -13,5 +13,7 @@ if (isCompanionMode()) {
     'fireplanner-property',
     'fireplanner-ui',
   ]
-  for (const key of STORE_KEYS) localStorage.removeItem(key)
+  try {
+    for (const key of STORE_KEYS) localStorage.removeItem(key)
+  } catch { /* SecurityError in restricted storage environments */ }
 }

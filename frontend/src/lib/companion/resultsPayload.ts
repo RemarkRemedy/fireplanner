@@ -131,9 +131,9 @@ export function buildPlannerResultsPayload(input: {
     }
   }
 
-  // Portfolio at retirement: median portfolio at retirement age index
-  const retirementIdx = Math.max(0, Math.round(retirementAge - currentAge))
-  const portfolioAtFire = retirementIdx < medians.length
+  // Portfolio at retirement: median portfolio at the age closest to retirementAge
+  const retirementIdx = ages.findIndex((age) => Math.round(age) >= Math.round(retirementAge))
+  const portfolioAtFire = retirementIdx >= 0 && retirementIdx < medians.length
     ? roundMoney(medians[retirementIdx])
     : roundMoney(result.terminal_stats.median)
 

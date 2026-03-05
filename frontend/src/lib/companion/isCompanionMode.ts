@@ -15,9 +15,9 @@ let _initialized = false
  */
 function initialize(): void {
   if (_initialized) return
-  _initialized = true
 
   if (typeof window === 'undefined') return
+  _initialized = true
 
   const url = new URL(window.location.href)
   let changed = false
@@ -86,10 +86,3 @@ export function getCompanionBaseUrl(): string {
   return typeof window !== 'undefined' ? window.location.origin : ''
 }
 
-/**
- * No-op retained for backward compatibility.
- * Scrubbing now happens inside `initialize()` on first access.
- */
-export function scrubCompanionParams(): void {
-  // Intentionally empty — scrubbing is handled by lazy init
-}

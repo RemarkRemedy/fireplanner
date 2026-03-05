@@ -4,7 +4,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 let isCompanionMode: () => boolean
 let getCompanionToken: () => string | null
 let getCompanionBaseUrl: () => string
-let scrubCompanionParams: () => void
 let COMPANION_SECTION_SCROLL_KEY: string
 
 describe('isCompanionMode', () => {
@@ -16,7 +15,6 @@ describe('isCompanionMode', () => {
     isCompanionMode = mod.isCompanionMode
     getCompanionToken = mod.getCompanionToken
     getCompanionBaseUrl = mod.getCompanionBaseUrl
-    scrubCompanionParams = mod.scrubCompanionParams
     COMPANION_SECTION_SCROLL_KEY = mod.COMPANION_SECTION_SCROLL_KEY
   })
 
@@ -83,10 +81,6 @@ describe('isCompanionMode', () => {
 
   it('getCompanionBaseUrl returns window.location.origin', () => {
     expect(getCompanionBaseUrl()).toBe(window.location.origin)
-  })
-
-  it('scrubCompanionParams is a no-op that does not throw', () => {
-    expect(() => scrubCompanionParams()).not.toThrow()
   })
 
   it('lazy-init is idempotent — multiple calls return same result', () => {
