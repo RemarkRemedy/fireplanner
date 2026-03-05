@@ -320,6 +320,83 @@ describe('useCompanionPlannerBridge', () => {
     expect(activeRow?.needsRerun).toBe(true)
   })
 
+  describe('snapshotWithdrawalRate', () => {
+    it('computes withdrawal rate from snapshot annualWithdrawal / investableAssets', async () => {
+      enableCompanionMode('wr-normal')
+      mockFetchPlannerSnapshot.mockResolvedValue({
+        schemaVersion: 1,
+        annualWithdrawal: 20_000,
+        investableAssets: 500_000,
+      })
+
+      const { result } = renderHook(() =>
+        useCompanionPlannerBridge({ result: undefined, isResultStale: false })
+      )
+
+      await waitFor(() => {
+        expect(result.current.bootstrapStatus).toBe('loaded')
+      })
+
+      expect(result.current.snapshotWithdrawalRate).toBeCloseTo(0.04)
+    })
+
+    it('clamps withdrawal rate to 1.0 when annualWithdrawal exceeds investableAssets', async () => {
+      enableCompanionMode('wr-clamp')
+      mockFetchPlannerSnapshot.mockResolvedValue({
+        schemaVersion: 1,
+        annualWithdrawal: 600_000,
+        investableAssets: 500_000,
+      })
+
+      const { result } = renderHook(() =>
+        useCompanionPlannerBridge({ result: undefined, isResultStale: false })
+      )
+
+      await waitFor(() => {
+        expect(result.current.bootstrapStatus).toBe('loaded')
+      })
+
+      expect(result.current.snapshotWithdrawalRate).toBe(1.0)
+    })
+
+    it('returns null when annualWithdrawal is missing from snapshot', async () => {
+      enableCompanionMode('wr-missing')
+      mockFetchPlannerSnapshot.mockResolvedValue({
+        schemaVersion: 1,
+        investableAssets: 500_000,
+      })
+
+      const { result } = renderHook(() =>
+        useCompanionPlannerBridge({ result: undefined, isResultStale: false })
+      )
+
+      await waitFor(() => {
+        expect(result.current.bootstrapStatus).toBe('loaded')
+      })
+
+      expect(result.current.snapshotWithdrawalRate).toBeNull()
+    })
+
+    it('returns null when investableAssets is zero', async () => {
+      enableCompanionMode('wr-zero')
+      mockFetchPlannerSnapshot.mockResolvedValue({
+        schemaVersion: 1,
+        annualWithdrawal: 20_000,
+        investableAssets: 0,
+      })
+
+      const { result } = renderHook(() =>
+        useCompanionPlannerBridge({ result: undefined, isResultStale: false })
+      )
+
+      await waitFor(() => {
+        expect(result.current.bootstrapStatus).toBe('loaded')
+      })
+
+      expect(result.current.snapshotWithdrawalRate).toBeNull()
+    })
+  })
+
   it('uses latest base inputs when resolving active scenario overrides', async () => {
     enableCompanionMode('base001')
     mockFetchPlannerSnapshot.mockResolvedValue({
