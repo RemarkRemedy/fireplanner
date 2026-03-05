@@ -13,10 +13,33 @@ vi.mock('@/lib/companion/companionClient', () => ({
   postPlannerResults: vi.fn(),
 }))
 
+vi.mock('@/lib/companion/isCompanionMode', () => ({
+  isCompanionMode: vi.fn(() => false),
+  getCompanionToken: vi.fn(() => null),
+  getCompanionBaseUrl: vi.fn(() => 'http://localhost:3000'),
+  scrubCompanionParams: vi.fn(),
+}))
+
 import { fetchPlannerSnapshot, postPlannerResults } from '@/lib/companion/companionClient'
+import {
+  isCompanionMode,
+  getCompanionToken,
+  getCompanionBaseUrl,
+  scrubCompanionParams,
+} from '@/lib/companion/isCompanionMode'
 
 const mockFetchPlannerSnapshot = vi.mocked(fetchPlannerSnapshot)
 const mockPostPlannerResults = vi.mocked(postPlannerResults)
+const mockIsCompanionMode = vi.mocked(isCompanionMode)
+const mockGetCompanionToken = vi.mocked(getCompanionToken)
+const mockGetCompanionBaseUrl = vi.mocked(getCompanionBaseUrl)
+const mockScrubCompanionParams = vi.mocked(scrubCompanionParams)
+
+function enableCompanionMode(token: string = 'test-token', baseUrl: string = 'http://localhost:3000') {
+  mockIsCompanionMode.mockReturnValue(true)
+  mockGetCompanionToken.mockReturnValue(token)
+  mockGetCompanionBaseUrl.mockReturnValue(baseUrl)
+}
 
 const SAMPLE_RESULT: MonteCarloResult = {
   success_rate: 0.91,
@@ -74,15 +97,17 @@ beforeEach(() => {
 
   mockFetchPlannerSnapshot.mockReset()
   mockPostPlannerResults.mockReset()
-
-  window.sessionStorage.clear()
-  window.history.pushState({}, '', '/')
+  mockIsCompanionMode.mockReturnValue(false)
+  mockGetCompanionToken.mockReturnValue(null)
+  mockGetCompanionBaseUrl.mockReturnValue('http://localhost:3000')
+  mockScrubCompanionParams.mockReset()
 })
 
 describe('useCompanionPlannerBridge', () => {
   it('loads companion snapshot and fills planner inputs when companion=1', async () => {
-    window.history.pushState({}, '', '/planner?token=abc123&companion=1')
+    enableCompanionMode('abc123')
     mockFetchPlannerSnapshot.mockResolvedValue({
+      schemaVersion: 1,
       avgMonthlyIncome: 5000,
       avgMonthlyExpense: 3200,
       avgMonthlySavings: 1800,
@@ -98,7 +123,7 @@ describe('useCompanionPlannerBridge', () => {
       expect(result.current.bootstrapStatus).toBe('loaded')
     })
 
-    expect(mockFetchPlannerSnapshot).toHaveBeenCalledWith('abc123')
+    expect(mockFetchPlannerSnapshot).toHaveBeenCalledWith('http://localhost:3000', 'abc123')
     expect(useProfileStore.getState().annualIncome).toBe(60_000)
     expect(useIncomeStore.getState().annualSalary).toBe(60_000)
     expect(useProfileStore.getState().annualExpenses).toBe(38_400)
@@ -107,8 +132,9 @@ describe('useCompanionPlannerBridge', () => {
   })
 
   it('posts companion results with required payload keys after simulation completes', async () => {
-    window.history.pushState({}, '', '/planner?token=xyz789&companion=1')
+    enableCompanionMode('xyz789')
     mockFetchPlannerSnapshot.mockResolvedValue({
+      schemaVersion: 1,
       avgMonthlyIncome: 4000,
       avgMonthlyExpense: 2600,
       investableAssets: 150_000,
@@ -133,27 +159,30 @@ describe('useCompanionPlannerBridge', () => {
       expect(mockPostPlannerResults).toHaveBeenCalledTimes(1)
     })
 
-    const [token, payload] = mockPostPlannerResults.mock.calls[0]
+    const [baseUrl, token, payload] = mockPostPlannerResults.mock.calls[0]
+    expect(baseUrl).toBe('http://localhost:3000')
     expect(token).toBe('xyz789')
     expect(payload).toEqual(expect.objectContaining({
       p_success: 0.91,
       horizonYears: 25,
     }))
+    expect(payload).toHaveProperty('schemaVersion')
     expect(payload).toHaveProperty('WR_critical_50')
     expect(payload).toHaveProperty('allocationSummary')
-    expect(payload).toHaveProperty('fireAge')
-    expect(payload).toHaveProperty('portfolioAtFire')
-    expect(payload).toHaveProperty('wrCritical10')
-    expect(payload).toHaveProperty('wrCritical90')
+    expect(payload).toHaveProperty('fire_age')
+    expect(payload).toHaveProperty('portfolio_at_fire')
+    expect(payload).toHaveProperty('wr_critical_10')
+    expect(payload).toHaveProperty('wr_critical_90')
     expect(Object.keys(payload).sort()).toEqual([
       'WR_critical_50',
       'allocationSummary',
-      'fireAge',
+      'fire_age',
       'horizonYears',
       'p_success',
-      'portfolioAtFire',
-      'wrCritical10',
-      'wrCritical90',
+      'portfolio_at_fire',
+      'schemaVersion',
+      'wr_critical_10',
+      'wr_critical_90',
     ])
 
     await waitFor(() => {
@@ -165,8 +194,8 @@ describe('useCompanionPlannerBridge', () => {
   })
 
   it('keeps token across navigation after initial companion bootstrap', async () => {
-    window.history.pushState({}, '', '/planner?token=persist123&companion=1')
-    mockFetchPlannerSnapshot.mockResolvedValue({})
+    enableCompanionMode('persist123')
+    mockFetchPlannerSnapshot.mockResolvedValue({ schemaVersion: 1 })
 
     const first = renderHook(() =>
       useCompanionPlannerBridge({ result: undefined, isResultStale: false })
@@ -178,7 +207,6 @@ describe('useCompanionPlannerBridge', () => {
 
     first.unmount()
 
-    window.history.pushState({}, '', '/stress-test')
     const second = renderHook(() =>
       useCompanionPlannerBridge({ result: undefined, isResultStale: false })
     )
@@ -187,13 +215,13 @@ describe('useCompanionPlannerBridge', () => {
       expect(second.result.current.isCompanionMode).toBe(true)
     })
 
-    expect(mockFetchPlannerSnapshot).toHaveBeenNthCalledWith(1, 'persist123')
-    expect(mockFetchPlannerSnapshot).toHaveBeenNthCalledWith(2, 'persist123')
+    expect(mockFetchPlannerSnapshot).toHaveBeenNthCalledWith(1, 'http://localhost:3000', 'persist123')
+    expect(mockFetchPlannerSnapshot).toHaveBeenNthCalledWith(2, 'http://localhost:3000', 'persist123')
   })
 
   it('does not post results when Monte Carlo data is stale', async () => {
-    window.history.pushState({}, '', '/planner?token=stale001&companion=1')
-    mockFetchPlannerSnapshot.mockResolvedValue({})
+    enableCompanionMode('stale001')
+    mockFetchPlannerSnapshot.mockResolvedValue({ schemaVersion: 1 })
     mockPostPlannerResults.mockResolvedValue()
 
     const { result, rerender } = renderHook(
@@ -213,8 +241,8 @@ describe('useCompanionPlannerBridge', () => {
   })
 
   it('blocks manual save when active scenario needs rerun', async () => {
-    window.history.pushState({}, '', '/planner?token=saveguard001&companion=1')
-    mockFetchPlannerSnapshot.mockResolvedValue({})
+    enableCompanionMode('saveguard001')
+    mockFetchPlannerSnapshot.mockResolvedValue({ schemaVersion: 1 })
     mockPostPlannerResults.mockResolvedValue()
 
     const { result, rerender } = renderHook(
@@ -252,43 +280,23 @@ describe('useCompanionPlannerBridge', () => {
     expect(mockPostPlannerResults).toHaveBeenCalledTimes(1)
   })
 
-  it('prefers query token over conflicting hash token and removes token from URL', async () => {
-    window.history.pushState({}, '', '/planner?token=query-token&companion=1#ct=hash-token')
-    mockFetchPlannerSnapshot.mockResolvedValue({})
+  it('scrubs companion params from URL on mount', async () => {
+    enableCompanionMode('scrub001')
+    mockFetchPlannerSnapshot.mockResolvedValue({ schemaVersion: 1 })
 
     renderHook(() =>
       useCompanionPlannerBridge({ result: undefined, isResultStale: false })
     )
 
     await waitFor(() => {
-      expect(mockFetchPlannerSnapshot).toHaveBeenCalledWith('query-token')
+      expect(mockScrubCompanionParams).toHaveBeenCalled()
     })
-
-    const currentUrl = new URL(window.location.href)
-    expect(currentUrl.searchParams.get('token')).toBeNull()
-    const hashParams = new URLSearchParams(currentUrl.hash.startsWith('#') ? currentUrl.hash.slice(1) : currentUrl.hash)
-    expect(hashParams.get('ct')).toBeNull()
-  })
-
-  it('prefers hash token over stale session token when query token is absent', async () => {
-    window.sessionStorage.setItem('fireplanner-companion-token', 'stale-session-token')
-    window.history.pushState({}, '', '/planner?companion=1#ct=fresh-hash-token')
-    mockFetchPlannerSnapshot.mockResolvedValue({})
-
-    renderHook(() =>
-      useCompanionPlannerBridge({ result: undefined, isResultStale: false })
-    )
-
-    await waitFor(() => {
-      expect(mockFetchPlannerSnapshot).toHaveBeenCalledWith('fresh-hash-token')
-    })
-
-    expect(window.sessionStorage.getItem('fireplanner-companion-token')).toBe('fresh-hash-token')
   })
 
   it('creates companion presets and supports duplicate + knob edits', async () => {
-    window.history.pushState({}, '', '/planner?token=scn001&companion=1')
+    enableCompanionMode('scn001')
     mockFetchPlannerSnapshot.mockResolvedValue({
+      schemaVersion: 1,
       avgMonthlyIncome: 4000,
       avgMonthlyExpense: 2600,
       investableAssets: 150_000,
@@ -305,7 +313,7 @@ describe('useCompanionPlannerBridge', () => {
     expect(result.current.scenarios.map((item) => item.name)).toEqual([
       'Base',
       'Cut $300/mo',
-      'Buy HDB earlier',
+      'Boost Savings $500/mo',
       'Retire 5 years earlier',
       'Conservative spending',
     ])
@@ -332,8 +340,9 @@ describe('useCompanionPlannerBridge', () => {
   })
 
   it('uses latest base inputs when resolving active scenario overrides', async () => {
-    window.history.pushState({}, '', '/planner?token=base001&companion=1')
+    enableCompanionMode('base001')
     mockFetchPlannerSnapshot.mockResolvedValue({
+      schemaVersion: 1,
       avgMonthlyIncome: 4000,
       avgMonthlyExpense: 2600,
       investableAssets: 150_000,

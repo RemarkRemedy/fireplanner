@@ -1,58 +1,50 @@
-export interface PlannerSnapshot {
-  avgMonthlyIncome?: number
-  avgMonthlyExpense?: number
-  avgMonthlySavings?: number
-  investableAssets?: number
-  structuralMode?: string
-}
+import { PlannerSnapshotResponseSchema, type PlannerSnapshotResponse, type PlannerResultsPayload } from './types'
 
-export interface PlannerResultsPayload {
-  p_success: number
-  WR_critical_50: number
-  horizonYears: number
-  allocationSummary: string
-  fireAge?: number
-  portfolioAtFire?: number
-  wrCritical10?: number
-  wrCritical90?: number
-}
-
-async function readError(response: Response): Promise<string> {
-  const fallback = `${response.status} ${response.statusText}`.trim()
+async function readErrorBody(response: Response): Promise<string> {
   try {
-    await response.text()
-    return fallback
+    const text = await response.text()
+    return text ? ` — ${text}` : ''
   } catch {
-    return fallback
+    return ''
   }
 }
 
-export async function fetchPlannerSnapshot(token: string): Promise<PlannerSnapshot> {
-  const qs = new URLSearchParams({ token }).toString()
-  const res = await fetch(`/planner/snapshot?${qs}`, {
+export async function fetchPlannerSnapshot(
+  baseUrl: string,
+  token: string,
+): Promise<PlannerSnapshotResponse> {
+  const res = await fetch(`${baseUrl}/api/planner/snapshot`, {
     method: 'GET',
-    headers: { Accept: 'application/json' },
+    headers: {
+      Accept: 'application/json',
+      'X-Companion-Token': token,
+    },
   })
 
   if (!res.ok) {
-    throw new Error(`Snapshot fetch failed (${await readError(res)})`)
+    throw new Error(`Snapshot fetch failed: ${res.status} ${res.statusText}${await readErrorBody(res)}`)
   }
 
-  return res.json() as Promise<PlannerSnapshot>
+  const json: unknown = await res.json()
+  return PlannerSnapshotResponseSchema.parse(json)
 }
 
-export async function postPlannerResults(token: string, payload: PlannerResultsPayload): Promise<void> {
-  const qs = new URLSearchParams({ token }).toString()
-  const res = await fetch(`/planner/results?${qs}`, {
+export async function postPlannerResults(
+  baseUrl: string,
+  token: string,
+  payload: PlannerResultsPayload,
+): Promise<void> {
+  const res = await fetch(`${baseUrl}/api/planner/results`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
+      'X-Companion-Token': token,
     },
     body: JSON.stringify(payload),
   })
 
   if (!res.ok) {
-    throw new Error(`Result export failed (${await readError(res)})`)
+    throw new Error(`Result export failed: ${res.status} ${res.statusText}${await readErrorBody(res)}`)
   }
 }

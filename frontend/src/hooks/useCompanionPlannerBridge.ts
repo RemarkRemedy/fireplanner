@@ -4,14 +4,20 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import {
-  applySnapshotToPlanner,
   buildPlannerResultsPayload,
   createCompanionScenarios,
   resolveScenarioInputs,
   type CompanionScenario,
-} from '@/lib/companion/companionBridge'
-import { fetchPlannerSnapshot, postPlannerResults, type PlannerResultsPayload } from '@/lib/companion/companionClient'
-import { getCompanionToken, isCompanionMode } from '@/lib/companion/isCompanionMode'
+} from '@/lib/companion/scenarios'
+import { fetchPlannerSnapshot, postPlannerResults } from '@/lib/companion/companionClient'
+import { applySnapshotToStores } from '@/lib/companion/companionBridge'
+import type { PlannerResultsPayload } from '@/lib/companion/types'
+import {
+  getCompanionToken,
+  getCompanionBaseUrl,
+  isCompanionMode,
+  scrubCompanionParams,
+} from '@/lib/companion/isCompanionMode'
 
 type CompanionBootstrapStatus = 'idle' | 'loading' | 'loaded' | 'error'
 type CompanionSaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -36,7 +42,6 @@ interface ScenarioRunContext {
 export interface CompanionScenarioComparison {
   id: string
   name: string
-  placeholder: boolean
   p_success: number | null
   WR_critical_50: number | null
   fireAge: number | null
@@ -95,6 +100,7 @@ export function useCompanionPlannerBridge({
 }: CompanionPlannerBridgeInput): CompanionPlannerBridgeState {
   const companionMode = isCompanionMode()
   const token = companionMode ? getCompanionToken() : null
+  const baseUrl = companionMode ? getCompanionBaseUrl() : ''
 
   const allocationWeights = useAllocationStore((s) => s.currentWeights)
   const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
@@ -104,11 +110,11 @@ export function useCompanionPlannerBridge({
   const retirementAge = useProfileStore((s) => s.retirementAge)
   const lifeExpectancy = useProfileStore((s) => s.lifeExpectancy)
   const initialPortfolio = useProfileStore(
-    (s) => s.liquidNetWorth + s.cpfOA + s.cpfSA + s.cpfMA + s.cpfRA
+    (s) => s.liquidNetWorth + s.cpfOA + s.cpfSA + s.cpfMA + s.cpfRA,
   )
 
   const [bootstrapStatus, setBootstrapStatus] = useState<CompanionBootstrapStatus>(() =>
-    companionMode && !!token ? 'loading' : 'idle'
+    companionMode && !!token ? 'loading' : 'idle',
   )
   const [bootstrapError, setBootstrapError] = useState<string | null>(null)
   const [saveStatus, setSaveStatus] = useState<CompanionSaveStatus>('idle')
@@ -121,11 +127,11 @@ export function useCompanionPlannerBridge({
 
   const minRetirementAge = useMemo(
     () => Math.max(35, Math.round(currentAge + 1)),
-    [currentAge]
+    [currentAge],
   )
   const maxRetirementAge = useMemo(
     () => Math.max(minRetirementAge, Math.round(lifeExpectancy - 1)),
-    [lifeExpectancy, minRetirementAge]
+    [lifeExpectancy, minRetirementAge],
   )
 
   const lastSavedSignatureRef = useRef<string | null>(null)
@@ -138,7 +144,7 @@ export function useCompanionPlannerBridge({
 
   const activeScenario = useMemo(
     () => scenarios.find((scenario) => scenario.id === activeScenarioId) ?? null,
-    [scenarios, activeScenarioId]
+    [scenarios, activeScenarioId],
   )
 
   const activeScenarioInputs = useMemo<CompanionScenarioInputs | null>(() => {
@@ -174,10 +180,9 @@ export function useCompanionPlannerBridge({
       return {
         id: scenario.id,
         name: scenario.name,
-        placeholder: !!scenario.placeholder,
         p_success: isFresh ? (record.payload.p_success ?? null) : null,
         WR_critical_50: isFresh ? (record.payload.WR_critical_50 ?? null) : null,
-        fireAge: isFresh ? (record.payload.fireAge ?? null) : null,
+        fireAge: isFresh ? (record.payload.fire_age ?? null) : null,
         needsRerun: !isFresh,
       }
     })
@@ -191,18 +196,18 @@ export function useCompanionPlannerBridge({
 
   const activeScenarioSignature = useMemo(
     () => (activeScenarioInputs ? buildInputSignature(activeScenarioInputs) : null),
-    [activeScenarioInputs]
+    [activeScenarioInputs],
   )
   const activeScenarioRecord = useMemo(
     () => (activeScenarioId ? scenarioResults[activeScenarioId] : undefined),
-    [activeScenarioId, scenarioResults]
+    [activeScenarioId, scenarioResults],
   )
   const activeScenarioPayload = useMemo(
     () => (activeScenarioSignature && activeScenarioRecord?.inputSignature === activeScenarioSignature
       ? activeScenarioRecord.payload
       : null
     ),
-    [activeScenarioSignature, activeScenarioRecord]
+    [activeScenarioSignature, activeScenarioRecord],
   )
   const isScenarioContextStale = !!activeScenarioId
     && !!lastRunScenarioId
@@ -214,46 +219,22 @@ export function useCompanionPlannerBridge({
     || isScenarioContextStale
     || !activeScenarioPayload
 
-  // Keep token out of URL after first capture.
+  // Scrub companion params from URL after first capture
   useEffect(() => {
     if (!companionMode || !token) return
-
-    const url = new URL(window.location.href)
-    const hashParams = new URLSearchParams(url.hash.startsWith('#') ? url.hash.slice(1) : '')
-
-    let changed = false
-
-    if (url.searchParams.has('token')) {
-      url.searchParams.delete('token')
-      changed = true
-    }
-
-    if (hashParams.has('ct')) {
-      hashParams.delete('ct')
-      changed = true
-    }
-
-    const nextHash = hashParams.toString()
-    const normalizedHash = nextHash ? `#${nextHash}` : ''
-    if (url.hash !== normalizedHash) {
-      url.hash = normalizedHash
-      changed = true
-    }
-
-    if (changed) {
-      window.history.replaceState(window.history.state ?? {}, '', `${url.pathname}${url.search}${url.hash}`)
-    }
+    scrubCompanionParams()
   }, [companionMode, token])
 
+  // Bootstrap: fetch snapshot → apply to stores
   useEffect(() => {
     if (!companionMode || !token) return
 
     let cancelled = false
 
-    fetchPlannerSnapshot(token)
+    fetchPlannerSnapshot(baseUrl, token)
       .then((snapshot) => {
         if (cancelled) return
-        applySnapshotToPlanner(snapshot)
+        applySnapshotToStores(snapshot)
         setBootstrapStatus('loaded')
       })
       .catch((err) => {
@@ -266,8 +247,9 @@ export function useCompanionPlannerBridge({
     return () => {
       cancelled = true
     }
-  }, [companionMode, token])
+  }, [companionMode, token, baseUrl])
 
+  // Initialize scenarios after bootstrap
   useEffect(() => {
     if (!companionMode || scenarios.length > 0) return
     if (bootstrapStatus === 'loading') return
@@ -276,7 +258,7 @@ export function useCompanionPlannerBridge({
 
     const clampedBaseRetirementAge = Math.min(
       maxRetirementAge,
-      Math.max(minRetirementAge, Math.round(retirementAge))
+      Math.max(minRetirementAge, Math.round(retirementAge)),
     )
     const defaults = createCompanionScenarios(clampedBaseRetirementAge)
 
@@ -299,14 +281,13 @@ export function useCompanionPlannerBridge({
     if (!activeScenario) return
 
     const siblingCopies = scenarios.filter((item) =>
-      item.name.toLowerCase().startsWith(`${activeScenario.name.toLowerCase()} copy`)
+      item.name.toLowerCase().startsWith(`${activeScenario.name.toLowerCase()} copy`),
     ).length
 
     const duplicate: CompanionScenario = {
       ...activeScenario,
       id: `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
       name: `${activeScenario.name} copy ${siblingCopies + 1}`,
-      placeholder: false,
     }
 
     setScenarios((prev) => [...prev, duplicate])
@@ -325,13 +306,12 @@ export function useCompanionPlannerBridge({
           ? scenario
           : {
               ...scenario,
-              placeholder: false,
               overrides: {
                 ...scenario.overrides,
                 monthlyExpenseDelta: Math.round(value),
               },
             }
-      ))
+      )),
     )
 
     setScenarioResults((prev) => {
@@ -355,13 +335,12 @@ export function useCompanionPlannerBridge({
           ? scenario
           : {
               ...scenario,
-              placeholder: false,
               overrides: {
                 ...scenario.overrides,
                 retirementAge: boundedValue,
               },
             }
-      ))
+      )),
     )
 
     setScenarioResults((prev) => {
@@ -400,7 +379,7 @@ export function useCompanionPlannerBridge({
     setSaveError(null)
 
     try {
-      await postPlannerResults(token, payload)
+      await postPlannerResults(baseUrl, token, payload)
       lastSavedSignatureRef.current = signature
       setSaveStatus('saved')
     } catch (err) {
@@ -408,11 +387,11 @@ export function useCompanionPlannerBridge({
       setSaveStatus('error')
       setSaveError('Could not save to phone. Please try again.')
     }
-  }, [companionMode, token])
+  }, [companionMode, token, baseUrl])
 
   const buildPayloadForContext = useCallback((
     runContext: ScenarioRunContext,
-    mcResult: MonteCarloResult
+    mcResult: MonteCarloResult,
   ): PlannerResultsPayload => {
     return buildPlannerResultsPayload({
       result: mcResult,
@@ -434,6 +413,7 @@ export function useCompanionPlannerBridge({
     strategyParams,
   ])
 
+  // Process MC results: store per-scenario, auto-POST to phone
   useEffect(() => {
     if (!companionMode || !result || isResultStale || scenarios.length === 0) return
     if (lastProcessedResultRef.current === result) return

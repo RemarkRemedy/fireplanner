@@ -10,7 +10,7 @@ import { ShareButton } from '@/components/shared/ShareButton'
 import { ScenarioManager } from './ScenarioManager'
 import { ThemeToggle } from './ThemeToggle'
 import { trackEvent } from '@/lib/analytics'
-import { getCompanionToken, isCompanionMode } from '@/lib/companion/isCompanionMode'
+import { isCompanionMode } from '@/lib/companion/isCompanionMode'
 import {
   User,
   DollarSign,
@@ -150,18 +150,9 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const navigate = useNavigate()
   const companionMode = isCompanionMode()
-  const companionToken = companionMode ? getCompanionToken() : null
   const sectionOrder = useUIStore((s) => s.sectionOrder)
   const { activeSection, isInputsPage } = useActiveSection()
   const { sections } = useSectionCompletion()
-
-  const companionHash = companionMode && companionToken
-    ? `#ct=${encodeURIComponent(companionToken)}`
-    : ''
-  const withCompanionHash = useCallback(
-    (path: string) => (companionHash ? `${path}${companionHash}` : path),
-    [companionHash]
-  )
 
   const cpfEnabled = useUIStore((s) => s.cpfEnabled)
   const healthcareEnabled = useUIStore((s) => s.healthcareEnabled)
@@ -199,13 +190,13 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
         document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
       } else if (companionMode) {
         try { sessionStorage.setItem(COMPANION_SECTION_SCROLL_KEY, sectionId) } catch { /* storage unavailable */ }
-        navigate(withCompanionHash('/inputs'))
+        navigate('/inputs')
       } else {
         navigate(`/inputs#${sectionId}`)
       }
       onNavigate?.()
     },
-    [isInputsPage, companionMode, navigate, onNavigate, withCompanionHash]
+    [isInputsPage, companionMode, navigate, onNavigate]
   )
 
   return (
@@ -219,7 +210,7 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
           <div className="flex flex-col gap-0.5">
             {group.items.map((item) => {
               const itemPath = companionMode && item.path === '/stress-test' ? '/planner' : item.path
-              const destination = withCompanionHash(itemPath)
+              const destination = itemPath
               return (
               <NavLink
                 key={`${group.title}-${destination}`}
@@ -277,7 +268,7 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
           <div className="flex flex-col gap-0.5">
             {group.items.map((item) => {
               const itemPath = companionMode && item.path === '/stress-test' ? '/planner' : item.path
-              const destination = withCompanionHash(itemPath)
+              const destination = itemPath
               return (
               <NavLink
                 key={destination}
@@ -439,10 +430,6 @@ export function Sidebar() {
   const location = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const companionMode = isCompanionMode()
-  const companionToken = companionMode ? getCompanionToken() : null
-  const companionHash = companionMode && companionToken
-    ? `#ct=${encodeURIComponent(companionToken)}`
-    : ''
 
   // Handle hash-based scroll on /inputs page load
   useEffect(() => {
@@ -541,7 +528,7 @@ export function Sidebar() {
           { label: 'Strategies', path: '/withdrawal', icon: <Banknote className="h-5 w-5" /> },
           ]
         ).map((item) => {
-          const destination = companionHash ? `${item.path}${companionHash}` : item.path
+          const destination = item.path
           return (
           <NavLink
             key={item.path}

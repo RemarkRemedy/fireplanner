@@ -1,94 +1,85 @@
 const COMPANION_SESSION_KEY = 'fireplanner-companion-mode'
 const COMPANION_TOKEN_SESSION_KEY = 'fireplanner-companion-token'
-let companionTokenInMemory: string | null = null
 
-function getCurrentUrl(): URL | null {
-  if (typeof window === 'undefined') return null
-  return new URL(window.location.href)
-}
-
-function readHashToken(url: URL): string | null {
-  const rawHash = url.hash.startsWith('#') ? url.hash.slice(1) : url.hash
-  if (!rawHash) return null
-  const params = new URLSearchParams(rawHash)
-  const token = params.get('ct')?.trim()
-  return token && token.length > 0 ? token : null
-}
-
-function persistToken(token: string): void {
-  const normalized = token.trim()
-  if (!normalized) return
-  companionTokenInMemory = normalized
-  try {
-    window.sessionStorage.setItem(COMPANION_TOKEN_SESSION_KEY, normalized)
-  } catch {
-    // ignore unavailable session storage
-  }
-}
-
-function readSessionToken(): string | null {
-  try {
-    const token = window.sessionStorage.getItem(COMPANION_TOKEN_SESSION_KEY)?.trim() ?? ''
-    return token.length > 0 ? token : null
-  } catch {
-    return null
-  }
-}
-
+/**
+ * Detect companion mode from URL query param or sessionStorage flag.
+ * Companion mode is entered via `?companion=1` in the URL. Once detected,
+ * the flag is persisted to sessionStorage for cross-navigation persistence.
+ */
 export function isCompanionMode(): boolean {
-  const url = getCurrentUrl()
-  if (!url) return false
+  if (typeof window === 'undefined') return false
 
-  const fromQuery = url.searchParams.get('companion') === '1'
-  const tokenFromQuery = url.searchParams.get('token')?.trim() ?? ''
-  const tokenFromHash = readHashToken(url)
-  const tokenFromSession = readSessionToken()
-
-  if (tokenFromQuery) {
-    // Query token is source-of-truth when present.
-    persistToken(tokenFromQuery)
-  } else if (tokenFromHash) {
-    // URL-provided hash token should override stale session state.
-    persistToken(tokenFromHash)
-  } else if (tokenFromSession) {
-    persistToken(tokenFromSession)
-  }
-
-  // Preserve companion mode across in-app navigation for the current tab.
-  if (fromQuery) {
-    try { window.sessionStorage.setItem(COMPANION_SESSION_KEY, '1') } catch { /* unavailable */ }
+  const url = new URL(window.location.href)
+  if (url.searchParams.get('companion') === '1') {
+    try { sessionStorage.setItem(COMPANION_SESSION_KEY, '1') } catch { /* unavailable */ }
     return true
   }
 
   try {
-    return window.sessionStorage.getItem(COMPANION_SESSION_KEY) === '1'
+    return sessionStorage.getItem(COMPANION_SESSION_KEY) === '1'
   } catch {
     return false
   }
 }
 
+/**
+ * Retrieve the companion token from the URL query param or sessionStorage.
+ * On first access, the token from `?token=` is persisted to sessionStorage
+ * and scrubbed from the URL via replaceState.
+ */
 export function getCompanionToken(): string | null {
-  const url = getCurrentUrl()
-  if (!url) return null
+  if (typeof window === 'undefined') return null
 
+  const url = new URL(window.location.href)
   const tokenFromQuery = url.searchParams.get('token')?.trim() ?? ''
+
   if (tokenFromQuery) {
-    persistToken(tokenFromQuery)
+    try { sessionStorage.setItem(COMPANION_TOKEN_SESSION_KEY, tokenFromQuery) } catch { /* unavailable */ }
     return tokenFromQuery
   }
 
-  const tokenFromHash = readHashToken(url)
-  if (tokenFromHash) {
-    persistToken(tokenFromHash)
-    return tokenFromHash
+  try {
+    const stored = sessionStorage.getItem(COMPANION_TOKEN_SESSION_KEY)?.trim() ?? ''
+    return stored.length > 0 ? stored : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Derive the companion base URL from the current origin.
+ * Since fireplanner is served as a static bundle under the companion server's
+ * /planner/* namespace, the API base is the same origin.
+ */
+export function getCompanionBaseUrl(): string {
+  return typeof window !== 'undefined' ? window.location.origin : ''
+}
+
+/**
+ * Scrub companion-related query params from the URL.
+ * Call once after bootstrap to prevent token leakage via browser history,
+ * referrer headers, or URL sharing.
+ */
+export function scrubCompanionParams(): void {
+  if (typeof window === 'undefined') return
+
+  const url = new URL(window.location.href)
+  let changed = false
+
+  if (url.searchParams.has('token')) {
+    url.searchParams.delete('token')
+    changed = true
+  }
+  if (url.searchParams.has('companion')) {
+    url.searchParams.delete('companion')
+    changed = true
   }
 
-  const tokenFromSession = readSessionToken()
-  if (tokenFromSession) {
-    persistToken(tokenFromSession)
-    return tokenFromSession
+  if (changed) {
+    window.history.replaceState(
+      window.history.state ?? {},
+      '',
+      `${url.pathname}${url.search}${url.hash}`,
+    )
   }
-
-  const cached = companionTokenInMemory?.trim() ?? ''
-  return cached.length > 0 ? cached : null
 }

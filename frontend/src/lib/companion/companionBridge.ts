@@ -1,11 +1,45 @@
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { createJSONStorage } from 'zustand/middleware'
 import { useProfileStore } from '@/stores/useProfileStore'
+import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useAllocationStore } from '@/stores/useAllocationStore'
+import { useSimulationStore } from '@/stores/useSimulationStore'
+import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
+import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useUIStore } from '@/stores/useUIStore'
-import type { MonteCarloResult, StrategyParamsMap, WithdrawalStrategyType } from '@/lib/types'
-import type { PlannerResultsPayload, PlannerSnapshot } from './companionClient'
+import type { PlannerSnapshotResponse } from './types'
 
 const MONTHS_PER_YEAR = 12
-const MIN_WR_DENOMINATOR = 0.0001
+
+// No-op storage that silently drops all reads/writes.
+// Used to prevent companion-mode store mutations from touching localStorage.
+const noopPersistStorage = createJSONStorage(() => ({
+  getItem: (): null => null,
+  setItem: () => {},
+  removeItem: () => {},
+}))
+
+/**
+ * Swap every persisted Zustand store's storage to a no-op adapter.
+ * Must be called BEFORE any store hydration in companion mode.
+ * This prevents companion data from leaking into localStorage while
+ * keeping normal setField() code paths unchanged.
+ */
+export function disableLocalStoragePersistence(): void {
+  const stores = [
+    useProfileStore,
+    useIncomeStore,
+    useAllocationStore,
+    useSimulationStore,
+    useWithdrawalStore,
+    usePropertyStore,
+    useUIStore,
+  ] as const
+
+  for (const store of stores) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    store.persist.setOptions({ storage: noopPersistStorage as any })
+  }
+}
 
 function toFiniteNumber(value: unknown): number | null {
   if (typeof value !== 'number') return null
@@ -13,82 +47,28 @@ function toFiniteNumber(value: unknown): number | null {
   return value
 }
 
-function clamp01(value: number): number {
-  if (value < 0) return 0
-  if (value > 1) return 1
-  return value
-}
+/**
+ * Map a phone FinancialSnapshot into fireplanner Zustand stores.
+ * Nil/null fields keep fireplanner defaults (no overwrite).
+ * Percentages are converted to decimals (e.g. 2.5 → 0.025).
+ */
+export function applySnapshotToStores(snapshot: PlannerSnapshotResponse): void {
+  // Step 1: Prevent companion writes from touching localStorage
+  disableLocalStoragePersistence()
 
-function roundRate(value: number): number {
-  return Math.round(value * 1_000_000) / 1_000_000
-}
-
-function roundMoney(value: number): number {
-  return Math.round(value)
-}
-
-function normalizeStructuralMode(value: unknown): string | null {
-  if (typeof value !== 'string') return null
-  const normalized = value.trim().toLowerCase()
-  return normalized.length > 0 ? normalized : null
-}
-
-export interface CompanionScenarioOverrides {
-  monthlyExpenseDelta?: number
-  retirementAge?: number
-}
-
-export interface CompanionScenario {
-  id: string
-  name: string
-  overrides: CompanionScenarioOverrides
-  placeholder?: boolean
-}
-
-export function createCompanionScenarios(baseRetirementAge: number): CompanionScenario[] {
-  return [
-    { id: 'base', name: 'Base', overrides: {} },
-    { id: 'cut-300', name: 'Cut $300/mo', overrides: { monthlyExpenseDelta: -300 } },
-    { id: 'buy-hdb-earlier', name: 'Buy HDB earlier', overrides: {}, placeholder: true },
-    { id: 'retire-5-earlier', name: 'Retire 5 years earlier', overrides: { retirementAge: Math.max(35, Math.round(baseRetirementAge - 5)) } },
-    { id: 'conservative-spending', name: 'Conservative spending', overrides: { monthlyExpenseDelta: -500 } },
-  ]
-}
-
-export function resolveScenarioInputs(input: {
-  baseAnnualExpenses: number
-  baseRetirementAge: number
-  overrides: CompanionScenarioOverrides
-  minRetirementAge?: number
-  maxRetirementAge?: number
-}): { annualExpenses: number; retirementAge: number } {
-  const { baseAnnualExpenses, baseRetirementAge, overrides } = input
-  const monthlyDelta = toFiniteNumber(overrides.monthlyExpenseDelta) ?? 0
-  const annualExpenses = Math.max(0, baseAnnualExpenses + monthlyDelta * MONTHS_PER_YEAR)
-  const minRetirementAge = Math.max(35, Math.round(toFiniteNumber(input.minRetirementAge) ?? 35))
-  const maxRetirementAgeRaw = toFiniteNumber(input.maxRetirementAge)
-  const maxRetirementAge = maxRetirementAgeRaw == null
-    ? Number.POSITIVE_INFINITY
-    : Math.max(minRetirementAge, Math.round(maxRetirementAgeRaw))
-  const rawRetirementAge = Math.round(toFiniteNumber(overrides.retirementAge) ?? baseRetirementAge)
-  const retirementAge = Math.min(maxRetirementAge, Math.max(minRetirementAge, rawRetirementAge))
-  return { annualExpenses, retirementAge }
-}
-
-export function applySnapshotToPlanner(snapshot: PlannerSnapshot): void {
   const profile = useProfileStore.getState()
   const income = useIncomeStore.getState()
-  const ui = useUIStore.getState()
 
+  // --- Income / expenses ---
   const monthlyIncome = toFiniteNumber(snapshot.avgMonthlyIncome)
   const monthlyExpense = toFiniteNumber(snapshot.avgMonthlyExpense)
   const monthlySavings = toFiniteNumber(snapshot.avgMonthlySavings)
   const investableAssets = toFiniteNumber(snapshot.investableAssets)
 
+  // Derive missing side from savings when the other is available
   let resolvedMonthlyIncome = monthlyIncome
   let resolvedMonthlyExpense = monthlyExpense
 
-  // Fill one side from savings when the other side is available.
   if (resolvedMonthlyIncome === null && resolvedMonthlyExpense !== null && monthlySavings !== null) {
     resolvedMonthlyIncome = resolvedMonthlyExpense + monthlySavings
   }
@@ -98,6 +78,7 @@ export function applySnapshotToPlanner(snapshot: PlannerSnapshot): void {
 
   if (resolvedMonthlyIncome !== null) {
     const annualIncome = Math.max(0, resolvedMonthlyIncome * MONTHS_PER_YEAR)
+    // Both stores must be set to keep derived metrics consistent
     profile.setField('annualIncome', annualIncome)
     income.setField('annualSalary', annualIncome)
   }
@@ -108,171 +89,44 @@ export function applySnapshotToPlanner(snapshot: PlannerSnapshot): void {
     profile.setField('liquidNetWorth', Math.max(0, investableAssets))
   }
 
-  const structuralMode = normalizeStructuralMode(snapshot.structuralMode)
-  if (structuralMode === 'simple' || structuralMode === 'advanced') {
-    ui.setField('mode', structuralMode)
-  }
-  if (structuralMode === 'goal-first' || structuralMode === 'story-first' || structuralMode === 'already-fire') {
-    ui.setField('sectionOrder', structuralMode)
-  }
-}
+  // --- Profile fields (from nested profile object) ---
+  const p = snapshot.profile
+  if (p) {
+    const age = toFiniteNumber(p.currentAge)
+    if (age !== null) profile.setField('currentAge', Math.round(age))
 
-function toPercent(weight: number): number {
-  return Math.round(Math.max(0, weight) * 100)
-}
+    const retAge = toFiniteNumber(p.retirementAgeTarget)
+    if (retAge !== null) profile.setField('retirementAge', Math.round(retAge))
 
-export function buildAllocationSummary(allocationWeights: number[]): string {
-  const safe = (idx: number) => allocationWeights[idx] ?? 0
+    const lifeExp = toFiniteNumber(p.lifeExpectancy)
+    if (lifeExp !== null) profile.setField('lifeExpectancy', Math.round(lifeExp))
 
-  const stocks = safe(0) + safe(1) + safe(2) + safe(4)
-  const bonds = safe(3)
-  const cash = safe(6)
-  const gold = safe(5)
-  const cpf = safe(7)
+    // UNIT CONVERSION: percentages → decimals (e.g. 2.5% → 0.025)
+    const inflation = toFiniteNumber(p.inflationPct)
+    if (inflation !== null) profile.setField('inflation', inflation / 100)
 
-  const parts: Array<[string, number]> = [
-    ['Stocks', stocks],
-    ['Bonds', bonds],
-    ['Cash', cash],
-  ]
-  if (gold >= 0.005) parts.push(['Gold', gold])
-  if (cpf >= 0.005) parts.push(['CPF', cpf])
+    const expectedReturn = toFiniteNumber(p.expectedReturnPct)
+    if (expectedReturn !== null) profile.setField('expectedReturn', expectedReturn / 100)
 
-  return parts
-    .map(([label, weight]) => `${label} ${toPercent(weight)}`)
-    .join(' / ')
-}
+    const expenseRatio = toFiniteNumber(p.expenseRatioPct)
+    if (expenseRatio !== null) profile.setField('expenseRatio', expenseRatio / 100)
 
-export function deriveWRCritical50(input: {
-  result: MonteCarloResult
-  initialPortfolio: number
-  selectedStrategy: WithdrawalStrategyType
-  strategyParams: StrategyParamsMap
-}): number {
-  const { result, initialPortfolio, selectedStrategy, strategyParams } = input
-  const fromBands = deriveWRFromBand(result, initialPortfolio, 'p50')
-  if (fromBands !== null) return fromBands
+    const swr = toFiniteNumber(p.swrPct)
+    if (swr !== null) profile.setField('swr', swr / 100)
 
-  if (selectedStrategy === 'constant_dollar') {
-    return roundRate(clamp01(strategyParams.constant_dollar.swr))
+    // CPF balances (Decimal→Double precision loss is acceptable)
+    const cpfOA = toFiniteNumber(p.cpfOA)
+    if (cpfOA !== null) profile.setField('cpfOA', cpfOA)
+
+    const cpfSA = toFiniteNumber(p.cpfSA)
+    if (cpfSA !== null) profile.setField('cpfSA', cpfSA)
+
+    const cpfMA = toFiniteNumber(p.cpfMA)
+    if (cpfMA !== null) profile.setField('cpfMA', cpfMA)
   }
 
-  if (result.safe_swr?.confidence_85 != null) {
-    return roundRate(clamp01(result.safe_swr.confidence_85))
-  }
-
-  return 0
-}
-
-function deriveWRFromBand(
-  result: MonteCarloResult,
-  initialPortfolio: number,
-  bandKey: 'p10' | 'p50' | 'p90'
-): number | null {
-  const value = result.withdrawal_bands?.[bandKey]?.[0]
-  if (typeof value !== 'number' || !Number.isFinite(value) || initialPortfolio <= 0) return null
-  return roundRate(clamp01(value / initialPortfolio))
-}
-
-function findFirstAgeIndex(ages: number[], targetAge: number): number {
-  const idx = ages.findIndex((age) => age >= targetAge)
-  return idx >= 0 ? idx : -1
-}
-
-function estimateFireMilestone(input: {
-  result: MonteCarloResult
-  currentAge: number
-  retirementAge: number
-  annualExpenses: number
-  wrCritical50: number
-}): { fireAge: number; portfolioAtFire: number } {
-  const { result, currentAge, retirementAge, annualExpenses, wrCritical50 } = input
-  const ages = result.percentile_bands.ages
-  const medians = result.percentile_bands.p50
-
-  if (ages.length === 0 || medians.length === 0) {
-    return {
-      fireAge: Math.round(retirementAge),
-      portfolioAtFire: roundMoney(result.terminal_stats.median),
-    }
-  }
-
-  const safeRate = Math.max(wrCritical50, MIN_WR_DENOMINATOR)
-  const requiredPortfolio = annualExpenses <= 0 ? 0 : annualExpenses / safeRate
-
-  const startIdx = findFirstAgeIndex(ages, currentAge)
-  if (startIdx >= 0) {
-    for (let i = startIdx; i < ages.length; i += 1) {
-      if ((medians[i] ?? 0) >= requiredPortfolio) {
-        return {
-          fireAge: Math.round(ages[i]),
-          portfolioAtFire: roundMoney(medians[i]),
-        }
-      }
-    }
-  }
-
-  const retirementIdx = findFirstAgeIndex(ages, retirementAge)
-  if (retirementIdx >= 0) {
-    return {
-      fireAge: Math.round(ages[retirementIdx]),
-      portfolioAtFire: roundMoney(medians[retirementIdx] ?? result.terminal_stats.median),
-    }
-  }
-
-  return {
-    fireAge: Math.round(retirementAge),
-    portfolioAtFire: roundMoney(result.terminal_stats.median),
-  }
-}
-
-export function buildPlannerResultsPayload(input: {
-  result: MonteCarloResult
-  initialPortfolio: number
-  currentAge: number
-  annualExpenses: number
-  lifeExpectancy: number
-  retirementAge: number
-  allocationWeights: number[]
-  selectedStrategy: WithdrawalStrategyType
-  strategyParams: StrategyParamsMap
-}): PlannerResultsPayload {
-  const {
-    result,
-    initialPortfolio,
-    currentAge,
-    annualExpenses,
-    lifeExpectancy,
-    retirementAge,
-    allocationWeights,
-    selectedStrategy,
-    strategyParams,
-  } = input
-
-  const wrCritical50 = deriveWRCritical50({
-    result,
-    initialPortfolio,
-    selectedStrategy,
-    strategyParams,
-  })
-  const wrCritical10 = deriveWRFromBand(result, initialPortfolio, 'p10') ?? wrCritical50
-  const wrCritical90 = deriveWRFromBand(result, initialPortfolio, 'p90') ?? wrCritical50
-  const { fireAge, portfolioAtFire } = estimateFireMilestone({
-    result,
-    currentAge,
-    retirementAge,
-    annualExpenses,
-    wrCritical50,
-  })
-
-  return {
-    p_success: roundRate(clamp01(result.success_rate)),
-    WR_critical_50: wrCritical50,
-    horizonYears: Math.max(0, Math.round(lifeExpectancy - retirementAge)),
-    allocationSummary: buildAllocationSummary(allocationWeights),
-    fireAge,
-    portfolioAtFire,
-    wrCritical10,
-    wrCritical90,
+  // --- UI mode ---
+  if (snapshot.structuralMode === 'advanced' || snapshot.structuralMode === 'simple') {
+    useUIStore.getState().setField('mode', snapshot.structuralMode)
   }
 }
