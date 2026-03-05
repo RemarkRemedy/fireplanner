@@ -44,6 +44,9 @@ export interface CompanionScenarioComparison {
   p_success: number | null
   WR_critical_50: number | null
   fireAge: number | null
+  portfolio_at_fire: number | null
+  wr_critical_10: number | null
+  wr_critical_90: number | null
   needsRerun: boolean
 }
 
@@ -67,6 +70,7 @@ export interface CompanionPlannerBridgeState {
   scenarioComparisons: CompanionScenarioComparison[]
   activeScenarioNeedsRerun: boolean
   lastRunScenarioId: string | null
+  deterministicFireAge: number | null
   selectScenario: (scenarioId: string) => void
   duplicateActiveScenario: () => void
   setActiveScenarioMonthlyExpenseDelta: (value: number) => void
@@ -123,6 +127,7 @@ export function useCompanionPlannerBridge({
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null)
   const [scenarioResults, setScenarioResults] = useState<Record<string, ScenarioResultRecord>>({})
   const [lastRunScenarioId, setLastRunScenarioId] = useState<string | null>(null)
+  const [deterministicFireAge, setDeterministicFireAge] = useState<number | null>(null)
 
   const minRetirementAge = useMemo(
     () => Math.max(35, Math.round(currentAge + 1)),
@@ -182,6 +187,9 @@ export function useCompanionPlannerBridge({
         p_success: isFresh ? (record.payload.p_success ?? null) : null,
         WR_critical_50: isFresh ? (record.payload.WR_critical_50 ?? null) : null,
         fireAge: isFresh ? (record.payload.fire_age ?? null) : null,
+        portfolio_at_fire: isFresh ? (record.payload.portfolio_at_fire ?? null) : null,
+        wr_critical_10: isFresh ? (record.payload.wr_critical_10 ?? null) : null,
+        wr_critical_90: isFresh ? (record.payload.wr_critical_90 ?? null) : null,
         needsRerun: !isFresh,
       }
     })
@@ -228,6 +236,9 @@ export function useCompanionPlannerBridge({
       .then((snapshot) => {
         if (cancelled) return
         applySnapshotToStores(snapshot)
+        if (typeof snapshot.deterministicFireAge === 'number' && Number.isFinite(snapshot.deterministicFireAge)) {
+          setDeterministicFireAge(Math.round(snapshot.deterministicFireAge))
+        }
         setBootstrapStatus('loaded')
       })
       .catch((err) => {
@@ -491,6 +502,7 @@ export function useCompanionPlannerBridge({
     scenarioComparisons,
     activeScenarioNeedsRerun,
     lastRunScenarioId,
+    deterministicFireAge,
     selectScenario,
     duplicateActiveScenario,
     setActiveScenarioMonthlyExpenseDelta,

@@ -42,6 +42,7 @@ export const PlannerSnapshotResponseSchema = z
     profile: PlannerProfileSchema.optional(),
     withdrawalProbabilitySuccess: z.number().optional(),
     withdrawalCriticalRate50: z.number().optional(),
+    deterministicFireAge: z.number().optional(),
   })
   .passthrough()
 

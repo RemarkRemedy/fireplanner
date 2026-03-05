@@ -4,9 +4,9 @@ import { Badge } from '@/components/ui/badge'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { formatCurrency, cn } from '@/lib/utils'
-import { formatPercent } from '@/lib/utils'
-import type { CompanionPlannerBridgeState } from '@/hooks/useCompanionPlannerBridge'
+import { DeltaBadge } from '@/components/shared/DeltaBadge'
+import { formatCurrency, formatPercent, cn } from '@/lib/utils'
+import type { CompanionPlannerBridgeState, CompanionScenarioComparison } from '@/hooks/useCompanionPlannerBridge'
 
 interface CompanionScenarioSwitcherProps {
   companion: CompanionPlannerBridgeState
@@ -23,11 +23,6 @@ export function CompanionScenarioSwitcher({
 }: CompanionScenarioSwitcherProps) {
   const hasSelectedScenario = !!companion.activeScenario
   const hasLoadedSnapshot = companion.bootstrapStatus === 'loaded'
-
-  const formatMaybePercent = (value: number | null) => {
-    if (value == null) return '\u2014'
-    return formatPercent(value, 1)
-  }
 
   return (
     <section className="companion-shell rounded-xl border companion-border companion-bg p-4 md:p-5 space-y-4">
@@ -176,38 +171,90 @@ export function CompanionScenarioSwitcher({
         </Card>
       </div>
 
-      <Card className="companion-card">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">Scenario Comparison</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="py-2 text-left">Scenario</th>
-                <th className="py-2 text-right">P(success)</th>
-                <th className="py-2 text-right">WR critical 50</th>
-                <th className="py-2 text-right">FIRE age (est.)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {companion.scenarioComparisons.map((row) => (
-                <tr key={row.id} className="border-b border-muted/50">
+      <CompanionComparisonTable
+        comparisons={companion.scenarioComparisons}
+        deterministicFireAge={companion.deterministicFireAge}
+      />
+    </section>
+  )
+}
+
+// --- Comparison table with delta vs base ---
+
+function CompanionComparisonTable({
+  comparisons,
+  deterministicFireAge,
+}: {
+  comparisons: CompanionScenarioComparison[]
+  deterministicFireAge: number | null
+}) {
+  const base = comparisons.find((row) => row.id === 'base') ?? null
+
+  const formatMaybePercent = (value: number | null) => {
+    if (value == null) return '\u2014'
+    return formatPercent(value, 1)
+  }
+
+  const formatDeltaPercent = (v: number) => formatPercent(Math.abs(v), 1)
+  const formatDeltaYears = (v: number) => `${Math.abs(v)}y`
+
+  return (
+    <Card className="companion-card">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold">Scenario Comparison</CardTitle>
+      </CardHeader>
+      <CardContent className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b">
+              <th className="py-2 text-left">Scenario</th>
+              <th className="py-2 text-right">P(success)</th>
+              <th className="py-2 text-right">FIRE age</th>
+              <th className="py-2 text-right">WR critical</th>
+            </tr>
+          </thead>
+          <tbody>
+            {comparisons.map((row) => {
+              const isBase = row.id === 'base'
+              const pDelta = !isBase && base?.p_success != null && row.p_success != null
+                ? row.p_success - base.p_success
+                : null
+              const ageDelta = !isBase && base?.fireAge != null && row.fireAge != null
+                ? row.fireAge - base.fireAge
+                : null
+
+              return (
+                <tr key={row.id} className={cn(
+                  'border-b border-muted/50',
+                  isBase && 'bg-muted/20',
+                )}>
                   <td className="py-2">
                     <span className="font-medium">{row.name}</span>
                     {row.needsRerun && (
                       <span className="ml-2 text-[10px] text-muted-foreground uppercase tracking-wide">needs rerun</span>
                     )}
                   </td>
-                  <td className="py-2 text-right">{formatMaybePercent(row.p_success)}</td>
+                  <td className="py-2 text-right whitespace-nowrap">
+                    {formatMaybePercent(row.p_success)}
+                    {pDelta != null && <DeltaBadge value={pDelta} format={formatDeltaPercent} />}
+                  </td>
+                  <td className="py-2 text-right whitespace-nowrap">
+                    {row.fireAge ?? '\u2014'}
+                    {ageDelta != null && <DeltaBadge value={ageDelta} format={formatDeltaYears} invert />}
+                  </td>
                   <td className="py-2 text-right">{formatMaybePercent(row.WR_critical_50)}</td>
-                  <td className="py-2 text-right">{row.fireAge ?? '\u2014'}</td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
-    </section>
+              )
+            })}
+          </tbody>
+        </table>
+        {deterministicFireAge != null && (
+          <div className="mt-2 text-xs text-muted-foreground">
+            Deterministic FIRE age estimate: <span className="font-medium">{deterministicFireAge}</span>
+            <span className="ml-1">(from Expense app, no simulation needed)</span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

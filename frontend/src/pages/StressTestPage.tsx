@@ -66,6 +66,7 @@ import { ActiveLifeEventsBar } from '@/components/stressTest/ActiveLifeEventsBar
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useCompanionPlannerBridge } from '@/hooks/useCompanionPlannerBridge'
 import { CompanionScenarioSwitcher } from '@/components/companion/CompanionScenarioSwitcher'
+import { CompanionResultsSummary } from '@/components/companion/CompanionResultsSummary'
 
 function TabIntro({ children }: { children: React.ReactNode }) {
   return (
@@ -784,12 +785,15 @@ export function StressTestPage() {
       )}
 
       {companion.isCompanionMode && (
-        <CompanionScenarioSwitcher
-          companion={companion}
-          isSimulationPending={mc.isPending}
-          simulationProgress={mc.progress}
-          onRunScenario={runMonteCarlo}
-        />
+        <>
+          <CompanionScenarioSwitcher
+            companion={companion}
+            isSimulationPending={mc.isPending}
+            simulationProgress={mc.progress}
+            onRunScenario={runMonteCarlo}
+          />
+          <CompanionResultsSummary companion={companion} />
+        </>
       )}
 
       {isStressAdvanced ? (

@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 /** Newest first. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-03-05',
+    category: 'feature',
+    title: 'Companion mode for Expense app integration',
+    description:
+      'Fireplanner can now run as a companion inside the RemarkRemedy Expense app. When launched with companion parameters, it loads your real expense data, pre-fills your profile, and lets you run Monte Carlo simulations with scenario comparison (cut spending, retire earlier, etc.). Results are sent back to the Expense app for mobile viewing.',
+    affectedSections: ['section-stress-test'],
+    insight:
+      'Companion mode uses a bootstrap module that clears localStorage before Zustand stores hydrate, ensuring expense-derived data is always fresh. The router basename handles path prefixing automatically, so no manual URL rewrites are needed inside the app.',
+  },
+  {
     date: '2026-03-04',
     category: 'feature',
     title: 'Asset Breakdown column group in projection tables',
