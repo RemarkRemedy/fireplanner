@@ -77,7 +77,7 @@ export function CompanionResultsSummary({
 
       <RetireeDrawdownGuard
         snapshotWithdrawalRate={companion.snapshotWithdrawalRate}
-        wrSafe90={activeRow.wr_safe_90}
+        wrSafe95={activeRow.wr_safe_95}
       />
 
       <ActionImpactsSection
@@ -94,14 +94,14 @@ export function CompanionResultsSummary({
 
 function RetireeDrawdownGuard({
   snapshotWithdrawalRate,
-  wrSafe90,
+  wrSafe95,
 }: {
   snapshotWithdrawalRate: number | null
-  wrSafe90: number | null
+  wrSafe95: number | null
 }) {
-  if (snapshotWithdrawalRate == null || wrSafe90 == null) return null
+  if (snapshotWithdrawalRate == null || wrSafe95 == null) return null
 
-  const isSustainable = snapshotWithdrawalRate <= wrSafe90
+  const isSustainable = snapshotWithdrawalRate <= wrSafe95
 
   return (
     <Card className="companion-card">
@@ -120,9 +120,9 @@ function RetireeDrawdownGuard({
               </span>
             </div>
             <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="text-sm text-muted-foreground">Safe rate (90% conf.):</span>
+              <span className="text-sm text-muted-foreground">Safe rate (95% conf.):</span>
               <span className="text-sm font-semibold tabular-nums">
-                {formatPercent(wrSafe90, 2)}
+                {formatPercent(wrSafe95, 2)}
               </span>
             </div>
           </div>
@@ -141,7 +141,7 @@ function RetireeDrawdownGuard({
           </div>
         </div>
         <div className="mt-2 text-[10px] text-muted-foreground leading-relaxed">
-          Based on simulated portfolio survival at 90% confidence.
+          Compared against the active scenario's 95% confidence safe withdrawal rate.
           This is a sustainability check, not a spending target.
         </div>
       </CardContent>

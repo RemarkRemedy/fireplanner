@@ -249,7 +249,8 @@ export function useCompanionPlannerBridge({
         const ia = snapshot.investableAssets
         if (typeof aw === 'number' && Number.isFinite(aw) && aw > 0
             && typeof ia === 'number' && Number.isFinite(ia) && ia > 0) {
-          setSnapshotWithdrawalRate(aw / ia)
+          // Clamp to [0, 1] — rates above 100% indicate data issues, not real WR
+          setSnapshotWithdrawalRate(Math.min(1, aw / ia))
         }
         setBootstrapStatus('loaded')
       })

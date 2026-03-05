@@ -1,13 +1,22 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import {
   ACTION_LEVERS,
   extractImpactMetrics,
   buildLeverOverrides,
   computeActionImpacts,
+  runActionImpactAnalysis,
   type ActionImpactMetrics,
   type LeverContext,
 } from './actionImpacts'
 import type { MonteCarloResult, StrategyParamsMap } from '@/lib/types'
+import { runMonteCarloWorker } from '@/lib/simulation/workerClient'
+
+vi.mock('@/lib/simulation/workerClient', () => ({
+  runMonteCarloWorker: vi.fn(),
+}))
+vi.mock('@/lib/simulation/monteCarloParams', () => ({
+  buildMonteCarloEngineParams: vi.fn(() => ({})),
+}))
 
 // ── Fixtures ──────────────────────────────────────────────
 
@@ -53,6 +62,7 @@ const BASE_CTX: LeverContext = {
   currentWeights: [0.3, 0.1, 0.1, 0.2, 0.1, 0, 0.2, 0],
   selectedStrategy: 'constant_dollar',
   strategyParams: STRATEGY_PARAMS,
+  withdrawalBasis: 'rate',
 }
 
 // ── Tests ─────────────────────────────────────────────────
@@ -270,11 +280,120 @@ describe('deterministic output bounds', () => {
     expect(swr).toBeGreaterThanOrEqual(0)
   })
 
-  it('buildLeverOverrides de-risk weights sum to approximately 1', () => {
+  it('buildLeverOverrides de-risk weights sum to exactly 1 after renormalization', () => {
     const deriskLever = ACTION_LEVERS.find((l) => l.id === 'derisk_10pp')!
     const overrides = buildLeverOverrides(deriskLever, BASE_CTX)
     const weights = overrides.allocationWeights!
     const sum = weights.reduce((a, b) => a + b, 0)
-    expect(sum).toBeCloseTo(1.0, 4)
+    expect(Math.abs(sum - 1.0)).toBeLessThan(1e-10)
+  })
+
+  it('withdrawal_down_10pct returns unmodified params for vpw (no primary rate)', () => {
+    const withdrawalLever = ACTION_LEVERS.find((l) => l.id === 'withdrawal_down_10pct')!
+    const ctx = { ...BASE_CTX, selectedStrategy: 'vpw' as const }
+    const overrides = buildLeverOverrides(withdrawalLever, ctx)
+    const modified = overrides.simulationOverrides?.strategyParams
+    expect(modified?.vpw).toEqual(STRATEGY_PARAMS.vpw)
+  })
+})
+
+describe('runActionImpactAnalysis', () => {
+  const mockedRunMC = vi.mocked(runMonteCarloWorker)
+
+  const MOCK_PROFILE = {
+    currentAge: 30, retirementAge: 55, lifeExpectancy: 90,
+    annualExpenses: 50_000, annualIncome: 100_000,
+    liquidNetWorth: 100_000, cpfOA: 0, cpfSA: 0, cpfMA: 0, cpfRA: 0,
+  } as never
+  const MOCK_INCOME = {} as never
+  const MOCK_ALLOCATION = { currentWeights: BASE_CTX.currentWeights } as never
+  const MOCK_SIMULATION = {
+    selectedStrategy: 'constant_dollar',
+    strategyParams: STRATEGY_PARAMS,
+    withdrawalBasis: 'rate',
+  } as never
+  const MOCK_PROPERTY = {} as never
+
+  function makeMockResult(successRate: number): MonteCarloResult {
+    return {
+      ...SAMPLE_RESULT,
+      success_rate: successRate,
+    }
+  }
+
+  it('calls onProgress for each completed lever', async () => {
+    mockedRunMC.mockResolvedValue(makeMockResult(0.92))
+    const progress: Array<[number, number]> = []
+
+    await runActionImpactAnalysis({
+      profile: MOCK_PROFILE,
+      income: MOCK_INCOME,
+      allocation: MOCK_ALLOCATION,
+      simulation: MOCK_SIMULATION,
+      property: MOCK_PROPERTY,
+      initialPortfolio: 500_000,
+      allocationWeights: BASE_CTX.currentWeights,
+      baseResult: SAMPLE_RESULT,
+      isRetiree: false,
+      annualIncome: 100_000,
+      onProgress: (completed, total) => progress.push([completed, total]),
+    })
+
+    expect(progress.length).toBeGreaterThan(0)
+    // Each progress call should have incrementing completed
+    for (let i = 1; i < progress.length; i++) {
+      expect(progress[i][0]).toBe(progress[i - 1][0] + 1)
+    }
+  })
+
+  it('stops on abort and returns partial results', async () => {
+    let callCount = 0
+    mockedRunMC.mockImplementation(async (_: never, opts?: { signal?: AbortSignal }) => {
+      callCount++
+      if (callCount >= 2) {
+        // Simulate abort after 1st lever
+        throw new DOMException('Aborted', 'AbortError')
+      }
+      return makeMockResult(0.93)
+    })
+
+    const controller = new AbortController()
+    const output = await runActionImpactAnalysis({
+      profile: MOCK_PROFILE,
+      income: MOCK_INCOME,
+      allocation: MOCK_ALLOCATION,
+      simulation: MOCK_SIMULATION,
+      property: MOCK_PROPERTY,
+      initialPortfolio: 500_000,
+      allocationWeights: BASE_CTX.currentWeights,
+      baseResult: SAMPLE_RESULT,
+      isRetiree: false,
+      annualIncome: 100_000,
+      signal: controller.signal,
+    })
+
+    // Should have partial results (1 lever completed before abort)
+    expect(output.completedLevers).toBe(1)
+    expect(output.impacts.length).toBe(1)
+  })
+
+  it('filters out withdrawal_down_10pct when withdrawalBasis is expenses', async () => {
+    mockedRunMC.mockResolvedValue(makeMockResult(0.90))
+
+    const output = await runActionImpactAnalysis({
+      profile: MOCK_PROFILE,
+      income: MOCK_INCOME,
+      allocation: MOCK_ALLOCATION,
+      simulation: { ...MOCK_SIMULATION, withdrawalBasis: 'expenses' } as never,
+      property: MOCK_PROPERTY,
+      initialPortfolio: 500_000,
+      allocationWeights: BASE_CTX.currentWeights,
+      baseResult: SAMPLE_RESULT,
+      isRetiree: true, // retiree so withdrawal_down_10pct would normally apply
+      annualIncome: 100_000,
+    })
+
+    const leverIds = output.impacts.map((i) => i.lever.id)
+    expect(leverIds).not.toContain('withdrawal_down_10pct')
   })
 })

@@ -745,15 +745,21 @@ export function StressTestPage() {
         },
       })
 
-      if (!controller.signal.aborted) {
+      // Runner returns partial results on abort/timeout instead of throwing
+      if (controller.signal.reason === 'timeout') {
+        setActionImpacts(output.impacts.length > 0 ? output.impacts : null)
+        setActionImpactsError(
+          output.impacts.length > 0
+            ? `Analysis timed out. Showing ${output.completedLevers}/${output.totalLevers} results.`
+            : 'Analysis timed out after 15 seconds. Please try again.',
+        )
+      } else if (!controller.signal.aborted) {
         setActionImpacts(output.impacts)
       }
     } catch (error) {
       if (!controller.signal.aborted) {
         console.error('action_impacts_failed', error)
         setActionImpactsError('Action impact analysis failed. Please try again.')
-      } else if (controller.signal.reason === 'timeout') {
-        setActionImpactsError('Analysis timed out after 15 seconds. Results may be partial.')
       }
     } finally {
       if (actionImpactTimeoutRef.current) {
@@ -787,10 +793,17 @@ export function StressTestPage() {
       return next
     })
 
-    // Clear previous action impacts when starting a new run
+    // Abort in-flight action impact analysis and clear previous results
     if (companion.isCompanionMode) {
+      actionImpactAbortRef.current?.abort()
+      actionImpactAbortRef.current = null
+      if (actionImpactTimeoutRef.current) {
+        clearTimeout(actionImpactTimeoutRef.current)
+        actionImpactTimeoutRef.current = null
+      }
       setActionImpacts(null)
       setActionImpactsError(null)
+      setIsActionImpactsPending(false)
     }
 
     mc.mutate(overrides)

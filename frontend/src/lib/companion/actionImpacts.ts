@@ -9,6 +9,7 @@
 
 import type {
   MonteCarloResult,
+  WithdrawalBasis,
   WithdrawalStrategyType,
   StrategyParamsMap,
   ProfileState,
@@ -104,6 +105,7 @@ export interface LeverContext {
   currentWeights: number[]
   selectedStrategy: WithdrawalStrategyType
   strategyParams: StrategyParamsMap
+  withdrawalBasis: WithdrawalBasis
 }
 
 interface LeverOverrides {
@@ -231,6 +233,14 @@ function buildDeriskedWeights(weights: number[], shiftPp: number): number[] {
   result[bondsIdx] = (result[bondsIdx] ?? 0) + effectiveShift * 0.5
   result[cashIdx] = (result[cashIdx] ?? 0) + effectiveShift * 0.5
 
+  // Renormalize to exactly 1.0 to prevent float-rounding drift after clamping
+  const sum = result.reduce((a, b) => a + b, 0)
+  if (sum > 0) {
+    for (let i = 0; i < result.length; i++) {
+      result[i] /= sum
+    }
+  }
+
   return result
 }
 
@@ -331,12 +341,17 @@ export async function runActionImpactAnalysis(
 
   const baseMetrics = extractImpactMetrics(baseResult)
 
-  // Filter levers by lifecycle
+  const withdrawalBasis = simulation.withdrawalBasis ?? 'expenses'
+
+  // Filter levers by lifecycle and applicability
   const applicableLevers = ACTION_LEVERS.filter((lever) => {
-    if (lever.applicableTo === 'all') return true
-    if (lever.applicableTo === 'accumulator') return !isRetiree
-    if (lever.applicableTo === 'retiree') return isRetiree
-    return false
+    // Lifecycle filter
+    if (lever.applicableTo === 'accumulator' && isRetiree) return false
+    if (lever.applicableTo === 'retiree' && !isRetiree) return false
+    // Skip withdrawal rate lever when basis is expenses — the strategy rate params
+    // don't affect the initial withdrawal amount in that mode
+    if (lever.id === 'withdrawal_down_10pct' && withdrawalBasis === 'expenses') return false
+    return true
   })
 
   const ctx: LeverContext = {
@@ -347,11 +362,14 @@ export async function runActionImpactAnalysis(
     currentWeights: allocationWeights,
     selectedStrategy: simulation.selectedStrategy,
     strategyParams: simulation.strategyParams,
+    withdrawalBasis,
   }
 
   const leverResults: Array<{ lever: ActionLever; metrics: ActionImpactMetrics }> = []
   let completed = 0
 
+  // Run levers sequentially (not Promise.all) so the abort signal cleanly stops
+  // the loop between levers, and partial results are returned for completed levers.
   for (const lever of applicableLevers) {
     if (signal?.aborted) break
 
@@ -379,8 +397,13 @@ export async function runActionImpactAnalysis(
         : undefined,
     })
 
-    const result = await runMonteCarloWorker(params, { signal })
-    leverResults.push({ lever, metrics: extractImpactMetrics(result) })
+    try {
+      const result = await runMonteCarloWorker(params, { signal })
+      leverResults.push({ lever, metrics: extractImpactMetrics(result) })
+    } catch {
+      // MC failed or was aborted — return partial results for completed levers
+      break
+    }
 
     completed++
     onProgress?.(completed, applicableLevers.length, lever)
