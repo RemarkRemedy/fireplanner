@@ -174,6 +174,14 @@ describe('runMonteCarlo', () => {
     expect(sumCounts).toBe(result.failure_distribution.total_failures)
   })
 
+  it('failure_distribution counts_5y is a partial sum of total_failures', () => {
+    const result = runMonteCarlo(makeDefaultParams())
+    const [fail04, fail59] = result.failure_distribution.counts_5y
+    expect(fail04).toBeGreaterThanOrEqual(0)
+    expect(fail59).toBeGreaterThanOrEqual(0)
+    expect(fail04 + fail59).toBeLessThanOrEqual(result.failure_distribution.total_failures)
+  })
+
   it('uses portfolio × SWR when withdrawalBasis is rate', () => {
     // Use a pure decumulation scenario (currentAge == retirementAge, $1M portfolio)
     // so the retirement portfolio is exactly the initial $1M.

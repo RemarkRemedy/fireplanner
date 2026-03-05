@@ -635,7 +635,7 @@ export interface FailureDistribution {
   buckets: string[]
   counts: number[]
   total_failures: number
-  counts_5y: [number, number]  // [years 0-4, years 5-9]
+  counts_5y: [number, number]  // [retirement years 1-5 (decumYear 0-4), retirement years 6-10 (decumYear 5-9)]
 }
 
 export interface SpendingMetrics {
