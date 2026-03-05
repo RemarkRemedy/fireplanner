@@ -46,7 +46,7 @@ export interface CompanionScenarioComparison {
   projected_fire_age_p50: number | null
   portfolio_at_fire_p50: number | null
   wr_safe_95: number | null
-  wr_safe_90: number | null
+  wr_safe_90: number | null // populated for payload completeness; UI displays 95/50/85 only
   wr_safe_85: number | null
   needsRerun: boolean
 }
