@@ -220,7 +220,10 @@ function CompanionComparisonTable({
                 ? row.p_success - base.p_success
                 : null
               const ageDelta = !isBase && base?.fireAge != null && row.fireAge != null
-                ? row.fireAge - base.fireAge
+                ? Math.round(row.fireAge) - Math.round(base.fireAge)
+                : null
+              const wrDelta = !isBase && base?.WR_critical_50 != null && row.WR_critical_50 != null
+                ? row.WR_critical_50 - base.WR_critical_50
                 : null
 
               return (
@@ -242,7 +245,10 @@ function CompanionComparisonTable({
                     {row.fireAge ?? '\u2014'}
                     {ageDelta != null && <DeltaBadge value={ageDelta} format={formatDeltaYears} invert />}
                   </td>
-                  <td className="py-2 text-right">{formatMaybePercent(row.WR_critical_50)}</td>
+                  <td className="py-2 text-right whitespace-nowrap">
+                    {formatMaybePercent(row.WR_critical_50)}
+                    {wrDelta != null && <DeltaBadge value={wrDelta} format={formatDeltaPercent} />}
+                  </td>
                 </tr>
               )
             })}
@@ -250,8 +256,8 @@ function CompanionComparisonTable({
         </table>
         {deterministicFireAge != null && (
           <div className="mt-2 text-xs text-muted-foreground">
-            Deterministic FIRE age estimate: <span className="font-medium">{deterministicFireAge}</span>
-            <span className="ml-1">(from Expense app, no simulation needed)</span>
+            Base plan FIRE age (deterministic): <span className="font-medium">{deterministicFireAge}</span>
+            <span className="ml-1">(from Expense app, before scenario adjustments)</span>
           </div>
         )}
       </CardContent>

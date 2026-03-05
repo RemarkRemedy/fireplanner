@@ -29,7 +29,7 @@ export function CompanionResultsSummary({ companion }: CompanionResultsSummaryPr
           <MetricCell
             label="Success Rate"
             value={formatPercent(activeRow.p_success, 1)}
-            accent={successPct >= 80 ? 'good' : successPct >= 50 ? 'neutral' : 'bad'}
+            accent={successPct >= 90 ? 'good' : successPct >= 70 ? 'neutral' : 'bad'}
           />
           <MetricCell
             label="FIRE Age (MC)"
@@ -45,7 +45,7 @@ export function CompanionResultsSummary({ companion }: CompanionResultsSummaryPr
           <MetricCell
             label="WR Critical"
             value={formatWRBand(activeRow.wr_critical_10, activeRow.WR_critical_50, activeRow.wr_critical_90)}
-            subtitle={activeRow.wr_critical_10 != null ? 'p10 / p50 / p90' : undefined}
+            subtitle={activeRow.wr_critical_10 != null && activeRow.wr_critical_90 != null ? 'p10 / p50 / p90' : undefined}
           />
           {activeRow.portfolio_at_fire != null && (
             <MetricCell
@@ -55,8 +55,8 @@ export function CompanionResultsSummary({ companion }: CompanionResultsSummaryPr
           )}
           <MetricCell
             label="Horizon"
-            value={companion.scenarioComparisons.length > 0
-              ? `${companion.retirementAgeMax - (activeRow.fireAge ?? companion.retirementAgeMin)}+ yrs`
+            value={activeRow.fireAge != null
+              ? `${companion.retirementAgeMax + 1 - activeRow.fireAge}+ yrs`
               : '\u2014'}
           />
         </div>
