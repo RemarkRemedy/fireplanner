@@ -1,0 +1,1594 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - region "Notifications alt+T"
+    - complementary [ref=e4]:
+      - generic [ref=e5]: FIRE Planner
+      - generic [ref=e6]:
+        - button "Simple" [ref=e7] [cursor=pointer]
+        - button "Advanced" [ref=e8] [cursor=pointer]
+      - navigation [ref=e9]:
+        - generic [ref=e10]:
+          - generic [ref=e11]: START
+          - link "Start Here" [ref=e13] [cursor=pointer]:
+            - /url: /
+            - img [ref=e14]
+            - text: Start Here
+        - generic [ref=e17]:
+          - generic [ref=e18]: INPUTS
+          - generic [ref=e19]:
+            - button "Personal Customized" [ref=e20] [cursor=pointer]:
+              - img [ref=e21]
+              - text: Personal
+              - generic "Customized" [ref=e24]
+            - button "FIRE Settings Using defaults" [ref=e25] [cursor=pointer]:
+              - img [ref=e26]
+              - text: FIRE Settings
+              - generic "Using defaults" [ref=e30]
+            - button "Income Using defaults" [ref=e31] [cursor=pointer]:
+              - img [ref=e32]
+              - text: Income
+              - generic "Using defaults" [ref=e34]
+            - button "Expenses Customized" [ref=e35] [cursor=pointer]:
+              - img [ref=e36]
+              - text: Expenses
+              - generic "Customized" [ref=e39]
+            - button "Goals Using defaults" [ref=e40] [cursor=pointer]:
+              - img [ref=e41]
+              - text: Goals
+              - generic "Using defaults" [ref=e44]
+            - button "Net Worth Customized" [ref=e45] [cursor=pointer]:
+              - img [ref=e46]
+              - text: Net Worth
+              - generic "Customized" [ref=e49]
+            - button "CPF Customized" [ref=e50] [cursor=pointer]:
+              - img [ref=e51]
+              - text: CPF
+              - generic "Customized" [ref=e53]
+            - button "Allocation Using defaults" [active] [ref=e54] [cursor=pointer]:
+              - img [ref=e55]
+              - text: Allocation
+              - generic "Using defaults" [ref=e58]
+        - generic [ref=e59]:
+          - generic [ref=e60]: PLAN
+          - link "Projection" [ref=e62] [cursor=pointer]:
+            - /url: /projection
+            - img [ref=e63]
+            - text: Projection
+        - generic [ref=e65]:
+          - generic [ref=e66]: EXPLORE
+          - link "Withdrawal Strategies" [ref=e68] [cursor=pointer]:
+            - /url: /withdrawal
+            - img [ref=e69]
+            - text: Withdrawal Strategies
+        - generic [ref=e72]:
+          - generic [ref=e73]: ANALYSIS
+          - link "Stress Test" [ref=e75] [cursor=pointer]:
+            - /url: /stress-test
+            - img [ref=e76]
+            - text: Stress Test
+        - generic [ref=e78]:
+          - generic [ref=e79]: RESULTS
+          - link "Dashboard" [ref=e81] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e82]
+            - text: Dashboard
+        - generic [ref=e87]:
+          - generic [ref=e88]: REFERENCE
+          - generic [ref=e89]:
+            - link "Reference Guide" [ref=e90] [cursor=pointer]:
+              - /url: /reference
+              - img [ref=e91]
+              - text: Reference Guide
+            - link "Checklist" [ref=e93] [cursor=pointer]:
+              - /url: /checklist
+              - img [ref=e94]
+              - text: Checklist
+      - generic [ref=e97]:
+        - button "Scenarios" [ref=e98] [cursor=pointer]:
+          - img [ref=e99]
+          - text: Scenarios
+        - generic [ref=e103]:
+          - button "Export" [ref=e104] [cursor=pointer]:
+            - img [ref=e105]
+            - text: Export
+          - button "Excel" [ref=e108] [cursor=pointer]:
+            - img [ref=e109]
+            - text: Excel
+          - button "Import" [ref=e112] [cursor=pointer]:
+            - img [ref=e113]
+            - text: Import
+          - button "Share" [ref=e116] [cursor=pointer]:
+            - img [ref=e117]
+            - text: Share
+        - button "Help & FAQ ?" [ref=e123] [cursor=pointer]:
+          - img [ref=e124]
+          - text: Help & FAQ
+          - generic [ref=e127]: "?"
+        - generic [ref=e128]:
+          - button "Light theme" [ref=e129] [cursor=pointer]:
+            - img [ref=e130]
+          - button "Dark theme" [ref=e136] [cursor=pointer]:
+            - img [ref=e137]
+          - button "System theme" [ref=e139] [cursor=pointer]:
+            - img [ref=e140]
+    - generic [ref=e142]:
+      - main [ref=e144]:
+        - generic [ref=e145]:
+          - generic [ref=e146]:
+            - img [ref=e147]
+            - generic [ref=e149]:
+              - text: Beta
+              - generic [ref=e150]: · Thanks for trying FIRE Planner! We're actively improving based on user feedback.
+              - link "Follow updates on Telegram" [ref=e2588] [cursor=pointer]:
+                - /url: https://t.me/sgfireplannerann
+              - text: ·
+              - link "Share feedback on Reddit" [ref=e152] [cursor=pointer]:
+                - /url: https://www.reddit.com/r/singaporefi/comments/1rcdnl3/i_built_a_free_singapore_fire_calculator_cpf_srs/
+            - button "Dismiss beta banner" [ref=e153] [cursor=pointer]:
+              - img [ref=e154]
+          - generic [ref=e3042]:
+            - generic [ref=e3043]:
+              - generic [ref=e3044]:
+                - heading "Plan Your FIRE" [level=1] [ref=e3045]
+                - paragraph [ref=e3046]: Fill in your financial details below. All changes save automatically.
+                - generic [ref=e3047]:
+                  - generic [ref=e3048]:
+                    - generic [ref=e3049]: 4 of 8 sections customized
+                    - generic [ref=e3050]: 50%
+                  - progressbar [ref=e3051]
+              - radiogroup "Section ordering" [ref=e3053]:
+                - radio "Goal first" [checked] [ref=e3054] [cursor=pointer]
+                - radio "Story first" [ref=e3055] [cursor=pointer]
+                - radio "Already FIRE" [ref=e3056] [cursor=pointer]
+            - generic [ref=e3057]:
+              - generic [ref=e3058]:
+                - generic [ref=e3059]:
+                  - button "Personal Age, retirement age, life expectancy, and personal status." [ref=e3060] [cursor=pointer]:
+                    - img [ref=e3061]
+                    - generic [ref=e3063]:
+                      - heading "Personal" [level=2] [ref=e3064]:
+                        - text: Personal
+                        - img [ref=e3065]
+                      - paragraph [ref=e3068]: Age, retirement age, life expectancy, and personal status.
+                  - button "Reset Section" [ref=e3069] [cursor=pointer]
+                - generic [ref=e3070]:
+                  - img [ref=e3071]
+                  - generic [ref=e3076]: Your settings were updated to a newer format. Review your inputs to ensure everything looks correct.
+                  - button "Dismiss" [ref=e3077] [cursor=pointer]:
+                    - img [ref=e3078]
+              - generic [ref=e3082]:
+                - generic [ref=e3084]: Personal Details
+                - generic [ref=e3086]:
+                  - generic [ref=e3087]:
+                    - generic [ref=e3088]:
+                      - text: Current Age
+                      - button "More information" [ref=e3089]: i
+                    - spinbutton [ref=e3090]: "35"
+                  - generic [ref=e3091]:
+                    - generic [ref=e3092]:
+                      - text: Retirement Age
+                      - button "More information" [ref=e3093]: i
+                    - spinbutton [ref=e3094]: "59"
+                  - generic [ref=e3095]:
+                    - generic [ref=e3096]:
+                      - text: Life Expectancy
+                      - button "More information" [ref=e3097]: i
+                    - spinbutton [ref=e3098]: "90"
+                  - generic [ref=e3099]:
+                    - generic [ref=e3100]:
+                      - text: Life Stage
+                      - button "More information" [ref=e3101]: i
+                    - combobox [ref=e3102] [cursor=pointer]:
+                      - generic: Pre-FIRE (Accumulating)
+                      - img [ref=e3103]
+                  - generic [ref=e3105]:
+                    - generic [ref=e3106]:
+                      - text: Marital Status
+                      - button "More information" [ref=e3107]: i
+                    - combobox [ref=e3108] [cursor=pointer]:
+                      - generic: Single
+                      - img [ref=e3109]
+                  - generic [ref=e3111]:
+                    - generic [ref=e3112]:
+                      - text: Residency Status
+                      - button "More information" [ref=e3113]: i
+                    - combobox [ref=e3114] [cursor=pointer]:
+                      - generic: Singapore Citizen
+                      - img [ref=e3115]
+            - generic [ref=e3117]:
+              - generic [ref=e3119]:
+                - generic [ref=e3120]:
+                  - button "FIRE Settings SWR, FIRE type, basis, return and inflation assumptions, and live FIRE metrics." [ref=e3121] [cursor=pointer]:
+                    - img [ref=e3122]
+                    - generic [ref=e3124]:
+                      - heading "FIRE Settings" [level=2] [ref=e3125]:
+                        - text: FIRE Settings
+                        - img [ref=e3126]
+                      - paragraph [ref=e3128]: SWR, FIRE type, basis, return and inflation assumptions, and live FIRE metrics.
+                  - button "Reset Section" [ref=e3129] [cursor=pointer]
+                - generic [ref=e3131]:
+                  - button "Simple" [ref=e3132] [cursor=pointer]
+                  - button "Advanced" [ref=e3133] [cursor=pointer]
+                - generic [ref=e3134]:
+                  - img [ref=e3135]
+                  - generic [ref=e3140]: Default SWR lowered from 4.0% to 3.6% — review your inputs.
+                  - button "Dismiss" [ref=e3141] [cursor=pointer]:
+                    - img [ref=e3142]
+              - generic [ref=e3145]:
+                - generic [ref=e3146]:
+                  - generic [ref=e3148]: FIRE Targets
+                  - generic [ref=e3149]:
+                    - generic [ref=e3150]:
+                      - generic [ref=e3151]:
+                        - generic [ref=e3152]:
+                          - text: FIRE Type
+                          - button "More information" [ref=e3153]: i
+                        - combobox [ref=e3154] [cursor=pointer]:
+                          - generic: Regular FIRE
+                          - img [ref=e3155]
+                      - generic [ref=e3157]:
+                        - generic [ref=e3158]:
+                          - generic [ref=e3159]:
+                            - text: Safe Withdrawal Rate (SWR)
+                            - button "More information" [ref=e3160]: i
+                          - generic [ref=e3161]:
+                            - spinbutton "Safe Withdrawal Rate (SWR) More information" [ref=e3162]: "3.6"
+                            - generic [ref=e3163]: "%"
+                        - paragraph [ref=e3164]:
+                          - text: This rate determines your FIRE Number — lower SWR = larger target.
+                          - link "Learn more" [ref=e3165] [cursor=pointer]:
+                            - /url: /reference#swr
+                    - generic [ref=e3166]:
+                      - generic [ref=e3167]:
+                        - generic [ref=e3168]:
+                          - generic [ref=e3169]: Progress to FIRE
+                          - generic [ref=e3170]: 96.51%
+                        - progressbar [ref=e3171]
+                      - generic [ref=e3173]:
+                        - generic [ref=e3174]:
+                          - generic [ref=e3175]:
+                            - text: FIRE Number
+                            - button "More information" [ref=e3176]: i
+                          - generic [ref=e3177]: $1,716,826
+                          - radiogroup "FIRE number dollar basis" [ref=e3178]:
+                            - radio "Today's $" [ref=e3179] [cursor=pointer]
+                            - radio "FIRE Age" [checked] [ref=e3180] [cursor=pointer]
+                            - radio "Retirement" [ref=e3181] [cursor=pointer]
+                          - generic [ref=e3182]: Adjusted to age 35 at 2.5%
+                        - generic [ref=e3183]:
+                          - generic [ref=e3184]:
+                            - text: Years to FIRE
+                            - button "More information" [ref=e3185]: i
+                          - generic [ref=e3186]: Achieved!
+                          - generic [ref=e3187]: simulated
+                        - generic [ref=e3188]:
+                          - generic [ref=e3189]: FIRE Age
+                          - generic [ref=e3190]: "35"
+                          - generic [ref=e3191]: simulated
+                        - generic [ref=e3192]:
+                          - generic [ref=e3193]:
+                            - text: Savings Rate
+                            - button "More information" [ref=e3194]: i
+                          - generic [ref=e3195]: 16.67%
+                        - generic [ref=e3196]:
+                          - generic [ref=e3197]:
+                            - text: Coast FIRE
+                            - button "More information" [ref=e3198]: i
+                          - generic [ref=e3199]: $1,030,399
+                        - generic [ref=e3200]:
+                          - generic [ref=e3201]:
+                            - text: Barista FIRE Income
+                            - button "More information" [ref=e3202]: i
+                          - generic [ref=e3203]: $15,006/yr
+                      - generic [ref=e3204]:
+                        - generic [ref=e3205]: "Lean FIRE: $1,030,096"
+                        - generic [ref=e3206]: "Fat FIRE: $2,575,239"
+                - generic [ref=e3207]:
+                  - generic [ref=e3209]: Assumptions
+                  - generic [ref=e3210]:
+                    - generic [ref=e3211]:
+                      - generic [ref=e3212]:
+                        - generic [ref=e3213]:
+                          - generic [ref=e3214]:
+                            - generic [ref=e3215]: Expected Nominal Return
+                            - button "More information" [ref=e3216]: i
+                          - generic [ref=e3217]:
+                            - button "From Allocation" [ref=e3218] [cursor=pointer]
+                            - button "Manual" [ref=e3219] [cursor=pointer]
+                        - generic [ref=e3221]:
+                          - spinbutton [disabled] [ref=e3222]: "5.0"
+                          - generic [ref=e3223]: "%"
+                        - paragraph [ref=e3224]: Derived from Asset Allocation (5.0%). Edit weights in Asset Allocation to change.
+                      - generic [ref=e3226]:
+                        - generic [ref=e3227]:
+                          - text: Inflation Rate
+                          - button "More information" [ref=e3228]: i
+                        - generic [ref=e3229]:
+                          - spinbutton "Inflation Rate More information" [ref=e3230]: "2.5"
+                          - generic [ref=e3231]: "%"
+                      - generic [ref=e3232]:
+                        - generic [ref=e3233]:
+                          - text: Expense Ratio
+                          - button "More information" [ref=e3234]: i
+                        - generic [ref=e3235]:
+                          - spinbutton "Expense Ratio More information" [ref=e3236]: "0.3"
+                          - generic [ref=e3237]: "%"
+                      - generic [ref=e3238]:
+                        - generic [ref=e3239]:
+                          - text: Rebalancing Frequency
+                          - button "More information" [ref=e3240]: i
+                        - combobox [ref=e3241] [cursor=pointer]:
+                          - generic: Annual
+                          - img [ref=e3242]
+                    - paragraph [ref=e3244]: "Net real return: 2.2% (5.0% nominal - 2.5% inflation - 0.3% fees)"
+            - button "Income Salary model, income streams, life events, and income summary." [ref=e3249] [cursor=pointer]:
+              - img [ref=e3250]
+              - generic [ref=e3252]:
+                - heading "Income" [level=2] [ref=e3253]:
+                  - text: Income
+                  - img [ref=e3254]
+                - paragraph [ref=e3256]: Salary model, income streams, life events, and income summary.
+            - generic [ref=e3257]:
+              - button "Dismiss projection prompt" [ref=e3258] [cursor=pointer]:
+                - img [ref=e3259]
+              - generic [ref=e3262]:
+                - paragraph [ref=e3263]:
+                  - text: "Your plan so far: FIRE at age 36 with"
+                  - generic [ref=e3264]: $1,716,826
+                  - text: needed. See your full year-by-year projection with CPF, withdrawal strategies, and Monte Carlo simulation.
+                - link "View Projection" [ref=e3265] [cursor=pointer]:
+                  - /url: /projection
+                  - text: View Projection
+                  - img
+            - button "Expenses & Withdrawal Annual spending, retirement adjustment, and withdrawal strategy comparison." [ref=e3270] [cursor=pointer]:
+              - img [ref=e3271]
+              - generic [ref=e3273]:
+                - heading "Expenses & Withdrawal" [level=2] [ref=e3274]:
+                  - text: Expenses & Withdrawal
+                  - img [ref=e3275]
+                - paragraph [ref=e3278]: Annual spending, retirement adjustment, and withdrawal strategy comparison.
+            - button "Financial Goals Wedding, education, home downpayment, and other milestone expenses." [ref=e3283] [cursor=pointer]:
+              - img [ref=e3284]
+              - generic [ref=e3286]:
+                - heading "Financial Goals" [level=2] [ref=e3287]:
+                  - text: Financial Goals
+                  - img [ref=e3288]
+                - paragraph [ref=e3290]: Wedding, education, home downpayment, and other milestone expenses.
+            - generic [ref=e3291]:
+              - generic [ref=e3293]:
+                - generic [ref=e3294]:
+                  - button "Net Worth Liquid net worth, CPF balances, and SRS." [ref=e3295] [cursor=pointer]:
+                    - img [ref=e3296]
+                    - generic [ref=e3298]:
+                      - heading "Net Worth" [level=2] [ref=e3299]:
+                        - text: Net Worth
+                        - img [ref=e3300]
+                      - paragraph [ref=e3303]: Liquid net worth, CPF balances, and SRS.
+                  - button "Reset Section" [ref=e3304] [cursor=pointer]
+                - generic [ref=e3306]:
+                  - button "Simple" [ref=e3307] [cursor=pointer]
+                  - button "Advanced" [ref=e3308] [cursor=pointer]
+              - generic [ref=e3309]:
+                - generic [ref=e3310]:
+                  - generic [ref=e3312]: Financial Snapshot
+                  - generic [ref=e3314]:
+                    - generic [ref=e3315]:
+                      - generic [ref=e3316]:
+                        - text: Liquid Net Worth
+                        - button "More information" [ref=e3317]: i
+                      - generic [ref=e3318]:
+                        - generic [ref=e3319]: $
+                        - textbox "Liquid Net Worth More information" [ref=e3320]: 1,300,000
+                    - generic [ref=e3321]:
+                      - generic [ref=e3322]:
+                        - text: CPF OA Balance
+                        - button "More information" [ref=e3323]: i
+                      - generic [ref=e3324]:
+                        - generic [ref=e3325]: $
+                        - textbox "CPF OA Balance More information" [ref=e3326]: 208,105
+                    - generic [ref=e3327]:
+                      - generic [ref=e3328]:
+                        - text: CPF SA Balance
+                        - button "More information" [ref=e3329]: i
+                      - generic [ref=e3330]:
+                        - generic [ref=e3331]: $
+                        - textbox "CPF SA Balance More information" [ref=e3332]: 73,235
+                    - generic [ref=e3333]:
+                      - generic [ref=e3334]:
+                        - text: CPF MA Balance
+                        - button "More information" [ref=e3335]: i
+                      - generic [ref=e3336]:
+                        - generic [ref=e3337]: $
+                        - textbox "CPF MA Balance More information" [ref=e3338]: 75,598
+                    - generic [ref=e3339]:
+                      - generic [ref=e3340]:
+                        - text: SRS Balance
+                        - button "More information" [ref=e3341]: i
+                      - generic [ref=e3342]:
+                        - generic [ref=e3343]: $
+                        - textbox "SRS Balance More information" [ref=e3344]: "0"
+                    - generic [ref=e3345]:
+                      - generic [ref=e3346]:
+                        - text: SRS Annual Contribution
+                        - button "More information" [ref=e3347]: i
+                      - generic [ref=e3348]:
+                        - generic [ref=e3349]: $
+                        - textbox "SRS Annual Contribution More information" [ref=e3350]: "0"
+                    - generic [ref=e3351]:
+                      - generic [ref=e3352]:
+                        - text: SRS Investment Return
+                        - button "More information" [ref=e3353]: i
+                      - generic [ref=e3354]:
+                        - spinbutton "SRS Investment Return More information" [ref=e3355]: "4.0"
+                        - generic [ref=e3356]: "%"
+                    - generic [ref=e3357]:
+                      - generic [ref=e3358]:
+                        - text: SRS Drawdown Start Age
+                        - button "More information" [ref=e3359]: i
+                      - spinbutton "SRS Drawdown Start Age More information" [ref=e3361]: "63"
+                    - generic [ref=e3362]:
+                      - generic [ref=e3363]:
+                        - heading "Locked Assets" [level=4] [ref=e3364]
+                        - button "More information" [ref=e3365]: i
+                      - button "Add Locked Asset" [ref=e3366] [cursor=pointer]:
+                        - img
+                        - text: Add Locked Asset
+                - generic [ref=e3369]:
+                  - generic [ref=e3370]:
+                    - text: Cash Reserve / Emergency Fund
+                    - button "More information" [ref=e3371]: i
+                  - switch [ref=e3372] [cursor=pointer]
+            - generic [ref=e3373]:
+              - generic [ref=e3375]:
+                - generic [ref=e3376]:
+                  - button "CPF CPF LIFE, housing deductions, and contribution projections." [ref=e3377] [cursor=pointer]:
+                    - img [ref=e3378]
+                    - generic [ref=e3380]:
+                      - heading "CPF" [level=2] [ref=e3381]:
+                        - text: CPF
+                        - img [ref=e3382]
+                      - paragraph [ref=e3385]: CPF LIFE, housing deductions, and contribution projections.
+                  - button "Reset Section" [ref=e3386] [cursor=pointer]
+                - generic [ref=e3388]:
+                  - button "Simple" [ref=e3389] [cursor=pointer]
+                  - button "Advanced" [ref=e3390] [cursor=pointer]
+              - generic [ref=e3391]:
+                - generic [ref=e3392]:
+                  - generic [ref=e3394]: Current CPF Status
+                  - generic [ref=e3395]:
+                    - generic [ref=e3396]:
+                      - heading "CPF Rates (Age 35, 35 and below) More information" [level=4] [ref=e3397]:
+                        - text: CPF Rates (Age 35, 35 and below)
+                        - button "More information" [ref=e3398]: i
+                      - generic [ref=e3399]:
+                        - generic [ref=e3400]:
+                          - generic [ref=e3401]: Employee
+                          - generic [ref=e3402]: 20.00%
+                        - generic [ref=e3403]:
+                          - generic [ref=e3404]: Employer
+                          - generic [ref=e3405]: 17.00%
+                        - generic [ref=e3406]:
+                          - generic [ref=e3407]: Total
+                          - generic [ref=e3408]: 37.00%
+                    - generic [ref=e3409]:
+                      - heading "Annual CPF Contribution (estimated)" [level=4] [ref=e3410]
+                      - generic [ref=e3411]:
+                        - generic [ref=e3412]:
+                          - generic [ref=e3413]: Employee
+                          - generic [ref=e3414]: $14,400
+                        - generic [ref=e3415]:
+                          - generic [ref=e3416]: Employer
+                          - generic [ref=e3417]: $12,240
+                        - generic [ref=e3418]:
+                          - generic [ref=e3419]: OA
+                          - generic [ref=e3420]: $16,560
+                        - generic [ref=e3421]:
+                          - generic [ref=e3422]: SA
+                          - generic [ref=e3423]: $4,320
+                    - generic [ref=e3424]:
+                      - button "Re-estimate from age & salary" [ref=e3425] [cursor=pointer]
+                      - button "More information" [ref=e3426]: i
+                      - button "Clear" [ref=e3427] [cursor=pointer]
+                    - generic [ref=e3428]:
+                      - heading "Current CPF Balances" [level=4] [ref=e3429]
+                      - generic [ref=e3430]:
+                        - generic [ref=e3431]:
+                          - generic [ref=e3432]: OA
+                          - generic [ref=e3433]:
+                            - generic [ref=e3434]: $
+                            - textbox "OA" [ref=e3435]: 208,105
+                        - generic [ref=e3436]:
+                          - generic [ref=e3437]: SA
+                          - generic [ref=e3438]:
+                            - generic [ref=e3439]: $
+                            - textbox "SA" [ref=e3440]: 73,235
+                        - generic [ref=e3441]:
+                          - generic [ref=e3442]: MA
+                          - generic [ref=e3443]:
+                            - generic [ref=e3444]: $
+                            - textbox "MA" [ref=e3445]: 75,598
+                        - generic [ref=e3446]:
+                          - generic [ref=e3447]: Total
+                          - generic [ref=e3448]: $356,938
+                - generic [ref=e3449]:
+                  - generic [ref=e3451]: Voluntary Top-Ups
+                  - generic [ref=e3452]:
+                    - generic [ref=e3453]:
+                      - generic [ref=e3454]:
+                        - generic [ref=e3455]:
+                          - text: Annual SA Top-Up (RSTU)
+                          - button "More information" [ref=e3456]: i
+                        - generic [ref=e3457]:
+                          - generic [ref=e3458]: $
+                          - textbox "Annual SA Top-Up (RSTU) More information" [ref=e3459]: "0"
+                      - generic [ref=e3460]:
+                        - generic [ref=e3461]:
+                          - text: Annual MA Top-Up
+                          - button "More information" [ref=e3462]: i
+                        - generic [ref=e3463]:
+                          - generic [ref=e3464]: $
+                          - textbox "Annual MA Top-Up More information" [ref=e3465]: "0"
+                      - generic [ref=e3466]:
+                        - generic [ref=e3467]:
+                          - text: Annual OA Top-Up
+                          - button "More information" [ref=e3468]: i
+                        - generic [ref=e3469]:
+                          - generic [ref=e3470]: $
+                          - textbox "Annual OA Top-Up More information" [ref=e3471]: "0"
+                    - paragraph [ref=e3472]: Top-ups are applied pre-retirement only and reduce your annual liquid savings.
+                - generic [ref=e3473]:
+                  - generic [ref=e3475]: CPF Planning
+                  - generic [ref=e3476]:
+                    - generic [ref=e3477]:
+                      - heading "Projected BRS/FRS/ERS at Age 55 More information" [level=4] [ref=e3478]:
+                        - text: Projected BRS/FRS/ERS at Age 55
+                        - button "More information" [ref=e3479]: i
+                      - generic [ref=e3480]:
+                        - generic [ref=e3481]:
+                          - generic [ref=e3482]: BRS
+                          - generic [ref=e3483]: $219,275
+                          - generic [ref=e3484]: "2026: $110,200"
+                        - generic [ref=e3485]:
+                          - generic [ref=e3486]: FRS
+                          - generic [ref=e3487]: $438,549
+                          - generic [ref=e3488]: "2026: $220,400"
+                        - generic [ref=e3489]:
+                          - generic [ref=e3490]: ERS
+                          - generic [ref=e3491]: $877,099
+                          - generic [ref=e3492]: "2026: $440,800"
+                    - generic [ref=e3493]:
+                      - heading "CPF LIFE Monthly Payouts (from age 65) More information" [level=4] [ref=e3494]:
+                        - text: CPF LIFE Monthly Payouts (from age 65)
+                        - button "More information" [ref=e3495]: i
+                      - table [ref=e3497]:
+                        - rowgroup [ref=e3498]:
+                          - row "Basic (~5.4%) Standard (~6.3%) Escalating (~4.8%, +2%/yr)" [ref=e3499]:
+                            - columnheader [ref=e3500]
+                            - columnheader "Basic (~5.4%)" [ref=e3501]:
+                              - text: Basic
+                              - generic [ref=e3502]: (~5.4%)
+                            - columnheader "Standard (~6.3%)" [ref=e3503]:
+                              - text: Standard
+                              - generic [ref=e3504]: (~6.3%)
+                            - columnheader "Escalating (~4.8%, +2%/yr)" [ref=e3505]:
+                              - text: Escalating
+                              - generic [ref=e3506]: (~4.8%, +2%/yr)
+                        - rowgroup [ref=e3507]:
+                          - row "BRS ($324,580) $1,461/mo $1,704/mo $1,298/mo" [ref=e3508]:
+                            - cell "BRS ($324,580)" [ref=e3509]
+                            - cell "$1,461/mo" [ref=e3510]
+                            - cell "$1,704/mo" [ref=e3511]
+                            - cell "$1,298/mo" [ref=e3512]
+                          - row "FRS ($649,160) $2,921/mo $3,408/mo $2,597/mo" [ref=e3513]:
+                            - cell "FRS ($649,160)" [ref=e3514]
+                            - cell "$2,921/mo" [ref=e3515]
+                            - cell "$3,408/mo" [ref=e3516]
+                            - cell "$2,597/mo" [ref=e3517]
+                          - row "ERS ($1,298,321) $5,842/mo $6,816/mo $5,193/mo" [ref=e3518]:
+                            - cell "ERS ($1,298,321)" [ref=e3519]
+                            - cell "$5,842/mo" [ref=e3520]
+                            - cell "$6,816/mo" [ref=e3521]
+                            - cell "$5,193/mo" [ref=e3522]
+                    - generic [ref=e3523]:
+                      - heading "CPF LIFE Configuration More information" [level=4] [ref=e3524]:
+                        - text: CPF LIFE Configuration
+                        - button "More information" [ref=e3525]: i
+                      - generic [ref=e3526]:
+                        - generic [ref=e3527]:
+                          - text: Start Age (65-75)
+                          - spinbutton [ref=e3528]: "65"
+                        - generic [ref=e3529]:
+                          - text: Plan Type
+                          - combobox [ref=e3530] [cursor=pointer]:
+                            - generic: Standard (~6.3%)
+                            - img [ref=e3531]
+                        - generic [ref=e3533]:
+                          - text: Retirement Sum
+                          - combobox [ref=e3534] [cursor=pointer]:
+                            - generic: FRS ($438,549)
+                            - img [ref=e3535]
+                      - generic [ref=e3537]:
+                        - text: "Projected annual payout:"
+                        - generic [ref=e3538]: $41,551/yr
+                        - generic [ref=e3539]: ($3,463/mo)
+                    - generic [ref=e3540]:
+                      - heading "CPFIS (CPF Investment Scheme) More information" [level=4] [ref=e3541]:
+                        - text: CPFIS (CPF Investment Scheme)
+                        - button "More information" [ref=e3542]: i
+                      - generic [ref=e3543]:
+                        - switch [ref=e3544] [cursor=pointer]
+                        - generic [ref=e3545]: Enable CPFIS
+                    - generic [ref=e3546]:
+                      - heading "CPF OA Withdrawals More information" [level=4] [ref=e3547]:
+                        - text: CPF OA Withdrawals
+                        - button "More information" [ref=e3548]: i
+                      - generic [ref=e3549]:
+                        - generic [ref=e3550]:
+                          - text: Label
+                          - textbox "e.g. OA withdrawal at 55" [ref=e3551]: OA withdrawal at 55
+                        - generic [ref=e3553]:
+                          - generic [ref=e3554]: Amount
+                          - generic [ref=e3555]:
+                            - generic [ref=e3556]: $
+                            - textbox "Amount" [ref=e3557]: 50,000
+                        - spinbutton [ref=e3559]: "55"
+                        - button [ref=e3560] [cursor=pointer]:
+                          - img
+                      - button "Add OA Withdrawal" [ref=e3561] [cursor=pointer]:
+                        - img
+                        - text: Add OA Withdrawal
+                      - generic [ref=e3562]: "Projected OA balance at age 55: $978,644"
+                    - generic [ref=e3563]:
+                      - heading "CPF Auto-Withdrawal Rules More information" [level=4] [ref=e3564]:
+                        - text: CPF Auto-Withdrawal Rules
+                        - button "More information" [ref=e3565]: i
+                      - generic [ref=e3566]:
+                        - generic [ref=e3567] [cursor=pointer]:
+                          - checkbox "Auto-withdraw from CPF when portfolio runs out More information" [checked] [ref=e3568]
+                          - text: Auto-withdraw from CPF when portfolio runs out
+                          - button "More information" [ref=e3569]: i
+                        - generic [ref=e3570] [cursor=pointer]:
+                          - checkbox "Count uninvested CPF as bond allocation More information" [checked] [ref=e3571]
+                          - text: Count uninvested CPF as bond allocation
+                          - button "More information" [ref=e3572]: i
+                        - generic [ref=e3573]:
+                          - generic [ref=e3574] [cursor=pointer]:
+                            - radio "From age 55 only More information" [checked] [ref=e3575]
+                            - text: From age 55 only
+                            - button "More information" [ref=e3576]: i
+                          - generic [ref=e3577] [cursor=pointer]:
+                            - radio "Always (illiquid before 55) More information" [ref=e3578]
+                            - text: Always (illiquid before 55)
+                            - button "More information" [ref=e3579]: i
+                    - generic [ref=e3580]:
+                      - heading "Year-by-Year CPF Projection More information" [level=4] [ref=e3581]:
+                        - text: Year-by-Year CPF Projection
+                        - button "More information" [ref=e3582]: i
+                      - button "CPF Assumptions & Rates" [ref=e3584] [cursor=pointer]:
+                        - img [ref=e3585]
+                        - text: CPF Assumptions & Rates
+                      - table [ref=e3588]:
+                        - rowgroup [ref=e3589]:
+                          - row "Age OA SA RA MA Total Contribution Interest CPF LIFE Bequest" [ref=e3590]:
+                            - columnheader "Age" [ref=e3591]
+                            - columnheader "OA" [ref=e3592]
+                            - columnheader "SA" [ref=e3593]
+                            - columnheader "RA" [ref=e3594]
+                            - columnheader "MA" [ref=e3595]
+                            - columnheader "Total" [ref=e3596]
+                            - columnheader "Contribution" [ref=e3597]
+                            - columnheader "Interest" [ref=e3598]
+                            - columnheader "CPF LIFE" [ref=e3599]
+                            - columnheader "Bequest" [ref=e3600]
+                        - rowgroup [ref=e3601]:
+                          - row "35 $230,075 $86,668 $0 $79,000 $395,743 $26,640 - - - BRS reached More information" [ref=e3602]:
+                            - cell "35" [ref=e3603]
+                            - cell "$230,075" [ref=e3604]
+                            - cell "$86,668" [ref=e3605]
+                            - cell "$0" [ref=e3606]
+                            - cell "$79,000" [ref=e3607]
+                            - cell "$395,743" [ref=e3608]
+                            - cell "$26,640" [ref=e3609]
+                            - cell "-" [ref=e3610]
+                            - cell "-" [ref=e3611]
+                            - cell "-" [ref=e3612]
+                            - cell "BRS reached More information" [ref=e3613]:
+                              - generic [ref=e3614]:
+                                - text: BRS reached
+                                - button "More information" [ref=e3615]: i
+                          - row "36 $251,595 $102,443 $0 $82,555 $436,592 $27,439 $13,411 - -" [ref=e3616]:
+                            - cell "36" [ref=e3617]
+                            - cell "$251,595" [ref=e3618]
+                            - cell "$102,443" [ref=e3619]
+                            - cell "$0" [ref=e3620]
+                            - cell "$82,555" [ref=e3621]
+                            - cell "$436,592" [ref=e3622]
+                            - cell "$27,439" [ref=e3623]
+                            - cell "$13,411" [ref=e3624]
+                            - cell "-" [ref=e3625]
+                            - cell "-" [ref=e3626]
+                          - row "37 $274,126 $119,193 $0 $86,270 $479,589 $28,262 $14,735 - -" [ref=e3627]:
+                            - cell "37" [ref=e3628]
+                            - cell "$274,126" [ref=e3629]
+                            - cell "$119,193" [ref=e3630]
+                            - cell "$0" [ref=e3631]
+                            - cell "$86,270" [ref=e3632]
+                            - cell "$479,589" [ref=e3633]
+                            - cell "$28,262" [ref=e3634]
+                            - cell "$14,735" [ref=e3635]
+                            - cell "-" [ref=e3636]
+                            - cell "-" [ref=e3637]
+                          - row "38 $297,708 $136,970 $0 $90,152 $524,830 $29,110 $16,130 - -" [ref=e3638]:
+                            - cell "38" [ref=e3639]
+                            - cell "$297,708" [ref=e3640]
+                            - cell "$136,970" [ref=e3641]
+                            - cell "$0" [ref=e3642]
+                            - cell "$90,152" [ref=e3643]
+                            - cell "$524,830" [ref=e3644]
+                            - cell "$29,110" [ref=e3645]
+                            - cell "$16,130" [ref=e3646]
+                            - cell "-" [ref=e3647]
+                            - cell "-" [ref=e3648]
+                          - row "39 $322,381 $155,823 $0 $94,209 $572,413 $29,984 $17,600 - - FRS reached More information" [ref=e3649]:
+                            - cell "39" [ref=e3650]
+                            - cell "$322,381" [ref=e3651]
+                            - cell "$155,823" [ref=e3652]
+                            - cell "$0" [ref=e3653]
+                            - cell "$94,209" [ref=e3654]
+                            - cell "$572,413" [ref=e3655]
+                            - cell "$29,984" [ref=e3656]
+                            - cell "$17,600" [ref=e3657]
+                            - cell "-" [ref=e3658]
+                            - cell "-" [ref=e3659]
+                            - cell "FRS reached More information" [ref=e3660]:
+                              - generic [ref=e3661]:
+                                - text: FRS reached
+                                - button "More information" [ref=e3662]: i
+                          - row "40 $348,188 $175,807 $0 $98,448 $622,443 $30,883 $19,147 - -" [ref=e3663]:
+                            - cell "40" [ref=e3664]
+                            - cell "$348,188" [ref=e3665]
+                            - cell "$175,807" [ref=e3666]
+                            - cell "$0" [ref=e3667]
+                            - cell "$98,448" [ref=e3668]
+                            - cell "$622,443" [ref=e3669]
+                            - cell "$30,883" [ref=e3670]
+                            - cell "$19,147" [ref=e3671]
+                            - cell "-" [ref=e3672]
+                            - cell "-" [ref=e3673]
+                          - row "41 $375,172 $196,977 $0 $102,879 $675,028 $31,810 $20,776 - -" [ref=e3674]:
+                            - cell "41" [ref=e3675]
+                            - cell "$375,172" [ref=e3676]
+                            - cell "$196,977" [ref=e3677]
+                            - cell "$0" [ref=e3678]
+                            - cell "$102,879" [ref=e3679]
+                            - cell "$675,028" [ref=e3680]
+                            - cell "$31,810" [ref=e3681]
+                            - cell "$20,776" [ref=e3682]
+                            - cell "-" [ref=e3683]
+                            - cell "-" [ref=e3684]
+                          - row "42 $403,379 $219,394 $0 $107,508 $730,281 $32,764 $22,489 - -" [ref=e3685]:
+                            - cell "42" [ref=e3686]
+                            - cell "$403,379" [ref=e3687]
+                            - cell "$219,394" [ref=e3688]
+                            - cell "$0" [ref=e3689]
+                            - cell "$107,508" [ref=e3690]
+                            - cell "$730,281" [ref=e3691]
+                            - cell "$32,764" [ref=e3692]
+                            - cell "$22,489" [ref=e3693]
+                            - cell "-" [ref=e3694]
+                            - cell "-" [ref=e3695]
+                          - row "43 $432,857 $243,117 $0 $112,346 $788,320 $33,747 $24,292 - -" [ref=e3696]:
+                            - cell "43" [ref=e3697]
+                            - cell "$432,857" [ref=e3698]
+                            - cell "$243,117" [ref=e3699]
+                            - cell "$0" [ref=e3700]
+                            - cell "$112,346" [ref=e3701]
+                            - cell "$788,320" [ref=e3702]
+                            - cell "$33,747" [ref=e3703]
+                            - cell "$24,292" [ref=e3704]
+                            - cell "-" [ref=e3705]
+                            - cell "-" [ref=e3706]
+                          - row "44 $463,653 $268,211 $0 $117,402 $849,266 $34,759 $26,187 - -" [ref=e3707]:
+                            - cell "44" [ref=e3708]
+                            - cell "$463,653" [ref=e3709]
+                            - cell "$268,211" [ref=e3710]
+                            - cell "$0" [ref=e3711]
+                            - cell "$117,402" [ref=e3712]
+                            - cell "$849,266" [ref=e3713]
+                            - cell "$34,759" [ref=e3714]
+                            - cell "$26,187" [ref=e3715]
+                            - cell "-" [ref=e3716]
+                            - cell "-" [ref=e3717]
+                          - row "45 $495,656 $294,620 $0 $122,685 $912,961 $35,520 $28,175 - -" [ref=e3718]:
+                            - cell "45" [ref=e3719]
+                            - cell "$495,656" [ref=e3720]
+                            - cell "$294,620" [ref=e3721]
+                            - cell "$0" [ref=e3722]
+                            - cell "$122,685" [ref=e3723]
+                            - cell "$912,961" [ref=e3724]
+                            - cell "$35,520" [ref=e3725]
+                            - cell "$28,175" [ref=e3726]
+                            - cell "-" [ref=e3727]
+                            - cell "-" [ref=e3728]
+                          - row "46 $526,516 $324,018 $0 $128,205 $978,738 $35,520 $30,257 - -" [ref=e3729]:
+                            - cell "46" [ref=e3730]
+                            - cell "$526,516" [ref=e3731]
+                            - cell "$324,018" [ref=e3732]
+                            - cell "$0" [ref=e3733]
+                            - cell "$128,205" [ref=e3734]
+                            - cell "$978,738" [ref=e3735]
+                            - cell "$35,520" [ref=e3736]
+                            - cell "$30,257" [ref=e3737]
+                            - cell "-" [ref=e3738]
+                            - cell "-" [ref=e3739]
+                          - row "47 $558,147 $354,562 $0 $133,975 $1,046,684 $35,520 $32,425 - - ERS reached More information" [ref=e3740]:
+                            - cell "47" [ref=e3741]
+                            - cell "$558,147" [ref=e3742]
+                            - cell "$354,562" [ref=e3743]
+                            - cell "$0" [ref=e3744]
+                            - cell "$133,975" [ref=e3745]
+                            - cell "$1,046,684" [ref=e3746]
+                            - cell "$35,520" [ref=e3747]
+                            - cell "$32,425" [ref=e3748]
+                            - cell "-" [ref=e3749]
+                            - cell "-" [ref=e3750]
+                            - cell "ERS reached More information" [ref=e3751]:
+                              - generic [ref=e3752]:
+                                - text: ERS reached
+                                - button "More information" [ref=e3753]: i
+                          - row "48 $590,568 $386,301 $0 $140,003 $1,116,873 $35,520 $34,669 - -" [ref=e3754]:
+                            - cell "48" [ref=e3755]
+                            - cell "$590,568" [ref=e3756]
+                            - cell "$386,301" [ref=e3757]
+                            - cell "$0" [ref=e3758]
+                            - cell "$140,003" [ref=e3759]
+                            - cell "$1,116,873" [ref=e3760]
+                            - cell "$35,520" [ref=e3761]
+                            - cell "$34,669" [ref=e3762]
+                            - cell "-" [ref=e3763]
+                            - cell "-" [ref=e3764]
+                          - row "49 $623,801 $419,278 $0 $146,304 $1,189,383 $35,520 $36,990 - -" [ref=e3765]:
+                            - cell "49" [ref=e3766]
+                            - cell "$623,801" [ref=e3767]
+                            - cell "$419,278" [ref=e3768]
+                            - cell "$0" [ref=e3769]
+                            - cell "$146,304" [ref=e3770]
+                            - cell "$1,189,383" [ref=e3771]
+                            - cell "$35,520" [ref=e3772]
+                            - cell "$36,990" [ref=e3773]
+                            - cell "-" [ref=e3774]
+                            - cell "-" [ref=e3775]
+                          - row "50 $657,864 $453,544 $0 $152,887 $1,264,294 $35,520 $39,392 - -" [ref=e3776]:
+                            - cell "50" [ref=e3777]
+                            - cell "$657,864" [ref=e3778]
+                            - cell "$453,544" [ref=e3779]
+                            - cell "$0" [ref=e3780]
+                            - cell "$152,887" [ref=e3781]
+                            - cell "$1,264,294" [ref=e3782]
+                            - cell "$35,520" [ref=e3783]
+                            - cell "$39,392" [ref=e3784]
+                            - cell "-" [ref=e3785]
+                            - cell "-" [ref=e3786]
+                          - row "51 $688,890 $493,063 $0 $159,767 $1,341,721 $35,520 $41,906 - -" [ref=e3787]:
+                            - cell "51" [ref=e3788]
+                            - cell "$688,890" [ref=e3789]
+                            - cell "$493,063" [ref=e3790]
+                            - cell "$0" [ref=e3791]
+                            - cell "$159,767" [ref=e3792]
+                            - cell "$1,341,721" [ref=e3793]
+                            - cell "$35,520" [ref=e3794]
+                            - cell "$41,906" [ref=e3795]
+                            - cell "-" [ref=e3796]
+                            - cell "-" [ref=e3797]
+                          - row "52 $720,693 $534,129 $0 $166,957 $1,421,779 $35,520 $44,538 - -" [ref=e3798]:
+                            - cell "52" [ref=e3799]
+                            - cell "$720,693" [ref=e3800]
+                            - cell "$534,129" [ref=e3801]
+                            - cell "$0" [ref=e3802]
+                            - cell "$166,957" [ref=e3803]
+                            - cell "$1,421,779" [ref=e3804]
+                            - cell "$35,520" [ref=e3805]
+                            - cell "$44,538" [ref=e3806]
+                            - cell "-" [ref=e3807]
+                            - cell "-" [ref=e3808]
+                          - row "53 $753,290 $576,802 $0 $174,470 $1,504,562 $35,520 $47,263 - -" [ref=e3809]:
+                            - cell "53" [ref=e3810]
+                            - cell "$753,290" [ref=e3811]
+                            - cell "$576,802" [ref=e3812]
+                            - cell "$0" [ref=e3813]
+                            - cell "$174,470" [ref=e3814]
+                            - cell "$1,504,562" [ref=e3815]
+                            - cell "$35,520" [ref=e3816]
+                            - cell "$47,263" [ref=e3817]
+                            - cell "-" [ref=e3818]
+                            - cell "-" [ref=e3819]
+                          - row "54 $786,702 $621,144 $0 $182,321 $1,590,167 $35,520 $50,086 - -" [ref=e3820]:
+                            - cell "54" [ref=e3821]
+                            - cell "$786,702" [ref=e3822]
+                            - cell "$621,144" [ref=e3823]
+                            - cell "$0" [ref=e3824]
+                            - cell "$182,321" [ref=e3825]
+                            - cell "$1,590,167" [ref=e3826]
+                            - cell "$35,520" [ref=e3827]
+                            - cell "$50,086" [ref=e3828]
+                            - cell "-" [ref=e3829]
+                            - cell "-" [ref=e3830]
+                          - row "55 $978,644 $0 $456,691 $190,525 $1,625,860 $35,520 $173 - - RA created More information" [ref=e3831]:
+                            - cell "55" [ref=e3832]
+                            - cell "$978,644" [ref=e3833]
+                            - cell "$0" [ref=e3834]
+                            - cell "$456,691" [ref=e3835]
+                            - cell "$190,525" [ref=e3836]
+                            - cell "$1,625,860" [ref=e3837]
+                            - cell "$35,520" [ref=e3838]
+                            - cell "$173" [ref=e3839]
+                            - cell "-" [ref=e3840]
+                            - cell "-" [ref=e3841]
+                            - cell "RA created More information" [ref=e3842]:
+                              - generic [ref=e3843]:
+                                - text: RA created
+                                - button "More information" [ref=e3844]: i
+                          - row "56 $1,035,269 $0 $475,859 $199,099 $1,710,227 $32,640 $51,727 - -" [ref=e3845]:
+                            - cell "56" [ref=e3846]
+                            - cell "$1,035,269" [ref=e3847]
+                            - cell "$0" [ref=e3848]
+                            - cell "$475,859" [ref=e3849]
+                            - cell "$199,099" [ref=e3850]
+                            - cell "$1,710,227" [ref=e3851]
+                            - cell "$32,640" [ref=e3852]
+                            - cell "$51,727" [ref=e3853]
+                            - cell "-" [ref=e3854]
+                            - cell "-" [ref=e3855]
+                          - row "57 $1,093,270 $0 $495,793 $208,059 $1,797,122 $32,640 $54,255 - -" [ref=e3856]:
+                            - cell "57" [ref=e3857]
+                            - cell "$1,093,270" [ref=e3858]
+                            - cell "$0" [ref=e3859]
+                            - cell "$495,793" [ref=e3860]
+                            - cell "$208,059" [ref=e3861]
+                            - cell "$1,797,122" [ref=e3862]
+                            - cell "$32,640" [ref=e3863]
+                            - cell "$54,255" [ref=e3864]
+                            - cell "-" [ref=e3865]
+                            - cell "-" [ref=e3866]
+                          - row "58 $1,152,680 $0 $516,525 $217,421 $1,886,626 $32,640 $56,864 - -" [ref=e3867]:
+                            - cell "58" [ref=e3868]
+                            - cell "$1,152,680" [ref=e3869]
+                            - cell "$0" [ref=e3870]
+                            - cell "$516,525" [ref=e3871]
+                            - cell "$217,421" [ref=e3872]
+                            - cell "$1,886,626" [ref=e3873]
+                            - cell "$32,640" [ref=e3874]
+                            - cell "$56,864" [ref=e3875]
+                            - cell "-" [ref=e3876]
+                            - cell "-" [ref=e3877]
+                          - row "59 $1,213,531 $0 $538,086 $227,205 $1,978,823 $32,640 $59,556 - -" [ref=e3878]:
+                            - cell "59" [ref=e3879]
+                            - cell "$1,213,531" [ref=e3880]
+                            - cell "$0" [ref=e3881]
+                            - cell "$538,086" [ref=e3882]
+                            - cell "$227,205" [ref=e3883]
+                            - cell "$1,978,823" [ref=e3884]
+                            - cell "$32,640" [ref=e3885]
+                            - cell "$59,556" [ref=e3886]
+                            - cell "-" [ref=e3887]
+                            - cell "-" [ref=e3888]
+                          - row "60 $1,243,870 $0 $560,510 $236,293 $2,040,673 - $61,850 - -" [ref=e3889]:
+                            - cell "60" [ref=e3890]
+                            - cell "$1,243,870" [ref=e3891]
+                            - cell "$0" [ref=e3892]
+                            - cell "$560,510" [ref=e3893]
+                            - cell "$236,293" [ref=e3894]
+                            - cell "$2,040,673" [ref=e3895]
+                            - cell "-" [ref=e3896]
+                            - cell "$61,850" [ref=e3897]
+                            - cell "-" [ref=e3898]
+                            - cell "-" [ref=e3899]
+                          - row "61 $1,274,966 $0 $583,830 $245,745 $2,104,541 - $63,869 - -" [ref=e3900]:
+                            - cell "61" [ref=e3901]
+                            - cell "$1,274,966" [ref=e3902]
+                            - cell "$0" [ref=e3903]
+                            - cell "$583,830" [ref=e3904]
+                            - cell "$245,745" [ref=e3905]
+                            - cell "$2,104,541" [ref=e3906]
+                            - cell "-" [ref=e3907]
+                            - cell "$63,869" [ref=e3908]
+                            - cell "-" [ref=e3909]
+                            - cell "-" [ref=e3910]
+                          - row "62 $1,306,841 $0 $608,083 $255,575 $2,170,499 - $65,957 - -" [ref=e3911]:
+                            - cell "62" [ref=e3912]
+                            - cell "$1,306,841" [ref=e3913]
+                            - cell "$0" [ref=e3914]
+                            - cell "$608,083" [ref=e3915]
+                            - cell "$255,575" [ref=e3916]
+                            - cell "$2,170,499" [ref=e3917]
+                            - cell "-" [ref=e3918]
+                            - cell "$65,957" [ref=e3919]
+                            - cell "-" [ref=e3920]
+                            - cell "-" [ref=e3921]
+                          - row "63 $1,339,512 $0 $633,307 $265,798 $2,238,616 - $68,117 - -" [ref=e3922]:
+                            - cell "63" [ref=e3923]
+                            - cell "$1,339,512" [ref=e3924]
+                            - cell "$0" [ref=e3925]
+                            - cell "$633,307" [ref=e3926]
+                            - cell "$265,798" [ref=e3927]
+                            - cell "$2,238,616" [ref=e3928]
+                            - cell "-" [ref=e3929]
+                            - cell "$68,117" [ref=e3930]
+                            - cell "-" [ref=e3931]
+                            - cell "-" [ref=e3932]
+                          - row "64 $1,372,999 $0 $659,539 $276,430 $2,308,968 - $70,352 - -" [ref=e3933]:
+                            - cell "64" [ref=e3934]
+                            - cell "$1,372,999" [ref=e3935]
+                            - cell "$0" [ref=e3936]
+                            - cell "$659,539" [ref=e3937]
+                            - cell "$276,430" [ref=e3938]
+                            - cell "$2,308,968" [ref=e3939]
+                            - cell "-" [ref=e3940]
+                            - cell "$70,352" [ref=e3941]
+                            - cell "-" [ref=e3942]
+                            - cell "-" [ref=e3943]
+                          - row "65 $1,407,924 $0 $0 $287,487 $1,695,411 - - $41,551 $617,988 CPF LIFE starts More information" [ref=e3944]:
+                            - cell "65" [ref=e3945]
+                            - cell "$1,407,924" [ref=e3946]
+                            - cell "$0" [ref=e3947]
+                            - cell "$0" [ref=e3948]
+                            - cell "$287,487" [ref=e3949]
+                            - cell "$1,695,411" [ref=e3950]
+                            - cell "-" [ref=e3951]
+                            - cell "-" [ref=e3952]
+                            - cell "$41,551" [ref=e3953]
+                            - cell "$617,988" [ref=e3954]
+                            - cell "CPF LIFE starts More information" [ref=e3955]:
+                              - generic [ref=e3956]:
+                                - text: CPF LIFE starts
+                                - button "More information" [ref=e3957]: i
+                          - row "66 $1,446,829 $0 $0 $295,880 $1,742,709 - $47,298 $41,551 $576,437" [ref=e3958]:
+                            - cell "66" [ref=e3959]
+                            - cell "$1,446,829" [ref=e3960]
+                            - cell "$0" [ref=e3961]
+                            - cell "$0" [ref=e3962]
+                            - cell "$295,880" [ref=e3963]
+                            - cell "$1,742,709" [ref=e3964]
+                            - cell "-" [ref=e3965]
+                            - cell "$47,298" [ref=e3966]
+                            - cell "$41,551" [ref=e3967]
+                            - cell "$576,437" [ref=e3968]
+                          - row "67 $1,495,435 $0 $0 $295,880 $1,791,315 - $48,606 $41,551 $534,886" [ref=e3969]:
+                            - cell "67" [ref=e3970]
+                            - cell "$1,495,435" [ref=e3971]
+                            - cell "$0" [ref=e3972]
+                            - cell "$0" [ref=e3973]
+                            - cell "$295,880" [ref=e3974]
+                            - cell "$1,791,315" [ref=e3975]
+                            - cell "-" [ref=e3976]
+                            - cell "$48,606" [ref=e3977]
+                            - cell "$41,551" [ref=e3978]
+                            - cell "$534,886" [ref=e3979]
+                          - row "68 $1,545,256 $0 $0 $295,880 $1,841,136 - $49,821 $41,551 $493,335" [ref=e3980]:
+                            - cell "68" [ref=e3981]
+                            - cell "$1,545,256" [ref=e3982]
+                            - cell "$0" [ref=e3983]
+                            - cell "$0" [ref=e3984]
+                            - cell "$295,880" [ref=e3985]
+                            - cell "$1,841,136" [ref=e3986]
+                            - cell "-" [ref=e3987]
+                            - cell "$49,821" [ref=e3988]
+                            - cell "$41,551" [ref=e3989]
+                            - cell "$493,335" [ref=e3990]
+                          - row "69 $1,596,322 $0 $0 $295,880 $1,892,202 - $51,067 $41,551 $451,784" [ref=e3991]:
+                            - cell "69" [ref=e3992]
+                            - cell "$1,596,322" [ref=e3993]
+                            - cell "$0" [ref=e3994]
+                            - cell "$0" [ref=e3995]
+                            - cell "$295,880" [ref=e3996]
+                            - cell "$1,892,202" [ref=e3997]
+                            - cell "-" [ref=e3998]
+                            - cell "$51,067" [ref=e3999]
+                            - cell "$41,551" [ref=e4000]
+                            - cell "$451,784" [ref=e4001]
+                          - row "70 $1,648,666 $0 $0 $295,880 $1,944,546 - $52,343 $41,551 $410,233" [ref=e4002]:
+                            - cell "70" [ref=e4003]
+                            - cell "$1,648,666" [ref=e4004]
+                            - cell "$0" [ref=e4005]
+                            - cell "$0" [ref=e4006]
+                            - cell "$295,880" [ref=e4007]
+                            - cell "$1,944,546" [ref=e4008]
+                            - cell "-" [ref=e4009]
+                            - cell "$52,343" [ref=e4010]
+                            - cell "$41,551" [ref=e4011]
+                            - cell "$410,233" [ref=e4012]
+                          - row "71 $1,702,317 $0 $0 $295,880 $1,998,197 - $53,652 $41,551 $368,682" [ref=e4013]:
+                            - cell "71" [ref=e4014]
+                            - cell "$1,702,317" [ref=e4015]
+                            - cell "$0" [ref=e4016]
+                            - cell "$0" [ref=e4017]
+                            - cell "$295,880" [ref=e4018]
+                            - cell "$1,998,197" [ref=e4019]
+                            - cell "-" [ref=e4020]
+                            - cell "$53,652" [ref=e4021]
+                            - cell "$41,551" [ref=e4022]
+                            - cell "$368,682" [ref=e4023]
+                          - row "72 $1,757,311 $0 $0 $295,880 $2,053,191 - $54,993 $41,551 $327,131" [ref=e4024]:
+                            - cell "72" [ref=e4025]
+                            - cell "$1,757,311" [ref=e4026]
+                            - cell "$0" [ref=e4027]
+                            - cell "$0" [ref=e4028]
+                            - cell "$295,880" [ref=e4029]
+                            - cell "$2,053,191" [ref=e4030]
+                            - cell "-" [ref=e4031]
+                            - cell "$54,993" [ref=e4032]
+                            - cell "$41,551" [ref=e4033]
+                            - cell "$327,131" [ref=e4034]
+                          - row "73 $1,813,679 $0 $0 $295,880 $2,109,559 - $56,368 $41,551 $285,580" [ref=e4035]:
+                            - cell "73" [ref=e4036]
+                            - cell "$1,813,679" [ref=e4037]
+                            - cell "$0" [ref=e4038]
+                            - cell "$0" [ref=e4039]
+                            - cell "$295,880" [ref=e4040]
+                            - cell "$2,109,559" [ref=e4041]
+                            - cell "-" [ref=e4042]
+                            - cell "$56,368" [ref=e4043]
+                            - cell "$41,551" [ref=e4044]
+                            - cell "$285,580" [ref=e4045]
+                          - row "74 $1,871,456 $0 $0 $295,880 $2,167,336 - $57,777 $41,551 $244,029" [ref=e4046]:
+                            - cell "74" [ref=e4047]
+                            - cell "$1,871,456" [ref=e4048]
+                            - cell "$0" [ref=e4049]
+                            - cell "$0" [ref=e4050]
+                            - cell "$295,880" [ref=e4051]
+                            - cell "$2,167,336" [ref=e4052]
+                            - cell "-" [ref=e4053]
+                            - cell "$57,777" [ref=e4054]
+                            - cell "$41,551" [ref=e4055]
+                            - cell "$244,029" [ref=e4056]
+                          - row "75 $1,930,677 $0 $0 $295,880 $2,226,557 - $59,222 $41,551 $202,478" [ref=e4057]:
+                            - cell "75" [ref=e4058]
+                            - cell "$1,930,677" [ref=e4059]
+                            - cell "$0" [ref=e4060]
+                            - cell "$0" [ref=e4061]
+                            - cell "$295,880" [ref=e4062]
+                            - cell "$2,226,557" [ref=e4063]
+                            - cell "-" [ref=e4064]
+                            - cell "$59,222" [ref=e4065]
+                            - cell "$41,551" [ref=e4066]
+                            - cell "$202,478" [ref=e4067]
+                          - row "76 $1,991,379 $0 $0 $295,880 $2,287,259 - $60,702 $41,551 $160,927" [ref=e4068]:
+                            - cell "76" [ref=e4069]
+                            - cell "$1,991,379" [ref=e4070]
+                            - cell "$0" [ref=e4071]
+                            - cell "$0" [ref=e4072]
+                            - cell "$295,880" [ref=e4073]
+                            - cell "$2,287,259" [ref=e4074]
+                            - cell "-" [ref=e4075]
+                            - cell "$60,702" [ref=e4076]
+                            - cell "$41,551" [ref=e4077]
+                            - cell "$160,927" [ref=e4078]
+                          - row "77 $2,053,599 $0 $0 $295,880 $2,349,479 - $62,220 $41,551 $119,377" [ref=e4079]:
+                            - cell "77" [ref=e4080]
+                            - cell "$2,053,599" [ref=e4081]
+                            - cell "$0" [ref=e4082]
+                            - cell "$0" [ref=e4083]
+                            - cell "$295,880" [ref=e4084]
+                            - cell "$2,349,479" [ref=e4085]
+                            - cell "-" [ref=e4086]
+                            - cell "$62,220" [ref=e4087]
+                            - cell "$41,551" [ref=e4088]
+                            - cell "$119,377" [ref=e4089]
+                          - row "78 $2,117,374 $0 $0 $295,880 $2,413,254 - $63,775 $41,551 $77,826" [ref=e4090]:
+                            - cell "78" [ref=e4091]
+                            - cell "$2,117,374" [ref=e4092]
+                            - cell "$0" [ref=e4093]
+                            - cell "$0" [ref=e4094]
+                            - cell "$295,880" [ref=e4095]
+                            - cell "$2,413,254" [ref=e4096]
+                            - cell "-" [ref=e4097]
+                            - cell "$63,775" [ref=e4098]
+                            - cell "$41,551" [ref=e4099]
+                            - cell "$77,826" [ref=e4100]
+                          - row "79 $2,182,744 $0 $0 $295,880 $2,478,624 - $65,370 $41,551 $36,275" [ref=e4101]:
+                            - cell "79" [ref=e4102]
+                            - cell "$2,182,744" [ref=e4103]
+                            - cell "$0" [ref=e4104]
+                            - cell "$0" [ref=e4105]
+                            - cell "$295,880" [ref=e4106]
+                            - cell "$2,478,624" [ref=e4107]
+                            - cell "-" [ref=e4108]
+                            - cell "$65,370" [ref=e4109]
+                            - cell "$41,551" [ref=e4110]
+                            - cell "$36,275" [ref=e4111]
+                          - row "80 $2,249,748 $0 $0 $295,880 $2,545,628 - $67,004 $41,551 -" [ref=e4112]:
+                            - cell "80" [ref=e4113]
+                            - cell "$2,249,748" [ref=e4114]
+                            - cell "$0" [ref=e4115]
+                            - cell "$0" [ref=e4116]
+                            - cell "$295,880" [ref=e4117]
+                            - cell "$2,545,628" [ref=e4118]
+                            - cell "-" [ref=e4119]
+                            - cell "$67,004" [ref=e4120]
+                            - cell "$41,551" [ref=e4121]
+                            - cell "-" [ref=e4122]
+                          - row "81 $2,318,427 $0 $0 $295,880 $2,614,307 - $68,679 $41,551 -" [ref=e4123]:
+                            - cell "81" [ref=e4124]
+                            - cell "$2,318,427" [ref=e4125]
+                            - cell "$0" [ref=e4126]
+                            - cell "$0" [ref=e4127]
+                            - cell "$295,880" [ref=e4128]
+                            - cell "$2,614,307" [ref=e4129]
+                            - cell "-" [ref=e4130]
+                            - cell "$68,679" [ref=e4131]
+                            - cell "$41,551" [ref=e4132]
+                            - cell "-" [ref=e4133]
+                          - row "82 $2,388,822 $0 $0 $295,880 $2,684,702 - $70,396 $41,551 -" [ref=e4134]:
+                            - cell "82" [ref=e4135]
+                            - cell "$2,388,822" [ref=e4136]
+                            - cell "$0" [ref=e4137]
+                            - cell "$0" [ref=e4138]
+                            - cell "$295,880" [ref=e4139]
+                            - cell "$2,684,702" [ref=e4140]
+                            - cell "-" [ref=e4141]
+                            - cell "$70,396" [ref=e4142]
+                            - cell "$41,551" [ref=e4143]
+                            - cell "-" [ref=e4144]
+                          - row "83 $2,460,978 $0 $0 $295,880 $2,756,858 - $72,156 $41,551 -" [ref=e4145]:
+                            - cell "83" [ref=e4146]
+                            - cell "$2,460,978" [ref=e4147]
+                            - cell "$0" [ref=e4148]
+                            - cell "$0" [ref=e4149]
+                            - cell "$295,880" [ref=e4150]
+                            - cell "$2,756,858" [ref=e4151]
+                            - cell "-" [ref=e4152]
+                            - cell "$72,156" [ref=e4153]
+                            - cell "$41,551" [ref=e4154]
+                            - cell "-" [ref=e4155]
+                          - row "84 $2,534,938 $0 $0 $295,880 $2,830,818 - $73,960 $41,551 -" [ref=e4156]:
+                            - cell "84" [ref=e4157]
+                            - cell "$2,534,938" [ref=e4158]
+                            - cell "$0" [ref=e4159]
+                            - cell "$0" [ref=e4160]
+                            - cell "$295,880" [ref=e4161]
+                            - cell "$2,830,818" [ref=e4162]
+                            - cell "-" [ref=e4163]
+                            - cell "$73,960" [ref=e4164]
+                            - cell "$41,551" [ref=e4165]
+                            - cell "-" [ref=e4166]
+                          - row "85 $2,610,746 $0 $0 $295,880 $2,906,626 - $75,809 $41,551 -" [ref=e4167]:
+                            - cell "85" [ref=e4168]
+                            - cell "$2,610,746" [ref=e4169]
+                            - cell "$0" [ref=e4170]
+                            - cell "$0" [ref=e4171]
+                            - cell "$295,880" [ref=e4172]
+                            - cell "$2,906,626" [ref=e4173]
+                            - cell "-" [ref=e4174]
+                            - cell "$75,809" [ref=e4175]
+                            - cell "$41,551" [ref=e4176]
+                            - cell "-" [ref=e4177]
+                          - row "86 $2,688,450 $0 $0 $295,880 $2,984,330 - $77,704 $41,551 -" [ref=e4178]:
+                            - cell "86" [ref=e4179]
+                            - cell "$2,688,450" [ref=e4180]
+                            - cell "$0" [ref=e4181]
+                            - cell "$0" [ref=e4182]
+                            - cell "$295,880" [ref=e4183]
+                            - cell "$2,984,330" [ref=e4184]
+                            - cell "-" [ref=e4185]
+                            - cell "$77,704" [ref=e4186]
+                            - cell "$41,551" [ref=e4187]
+                            - cell "-" [ref=e4188]
+                          - row "87 $2,768,097 $0 $0 $295,880 $3,063,977 - $79,646 $41,551 -" [ref=e4189]:
+                            - cell "87" [ref=e4190]
+                            - cell "$2,768,097" [ref=e4191]
+                            - cell "$0" [ref=e4192]
+                            - cell "$0" [ref=e4193]
+                            - cell "$295,880" [ref=e4194]
+                            - cell "$3,063,977" [ref=e4195]
+                            - cell "-" [ref=e4196]
+                            - cell "$79,646" [ref=e4197]
+                            - cell "$41,551" [ref=e4198]
+                            - cell "-" [ref=e4199]
+                          - row "88 $2,849,734 $0 $0 $295,880 $3,145,614 - $81,638 $41,551 -" [ref=e4200]:
+                            - cell "88" [ref=e4201]
+                            - cell "$2,849,734" [ref=e4202]
+                            - cell "$0" [ref=e4203]
+                            - cell "$0" [ref=e4204]
+                            - cell "$295,880" [ref=e4205]
+                            - cell "$3,145,614" [ref=e4206]
+                            - cell "-" [ref=e4207]
+                            - cell "$81,638" [ref=e4208]
+                            - cell "$41,551" [ref=e4209]
+                            - cell "-" [ref=e4210]
+                          - row "89 $2,933,413 $0 $0 $295,880 $3,229,293 - $83,679 $41,551 -" [ref=e4211]:
+                            - cell "89" [ref=e4212]
+                            - cell "$2,933,413" [ref=e4213]
+                            - cell "$0" [ref=e4214]
+                            - cell "$0" [ref=e4215]
+                            - cell "$295,880" [ref=e4216]
+                            - cell "$3,229,293" [ref=e4217]
+                            - cell "-" [ref=e4218]
+                            - cell "$83,679" [ref=e4219]
+                            - cell "$41,551" [ref=e4220]
+                            - cell "-" [ref=e4221]
+                          - row "90 $3,019,183 $0 $0 $295,880 $3,315,063 - $85,771 $41,551 -" [ref=e4222]:
+                            - cell "90" [ref=e4223]
+                            - cell "$3,019,183" [ref=e4224]
+                            - cell "$0" [ref=e4225]
+                            - cell "$0" [ref=e4226]
+                            - cell "$295,880" [ref=e4227]
+                            - cell "$3,315,063" [ref=e4228]
+                            - cell "-" [ref=e4229]
+                            - cell "$85,771" [ref=e4230]
+                            - cell "$41,551" [ref=e4231]
+                            - cell "-" [ref=e4232]
+            - generic [ref=e4233]:
+              - generic [ref=e4235]:
+                - generic [ref=e4236]:
+                  - button "Asset Allocation 8-class portfolio builder, templates, portfolio stats, glide path, and correlation heatmap." [ref=e4237] [cursor=pointer]:
+                    - img [ref=e4238]
+                    - generic [ref=e4240]:
+                      - heading "Asset Allocation" [level=2] [ref=e4241]:
+                        - text: Asset Allocation
+                        - img [ref=e4242]
+                      - paragraph [ref=e4244]: 8-class portfolio builder, templates, portfolio stats, glide path, and correlation heatmap.
+                  - button "Reset Section" [ref=e4245] [cursor=pointer]
+                - generic [ref=e4247]:
+                  - button "Simple" [ref=e4248] [cursor=pointer]
+                  - button "Advanced" [ref=e4249] [cursor=pointer]
+                - generic [ref=e4250]:
+                  - img [ref=e4251]
+                  - generic [ref=e4256]: Historical returns extended to 2025 — review your inputs.
+                  - button "Dismiss" [ref=e4257] [cursor=pointer]:
+                    - img [ref=e4258]
+                - generic [ref=e4261]:
+                  - img [ref=e4262]
+                  - generic [ref=e4267]: Forward-looking return estimates — review your inputs.
+                  - button "Dismiss" [ref=e4268] [cursor=pointer]:
+                    - img [ref=e4269]
+              - generic [ref=e4272]:
+                - generic [ref=e4273]:
+                  - generic [ref=e4275]:
+                    - text: Portfolio Allocation
+                    - button "More information" [ref=e4276]: i
+                  - generic [ref=e4277]:
+                    - generic [ref=e4278]:
+                      - generic [ref=e4279]:
+                        - text: Current Template
+                        - combobox [ref=e4280] [cursor=pointer]:
+                          - generic: Balanced (60/40)
+                          - img [ref=e4281]
+                      - generic [ref=e4283]:
+                        - text: Target Template
+                        - combobox [ref=e4284] [cursor=pointer]:
+                          - generic: Balanced (60/40)
+                          - img [ref=e4285]
+                    - table [ref=e4288]:
+                      - rowgroup [ref=e4289]:
+                        - row "Asset Class Current % Target % Exp Return Std Dev" [ref=e4290]:
+                          - columnheader "Asset Class" [ref=e4291]
+                          - columnheader "Current %" [ref=e4292]
+                          - columnheader "Target %" [ref=e4293]
+                          - columnheader "Exp Return" [ref=e4294]
+                          - columnheader "Std Dev" [ref=e4295]
+                      - rowgroup [ref=e4296]:
+                        - row "US Equities (S&P 500) 30.0 30.0 7.0% 15.5%" [ref=e4297]:
+                          - cell "US Equities (S&P 500)" [ref=e4298]
+                          - cell "30.0" [ref=e4299]:
+                            - spinbutton [ref=e4300]: "30.0"
+                          - cell "30.0" [ref=e4301]:
+                            - spinbutton [ref=e4302]: "30.0"
+                          - cell "7.0%" [ref=e4303]
+                          - cell "15.5%" [ref=e4304]
+                        - row "SG Equities (STI) 10.0 10.0 7.0% 18.0%" [ref=e4305]:
+                          - cell "SG Equities (STI)" [ref=e4306]
+                          - cell "10.0" [ref=e4307]:
+                            - spinbutton [ref=e4308]: "10.0"
+                          - cell "10.0" [ref=e4309]:
+                            - spinbutton [ref=e4310]: "10.0"
+                          - cell "7.0%" [ref=e4311]
+                          - cell "18.0%" [ref=e4312]
+                        - row "Intl Equities (MSCI World) 10.0 10.0 7.1% 16.0%" [ref=e4313]:
+                          - cell "Intl Equities (MSCI World)" [ref=e4314]
+                          - cell "10.0" [ref=e4315]:
+                            - spinbutton [ref=e4316]: "10.0"
+                          - cell "10.0" [ref=e4317]:
+                            - spinbutton [ref=e4318]: "10.0"
+                          - cell "7.1%" [ref=e4319]
+                          - cell "16.0%" [ref=e4320]
+                        - row "Bonds (10-yr Treasury) 30.0 30.0 3.0% 5.5%" [ref=e4321]:
+                          - cell "Bonds (10-yr Treasury)" [ref=e4322]
+                          - cell "30.0" [ref=e4323]:
+                            - spinbutton [ref=e4324]: "30.0"
+                          - cell "30.0" [ref=e4325]:
+                            - spinbutton [ref=e4326]: "30.0"
+                          - cell "3.0%" [ref=e4327]
+                          - cell "5.5%" [ref=e4328]
+                        - row "REITs 5.0 5.0 5.0% 18.5%" [ref=e4329]:
+                          - cell "REITs" [ref=e4330]
+                          - cell "5.0" [ref=e4331]:
+                            - spinbutton [ref=e4332]: "5.0"
+                          - cell "5.0" [ref=e4333]:
+                            - spinbutton [ref=e4334]: "5.0"
+                          - cell "5.0%" [ref=e4335]
+                          - cell "18.5%" [ref=e4336]
+                        - row "Gold 5.0 5.0 3.0% 15.0%" [ref=e4337]:
+                          - cell "Gold" [ref=e4338]
+                          - cell "5.0" [ref=e4339]:
+                            - spinbutton [ref=e4340]: "5.0"
+                          - cell "5.0" [ref=e4341]:
+                            - spinbutton [ref=e4342]: "5.0"
+                          - cell "3.0%" [ref=e4343]
+                          - cell "15.0%" [ref=e4344]
+                        - row "Cash (T-Bills) 10.0 10.0 1.4% 1.0%" [ref=e4345]:
+                          - cell "Cash (T-Bills)" [ref=e4346]
+                          - cell "10.0" [ref=e4347]:
+                            - spinbutton [ref=e4348]: "10.0"
+                          - cell "10.0" [ref=e4349]:
+                            - spinbutton [ref=e4350]: "10.0"
+                          - cell "1.4%" [ref=e4351]
+                          - cell "1.0%" [ref=e4352]
+                      - rowgroup [ref=e4353]:
+                        - row "Total 100.0% ✓ 100.0% ✓" [ref=e4354]:
+                          - cell "Total" [ref=e4355]
+                          - cell "100.0% ✓" [ref=e4356]
+                          - cell "100.0% ✓" [ref=e4357]
+                          - cell [ref=e4358]
+                          - cell [ref=e4359]
+                - generic [ref=e4360]:
+                  - generic [ref=e4362]:
+                    - text: Portfolio Statistics
+                    - button "More information" [ref=e4363]: i
+                  - generic [ref=e4364]:
+                    - table [ref=e4366]:
+                      - rowgroup [ref=e4367]:
+                        - row "Metric Current Retirement" [ref=e4368]:
+                          - columnheader "Metric" [ref=e4369]
+                          - columnheader "Current" [ref=e4370]
+                          - columnheader "Retirement" [ref=e4371]
+                      - rowgroup [ref=e4372]:
+                        - row "Expected Return More information 4.95% 4.95%" [ref=e4373]:
+                          - cell "Expected Return More information" [ref=e4374]:
+                            - generic [ref=e4375]:
+                              - text: Expected Return
+                              - button "More information" [ref=e4376]: i
+                          - cell "4.95%" [ref=e4377]
+                          - cell "4.95%" [ref=e4378]
+                        - row "Real Return More information 2.45% 2.45%" [ref=e4379]:
+                          - cell "Real Return More information" [ref=e4380]:
+                            - generic [ref=e4381]:
+                              - text: Real Return
+                              - button "More information" [ref=e4382]: i
+                          - cell "2.45%" [ref=e4383]
+                          - cell "2.45%" [ref=e4384]
+                    - button "Show all stats" [ref=e4385] [cursor=pointer]:
+                      - text: Show all stats
+                      - img [ref=e4386]
+                - heading "Override Default Return Assumptions" [level=3] [ref=e4390]:
+                  - button "Override Default Return Assumptions" [ref=e4391] [cursor=pointer]:
+                    - text: Override Default Return Assumptions
+                    - img [ref=e4392]
+                - generic [ref=e4394]:
+                  - generic [ref=e4396]:
+                    - text: Glide Path
+                    - button "More information" [ref=e4397]: i
+                    - button "ON" [ref=e4398] [cursor=pointer]
+                  - generic [ref=e4399]:
+                    - generic [ref=e4400]:
+                      - generic [ref=e4401]:
+                        - generic [ref=e4402]:
+                          - text: Method
+                          - button "More information" [ref=e4403]: i
+                        - combobox [ref=e4404] [cursor=pointer]:
+                          - generic: Linear
+                          - img [ref=e4405]
+                        - paragraph [ref=e4407]: Constant rate of change each year
+                      - generic [ref=e4408]:
+                        - generic [ref=e4409]:
+                          - text: Start Age
+                          - button "More information" [ref=e4410]: i
+                        - spinbutton [ref=e4411]: "54"
+                      - generic [ref=e4412]:
+                        - generic [ref=e4413]:
+                          - text: End Age
+                          - button "More information" [ref=e4414]: i
+                        - spinbutton [ref=e4415]: "69"
+                    - generic [ref=e4416]:
+                      - text: Year-by-Year Allocation Preview
+                      - table [ref=e4418]:
+                        - rowgroup [ref=e4419]:
+                          - row "Age US Eq SG Eq Intl Bonds REITs Gold Cash CPF" [ref=e4420]:
+                            - columnheader "Age" [ref=e4421]
+                            - columnheader "US Eq" [ref=e4422]
+                            - columnheader "SG Eq" [ref=e4423]
+                            - columnheader "Intl" [ref=e4424]
+                            - columnheader "Bonds" [ref=e4425]
+                            - columnheader "REITs" [ref=e4426]
+                            - columnheader "Gold" [ref=e4427]
+                            - columnheader "Cash" [ref=e4428]
+                            - columnheader "CPF" [ref=e4429]
+                        - rowgroup [ref=e4430]:
+                          - row "54 30.0 10.0 10.0 30.0 5.0 5.0 10.0 0.0" [ref=e4431]:
+                            - cell "54" [ref=e4432]
+                            - cell "30.0" [ref=e4433]
+                            - cell "10.0" [ref=e4434]
+                            - cell "10.0" [ref=e4435]
+                            - cell "30.0" [ref=e4436]
+                            - cell "5.0" [ref=e4437]
+                            - cell "5.0" [ref=e4438]
+                            - cell "10.0" [ref=e4439]
+                            - cell "0.0" [ref=e4440]
+                          - row "55 30.0 10.0 10.0 30.0 5.0 5.0 10.0 0.0" [ref=e4441]:
+                            - cell "55" [ref=e4442]
+                            - cell "30.0" [ref=e4443]
+                            - cell "10.0" [ref=e4444]
+                            - cell "10.0" [ref=e4445]
+                            - cell "30.0" [ref=e4446]
+                            - cell "5.0" [ref=e4447]
+                            - cell "5.0" [ref=e4448]
+                            - cell "10.0" [ref=e4449]
+                            - cell "0.0" [ref=e4450]
+                          - row "56 30.0 10.0 10.0 30.0 5.0 5.0 10.0 0.0" [ref=e4451]:
+                            - cell "56" [ref=e4452]
+                            - cell "30.0" [ref=e4453]
+                            - cell "10.0" [ref=e4454]
+                            - cell "10.0" [ref=e4455]
+                            - cell "30.0" [ref=e4456]
+                            - cell "5.0" [ref=e4457]
+                            - cell "5.0" [ref=e4458]
+                            - cell "10.0" [ref=e4459]
+                            - cell "0.0" [ref=e4460]
+                          - row "57 30.0 10.0 10.0 30.0 5.0 5.0 10.0 0.0" [ref=e4461]:
+                            - cell "57" [ref=e4462]
+                            - cell "30.0" [ref=e4463]
+                            - cell "10.0" [ref=e4464]
+                            - cell "10.0" [ref=e4465]
+                            - cell "30.0" [ref=e4466]
+                            - cell "5.0" [ref=e4467]
+                            - cell "5.0" [ref=e4468]
+                            - cell "10.0" [ref=e4469]
+                            - cell "0.0" [ref=e4470]
+                          - row "58 30.0 10.0 10.0 30.0 5.0 5.0 10.0 0.0" [ref=e4471]:
+                            - cell "58" [ref=e4472]
+                            - cell "30.0" [ref=e4473]
+                            - cell "10.0" [ref=e4474]
+                            - cell "10.0" [ref=e4475]
+                            - cell "30.0" [ref=e4476]
+                            - cell "5.0" [ref=e4477]
+                            - cell "5.0" [ref=e4478]
+                            - cell "10.0" [ref=e4479]
+                            - cell "0.0" [ref=e4480]
+                      - button "Show all 16 years" [ref=e4481] [cursor=pointer]:
+                        - text: Show all 16 years
+                        - img [ref=e4482]
+            - generic [ref=e4485]:
+              - heading "Explore your projections" [level=3] [ref=e4486]
+              - paragraph [ref=e4487]: You can view projections at any time — even with default values. Customize more sections for personalized results.
+              - generic [ref=e4488]:
+                - link "View Projection" [ref=e4489] [cursor=pointer]:
+                  - /url: /projection
+                  - text: View Projection
+                  - img
+                - link "Stress Test" [ref=e4490] [cursor=pointer]:
+                  - /url: /stress-test
+                  - text: Stress Test
+                  - img
+        - paragraph [ref=e160]: This tool is for educational and planning purposes only. It does not constitute financial advice. Results are estimates based on historical data and assumptions that may not reflect future outcomes. Your financial data stays in your browser and is never sent to any server. Email addresses submitted for notifications are stored separately. Not affiliated with CPF Board or any government agency.
+      - generic [ref=e1374]:
+        - generic [ref=e1375]:
+          - generic [ref=e1376]:
+            - generic [ref=e1377]: "FIRE Age:"
+            - generic [ref=e1378]: "35"
+          - generic [ref=e1379]:
+            - generic [ref=e1380]: "Years to FIRE:"
+            - generic [ref=e1381]: Achieved!
+          - generic [ref=e1382]:
+            - generic [ref=e1383]: "FIRE Number:"
+            - generic [ref=e1384]: $1,716,826
+          - generic [ref=e1385]:
+            - generic [ref=e1386]: "Progress:"
+            - generic [ref=e1387]: 97%
+          - generic [ref=e1388]:
+            - generic [ref=e1389]: "MC Success:"
+            - generic [ref=e1390]: 96.4%
+          - generic [ref=e1391]:
+            - generic [ref=e1392]: "Backtest:"
+            - generic [ref=e1393]: 0.0%
+        - button "Change stats position" [ref=e1395] [cursor=pointer]:
+          - img [ref=e1396]
+  - generic [ref=e2100]: "170"

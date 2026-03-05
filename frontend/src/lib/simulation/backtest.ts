@@ -370,7 +370,7 @@ export function runDetailedWindow(
       ? portfolio - prevPortfolio + prevWithdrawal
       : 0
 
-    let withdrawal = computeWithdrawal(withdrawalStrategy, {
+    const withdrawal = computeWithdrawal(withdrawalStrategy, {
       portfolio,
       year: y,
       remainingYears: remaining,

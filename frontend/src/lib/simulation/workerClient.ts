@@ -14,6 +14,24 @@ import type { MonteCarloEngineParams } from './monteCarlo'
 import type { BacktestEngineParams, DetailedWindowResult } from './backtest'
 import type { SequenceRiskEngineParams } from './sequenceRisk'
 
+export type MonteCarloWorkerStage =
+  | 'queued'
+  | 'running'
+  | 'finalizing'
+  | 'optimizing'
+  | 'completed'
+
+export interface MonteCarloWorkerProgress {
+  stage: MonteCarloWorkerStage
+  progress: number
+  message: string
+}
+
+export interface RunMonteCarloWorkerOptions {
+  signal?: AbortSignal
+  onProgress?: (progress: MonteCarloWorkerProgress) => void
+}
+
 // ============================================================
 // Strategy Params Flattening
 // ============================================================
@@ -91,8 +109,113 @@ function callWorker<T>(message: Record<string, unknown>): Promise<T> {
 // Typed public API
 // ============================================================
 
-export function runMonteCarloWorker(params: MonteCarloEngineParams): Promise<MonteCarloResult> {
-  return callWorker<MonteCarloResult>({ type: 'monteCarlo', params })
+function clampProgress(value: number): number {
+  if (!Number.isFinite(value)) return 0
+  if (value < 0) return 0
+  if (value > 1) return 1
+  return value
+}
+
+function createAbortError(): Error {
+  const err = new Error('Simulation aborted')
+  err.name = 'AbortError'
+  return err
+}
+
+export function runMonteCarloWorker(
+  params: MonteCarloEngineParams,
+  options: RunMonteCarloWorkerOptions = {},
+): Promise<MonteCarloResult> {
+  const id = String(nextId++)
+  const monteCarloWorker = new Worker(
+    new URL('../../workers/monteCarloWorker.ts', import.meta.url),
+    { type: 'module' },
+  )
+  const { signal, onProgress } = options
+
+  const emitProgress = (update: MonteCarloWorkerProgress) => {
+    onProgress?.({
+      ...update,
+      progress: clampProgress(update.progress),
+    })
+  }
+
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      monteCarloWorker.terminate()
+      reject(createAbortError())
+      return
+    }
+
+    let settled = false
+
+    const cleanup = () => {
+      monteCarloWorker.removeEventListener('message', handleMessage)
+      monteCarloWorker.removeEventListener('error', handleError)
+      signal?.removeEventListener('abort', handleAbort)
+      monteCarloWorker.terminate()
+    }
+
+    const finishSuccess = (result: MonteCarloResult) => {
+      if (settled) return
+      settled = true
+      cleanup()
+      resolve(result)
+    }
+
+    const finishError = (error: Error) => {
+      if (settled) return
+      settled = true
+      cleanup()
+      reject(error)
+    }
+
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data?.id !== id) return
+
+      if (e.data.type === 'progress') {
+        emitProgress({
+          stage: e.data.stage as MonteCarloWorkerStage,
+          progress: Number(e.data.progress),
+          message: String(e.data.message ?? ''),
+        })
+        return
+      }
+
+      if (e.data.type === 'success') {
+        emitProgress({
+          stage: 'completed',
+          progress: 1,
+          message: 'Simulation complete',
+        })
+        finishSuccess(e.data.result as MonteCarloResult)
+        return
+      }
+
+      if (e.data.type === 'error') {
+        finishError(new Error(String(e.data.error ?? 'Worker error')))
+      }
+    }
+
+    const handleError = (err: ErrorEvent) => {
+      finishError(new Error(err.message || 'Worker error'))
+    }
+
+    const handleAbort = () => {
+      finishError(createAbortError())
+    }
+
+    monteCarloWorker.addEventListener('message', handleMessage)
+    monteCarloWorker.addEventListener('error', handleError)
+    signal?.addEventListener('abort', handleAbort, { once: true })
+
+    emitProgress({
+      stage: 'queued',
+      progress: 0.02,
+      message: 'Queued simulation in worker',
+    })
+    monteCarloWorker.postMessage({ type: 'run', id, params })
+  })
 }
 
 export function runBacktestWorker(

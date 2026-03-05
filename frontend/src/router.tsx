@@ -2,6 +2,7 @@
 import { lazy, Suspense } from 'react'
 import { createBrowserRouter, Navigate, Link } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { isCompanionMode } from '@/lib/companion/isCompanionMode'
 
 const StartPage = lazy(() => import('@/pages/StartPage').then(m => ({ default: m.StartPage })))
 const InputsPage = lazy(() => import('@/pages/InputsPage').then(m => ({ default: m.InputsPage })))
@@ -39,6 +40,10 @@ function NotFound() {
   )
 }
 
+// In companion mode, the app is served under /planner/* by the NIO static handler.
+// The router basename must match so routes like /stress-test resolve to /planner/stress-test.
+const routerBasename = isCompanionMode() ? '/planner' : undefined
+
 export const router = createBrowserRouter([
   {
     element: <AppLayout />,
@@ -67,4 +72,4 @@ export const router = createBrowserRouter([
       { path: '*', element: <NotFound /> },
     ],
   },
-])
+], routerBasename ? { basename: routerBasename } : undefined)

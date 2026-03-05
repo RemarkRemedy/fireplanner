@@ -6,10 +6,13 @@ import { Button } from '@/components/ui/button'
 import { CheckCircle, Loader2, X } from 'lucide-react'
 import { useEmailSignup } from '@/hooks/useEmailSignup'
 import { EMAIL_MAX_LENGTH, FEATURE_OPTIONS, SIGNUP_FLAG } from '@/lib/validation/emailConstants'
+import { isCompanionMode } from '@/lib/companion/isCompanionMode'
 
 const SESSION_KEY = 'fireplanner-post-sim-dismissed'
 
 export function PostSimulationCapture() {
+  const companionMode = isCompanionMode()
+
   const [dismissed, setDismissed] = useState(() => {
     // Check sessionStorage and localStorage separately to avoid one failure hiding the other
     let sessionDismissed = false
@@ -24,7 +27,7 @@ export function PostSimulationCapture() {
     handleEmailSubmit, handleFeatureSelect, handleSkip,
   } = useEmailSignup('post_simulation')
 
-  if (dismissed) return null
+  if (companionMode || dismissed) return null
 
   const handleDismiss = () => {
     setDismissed(true)

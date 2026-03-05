@@ -10,7 +10,7 @@ interface FailureDistributionChartProps {
 
 export function FailureDistributionChart({ distribution, nSimulations }: FailureDistributionChartProps) {
   const isMobile = useIsMobile()
-  if (distribution.total_failures === 0) {
+  if (distribution.buckets.length === 0 || distribution.counts.length === 0) {
     return null
   }
 
@@ -26,6 +26,11 @@ export function FailureDistributionChart({ distribution, nSimulations }: Failure
         <CardTitle>Failure Distribution by Decade</CardTitle>
       </CardHeader>
       <CardContent>
+        {distribution.total_failures === 0 && (
+          <p className="mb-2 text-xs text-muted-foreground">
+            No simulated failures in this run.
+          </p>
+        )}
         <div className="h-48 md:h-56 lg:h-[250px]" role="img" aria-label="Bar chart showing failure distribution by decade of retirement">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>

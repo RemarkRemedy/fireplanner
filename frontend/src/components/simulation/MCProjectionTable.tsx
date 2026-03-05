@@ -5,7 +5,7 @@ import {
   flexRender,
   type VisibilityState,
 } from '@tanstack/react-table'
-import type { MonteCarloResult } from '@/lib/types'
+import type { MonteCarloResult, RepresentativePath } from '@/lib/types'
 import { generateProjection } from '@/lib/calculations/projection'
 import { useProjection } from '@/hooks/useProjection'
 import { Card, CardContent } from '@/components/ui/card'
@@ -22,14 +22,24 @@ import {
 } from '@/components/shared/projectionColumns'
 import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 
-// ── Percentile options ──────────────────────────────────────────────
-const PERCENTILE_OPTIONS = [
-  { value: 10, label: 'Pessimistic (p10)' },
-  { value: 25, label: 'Cautious (p25)' },
-  { value: 50, label: 'Median (p50)' },
-  { value: 75, label: 'Optimistic (p75)' },
-  { value: 90, label: 'Best Case (p90)' },
-] as const
+function getPathId(path: RepresentativePath): string {
+  if (path.kind === 'best') return 'best'
+  if (path.kind === 'worst') return 'worst'
+  return `p${path.percentile ?? 50}`
+}
+
+function getPathLabel(path: RepresentativePath): string {
+  if (path.label) return path.label
+  if (path.kind === 'best') return 'Best'
+  if (path.kind === 'worst') return 'Worst'
+  const pct = path.percentile ?? 50
+  if (pct === 10) return 'Pessimistic (p10)'
+  if (pct === 25) return 'Cautious (p25)'
+  if (pct === 50) return 'Median (p50)'
+  if (pct === 75) return 'Optimistic (p75)'
+  if (pct === 90) return 'Best Case (p90)'
+  return `P${pct}`
+}
 
 // ── Props ───────────────────────────────────────────────────────────
 interface MCProjectionTableProps {
@@ -38,16 +48,30 @@ interface MCProjectionTableProps {
 }
 
 export function MCProjectionTable({ result, isStale }: MCProjectionTableProps) {
-  const [selectedPercentile, setSelectedPercentile] = useState(50)
+  const [selectedPathId, setSelectedPathId] = useState('p50')
   const [activeGroups, setActiveGroups] = useState<Set<ColumnGroup>>(new Set())
 
   const { params: projectionParams } = useProjection()
 
+  const pathOptions = useMemo(() => {
+    if (!result.representative_paths) return []
+    return result.representative_paths.map((p) => ({
+      id: getPathId(p),
+      label: getPathLabel(p),
+      path: p,
+    }))
+  }, [result.representative_paths])
+
+  // Derive resolved ID: fall back to first option if current selection is no longer valid
+  const resolvedPathId = pathOptions.some((p) => p.id === selectedPathId)
+    ? selectedPathId
+    : pathOptions[0]?.id ?? 'p50'
+
   // ── Resolve the selected representative path ────────────────────
   const selectedPath = useMemo(() => {
-    if (!result.representative_paths) return null
-    return result.representative_paths.find((p) => p.percentile === selectedPercentile) ?? null
-  }, [result.representative_paths, selectedPercentile])
+    if (pathOptions.length === 0) return null
+    return pathOptions.find((p) => p.id === resolvedPathId)?.path ?? pathOptions[0].path
+  }, [pathOptions, resolvedPathId])
 
   // ── Compute timeline offset ─────────────────────────────────────
   // MC in fireTarget mode starts at retirementAge, not currentAge.
@@ -235,15 +259,15 @@ export function MCProjectionTable({ result, isStale }: MCProjectionTableProps) {
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium whitespace-nowrap">Scenario:</span>
           <Select
-            value={String(selectedPercentile)}
-            onValueChange={(v) => setSelectedPercentile(Number(v))}
+            value={resolvedPathId}
+            onValueChange={setSelectedPathId}
           >
             <SelectTrigger className="w-[200px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {PERCENTILE_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={String(opt.value)}>
+              {pathOptions.map((opt) => (
+                <SelectItem key={opt.id} value={opt.id}>
                   {opt.label}
                 </SelectItem>
               ))}

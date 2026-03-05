@@ -13,8 +13,21 @@
  */
 export function percentile(data: number[], p: number): number {
   const sorted = [...data].sort((a, b) => a - b)
-  const n = sorted.length
+  return percentileFromSorted(sorted, p)
+}
 
+/**
+ * Compute multiple percentiles in one sort pass.
+ * Useful for Monte Carlo hot paths where p5/p10/.../p95 are all needed.
+ */
+export function percentiles(data: number[], targets: readonly number[]): number[] {
+  const sorted = [...data].sort((a, b) => a - b)
+  return targets.map((target) => percentileFromSorted(sorted, target))
+}
+
+function percentileFromSorted(sorted: readonly number[], p: number): number {
+  const n = sorted.length
+  if (n === 0) return 0
   if (n === 1) return sorted[0]
 
   // numpy uses: index = p/100 * (n - 1)

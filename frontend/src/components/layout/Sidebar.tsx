@@ -10,6 +10,7 @@ import { ShareButton } from '@/components/shared/ShareButton'
 import { ScenarioManager } from './ScenarioManager'
 import { ThemeToggle } from './ThemeToggle'
 import { trackEvent } from '@/lib/analytics'
+import { isCompanionMode, COMPANION_SECTION_SCROLL_KEY } from '@/lib/companion/isCompanionMode'
 import {
   User,
   DollarSign,
@@ -146,6 +147,7 @@ function StatusDot({ sectionId, sections }: { sectionId: string; sections: Retur
 function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const navigate = useNavigate()
+  const companionMode = isCompanionMode()
   const sectionOrder = useUIStore((s) => s.sectionOrder)
   const { activeSection, isInputsPage } = useActiveSection()
   const { sections } = useSectionCompletion()
@@ -166,23 +168,30 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
       : STORY_FIRST_SECTIONS
 
   const inputSections = allInputSections.filter((s) => !hiddenSectionIds.has(s.sectionId))
+  const startGroups = companionMode ? [] : NON_INPUT_GROUPS
+  const afterInputGroups = companionMode
+    ? AFTER_INPUTS_GROUPS.filter((group) => group.title === 'PLAN' || group.title === 'ANALYSIS')
+    : AFTER_INPUTS_GROUPS
 
   const handleSectionClick = useCallback(
     (sectionId: string) => {
       if (isInputsPage) {
         document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
+      } else if (companionMode) {
+        try { sessionStorage.setItem(COMPANION_SECTION_SCROLL_KEY, sectionId) } catch { /* storage unavailable */ }
+        navigate('/inputs')
       } else {
         navigate(`/inputs#${sectionId}`)
       }
       onNavigate?.()
     },
-    [isInputsPage, navigate, onNavigate]
+    [isInputsPage, companionMode, navigate, onNavigate]
   )
 
   return (
     <nav className="flex flex-col gap-4">
       {/* START group */}
-      {NON_INPUT_GROUPS.map((group) => (
+      {startGroups.map((group) => (
         <div key={group.title}>
           <div className="text-xs font-semibold text-muted-foreground px-2 mb-1">
             {group.title}
@@ -190,7 +199,7 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
           <div className="flex flex-col gap-0.5">
             {group.items.map((item) => (
               <NavLink
-                key={item.path}
+                key={`${group.title}-${item.path}`}
                 to={item.path}
                 onClick={onNavigate}
                 className={cn(
@@ -236,7 +245,7 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       {/* Remaining nav groups */}
-      {AFTER_INPUTS_GROUPS.map((group) => (
+      {afterInputGroups.map((group) => (
         <div key={group.title}>
           <div className="text-xs font-semibold text-muted-foreground px-2 mb-1">
             {group.title}
@@ -401,14 +410,29 @@ function ModeToggle() {
 export function Sidebar() {
   const location = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const companionMode = isCompanionMode()
 
   // Handle hash-based scroll on /inputs page load
   useEffect(() => {
-    if (location.pathname === '/inputs' && location.hash) {
-      const id = location.hash.slice(1)
+    if (location.pathname !== '/inputs') return
+
+    let sectionId: string | null = null
+
+    if (location.hash && !location.hash.includes('ct=')) {
+      sectionId = location.hash.slice(1)
+    } else {
+      try {
+        sectionId = sessionStorage.getItem(COMPANION_SECTION_SCROLL_KEY)
+        if (sectionId) sessionStorage.removeItem(COMPANION_SECTION_SCROLL_KEY)
+      } catch {
+        sectionId = null
+      }
+    }
+
+    if (sectionId) {
       // Small delay to let the page render
       requestAnimationFrame(() => {
-        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
       })
     }
   }, [location.pathname, location.hash])
@@ -421,8 +445,8 @@ export function Sidebar() {
         <ModeToggle />
         <NavGroups />
         <div className="mt-auto border-t pt-3 space-y-2">
-          <ScenarioManager />
-          <DataActions />
+          {!companionMode && <ScenarioManager />}
+          {!companionMode && <DataActions />}
           <HelpButton />
           <ThemeToggle />
         </div>
@@ -460,8 +484,8 @@ export function Sidebar() {
             <ModeToggle />
             <NavGroups onNavigate={() => setDrawerOpen(false)} />
             <div className="mt-6 border-t pt-3 space-y-2">
-              <ScenarioManager />
-              <DataActions />
+              {!companionMode && <ScenarioManager />}
+              {!companionMode && <DataActions />}
               <HelpButton />
               <ThemeToggle />
             </div>
@@ -471,13 +495,20 @@ export function Sidebar() {
 
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t flex justify-around py-3 z-50">
-        {[
+        {(companionMode
+          ? [
+              { label: 'Inputs', path: '/inputs', icon: <Settings2 className="h-5 w-5" /> },
+              { label: 'Plan', path: '/projection', icon: <TableProperties className="h-5 w-5" /> },
+              { label: 'Test', path: '/stress-test', icon: <ShieldAlert className="h-5 w-5" /> },
+            ]
+          : [
           { label: 'Inputs', path: '/inputs', icon: <Settings2 className="h-5 w-5" /> },
           { label: 'Plan', path: '/projection', icon: <TableProperties className="h-5 w-5" /> },
           { label: 'Test', path: '/stress-test', icon: <ShieldAlert className="h-5 w-5" /> },
           { label: 'Dash', path: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
           { label: 'Strategies', path: '/withdrawal', icon: <Banknote className="h-5 w-5" /> },
-        ].map((item) => (
+          ]
+        ).map((item) => (
           <NavLink
             key={item.path}
             to={item.path}

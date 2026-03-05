@@ -1,9 +1,10 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
 import { AlertTriangle, ChevronDown, ChevronRight, Info } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { WithdrawalBasisToggle } from '@/components/shared/WithdrawalBasisToggle'
@@ -23,10 +24,25 @@ import { SpendingMetricsPanel } from '@/components/simulation/SpendingMetricsPan
 import { PortfolioHistogram } from '@/components/simulation/PortfolioHistogram'
 import { FanChart } from '@/components/simulation/FanChart'
 import { FailureDistributionChart } from '@/components/simulation/FailureDistributionChart'
+import { WithdrawalDistributionChart } from '@/components/simulation/WithdrawalDistributionChart'
 import { useMonteCarloQuery } from '@/hooks/useMonteCarloQuery'
 import { MCProjectionTable } from '@/components/simulation/MCProjectionTable'
+import { StressScenarioSelector } from '@/components/simulation/StressScenarioSelector'
+import { StressScenarioComparisonTable } from '@/components/simulation/StressScenarioComparisonTable'
+import { ProofWorkspace } from '@/components/proof/ProofWorkspace'
+import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
+import { useAllocationStore } from '@/stores/useAllocationStore'
+import { usePropertyStore } from '@/stores/usePropertyStore'
+import { buildMonteCarloEngineParams } from '@/lib/simulation/monteCarloParams'
+import { runMonteCarloWorker } from '@/lib/simulation/workerClient'
+import {
+  buildStressScenarioComparisonRow,
+  buildStressScenarioRunPlan,
+  type StressScenarioComparisonRow,
+  type StressScenarioId,
+} from '@/lib/simulation/stressScenarios'
 
 // Backtest imports
 import { BacktestControls } from '@/components/backtest/BacktestControls'
@@ -48,6 +64,8 @@ import { PostSimulationCapture } from '@/components/email/PostSimulationCapture'
 import { ContextualEmailNudge } from '@/components/email/ContextualEmailNudge'
 import { ActiveLifeEventsBar } from '@/components/stressTest/ActiveLifeEventsBar'
 import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useCompanionPlannerBridge } from '@/hooks/useCompanionPlannerBridge'
+import { CompanionScenarioSwitcher } from '@/components/companion/CompanionScenarioSwitcher'
 
 function TabIntro({ children }: { children: React.ReactNode }) {
   return (
@@ -57,6 +75,11 @@ function TabIntro({ children }: { children: React.ReactNode }) {
 
 interface MonteCarloTabProps {
   isAdvanced: boolean
+  selectedStressScenarioIds: StressScenarioId[]
+  onStressScenarioSelectionChange: (scenarioIds: StressScenarioId[]) => void
+  stressScenarioComparisonRows: StressScenarioComparisonRow[]
+  stressScenarioComparisonPending: boolean
+  stressScenarioComparisonError: string | null
   mutate: () => void
   data: import('@/lib/types').MonteCarloResult | undefined
   isPending: boolean
@@ -64,13 +87,28 @@ interface MonteCarloTabProps {
   canRun: boolean
   validationErrors: Record<string, string>
   isStale: boolean
+  progress: { progress: number; message: string } | null
 }
 
 function MonteCarloTab({
-  isAdvanced, mutate, data, isPending, error, canRun, validationErrors, isStale,
+  isAdvanced,
+  selectedStressScenarioIds,
+  onStressScenarioSelectionChange,
+  stressScenarioComparisonRows,
+  stressScenarioComparisonPending,
+  stressScenarioComparisonError,
+  mutate,
+  data,
+  isPending,
+  error,
+  canRun,
+  validationErrors,
+  isStale,
+  progress,
 }: MonteCarloTabProps) {
   const retirementAge = useProfileStore((s) => s.retirementAge)
   const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
+  const progressPercent = Math.round((progress?.progress ?? 0.1) * 100)
 
   const mcInterpretation = data ? (() => {
     const rate = data.success_rate
@@ -90,19 +128,30 @@ function MonteCarloTab({
         isPending={isPending}
         canRun={canRun}
         validationErrors={validationErrors}
+        beforeRunControls={(
+          <StressScenarioSelector
+            selectedScenarioIds={selectedStressScenarioIds}
+            onChange={onStressScenarioSelectionChange}
+            disabled={isPending}
+          />
+        )}
       />
 
       {isPending && (
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          Running simulation...
+        <div className="rounded-md border bg-muted/30 p-3 space-y-2">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <span>{progress?.message ?? 'Running simulation...'}</span>
+            <span className="ml-auto text-xs tabular-nums">{progressPercent}%</span>
+          </div>
+          <Progress value={progressPercent} className="h-2" />
         </div>
       )}
 
       {error && (
         <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3">
           <p className="text-sm text-destructive font-medium">
-            Simulation failed: {error.message}
+            Simulation failed. Please try again.
           </p>
         </div>
       )}
@@ -141,15 +190,21 @@ function MonteCarloTab({
           {isAdvanced && data.histogram_snapshots && data.histogram_snapshots.length > 0 && (
             <PortfolioHistogram snapshots={data.histogram_snapshots} />
           )}
-          {isAdvanced && (
-            <FailureDistributionChart
-              distribution={data.failure_distribution}
-              nSimulations={data.n_simulations}
-            />
+          <FailureDistributionChart
+            distribution={data.failure_distribution}
+            nSimulations={data.n_simulations}
+          />
+          {data.withdrawal_bands && (
+            <WithdrawalDistributionChart bands={data.withdrawal_bands} />
           )}
           {isAdvanced && data.withdrawal_bands && (
             <WithdrawalSchedule bands={data.withdrawal_bands} strategy={selectedStrategy} />
           )}
+          <StressScenarioComparisonTable
+            rows={stressScenarioComparisonRows}
+            isPending={stressScenarioComparisonPending}
+            error={stressScenarioComparisonError}
+          />
         </>
       )}
     </div>
@@ -311,7 +366,7 @@ function BacktestTab() {
 
       {error && (
         <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3">
-          <p className="text-sm text-destructive">{error.message}</p>
+          <p className="text-sm text-destructive">Backtest failed. Please try again.</p>
         </div>
       )}
 
@@ -459,7 +514,7 @@ function SequenceRiskTab() {
 
           {error && (
             <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3">
-              <p className="text-sm text-destructive">{error.message}</p>
+              <p className="text-sm text-destructive">Stress test failed. Please try again.</p>
             </div>
           )}
         </CardContent>
@@ -538,9 +593,145 @@ export function StressTestPage() {
   const stressNudge = useSectionNudge('section-stress-test')
   const setSectionMode = useUIStore((s) => s.setSectionMode)
   const isStressAdvanced = stressMode === 'advanced'
+  const analysisPortfolio = useAnalysisPortfolio()
   const mc = useMonteCarloQuery()
+  const companion = useCompanionPlannerBridge({ result: mc.data, isResultStale: mc.isStale })
+  const isCompanionScenarioContextStale = companion.isCompanionMode
+    && !!companion.lastRunScenarioId
+    && companion.activeScenarioId !== companion.lastRunScenarioId
+  const isCompanionResultStale = mc.isStale
+    || companion.activeScenarioNeedsRerun
+    || isCompanionScenarioContextStale
+  const currentRetirementAge = useProfileStore((s) => s.retirementAge)
   const setSimField = useSimulationStore((s) => s.setField)
   const lifeEventCount = useIncomeStore((s) => s.lifeEvents.length)
+  const [selectedStressScenarioIds, setSelectedStressScenarioIds] = useState<StressScenarioId[]>(['base'])
+  const [stressScenarioComparisonError, setStressScenarioComparisonError] = useState<string | null>(null)
+  const [isStressScenarioComparisonPending, setIsStressScenarioComparisonPending] = useState(false)
+  const [stressScenarioResults, setStressScenarioResults] = useState<
+    Partial<Record<StressScenarioId, StressScenarioComparisonRow>>
+  >({})
+  const scenarioBatchAbortRef = useRef<AbortController | null>(null)
+  const lastBaseRetirementAgeRef = useRef(currentRetirementAge)
+
+  const stressScenarioComparisonRows = useMemo(
+    () => selectedStressScenarioIds
+      .map((scenarioId) => stressScenarioResults[scenarioId])
+      .filter((row): row is StressScenarioComparisonRow => !!row),
+    [selectedStressScenarioIds, stressScenarioResults]
+  )
+
+  const runSelectedStressScenarios = useCallback(async (
+    scenarioIds: StressScenarioId[],
+    overrides?: { annualExpenses?: number; retirementAge?: number }
+  ) => {
+    scenarioBatchAbortRef.current?.abort()
+    const nonBaseScenarioIds = scenarioIds.filter((scenarioId) => scenarioId !== 'base')
+    if (nonBaseScenarioIds.length === 0) {
+      setIsStressScenarioComparisonPending(false)
+      setStressScenarioComparisonError(null)
+      return
+    }
+
+    const controller = new AbortController()
+    scenarioBatchAbortRef.current = controller
+    setIsStressScenarioComparisonPending(true)
+    setStressScenarioComparisonError(null)
+
+    try {
+      const params = buildMonteCarloEngineParams({
+        profile: useProfileStore.getState(),
+        income: useIncomeStore.getState(),
+        allocation: useAllocationStore.getState(),
+        simulation: useSimulationStore.getState(),
+        property: usePropertyStore.getState(),
+        initialPortfolio: analysisPortfolio.initialPortfolio,
+        allocationWeights: analysisPortfolio.allocationWeights,
+        profileOverrides: overrides
+          ? {
+              ...(overrides.annualExpenses != null ? { annualExpenses: overrides.annualExpenses } : {}),
+              ...(overrides.retirementAge != null ? { retirementAge: overrides.retirementAge } : {}),
+            }
+          : undefined,
+      })
+
+      const runPlan = buildStressScenarioRunPlan(params, nonBaseScenarioIds)
+
+      const rows = await Promise.all(
+        runPlan.map(async (run) => {
+          const result = await runMonteCarloWorker(run.params, { signal: controller.signal })
+          return buildStressScenarioComparisonRow(run.scenarioId, result, run.params.retirementAge)
+        })
+      )
+
+      if (controller.signal.aborted) return
+
+      setStressScenarioResults((prev) => {
+        const next: Partial<Record<StressScenarioId, StressScenarioComparisonRow>> = { ...prev }
+        for (const row of rows) {
+          next[row.scenarioId] = row
+        }
+        return next
+      })
+    } catch (error) {
+      if (controller.signal.aborted) return
+      console.error('stress_scenarios_failed', error)
+      setStressScenarioComparisonError('Could not complete all stress scenarios. Try again.')
+    } finally {
+      if (scenarioBatchAbortRef.current === controller) {
+        scenarioBatchAbortRef.current = null
+        setIsStressScenarioComparisonPending(false)
+      }
+    }
+  }, [analysisPortfolio.initialPortfolio, analysisPortfolio.allocationWeights])
+
+  const runMonteCarlo = useCallback(() => {
+    const overrides = companion.isCompanionMode
+      ? companion.prepareSimulationRun()
+      : undefined
+    const baseRetirementAge = overrides?.retirementAge ?? useProfileStore.getState().retirementAge
+    lastBaseRetirementAgeRef.current = baseRetirementAge
+
+    setStressScenarioComparisonError(null)
+    setStressScenarioResults((prev) => {
+      const next: Partial<Record<StressScenarioId, StressScenarioComparisonRow>> = { ...prev }
+      for (const scenarioId of selectedStressScenarioIds) {
+        delete next[scenarioId]
+      }
+      return next
+    })
+
+    mc.mutate(overrides)
+    void runSelectedStressScenarios(selectedStressScenarioIds, overrides)
+  }, [companion, mc, runSelectedStressScenarios, selectedStressScenarioIds])
+
+  useEffect(() => {
+    if (!mc.data || !selectedStressScenarioIds.includes('base')) return
+    const row = buildStressScenarioComparisonRow(
+      'base',
+      mc.data,
+      lastBaseRetirementAgeRef.current
+    )
+    setStressScenarioResults((prev) => ({ ...prev, base: row }))
+  }, [mc.data, selectedStressScenarioIds])
+
+  useEffect(() => {
+    setStressScenarioResults((prev) => {
+      const next: Partial<Record<StressScenarioId, StressScenarioComparisonRow>> = {}
+      for (const scenarioId of selectedStressScenarioIds) {
+        const row = prev[scenarioId]
+        if (row) next[scenarioId] = row
+      }
+      return next
+    })
+  }, [selectedStressScenarioIds])
+
+  useEffect(() => {
+    return () => {
+      scenarioBatchAbortRef.current?.abort()
+      scenarioBatchAbortRef.current = null
+    }
+  }, [])
 
   // Persist last MC success rate (lifted from MonteCarloTab so it updates even when tab is inactive)
   useEffect(() => {
@@ -548,7 +739,7 @@ export function StressTestPage() {
   }, [mc.data, setSimField])
 
   return (
-    <div className="space-y-6">
+    <div className={cn('space-y-6', companion.isCompanionMode && 'companion-mode')}>
       <div>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -592,6 +783,15 @@ export function StressTestPage() {
         />
       )}
 
+      {companion.isCompanionMode && (
+        <CompanionScenarioSwitcher
+          companion={companion}
+          isSimulationPending={mc.isPending}
+          simulationProgress={mc.progress}
+          onRunScenario={runMonteCarlo}
+        />
+      )}
+
       {isStressAdvanced ? (
         <ActiveLifeEventsBar />
       ) : lifeEventCount > 0 ? (
@@ -604,17 +804,19 @@ export function StressTestPage() {
         {(() => {
           // Static Tailwind class mapping — dynamic template literals get purged
           const hasResults = !!mc.data
-          const tabCount = 1 + (hasResults ? 1 : 0) + (isStressAdvanced ? 2 : 0)
+          const tabCount = 1 + (hasResults ? 1 : 0) + (isStressAdvanced ? 3 : 0)
           const gridColsClass: Record<number, string> = {
             1: 'grid-cols-1',
             2: 'grid-cols-2',
             3: 'grid-cols-3',
             4: 'grid-cols-4',
+            5: 'grid-cols-5',
           }
           return (
             <TabsList className={`grid w-full ${gridColsClass[tabCount] ?? 'grid-cols-1'}`}>
               <TabsTrigger value="monte-carlo">Monte Carlo</TabsTrigger>
               {hasResults && <TabsTrigger value="mc-projection">Projection Table</TabsTrigger>}
+              {isStressAdvanced && <TabsTrigger value="proof">Proof</TabsTrigger>}
               {isStressAdvanced && <TabsTrigger value="backtest">Historical Backtest</TabsTrigger>}
               {isStressAdvanced && <TabsTrigger value="sequence-risk">Sequence Risk</TabsTrigger>}
             </TabsList>
@@ -624,19 +826,31 @@ export function StressTestPage() {
         <TabsContent value="monte-carlo">
           <MonteCarloTab
             isAdvanced={isStressAdvanced}
-            mutate={mc.mutate}
+            selectedStressScenarioIds={selectedStressScenarioIds}
+            onStressScenarioSelectionChange={setSelectedStressScenarioIds}
+            stressScenarioComparisonRows={stressScenarioComparisonRows}
+            stressScenarioComparisonPending={isStressScenarioComparisonPending}
+            stressScenarioComparisonError={stressScenarioComparisonError}
+            mutate={runMonteCarlo}
             data={mc.data}
             isPending={mc.isPending}
             error={mc.error}
             canRun={mc.canRun}
             validationErrors={mc.validationErrors}
-            isStale={mc.isStale}
+            isStale={isCompanionResultStale}
+            progress={mc.progress}
           />
         </TabsContent>
 
         {mc.data && (
           <TabsContent value="mc-projection">
-            <MCProjectionTable result={mc.data!} isStale={mc.isStale} />
+            <MCProjectionTable result={mc.data!} isStale={isCompanionResultStale} />
+          </TabsContent>
+        )}
+
+        {isStressAdvanced && (
+          <TabsContent value="proof">
+            <ProofWorkspace mcResult={mc.data} isMcResultStale={isCompanionResultStale} />
           </TabsContent>
         )}
 
@@ -662,12 +876,14 @@ export function StressTestPage() {
 
       {mc.data && <PostSimulationCapture />}
 
-      <p className="text-xs text-muted-foreground mt-4">
-        Want to explore withdrawal strategies in isolation?{' '}
-        <Link to="/withdrawal" className="text-primary hover:underline">
-          Withdrawal Strategies &rarr;
-        </Link>
-      </p>
+      {!companion.isCompanionMode && (
+        <p className="text-xs text-muted-foreground mt-4">
+          Want to explore withdrawal strategies in isolation?{' '}
+          <Link to="/withdrawal" className="text-primary hover:underline">
+            Withdrawal Strategies &rarr;
+          </Link>
+        </p>
+      )}
     </div>
   )
 }

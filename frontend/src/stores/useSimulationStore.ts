@@ -24,6 +24,9 @@ interface SimulationActions {
 const SIMULATION_DATA_KEYS = [
   'mcMethod', 'selectedStrategy', 'strategyParams', 'nSimulations',
   'lastMCSuccessRate', 'lastBacktestSuccessRate', 'withdrawalBasis', 'deterministicAccumulation',
+  'proofSource', 'proofMetricType', 'proofChartType', 'proofShowOutliers', 'proofBlendRatio',
+  // proofSelectedCycle and proofSelectedYear are ephemeral UI cursors — not persisted.
+  // They are indices into runtime arrays that may change between sessions.
 ] as const
 
 const DEFAULT_STRATEGY_PARAMS: StrategyParamsMap = {
@@ -48,6 +51,13 @@ const DEFAULT_SIMULATION: Omit<SimulationState, 'validationErrors'> = {
   nSimulations: 10000,
   withdrawalBasis: 'expenses',
   deterministicAccumulation: false,
+  proofSource: 'mc',
+  proofMetricType: 'portfolio',
+  proofChartType: 'minmaxmean',
+  proofShowOutliers: false,
+  proofBlendRatio: 0.7,
+  proofSelectedCycle: 0,
+  proofSelectedYear: 0,
   lastMCSuccessRate: null,
   lastBacktestSuccessRate: null,
 }
@@ -114,7 +124,7 @@ export const useSimulationStore = create<SimulationState & SimulationActions>()(
     }),
     {
       name: 'fireplanner-simulation',
-      version: 6,
+      version: 7,
       migrate: (persisted: unknown, version: number) => {
         const state = persisted as Record<string, unknown>
         if (version < 2) {
@@ -147,6 +157,16 @@ export const useSimulationStore = create<SimulationState & SimulationActions>()(
         if (version < 6) {
           // v5 → v6: add deterministicAccumulation field
           state.deterministicAccumulation ??= false
+        }
+        if (version < 7) {
+          // v6 → v7: add Proof controls state
+          state.proofSource ??= 'mc'
+          state.proofMetricType ??= 'portfolio'
+          state.proofChartType ??= 'minmaxmean'
+          state.proofShowOutliers ??= false
+          state.proofBlendRatio ??= 0.7
+          state.proofSelectedCycle ??= 0
+          state.proofSelectedYear ??= 0
         }
         return state as unknown as SimulationState
       },

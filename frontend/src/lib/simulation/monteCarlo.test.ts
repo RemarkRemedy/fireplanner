@@ -201,6 +201,51 @@ describe('runMonteCarlo', () => {
     // so rate-driven should have a higher success rate
     expect(rateResult.success_rate).toBeGreaterThan(expenseResult.success_rate)
   })
+
+  it('compounds yearly inflation path for constant-dollar withdrawals', () => {
+    const result = runMonteCarlo(makeDefaultParams({
+      currentAge: 65,
+      retirementAge: 65,
+      lifeExpectancy: 68,
+      annualSavings: [],
+      postRetirementIncome: Array(3).fill(0),
+      inflation: 0,
+      yearlyInflationRates: [0, 0.10, 0.20],
+      withdrawalBasis: 'rate',
+      expenseRatio: 0,
+      initialPortfolio: 10_000_000,
+      expectedReturns: Array(8).fill(0),
+      stdDevs: Array(8).fill(0),
+      nSimulations: 200,
+    }))
+
+    // Initial withdrawal: 4% of $10M.
+    expect(result.withdrawal_bands!.p50[0]).toBeCloseTo(400_000, -1)
+    // Year 1 uses 10% inflation.
+    expect(result.withdrawal_bands!.p50[1]).toBeCloseTo(440_000, -1)
+    // Year 2 compounds: 400k × 1.10 × 1.20 = 528k.
+    expect(result.withdrawal_bands!.p50[2]).toBeCloseTo(528_000, -1)
+  })
+
+  it('respects forced crash returns during deterministic accumulation', () => {
+    const result = runMonteCarlo(makeDefaultParams({
+      currentAge: 40,
+      retirementAge: 43,
+      lifeExpectancy: 44,
+      annualSavings: [0, 0, 0],
+      postRetirementIncome: [0],
+      deterministicAccumulation: true,
+      forcedPortfolioReturns: [-0.30, -0.10, 0.05],
+      expenseRatio: 0,
+      nSimulations: 200,
+    }))
+
+    // Deterministic accumulation + forced returns should produce exact pre-retirement balances:
+    // 1,000,000 -> 700,000 -> 630,000 -> 661,500.
+    expect(result.percentile_bands.p50[1]).toBeCloseTo(700_000, -1)
+    expect(result.percentile_bands.p50[2]).toBeCloseTo(630_000, -1)
+    expect(result.percentile_bands.p50[3]).toBeCloseTo(661_500, -1)
+  })
 })
 
 describe('runMonteCarlo — bootstrap method', () => {
@@ -974,13 +1019,15 @@ describe('retirement cash bucket mitigation', () => {
 })
 
 describe('representative paths', () => {
-  it('returns 5 representative paths with correct percentiles when extractPaths is true', () => {
+  it('returns 7 representative paths with percentile + best/worst when extractPaths is true', () => {
     const params = makeDefaultParams({ nSimulations: 500, extractPaths: true })
     const result = runMonteCarlo(params as MonteCarloEngineParams)
     expect(result.representative_paths).toBeDefined()
-    expect(result.representative_paths).toHaveLength(5)
-    const percentiles = result.representative_paths!.map(p => p.percentile)
+    expect(result.representative_paths).toHaveLength(7)
+    const percentiles = result.representative_paths!.filter(p => p.kind !== 'best' && p.kind !== 'worst').map(p => p.percentile)
     expect(percentiles).toEqual([10, 25, 50, 75, 90])
+    expect(result.representative_paths!.some(p => p.kind === 'best')).toBe(true)
+    expect(result.representative_paths!.some(p => p.kind === 'worst')).toBe(true)
   })
 
   it('does NOT extract paths when extractPaths is false or omitted', () => {
@@ -1039,7 +1086,7 @@ describe('representative paths edge cases', () => {
       extractPaths: true,
     })
     const result = runMonteCarlo(params as MonteCarloEngineParams)
-    expect(result.representative_paths).toHaveLength(5)
+    expect(result.representative_paths).toHaveLength(7)
     for (const path of result.representative_paths!) {
       expect(path.yearlyReturns).toHaveLength(35) // 90 - 55
     }
@@ -1067,7 +1114,7 @@ describe('deterministicAccumulation', () => {
       extractPaths: true,
     }) as MonteCarloEngineParams
     const result = runMonteCarlo(params)
-    // All 5 representative paths should have the same retirement balance
+    // All representative paths should have the same retirement balance
     const retBalances = result.representative_paths!.map(p => p.retirementBalance)
     const first = retBalances[0]
     for (const bal of retBalances) {
