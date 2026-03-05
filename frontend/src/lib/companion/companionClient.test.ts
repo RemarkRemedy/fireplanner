@@ -31,15 +31,17 @@ function makeValidSnapshot(overrides: Record<string, unknown> = {}) {
 
 function makeValidPayload(): PlannerResultsPayload {
   return {
-    schemaVersion: SCHEMA_VERSION,
+    schema_version: SCHEMA_VERSION as 2,
+    computed_at_utc: new Date().toISOString(),
     p_success: 0.85,
-    WR_critical_50: 0.04,
-    horizonYears: 30,
-    allocationSummary: 'Stocks 70 / Bonds 20 / Cash 10',
-    fire_age: 45,
-    portfolio_at_fire: 1_500_000,
-    wr_critical_10: 0.03,
-    wr_critical_90: 0.05,
+    wr_safe_50: 0.04,
+    horizon_years: 30,
+    allocation_summary: 'Stocks 70 / Bonds 20 / Cash 10',
+    projected_fire_age_p50: 45,
+    portfolio_at_fire_p50: 1_500_000,
+    wr_safe_95: 0.03,
+    wr_safe_90: 0.035,
+    wr_safe_85: 0.04,
   }
 }
 
@@ -153,7 +155,7 @@ describe('postPlannerResults', () => {
     await postPlannerResults(BASE_URL, TOKEN, payload)
 
     const body = JSON.parse(vi.mocked(fetch).mock.calls[0][1]!.body as string)
-    expect(body.schemaVersion).toBe(SCHEMA_VERSION)
+    expect(body.schema_version).toBe(SCHEMA_VERSION)
   })
 
   it('throws on non-200 response', async () => {

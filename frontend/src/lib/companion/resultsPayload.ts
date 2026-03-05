@@ -1,5 +1,5 @@
-import type { MonteCarloResult, StrategyParamsMap, WithdrawalStrategyType } from '@/lib/types'
-import { SCHEMA_VERSION, type PlannerResultsPayload } from './types'
+import type { MonteCarloResult, StrategyParamsMap, WithdrawalStrategyType, MonteCarloMethod } from '@/lib/types'
+import { SCHEMA_VERSION, type PlannerResultsPayload, type AllocationWeights, type WrSafe50Source } from './types'
 import { clamp01 } from './utils'
 
 const MIN_WR_DENOMINATOR = 0.0001
@@ -16,12 +16,11 @@ function toPercent(weight: number): number {
   return Math.round(Math.max(0, weight) * 100)
 }
 
-// --- Allocation summary ---
+// --- Allocation ---
 
 export function buildAllocationSummary(allocationWeights: number[]): string {
   const safe = (idx: number) => allocationWeights[idx] ?? 0
 
-  // Aggregate 8 asset classes into display groups
   const stocks = safe(0) + safe(1) + safe(2) + safe(4) // US, SG, Intl, REITs
   const bonds = safe(3)
   const cash = safe(6)
@@ -41,6 +40,20 @@ export function buildAllocationSummary(allocationWeights: number[]): string {
     .join(' / ')
 }
 
+function buildAllocationWeightsObj(weights: number[]): AllocationWeights {
+  const safe = (idx: number) => weights[idx] ?? 0
+  return {
+    usEquities: safe(0),
+    sgEquities: safe(1),
+    intlEquities: safe(2),
+    bonds: safe(3),
+    reits: safe(4),
+    gold: safe(5),
+    cash: safe(6),
+    cpf: safe(7),
+  }
+}
+
 // --- Withdrawal rate derivation ---
 
 function deriveWRFromBand(
@@ -53,30 +66,54 @@ function deriveWRFromBand(
   return roundRate(clamp01(value / initialPortfolio))
 }
 
+interface WrSafe50Result {
+  value: number
+  source: WrSafe50Source
+}
+
+export function deriveWrSafe50(input: {
+  result: MonteCarloResult
+  initialPortfolio: number
+  selectedStrategy: WithdrawalStrategyType
+  strategyParams: StrategyParamsMap
+}): WrSafe50Result {
+  const { result, initialPortfolio, selectedStrategy, strategyParams } = input
+
+  // Prefer true optimized confidence_50 from SWR optimizer
+  if (result.safe_swr?.confidence_50 != null && Number.isFinite(result.safe_swr.confidence_50)) {
+    return { value: roundRate(clamp01(result.safe_swr.confidence_50)), source: 'optimized_confidence_50' }
+  }
+
+  // Fallback: withdrawal band p50 proxy
+  const fromBands = deriveWRFromBand(result, initialPortfolio, 'p50')
+  if (fromBands !== null) {
+    return { value: fromBands, source: 'withdrawal_band_proxy' }
+  }
+
+  // Fallback: strategy parameter proxy
+  if (selectedStrategy === 'constant_dollar') {
+    return { value: roundRate(clamp01(strategyParams.constant_dollar.swr)), source: 'strategy_proxy' }
+  }
+  if (result.safe_swr?.confidence_85 != null) {
+    return { value: roundRate(clamp01(result.safe_swr.confidence_85)), source: 'strategy_proxy' }
+  }
+
+  return { value: 0, source: 'strategy_proxy' }
+}
+
+// Legacy export for backward compat in tests — delegates to deriveWrSafe50
 export function deriveWRCritical50(input: {
   result: MonteCarloResult
   initialPortfolio: number
   selectedStrategy: WithdrawalStrategyType
   strategyParams: StrategyParamsMap
 }): number {
-  const { result, initialPortfolio, selectedStrategy, strategyParams } = input
-  const fromBands = deriveWRFromBand(result, initialPortfolio, 'p50')
-  if (fromBands !== null) return fromBands
-
-  if (selectedStrategy === 'constant_dollar') {
-    return roundRate(clamp01(strategyParams.constant_dollar.swr))
-  }
-
-  if (result.safe_swr?.confidence_85 != null) {
-    return roundRate(clamp01(result.safe_swr.confidence_85))
-  }
-
-  return 0
+  return deriveWrSafe50(input).value
 }
 
 // --- Results payload builder ---
 
-export function buildPlannerResultsPayload(input: {
+export interface BuildPayloadInput {
   result: MonteCarloResult
   initialPortfolio: number
   currentAge: number
@@ -86,7 +123,12 @@ export function buildPlannerResultsPayload(input: {
   allocationWeights: number[]
   selectedStrategy: WithdrawalStrategyType
   strategyParams: StrategyParamsMap
-}): PlannerResultsPayload {
+  mcMethod?: MonteCarloMethod
+  scenarioId?: string
+  scenarioName?: string
+}
+
+export function buildPlannerResultsPayload(input: BuildPayloadInput): PlannerResultsPayload {
   const {
     result,
     initialPortfolio,
@@ -97,25 +139,25 @@ export function buildPlannerResultsPayload(input: {
     allocationWeights,
     selectedStrategy,
     strategyParams,
+    mcMethod,
+    scenarioId,
+    scenarioName,
   } = input
 
-  const wrCritical50 = deriveWRCritical50({
-    result,
-    initialPortfolio,
-    selectedStrategy,
-    strategyParams,
-  })
+  const wrSafe50 = deriveWrSafe50({ result, initialPortfolio, selectedStrategy, strategyParams })
 
-  // WR at p10/p90 from safe_swr confidence levels
-  const wrCritical10 = result.safe_swr?.confidence_95 != null
+  const wrSafe95 = result.safe_swr?.confidence_95 != null
     ? roundRate(clamp01(result.safe_swr.confidence_95))
-    : wrCritical50
-  const wrCritical90 = result.safe_swr?.confidence_85 != null
+    : wrSafe50.value
+  const wrSafe90 = result.safe_swr?.confidence_90 != null
+    ? roundRate(clamp01(result.safe_swr.confidence_90))
+    : wrSafe50.value
+  const wrSafe85 = result.safe_swr?.confidence_85 != null
     ? roundRate(clamp01(result.safe_swr.confidence_85))
-    : wrCritical50
+    : wrSafe50.value
 
-  // FIRE age estimation: find first age where median portfolio >= required
-  const safeRate = Math.max(wrCritical50, MIN_WR_DENOMINATOR)
+  // FIRE age: first age where median portfolio >= required
+  const safeRate = Math.max(wrSafe50.value, MIN_WR_DENOMINATOR)
   const requiredPortfolio = annualExpenses <= 0 ? 0 : annualExpenses / safeRate
   let fireAge = Math.round(retirementAge)
 
@@ -131,21 +173,53 @@ export function buildPlannerResultsPayload(input: {
     }
   }
 
-  // Portfolio at retirement: median portfolio at the age closest to retirementAge
+  // Portfolio at retirement
   const retirementIdx = ages.findIndex((age) => Math.round(age) >= Math.round(retirementAge))
   const portfolioAtFire = retirementIdx >= 0 && retirementIdx < medians.length
     ? roundMoney(medians[retirementIdx])
     : roundMoney(result.terminal_stats.median)
 
+  const horizonYears = Math.max(0, Math.round(lifeExpectancy - retirementAge))
+
+  // Failure probabilities from 5-year bins
+  const nSims = result.n_simulations || 1
+  const [fail04, fail59] = result.failure_distribution.counts_5y
+  const failProb05y = roundRate(clamp01(fail04 / nSims))
+  const failProb610y = roundRate(clamp01(fail59 / nSims))
+
+  // Simulation method mapping
+  const simulationMethod = mcMethod ?? undefined
+
   return {
-    schemaVersion: SCHEMA_VERSION,
+    schema_version: SCHEMA_VERSION as 2,
+    computed_at_utc: new Date().toISOString(),
+    input_signature: undefined,
+    scenario_id: scenarioId,
+    scenario_name: scenarioName,
+    simulation_method: simulationMethod,
+    n_simulations: result.n_simulations,
+    computation_time_ms: result.computation_time_ms,
+    cached: result.cached,
+    horizon_years: horizonYears,
+    target_fire_age: Math.round(retirementAge),
+    projected_fire_age_p50: fireAge,
+    annual_expenses_target_real: roundMoney(annualExpenses),
+    required_portfolio: roundMoney(requiredPortfolio),
+    required_portfolio_basis: 'wr_safe_50',
+    required_savings_rate: undefined,
     p_success: roundRate(clamp01(result.success_rate)),
-    WR_critical_50: wrCritical50,
-    horizonYears: Math.max(0, Math.round(lifeExpectancy - retirementAge)),
-    allocationSummary: buildAllocationSummary(allocationWeights),
-    fire_age: fireAge,
-    portfolio_at_fire: portfolioAtFire,
-    wr_critical_10: wrCritical10,
-    wr_critical_90: wrCritical90,
+    wr_safe_95: wrSafe95,
+    wr_safe_90: wrSafe90,
+    wr_safe_85: wrSafe85,
+    wr_safe_50: wrSafe50.value,
+    wr_safe_50_source: wrSafe50.source,
+    fail_prob_0_5y: failProb05y,
+    fail_prob_6_10y: failProb610y,
+    terminal_p5: roundMoney(result.terminal_stats.p5),
+    terminal_p50: roundMoney(result.terminal_stats.median),
+    terminal_p95: roundMoney(result.terminal_stats.p95),
+    portfolio_at_fire_p50: portfolioAtFire,
+    allocation_summary: buildAllocationSummary(allocationWeights),
+    allocation_weights: buildAllocationWeightsObj(allocationWeights),
   }
 }
