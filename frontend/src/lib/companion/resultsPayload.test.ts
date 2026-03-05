@@ -73,17 +73,17 @@ const SAMPLE_RESULT: MonteCarloResult = {
 
 const STRATEGY_PARAMS: StrategyParamsMap = {
   constant_dollar: { swr: 0.04 },
-  vpw: {},
-  guardrails: { ceiling: 0.05, floor: 0.03 },
-  vanguard_dynamic: { ceiling: 0.05, floor: 0.025 },
-  cape_based: { baseSwr: 0.04, capeDivisor: 1 },
-  floor_ceiling: { floor: 0.03, ceiling: 0.06 },
-  percent_portfolio: { rate: 0.04 },
+  vpw: { expectedRealReturn: 0.05, targetEndValue: 0 },
+  guardrails: { initialRate: 0.04, ceilingTrigger: 1.2, floorTrigger: 0.8, adjustmentSize: 0.1 },
+  vanguard_dynamic: { swr: 0.04, ceiling: 0.05, floor: 0.025 },
+  cape_based: { baseRate: 0.04, capeWeight: 0.5, currentCape: 30 },
+  floor_ceiling: { floor: 0.03, ceiling: 0.06, targetRate: 0.04 },
+  percent_of_portfolio: { rate: 0.04 },
   one_over_n: {},
-  sensible: { initialRate: 0.04, floor: 0.03, ceiling: 0.05 },
-  rule_95: { initialRate: 0.04 },
-  endowment: { smoothingYears: 3, targetRate: 0.05 },
-  hebeler: { initialRate: 0.045 },
+  sensible_withdrawals: { baseRate: 0.04, extrasRate: 0.02 },
+  ninety_five_percent: { swr: 0.04 },
+  endowment: { swr: 0.05, smoothingWeight: 0.7 },
+  hebeler_autopilot: { expectedRealReturn: 0.045 },
 }
 
 describe('deriveWRCritical50', () => {

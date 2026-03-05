@@ -1,6 +1,6 @@
 import type { MonteCarloResult, StrategyParamsMap, WithdrawalStrategyType } from '@/lib/types'
 import { SCHEMA_VERSION, type PlannerResultsPayload } from './types'
-import { clamp01, toFiniteNumber } from './utils'
+import { clamp01 } from './utils'
 
 const MIN_WR_DENOMINATOR = 0.0001
 
