@@ -17,7 +17,6 @@ vi.mock('@/lib/companion/isCompanionMode', () => ({
   isCompanionMode: vi.fn(() => false),
   getCompanionToken: vi.fn(() => null),
   getCompanionBaseUrl: vi.fn(() => 'http://localhost:3000'),
-  scrubCompanionParams: vi.fn(),
 }))
 
 import { fetchPlannerSnapshot, postPlannerResults } from '@/lib/companion/companionClient'
@@ -25,7 +24,6 @@ import {
   isCompanionMode,
   getCompanionToken,
   getCompanionBaseUrl,
-  scrubCompanionParams,
 } from '@/lib/companion/isCompanionMode'
 
 const mockFetchPlannerSnapshot = vi.mocked(fetchPlannerSnapshot)
@@ -33,7 +31,6 @@ const mockPostPlannerResults = vi.mocked(postPlannerResults)
 const mockIsCompanionMode = vi.mocked(isCompanionMode)
 const mockGetCompanionToken = vi.mocked(getCompanionToken)
 const mockGetCompanionBaseUrl = vi.mocked(getCompanionBaseUrl)
-const mockScrubCompanionParams = vi.mocked(scrubCompanionParams)
 
 function enableCompanionMode(token: string = 'test-token', baseUrl: string = 'http://localhost:3000') {
   mockIsCompanionMode.mockReturnValue(true)
@@ -100,7 +97,6 @@ beforeEach(() => {
   mockIsCompanionMode.mockReturnValue(false)
   mockGetCompanionToken.mockReturnValue(null)
   mockGetCompanionBaseUrl.mockReturnValue('http://localhost:3000')
-  mockScrubCompanionParams.mockReset()
 })
 
 describe('useCompanionPlannerBridge', () => {
@@ -278,19 +274,6 @@ describe('useCompanionPlannerBridge', () => {
     await new Promise((resolve) => setTimeout(resolve, 10))
 
     expect(mockPostPlannerResults).toHaveBeenCalledTimes(1)
-  })
-
-  it('scrubs companion params from URL on mount', async () => {
-    enableCompanionMode('scrub001')
-    mockFetchPlannerSnapshot.mockResolvedValue({ schemaVersion: 1 })
-
-    renderHook(() =>
-      useCompanionPlannerBridge({ result: undefined, isResultStale: false })
-    )
-
-    await waitFor(() => {
-      expect(mockScrubCompanionParams).toHaveBeenCalled()
-    })
   })
 
   it('creates companion presets and supports duplicate + knob edits', async () => {

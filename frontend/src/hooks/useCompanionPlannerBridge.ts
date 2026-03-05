@@ -4,11 +4,11 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import {
-  buildPlannerResultsPayload,
   createCompanionScenarios,
   resolveScenarioInputs,
   type CompanionScenario,
 } from '@/lib/companion/scenarios'
+import { buildPlannerResultsPayload } from '@/lib/companion/resultsPayload'
 import { fetchPlannerSnapshot, postPlannerResults } from '@/lib/companion/companionClient'
 import { applySnapshotToStores } from '@/lib/companion/companionBridge'
 import type { PlannerResultsPayload } from '@/lib/companion/types'
@@ -16,7 +16,6 @@ import {
   getCompanionToken,
   getCompanionBaseUrl,
   isCompanionMode,
-  scrubCompanionParams,
 } from '@/lib/companion/isCompanionMode'
 
 type CompanionBootstrapStatus = 'idle' | 'loading' | 'loaded' | 'error'
@@ -98,9 +97,9 @@ export function useCompanionPlannerBridge({
   result,
   isResultStale,
 }: CompanionPlannerBridgeInput): CompanionPlannerBridgeState {
-  const companionMode = isCompanionMode()
-  const token = companionMode ? getCompanionToken() : null
-  const baseUrl = companionMode ? getCompanionBaseUrl() : ''
+  const companionMode = useMemo(() => isCompanionMode(), [])
+  const token = useMemo(() => companionMode ? getCompanionToken() : null, [companionMode])
+  const baseUrl = useMemo(() => companionMode ? getCompanionBaseUrl() : '', [companionMode])
 
   const allocationWeights = useAllocationStore((s) => s.currentWeights)
   const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
@@ -219,12 +218,6 @@ export function useCompanionPlannerBridge({
     || isScenarioContextStale
     || !activeScenarioPayload
 
-  // Scrub companion params from URL after first capture
-  useEffect(() => {
-    if (!companionMode || !token) return
-    scrubCompanionParams()
-  }, [companionMode, token])
-
   // Bootstrap: fetch snapshot → apply to stores
   useEffect(() => {
     if (!companionMode || !token) return
@@ -262,10 +255,8 @@ export function useCompanionPlannerBridge({
     )
     const defaults = createCompanionScenarios(clampedBaseRetirementAge)
 
-    queueMicrotask(() => {
-      setScenarios(defaults)
-      setActiveScenarioId(defaults[0]?.id ?? null)
-    })
+    setScenarios(defaults)
+    setActiveScenarioId(defaults[0]?.id ?? null)
   }, [companionMode, scenarios.length, bootstrapStatus, retirementAge, minRetirementAge, maxRetirementAge])
 
   const selectScenario = useCallback((scenarioId: string) => {
@@ -447,24 +438,17 @@ export function useCompanionPlannerBridge({
 
     const payload = buildPayloadForContext(runContext, result)
     lastPayloadRef.current = payload
-    queueMicrotask(() => {
-      setLastRunScenarioId(runContext.scenarioId)
-    })
-
-    queueMicrotask(() => {
-      setScenarioResults((prev) => ({
-        ...prev,
-        [runContext.scenarioId]: {
-          payload,
-          inputSignature: runContext.inputSignature,
-        },
-      }))
-    })
+    setLastRunScenarioId(runContext.scenarioId)
+    setScenarioResults((prev) => ({
+      ...prev,
+      [runContext.scenarioId]: {
+        payload,
+        inputSignature: runContext.inputSignature,
+      },
+    }))
 
     if (token) {
-      queueMicrotask(() => {
-        void savePayload(payload, false)
-      })
+      void savePayload(payload, false)
     }
   }, [
     companionMode,

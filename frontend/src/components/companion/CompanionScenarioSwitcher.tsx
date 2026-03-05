@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
+import { NumberInput } from '@/components/shared/NumberInput'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { formatCurrency, cn } from '@/lib/utils'
@@ -23,7 +23,6 @@ export function CompanionScenarioSwitcher({
 }: CompanionScenarioSwitcherProps) {
   const hasSelectedScenario = !!companion.activeScenario
   const hasLoadedSnapshot = companion.bootstrapStatus === 'loaded'
-  const activeRetirementAge: string | number = companion.activeScenarioRetirementAge ?? ''
 
   const formatMaybePercent = (value: number | null) => {
     if (value == null) return '\u2014'
@@ -133,33 +132,23 @@ export function CompanionScenarioSwitcher({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Spending Delta (monthly)</label>
-              <Input
-                type="number"
-                inputMode="numeric"
-                value={companion.activeScenarioMonthlyExpenseDelta}
-                onChange={(e) => {
-                  const value = e.target.value === '' ? 0 : Number(e.target.value)
-                  if (Number.isFinite(value)) companion.setActiveScenarioMonthlyExpenseDelta(value)
-                }}
-              />
-            </div>
+            <NumberInput
+              label="Spending Delta (monthly)"
+              value={companion.activeScenarioMonthlyExpenseDelta}
+              onChange={companion.setActiveScenarioMonthlyExpenseDelta}
+              integer
+              step={100}
+            />
 
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Retirement Age</label>
-              <Input
-                type="number"
-                inputMode="numeric"
-                min={companion.retirementAgeMin}
-                max={companion.retirementAgeMax}
-                value={activeRetirementAge}
-                onChange={(e) => {
-                  const value = Number(e.target.value)
-                  if (Number.isFinite(value)) companion.setActiveScenarioRetirementAge(value)
-                }}
-              />
-            </div>
+            <NumberInput
+              label="Retirement Age"
+              value={companion.activeScenarioRetirementAge ?? companion.retirementAgeMin}
+              onChange={companion.setActiveScenarioRetirementAge}
+              integer
+              min={companion.retirementAgeMin}
+              max={companion.retirementAgeMax}
+              disabled={!hasSelectedScenario}
+            />
 
             <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
               Effective annual expenses: {companion.activeScenarioAnnualExpenses != null

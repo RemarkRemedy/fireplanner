@@ -28,7 +28,7 @@ const SafeToSpendSchema = z
 
 export const PlannerSnapshotResponseSchema = z
   .object({
-    schemaVersion: z.number(),
+    schemaVersion: z.number().int().min(1),
     monthKey: z.string().optional(),
     structuralMode: z.string().optional(),
     emotionalMode: z.string().optional(),

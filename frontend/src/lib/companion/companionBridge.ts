@@ -7,6 +7,7 @@ import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useUIStore } from '@/stores/useUIStore'
 import type { PlannerSnapshotResponse } from './types'
+import { toFiniteNumber } from './utils'
 
 const MONTHS_PER_YEAR = 12
 
@@ -39,12 +40,6 @@ export function disableLocalStoragePersistence(): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     store.persist.setOptions({ storage: noopPersistStorage as any })
   }
-}
-
-function toFiniteNumber(value: unknown): number | null {
-  if (typeof value !== 'number') return null
-  if (!Number.isFinite(value)) return null
-  return value
 }
 
 /**
