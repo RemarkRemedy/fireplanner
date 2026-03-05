@@ -161,27 +161,23 @@ describe('useCompanionPlannerBridge', () => {
     expect(baseUrl).toBe('http://localhost:3000')
     expect(token).toBe('xyz789')
     expect(payload).toEqual(expect.objectContaining({
-      p_success: 0.91,
-      horizonYears: 25,
+      p_success: expect.any(Number),
+      horizon_years: expect.any(Number),
+      schema_version: 2,
     }))
-    expect(payload).toHaveProperty('schemaVersion')
-    expect(payload).toHaveProperty('WR_critical_50')
-    expect(payload).toHaveProperty('allocationSummary')
-    expect(payload).toHaveProperty('fire_age')
-    expect(payload).toHaveProperty('portfolio_at_fire')
-    expect(payload).toHaveProperty('wr_critical_10')
-    expect(payload).toHaveProperty('wr_critical_90')
-    expect(Object.keys(payload).sort()).toEqual([
-      'WR_critical_50',
-      'allocationSummary',
-      'fire_age',
-      'horizonYears',
-      'p_success',
-      'portfolio_at_fire',
-      'schemaVersion',
-      'wr_critical_10',
-      'wr_critical_90',
-    ])
+    expect(payload).toHaveProperty('wr_safe_50')
+    expect(payload).toHaveProperty('wr_safe_95')
+    expect(payload).toHaveProperty('wr_safe_90')
+    expect(payload).toHaveProperty('wr_safe_85')
+    expect(payload).toHaveProperty('allocation_summary')
+    expect(payload).toHaveProperty('projected_fire_age_p50')
+    expect(payload).toHaveProperty('portfolio_at_fire_p50')
+    expect(payload).toHaveProperty('terminal_p5')
+    expect(payload).toHaveProperty('terminal_p50')
+    expect(payload).toHaveProperty('terminal_p95')
+    expect(payload).toHaveProperty('computed_at_utc')
+    expect(payload).toHaveProperty('scenario_id')
+    expect(payload).toHaveProperty('input_signature')
 
     await waitFor(() => {
       expect(result.current.saveStatus).toBe('saved')

@@ -42,11 +42,12 @@ export interface CompanionScenarioComparison {
   id: string
   name: string
   p_success: number | null
-  WR_critical_50: number | null
-  fireAge: number | null
-  portfolio_at_fire: number | null
-  wr_critical_10: number | null
-  wr_critical_90: number | null
+  wr_safe_50: number | null
+  projected_fire_age_p50: number | null
+  portfolio_at_fire_p50: number | null
+  wr_safe_95: number | null
+  wr_safe_90: number | null
+  wr_safe_85: number | null
   needsRerun: boolean
 }
 
@@ -108,6 +109,7 @@ export function useCompanionPlannerBridge({
   const allocationWeights = useAllocationStore((s) => s.currentWeights)
   const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
   const strategyParams = useSimulationStore((s) => s.strategyParams)
+  const mcMethod = useSimulationStore((s) => s.mcMethod)
   const currentAge = useProfileStore((s) => s.currentAge)
   const annualExpenses = useProfileStore((s) => s.annualExpenses)
   const retirementAge = useProfileStore((s) => s.retirementAge)
@@ -185,11 +187,12 @@ export function useCompanionPlannerBridge({
         id: scenario.id,
         name: scenario.name,
         p_success: isFresh ? (record.payload.p_success ?? null) : null,
-        WR_critical_50: isFresh ? (record.payload.WR_critical_50 ?? null) : null,
-        fireAge: isFresh ? (record.payload.fire_age ?? null) : null,
-        portfolio_at_fire: isFresh ? (record.payload.portfolio_at_fire ?? null) : null,
-        wr_critical_10: isFresh ? (record.payload.wr_critical_10 ?? null) : null,
-        wr_critical_90: isFresh ? (record.payload.wr_critical_90 ?? null) : null,
+        wr_safe_50: isFresh ? (record.payload.wr_safe_50 ?? null) : null,
+        projected_fire_age_p50: isFresh ? (record.payload.projected_fire_age_p50 ?? null) : null,
+        portfolio_at_fire_p50: isFresh ? (record.payload.portfolio_at_fire_p50 ?? null) : null,
+        wr_safe_95: isFresh ? (record.payload.wr_safe_95 ?? null) : null,
+        wr_safe_90: isFresh ? (record.payload.wr_safe_90 ?? null) : null,
+        wr_safe_85: isFresh ? (record.payload.wr_safe_85 ?? null) : null,
         needsRerun: !isFresh,
       }
     })
@@ -395,7 +398,7 @@ export function useCompanionPlannerBridge({
     runContext: ScenarioRunContext,
     mcResult: MonteCarloResult,
   ): PlannerResultsPayload => {
-    return buildPlannerResultsPayload({
+    const payload = buildPlannerResultsPayload({
       result: mcResult,
       initialPortfolio,
       currentAge,
@@ -405,7 +408,11 @@ export function useCompanionPlannerBridge({
       allocationWeights,
       selectedStrategy,
       strategyParams,
+      mcMethod,
+      scenarioId: runContext.scenarioId,
+      scenarioName: scenarios.find((s) => s.id === runContext.scenarioId)?.name,
     })
+    return { ...payload, input_signature: runContext.inputSignature }
   }, [
     initialPortfolio,
     currentAge,
@@ -413,6 +420,8 @@ export function useCompanionPlannerBridge({
     allocationWeights,
     selectedStrategy,
     strategyParams,
+    mcMethod,
+    scenarios,
   ])
 
   // Process MC results: store per-scenario, auto-POST to phone

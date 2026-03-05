@@ -33,7 +33,7 @@ export function CompanionResultsSummary({ companion }: CompanionResultsSummaryPr
           />
           <MetricCell
             label="FIRE Age (MC)"
-            value={activeRow.fireAge != null ? String(activeRow.fireAge) : '\u2014'}
+            value={activeRow.projected_fire_age_p50 != null ? String(activeRow.projected_fire_age_p50) : '\u2014'}
           />
           {companion.deterministicFireAge != null && (
             <MetricCell
@@ -43,20 +43,20 @@ export function CompanionResultsSummary({ companion }: CompanionResultsSummaryPr
             />
           )}
           <MetricCell
-            label="WR Critical"
-            value={formatWRBand(activeRow.wr_critical_10, activeRow.WR_critical_50, activeRow.wr_critical_90)}
-            subtitle={activeRow.wr_critical_10 != null && activeRow.wr_critical_90 != null ? 'p10 / p50 / p90' : undefined}
+            label="Safe WR"
+            value={formatWRBand(activeRow.wr_safe_95, activeRow.wr_safe_50, activeRow.wr_safe_85)}
+            subtitle={activeRow.wr_safe_95 != null && activeRow.wr_safe_85 != null ? '95% / 50% / 85%' : undefined}
           />
-          {activeRow.portfolio_at_fire != null && (
+          {activeRow.portfolio_at_fire_p50 != null && (
             <MetricCell
               label="Portfolio at FIRE"
-              value={formatCurrency(activeRow.portfolio_at_fire)}
+              value={formatCurrency(activeRow.portfolio_at_fire_p50)}
             />
           )}
           <MetricCell
             label="Horizon"
-            value={activeRow.fireAge != null
-              ? `${companion.retirementAgeMax + 1 - activeRow.fireAge}+ yrs`
+            value={activeRow.projected_fire_age_p50 != null
+              ? `${companion.retirementAgeMax + 1 - activeRow.projected_fire_age_p50}+ yrs`
               : '\u2014'}
           />
         </div>

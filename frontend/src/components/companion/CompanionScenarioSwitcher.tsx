@@ -210,7 +210,7 @@ function CompanionComparisonTable({
               <th className="py-2 text-left">Scenario</th>
               <th className="py-2 text-right">P(success)</th>
               <th className="py-2 text-right">FIRE age</th>
-              <th className="py-2 text-right">WR critical</th>
+              <th className="py-2 text-right">Safe WR</th>
             </tr>
           </thead>
           <tbody>
@@ -219,11 +219,11 @@ function CompanionComparisonTable({
               const pDelta = !isBase && base?.p_success != null && row.p_success != null
                 ? row.p_success - base.p_success
                 : null
-              const ageDelta = !isBase && base?.fireAge != null && row.fireAge != null
-                ? Math.round(row.fireAge) - Math.round(base.fireAge)
+              const ageDelta = !isBase && base?.projected_fire_age_p50 != null && row.projected_fire_age_p50 != null
+                ? Math.round(row.projected_fire_age_p50) - Math.round(base.projected_fire_age_p50)
                 : null
-              const wrDelta = !isBase && base?.WR_critical_50 != null && row.WR_critical_50 != null
-                ? row.WR_critical_50 - base.WR_critical_50
+              const wrDelta = !isBase && base?.wr_safe_50 != null && row.wr_safe_50 != null
+                ? row.wr_safe_50 - base.wr_safe_50
                 : null
 
               return (
@@ -242,11 +242,11 @@ function CompanionComparisonTable({
                     {pDelta != null && <DeltaBadge value={pDelta} format={formatDeltaPercent} />}
                   </td>
                   <td className="py-2 text-right whitespace-nowrap">
-                    {row.fireAge ?? '\u2014'}
+                    {row.projected_fire_age_p50 ?? '\u2014'}
                     {ageDelta != null && <DeltaBadge value={ageDelta} format={formatDeltaYears} invert />}
                   </td>
                   <td className="py-2 text-right whitespace-nowrap">
-                    {formatMaybePercent(row.WR_critical_50)}
+                    {formatMaybePercent(row.wr_safe_50)}
                     {wrDelta != null && <DeltaBadge value={wrDelta} format={formatDeltaPercent} />}
                   </td>
                 </tr>
