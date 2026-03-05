@@ -73,12 +73,76 @@ export function CompanionResultsSummary({
         </CardContent>
       </Card>
 
+      <RetireeDrawdownGuard
+        snapshotWithdrawalRate={companion.snapshotWithdrawalRate}
+        wrSafe90={activeRow.wr_safe_90}
+      />
+
       <ActionImpactsSection
         impacts={actionImpacts}
         isPending={actionImpactsPending}
         progress={actionImpactsProgress}
       />
     </div>
+  )
+}
+
+// ── Retiree drawdown guard ────────────────────────────────
+
+function RetireeDrawdownGuard({
+  snapshotWithdrawalRate,
+  wrSafe90,
+}: {
+  snapshotWithdrawalRate: number | null
+  wrSafe90: number | null
+}) {
+  if (snapshotWithdrawalRate == null || wrSafe90 == null) return null
+
+  const isSustainable = snapshotWithdrawalRate <= wrSafe90
+
+  return (
+    <Card className="companion-card">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold">
+          Drawdown Sustainability
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-1 min-w-0">
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <span className="text-sm text-muted-foreground">Current rate:</span>
+              <span className="text-sm font-semibold tabular-nums">
+                {formatPercent(snapshotWithdrawalRate, 2)}
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <span className="text-sm text-muted-foreground">Safe rate (90% conf.):</span>
+              <span className="text-sm font-semibold tabular-nums">
+                {formatPercent(wrSafe90, 2)}
+              </span>
+            </div>
+          </div>
+          <div className="shrink-0 text-right">
+            {isSustainable ? (
+              <div className="text-green-600 dark:text-green-400">
+                <div className="text-lg font-bold">Pass</div>
+                <div className="text-[10px]">Within safe range</div>
+              </div>
+            ) : (
+              <div className="text-amber-600 dark:text-amber-400">
+                <div className="text-lg font-bold">Caution</div>
+                <div className="text-[10px]">Exceeds safe rate</div>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="mt-2 text-[10px] text-muted-foreground leading-relaxed">
+          Based on simulated portfolio survival at 90% confidence.
+          This is a sustainability check, not a spending target.
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
