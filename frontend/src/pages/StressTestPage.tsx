@@ -38,6 +38,7 @@ import { usePropertyStore } from '@/stores/usePropertyStore'
 import { buildMonteCarloEngineParams } from '@/lib/simulation/monteCarloParams'
 import { runMonteCarloWorker } from '@/lib/simulation/workerClient'
 import {
+  STRESS_SCENARIOS,
   buildStressScenarioComparisonRow,
   buildStressScenarioRunPlan,
   type StressScenarioComparisonRow,
@@ -67,6 +68,8 @@ import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useCompanionPlannerBridge } from '@/hooks/useCompanionPlannerBridge'
 import { CompanionScenarioSwitcher } from '@/components/companion/CompanionScenarioSwitcher'
 import { CompanionResultsSummary } from '@/components/companion/CompanionResultsSummary'
+
+const ALL_STRESS_SCENARIO_IDS = STRESS_SCENARIOS.map((s) => s.id)
 
 function TabIntro({ children }: { children: React.ReactNode }) {
   return (
@@ -658,26 +661,23 @@ export function StressTestPage() {
 
       const runPlan = buildStressScenarioRunPlan(params, nonBaseScenarioIds)
 
-      const rows = await Promise.all(
-        runPlan.map(async (run) => {
-          const result = await runMonteCarloWorker(run.params, { signal: controller.signal })
-          return buildStressScenarioComparisonRow(run.scenarioId, result, run.params.retirementAge, run.params.currentAge)
-        })
-      )
-
-      if (controller.signal.aborted) return
-
-      setStressScenarioResults((prev) => {
-        const next: Partial<Record<StressScenarioId, StressScenarioComparisonRow>> = { ...prev }
-        for (const row of rows) {
-          next[row.scenarioId] = row
-        }
-        return next
+      const promises = runPlan.map(async (run) => {
+        const result = await runMonteCarloWorker(run.params, { signal: controller.signal })
+        if (controller.signal.aborted) return
+        const row = buildStressScenarioComparisonRow(run.scenarioId, result, run.params.retirementAge, run.params.currentAge)
+        setStressScenarioResults((prev) => ({ ...prev, [row.scenarioId]: row }))
       })
+      const settled = await Promise.allSettled(promises)
+      const failures = settled.filter((r) => r.status === 'rejected')
+      if (failures.length > 0 && !controller.signal.aborted) {
+        console.error('stress_scenarios_partial_failure', failures)
+        setStressScenarioComparisonError('Some stress scenarios failed. Try again.')
+      }
     } catch (error) {
-      if (controller.signal.aborted) return
-      console.error('stress_scenarios_failed', error)
-      setStressScenarioComparisonError('Could not complete all stress scenarios. Try again.')
+      if (!controller.signal.aborted) {
+        console.error('stress_scenarios_failed', error)
+        setStressScenarioComparisonError('Could not run stress scenarios. Try again.')
+      }
     } finally {
       if (scenarioBatchAbortRef.current === controller) {
         scenarioBatchAbortRef.current = null
@@ -727,6 +727,14 @@ export function StressTestPage() {
       return next
     })
   }, [selectedStressScenarioIds])
+
+  useEffect(() => {
+    if (companion.isCompanionMode) {
+      setSelectedStressScenarioIds(ALL_STRESS_SCENARIO_IDS)
+    } else {
+      setSelectedStressScenarioIds(['base'])
+    }
+  }, [companion.isCompanionMode])
 
   useEffect(() => {
     return () => {
