@@ -53,7 +53,6 @@ export const router = createBrowserRouter([
       { path: '/projection', element: page(ProjectionPage) },
       { path: '/withdrawal', element: page(WithdrawalPage) },
       { path: '/stress-test', element: page(StressTestPage) },
-      { path: '/planner', element: page(StressTestPage) },
       { path: '/dashboard', element: page(DashboardPage) },
       { path: '/reference', element: page(ReferencePage) },
       { path: '/checklist', element: page(ChecklistPage) },

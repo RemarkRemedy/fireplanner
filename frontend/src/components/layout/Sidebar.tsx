@@ -10,7 +10,7 @@ import { ShareButton } from '@/components/shared/ShareButton'
 import { ScenarioManager } from './ScenarioManager'
 import { ThemeToggle } from './ThemeToggle'
 import { trackEvent } from '@/lib/analytics'
-import { isCompanionMode } from '@/lib/companion/isCompanionMode'
+import { isCompanionMode, COMPANION_SECTION_SCROLL_KEY } from '@/lib/companion/isCompanionMode'
 import {
   User,
   DollarSign,
@@ -131,8 +131,6 @@ const AFTER_INPUTS_GROUPS: { title: string; items: NavItem[] }[] = [
   },
 ]
 
-const COMPANION_SECTION_SCROLL_KEY = 'fireplanner-companion-target-section'
-
 function StatusDot({ sectionId, sections }: { sectionId: string; sections: ReturnType<typeof useSectionCompletion>['sections'] }) {
   const section = sections[sectionId as SectionId]
   if (!section) return null
@@ -172,16 +170,7 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
   const inputSections = allInputSections.filter((s) => !hiddenSectionIds.has(s.sectionId))
   const startGroups = companionMode ? [] : NON_INPUT_GROUPS
   const afterInputGroups = companionMode
-    ? AFTER_INPUTS_GROUPS
-      .filter((group) => group.title === 'ANALYSIS' || group.title === 'RESULTS')
-      .map((group) => ({
-        ...group,
-        items: group.items.map((item) => (
-          item.path === '/stress-test'
-            ? { ...item, path: '/planner' }
-            : item
-        )),
-      }))
+    ? AFTER_INPUTS_GROUPS.filter((group) => group.title === 'PLAN' || group.title === 'ANALYSIS')
     : AFTER_INPUTS_GROUPS
 
   const handleSectionClick = useCallback(
@@ -208,17 +197,14 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
             {group.title}
           </div>
           <div className="flex flex-col gap-0.5">
-            {group.items.map((item) => {
-              const itemPath = companionMode && item.path === '/stress-test' ? '/planner' : item.path
-              const destination = itemPath
-              return (
+            {group.items.map((item) => (
               <NavLink
-                key={`${group.title}-${destination}`}
-                to={destination}
+                key={`${group.title}-${item.path}`}
+                to={item.path}
                 onClick={onNavigate}
                 className={cn(
                   'flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors',
-                  location.pathname === itemPath
+                  location.pathname === item.path
                     ? 'bg-primary text-primary-foreground'
                     : 'hover:bg-accent'
                 )}
@@ -226,8 +212,7 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
                 {item.icon}
                 {item.label}
               </NavLink>
-              )
-            })}
+            ))}
           </div>
         </div>
       ))}
@@ -266,17 +251,14 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
             {group.title}
           </div>
           <div className="flex flex-col gap-0.5">
-            {group.items.map((item) => {
-              const itemPath = companionMode && item.path === '/stress-test' ? '/planner' : item.path
-              const destination = itemPath
-              return (
+            {group.items.map((item) => (
               <NavLink
-                key={destination}
-                to={destination}
+                key={item.path}
+                to={item.path}
                 onClick={onNavigate}
                 className={cn(
                   'flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors',
-                  location.pathname === itemPath
+                  location.pathname === item.path
                     ? 'bg-primary text-primary-foreground'
                     : 'hover:bg-accent'
                 )}
@@ -284,8 +266,7 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
                 {item.icon}
                 {item.label}
               </NavLink>
-              )
-            })}
+            ))}
           </div>
         </div>
       ))}
@@ -517,8 +498,8 @@ export function Sidebar() {
         {(companionMode
           ? [
               { label: 'Inputs', path: '/inputs', icon: <Settings2 className="h-5 w-5" /> },
-              { label: 'Test', path: '/planner', icon: <ShieldAlert className="h-5 w-5" /> },
-              { label: 'Dash', path: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+              { label: 'Plan', path: '/projection', icon: <TableProperties className="h-5 w-5" /> },
+              { label: 'Test', path: '/stress-test', icon: <ShieldAlert className="h-5 w-5" /> },
             ]
           : [
           { label: 'Inputs', path: '/inputs', icon: <Settings2 className="h-5 w-5" /> },
@@ -527,12 +508,10 @@ export function Sidebar() {
           { label: 'Dash', path: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
           { label: 'Strategies', path: '/withdrawal', icon: <Banknote className="h-5 w-5" /> },
           ]
-        ).map((item) => {
-          const destination = item.path
-          return (
+        ).map((item) => (
           <NavLink
             key={item.path}
-            to={destination}
+            to={item.path}
             className={cn(
               'flex flex-col items-center gap-0.5 text-xs min-w-[48px]',
               location.pathname === item.path
@@ -543,8 +522,7 @@ export function Sidebar() {
             {item.icon}
             {item.label}
           </NavLink>
-          )
-        })}
+        ))}
       </nav>
     </>
   )

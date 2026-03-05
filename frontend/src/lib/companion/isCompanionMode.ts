@@ -1,19 +1,57 @@
 const COMPANION_SESSION_KEY = 'fireplanner-companion-mode'
 const COMPANION_TOKEN_SESSION_KEY = 'fireplanner-companion-token'
 
+export const COMPANION_SECTION_SCROLL_KEY = 'fireplanner-companion-target-section'
+
+let _initialized = false
+
 /**
- * Detect companion mode from URL query param or sessionStorage flag.
- * Companion mode is entered via `?companion=1` in the URL. Once detected,
- * the flag is persisted to sessionStorage for cross-navigation persistence.
+ * Lazy-init: On first call, captures `?companion=1` and `?token=` from the URL
+ * into sessionStorage, then scrubs them from the URL via replaceState.
+ *
+ * Because `isCompanionMode()` is called at `router.tsx` module-eval time
+ * (before React mounts), the URL is cleaned before any deferred scripts
+ * can leak the token via referrer headers or browser history.
  */
-export function isCompanionMode(): boolean {
-  if (typeof window === 'undefined') return false
+function initialize(): void {
+  if (_initialized) return
+  _initialized = true
+
+  if (typeof window === 'undefined') return
 
   const url = new URL(window.location.href)
+  let changed = false
+
   if (url.searchParams.get('companion') === '1') {
     try { sessionStorage.setItem(COMPANION_SESSION_KEY, '1') } catch { /* unavailable */ }
-    return true
+    changed = true
   }
+
+  const tokenFromQuery = url.searchParams.get('token')?.trim() ?? ''
+  if (tokenFromQuery) {
+    try { sessionStorage.setItem(COMPANION_TOKEN_SESSION_KEY, tokenFromQuery) } catch { /* unavailable */ }
+    changed = true
+  }
+
+  // Scrub companion params from URL immediately
+  if (changed) {
+    url.searchParams.delete('companion')
+    url.searchParams.delete('token')
+    window.history.replaceState(
+      window.history.state ?? {},
+      '',
+      `${url.pathname}${url.search}${url.hash}`,
+    )
+  }
+}
+
+/**
+ * Detect companion mode. First call triggers lazy init (capture + scrub).
+ */
+export function isCompanionMode(): boolean {
+  initialize()
+
+  if (typeof window === 'undefined') return false
 
   try {
     return sessionStorage.getItem(COMPANION_SESSION_KEY) === '1'
@@ -23,20 +61,13 @@ export function isCompanionMode(): boolean {
 }
 
 /**
- * Retrieve the companion token from the URL query param or sessionStorage.
- * On first access, the token from `?token=` is persisted to sessionStorage
- * and scrubbed from the URL via replaceState.
+ * Retrieve the companion token from sessionStorage.
+ * First call triggers lazy init if not already done.
  */
 export function getCompanionToken(): string | null {
+  initialize()
+
   if (typeof window === 'undefined') return null
-
-  const url = new URL(window.location.href)
-  const tokenFromQuery = url.searchParams.get('token')?.trim() ?? ''
-
-  if (tokenFromQuery) {
-    try { sessionStorage.setItem(COMPANION_TOKEN_SESSION_KEY, tokenFromQuery) } catch { /* unavailable */ }
-    return tokenFromQuery
-  }
 
   try {
     const stored = sessionStorage.getItem(COMPANION_TOKEN_SESSION_KEY)?.trim() ?? ''
@@ -56,30 +87,9 @@ export function getCompanionBaseUrl(): string {
 }
 
 /**
- * Scrub companion-related query params from the URL.
- * Call once after bootstrap to prevent token leakage via browser history,
- * referrer headers, or URL sharing.
+ * No-op retained for backward compatibility.
+ * Scrubbing now happens inside `initialize()` on first access.
  */
 export function scrubCompanionParams(): void {
-  if (typeof window === 'undefined') return
-
-  const url = new URL(window.location.href)
-  let changed = false
-
-  if (url.searchParams.has('token')) {
-    url.searchParams.delete('token')
-    changed = true
-  }
-  if (url.searchParams.has('companion')) {
-    url.searchParams.delete('companion')
-    changed = true
-  }
-
-  if (changed) {
-    window.history.replaceState(
-      window.history.state ?? {},
-      '',
-      `${url.pathname}${url.search}${url.hash}`,
-    )
-  }
+  // Intentionally empty — scrubbing is handled by lazy init
 }
