@@ -69,6 +69,7 @@ import { useCompanionPlannerBridge } from '@/hooks/useCompanionPlannerBridge'
 import { CompanionScenarioSwitcher } from '@/components/companion/CompanionScenarioSwitcher'
 import { CompanionResultsSummary } from '@/components/companion/CompanionResultsSummary'
 import { CompanionStressComparison } from '@/components/companion/CompanionStressComparison'
+import { runActionImpactAnalysis, type ActionImpactResult } from '@/lib/companion/actionImpacts'
 
 const ALL_STRESS_SCENARIO_IDS = STRESS_SCENARIOS.map((s) => s.id)
 
@@ -617,7 +618,13 @@ export function StressTestPage() {
     Partial<Record<StressScenarioId, StressScenarioComparisonRow>>
   >({})
   const scenarioBatchAbortRef = useRef<AbortController | null>(null)
+  const actionImpactAbortRef = useRef<AbortController | null>(null)
   const lastBaseRetirementAgeRef = useRef(currentRetirementAge)
+  const [actionImpacts, setActionImpacts] = useState<ActionImpactResult[] | null>(null)
+  const [isActionImpactsPending, setIsActionImpactsPending] = useState(false)
+  const [actionImpactsProgress, setActionImpactsProgress] = useState<{ completed: number; total: number } | null>(null)
+  const [actionImpactsError, setActionImpactsError] = useState<string | null>(null)
+  const actionImpactTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const stressScenarioComparisonRows = useMemo(
     () => selectedStressScenarioIds
@@ -687,12 +694,95 @@ export function StressTestPage() {
     }
   }, [analysisPortfolio.initialPortfolio, analysisPortfolio.allocationWeights])
 
+  const runCompanionActionImpacts = useCallback(async (
+    baseResult: import('@/lib/types').MonteCarloResult,
+    overrides?: { annualExpenses?: number; retirementAge?: number },
+  ) => {
+    actionImpactAbortRef.current?.abort()
+    if (actionImpactTimeoutRef.current) {
+      clearTimeout(actionImpactTimeoutRef.current)
+      actionImpactTimeoutRef.current = null
+    }
+    const controller = new AbortController()
+    actionImpactAbortRef.current = controller
+    setIsActionImpactsPending(true)
+    setActionImpacts(null)
+    setActionImpactsProgress(null)
+    setActionImpactsError(null)
+
+    // 15s timeout guardrail
+    actionImpactTimeoutRef.current = setTimeout(() => {
+      controller.abort('timeout')
+    }, 15_000)
+
+    try {
+      const profile = useProfileStore.getState()
+      const annualIncome = profile.annualIncome ?? 0
+      const isRetiree = profile.currentAge >= (overrides?.retirementAge ?? profile.retirementAge)
+
+      const output = await runActionImpactAnalysis({
+        profile,
+        income: useIncomeStore.getState(),
+        allocation: useAllocationStore.getState(),
+        simulation: useSimulationStore.getState(),
+        property: usePropertyStore.getState(),
+        initialPortfolio: analysisPortfolio.initialPortfolio,
+        allocationWeights: analysisPortfolio.allocationWeights,
+        baseResult,
+        isRetiree,
+        annualIncome,
+        signal: controller.signal,
+        profileOverrides: overrides
+          ? {
+              ...(overrides.annualExpenses != null ? { annualExpenses: overrides.annualExpenses } : {}),
+              ...(overrides.retirementAge != null ? { retirementAge: overrides.retirementAge } : {}),
+            }
+          : undefined,
+        onProgress: (completed, total) => {
+          if (!controller.signal.aborted) {
+            setActionImpactsProgress({ completed, total })
+          }
+        },
+      })
+
+      // Runner returns partial results on abort/timeout instead of throwing
+      if (controller.signal.reason === 'timeout') {
+        setActionImpacts(output.impacts.length > 0 ? output.impacts : null)
+        setActionImpactsError(
+          output.impacts.length > 0
+            ? `Analysis timed out. Showing ${output.completedLevers}/${output.totalLevers} results.`
+            : 'Analysis timed out after 15 seconds. Please try again.',
+        )
+      } else if (!controller.signal.aborted) {
+        setActionImpacts(output.impacts)
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        console.error('action_impacts_failed', error)
+        setActionImpactsError('Action impact analysis failed. Please try again.')
+      }
+    } finally {
+      if (actionImpactTimeoutRef.current) {
+        clearTimeout(actionImpactTimeoutRef.current)
+        actionImpactTimeoutRef.current = null
+      }
+      if (actionImpactAbortRef.current === controller) {
+        actionImpactAbortRef.current = null
+        setIsActionImpactsPending(false)
+        setActionImpactsProgress(null)
+      }
+    }
+  }, [analysisPortfolio.initialPortfolio, analysisPortfolio.allocationWeights])
+
+  const lastRunOverridesRef = useRef<{ annualExpenses?: number; retirementAge?: number } | undefined>(undefined)
+
   const runMonteCarlo = useCallback(() => {
     const overrides = companion.isCompanionMode
       ? companion.prepareSimulationRun()
       : undefined
     const baseRetirementAge = overrides?.retirementAge ?? useProfileStore.getState().retirementAge
     lastBaseRetirementAgeRef.current = baseRetirementAge
+    lastRunOverridesRef.current = overrides
 
     setStressScenarioComparisonError(null)
     setStressScenarioResults((prev) => {
@@ -702,6 +792,19 @@ export function StressTestPage() {
       }
       return next
     })
+
+    // Abort in-flight action impact analysis and clear previous results
+    if (companion.isCompanionMode) {
+      actionImpactAbortRef.current?.abort()
+      actionImpactAbortRef.current = null
+      if (actionImpactTimeoutRef.current) {
+        clearTimeout(actionImpactTimeoutRef.current)
+        actionImpactTimeoutRef.current = null
+      }
+      setActionImpacts(null)
+      setActionImpactsError(null)
+      setIsActionImpactsPending(false)
+    }
 
     mc.mutate(overrides)
     void runSelectedStressScenarios(selectedStressScenarioIds, overrides)
@@ -717,6 +820,12 @@ export function StressTestPage() {
     )
     setStressScenarioResults((prev) => ({ ...prev, base: row }))
   }, [mc.data, selectedStressScenarioIds])
+
+  // Trigger action impact analysis after base MC completes in companion mode
+  useEffect(() => {
+    if (!companion.isCompanionMode || !mc.data || mc.isPending) return
+    void runCompanionActionImpacts(mc.data, lastRunOverridesRef.current)
+  }, [companion.isCompanionMode, mc.data, mc.isPending, runCompanionActionImpacts])
 
   useEffect(() => {
     setStressScenarioResults((prev) => {
@@ -741,6 +850,12 @@ export function StressTestPage() {
     return () => {
       scenarioBatchAbortRef.current?.abort()
       scenarioBatchAbortRef.current = null
+      actionImpactAbortRef.current?.abort()
+      actionImpactAbortRef.current = null
+      if (actionImpactTimeoutRef.current) {
+        clearTimeout(actionImpactTimeoutRef.current)
+        actionImpactTimeoutRef.current = null
+      }
     }
   }, [])
 
@@ -802,7 +917,13 @@ export function StressTestPage() {
             simulationProgress={mc.progress}
             onRunScenario={runMonteCarlo}
           />
-          <CompanionResultsSummary companion={companion} />
+          <CompanionResultsSummary
+            companion={companion}
+            actionImpacts={actionImpacts}
+            actionImpactsPending={isActionImpactsPending}
+            actionImpactsProgress={actionImpactsProgress}
+            actionImpactsError={actionImpactsError}
+          />
           <CompanionStressComparison
             rows={stressScenarioComparisonRows}
             isPending={isStressScenarioComparisonPending}

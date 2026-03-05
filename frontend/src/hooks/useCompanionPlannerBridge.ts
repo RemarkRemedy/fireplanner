@@ -72,6 +72,7 @@ export interface CompanionPlannerBridgeState {
   activeScenarioNeedsRerun: boolean
   lastRunScenarioId: string | null
   deterministicFireAge: number | null
+  snapshotWithdrawalRate: number | null
   selectScenario: (scenarioId: string) => void
   duplicateActiveScenario: () => void
   setActiveScenarioMonthlyExpenseDelta: (value: number) => void
@@ -130,6 +131,7 @@ export function useCompanionPlannerBridge({
   const [scenarioResults, setScenarioResults] = useState<Record<string, ScenarioResultRecord>>({})
   const [lastRunScenarioId, setLastRunScenarioId] = useState<string | null>(null)
   const [deterministicFireAge, setDeterministicFireAge] = useState<number | null>(null)
+  const [snapshotWithdrawalRate, setSnapshotWithdrawalRate] = useState<number | null>(null)
 
   const minRetirementAge = useMemo(
     () => Math.max(35, Math.round(currentAge + 1)),
@@ -241,6 +243,14 @@ export function useCompanionPlannerBridge({
         applySnapshotToStores(snapshot)
         if (typeof snapshot.deterministicFireAge === 'number' && Number.isFinite(snapshot.deterministicFireAge)) {
           setDeterministicFireAge(Math.round(snapshot.deterministicFireAge))
+        }
+        // Compute actual withdrawal rate from snapshot for retiree guard
+        const aw = snapshot.annualWithdrawal
+        const ia = snapshot.investableAssets
+        if (typeof aw === 'number' && Number.isFinite(aw) && aw > 0
+            && typeof ia === 'number' && Number.isFinite(ia) && ia > 0) {
+          // Clamp to [0, 1] — rates above 100% indicate data issues, not real WR
+          setSnapshotWithdrawalRate(Math.min(1, aw / ia))
         }
         setBootstrapStatus('loaded')
       })
@@ -512,6 +522,7 @@ export function useCompanionPlannerBridge({
     activeScenarioNeedsRerun,
     lastRunScenarioId,
     deterministicFireAge,
+    snapshotWithdrawalRate,
     selectScenario,
     duplicateActiveScenario,
     setActiveScenarioMonthlyExpenseDelta,
