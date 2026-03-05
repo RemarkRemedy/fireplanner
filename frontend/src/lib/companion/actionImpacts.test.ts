@@ -6,9 +6,10 @@ import {
   computeActionImpacts,
   runActionImpactAnalysis,
   type ActionImpactMetrics,
+  type ActionLever,
   type LeverContext,
 } from './actionImpacts'
-import type { MonteCarloResult, StrategyParamsMap } from '@/lib/types'
+import type { MonteCarloResult, StrategyParamsMap, WithdrawalStrategyType } from '@/lib/types'
 import { runMonteCarloWorker } from '@/lib/simulation/workerClient'
 
 vi.mock('@/lib/simulation/workerClient', () => ({
@@ -295,6 +296,62 @@ describe('deterministic output bounds', () => {
     const modified = overrides.simulationOverrides?.strategyParams
     expect(modified?.vpw).toEqual(STRATEGY_PARAMS.vpw)
   })
+
+  it('buildLeverOverrides returns empty for unknown lever id', () => {
+    const unknownLever: ActionLever = {
+      id: 'nonexistent_lever',
+      label: 'Unknown',
+      shortLabel: 'Unknown',
+      description: 'Does not exist',
+      applicableTo: 'all',
+    }
+    const overrides = buildLeverOverrides(unknownLever, BASE_CTX)
+    expect(overrides).toEqual({})
+  })
+
+  it('withdrawal_down_10pct scales all strategy types correctly', () => {
+    const withdrawalLever = ACTION_LEVERS.find((l) => l.id === 'withdrawal_down_10pct')!
+
+    const strategies: Array<{ strategy: WithdrawalStrategyType; field: string; path: string[] }> = [
+      { strategy: 'vanguard_dynamic', field: 'swr', path: ['vanguard_dynamic', 'swr'] },
+      { strategy: 'cape_based', field: 'baseRate', path: ['cape_based', 'baseRate'] },
+      { strategy: 'floor_ceiling', field: 'targetRate', path: ['floor_ceiling', 'targetRate'] },
+      { strategy: 'percent_of_portfolio', field: 'rate', path: ['percent_of_portfolio', 'rate'] },
+      { strategy: 'sensible_withdrawals', field: 'baseRate', path: ['sensible_withdrawals', 'baseRate'] },
+      { strategy: 'ninety_five_percent', field: 'swr', path: ['ninety_five_percent', 'swr'] },
+      { strategy: 'endowment', field: 'swr', path: ['endowment', 'swr'] },
+    ]
+
+    for (const { strategy, path } of strategies) {
+      const ctx = { ...BASE_CTX, selectedStrategy: strategy }
+      const overrides = buildLeverOverrides(withdrawalLever, ctx)
+      const params = overrides.simulationOverrides?.strategyParams
+      expect(params).toBeDefined()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const original = (STRATEGY_PARAMS as any)[path[0]][path[1]]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const modified = (params as any)[path[0]][path[1]]
+      expect(modified).toBeCloseTo(original * 0.9)
+    }
+  })
+
+  it('floor_ceiling scales floor and ceiling alongside targetRate', () => {
+    const withdrawalLever = ACTION_LEVERS.find((l) => l.id === 'withdrawal_down_10pct')!
+    const ctx = { ...BASE_CTX, selectedStrategy: 'floor_ceiling' as const }
+    const overrides = buildLeverOverrides(withdrawalLever, ctx)
+    const params = overrides.simulationOverrides?.strategyParams?.floor_ceiling
+    expect(params?.floor).toBeCloseTo(STRATEGY_PARAMS.floor_ceiling.floor * 0.9)
+    expect(params?.ceiling).toBeCloseTo(STRATEGY_PARAMS.floor_ceiling.ceiling * 0.9)
+    expect(params?.targetRate).toBeCloseTo(STRATEGY_PARAMS.floor_ceiling.targetRate * 0.9)
+  })
+
+  it('derisk_10pp returns unchanged weights when totalEquity is 0', () => {
+    const deriskLever = ACTION_LEVERS.find((l) => l.id === 'derisk_10pp')!
+    const ctx = { ...BASE_CTX, currentWeights: [0, 0, 0, 0.5, 0, 0, 0.5, 0] }
+    const overrides = buildLeverOverrides(deriskLever, ctx)
+    const weights = overrides.allocationWeights!
+    expect(weights).toEqual([0, 0, 0, 0.5, 0, 0, 0.5, 0])
+  })
 })
 
 describe('runActionImpactAnalysis', () => {
@@ -375,6 +432,32 @@ describe('runActionImpactAnalysis', () => {
     // Should have partial results (1 lever completed before abort)
     expect(output.completedLevers).toBe(1)
     expect(output.impacts.length).toBe(1)
+  })
+
+  it('returns zero results when signal is already aborted', async () => {
+    mockedRunMC.mockClear()
+    mockedRunMC.mockResolvedValue(makeMockResult(0.95))
+
+    const controller = new AbortController()
+    controller.abort()
+
+    const output = await runActionImpactAnalysis({
+      profile: MOCK_PROFILE,
+      income: MOCK_INCOME,
+      allocation: MOCK_ALLOCATION,
+      simulation: MOCK_SIMULATION,
+      property: MOCK_PROPERTY,
+      initialPortfolio: 500_000,
+      allocationWeights: BASE_CTX.currentWeights,
+      baseResult: SAMPLE_RESULT,
+      isRetiree: false,
+      annualIncome: 100_000,
+      signal: controller.signal,
+    })
+
+    expect(output.completedLevers).toBe(0)
+    expect(output.impacts).toHaveLength(0)
+    expect(mockedRunMC).not.toHaveBeenCalled()
   })
 
   it('filters out withdrawal_down_10pct when withdrawalBasis is expenses', async () => {
