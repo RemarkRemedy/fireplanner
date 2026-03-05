@@ -179,7 +179,7 @@ export function buildPlannerResultsPayload(input: BuildPayloadInput): PlannerRes
     ? roundMoney(medians[retirementIdx])
     : roundMoney(result.terminal_stats.median)
 
-  const horizonYears = Math.max(0, Math.round(lifeExpectancy - retirementAge))
+  const horizonYears = Math.max(1, Math.round(lifeExpectancy - retirementAge))
 
   // Failure probabilities from 5-year bins
   const nSims = result.n_simulations || 1
