@@ -56,6 +56,7 @@ const BASE_RESULT: MonteCarloResult = {
     buckets: ['Year 1-10', 'Year 11-20'],
     counts: [0, 120],
     total_failures: 120,
+    counts_5y: [0, 0],
   },
   withdrawal_bands: {
     years: [0],

@@ -765,6 +765,14 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
     }
   }
 
+  // 5-year failure bins for companion payload
+  let fail_0_4 = 0
+  let fail_5_9 = 0
+  for (const fy of failedYears) {
+    if (fy >= 0 && fy < 5) fail_0_4++
+    else if (fy >= 5 && fy < 10) fail_5_9++
+  }
+
   const decades: [number, number][] = [[0, 10], [10, 20], [20, 30], [30, 40], [40, 50]]
   const bucketLabels: string[] = []
   const bucketCounts: number[] = []
@@ -783,6 +791,7 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
     buckets: bucketLabels,
     counts: bucketCounts,
     total_failures: failedYears.length,
+    counts_5y: [fail_0_4, fail_5_9],
   }
 
   const withdrawalBands: PercentileBands = {

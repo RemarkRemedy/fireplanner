@@ -34,6 +34,7 @@ self.onmessage = (event: MessageEvent<RunMessage>) => {
         confidence_95: optimizeSwr(0.95, params),
         confidence_90: optimizeSwr(0.90, params),
         confidence_85: optimizeSwr(0.85, params),
+        confidence_50: optimizeSwr(0.50, params),
       }
     } catch {
       // SWR optimization is optional; simulation result remains valid.

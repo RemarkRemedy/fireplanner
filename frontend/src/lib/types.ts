@@ -628,12 +628,14 @@ export interface SafeSwr {
   confidence_95: number
   confidence_90: number
   confidence_85: number
+  confidence_50: number
 }
 
 export interface FailureDistribution {
   buckets: string[]
   counts: number[]
   total_failures: number
+  counts_5y: [number, number]  // [years 0-4, years 5-9]
 }
 
 export interface SpendingMetrics {

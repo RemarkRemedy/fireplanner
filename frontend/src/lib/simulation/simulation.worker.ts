@@ -30,6 +30,7 @@ self.onmessage = (e: MessageEvent) => {
           confidence_95: optimizeSwr(0.95, e.data.params),
           confidence_90: optimizeSwr(0.90, e.data.params),
           confidence_85: optimizeSwr(0.85, e.data.params),
+          confidence_50: optimizeSwr(0.50, e.data.params),
         }
       } catch {
         /* skip SWR optimization on error */

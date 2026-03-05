@@ -49,11 +49,13 @@ const SAMPLE_RESULT: MonteCarloResult = {
     confidence_95: 0.03,
     confidence_90: 0.035,
     confidence_85: 0.04,
+    confidence_50: 0.047,
   },
   failure_distribution: {
     buckets: ['0-5'],
     counts: [100],
     total_failures: 100,
+    counts_5y: [0, 0],
   },
   withdrawal_bands: {
     years: [0],
