@@ -118,11 +118,12 @@ test.describe('Monte Carlo Simulation', () => {
   test('companion mode runs in planner route and renders companion charts', async ({ page }) => {
     const postedPayloads: unknown[] = []
 
-    await page.route('**/planner/snapshot?*', async (route) => {
+    await page.route('**/api/planner/snapshot*', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
+          schemaVersion: 1,
           avgMonthlyIncome: 4000,
           avgMonthlyExpense: 6200,
           avgMonthlySavings: -2200,
@@ -132,7 +133,7 @@ test.describe('Monte Carlo Simulation', () => {
       })
     })
 
-    await page.route('**/planner/results?*', async (route) => {
+    await page.route('**/api/planner/results*', async (route) => {
       const payload = route.request().postDataJSON()
       postedPayloads.push(payload)
       await route.fulfill({
@@ -142,7 +143,7 @@ test.describe('Monte Carlo Simulation', () => {
       })
     })
 
-    await page.goto('/planner?token=e2e-token&companion=1')
+    await page.goto('/planner/stress-test?token=e2e-token&companion=1')
     await expect(page).toHaveURL(/\/planner/)
     await expect(page.getByText(/loaded from your expense data/i)).toBeVisible({ timeout: 15000 })
 
@@ -162,5 +163,10 @@ test.describe('Monte Carlo Simulation', () => {
     expect(firstPayload).toHaveProperty('WR_critical_50')
     expect(firstPayload).toHaveProperty('horizonYears')
     expect(firstPayload).toHaveProperty('allocationSummary')
+    expect(firstPayload).toHaveProperty('schemaVersion')
+    expect(firstPayload).toHaveProperty('fire_age')
+    expect(firstPayload).toHaveProperty('portfolio_at_fire')
+    expect(firstPayload).toHaveProperty('wr_critical_10')
+    expect(firstPayload).toHaveProperty('wr_critical_90')
   })
 })
