@@ -214,7 +214,6 @@ function ActionImpactsSection({
 
 function ActionImpactRow({ impact, rank }: { impact: ActionImpactResult; rank: number }) {
   const deltaP = impact.delta_p_success
-  const isPositive = deltaP > 0
 
   return (
     <div className="rounded-lg border bg-card px-3 py-2.5">

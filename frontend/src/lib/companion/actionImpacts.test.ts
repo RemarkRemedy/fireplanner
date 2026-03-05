@@ -250,7 +250,7 @@ describe('deterministic output bounds', () => {
       { ...SAMPLE_RESULT, success_rate: -0.5 },
       { ...SAMPLE_RESULT, success_rate: 2.0 },
       { ...SAMPLE_RESULT, n_simulations: 1 },
-      { ...SAMPLE_RESULT, failure_distribution: { ...SAMPLE_RESULT.failure_distribution, counts_5y: [10000, 10000] } },
+      { ...SAMPLE_RESULT, failure_distribution: { ...SAMPLE_RESULT.failure_distribution, counts_5y: [10000, 10000] as [number, number] } },
     ]
 
     for (const result of edgeCases) {
@@ -348,7 +348,7 @@ describe('runActionImpactAnalysis', () => {
 
   it('stops on abort and returns partial results', async () => {
     let callCount = 0
-    mockedRunMC.mockImplementation(async (_: never, opts?: { signal?: AbortSignal }) => {
+    mockedRunMC.mockImplementation(async () => {
       callCount++
       if (callCount >= 2) {
         // Simulate abort after 1st lever
@@ -384,7 +384,11 @@ describe('runActionImpactAnalysis', () => {
       profile: MOCK_PROFILE,
       income: MOCK_INCOME,
       allocation: MOCK_ALLOCATION,
-      simulation: { ...MOCK_SIMULATION, withdrawalBasis: 'expenses' } as never,
+      simulation: {
+        selectedStrategy: 'constant_dollar',
+        strategyParams: STRATEGY_PARAMS,
+        withdrawalBasis: 'expenses',
+      } as never,
       property: MOCK_PROPERTY,
       initialPortfolio: 500_000,
       allocationWeights: BASE_CTX.currentWeights,
