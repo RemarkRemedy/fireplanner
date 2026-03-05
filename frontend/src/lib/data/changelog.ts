@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 /** Newest first. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-03-06',
+    category: 'feature',
+    title: 'Companion mode integration tests for cross-module boundaries',
+    description:
+      'Added 15 integration tests covering three previously untested boundaries: lever override propagation through the real Monte Carlo param builder, snapshot withdrawal rate calculation with clamping and null guards, and StressTestPage orchestration including 15-second timeout guardrails, abort-on-rerun, error display, and cleanup on unmount.',
+    affectedSections: ['section-stress-test'],
+    insight:
+      'Unit tests mocked buildMonteCarloEngineParams to an empty object, so lever overrides were never verified end-to-end. The new integration tests call the real param builder and confirm that expense cuts, retirement age delays, and withdrawal rate reductions actually flow through to the MC engine parameters.',
+  },
+  {
     date: '2026-03-05',
     category: 'feature',
     title: 'Companion mode for Expense app integration',
