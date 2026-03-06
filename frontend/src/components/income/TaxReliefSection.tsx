@@ -97,7 +97,7 @@ export function TaxReliefSection() {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           Personal Tax Reliefs
-          <InfoTooltip text="Annual personal tax reliefs reduce your chargeable income. Use Simple mode for a single number, or Detailed mode for a breakdown of individual IRAS reliefs (YA 2025)." />
+          <InfoTooltip text="Annual personal tax reliefs reduce your chargeable income. Use Simple mode for a single number, or Detailed mode for a breakdown of individual IRAS reliefs (Year of Assessment 2025)." />
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -133,7 +133,7 @@ export function TaxReliefSection() {
               value={income.personalReliefs}
               onChange={(v) => income.setField('personalReliefs', v)}
               error={income.validationErrors.personalReliefs}
-              tooltip="Annual personal tax reliefs (earned income, NSman, spouse, children, parents, etc.). Do NOT include CPF or SRS here — those are deducted automatically below."
+              tooltip="Annual personal tax reliefs (earned income, National Service, spouse, children, parents, etc.). Do NOT include CPF or SRS here — those are deducted automatically below."
             />
           </div>
         ) : (
@@ -157,8 +157,8 @@ export function TaxReliefSection() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label className="text-sm flex items-center gap-1">
-                  NSman Relief
-                  <InfoTooltip text="For operationally ready NSmen. No duties: $1,500. Performed duties: $3,000." />
+                  National Service (NSman) Relief
+                  <InfoTooltip text="For operationally ready National Servicemen. No duties: $1,500. Performed duties: $3,000." />
                 </Label>
                 <Select
                   value={breakdown.nsmanStatus}
@@ -319,8 +319,8 @@ export function TaxReliefSection() {
           {/* CPF Relief (Employee) */}
           <div className="flex items-center justify-between text-sm">
             <span className="flex items-center gap-1">
-              CPF Relief (Employee)
-              <InfoTooltip text="Employee CPF contribution is automatically deducted from your taxable income. Computed from your salary and age, subject to the OW ceiling ($8,000/month from 2026) and annual salary ceiling ($102,000). Do not include this in Personal Reliefs above." source="IRAS" sourceUrl="https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/tax-reliefs-rebates-and-deductions/tax-reliefs/central-provident-fund(cpf)-relief-for-employees" />
+              Central Provident Fund (CPF) Relief (Employee)
+              <InfoTooltip text="Employee CPF contribution is automatically deducted from your taxable income. Computed from your salary and age, subject to the Ordinary Wage (OW) ceiling ($8,000/month from 2026) and annual salary ceiling ($102,000). Do not include this in Personal Reliefs above." source="IRAS" sourceUrl="https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/tax-reliefs-rebates-and-deductions/tax-reliefs/central-provident-fund(cpf)-relief-for-employees" />
             </span>
             <span className="font-medium text-green-700 dark:text-green-400">{formatCurrency(cpfEmployee)}</span>
           </div>
@@ -329,8 +329,8 @@ export function TaxReliefSection() {
           {srsDeduction > 0 && (
             <div className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-1">
-                SRS Deduction
-                <InfoTooltip text={`SRS contributions are tax-deductible up to ${residencyStatus === 'foreigner' ? '$35,700' : '$15,300'}/year. Set your annual SRS contribution in the FIRE Profile section. Do not include this in Personal Reliefs above.`} source="IRAS" sourceUrl="https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/special-tax-schemes/srs-contributions" />
+                Supplementary Retirement Scheme (SRS) Deduction
+                <InfoTooltip text={`SRS contributions are tax-deductible up to ${residencyStatus === 'foreigner' ? '$35,700' : '$15,300'}/year. Set your annual SRS contribution in the Financial Snapshot section. Do not include this in Personal Reliefs above.`} source="IRAS" sourceUrl="https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/special-tax-schemes/srs-contributions" />
               </span>
               <span className="font-medium text-green-700 dark:text-green-400">{formatCurrency(srsDeduction)}</span>
             </div>
@@ -340,8 +340,8 @@ export function TaxReliefSection() {
           {rstuDeduction > 0 && (
             <div className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-1">
-                RSTU Relief (SA Top-Up)
-                <InfoTooltip text="Cash top-up to SA (or RA if 55+) qualifies for tax relief up to $8,000/year. Set your annual SA top-up in the CPF section. Do not include this in Personal Reliefs above." source="IRAS" sourceUrl="https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/tax-reliefs-rebates-and-deductions/tax-reliefs/central-provident-fund-(cpf)-cash-top-up-relief" />
+                Retirement Sum Top-Up (RSTU) Relief
+                <InfoTooltip text="Cash top-up to Special Account (SA), or Retirement Account (RA) if 55+, qualifies for tax relief up to $8,000/year. Set your annual SA top-up in the CPF section. Do not include this in Personal Reliefs above." source="IRAS" sourceUrl="https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/tax-reliefs-rebates-and-deductions/tax-reliefs/central-provident-fund-(cpf)-cash-top-up-relief" />
               </span>
               <span className="font-medium text-green-700 dark:text-green-400">{formatCurrency(rstuDeduction)}</span>
             </div>
@@ -351,7 +351,7 @@ export function TaxReliefSection() {
           <div className="flex items-center justify-between text-sm pt-2 border-t border-dashed">
             <span className="text-muted-foreground font-medium flex items-center gap-1">
               Total Tax Deductions
-              <InfoTooltip text="Sum of personal reliefs, CPF employee contribution, SRS deduction, and RSTU relief — all subtracted from gross income to arrive at chargeable income." />
+              <InfoTooltip text="Sum of personal reliefs, CPF employee contribution, SRS deduction, and Retirement Sum Top-Up (RSTU) relief. All subtracted from gross income to arrive at chargeable income." />
             </span>
             <span className="font-bold text-base">{formatCurrency(computedTotal + cpfEmployee + srsDeduction + rstuDeduction)}</span>
           </div>
