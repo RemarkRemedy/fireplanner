@@ -4,6 +4,7 @@ import { useProjection } from '@/hooks/useProjection'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { calculateProjectionFireNumber, normalizeProjectionFireNumber } from '@/lib/calculations/fire'
+import type { FireType } from '@/lib/types'
 
 export interface WaterfallItem {
   label: string
@@ -86,6 +87,10 @@ export function useAdjustedFireNumber(): AdjustedFireNumberResult {
     // Compute basisInflationFactor from the expenses breakdown.
     // This captures whatever inflation the simple formula applied:
     //   "today" → 1, "retirement" → (1+i)^retYears, "fireAge" → converged factor
+    // Note: basisInflationFactor is derived from expensesBreakdown which applies
+    // FIRE_TYPE_MULTIPLIERS. The ratio effectiveExpenses/preInflationTotal cancels
+    // the multiplier, leaving only the inflation component — so basisInflationFactor
+    // is valid for normalizing any projection item regardless of FIRE type.
     const { baseExpenses, parentSupportAnnual, healthcareCashOutlay, effectiveExpenses } = metrics.expensesBreakdown
     const preInflationTotal = baseExpenses + parentSupportAnnual + healthcareCashOutlay
     const basisInflationFactor = preInflationTotal > 0
@@ -99,7 +104,10 @@ export function useAdjustedFireNumber(): AdjustedFireNumberResult {
     const deviation = simple > 0 ? (normalizedProjNumber - simple) / simple : 0
     const show = Math.abs(deviation) > 0.05
 
-    // Build human-readable factor list
+    // Build human-readable factor list for items causing deviation from simple formula.
+    // Only includes items NOT in the simple formula (mortgage, CPF LIFE, rental).
+    // Omits downsizingRentExpense and parentSupportExpense because these are already
+    // reflected in the simple formula via expensesBreakdown, so they don't cause deviation.
     const factors: string[] = []
     if (firstRetiredRow.mortgageCashPayment > 0) {
       factors.push('mortgage cash payments')
@@ -115,14 +123,13 @@ export function useAdjustedFireNumber(): AdjustedFireNumberResult {
     const projInflationFactor = Math.pow(1 + inflation, firstRetiredRow.age - currentAge)
     const perItemFactor = projInflationFactor > 0 ? basisInflationFactor / projInflationFactor : 1
 
-    const expensesLabel = fireType === 'lean' ? 'Expenses (60%)'
-      : fireType === 'fat' ? 'Expenses (150%)'
-      : 'Expenses'
-
+    // Projection path uses plain "Expenses" because projection.ts does NOT apply
+    // FIRE_TYPE_MULTIPLIERS — it only uses retirementSpendingAdjustment. The lean/fat
+    // suffix is only accurate in the formula-side fallback (buildFormulaSideWaterfall).
     const waterfallItems: WaterfallItem[] = []
 
     // Additions
-    waterfallItems.push({ label: expensesLabel, amount: firstRetiredRow.baseInflatedExpenses * perItemFactor, type: 'add' })
+    waterfallItems.push({ label: 'Expenses', amount: firstRetiredRow.baseInflatedExpenses * perItemFactor, type: 'add' })
     if (firstRetiredRow.healthcareCashOutlay > 0) {
       waterfallItems.push({ label: 'Healthcare', amount: firstRetiredRow.healthcareCashOutlay * perItemFactor, type: 'add' })
     }
@@ -144,11 +151,12 @@ export function useAdjustedFireNumber(): AdjustedFireNumberResult {
       waterfallItems.push({ label: 'Rental income', amount: firstRetiredRow.rentalIncome * perItemFactor, type: 'subtract' })
     }
 
-    const netAnnualNeed = sumWaterfall(waterfallItems)
+    const netAnnualNeed = Math.max(0, sumWaterfall(waterfallItems))
 
-    // CPF OA mortgage coverage
+    // CPF OA mortgage coverage — shown even when CPF covers 100% (mortgageCashPayment === 0)
+    // so users understand why mortgage doesn't appear in the waterfall.
     const cpfOaMortgageCoverPct =
-      ownsProperty && existingMonthlyPayment > 0 && firstRetiredRow.mortgageCashPayment > 0
+      ownsProperty && existingMonthlyPayment > 0
         ? Math.min(1, mortgageCpfMonthly / existingMonthlyPayment)
         : null
 
@@ -165,16 +173,23 @@ export function useAdjustedFireNumber(): AdjustedFireNumberResult {
   }, [metrics, rows, swr, inflation, currentAge, fireType, ownsProperty, existingMonthlyPayment, mortgageCpfMonthly])
 }
 
-/** Formula-side fallback waterfall when no projection rows exist */
+/** Formula-side fallback waterfall when no projection rows exist.
+ *  Unlike the projection path, the formula side applies FIRE_TYPE_MULTIPLIERS via
+ *  computeMetrics, so the lean/fat labels here accurately reflect the amounts. */
 function buildFormulaSideWaterfall(
   metrics: NonNullable<ReturnType<typeof useFireCalculations>['metrics']>,
-  fireType: string,
+  fireType: FireType,
   basisFactor: number,
 ): WaterfallItem[] {
   const { baseExpenses, parentSupportAnnual, healthcareCashOutlay } = metrics.expensesBreakdown
-  const label = fireType === 'lean' ? 'Expenses (60%)'
-    : fireType === 'fat' ? 'Expenses (150%)'
-    : 'Expenses'
+  const FIRE_LABELS: Record<FireType, string> = {
+    regular: 'Expenses',
+    lean: 'Expenses (60%)',
+    fat: 'Expenses (150%)',
+    coast: 'Expenses',
+    barista: 'Expenses',
+  }
+  const label = FIRE_LABELS[fireType]
   const items: WaterfallItem[] = [{ label, amount: baseExpenses * basisFactor, type: 'add' }]
   if (healthcareCashOutlay > 0) {
     items.push({ label: 'Healthcare', amount: healthcareCashOutlay * basisFactor, type: 'add' })

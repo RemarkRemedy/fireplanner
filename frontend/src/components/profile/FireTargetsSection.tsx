@@ -11,12 +11,20 @@ import { useProjection } from '@/hooks/useProjection'
 import { PercentInput } from '@/components/shared/PercentInput'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { formatCurrency, formatPercent } from '@/lib/utils'
-import { useAdjustedFireNumber } from '@/hooks/useAdjustedFireNumber'
+import { useAdjustedFireNumber, type WaterfallItem } from '@/hooks/useAdjustedFireNumber'
 import { useEffectiveMode } from '@/hooks/useEffectiveMode'
 import type { FireType, FireNumberBasis } from '@/lib/types'
 
 export function FireTargetsSection() {
-  const { fireType, swr, fireNumberBasis, inflation, retirementAge, currentAge, liquidNetWorth, setField, validationErrors } = useProfileStore()
+  const fireType = useProfileStore((s) => s.fireType)
+  const swr = useProfileStore((s) => s.swr)
+  const fireNumberBasis = useProfileStore((s) => s.fireNumberBasis)
+  const inflation = useProfileStore((s) => s.inflation)
+  const retirementAge = useProfileStore((s) => s.retirementAge)
+  const currentAge = useProfileStore((s) => s.currentAge)
+  const liquidNetWorth = useProfileStore((s) => s.liquidNetWorth)
+  const setField = useProfileStore((s) => s.setField)
+  const validationErrors = useProfileStore((s) => s.validationErrors)
   const mode = useEffectiveMode('section-fire-settings')
   const { metrics, hasErrors } = useFireCalculations()
   const { summary: projSummary } = useProjection()
@@ -324,25 +332,25 @@ function WaterfallBreakdown({
   fireType,
   cpfOaMortgageCoverPct,
 }: {
-  items: { label: string; amount: number; type: 'add' | 'subtract' }[]
+  items: WaterfallItem[]
   netAnnualNeed: number
   swr: number
   fireType: FireType
   cpfOaMortgageCoverPct: number | null
 }) {
-  const maxAmount = Math.max(...items.map((i) => i.amount))
+  const maxAmount = items.length > 0 ? Math.max(...items.map((i) => i.amount)) : 0
   const isCoastOrBarista = fireType === 'coast' || fireType === 'barista'
   const impliedFireNumber = swr > 0 ? netAnnualNeed / swr : 0
 
   return (
     <div className="text-[10px] text-muted-foreground space-y-0.5">
-      {items.map((item, i) => {
+      {items.map((item) => {
         const barPct = maxAmount > 0 ? (item.amount / maxAmount) * 100 : 0
         const isSubtract = item.type === 'subtract'
         return (
           <div key={item.label} className="flex items-center gap-1">
             <span className={`w-2.5 text-right shrink-0 ${isSubtract ? 'text-green-600' : ''}`}>
-              {i === 0 ? '' : isSubtract ? '−' : '+'}
+              {isSubtract ? '−' : item.type === 'add' ? '+' : ''}
             </span>
             <span className={`w-24 truncate ${isSubtract ? 'text-green-600' : ''}`}>
               {item.label}
@@ -374,9 +382,14 @@ function WaterfallBreakdown({
       {cpfOaMortgageCoverPct !== null && (
         <div className="mt-1 px-1.5 py-1 rounded bg-muted/50 text-[10px] text-muted-foreground">
           CPF OA covers {Math.round(cpfOaMortgageCoverPct * 100)}% of your mortgage.
-          Only the cash portion ({Math.round((1 - cpfOaMortgageCoverPct) * 100)}%) affects your FIRE number.
+          {cpfOaMortgageCoverPct < 1
+            ? ` Only the cash portion (${Math.round((1 - cpfOaMortgageCoverPct) * 100)}%) affects your FIRE number.`
+            : ' Your mortgage is fully covered by CPF and does not affect your FIRE number.'}
         </div>
       )}
+      <div className="mt-1 text-[9px] text-muted-foreground/70 italic">
+        Based on your first retirement year. Amounts may differ in later years as mortgages end, CPF LIFE starts, or rental leases change.
+      </div>
     </div>
   )
 }

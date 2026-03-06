@@ -186,7 +186,7 @@ describe('useAdjustedFireNumber', () => {
     expect(result.current.deviationPct).not.toBeNull()
     // If normalization works, deviation should be much less than the raw
     // inflation gap (10 years at 2.5% = ~28%). Tight bound confirms same basis.
-    expect(Math.abs(result.current.deviationPct!)).toBeLessThan(0.25)
+    expect(Math.abs(result.current.deviationPct!)).toBeLessThan(0.10)
     expect(simple).toBeGreaterThan(0)
     expect(proj).toBeGreaterThan(0)
   })
@@ -354,21 +354,71 @@ describe('waterfall items', () => {
     expect(result.current.netAnnualNeed).toBeCloseTo(expectedNet, 2)
   })
 
-  it('Lean FIRE label is "Expenses (60%)"', () => {
+  it('Lean FIRE uses plain "Expenses" label in projection path (projection does not apply FIRE multiplier)', () => {
     setupBaseline()
     useProfileStore.setState({
       ...useProfileStore.getState(),
       fireType: 'lean',
     })
     const { result } = renderHook(() => useAdjustedFireNumber())
-    expect(result.current.waterfallItems[0].label).toBe('Expenses (60%)')
+    // Projection path: label is "Expenses" because projection.ts doesn't apply FIRE_TYPE_MULTIPLIERS
+    expect(result.current.waterfallItems[0].label).toBe('Expenses')
   })
 
-  it('Fat FIRE label is "Expenses (150%)"', () => {
+  it('Fat FIRE uses plain "Expenses" label in projection path', () => {
     setupBaseline()
     useProfileStore.setState({
       ...useProfileStore.getState(),
       fireType: 'fat',
+    })
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    expect(result.current.waterfallItems[0].label).toBe('Expenses')
+  })
+
+  it('Lean FIRE fallback path uses "Expenses (60%)" label', () => {
+    // retirementAge === lifeExpectancy means no retired rows → fallback path
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      currentAge: 30,
+      retirementAge: 90,
+      lifeExpectancy: 90,
+      annualExpenses: 60000,
+      liquidNetWorth: 0,
+      swr: 0.04,
+      fireNumberBasis: 'today',
+      fireType: 'lean',
+      usePortfolioReturn: false,
+      expectedReturn: 0.07,
+      inflation: 0.025,
+      expenseRatio: 0.003,
+      parentSupportEnabled: false,
+      parentSupport: [],
+      healthcareConfig: { ...useProfileStore.getState().healthcareConfig, enabled: false },
+      validationErrors: {},
+    })
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    expect(result.current.waterfallItems[0].label).toBe('Expenses (60%)')
+  })
+
+  it('Fat FIRE fallback path uses "Expenses (150%)" label', () => {
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      currentAge: 30,
+      retirementAge: 90,
+      lifeExpectancy: 90,
+      annualExpenses: 60000,
+      liquidNetWorth: 0,
+      swr: 0.04,
+      fireNumberBasis: 'today',
+      fireType: 'fat',
+      usePortfolioReturn: false,
+      expectedReturn: 0.07,
+      inflation: 0.025,
+      expenseRatio: 0.003,
+      parentSupportEnabled: false,
+      parentSupport: [],
+      healthcareConfig: { ...useProfileStore.getState().healthcareConfig, enabled: false },
+      validationErrors: {},
     })
     const { result } = renderHook(() => useAdjustedFireNumber())
     expect(result.current.waterfallItems[0].label).toBe('Expenses (150%)')
@@ -499,6 +549,28 @@ describe('waterfall items', () => {
     // netAnnualNeed / swr should equal simpleFireNumber (both in retirement basis)
     const swr = useProfileStore.getState().swr
     expect(netAnnualNeed! / swr).toBeCloseTo(simpleFireNumber!, -2)
+  })
+
+  it('cpfOaMortgageCoverPct is 1.0 when CPF equals monthly payment', () => {
+    // When CPF covers 100% of the monthly payment, cpfOaMortgageCoverPct should be 1.0.
+    // Note: the projection engine may still show a mortgageCashPayment > 0 because it
+    // computes the CPF/cash split independently from the store-level ratio.
+    setupBaseline()
+    usePropertyStore.setState({
+      ...usePropertyStore.getState(),
+      ownsProperty: true,
+      existingPropertyValue: 1500000,
+      existingMortgageBalance: 800000,
+      existingMonthlyPayment: 3000,
+      mortgageCpfMonthly: 3000, // 100% covered by CPF
+      existingMortgageRate: 0.035,
+      existingMortgageRemainingYears: 20,
+      ownershipPercent: 1,
+      validationErrors: {},
+    })
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    // Coverage should be exactly 1.0 (not > 1.0)
+    expect(result.current.cpfOaMortgageCoverPct).toBe(1)
   })
 
   it('downsizing rent item appears when downsizing is configured', () => {
