@@ -61,13 +61,13 @@ describe('useProfileStore', () => {
     it('produces cross-field error when retirementAge <= currentAge', () => {
       useProfileStore.getState().setField('retirementAge', 30)
       const errors = useProfileStore.getState().validationErrors
-      expect(errors.retirementAge).toBe('Retirement age must be greater than current age')
+      expect(errors.retirementAge).toBe('Retirement age must be later than current age')
     })
 
     it('produces cross-field error when lifeExpectancy <= retirementAge', () => {
       useProfileStore.getState().setField('lifeExpectancy', 65)
       const errors = useProfileStore.getState().validationErrors
-      expect(errors.lifeExpectancy).toBe('Life expectancy must be greater than retirement age')
+      expect(errors.lifeExpectancy).toBe('Life expectancy must be later than retirement age')
     })
 
     it('syncs oopReferenceAge when currentAge changes and they match', () => {

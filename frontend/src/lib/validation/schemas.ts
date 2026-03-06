@@ -63,10 +63,10 @@ export const profileSchema = z.object({
   cpfMortgageYearsLeft: z.number().int().min(0).max(40),
 }).refine(
   (data) => data.lifeStage === 'post-fire' || data.retirementAge > data.currentAge,
-  { message: 'Retirement age must be greater than current age', path: ['retirementAge'] }
+  { message: 'Retirement age must be later than current age', path: ['retirementAge'] }
 ).refine(
   (data) => data.lifeExpectancy > data.retirementAge,
-  { message: 'Life expectancy must be greater than retirement age', path: ['lifeExpectancy'] }
+  { message: 'Life expectancy must be later than retirement age', path: ['lifeExpectancy'] }
 )
 
 // ============================================================
@@ -156,7 +156,7 @@ export const glidePathConfigSchema = z.object({
   endAge: z.number().int().min(18).max(120),
 }).refine(
   (data) => data.startAge < data.endAge,
-  { message: 'Start age must be less than end age', path: ['startAge'] }
+  { message: 'Start age must be earlier than end age', path: ['startAge'] }
 )
 
 export const allocationSchema = z.object({

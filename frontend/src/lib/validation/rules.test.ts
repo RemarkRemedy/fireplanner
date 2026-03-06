@@ -707,7 +707,7 @@ describe('CPF OA withdrawal validation', () => {
         { id: 'ow1', label: 'Too early', amount: 50000, age: 50 },
       ],
     })
-    expect(errors['cpfOaWithdrawal_ow1_age']).toBe('CPF OA withdrawal age must be >= 55')
+    expect(errors['cpfOaWithdrawal_ow1_age']).toBe('CPF Ordinary Account (OA) withdrawal age must be 55 or later')
   })
 
   it('catches withdrawal age > life expectancy', () => {

@@ -12,15 +12,15 @@ export function validateProfileConsistency(
   const errors: ValidationErrors = {}
 
   if (profile.lifeStage !== 'post-fire' && profile.retirementAge <= profile.currentAge) {
-    errors.retirementAge = 'Retirement age must be greater than current age'
+    errors.retirementAge = 'Retirement age must be later than current age'
   }
 
   if (profile.lifeExpectancy <= profile.retirementAge) {
-    errors.lifeExpectancy = 'Life expectancy must be greater than retirement age'
+    errors.lifeExpectancy = 'Life expectancy must be later than retirement age'
   }
 
   if (profile.cpfLifeStartAge >= profile.lifeExpectancy) {
-    errors.cpfLifeStartAge = 'CPF LIFE start age must be less than life expectancy'
+    errors.cpfLifeStartAge = 'CPF LIFE start age must be earlier than life expectancy'
   }
 
   // MA cannot exceed BHS for current age
@@ -36,7 +36,7 @@ export function validateProfileConsistency(
         errors[`parentSupport_${entry.id}_startAge`] = 'Start age must be at least 18'
       }
       if (entry.startAge >= entry.endAge) {
-        errors[`parentSupport_${entry.id}_startAge`] = 'Start age must be less than end age'
+        errors[`parentSupport_${entry.id}_startAge`] = 'Start age must be earlier than end age'
       }
       if (entry.endAge > profile.lifeExpectancy) {
         errors[`parentSupport_${entry.id}_endAge`] = `End age cannot exceed life expectancy (${profile.lifeExpectancy})`
@@ -48,7 +48,7 @@ export function validateProfileConsistency(
   for (const rw of profile.retirementWithdrawals ?? []) {
     if (rw.age < profile.retirementAge) {
       errors[`retirementWithdrawal_${rw.id}_age`] =
-        `Withdrawal age (${rw.age}) must be >= retirement age (${profile.retirementAge})`
+        `Withdrawal age (${rw.age}) must be at or after retirement age (${profile.retirementAge})`
     }
     if (rw.age + (rw.durationYears ?? 1) > profile.lifeExpectancy) {
       errors[`retirementWithdrawal_${rw.id}_durationYears`] =
@@ -59,10 +59,10 @@ export function validateProfileConsistency(
   // Healthcare config validation
   if (profile.healthcareConfig?.enabled) {
     if (profile.healthcareConfig.oopBaseAmount < 0 || profile.healthcareConfig.oopBaseAmount > 50000) {
-      errors['healthcareConfig.oopBaseAmount'] = 'OOP base amount must be between $0 and $50,000'
+      errors['healthcareConfig.oopBaseAmount'] = 'Out-of-pocket base amount must be between $0 and $50,000'
     }
     if (profile.healthcareConfig.mediSaveTopUpAnnual < 0 || profile.healthcareConfig.mediSaveTopUpAnnual > MEDISAVE_BHS) {
-      errors['healthcareConfig.mediSaveTopUpAnnual'] = `MediSave top-up must be between $0 and $${MEDISAVE_BHS.toLocaleString()}`
+      errors['healthcareConfig.mediSaveTopUpAnnual'] = `MediSave Account (MA) top-up must be between $0 and $${MEDISAVE_BHS.toLocaleString()} (Basic Healthcare Sum cap)`
     }
   }
 
@@ -88,7 +88,7 @@ export function validateProfileConsistency(
   // CPF OA withdrawal validation
   for (const w of profile.cpfOaWithdrawals ?? []) {
     if (w.age < 55) {
-      errors[`cpfOaWithdrawal_${w.id}_age`] = 'CPF OA withdrawal age must be >= 55'
+      errors[`cpfOaWithdrawal_${w.id}_age`] = 'CPF Ordinary Account (OA) withdrawal age must be 55 or later'
     }
     if (w.age > profile.lifeExpectancy) {
       errors[`cpfOaWithdrawal_${w.id}_age`] = `Withdrawal age (${w.age}) exceeds life expectancy (${profile.lifeExpectancy})`
@@ -105,7 +105,7 @@ export function validateProfileConsistency(
     }
     for (const adj of profile.expenseAdjustments) {
       if (adj.endAge !== null && adj.endAge <= adj.startAge) {
-        errors[`expenseAdjustment_${adj.id}_endAge`] = 'End age must be greater than start age'
+        errors[`expenseAdjustment_${adj.id}_endAge`] = 'End age must be later than start age'
       }
       if (adj.endAge !== null && adj.endAge > profile.lifeExpectancy) {
         errors[`expenseAdjustment_${adj.id}_endAge`] = `End age cannot exceed life expectancy (${profile.lifeExpectancy})`
@@ -118,7 +118,7 @@ export function validateProfileConsistency(
     for (let i = 0; i < profile.lockedAssets.length; i++) {
       const asset = profile.lockedAssets[i]
       if (asset.unlockAge <= profile.currentAge) {
-        errors[`lockedAssets.${i}.unlockAge`] = 'Unlock age must be greater than current age'
+        errors[`lockedAssets.${i}.unlockAge`] = 'Unlock age must be later than current age'
       }
       if (asset.unlockAge > profile.lifeExpectancy) {
         errors[`lockedAssets.${i}.unlockAge`] = 'Unlock age must not exceed life expectancy'
@@ -149,7 +149,7 @@ export function validateCrossStoreRules(
     }
     if (stream.startAge >= stream.endAge) {
       errors[`incomeStream_${stream.id}_startAge`] =
-        `Start age must be less than end age`
+        `Start age must be earlier than end age`
     }
   }
 
@@ -162,7 +162,7 @@ export function validateCrossStoreRules(
       }
       if (event.startAge >= event.endAge) {
         errors[`lifeEvent_${event.id}_startAge`] =
-          `Start age must be less than end age`
+          `Start age must be earlier than end age`
       }
     }
   }
@@ -172,11 +172,11 @@ export function validateCrossStoreRules(
     const jump = income.promotionJumps[i]
     if (jump.age < profile.currentAge) {
       errors[`promotionJump_${i}_age`] =
-        `Promotion age (${jump.age}) must be >= current age (${profile.currentAge})`
+        `Promotion age (${jump.age}) must be at or after current age (${profile.currentAge})`
     }
     if (jump.age > profile.retirementAge) {
       errors[`promotionJump_${i}_age`] =
-        `Promotion age (${jump.age}) must be <= retirement age (${profile.retirementAge})`
+        `Promotion age (${jump.age}) must be at or before retirement age (${profile.retirementAge})`
     }
   }
 
@@ -195,15 +195,15 @@ export function validateAllocationCrossStoreRules(
   if (allocation.glidePathConfig.enabled) {
     if (allocation.glidePathConfig.startAge < profile.currentAge) {
       errors['glidePathConfig.startAge'] =
-        `Glide path start age (${allocation.glidePathConfig.startAge}) must be >= current age (${profile.currentAge})`
+        `Glide path start age (${allocation.glidePathConfig.startAge}) must be at or after current age (${profile.currentAge})`
     }
     if (allocation.glidePathConfig.endAge > profile.lifeExpectancy) {
       errors['glidePathConfig.endAge'] =
-        `Glide path end age (${allocation.glidePathConfig.endAge}) must be <= life expectancy (${profile.lifeExpectancy})`
+        `Glide path end age (${allocation.glidePathConfig.endAge}) must be at or before life expectancy (${profile.lifeExpectancy})`
     }
     if (allocation.glidePathConfig.startAge >= allocation.glidePathConfig.endAge) {
       errors['glidePathConfig.startAge'] =
-        'Glide path start age must be less than end age'
+        'Glide path start age must be earlier than end age'
     }
 
     // Validate target weights sum when glide path is enabled
@@ -227,7 +227,7 @@ export function validateWithdrawalCrossStoreRules(
 
   const fc = withdrawal.strategyParams.floor_ceiling
   if (fc.floor > profile.annualExpenses * 3) {
-    errors['floor_ceiling.floor'] = 'Floor seems too high relative to annual expenses'
+    errors['floor_ceiling.floor'] = 'Floor seems too high relative to annual expenses. Try a lower value or increase expenses first.'
   }
 
   const duration = profile.lifeExpectancy - profile.retirementAge
