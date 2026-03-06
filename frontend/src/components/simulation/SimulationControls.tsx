@@ -18,9 +18,9 @@ import { useEffectiveMode } from '@/hooks/useEffectiveMode'
 import { trackEvent } from '@/lib/analytics'
 
 const MC_METHODS: { value: MonteCarloMethod; label: string }[] = [
-  { value: 'parametric', label: 'Parametric (Cholesky)' },
-  { value: 'bootstrap', label: 'Historical Bootstrap' },
-  { value: 'fat_tail', label: 'Fat-Tail (Student-t df=5)' },
+  { value: 'parametric', label: 'Normal distribution' },
+  { value: 'bootstrap', label: 'Historical sampling' },
+  { value: 'fat_tail', label: 'Extreme events (heavy tail)' },
 ]
 
 const SIMPLE_STRATEGIES: WithdrawalStrategyType[] = [
@@ -71,7 +71,7 @@ export function SimulationControls({
           <div className="space-y-2">
             <Label>
               Method
-              <InfoTooltip text="How returns are generated. Parametric uses normal distribution with correlations. Bootstrap samples from history. Fat-tail uses Student-t for extreme events." />
+              <InfoTooltip text="How returns are generated. Normal distribution models returns as a bell curve with correlations. Historical sampling draws from actual past data. Extreme events includes rare crashes and booms." />
             </Label>
             <Select
               value={simulation.mcMethod}
@@ -224,11 +224,12 @@ export function SimulationControls({
             {/* Volatility drag + reading results */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="rounded-md border border-border bg-background p-3 space-y-1">
-                <p className="font-medium text-foreground">Volatility drag</p>
+                <p className="font-medium text-foreground">Why volatile markets reduce growth</p>
                 <p>
-                  Expected mode uses the arithmetic mean return (e.g. 8%), but volatile returns compound lower.
-                  A portfolio with 8% mean and 15% volatility actually grows at ~6.9%. So Expected is slightly
-                  optimistic. The further from retirement, the more this gap compounds.
+                  Expected mode uses the average return (e.g. 8%), but market ups and downs cause your portfolio
+                  to grow slower than the average suggests. A portfolio with 8% average return and typical
+                  volatility actually grows at ~6.9%. So Expected mode is slightly optimistic. The further
+                  from retirement, the more this gap adds up.
                 </p>
               </div>
               <div className="rounded-md border border-border bg-background p-3 space-y-1">
@@ -309,7 +310,7 @@ function StrategyParams() {
     <>
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       {strategy === 'constant_dollar' && (
-        <ParamInput label="SWR" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} disabled={rateDisabled} />
+        <ParamInput label="Withdrawal Rate" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} disabled={rateDisabled} />
       )}
       {strategy === 'vpw' && (
         <>
@@ -327,7 +328,7 @@ function StrategyParams() {
       )}
       {strategy === 'vanguard_dynamic' && (
         <>
-          <ParamInput label="SWR" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} disabled={rateDisabled} />
+          <ParamInput label="Withdrawal Rate" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} disabled={rateDisabled} />
           <ParamInput label="Ceiling" value={(params as { ceiling: number }).ceiling * 100} onChange={(v) => setParam('ceiling', v / 100)} suffix="%" step={0.1} />
           <ParamInput label="Floor" value={(params as { floor: number }).floor * 100} onChange={(v) => setParam('floor', v / 100)} suffix="%" step={0.1} />
         </>

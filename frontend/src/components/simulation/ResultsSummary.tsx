@@ -34,27 +34,27 @@ export function ResultsSummary({ result }: ResultsSummaryProps) {
               <div className="text-xl font-semibold">
                 {formatCurrency(result.terminal_stats.median)}
               </div>
-              <div className="text-sm text-muted-foreground mt-1">Median Terminal</div>
+              <div className="text-sm text-muted-foreground mt-1">Typical Final Balance</div>
             </div>
 
             <div className="text-center p-4 rounded-lg bg-muted/50">
               <div className="text-xl font-semibold">
                 {formatCurrency(result.terminal_stats.p5)}
               </div>
-              <div className="text-sm text-muted-foreground mt-1">5th Percentile</div>
+              <div className="text-sm text-muted-foreground mt-1">Poor outcome (5th)</div>
             </div>
 
             <div className="text-center p-4 rounded-lg bg-muted/50">
               <div className="text-xl font-semibold">
                 {formatCurrency(result.terminal_stats.p95)}
               </div>
-              <div className="text-sm text-muted-foreground mt-1">95th Percentile</div>
+              <div className="text-sm text-muted-foreground mt-1">Great outcome (95th)</div>
             </div>
           </div>
 
           {/* Terminal Stats Table */}
           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-            <Stat label="Mean Terminal" value={formatCurrency(result.terminal_stats.mean)} />
+            <Stat label="Average Final Balance" value={formatCurrency(result.terminal_stats.mean)} />
             <Stat label="Worst Case" value={formatCurrency(result.terminal_stats.worst)} />
             <Stat label="Best Case" value={formatCurrency(result.terminal_stats.best)} />
             <Stat
@@ -79,7 +79,7 @@ export function ResultsSummary({ result }: ResultsSummaryProps) {
           {result.failure_distribution.total_failures > 0 && (
             <div className="mt-4 border-t pt-4">
               <h4 className="text-sm font-medium mb-2">
-                Failure Distribution ({result.failure_distribution.total_failures} of {result.n_simulations} failed)
+                When portfolios ran out ({result.failure_distribution.total_failures} of {result.n_simulations} scenarios)
               </h4>
               <div className="flex gap-2">
                 {result.failure_distribution.buckets.map((bucket, i) => (
