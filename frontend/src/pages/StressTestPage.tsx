@@ -27,9 +27,9 @@ import { FailureDistributionChart } from '@/components/simulation/FailureDistrib
 import { WithdrawalDistributionChart } from '@/components/simulation/WithdrawalDistributionChart'
 import { useMonteCarloQuery } from '@/hooks/useMonteCarloQuery'
 import { MCProjectionTable } from '@/components/simulation/MCProjectionTable'
-import { StressScenarioSelector } from '@/components/simulation/StressScenarioSelector'
+// import { StressScenarioSelector } from '@/components/simulation/StressScenarioSelector'
 import { StressScenarioComparisonTable } from '@/components/simulation/StressScenarioComparisonTable'
-import { ProofWorkspace } from '@/components/proof/ProofWorkspace'
+// import { ProofWorkspace } from '@/components/proof/ProofWorkspace'
 import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
@@ -81,8 +81,6 @@ function TabIntro({ children }: { children: React.ReactNode }) {
 
 interface MonteCarloTabProps {
   isAdvanced: boolean
-  selectedStressScenarioIds: StressScenarioId[]
-  onStressScenarioSelectionChange: (scenarioIds: StressScenarioId[]) => void
   stressScenarioComparisonRows: StressScenarioComparisonRow[]
   stressScenarioComparisonPending: boolean
   stressScenarioComparisonError: string | null
@@ -98,8 +96,6 @@ interface MonteCarloTabProps {
 
 function MonteCarloTab({
   isAdvanced,
-  selectedStressScenarioIds,
-  onStressScenarioSelectionChange,
   stressScenarioComparisonRows,
   stressScenarioComparisonPending,
   stressScenarioComparisonError,
@@ -134,13 +130,7 @@ function MonteCarloTab({
         isPending={isPending}
         canRun={canRun}
         validationErrors={validationErrors}
-        beforeRunControls={(
-          <StressScenarioSelector
-            selectedScenarioIds={selectedStressScenarioIds}
-            onChange={onStressScenarioSelectionChange}
-            disabled={isPending}
-          />
-        )}
+        beforeRunControls={undefined}
       />
 
       {isPending && (
@@ -956,7 +946,7 @@ export function StressTestPage() {
             <TabsList className={`grid w-full ${gridColsClass[tabCount] ?? 'grid-cols-1'}`}>
               <TabsTrigger value="monte-carlo">Monte Carlo</TabsTrigger>
               {hasResults && <TabsTrigger value="mc-projection">Projection Table</TabsTrigger>}
-              {isStressAdvanced && <TabsTrigger value="proof">Proof</TabsTrigger>}
+              {/* Proof tab hidden for now */}
               {isStressAdvanced && <TabsTrigger value="backtest">Historical Backtest</TabsTrigger>}
               {isStressAdvanced && <TabsTrigger value="sequence-risk">Sequence Risk</TabsTrigger>}
             </TabsList>
@@ -966,8 +956,6 @@ export function StressTestPage() {
         <TabsContent value="monte-carlo">
           <MonteCarloTab
             isAdvanced={isStressAdvanced}
-            selectedStressScenarioIds={selectedStressScenarioIds}
-            onStressScenarioSelectionChange={setSelectedStressScenarioIds}
             stressScenarioComparisonRows={stressScenarioComparisonRows}
             stressScenarioComparisonPending={isStressScenarioComparisonPending}
             stressScenarioComparisonError={stressScenarioComparisonError}
@@ -988,11 +976,13 @@ export function StressTestPage() {
           </TabsContent>
         )}
 
+        {/* Proof tab hidden for now
         {isStressAdvanced && (
           <TabsContent value="proof">
             <ProofWorkspace mcResult={mc.data} isMcResultStale={isCompanionResultStale} />
           </TabsContent>
         )}
+        */}
 
         {isStressAdvanced && (
           <TabsContent value="backtest">
