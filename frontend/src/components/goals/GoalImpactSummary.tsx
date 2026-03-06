@@ -82,7 +82,7 @@ export function GoalImpactSummary() {
       // impossible (goals always cost money). If this fires, it signals a
       // calculation bug, not an edge case to display gracefully.
       console.error(`[GoalImpactSummary] Goals appear to accelerate FIRE by ${Math.abs(delay)} years. This indicates a calculation bug.`)
-      fireDelayText = `Unexpected result — goals appear to accelerate FIRE (possible calculation error)`
+      fireDelayText = `Something looks wrong: goals appear to speed up FIRE. This is likely a calculation error. Please report this issue.`
       fireDelayColor = 'text-destructive'
     }
   } else {
@@ -97,7 +97,7 @@ export function GoalImpactSummary() {
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           Goal Impact
-          <InfoTooltip text="Shows how your financial goals affect your FIRE timeline and terminal portfolio." />
+          <InfoTooltip text="Shows how your financial goals affect your FIRE timeline and final cash and investments at life expectancy." />
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -115,7 +115,7 @@ export function GoalImpactSummary() {
           </div>
         </div>
         <div className="p-3 bg-muted/50 rounded-lg">
-          <p className="text-xs text-muted-foreground mb-1">Terminal Portfolio Impact</p>
+          <p className="text-xs text-muted-foreground mb-1">Final Cash & Investments Impact</p>
           <p className="text-sm">
             <span className="font-semibold">{formatCurrency(terminalWith)}</span>
             <span className="text-muted-foreground"> vs </span>
@@ -139,7 +139,7 @@ export function GoalImpactSummary() {
                 ? underfundedAges.join(', ')
                 : `${underfundedAges[0]}–${underfundedAges[underfundedAges.length - 1]}`
               }, your portfolio cannot fully fund the goal.
-              The shortfall of {formatCurrency(totalShortfall)} is not financed.
+              The shortfall of {formatCurrency(totalShortfall)} is not financed. Consider reducing goal amounts or pushing target ages later.
             </p>
           </div>
         )}
@@ -151,7 +151,7 @@ export function GoalImpactSummary() {
             </p>
             <p className="text-xs text-amber-600/80 dark:text-amber-400/80 mt-1">
               Without goals, your portfolio survives to life expectancy.
-              With goals, it runs out at age {depletionWith}.
+              With goals, it runs out at age {depletionWith}. Consider reducing or deferring some goals.
             </p>
           </div>
         )}

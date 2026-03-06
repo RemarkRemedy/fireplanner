@@ -95,7 +95,7 @@ export function GoalTimelineChart() {
                 x={retirementAge}
                 stroke="#ef4444"
                 strokeDasharray="4 4"
-                label={{ value: 'FIRE', position: 'top', fontSize: 11, fill: '#ef4444' }}
+                label={{ value: 'Retirement', position: 'top', fontSize: 11, fill: '#ef4444' }}
               />
               <Bar dataKey="amount" radius={[4, 4, 0, 0]} maxBarSize={40}>
                 {data.map((entry, index) => (

@@ -173,7 +173,7 @@ export function GoalsSection() {
                   min={1}
                   max={Math.max(1, lifeExpectancy - goal.targetAge)}
                   error={durationError}
-                  tooltip="1 = lump sum. >1 = amount spread equally across years."
+                  tooltip="Set to 1 for a one-time expense. Set to more than 1 to spread the amount equally across that many years (e.g., 4 years of university tuition)."
                 />
                 <div className="space-y-1">
                   <Label className="text-xs flex items-center gap-1">
