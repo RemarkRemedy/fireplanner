@@ -65,8 +65,12 @@ export function useAdjustedFireNumber(): AdjustedFireNumberResult {
 
     const firstRetiredRow = rows.find((r) => r.isRetired)
     if (!firstRetiredRow) {
-      // No projection data — fall back to formula-side breakdown
-      const fallbackItems = buildFormulaSideWaterfall(metrics, fireType)
+      // No projection data — fall back to formula-side breakdown.
+      // Apply basisInflationFactor so items match the inflated fireNumber.
+      const { baseExpenses: fb, parentSupportAnnual: fp, healthcareCashOutlay: fh, effectiveExpenses: fe } = metrics.expensesBreakdown
+      const preTotalFallback = fb + fp + fh
+      const fallbackBasisFactor = preTotalFallback > 0 ? fe / preTotalFallback : 1
+      const fallbackItems = buildFormulaSideWaterfall(metrics, fireType, fallbackBasisFactor)
       const fallbackNet = sumWaterfall(fallbackItems)
       return {
         ...emptyResult,
@@ -165,17 +169,18 @@ export function useAdjustedFireNumber(): AdjustedFireNumberResult {
 function buildFormulaSideWaterfall(
   metrics: NonNullable<ReturnType<typeof useFireCalculations>['metrics']>,
   fireType: string,
+  basisFactor: number,
 ): WaterfallItem[] {
   const { baseExpenses, parentSupportAnnual, healthcareCashOutlay } = metrics.expensesBreakdown
   const label = fireType === 'lean' ? 'Expenses (60%)'
     : fireType === 'fat' ? 'Expenses (150%)'
     : 'Expenses'
-  const items: WaterfallItem[] = [{ label, amount: baseExpenses, type: 'add' }]
+  const items: WaterfallItem[] = [{ label, amount: baseExpenses * basisFactor, type: 'add' }]
   if (healthcareCashOutlay > 0) {
-    items.push({ label: 'Healthcare', amount: healthcareCashOutlay, type: 'add' })
+    items.push({ label: 'Healthcare', amount: healthcareCashOutlay * basisFactor, type: 'add' })
   }
   if (parentSupportAnnual > 0) {
-    items.push({ label: 'Parent support', amount: parentSupportAnnual, type: 'add' })
+    items.push({ label: 'Parent support', amount: parentSupportAnnual * basisFactor, type: 'add' })
   }
   return items
 }

@@ -152,7 +152,6 @@ export function FireTargetsSection() {
                           items={waterfallItems}
                           netAnnualNeed={netAnnualNeed}
                           swr={swr}
-                          fireNumber={metrics.fireNumber}
                           fireType={fireType}
                           cpfOaMortgageCoverPct={cpfOaMortgageCoverPct}
                         />
@@ -322,19 +321,18 @@ function WaterfallBreakdown({
   items,
   netAnnualNeed,
   swr,
-  fireNumber,
   fireType,
   cpfOaMortgageCoverPct,
 }: {
   items: { label: string; amount: number; type: 'add' | 'subtract' }[]
   netAnnualNeed: number
   swr: number
-  fireNumber: number
   fireType: FireType
   cpfOaMortgageCoverPct: number | null
 }) {
   const maxAmount = Math.max(...items.map((i) => i.amount))
   const isCoastOrBarista = fireType === 'coast' || fireType === 'barista'
+  const impliedFireNumber = swr > 0 ? netAnnualNeed / swr : 0
 
   return (
     <div className="text-[10px] text-muted-foreground space-y-0.5">
@@ -370,7 +368,7 @@ function WaterfallBreakdown({
         <div className="flex items-center gap-1 font-medium">
           <span className="w-2.5 shrink-0" />
           <span className="w-24">÷ {(swr * 100).toFixed(1)}% SWR</span>
-          <span className="w-16 text-right tabular-nums shrink-0">{formatCurrency(fireNumber)}</span>
+          <span className="w-16 text-right tabular-nums shrink-0">{formatCurrency(impliedFireNumber)}</span>
         </div>
       )}
       {cpfOaMortgageCoverPct !== null && (

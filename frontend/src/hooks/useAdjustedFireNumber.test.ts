@@ -364,6 +364,143 @@ describe('waterfall items', () => {
     expect(result.current.waterfallItems[0].label).toBe('Expenses (60%)')
   })
 
+  it('Fat FIRE label is "Expenses (150%)"', () => {
+    setupBaseline()
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      fireType: 'fat',
+    })
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    expect(result.current.waterfallItems[0].label).toBe('Expenses (150%)')
+  })
+
+  it('CPF LIFE appears as subtract item when cpfLifeStartAge is within range', () => {
+    // Use currentAge: 56 (past 55) so performAge55Transfer doesn't overwrite cpfRA.
+    // Set cpfLifeStartAge: 56 so the annuity is captured at the projection start.
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      currentAge: 56,
+      retirementAge: 58,
+      lifeExpectancy: 90,
+      annualExpenses: 80000,
+      liquidNetWorth: 2000000,
+      swr: 0.04,
+      fireNumberBasis: 'today',
+      usePortfolioReturn: false,
+      expectedReturn: 0.07,
+      inflation: 0.025,
+      expenseRatio: 0.003,
+      cpfOA: 0,
+      cpfSA: 0,
+      cpfMA: 0,
+      cpfRA: 100000,
+      cpfLifeStartAge: 56,
+      parentSupportEnabled: false,
+      parentSupport: [],
+      healthcareConfig: { ...useProfileStore.getState().healthcareConfig, enabled: false },
+      validationErrors: {},
+    })
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    const cpfItem = result.current.waterfallItems.find((i) => i.label === 'CPF LIFE')
+    expect(cpfItem).toBeDefined()
+    expect(cpfItem!.type).toBe('subtract')
+    expect(cpfItem!.amount).toBeGreaterThan(0)
+  })
+
+  it('cpfOaMortgageCoverPct is clamped at 1.0 when CPF exceeds payment', () => {
+    setupBaseline()
+    usePropertyStore.setState({
+      ...usePropertyStore.getState(),
+      ownsProperty: true,
+      existingPropertyValue: 1500000,
+      existingMortgageBalance: 800000,
+      existingMonthlyPayment: 3000,
+      mortgageCpfMonthly: 5000, // CPF > monthly payment
+      existingMortgageRate: 0.035,
+      existingMortgageRemainingYears: 20,
+      ownershipPercent: 1,
+      validationErrors: {},
+    })
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    expect(result.current.cpfOaMortgageCoverPct).not.toBeNull()
+    expect(result.current.cpfOaMortgageCoverPct).toBe(1)
+  })
+
+  it('netAnnualNeed / swr approximates projectionFireNumber for simple case', () => {
+    // With no special cash flows (no mortgage, CPF LIFE, rental), the projection-
+    // derived FIRE number should closely match netAnnualNeed / swr. This is the
+    // core invariant: the waterfall correctly decomposes the projection number.
+    setupBaseline()
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    const { netAnnualNeed, projectionFireNumber } = result.current
+    expect(netAnnualNeed).not.toBeNull()
+    expect(projectionFireNumber).not.toBeNull()
+    const swr = useProfileStore.getState().swr
+    const impliedNumber = netAnnualNeed! / swr
+    // Allow 5% tolerance for rounding in normalization
+    expect(Math.abs(impliedNumber - projectionFireNumber!) / projectionFireNumber!).toBeLessThan(0.05)
+  })
+
+  it('fallback path produces waterfall items when no retired rows', () => {
+    // retirementAge === lifeExpectancy means no retired rows in projection
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      currentAge: 30,
+      retirementAge: 90,
+      lifeExpectancy: 90,
+      annualExpenses: 60000,
+      liquidNetWorth: 0,
+      swr: 0.04,
+      fireNumberBasis: 'today',
+      usePortfolioReturn: false,
+      expectedReturn: 0.07,
+      inflation: 0.025,
+      expenseRatio: 0.003,
+      parentSupportEnabled: false,
+      parentSupport: [],
+      healthcareConfig: { ...useProfileStore.getState().healthcareConfig, enabled: false },
+      validationErrors: {},
+    })
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    // Should still have waterfall items from the formula-side fallback
+    expect(result.current.waterfallItems.length).toBeGreaterThanOrEqual(1)
+    expect(result.current.waterfallItems[0].label).toBe('Expenses')
+    expect(result.current.netAnnualNeed).not.toBeNull()
+    // projectionFireNumber should be null (no retired rows)
+    expect(result.current.projectionFireNumber).toBeNull()
+  })
+
+  it('fallback waterfall items match fireNumber on retirement basis', () => {
+    // Bug 1 regression test: on non-today basis, fallback items must be inflation-
+    // adjusted to match the FIRE number's dollar basis.
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      currentAge: 30,
+      retirementAge: 90,
+      lifeExpectancy: 90,
+      annualExpenses: 60000,
+      liquidNetWorth: 0,
+      swr: 0.04,
+      fireNumberBasis: 'retirement',
+      usePortfolioReturn: false,
+      expectedReturn: 0.07,
+      inflation: 0.025,
+      expenseRatio: 0.003,
+      parentSupportEnabled: false,
+      parentSupport: [],
+      healthcareConfig: { ...useProfileStore.getState().healthcareConfig, enabled: false },
+      validationErrors: {},
+    })
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    const { waterfallItems, netAnnualNeed, simpleFireNumber } = result.current
+    expect(waterfallItems.length).toBeGreaterThanOrEqual(1)
+    expect(netAnnualNeed).not.toBeNull()
+    expect(simpleFireNumber).not.toBeNull()
+    // netAnnualNeed / swr should equal simpleFireNumber (both in retirement basis)
+    const swr = useProfileStore.getState().swr
+    expect(netAnnualNeed! / swr).toBeCloseTo(simpleFireNumber!, -2)
+  })
+
   it('downsizing rent item appears when downsizing is configured', () => {
     setupBaseline()
     usePropertyStore.setState({
