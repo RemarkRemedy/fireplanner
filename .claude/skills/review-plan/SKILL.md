@@ -26,7 +26,7 @@ If invoked and there is no plan to review, ask the user which plan file to revie
 2. **Read project rules**: Read `/Users/tj/TJDevelopment/fireplanner/CLAUDE.md` to have
    the full project rules in context for compliance checking.
 
-3. **Launch 3 review agents in parallel** (single message, 3 Agent tool calls):
+3. **Launch 4 review agents in parallel** (single message, 4 tool calls):
 
    **Agent 1 — Code Architect** (subagent_type: `feature-dev:code-architect`):
    Review the plan for architectural soundness:
@@ -54,7 +54,15 @@ If invoked and there is no plan to review, ask the user which plan file to revie
    about existing code, scope creep, and any steps that contradict each other.
    The plan: [plan content]"
 
-4. **Consolidate findings**: Collect all 3 agent results, deduplicate, and present as a
+   **Agent 4 — Gemini** (use `mcp__gemini-cli__ask-gemini` tool):
+   Send the plan content to Gemini for an independent review. Prompt:
+   "Review this implementation plan for a TypeScript/React retirement planner app.
+   Look for: logical flaws, missing steps, contradictions between steps, unrealistic
+   scope estimates, and assumptions that might not hold. Also check if any step
+   could introduce bugs or regressions in adjacent features.
+   The plan: [plan content]"
+
+4. **Consolidate findings**: Collect all 4 agent results, deduplicate, and present as a
    severity-ranked list:
    - BLOCKER: Plan violates CLAUDE.md rules, targets nonexistent APIs, or has logical flaws
    - WARNING: Missing edge cases, hidden dependencies, scope underestimated

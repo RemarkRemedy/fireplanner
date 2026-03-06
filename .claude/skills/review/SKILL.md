@@ -26,7 +26,7 @@ If invoked and there are no `.ts`/`.tsx` changes, say "No code changes to review
    If no `.ts`/`.tsx` files remain after filtering, stop — nothing to review.
    Read all code files to build context.
 
-2. **Launch 3 review agents in parallel** (single message, 3 Agent tool calls):
+2. **Launch 4 review agents in parallel** (single message, 4 tool calls):
 
    **Agent 1 — Code Architect** (subagent_type: `feature-dev:code-architect`):
    Review all changed files for architectural concerns: CLAUDE.md convention violations,
@@ -44,7 +44,14 @@ If invoked and there are no `.ts`/`.tsx` changes, say "No code changes to review
    and improvements. Prompt: "Review these files for bugs, logic errors, type safety
    issues, and convention violations: [file list]. Read each file and report findings."
 
-3. **Consolidate findings**: Collect all 3 agent results, deduplicate, and present as a
+   **Agent 4 — Gemini** (use `mcp__gemini-cli__ask-gemini` tool):
+   Send the list of changed files using @ syntax for file inclusion. Prompt:
+   "Review these changed files for bugs, logic errors, missed edge cases, and
+   potential regressions. Focus on issues the other reviewers might miss —
+   subtle logic flaws, implicit assumptions, and cross-file interaction bugs:
+   @file1.ts @file2.ts ..."
+
+3. **Consolidate findings**: Collect all 4 agent results, deduplicate, and present as a
    severity-ranked list:
    - CRITICAL: Bugs, type errors, security issues, calculation errors
    - WARNING: Convention violations, missing tests, architectural concerns
