@@ -171,7 +171,7 @@ export function SimulationControls({
             </div>
             <p className="text-xs text-muted-foreground">
               {simulation.deterministicAccumulation
-                ? 'Assumes average market luck until retirement. Every simulation starts decumulation with the same portfolio.'
+                ? 'Assumes average market luck until retirement. Every simulation starts retirement withdrawals with the same portfolio.'
                 : 'Considers both lucky and unlucky markets before retirement. Some simulations arrive with much more, others much less. More realistic, but produces lower success rates.'}
             </p>
             <button
@@ -210,7 +210,7 @@ export function SimulationControls({
                   <tr>
                     <td className="border border-border px-3 py-2 font-medium bg-muted/30">Risk captured</td>
                     <td className="border border-border px-3 py-2">Withdrawal strategy only</td>
-                    <td className="border border-border px-3 py-2">All sources (accumulation + decumulation)</td>
+                    <td className="border border-border px-3 py-2">All sources (saving + retirement phases)</td>
                   </tr>
                   <tr>
                     <td className="border border-border px-3 py-2 font-medium bg-muted/30">Conservative?</td>
