@@ -130,7 +130,7 @@ export function PassiveIncomePanel() {
                   <Area
                     type="monotone"
                     dataKey="governmentIncome"
-                    name="Govt / CPF LIFE"
+                    name="Government / CPF LIFE"
                     stackId="1"
                     stroke="#10b981"
                     fill="#10b981"
