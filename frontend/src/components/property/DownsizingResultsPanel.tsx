@@ -74,8 +74,8 @@ export function DownsizingResultsPanel() {
           {results.type === 'sell-and-downsize' && (
             <>
               <div className="border-t pt-2 mt-2" />
-              <Row label="BSD on New Property" value={`(${formatCurrency(results.bsdOnNewProperty)})`} negative />
-              <Row label="ABSD on New Property" value={results.absdOnNewProperty > 0 ? `(${formatCurrency(results.absdOnNewProperty)})` : '$0'} negative={results.absdOnNewProperty > 0} />
+              <Row label="Buyer's Stamp Duty (BSD) on New Property" value={`(${formatCurrency(results.bsdOnNewProperty)})`} negative />
+              <Row label="Additional BSD (ABSD) on New Property" value={results.absdOnNewProperty > 0 ? `(${formatCurrency(results.absdOnNewProperty)})` : '$0'} negative={results.absdOnNewProperty > 0} />
               <Row label="Down Payment" value={`(${formatCurrency(results.downPayment)})`} negative />
               <div className="border-t pt-2 mt-2" />
               <Row label="Net Equity to Portfolio" value={formatCurrency(results.netEquityToPortfolio)} highlight />

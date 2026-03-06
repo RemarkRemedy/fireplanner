@@ -55,7 +55,7 @@ export function PropertyAnalysisPanel() {
     return (
       <Card>
         <CardContent className="pt-6 md:pt-6">
-          <p className="text-sm text-muted-foreground">Fix validation errors to see analysis.</p>
+          <p className="text-sm text-muted-foreground">Fix the input errors above to see the property analysis.</p>
         </CardContent>
       </Card>
     )
@@ -70,11 +70,11 @@ export function PropertyAnalysisPanel() {
           </CardHeader>
           <CardContent className="space-y-1 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">BSD</span>
+              <span className="text-muted-foreground">Buyer's Stamp Duty (BSD)</span>
               <span>{formatCurrency(analysis.bsd)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">ABSD</span>
+              <span className="text-muted-foreground">Additional BSD (ABSD)</span>
               <span>{formatCurrency(analysis.absd)}</span>
             </div>
             <div className="flex justify-between font-medium border-t pt-1">
@@ -127,7 +127,7 @@ export function PropertyAnalysisPanel() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Leasehold Decay (Bala's Table)</CardTitle>
+          <CardTitle className="text-sm">Leasehold Depreciation (Bala's Table)</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex gap-6 text-sm">
