@@ -89,12 +89,12 @@ describe('useExplorePortfolio', () => {
       expect(isFinite(result.current.initialPortfolio)).toBe(true)
     })
 
-    it('label contains "FIRE Target" with dollar-basis year', () => {
+    it('label contains "FIRE Number" with dollar-basis year', () => {
       const { result } = renderHook(() => useExplorePortfolio())
       act(() => {
         result.current.setBalanceMode('fireTarget')
       })
-      expect(result.current.label).toContain('FIRE Target')
+      expect(result.current.label).toContain('FIRE Number')
       expect(result.current.label).toMatch(/\(\d{4}\$\)/)
     })
   })

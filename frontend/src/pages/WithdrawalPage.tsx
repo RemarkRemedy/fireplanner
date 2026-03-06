@@ -202,7 +202,7 @@ export function WithdrawalPage() {
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200 flex items-start justify-between gap-2">
             <p>
               Compare withdrawal strategies to understand how they behave under different market conditions.
-              This uses a simplified decumulation-only model. For a full stress test of your plan including accumulation, go to{' '}
+              This uses a simplified model with retirement withdrawals only (no new savings). For a full stress test of your plan including accumulation, go to{' '}
               <Link to="/stress-test" className="font-medium underline">Stress Test</Link>
             </p>
             <button
@@ -236,7 +236,7 @@ export function WithdrawalPage() {
                     disabled
                     className="rounded-md px-3 py-1.5 text-sm font-medium cursor-not-allowed opacity-40 text-muted-foreground"
                   >
-                    FIRE Target
+                    FIRE Number
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -292,7 +292,7 @@ export function WithdrawalPage() {
             <div className="space-y-6">
               <p className="text-sm text-muted-foreground">
                 Run 10,000 random market scenarios using your selected withdrawal strategy to estimate the probability
-                your portfolio lasts through retirement. This is a simplified decumulation-only model with no income streams.
+                your portfolio lasts through retirement. This uses retirement withdrawals only (no new savings or income streams).
               </p>
 
               <SimulationControls

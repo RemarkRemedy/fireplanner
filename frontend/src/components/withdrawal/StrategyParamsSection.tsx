@@ -30,16 +30,16 @@ const STRATEGY_GROUPS: { label: string; strategies: WithdrawalStrategyType[] }[]
 export const STRATEGY_DESCRIPTIONS: Record<WithdrawalStrategyType, string> = {
   constant_dollar: 'Withdraw a fixed inflation-adjusted amount each year (the classic 4% rule).',
   vpw: 'Withdraw a variable percentage based on remaining years and portfolio size.',
-  guardrails: 'Inflation-adjust spending but cut/raise when portfolio hits guardrails.',
+  guardrails: 'Adjust spending for inflation, but cut or raise it when your portfolio crosses upper or lower boundaries.',
   vanguard_dynamic: 'Target a percentage of portfolio with ceiling and floor limits on changes.',
-  cape_based: 'Blend CAPE earnings yield with a base rate, adjusting for valuation.',
-  floor_ceiling: 'Withdraw a percentage of portfolio, clamped between floor and ceiling amounts.',
+  cape_based: 'Adjust withdrawals based on current stock market valuations, blending a base rate with market conditions.',
+  floor_ceiling: 'Withdraw a percentage of portfolio, kept between a minimum and maximum dollar amount.',
   percent_of_portfolio: 'Withdraw a fixed percentage of the current portfolio each year.',
-  one_over_n: 'Withdraw portfolio / remaining years. Spends everything by end.',
-  sensible_withdrawals: 'Base rate + share of prior year gains. Conservative base with upside.',
+  one_over_n: 'Divide your portfolio by your remaining years. Aims to spend everything by end of plan.',
+  sensible_withdrawals: 'A conservative base withdrawal plus a share of prior year gains as a bonus.',
   ninety_five_percent: 'Never less than 95% of last year. Protects income in downturns.',
-  endowment: 'Smoothed blend of inflation-adjusted prior and market-based target (Yale model).',
-  hebeler_autopilot: '75% inflation-adjusted prior + 25% PMT-based annuity factor.',
+  endowment: 'Smoothed blend of inflation-adjusted prior spending and a market-based target (Yale model).',
+  hebeler_autopilot: '75% inflation-adjusted prior spending plus 25% based on a remaining-lifetime payout factor.',
 }
 
 interface StrategyParamsSectionProps {
@@ -166,7 +166,7 @@ export function StrategyParamCard({ strategy }: { strategy: WithdrawalStrategyTy
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {strategy === 'constant_dollar' && (
-          <ParamInput label="SWR" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} />
+          <ParamInput label="Withdrawal Rate" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} />
         )}
         {strategy === 'vpw' && (
           <>
@@ -184,7 +184,7 @@ export function StrategyParamCard({ strategy }: { strategy: WithdrawalStrategyTy
         )}
         {strategy === 'vanguard_dynamic' && (
           <>
-            <ParamInput label="SWR" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} />
+            <ParamInput label="Withdrawal Rate" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} />
             <ParamInput label="Ceiling" value={(params as { ceiling: number }).ceiling * 100} onChange={(v) => setParam('ceiling', v / 100)} suffix="%" step={0.1} />
             <ParamInput label="Floor" value={(params as { floor: number }).floor * 100} onChange={(v) => setParam('floor', v / 100)} suffix="%" step={0.1} />
           </>
@@ -216,11 +216,11 @@ export function StrategyParamCard({ strategy }: { strategy: WithdrawalStrategyTy
           </>
         )}
         {strategy === 'ninety_five_percent' && (
-          <ParamInput label="SWR" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} tooltip="Target withdrawal rate. Actual withdrawal never drops below 95% of prior year." />
+          <ParamInput label="Withdrawal Rate" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} tooltip="Target withdrawal rate. Actual withdrawal never drops below 95% of prior year." />
         )}
         {strategy === 'endowment' && (
           <>
-            <ParamInput label="SWR" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} />
+            <ParamInput label="Withdrawal Rate" value={(params as { swr: number }).swr * 100} onChange={(v) => setParam('swr', v / 100)} suffix="%" step={0.1} />
             <ParamInput label="Smoothing Weight" value={(params as { smoothingWeight: number }).smoothingWeight * 100} onChange={(v) => setParam('smoothingWeight', v / 100)} suffix="%" step={5} tooltip="Weight on prior withdrawal (inflation-adjusted). Higher = smoother income, slower response to market." />
           </>
         )}

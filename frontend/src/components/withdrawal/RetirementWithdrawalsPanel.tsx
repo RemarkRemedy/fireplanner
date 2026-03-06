@@ -120,7 +120,7 @@ export function RetirementWithdrawalsPanel() {
                     onChange={(e) => updateEntry(entry.id, { inflationAdjusted: e.target.checked })}
                   />
                   <span className="text-muted-foreground text-xs">
-                    {entry.inflationAdjusted ? "Today's dollars" : 'Nominal'}
+                    {entry.inflationAdjusted ? "Today's dollars" : 'Future dollars'}
                   </span>
                 </label>
               </div>

@@ -52,7 +52,7 @@ export function useExplorePortfolio(): ExplorePortfolioResult {
         initialPortfolio: fireNumber,
         allocationWeights: weights,
         startAge: fireAge,
-        label: `FIRE Target: ${formatCurrency(fireNumber)} at age ${fireAge} (${dollarYear}$)`,
+        label: `FIRE Number: ${formatCurrency(fireNumber)} at age ${fireAge} (${dollarYear}$)`,
       }
     }
 
