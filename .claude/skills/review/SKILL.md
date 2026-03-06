@@ -1,17 +1,30 @@
 ---
 name: review
-description: Multi-agent code review of current branch changes
+description: Multi-agent code review of TypeScript/TSX source code changes on the current branch. Only for reviewing code, NOT for reviewing plans, docs, or markdown files.
 ---
 
 # Code Review Skill
 
-Run a structured, multi-agent code review of all changes on the current branch.
+Run a structured, multi-agent code review of all **code** changes on the current branch.
+
+## Scope Guard
+
+This skill reviews `.ts` and `.tsx` source files only. It does NOT review:
+- Plan files (`.md` in `.claude/plans/` or `docs/plans/`)
+- Documentation (`.md`, `CLAUDE.md`, `SKILL.md`)
+- Config files (`.json`, `.toml`, `.yaml`)
+- Skill definitions
+
+If invoked and there are no `.ts`/`.tsx` changes, say "No code changes to review" and stop.
 
 ## Steps
 
 1. **Identify scope**: Run `git diff main...HEAD --name-only` to list all changed files.
    If no diff (on main), use `git diff HEAD~1 --name-only` for the last commit.
-   Read all changed files to build context.
+   **Filter to only `.ts` and `.tsx` files.** Exclude test files (`*.test.ts`) from
+   the architectural review but include them in the correctness review.
+   If no `.ts`/`.tsx` files remain after filtering, stop — nothing to review.
+   Read all code files to build context.
 
 2. **Launch 3 review agents in parallel** (single message, 3 Agent tool calls):
 
