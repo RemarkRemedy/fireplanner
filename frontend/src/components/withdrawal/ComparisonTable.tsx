@@ -27,10 +27,10 @@ export function ComparisonTable({ results }: ComparisonTableProps) {
                 <th className="text-right py-2 px-2 font-medium">Avg Withdrawal</th>
                 <th className="text-right py-2 px-2 font-medium">Min</th>
                 <th className="text-right py-2 px-2 font-medium hidden md:table-cell">Max</th>
-                <th className="text-right py-2 px-2 font-medium hidden md:table-cell">Std Dev</th>
+                <th className="text-right py-2 px-2 font-medium hidden md:table-cell">Variability</th>
                 <th className="text-right py-2 px-2 font-medium hidden md:table-cell">Total Withdrawn</th>
-                <th className="text-right py-2 px-2 font-medium">Terminal Portfolio</th>
-                <th className="text-right py-2 pl-2 font-medium">Survived</th>
+                <th className="text-right py-2 px-2 font-medium">Ending Balance</th>
+                <th className="text-right py-2 pl-2 font-medium">Lasted</th>
               </tr>
             </thead>
             <tbody>

@@ -40,7 +40,7 @@ export function PortfolioComparisonChart({ results }: PortfolioComparisonChartPr
             <YAxis tickFormatter={(v: number) => formatCurrency(v)} width={90} />
             <Tooltip trigger={isMobile ? 'click' : undefined} formatter={(value: number) => formatCurrency(value)} />
             <Legend formatter={(value: string) => getStrategyLabel(value as WithdrawalStrategyType)} />
-            <ReferenceLine y={0} stroke="#ef4444" strokeDasharray="3 3" label="Ruin" />
+            <ReferenceLine y={0} stroke="#ef4444" strokeDasharray="3 3" label="Ran out" />
             {strategies.map((s) => (
               <Line
                 key={s}

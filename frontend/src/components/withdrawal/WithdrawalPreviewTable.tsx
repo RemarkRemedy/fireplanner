@@ -50,7 +50,7 @@ export function WithdrawalPreviewTable({
               <th className="px-2 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">Age</th>
               <th className="px-2 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">Projected Expenses</th>
               <th className="px-2 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">Withdrawal</th>
-              <th className="px-2 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">Gap</th>
+              <th className="px-2 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">Shortfall</th>
               <th className="px-2 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">Projected Portfolio</th>
             </tr>
           </thead>
