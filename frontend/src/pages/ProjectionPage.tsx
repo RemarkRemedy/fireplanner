@@ -509,7 +509,7 @@ export function ProjectionPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Peak Total NW
+                Peak Net Worth
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -560,9 +560,9 @@ export function ProjectionPage() {
         } else if (fireAchievedAge !== null && depleted) {
           narrative = `You reach financial independence at age ${fireAchievedAge}, but your portfolio depletes at age ${portfolioDepletedAge}. Consider reducing spending or adjusting your withdrawal strategy.`
         } else if (!depleted) {
-          narrative = `Your portfolio does not reach the FIRE target within the projection period, but never depletes. It peaks at ${formatCurrency(peakTotalNW)} at age ${peakTotalNWAge}.`
+          narrative = `Your portfolio does not reach the FIRE number within the projection period, but never depletes. It peaks at ${formatCurrency(peakTotalNW)} at age ${peakTotalNWAge}.`
         } else {
-          narrative = `Your portfolio does not reach the FIRE target and depletes at age ${portfolioDepletedAge}. Consider increasing savings or extending your working years.`
+          narrative = `Your portfolio does not reach the FIRE number and depletes at age ${portfolioDepletedAge}. Consider increasing savings or extending your working years.`
         }
 
         return (

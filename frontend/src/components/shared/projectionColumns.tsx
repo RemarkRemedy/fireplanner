@@ -132,7 +132,7 @@ export function buildProjectionColumns(
       cell: (info) => currencyCell(info.getValue()),
     }),
     columnHelper.accessor('liquidNW', {
-      header: 'Liquid NW',
+      header: 'Cash & Investments',
       cell: (info) => currencyCell(info.getValue()),
     }),
     columnHelper.accessor('cpfTotal', {
