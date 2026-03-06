@@ -274,11 +274,11 @@ function WithdrawalSchedule({ bands, strategy }: { bands: PercentileBands; strat
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-2 pr-4 font-medium">Age</th>
-                  <th className="text-right py-2 px-3 font-medium text-red-600">p10</th>
-                  <th className="text-right py-2 px-3 font-medium text-yellow-600">p25</th>
-                  <th className="text-right py-2 px-3 font-medium">p50 (Median)</th>
-                  <th className="text-right py-2 px-3 font-medium text-green-600">p75</th>
-                  <th className="text-right py-2 px-3 font-medium text-green-600">p90</th>
+                  <th className="text-right py-2 px-3 font-medium text-red-600">Poor (10th)</th>
+                  <th className="text-right py-2 px-3 font-medium text-yellow-600">Lower (25th)</th>
+                  <th className="text-right py-2 px-3 font-medium">Typical (50th)</th>
+                  <th className="text-right py-2 px-3 font-medium text-green-600">Upper (75th)</th>
+                  <th className="text-right py-2 px-3 font-medium text-green-600">Good (90th)</th>
                 </tr>
               </thead>
               <tbody>

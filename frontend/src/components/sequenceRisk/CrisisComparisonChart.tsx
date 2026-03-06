@@ -35,12 +35,12 @@ export function CrisisComparisonChart({ normalBands, crisisBands }: CrisisCompar
             <YAxis tickFormatter={(v: number) => formatCurrency(v)} width={90} />
             <Tooltip trigger={isMobile ? 'click' : undefined} formatter={(value: number) => formatCurrency(value)} />
             <Legend />
-            <Line type="monotone" dataKey="normalP50" name="Normal (p50)" stroke="#16a34a" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="normalP25" name="Normal (p25)" stroke="#16a34a" strokeWidth={1} strokeDasharray="4 4" dot={false} />
-            <Line type="monotone" dataKey="normalP75" name="Normal (p75)" stroke="#16a34a" strokeWidth={1} strokeDasharray="4 4" dot={false} />
-            <Line type="monotone" dataKey="crisisP50" name="Crisis (p50)" stroke="#dc2626" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="crisisP25" name="Crisis (p25)" stroke="#dc2626" strokeWidth={1} strokeDasharray="4 4" dot={false} />
-            <Line type="monotone" dataKey="crisisP75" name="Crisis (p75)" stroke="#dc2626" strokeWidth={1} strokeDasharray="4 4" dot={false} />
+            <Line type="monotone" dataKey="normalP50" name="Typical outcome" stroke="#16a34a" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="normalP25" name="Normal lower range" stroke="#16a34a" strokeWidth={1} strokeDasharray="4 4" dot={false} />
+            <Line type="monotone" dataKey="normalP75" name="Normal upper range" stroke="#16a34a" strokeWidth={1} strokeDasharray="4 4" dot={false} />
+            <Line type="monotone" dataKey="crisisP50" name="Crisis outcome" stroke="#dc2626" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="crisisP25" name="Crisis lower range" stroke="#dc2626" strokeWidth={1} strokeDasharray="4 4" dot={false} />
+            <Line type="monotone" dataKey="crisisP75" name="Crisis upper range" stroke="#dc2626" strokeWidth={1} strokeDasharray="4 4" dot={false} />
           </LineChart>
         </ResponsiveContainer>
         </div>
