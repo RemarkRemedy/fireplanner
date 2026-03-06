@@ -61,7 +61,7 @@ export function NWChartView({ rows, retirementAge }: NWChartViewProps) {
             formatter={(value: number, name: string) => [
               formatCurrency(value),
               name === 'liquidNW'
-                ? 'Liquid NW'
+                ? 'Cash & Investments'
                 : name === 'cpfTotal'
                   ? 'CPF'
                   : name === 'cpfBequest'
@@ -115,7 +115,7 @@ export function NWChartView({ rows, retirementAge }: NWChartViewProps) {
         </AreaChart>
       </ResponsiveContainer>
       <div className="flex flex-wrap justify-center gap-x-6 gap-y-1 mt-2 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(210, 80%, 60%)' }} /> Liquid NW</span>
+        <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(210, 80%, 60%)' }} /> Cash & Investments</span>
         <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(150, 60%, 50%)' }} /> CPF</span>
         <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(150, 40%, 72%)' }} /> CPF LIFE Bequest</span>
         <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(35, 80%, 55%)' }} /> Property Equity</span>

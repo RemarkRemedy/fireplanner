@@ -205,17 +205,17 @@ export function buildProjectionColumns(
     }),
     columnHelper.accessor('mediShieldLifePremium', {
       id: 'mediShieldLifePremium',
-      header: 'MSL Prem.',
+      header: 'MediShield Life',
       cell: (info) => optionalCurrencyCell(info.getValue()),
     }),
     columnHelper.accessor('ispAdditionalPremium', {
       id: 'ispAdditionalPremium',
-      header: 'ISP Prem.',
+      header: 'Shield Plan',
       cell: (info) => optionalCurrencyCell(info.getValue()),
     }),
     columnHelper.accessor('careShieldLifePremium', {
       id: 'careShieldLifePremium',
-      header: 'CSL Prem.',
+      header: 'CareShield Life',
       cell: (info) => optionalCurrencyCell(info.getValue()),
     }),
     columnHelper.accessor('oopExpense', {
@@ -225,7 +225,7 @@ export function buildProjectionColumns(
     }),
     columnHelper.accessor('mediSaveDeductible', {
       id: 'mediSaveDeductible',
-      header: 'MS Deduct.',
+      header: 'MediSave Used',
       cell: (info) => optionalCurrencyCell(info.getValue()),
     }),
 

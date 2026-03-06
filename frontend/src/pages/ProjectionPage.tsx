@@ -415,7 +415,7 @@ export function ProjectionPage() {
           <div>
             <h1 className="text-2xl font-bold">Year-by-Year Projection</h1>
             <p className="text-muted-foreground text-sm">
-              Deterministic trajectory showing income, portfolio growth, and FIRE progress.
+              Single-path projection showing income, portfolio growth, and FIRE progress.
               Verify your inputs produce sensible numbers before running Monte Carlo analysis.
               {' '}
               <span className="font-medium">
@@ -475,7 +475,7 @@ export function ProjectionPage() {
       {hasErrors && (
         <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3">
           <p className="text-sm text-destructive font-medium">
-            Fix upstream validation errors before the projection can be computed.
+            Fix input errors before the projection can be computed.
           </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
             <Link to="/inputs#section-personal" className="text-sm text-destructive hover:underline font-medium">
@@ -521,13 +521,13 @@ export function ProjectionPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Terminal NW
+                Final Net Worth
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">{formatCurrency(displaySummary.terminalTotalNW)}</p>
               <p className="text-xs text-muted-foreground">
-                Liquid: {formatCurrency(displaySummary.terminalLiquidNW)}
+                Cash & Investments: {formatCurrency(displaySummary.terminalLiquidNW)}
               </p>
             </CardContent>
           </Card>
@@ -617,7 +617,7 @@ export function ProjectionPage() {
                 )}
                 title="Show values in today's purchasing power"
               >
-                Real $
+                Today's $
               </button>
               <button
                 onClick={() => { setUIField('dollarBasis', 'nominal'); trackEvent('dollar_basis_changed', { basis: 'nominal' }) }}
@@ -629,7 +629,7 @@ export function ProjectionPage() {
                 )}
                 title="Show actual future dollar amounts"
               >
-                Nominal $
+                Future $
               </button>
             </div>
             <button
