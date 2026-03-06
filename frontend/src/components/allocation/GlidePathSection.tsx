@@ -19,9 +19,9 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 import type { GlidePathMethod } from '@/lib/types'
 
 const METHOD_LABELS: Record<GlidePathMethod, string> = {
-  linear: 'Linear',
-  slowStart: 'Slow Start (Quadratic)',
-  fastStart: 'Fast Start (Square Root)',
+  linear: 'Linear (steady pace)',
+  slowStart: 'Slow Start (gradual then fast)',
+  fastStart: 'Fast Start (quick then gradual)',
 }
 
 const METHOD_DESCRIPTIONS: Record<GlidePathMethod, string> = {

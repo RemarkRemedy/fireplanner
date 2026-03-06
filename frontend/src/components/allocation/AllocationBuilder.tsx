@@ -110,8 +110,8 @@ export function AllocationBuilder() {
                 <th className="text-left py-2 pr-4 font-medium">Asset Class</th>
                 <th className="text-right py-2 px-2 font-medium w-28">Current %</th>
                 <th className="text-right py-2 px-2 font-medium w-28">Target %</th>
-                <th className="text-right py-2 px-2 font-medium w-24">Exp Return</th>
-                <th className="text-right py-2 pl-2 font-medium w-24">Std Dev</th>
+                <th className="text-right py-2 px-2 font-medium w-24">Expected Return</th>
+                <th className="text-right py-2 pl-2 font-medium w-24">Risk (Std Dev)</th>
               </tr>
             </thead>
             <tbody>

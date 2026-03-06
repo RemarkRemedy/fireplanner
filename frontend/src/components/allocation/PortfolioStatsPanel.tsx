@@ -52,7 +52,7 @@ export function PortfolioStatsPanel({ compact = false }: { compact?: boolean } =
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Fix validation errors above to see portfolio statistics.
+            Fix the input errors above to see portfolio statistics.
           </p>
         </CardContent>
       </Card>
@@ -64,7 +64,7 @@ export function PortfolioStatsPanel({ compact = false }: { compact?: boolean } =
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           Portfolio Statistics
-          <InfoTooltip text="Markowitz portfolio analytics comparing your current (accumulation) and target (retirement) allocations." />
+          <InfoTooltip text="Portfolio analytics comparing your current (accumulation) and target (retirement) allocations, showing the optimal risk-return balance." />
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -105,8 +105,8 @@ export function PortfolioStatsPanel({ compact = false }: { compact?: boolean } =
                     format={(v) => formatPercent(v, 2)}
                   />
                   <StatRow
-                    label="Std Deviation"
-                    tooltip="Portfolio volatility (risk). Lower is less risky."
+                    label="Risk (Std Dev)"
+                    tooltip="Portfolio volatility. Lower means less risk and more stable returns."
                     formula="√(w'Σw)"
                     current={currentStats.stdDev}
                     target={targetStats.stdDev}
@@ -114,16 +114,16 @@ export function PortfolioStatsPanel({ compact = false }: { compact?: boolean } =
                     higherIsBetter={false}
                   />
                   <StatRow
-                    label="Sharpe Ratio"
-                    tooltip="Risk-adjusted return. Higher means more return per unit of risk."
+                    label="Risk-Adjusted Return (Sharpe)"
+                    tooltip="Measures return per unit of risk. Higher means more return for the same level of volatility."
                     formula="(Net Return - Risk Free) / Std Dev"
                     current={currentStats.sharpe}
                     target={targetStats.sharpe}
                     format={(v) => isFinite(v) ? v.toFixed(3) : '\u221E'}
                   />
                   <StatRow
-                    label="VaR 95%"
-                    tooltip="Value at Risk: worst expected annual return with 95% confidence. Less negative is better."
+                    label="Worst-Case Loss (95% confidence)"
+                    tooltip="The worst expected annual return under normal conditions, with 95% confidence. Less negative is better."
                     formula="Return - 1.645 × Std Dev"
                     current={currentStats.var95}
                     target={targetStats.var95}
