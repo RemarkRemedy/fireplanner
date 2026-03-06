@@ -29,7 +29,7 @@ const PHASE_CARDS: { phase: RetirementPhase; label: string; description: string;
   {
     phase: 'before-55',
     label: 'Before 55',
-    description: 'CPF still accumulating. No CPF LIFE yet — you\'ll need your portfolio to bridge the gap.',
+    description: 'Central Provident Fund (CPF) still accumulating. No CPF LIFE yet — you\'ll need your portfolio to bridge the gap.',
     icon: Clock,
   },
   {
@@ -205,7 +205,7 @@ export function StartPage() {
           <Landmark className="h-4 w-4 text-muted-foreground" />
           <div>
             <div className="text-sm font-medium">CPF Integration</div>
-            <p className="text-xs text-muted-foreground">CPF balances, contributions, and LIFE payouts</p>
+            <p className="text-xs text-muted-foreground">Central Provident Fund (CPF) balances, contributions, and LIFE payouts</p>
           </div>
         </div>
         <Switch
@@ -343,13 +343,13 @@ export function StartPage() {
                 tooltip="Total annual income before tax and CPF"
               />
               <CurrencyInput
-                label="Annual Expenses (excl. healthcare & mortgage)"
+                label="Annual Expenses (excluding healthcare & mortgage)"
                 value={draftExpenses}
                 onChange={setDraftExpenses}
                 tooltip="Healthcare insurance and mortgage payments are modelled separately in their own sections."
               />
               <CurrencyInput
-                label="Savings & Investments"
+                label="Cash & Investments"
                 value={draftNetWorth}
                 onChange={setDraftNetWorth}
                 tooltip="Cash, savings, stocks, bonds, and other investments — excluding CPF and property"
@@ -397,13 +397,13 @@ export function StartPage() {
                 tooltip="Total annual income before tax and CPF"
               />
               <CurrencyInput
-                label="Annual Expenses (excl. healthcare & mortgage)"
+                label="Annual Expenses (excluding healthcare & mortgage)"
                 value={draftExpenses}
                 onChange={setDraftExpenses}
                 tooltip="Healthcare insurance and mortgage payments are modelled separately in their own sections."
               />
               <CurrencyInput
-                label="Savings & Investments"
+                label="Cash & Investments"
                 value={draftNetWorth}
                 onChange={setDraftNetWorth}
                 tooltip="Cash, savings, stocks, bonds, and other investments — excluding CPF and property"
@@ -452,13 +452,13 @@ export function StartPage() {
                   tooltip="Total annual income before tax and CPF"
                 />
                 <CurrencyInput
-                  label="Annual Expenses (excl. healthcare & mortgage)"
+                  label="Annual Expenses (excluding healthcare & mortgage)"
                   value={draftExpenses}
                   onChange={setDraftExpenses}
                   tooltip="Healthcare insurance and mortgage payments are modelled separately in their own sections."
                 />
                 <CurrencyInput
-                  label="Savings & Investments"
+                  label="Cash & Investments"
                   value={draftNetWorth}
                   onChange={setDraftNetWorth}
                   tooltip="Cash, savings, stocks, bonds, and other investments — excluding CPF and property"
@@ -657,7 +657,7 @@ function QuickResults({
 
       {/* Disclaimer */}
       <p className="text-xs text-muted-foreground">
-        Quick estimate in today's dollars (3.6% SWR, 7% return, 2.5% inflation).
+        Quick estimate in today's dollars (3.6% Safe Withdrawal Rate, 7% return, 2.5% inflation).
         Your detailed plan will adjust for inflation, CPF, and portfolio allocation.
       </p>
     </div>
