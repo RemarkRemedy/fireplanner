@@ -191,3 +191,208 @@ describe('useAdjustedFireNumber', () => {
     expect(proj).toBeGreaterThan(0)
   })
 })
+
+describe('waterfall items', () => {
+  /** Reusable baseline: near-retirement, minimal config, produces retired rows */
+  function setupBaseline() {
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      currentAge: 55,
+      retirementAge: 58,
+      lifeExpectancy: 90,
+      annualExpenses: 80000,
+      liquidNetWorth: 2000000,
+      swr: 0.04,
+      fireNumberBasis: 'today',
+      usePortfolioReturn: false,
+      expectedReturn: 0.07,
+      inflation: 0.025,
+      expenseRatio: 0.003,
+      cpfOA: 0,
+      cpfSA: 0,
+      cpfMA: 0,
+      cpfRA: 0,
+      cpfLifeStartAge: 100,
+      parentSupportEnabled: false,
+      parentSupport: [],
+      healthcareConfig: { ...useProfileStore.getState().healthcareConfig, enabled: false },
+      validationErrors: {},
+    })
+  }
+
+  it('waterfallItems always contains at least Expenses', () => {
+    setupBaseline()
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    expect(result.current.waterfallItems.length).toBeGreaterThanOrEqual(1)
+    expect(result.current.waterfallItems[0].label).toBe('Expenses')
+    expect(result.current.waterfallItems[0].type).toBe('add')
+    expect(result.current.waterfallItems[0].amount).toBeGreaterThan(0)
+  })
+
+  it('healthcare item appears when enabled', () => {
+    setupBaseline()
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      healthcareConfig: {
+        ...useProfileStore.getState().healthcareConfig,
+        enabled: true,
+      },
+    })
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    const healthcareItem = result.current.waterfallItems.find((i) => i.label === 'Healthcare')
+    expect(healthcareItem).toBeDefined()
+    expect(healthcareItem!.type).toBe('add')
+    expect(healthcareItem!.amount).toBeGreaterThan(0)
+  })
+
+  it('parent support item appears when enabled', () => {
+    setupBaseline()
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      parentSupportEnabled: true,
+      parentSupport: [{ id: 'p1', label: 'Parent 1', monthlyAmount: 500, startAge: 55, endAge: 80, growthRate: 0.02 }],
+    })
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    const parentItem = result.current.waterfallItems.find((i) => i.label === 'Parent support')
+    expect(parentItem).toBeDefined()
+    expect(parentItem!.type).toBe('add')
+    expect(parentItem!.amount).toBeGreaterThan(0)
+  })
+
+  it('zero-value items are excluded', () => {
+    setupBaseline()
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    // With no healthcare, parent support, mortgage, CPF LIFE, or rental income,
+    // only Expenses should be present
+    expect(result.current.waterfallItems).toHaveLength(1)
+    expect(result.current.waterfallItems[0].label).toBe('Expenses')
+  })
+
+  it('mortgage item appears when property has mortgage', () => {
+    setupBaseline()
+    usePropertyStore.setState({
+      ...usePropertyStore.getState(),
+      ownsProperty: true,
+      existingPropertyValue: 1500000,
+      existingMortgageBalance: 800000,
+      existingMonthlyPayment: 3000,
+      mortgageCpfMonthly: 0,
+      existingMortgageRate: 0.035,
+      existingMortgageRemainingYears: 20,
+      ownershipPercent: 1,
+      validationErrors: {},
+    })
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    const mortgageItem = result.current.waterfallItems.find((i) => i.label === 'Mortgage (cash)')
+    expect(mortgageItem).toBeDefined()
+    expect(mortgageItem!.type).toBe('add')
+    expect(mortgageItem!.amount).toBeGreaterThan(0)
+  })
+
+  it('cpfOaMortgageCoverPct is correct when property exists with CPF portion', () => {
+    setupBaseline()
+    usePropertyStore.setState({
+      ...usePropertyStore.getState(),
+      ownsProperty: true,
+      existingPropertyValue: 1500000,
+      existingMortgageBalance: 800000,
+      existingMonthlyPayment: 3000,
+      mortgageCpfMonthly: 2640, // 88% covered by CPF
+      existingMortgageRate: 0.035,
+      existingMortgageRemainingYears: 20,
+      ownershipPercent: 1,
+      validationErrors: {},
+    })
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    expect(result.current.cpfOaMortgageCoverPct).not.toBeNull()
+    expect(result.current.cpfOaMortgageCoverPct).toBeCloseTo(0.88, 1)
+  })
+
+  it('cpfOaMortgageCoverPct is null when no property', () => {
+    setupBaseline()
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    expect(result.current.cpfOaMortgageCoverPct).toBeNull()
+  })
+
+  it('cpfOaMortgageCoverPct is null when existingMonthlyPayment is 0 (NaN guard)', () => {
+    setupBaseline()
+    usePropertyStore.setState({
+      ...usePropertyStore.getState(),
+      ownsProperty: true,
+      existingPropertyValue: 1500000,
+      existingMortgageBalance: 0,
+      existingMonthlyPayment: 0,
+      mortgageCpfMonthly: 0,
+      existingMortgageRate: 0.035,
+      existingMortgageRemainingYears: 0,
+      ownershipPercent: 1,
+      validationErrors: {},
+    })
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    expect(result.current.cpfOaMortgageCoverPct).toBeNull()
+  })
+
+  it('netAnnualNeed equals sum of add minus subtract items', () => {
+    setupBaseline()
+    usePropertyStore.setState({
+      ...usePropertyStore.getState(),
+      ownsProperty: true,
+      existingPropertyValue: 1500000,
+      existingMortgageBalance: 800000,
+      existingMonthlyPayment: 3000,
+      mortgageCpfMonthly: 0,
+      existingMortgageRate: 0.035,
+      existingMortgageRemainingYears: 20,
+      ownershipPercent: 1,
+      validationErrors: {},
+    })
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    const expectedNet = result.current.waterfallItems.reduce(
+      (sum, item) => sum + (item.type === 'add' ? item.amount : -item.amount),
+      0,
+    )
+    expect(result.current.netAnnualNeed).toBeCloseTo(expectedNet, 2)
+  })
+
+  it('Lean FIRE label is "Expenses (60%)"', () => {
+    setupBaseline()
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      fireType: 'lean',
+    })
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    expect(result.current.waterfallItems[0].label).toBe('Expenses (60%)')
+  })
+
+  it('downsizing rent item appears when downsizing is configured', () => {
+    setupBaseline()
+    usePropertyStore.setState({
+      ...usePropertyStore.getState(),
+      ownsProperty: true,
+      existingPropertyValue: 1500000,
+      existingMortgageBalance: 0,
+      existingMonthlyPayment: 0,
+      mortgageCpfMonthly: 0,
+      existingMortgageRate: 0.035,
+      existingMortgageRemainingYears: 0,
+      ownershipPercent: 1,
+      downsizing: {
+        scenario: 'sell-and-rent',
+        sellAge: 57,
+        expectedSalePrice: 1500000,
+        newPropertyCost: 0,
+        newMortgageRate: 0.035,
+        newMortgageTerm: 20,
+        newLtv: 0.75,
+        monthlyRent: 2500,
+        rentGrowthRate: 0.03,
+      },
+      validationErrors: {},
+    })
+    const { result } = renderHook(() => useAdjustedFireNumber())
+    const rentItem = result.current.waterfallItems.find((i) => i.label === 'Rent (downsized)')
+    expect(rentItem).toBeDefined()
+    expect(rentItem!.type).toBe('add')
+    expect(rentItem!.amount).toBeGreaterThan(0)
+  })
+})

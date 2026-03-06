@@ -4,6 +4,7 @@ import { Progress } from '@/components/ui/progress'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useProjection } from '@/hooks/useProjection'
@@ -19,7 +20,7 @@ export function FireTargetsSection() {
   const mode = useEffectiveMode('section-fire-settings')
   const { metrics, hasErrors } = useFireCalculations()
   const { summary: projSummary } = useProjection()
-  const { projectionFireNumber, deviationPct, showProjectionNumber, deviationFactors } = useAdjustedFireNumber()
+  const { waterfallItems, netAnnualNeed, cpfOaMortgageCoverPct } = useAdjustedFireNumber()
 
   // Prefer projection's simulated FIRE age over NPER estimate
   const projFireAge = projSummary?.fireAchievedAge ?? null
@@ -139,52 +140,30 @@ export function FireTargetsSection() {
                 {fireType === 'fat' && (
                   <div className="text-xs text-muted-foreground">150% of expenses</div>
                 )}
-                {/* Expense breakdown — only show when add-ons exist */}
-                {(metrics.expensesBreakdown.healthcareCashOutlay > 0 || metrics.expensesBreakdown.parentSupportAnnual > 0) && (
-                  <div className="text-[10px] text-muted-foreground mt-1 space-y-0.5">
-                    <div className="flex justify-between">
-                      <span>Expenses</span>
-                      <span>{formatCurrency(metrics.expensesBreakdown.baseExpenses)}</span>
-                    </div>
-                    {metrics.expensesBreakdown.healthcareCashOutlay > 0 && (
-                      <div className="flex justify-between">
-                        <span className="flex items-center gap-0.5">
-                          + Healthcare
-                          <InfoTooltip text="Level Annual Equivalent (LAE): the constant annual withdrawal that covers all escalating healthcare costs from retirement to life expectancy, accounting for portfolio growth." />
-                        </span>
-                        <span>{formatCurrency(metrics.expensesBreakdown.healthcareCashOutlay)}</span>
-                      </div>
-                    )}
-                    {metrics.expensesBreakdown.parentSupportAnnual > 0 && (
-                      <div className="flex justify-between">
-                        <span>+ Parent support</span>
-                        <span>{formatCurrency(metrics.expensesBreakdown.parentSupportAnnual)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between border-t border-border/50 pt-0.5 font-medium">
-                      <span>/ {(swr * 100).toFixed(1)}% SWR</span>
-                      <span>{formatCurrency(metrics.fireNumber)}</span>
-                    </div>
+                {/* Waterfall breakdown */}
+                {waterfallItems.length > 1 && netAnnualNeed !== null ? (
+                  <Accordion type="single" collapsible className="mt-1">
+                    <AccordionItem value="breakdown" className="border-0">
+                      <AccordionTrigger className="py-1 text-[10px] text-muted-foreground font-normal hover:no-underline">
+                        Net annual need {formatCurrency(netAnnualNeed)}/yr at {(swr * 100).toFixed(1)}% SWR
+                      </AccordionTrigger>
+                      <AccordionContent className="pb-1">
+                        <WaterfallBreakdown
+                          items={waterfallItems}
+                          netAnnualNeed={netAnnualNeed}
+                          swr={swr}
+                          fireNumber={metrics.fireNumber}
+                          fireType={fireType}
+                          cpfOaMortgageCoverPct={cpfOaMortgageCoverPct}
+                        />
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                ) : waterfallItems.length === 1 && netAnnualNeed !== null ? (
+                  <div className="text-[10px] text-muted-foreground mt-1">
+                    {formatCurrency(netAnnualNeed)} / {(swr * 100).toFixed(1)}% SWR
                   </div>
-                )}
-                {/* Projection-derived FIRE Number annotation */}
-                {showProjectionNumber && projectionFireNumber !== null && deviationPct !== null && (
-                  <div className="text-[10px] mt-1 p-1.5 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                    <div className="flex justify-between font-medium text-blue-800 dark:text-blue-200">
-                      <span className="flex items-center gap-0.5">
-                        Projection-derived
-                        <InfoTooltip text="Based on first retirement year's actual cash flows from the year-by-year projection, which accounts for mortgage payments, CPF LIFE payouts, and rental income that the simple formula excludes." />
-                      </span>
-                      <span>{formatCurrency(projectionFireNumber)}</span>
-                    </div>
-                    <div className="text-blue-600 dark:text-blue-300 mt-0.5">
-                      {deviationPct > 0 ? '+' : ''}{(deviationPct * 100).toFixed(1)}% vs formula
-                      {deviationFactors.length > 0 && (
-                        <span> ({deviationFactors.join(', ')})</span>
-                      )}
-                    </div>
-                  </div>
-                )}
+                ) : null}
                 {/* Basis toggle */}
                 <div role="radiogroup" aria-label="FIRE number dollar basis" className="flex items-center gap-0.5 mt-1.5 rounded-md bg-background border p-0.5">
                   {([
@@ -332,6 +311,71 @@ function MetricCard({
       <div className="text-lg font-semibold mt-0.5">{value}</div>
       {subtitle && (
         <div className="text-xs text-muted-foreground">{subtitle}</div>
+      )}
+    </div>
+  )
+}
+
+function WaterfallBreakdown({
+  items,
+  netAnnualNeed,
+  swr,
+  fireNumber,
+  fireType,
+  cpfOaMortgageCoverPct,
+}: {
+  items: { label: string; amount: number; type: 'add' | 'subtract' }[]
+  netAnnualNeed: number
+  swr: number
+  fireNumber: number
+  fireType: FireType
+  cpfOaMortgageCoverPct: number | null
+}) {
+  const maxAmount = Math.max(...items.map((i) => i.amount))
+  const isCoastOrBarista = fireType === 'coast' || fireType === 'barista'
+
+  return (
+    <div className="text-[10px] text-muted-foreground space-y-0.5">
+      {items.map((item, i) => {
+        const barPct = maxAmount > 0 ? (item.amount / maxAmount) * 100 : 0
+        const isSubtract = item.type === 'subtract'
+        return (
+          <div key={item.label} className="flex items-center gap-1">
+            <span className={`w-2.5 text-right shrink-0 ${isSubtract ? 'text-green-600' : ''}`}>
+              {i === 0 ? '' : isSubtract ? '−' : '+'}
+            </span>
+            <span className={`w-24 truncate ${isSubtract ? 'text-green-600' : ''}`}>
+              {item.label}
+            </span>
+            <span className={`w-16 text-right tabular-nums shrink-0 ${isSubtract ? 'text-green-600' : ''}`}>
+              {isSubtract ? '−' : ''}{formatCurrency(item.amount)}
+            </span>
+            <div className="flex-1 h-2 rounded-sm overflow-hidden bg-muted">
+              <div
+                className={`h-full rounded-sm ${isSubtract ? 'bg-green-400' : 'bg-primary/40'}`}
+                style={{ width: `${barPct}%` }}
+              />
+            </div>
+          </div>
+        )
+      })}
+      <div className="flex items-center gap-1 border-t border-border/50 pt-0.5 font-medium">
+        <span className="w-2.5 shrink-0" />
+        <span className="w-24">Net annual need</span>
+        <span className="w-16 text-right tabular-nums shrink-0">{formatCurrency(netAnnualNeed)}</span>
+      </div>
+      {!isCoastOrBarista && (
+        <div className="flex items-center gap-1 font-medium">
+          <span className="w-2.5 shrink-0" />
+          <span className="w-24">÷ {(swr * 100).toFixed(1)}% SWR</span>
+          <span className="w-16 text-right tabular-nums shrink-0">{formatCurrency(fireNumber)}</span>
+        </div>
+      )}
+      {cpfOaMortgageCoverPct !== null && (
+        <div className="mt-1 px-1.5 py-1 rounded bg-muted/50 text-[10px] text-muted-foreground">
+          CPF OA covers {Math.round(cpfOaMortgageCoverPct * 100)}% of your mortgage.
+          Only the cash portion ({Math.round((1 - cpfOaMortgageCoverPct) * 100)}%) affects your FIRE number.
+        </div>
       )}
     </div>
   )
