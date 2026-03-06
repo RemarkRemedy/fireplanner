@@ -82,7 +82,7 @@ export function BacktestControls({ config, setConfig, isPending, canRun, validat
           <div className="space-y-2">
             <Label>
               Dataset
-              <InfoTooltip text="US-only uses S&P 500 returns. SG-only uses STI. Blended mixes both with adjustable weighting." />
+              <InfoTooltip text="US market (S&P 500) returns. Singapore market (STI). Blended mixes both with adjustable weighting." />
             </Label>
             <Select
               value={config.dataset}
@@ -120,8 +120,8 @@ export function BacktestControls({ config, setConfig, isPending, canRun, validat
           {showSwr && (
             <div className="space-y-2">
               <Label>
-                SWR
-                <InfoTooltip text="Safe Withdrawal Rate — the percentage of your portfolio withdrawn in year 1. 4% is the classic starting point." />
+                Withdrawal Rate
+                <InfoTooltip text="Safe Withdrawal Rate (SWR) — the percentage of your portfolio withdrawn in year 1. 4% is the classic starting point." />
               </Label>
               <Input
                 type="number"

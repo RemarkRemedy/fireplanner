@@ -159,7 +159,7 @@ export function SwrHeatmap({ data, onCellClick }: SwrHeatmapProps) {
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           SWR x Duration Heatmap
-          <InfoTooltip text="Historical success rate for each combination of withdrawal rate and retirement duration. Green = high survival, red = high failure risk." />
+          <InfoTooltip text="Historical success rate for each combination of withdrawal rate and retirement duration. Green = portfolio lasted, red = high risk of running out." />
         </CardTitle>
       </CardHeader>
       <CardContent>

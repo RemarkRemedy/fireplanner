@@ -173,7 +173,7 @@ export function BacktestDrillDown({
             SWR {formatPercent(swr, 1)} x {duration} years
           </SheetTitle>
           <SheetDescription>
-            Success rate: {formatPercent(successRate, 1)} — {backtestResult?.summary.total_periods ?? '...'} rolling windows
+            Success rate: {formatPercent(successRate, 1)} — {backtestResult?.summary.total_periods ?? '...'} tested historical periods
           </SheetDescription>
         </SheetHeader>
 
@@ -270,7 +270,7 @@ export function BacktestDrillDown({
             <Card>
               <CardContent className="pt-4">
                 <p className="text-sm font-medium mb-3">
-                  Rolling Windows ({backtestResult.results.length})
+                  Tested Historical Periods ({backtestResult.results.length})
                 </p>
                 <div className="max-h-64 overflow-y-auto">
                   <table className="w-full text-sm">
@@ -295,7 +295,7 @@ export function BacktestDrillDown({
                           <td className="py-1.5 pr-2 font-medium">{r.start_year}</td>
                           <td className="py-1.5 px-2 text-center">
                             <Badge variant={r.survived ? 'default' : 'destructive'} className="text-xs">
-                              {r.survived ? 'OK' : 'Fail'}
+                              {r.survived ? 'Passed' : 'Failed'}
                             </Badge>
                           </td>
                           <td className="py-1.5 px-2 text-right">{formatCurrency(r.ending_balance)}</td>
