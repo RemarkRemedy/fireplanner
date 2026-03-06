@@ -195,12 +195,12 @@ export function FireTargetsSection() {
                 </div>
                 {fireNumberBasis === 'retirement' && (
                   <div className="text-[10px] text-muted-foreground mt-0.5">
-                    Adjusted to age {retirementAge} at {(inflation * 100).toFixed(1)}%
+                    Adjusted to age {retirementAge} at {(inflation * 100).toFixed(1)}% inflation
                   </div>
                 )}
                 {fireNumberBasis === 'fireAge' && effectiveFireAge !== null && isFinite(effectiveFireAge) && (
                   <div className="text-[10px] text-muted-foreground mt-0.5">
-                    Adjusted to age {Math.ceil(effectiveFireAge)} at {(inflation * 100).toFixed(1)}%
+                    Adjusted to age {Math.ceil(effectiveFireAge)} at {(inflation * 100).toFixed(1)}% inflation
                   </div>
                 )}
               </div>
@@ -389,6 +389,7 @@ function WaterfallBreakdown({
       )}
       <div className="mt-1 text-[9px] text-muted-foreground/70 italic">
         Based on your first retirement year. Amounts may differ in later years as mortgages end, CPF LIFE starts, or rental leases change.
+        See <Link to="/projection" className="underline">Projection</Link> or <Link to="/stress-test" className="underline">Stress Test</Link> for a year-by-year analysis.
       </div>
     </div>
   )
