@@ -108,10 +108,10 @@ describe('lever → buildMonteCarloEngineParams integration', () => {
     const levered = buildLeverParams('expenses_down_10pct')
 
     // annualExpensesAtRetirement should be lower (reflects 10% expense cut inflated to retirement)
-    expect(levered.annualExpensesAtRetirement).toBeLessThan(baseline.annualExpensesAtRetirement)
+    expect(levered.annualExpensesAtRetirement).toBeLessThan(baseline.annualExpensesAtRetirement!)
 
     // Verify the ratio is approximately 0.9 (may not be exact due to expense adjustments)
-    const ratio = levered.annualExpensesAtRetirement / baseline.annualExpensesAtRetirement
+    const ratio = levered.annualExpensesAtRetirement! / baseline.annualExpensesAtRetirement!
     expect(ratio).toBeCloseTo(0.9, 1)
   })
 
@@ -164,10 +164,10 @@ describe('lever → buildMonteCarloEngineParams integration', () => {
     const levered = buildLeverParams('savings_rate_up_2pp')
 
     // 2% of 100K income = 2K less expenses → should reduce expenses at retirement
-    expect(levered.annualExpensesAtRetirement).toBeLessThan(baseline.annualExpensesAtRetirement)
+    expect(levered.annualExpensesAtRetirement).toBeLessThan(baseline.annualExpensesAtRetirement!)
 
     // The reduction should be proportional to 2K / 60K ≈ 3.3%
-    const ratio = levered.annualExpensesAtRetirement / baseline.annualExpensesAtRetirement
+    const ratio = levered.annualExpensesAtRetirement! / baseline.annualExpensesAtRetirement!
     const expectedRatio = (60_000 - 2_000) / 60_000
     expect(ratio).toBeCloseTo(expectedRatio, 1)
   })
