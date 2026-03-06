@@ -937,7 +937,7 @@ export function StressTestPage() {
         {(() => {
           // Static Tailwind class mapping — dynamic template literals get purged
           const hasResults = !!mc.data
-          const tabCount = 1 + (hasResults ? 1 : 0) + (isStressAdvanced ? 3 : 0)
+          const tabCount = 1 + (hasResults ? 1 : 0) + (isStressAdvanced ? 2 : 0)
           const gridColsClass: Record<number, string> = {
             1: 'grid-cols-1',
             2: 'grid-cols-2',
