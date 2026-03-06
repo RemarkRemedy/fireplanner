@@ -47,7 +47,7 @@ export function DashboardPage() {
         <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-3">
           <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
           <div className="text-sm text-blue-800 dark:text-blue-200">
-            <p>Some sections are using default values. Personalize your inputs for accurate results:</p>
+            <p>You're using default values for some sections. Personalize your inputs for accurate results:</p>
             <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
               {uncustomized.map((s) => (
                 <Link
@@ -67,7 +67,7 @@ export function DashboardPage() {
         <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 p-3">
           <FlaskConical className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
           <div className="text-sm text-amber-800 dark:text-amber-200">
-            These results are preliminary estimates. Verify your year-by-year numbers in{' '}
+            These results are early estimates based on your inputs. Verify your year-by-year numbers in{' '}
             <Link to="/projection" className="font-medium underline hover:no-underline">Projection</Link>, then{' '}
             <Link to="/stress-test" className="font-medium underline hover:no-underline">Stress Test</Link>{' '}
             your plan to see how it holds up against life's uncertainties.
