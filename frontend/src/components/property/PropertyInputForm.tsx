@@ -21,7 +21,7 @@ export function PropertyInputForm() {
           <div className="space-y-2">
             <Label>
               Property Type
-              <InfoTooltip text="HDB, Condo, or Landed. Affects ABSD and LTV calculations." />
+              <InfoTooltip text="Housing & Development Board (HDB), Condo, or Landed. Affects Additional Buyer's Stamp Duty (ABSD) and Loan-to-Value calculations." />
             </Label>
             <Select
               value={store.propertyType}
@@ -48,7 +48,7 @@ export function PropertyInputForm() {
           <div className="space-y-2">
             <Label>
               Lease (years)
-              <InfoTooltip text="99-year leasehold is standard for condos. 999 or freehold for some landed. Leasehold decay follows Bala's Table." source="SLA" sourceUrl="https://isomer-user-content.by.gov.sg/50/ade6cd16-890b-4a1b-9d1d-d0e189daba03/balas-table.pdf" />
+              <InfoTooltip text="99-year leasehold is standard for condos. 999 or freehold for some landed. Leasehold decay follows the leasehold depreciation schedule (Bala's Table)." source="SLA" sourceUrl="https://isomer-user-content.by.gov.sg/50/ade6cd16-890b-4a1b-9d1d-d0e189daba03/balas-table.pdf" />
             </Label>
             <Input
               type="number"
@@ -119,7 +119,7 @@ export function PropertyInputForm() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label>LTV</Label>
+            <Label>Loan-to-Value (LTV)</Label>
             <div className="relative">
               <Input
                 type="number"
@@ -133,7 +133,7 @@ export function PropertyInputForm() {
           </div>
 
           <div className="space-y-2">
-            <Label>Residency (for ABSD)</Label>
+            <Label>Residency (for Additional Buyer's Stamp Duty)</Label>
             <Select
               value={store.residencyForAbsd}
               onValueChange={(v) => store.setField('residencyForAbsd', v as 'citizen' | 'pr' | 'foreigner')}
@@ -152,7 +152,7 @@ export function PropertyInputForm() {
           <div className="space-y-2">
             <Label>
               Existing Properties
-              <InfoTooltip text="Number of properties already owned. Affects ABSD rate." source="IRAS" sourceUrl="https://www.iras.gov.sg/taxes/stamp-duty/for-property/buying-or-acquiring-property/additional-buyer's-stamp-duty-(absd)" />
+              <InfoTooltip text="Number of properties already owned. Affects Additional Buyer's Stamp Duty (ABSD) rate." source="IRAS" sourceUrl="https://www.iras.gov.sg/taxes/stamp-duty/for-property/buying-or-acquiring-property/additional-buyer's-stamp-duty-(absd)" />
             </Label>
             <Input
               type="number"

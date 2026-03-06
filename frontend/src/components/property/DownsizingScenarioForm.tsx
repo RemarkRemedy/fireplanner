@@ -109,11 +109,11 @@ export function DownsizingScenarioForm() {
                     )}
                   </div>
                   <PercentInput
-                    label="New LTV"
+                    label="New Loan-to-Value (LTV)"
                     value={downsizing.newLtv}
                     onChange={(v) => setDownsizingField('newLtv', v)}
                     error={validationErrors['downsizing_newLtv']}
-                    tooltip="Loan-to-value ratio for the new property (max 75% in SG)"
+                    tooltip="Loan-to-value ratio for the new property (maximum 75% in Singapore)"
                   />
                 </div>
               </div>

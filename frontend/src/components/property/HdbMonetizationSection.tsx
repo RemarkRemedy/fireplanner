@@ -26,14 +26,14 @@ export function HdbMonetizationSection() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">HDB Monetization</CardTitle>
+        <CardTitle className="text-lg">Housing & Development Board (HDB) Monetization</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
             <Label className="text-sm flex items-center gap-1">
               Flat Type
-              <InfoTooltip text="Your HDB flat type. Affects subletting rate suggestions." />
+              <InfoTooltip text="Your HDB flat type. Used to suggest typical subletting rates." />
             </Label>
             <Select
               value={flatType}
@@ -127,7 +127,7 @@ function SubletInputs({
           integer
           min={1}
           max={3}
-          tooltip="Number of rooms to rent out (max 3 for HDB)"
+          tooltip="Number of rooms to rent out (maximum 3 for HDB)"
         />
         <CurrencyInput
           label="Monthly Rate per Room"
@@ -163,7 +163,7 @@ function LbsInputs() {
         <div className="space-y-1">
           <Label className="text-sm flex items-center gap-1">
             Retained Lease
-            <InfoTooltip text="Years of lease to keep. HDB allows 20, 25, 30, or 35 years. Must cover you to at least age 95." />
+            <InfoTooltip text="Years of lease to keep. HDB Lease Buyback Scheme allows 20, 25, 30, or 35 years. Must cover you to at least age 95." />
           </Label>
           <Select
             value={String(property.hdbLbsRetainedLease)}
@@ -196,7 +196,7 @@ function LbsInputs() {
           <span className="font-semibold">{formatCurrency(lbsResult.totalProceeds)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">CPF RA Top-up</span>
+          <span className="text-muted-foreground">CPF Retirement Account (RA) Top-up</span>
           <span className="font-medium">{formatCurrency(lbsResult.cpfRaTopUp)}</span>
         </div>
         <div className="flex justify-between">
@@ -204,7 +204,7 @@ function LbsInputs() {
           <span className="font-medium">{formatCurrency(lbsResult.cashProceeds)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Est. Monthly LIFE Boost</span>
+          <span className="text-muted-foreground">Estimated Monthly CPF LIFE Boost</span>
           <span className="font-medium">{formatCurrency(lbsResult.estimatedMonthlyLifeBoost)}/mo</span>
         </div>
       </div>
