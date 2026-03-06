@@ -117,7 +117,7 @@ export function PersonalSection() {
           <div className="space-y-1">
             <Label className="text-sm flex items-center">
               Residency Status
-              <InfoTooltip text="Sets your residency for CPF contribution rates, SRS caps, and tax calculations. For ABSD on property purchases, residency is set separately in the Property section." />
+              <InfoTooltip text="Sets your residency for Central Provident Fund (CPF) contribution rates, Supplementary Retirement Scheme (SRS) caps, and tax calculations. For Additional Buyer's Stamp Duty (ABSD) on property purchases, residency is set separately in the Property section." />
             </Label>
             <Select
               value={residencyStatus}

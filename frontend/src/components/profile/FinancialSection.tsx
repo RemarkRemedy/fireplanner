@@ -33,35 +33,35 @@ export function FinancialSection() {
           />
 
           <CurrencyInput
-            label="CPF OA Balance"
+            label="CPF Ordinary Account (OA) Balance"
             value={store.cpfOA}
             onChange={(v) => store.setField('cpfOA', v)}
             error={store.validationErrors.cpfOA}
-            tooltip="CPF Ordinary Account balance"
+            tooltip="Central Provident Fund (CPF) Ordinary Account balance"
           />
 
           <CurrencyInput
-            label="CPF SA Balance"
+            label="CPF Special Account (SA) Balance"
             value={store.cpfSA}
             onChange={(v) => store.setField('cpfSA', v)}
             error={store.validationErrors.cpfSA}
-            tooltip="CPF Special Account balance"
+            tooltip="CPF Special Account (SA) balance"
           />
 
           <CurrencyInput
-            label="CPF MA Balance"
+            label="CPF MediSave Account (MA) Balance"
             value={store.cpfMA}
             onChange={(v) => store.setField('cpfMA', v)}
             error={store.validationErrors.cpfMA}
-            tooltip="CPF Medisave Account balance"
+            tooltip="CPF MediSave Account (MA) balance"
           />
 
           <CurrencyInput
-            label="SRS Balance"
+            label="Supplementary Retirement Scheme (SRS) Balance"
             value={store.srsBalance}
             onChange={(v) => store.setField('srsBalance', v)}
             error={store.validationErrors.srsBalance}
-            tooltip="Supplementary Retirement Scheme balance"
+            tooltip="Supplementary Retirement Scheme (SRS) balance"
           />
 
           <CurrencyInput

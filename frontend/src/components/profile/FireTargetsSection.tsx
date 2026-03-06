@@ -209,7 +209,7 @@ export function FireTargetsSection() {
                   FIRE Timeline
                   <InfoTooltip text={isSimulated
                     ? "Year-by-year projection with income growth, CPF, and tax"
-                    : "NPER formula using constant savings and net real return"
+                    : "Estimated from your savings rate and inflation-adjusted returns"
                   } />
                 </div>
                 <div className="flex items-baseline gap-1.5 mt-0.5">
