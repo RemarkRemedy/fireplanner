@@ -1,0 +1,73 @@
+import { useState, useCallback, useRef, useMemo } from 'react'
+import { useLocation } from 'react-router-dom'
+import { trackEvent } from '@/lib/analytics'
+import { isCompanionMode } from '@/lib/companion/isCompanionMode'
+import { readStorageValue, setStorageValue, setSessionFlag, readSessionFlag } from '@/lib/storageFlags'
+import {
+  EXPENSE_TRACKER_MODAL_DISMISSED_KEY,
+  EXPENSE_TRACKER_MODAL_SESSION_KEY,
+  type SourceSurface,
+} from '@/lib/validation/emailConstants'
+import { useExpenseTrackerSignup } from '@/hooks/useExpenseTrackerSignup'
+import { ExpenseTrackerContext } from './ExpenseTrackerContext'
+
+const DISMISS_SUPPRESS_DAYS = 14
+
+function isModalDismissedRecently(): boolean {
+  const dismissed = readStorageValue(EXPENSE_TRACKER_MODAL_DISMISSED_KEY)
+  if (!dismissed) return false
+  const dismissedAt = new Date(dismissed).getTime()
+  if (isNaN(dismissedAt)) return false
+  return (Date.now() - dismissedAt) / (1000 * 60 * 60 * 24) < DISMISS_SUPPRESS_DAYS
+}
+
+export function ExpenseTrackerProvider({ children }: { children: React.ReactNode }) {
+  const signup = useExpenseTrackerSignup()
+  const location = useLocation()
+  const companion = isCompanionMode()
+
+  const isEligible = !signup.isSignedUp && !companion
+
+  const [modalOpen, setModalOpen] = useState(false)
+  const modalDismissedRecently = useRef(isModalDismissedRecently())
+  const modalShownThisSession = useRef(readSessionFlag(EXPENSE_TRACKER_MODAL_SESSION_KEY))
+
+  const impressionTracked = useRef<Record<string, boolean>>({})
+
+  const openModal = useCallback((force?: boolean) => {
+    if (!isEligible) return
+    if (!force && (modalDismissedRecently.current || modalShownThisSession.current)) return
+    setModalOpen(true)
+    modalShownThisSession.current = true
+    setSessionFlag(EXPENSE_TRACKER_MODAL_SESSION_KEY)
+    trackEvent('expense_tracker_form_open', { surface: 'modal', page: location.pathname })
+  }, [isEligible, location.pathname])
+
+  const closeModal = useCallback(() => {
+    setModalOpen(false)
+  }, [])
+
+  const dismissModal = useCallback((method: 'overlay' | 'escape' | 'close_button' = 'close_button') => {
+    setModalOpen(false)
+    setStorageValue(EXPENSE_TRACKER_MODAL_DISMISSED_KEY, new Date().toISOString())
+    modalDismissedRecently.current = true
+    trackEvent('expense_tracker_modal_dismiss', { page: location.pathname, method })
+  }, [location.pathname])
+
+  const trackImpression = useCallback((surface: SourceSurface) => {
+    if (impressionTracked.current[surface]) return
+    impressionTracked.current[surface] = true
+    trackEvent('expense_tracker_impression', { surface, page: location.pathname })
+  }, [location.pathname])
+
+  const value = useMemo(() => ({
+    signup, isEligible, modalOpen, openModal, closeModal, dismissModal, trackImpression,
+  }), [signup, isEligible, modalOpen, openModal, closeModal, dismissModal, trackImpression])
+
+  return (
+    <ExpenseTrackerContext.Provider value={value}>
+      {children}
+    </ExpenseTrackerContext.Provider>
+  )
+}
+
