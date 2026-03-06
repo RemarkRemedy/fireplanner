@@ -58,13 +58,13 @@ export function FanChart({ bands, retirementAge }: FanChartProps) {
                 if (!row) return null
                 const age = label as number
                 const percentiles = [
-                  { key: 'p95', label: '95th' },
-                  { key: 'p90', label: '90th' },
-                  { key: 'p75', label: '75th' },
-                  { key: 'p50', label: '50th (Median)' },
-                  { key: 'p25', label: '25th' },
-                  { key: 'p10', label: '10th' },
-                  { key: 'p5', label: '5th' },
+                  { key: 'p95', label: 'Great outcome (95th)' },
+                  { key: 'p90', label: 'Good outcome (90th)' },
+                  { key: 'p75', label: 'Upper range (75th)' },
+                  { key: 'p50', label: 'Typical (50th)' },
+                  { key: 'p25', label: 'Lower range (25th)' },
+                  { key: 'p10', label: 'Poor outcome (10th)' },
+                  { key: 'p5', label: 'Worst case (5th)' },
                 ]
                 return (
                   <div className="rounded-lg border bg-background p-2 shadow-md text-xs">
@@ -98,13 +98,13 @@ export function FanChart({ bands, retirementAge }: FanChartProps) {
         </div>
         <div className="flex justify-center gap-4 mt-2 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded bg-green-400" /> Median (p50)
+            <span className="inline-block w-3 h-3 rounded bg-green-400" /> Typical (50th)
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded bg-green-200" /> p25-p75
+            <span className="inline-block w-3 h-3 rounded bg-green-200" /> Middle 50%
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded bg-green-100" /> p5-p95
+            <span className="inline-block w-3 h-3 rounded bg-green-100" /> Full range (5th-95th)
           </span>
         </div>
       </CardContent>

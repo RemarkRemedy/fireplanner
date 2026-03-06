@@ -33,11 +33,11 @@ function getPathLabel(path: RepresentativePath): string {
   if (path.kind === 'best') return 'Best'
   if (path.kind === 'worst') return 'Worst'
   const pct = path.percentile ?? 50
-  if (pct === 10) return 'Pessimistic (p10)'
-  if (pct === 25) return 'Cautious (p25)'
-  if (pct === 50) return 'Median (p50)'
-  if (pct === 75) return 'Optimistic (p75)'
-  if (pct === 90) return 'Best Case (p90)'
+  if (pct === 10) return 'Lower outcome (10th percentile)'
+  if (pct === 25) return 'Cautious (25th percentile)'
+  if (pct === 50) return 'Typical outcome (50th percentile)'
+  if (pct === 75) return 'Optimistic (75th percentile)'
+  if (pct === 90) return 'Great outcome (90th percentile)'
   return `P${pct}`
 }
 
@@ -239,7 +239,7 @@ export function MCProjectionTable({ result, isStale }: MCProjectionTableProps) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-muted-foreground">
-          Fix upstream validation errors before the projection table can be shown.
+          Fix input errors before the projection table can be shown.
         </CardContent>
       </Card>
     )
