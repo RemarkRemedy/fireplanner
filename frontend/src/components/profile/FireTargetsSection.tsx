@@ -122,7 +122,7 @@ export function FireTargetsSection() {
 
             {/* Headline metrics */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <div className="col-span-2 md:col-span-1 p-3 rounded-md bg-muted/50">
+              <div className="col-span-2 p-3 rounded-md bg-muted/50">
                 <div className="text-xs text-muted-foreground flex items-center">
                   FIRE Number
                   <InfoTooltip text={
@@ -197,34 +197,36 @@ export function FireTargetsSection() {
                   </div>
                 )}
               </div>
-              <MetricCard
-                label="Years to FIRE"
-                value={
-                  effectiveYearsToFire !== null && effectiveYearsToFire === 0
-                    ? 'Achieved!'
-                    : effectiveYearsToFire !== null && isFinite(effectiveYearsToFire)
-                      ? Math.ceil(effectiveYearsToFire).toString()
-                      : isFinite(metrics.yearsToFire)
-                        ? Math.ceil(metrics.yearsToFire).toString()
-                        : 'N/A'
-                }
-                subtitle={isSimulated ? 'simulated' : 'estimate'}
-                tooltip={isSimulated
-                  ? "Year-by-year projection with income growth, CPF, and tax"
-                  : "NPER formula using constant savings and net real return"
-                }
-              />
-              <MetricCard
-                label="FIRE Age"
-                value={
-                  effectiveFireAge !== null && isFinite(effectiveFireAge)
-                    ? Math.ceil(effectiveFireAge).toString()
-                    : isFinite(metrics.fireAge)
-                      ? Math.ceil(metrics.fireAge).toString()
-                      : 'N/A'
-                }
-                subtitle={isSimulated ? 'simulated' : 'estimate'}
-              />
+              <div className="p-3 rounded-md bg-muted/50">
+                <div className="text-xs text-muted-foreground flex items-center">
+                  FIRE Timeline
+                  <InfoTooltip text={isSimulated
+                    ? "Year-by-year projection with income growth, CPF, and tax"
+                    : "NPER formula using constant savings and net real return"
+                  } />
+                </div>
+                <div className="flex items-baseline gap-1.5 mt-0.5">
+                  <span className="text-lg font-semibold">
+                    {effectiveYearsToFire !== null && effectiveYearsToFire === 0
+                      ? 'Achieved!'
+                      : effectiveYearsToFire !== null && isFinite(effectiveYearsToFire)
+                        ? `${Math.ceil(effectiveYearsToFire)} yrs`
+                        : isFinite(metrics.yearsToFire)
+                          ? `${Math.ceil(metrics.yearsToFire)} yrs`
+                          : 'N/A'}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    (age {effectiveFireAge !== null && isFinite(effectiveFireAge)
+                      ? Math.ceil(effectiveFireAge)
+                      : isFinite(metrics.fireAge)
+                        ? Math.ceil(metrics.fireAge)
+                        : 'N/A'})
+                  </span>
+                </div>
+                {isSimulated && (
+                  <div className="text-xs text-muted-foreground">simulated</div>
+                )}
+              </div>
               <MetricCard
                 label="Savings Rate"
                 value={formatPercent(metrics.savingsRate)}
