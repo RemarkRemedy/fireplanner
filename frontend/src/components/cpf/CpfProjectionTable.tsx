@@ -62,7 +62,7 @@ export function CpfProjectionTable() {
           cell: (info) => optionalCurrencyCell(info.getValue()),
         }),
         columnHelper.accessor('cpfisReturn', {
-          header: 'CPFIS Add. Return',
+          header: 'CPFIS Additional Return',
           cell: (info) => optionalCurrencyCell(info.getValue()),
         }),
       )
@@ -146,7 +146,7 @@ export function CpfProjectionTable() {
   if (hasErrors || !rows) {
     return (
       <p className="text-sm text-muted-foreground">
-        Fix validation errors above to see the CPF projection table.
+        Some inputs need fixing. Check the highlighted fields above to see the CPF projection table.
       </p>
     )
   }
@@ -156,7 +156,7 @@ export function CpfProjectionTable() {
     {depletionRow && (
       <div className="mb-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md text-sm">
         <p className="font-medium text-amber-800 dark:text-amber-200">
-          CPF OA projected to be depleted at age {depletionRow.age}
+          CPF Ordinary Account (OA) projected to be depleted at age {depletionRow.age}
         </p>
         <p className="text-amber-700 dark:text-amber-300 mt-1">
           From age {depletionRow.age} to {mortgageEndAge}, the remaining mortgage payments
@@ -222,11 +222,11 @@ export function CpfProjectionTable() {
                 {isMilestone && (
                   <td className="px-2 py-1.5 text-xs text-muted-foreground whitespace-nowrap">
                     <span className="inline-flex items-center gap-0.5">
-                      {original.milestone === 'brs' && 'BRS reached'}
-                      {original.milestone === 'frs' && 'FRS reached'}
-                      {original.milestone === 'ers' && 'ERS reached'}
+                      {original.milestone === 'brs' && 'Basic Retirement Sum reached'}
+                      {original.milestone === 'frs' && 'Full Retirement Sum reached'}
+                      {original.milestone === 'ers' && 'Enhanced Retirement Sum reached'}
                       {original.milestone === 'cpfLifeStart' && 'CPF LIFE starts'}
-                      {original.milestone === 'raCreated' && 'RA created'}
+                      {original.milestone === 'raCreated' && 'Retirement Account created'}
                       {original.milestoneFormula && (
                         <InfoTooltip text={original.milestoneFormula} />
                       )}
