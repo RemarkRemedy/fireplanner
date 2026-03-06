@@ -132,9 +132,9 @@ const ADVANCED_LABELS: Partial<Record<SectionId, { modeSectionId: ModeSectionId;
   'section-fire-settings': { modeSectionId: 'section-fire-settings', label: 'FIRE types, number basis, manual returns' },
   'section-income': { modeSectionId: 'section-income', label: 'tax reliefs, income streams, life events' },
   'section-expenses': { modeSectionId: 'section-expenses', label: 'all 12 strategies, comparison charts' },
-  'section-net-worth': { modeSectionId: 'section-net-worth', label: 'SRS return assumption, drawdown age' },
+  'section-net-worth': { modeSectionId: 'section-net-worth', label: 'Supplementary Retirement Scheme (SRS) return assumption, drawdown age' },
   'section-cpf': { modeSectionId: 'section-cpf', label: 'projection table, extra interest details' },
-  'section-property': { modeSectionId: 'section-property', label: "stamp duty breakdown, Bala's Table, amortization" },
+  'section-property': { modeSectionId: 'section-property', label: "stamp duty breakdown, leasehold depreciation (Bala's Table), amortization" },
   'section-allocation': { modeSectionId: 'section-allocation', label: 'custom overrides, glide path, correlations' },
 }
 
@@ -333,7 +333,7 @@ function ExpensesContent() {
         <CardContent>
           <div className="max-w-sm">
             <CurrencyInput
-              label="Annual Expenses (excl. healthcare & mortgage)"
+              label="Annual Expenses (excluding healthcare & mortgage)"
               value={annualExpenses}
               onChange={(v) => setProfileField('annualExpenses', v)}
               error={expensesError}
@@ -1382,7 +1382,7 @@ export function InputsPage() {
     'section-fire-settings': {
       id: 'section-fire-settings',
       title: 'FIRE Settings',
-      description: 'SWR, FIRE type, basis, return and inflation assumptions, and live FIRE metrics.',
+      description: 'Safe Withdrawal Rate (SWR), FIRE type, basis, return and inflation assumptions, and live FIRE metrics.',
       resetLabel: 'Reset Section',
       onReset: resetFireSettings,
       content: <FireSettingsContent />,
@@ -1414,7 +1414,7 @@ export function InputsPage() {
     'section-net-worth': {
       id: 'section-net-worth',
       title: 'Net Worth',
-      description: 'Liquid net worth, CPF balances, and SRS.',
+      description: 'Liquid net worth, CPF balances, and Supplementary Retirement Scheme (SRS).',
       resetLabel: 'Reset Section',
       onReset: resetNetWorth,
       content: <NetWorthContent />,
@@ -1422,7 +1422,7 @@ export function InputsPage() {
     'section-cpf': {
       id: 'section-cpf',
       title: 'CPF',
-      description: 'CPF LIFE, housing deductions, and contribution projections.',
+      description: 'Central Provident Fund (CPF) LIFE, housing deductions, and contribution projections.',
       resetLabel: 'Reset Section',
       onReset: resetCpf,
       content: <CpfContent />,
@@ -1438,7 +1438,7 @@ export function InputsPage() {
     'section-property': {
       id: 'section-property',
       title: 'Property',
-      description: 'Existing property tracking and new purchase analysis with BSD/ABSD.',
+      description: 'Existing property tracking and new purchase analysis with Buyer\'s Stamp Duty (BSD) and Additional Buyer\'s Stamp Duty (ABSD).',
       resetLabel: 'Reset Section',
       onReset: resetProperty,
       content: <PropertyContent />,
