@@ -6,7 +6,7 @@ export interface ExpenseTrackerContextValue {
   signup: ExpenseTrackerSignupHook
   isEligible: boolean
   modalOpen: boolean
-  openModal: () => void
+  openModal: (force?: boolean) => void
   closeModal: () => void
   dismissModal: (method?: 'overlay' | 'escape' | 'close_button') => void
   trackImpression: (surface: SourceSurface) => void

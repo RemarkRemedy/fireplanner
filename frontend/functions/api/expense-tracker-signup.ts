@@ -53,6 +53,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     if (isNaN(Date.parse(submittedAt))) {
       return jsonResponse({ error: 'Invalid submittedAt timestamp' }, 400)
     }
+    if (pagePath.length > 500) {
+      return jsonResponse({ error: 'Invalid pagePath' }, 400)
+    }
+    if (copyVariant.length > 50) {
+      return jsonResponse({ error: 'Invalid copyVariant' }, 400)
+    }
 
     const clientIP = context.request.headers.get('CF-Connecting-IP') ?? 'unknown'
     const salt = context.env.IP_HASH_SALT

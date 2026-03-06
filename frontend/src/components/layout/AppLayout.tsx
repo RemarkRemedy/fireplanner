@@ -43,7 +43,7 @@ function AppLayoutFooterCta() {
         onClick={() => {
           trackEvent('expense_tracker_cta_click', { surface: 'footer', page: location.pathname })
           trackImpression('footer')
-          openModal()
+          openModal(true)
         }}
         className="text-primary hover:underline font-medium"
       >

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { trackEvent } from '@/lib/analytics'
 import { isCompanionMode } from '@/lib/companion/isCompanionMode'
@@ -34,8 +34,9 @@ export function ExpenseTrackerProvider({ children }: { children: React.ReactNode
 
   const impressionTracked = useRef<Record<string, boolean>>({})
 
-  const openModal = useCallback(() => {
-    if (!isEligible || modalDismissedRecently.current || modalShownThisSession.current) return
+  const openModal = useCallback((force?: boolean) => {
+    if (!isEligible) return
+    if (!force && (modalDismissedRecently.current || modalShownThisSession.current)) return
     setModalOpen(true)
     modalShownThisSession.current = true
     setSessionFlag(EXPENSE_TRACKER_MODAL_SESSION_KEY)
@@ -59,10 +60,12 @@ export function ExpenseTrackerProvider({ children }: { children: React.ReactNode
     trackEvent('expense_tracker_impression', { surface, page: location.pathname })
   }, [location.pathname])
 
+  const value = useMemo(() => ({
+    signup, isEligible, modalOpen, openModal, closeModal, dismissModal, trackImpression,
+  }), [signup, isEligible, modalOpen, openModal, closeModal, dismissModal, trackImpression])
+
   return (
-    <ExpenseTrackerContext.Provider value={{
-      signup, isEligible, modalOpen, openModal, closeModal, dismissModal, trackImpression,
-    }}>
+    <ExpenseTrackerContext.Provider value={value}>
       {children}
     </ExpenseTrackerContext.Provider>
   )

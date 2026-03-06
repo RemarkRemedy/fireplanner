@@ -72,8 +72,8 @@ export function ExpenseTrackerForm({ signup, surface, pagePath }: ExpenseTracker
       </div>
 
       <fieldset>
-        <legend className="text-sm font-medium mb-2">How do you track expenses today?</legend>
-        <div className="flex flex-wrap gap-2" role="radiogroup">
+        <legend id="et-tracking-label" className="text-sm font-medium mb-2">How do you track expenses today?</legend>
+        <div className="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="et-tracking-label">
           {EXPENSE_TRACKING_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -95,8 +95,8 @@ export function ExpenseTrackerForm({ signup, surface, pagePath }: ExpenseTracker
       </fieldset>
 
       <fieldset>
-        <legend className="text-sm font-medium mb-2">Primary device</legend>
-        <div className="flex flex-wrap gap-2" role="radiogroup">
+        <legend id="et-device-label" className="text-sm font-medium mb-2">Primary device</legend>
+        <div className="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="et-device-label">
           {PRIMARY_DEVICE_OPTIONS.map((opt) => (
             <button
               key={opt.value}

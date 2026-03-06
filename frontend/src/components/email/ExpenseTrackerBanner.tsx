@@ -26,7 +26,7 @@ export function ExpenseTrackerBanner() {
 
   const handleCtaClick = () => {
     trackEvent('expense_tracker_cta_click', { surface: 'banner', page: location.pathname })
-    openModal()
+    openModal(true)
   }
 
   return (
