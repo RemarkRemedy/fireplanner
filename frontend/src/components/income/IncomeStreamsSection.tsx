@@ -209,8 +209,8 @@ function StreamRow({
             <SelectContent>
               <SelectItem value="taxable">Taxable</SelectItem>
               <SelectItem value="tax-exempt">Tax-Exempt</SelectItem>
-              <SelectItem value="cpf">CPF</SelectItem>
-              <SelectItem value="srs">SRS</SelectItem>
+              <SelectItem value="cpf">Central Provident Fund (CPF)</SelectItem>
+              <SelectItem value="srs">Supplementary Retirement Scheme (SRS)</SelectItem>
             </SelectContent>
           </Select>
         </div>

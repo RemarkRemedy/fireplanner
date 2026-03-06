@@ -262,11 +262,11 @@ function EventRow({
         </div>
 
         <PercentInput
-          label="Income Impact"
+          label="Income retained"
           value={event.incomeImpact}
           onChange={(v) => onUpdate({ incomeImpact: v })}
           error={errors[`${prefix}_incomeImpact`]}
-          tooltip="0% = no income, 50% = half income, 100% = full income"
+          tooltip="0% = no income, 50% = half income kept, 100% = full income kept"
           step={5}
         />
 
@@ -285,7 +285,7 @@ function EventRow({
               checked={event.cpfPause}
               onCheckedChange={(checked: boolean | 'indeterminate') => onUpdate({ cpfPause: checked === true })}
             />
-            <Label htmlFor={`${prefix}-pause-cpf`} className="text-sm cursor-pointer">Pause CPF</Label>
+            <Label htmlFor={`${prefix}-pause-cpf`} className="text-sm cursor-pointer">Pause CPF contributions</Label>
           </div>
         </div>
       </div>

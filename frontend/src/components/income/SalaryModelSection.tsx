@@ -44,7 +44,7 @@ export function SalaryModelSection() {
               <SelectContent>
                 <SelectItem value="simple">Simple (fixed annual growth)</SelectItem>
                 <SelectItem value="realistic">Realistic (career phases + promotions)</SelectItem>
-                <SelectItem value="data-driven">Data-Driven (MOM benchmarks)</SelectItem>
+                <SelectItem value="data-driven">Data-Driven (Ministry of Manpower benchmarks)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -113,11 +113,11 @@ function SimplePanel({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <CurrencyInput
-        label="Annual Salary (excl. bonus)"
+        label="Annual Salary (excluding bonus)"
         value={salary}
         onChange={onSalaryChange}
         error={errors.annualSalary}
-        tooltip="Current gross annual base salary (12 months), excluding bonus. Bonus is added separately via Bonus Months below."
+        tooltip="Current gross annual base salary (12 months), excluding bonus. Bonus is added separately via Annual Wage Supplement below."
       />
       <PercentInput
         label="Annual Growth Rate"
@@ -127,14 +127,14 @@ function SimplePanel({
         tooltip="Expected annual salary increase"
       />
       <NumberInput
-        label="Bonus Months (AWS)"
+        label="Annual Wage Supplement (13th month)"
         value={bonusMonths}
         onChange={onBonusMonthsChange}
         min={0}
         max={12}
         step={0.5}
         error={errors.bonusMonths}
-        tooltip="Number of bonus months per year (e.g., 2.0 = 2 months). Treated as Additional Wages for CPF, subject to the $102K annual ceiling."
+        tooltip="Number of bonus months per year (e.g., 2.0 = 2 months). Treated as Additional Wages for Central Provident Fund (CPF), subject to the $102K annual ceiling."
       />
       <div className="md:col-span-2 p-3 bg-muted/50 rounded-md">
         <span className="text-sm text-muted-foreground">Salary at retirement (age {retirementAge}): </span>
@@ -291,7 +291,7 @@ function DataDrivenPanel({
       <div className="space-y-1">
         <Label className="text-sm flex items-center">
           Education Level
-          <InfoTooltip text="MOM salary data is segmented by education level" source="MOM Stats" sourceUrl="https://stats.mom.gov.sg/pages/income-summary-table.aspx" />
+          <InfoTooltip text="Ministry of Manpower (MOM) salary data is segmented by education level" source="MOM Stats" sourceUrl="https://stats.mom.gov.sg/pages/income-summary-table.aspx" />
         </Label>
         <Select
           value={education}
@@ -313,12 +313,12 @@ function DataDrivenPanel({
         value={adjustment}
         onChange={onAdjustmentChange}
         error={errors.momAdjustment}
-        tooltip="Multiply MOM median by this factor (1.0 = median, 1.2 = 20% above median). Based on MOM Labour Force Survey data."
+        tooltip="Multiply the MOM median by this factor (1.0 = median, 1.2 = 20% above median). Based on MOM Labour Force Survey data."
         step={1}
       />
 
       <div className="p-3 bg-muted/50 rounded-md">
-        <span className="text-sm text-muted-foreground">Current MOM salary (age {currentAge}): </span>
+        <span className="text-sm text-muted-foreground">Current MOM benchmark salary (age {currentAge}): </span>
         <span className="text-sm font-medium text-green-600">{formatCurrency(currentSalary)}</span>
       </div>
     </div>
