@@ -27,7 +27,7 @@ const GLOSSARY: Record<string, string> = {
   'Student-t distribution': 'A bell curve with fatter edges — makes extreme crashes and booms more likely.',
   'Fat-Tail': 'A model where extreme events (crashes, booms) happen more often than a normal bell curve predicts.',
   'fan chart': 'A chart shaped like a fan showing the range of possible outcomes from best to worst.',
-  'percentile bands': 'Dividing outcomes into slices — p5 means only 5% of scenarios did worse.',
+  'percentile bands': 'Dividing outcomes into slices — the 5th percentile means only 5% of scenarios did worse.',
   // SWR
   'CAPE ratio': 'A stock market "is it expensive?" gauge — compares prices to 10 years of earnings.',
   'CAPE earnings yield': 'The inverse of the CAPE ratio — tells you what return the market is "priced to deliver".',
@@ -173,15 +173,15 @@ Based on William Bengen's 1994 study of US stock/bond returns from 1926-1992. Th
     content: `Monte Carlo simulation runs thousands of random scenarios to estimate the probability of retirement success. Each simulation randomly generates annual returns based on historical patterns.
 
 **Three methods in this tool:**
-1. **Parametric**: Generates returns from a multivariate normal distribution using expected returns and correlations (Cholesky decomposition)
-2. **Historical Bootstrap**: Randomly samples actual historical return years with replacement
-3. **Fat-Tail (Student-t)**: Uses Student-t distribution (df=5) to better model extreme market events
+1. **Normal distribution (Parametric)**: Generates returns from a bell curve using expected returns and correlations
+2. **Historical sampling (Bootstrap)**: Randomly samples actual historical return years with replacement
+3. **Extreme events (Fat-Tail, Student-t)**: Uses a heavy-tailed distribution to better model extreme market events
 
 ### How Expected Returns and Standard Deviations Work
 
-Every asset class has two key numbers: **expected return** (the average annual gain) and **Standard Deviation** (how much returns swing around that average). These drive the simulation differently depending on the method:
+Every asset class has two key numbers: **expected return** (the average annual gain) and **risk (standard deviation)** (how much returns swing around that average). These drive the simulation differently depending on the method:
 
-**Parametric method** models all 8 asset classes as correlated random variables:
+**Normal distribution method** models all 8 asset classes as correlated random variables:
 1. The standard deviations and the 8x8 correlation matrix are combined into a covariance matrix: \`cov[i][j] = stdDev[i] x stdDev[j] x correlation[i][j]\`
 2. Cholesky decomposition factors this into a lower-triangular matrix L, which converts independent random numbers into correlated ones
 3. For each year of each simulation: 8 independent random draws are multiplied by L, then shifted by each asset's expected return to produce correlated per-asset returns
@@ -189,9 +189,9 @@ Every asset class has two key numbers: **expected return** (the average annual g
 
 The expected return is the *centre* of the distribution (what you'd get on average), and the standard deviation controls the *width* (how much any given year can deviate). The correlation matrix adds the third dimension: how assets move together, which is why a diversified portfolio can have lower overall volatility than any single asset.
 
-**Historical Bootstrap** ignores both parameters entirely. It randomly picks real historical year rows (1928-2025) and replays them in shuffled order, preserving real-world correlations and fat tails naturally.
+**Historical sampling** ignores both parameters entirely. It randomly picks real historical year rows (1928-2025) and replays them in shuffled order, preserving real-world correlations and fat tails naturally.
 
-**Fat-Tail (Student-t)** operates at the portfolio level. It computes a single portfolio mean and standard deviation from the weighted asset parameters, then draws from a Student-t distribution with 5 degrees of freedom. This produces the same average return and spread, but with heavier tails: extreme years (crashes and booms) occur more frequently than a normal bell curve predicts.
+**Extreme events (Fat-Tail)** operates at the portfolio level. It computes a single portfolio mean and standard deviation from the weighted asset parameters, then draws from a Student-t distribution with 5 degrees of freedom. This produces the same average return and spread, but with heavier tails: extreme years (crashes and booms) occur more frequently than a normal bell curve predicts.
 
 ### Two-Phase Simulation
 
@@ -206,7 +206,7 @@ The same return sequence applies to both phases, so a simulation that starts wit
 - **Success rate 80-95%**: Reasonable, consider flexibility
 - **Success rate < 80%**: Significant risk, adjust plan
 
-The fan chart shows percentile bands (p5 to p95) of portfolio paths over time.`,
+The fan chart shows percentile bands (5th to 95th) of portfolio paths over time.`,
   },
   {
     id: 'sequence-risk',
@@ -240,15 +240,15 @@ The fan chart shows percentile bands (p5 to p95) of portfolio paths over time.`,
 | CPF (OA+SA) | 3.5% | Very Low |
 
 ### Key Concepts
-- **Markowitz efficient frontier**: Optimal risk-return tradeoff
-- **Sharpe ratio**: Return per unit of risk
+- **Optimal risk-return balance (Markowitz efficient frontier)**: The best possible combinations of risk and return
+- **Risk-adjusted return (Sharpe ratio)**: Return earned per unit of risk taken
 - **Diversification ratio**: How much diversification reduces portfolio risk
 - **Glide path**: Gradually shifting allocation from aggressive to conservative over time`,
   },
   {
     id: 'withdrawal',
     title: 'Withdrawal Strategies',
-    content: `Six strategies for drawing down your portfolio in retirement:
+    content: `Twelve strategies for drawing down your portfolio in retirement. The six most common:
 
 1. **Constant Dollar (4% Rule)**: Fixed inflation-adjusted amount. Simple but rigid.
 2. **Variable Percentage (VPW)**: Withdraws based on remaining years and portfolio size. Adjusts naturally.
@@ -257,16 +257,18 @@ The fan chart shows percentile bands (p5 to p95) of portfolio paths over time.`,
 5. **CAPE-Based**: Blend CAPE earnings yield with a base rate. Adjusts for market valuation.
 6. **Floor-and-Ceiling**: Withdraw percentage of portfolio, clamped between minimum and maximum amounts.
 
+Plus six more: Percent of Portfolio, 1/N (Remaining Years), Sensible Withdrawals, 95% Rule, Endowment (Yale Model), and Hebeler Autopilot II.
+
 **Trade-offs:** More adaptive strategies provide better portfolio survival but less predictable income.`,
   },
   {
     id: 'singapore',
     title: 'Singapore Considerations',
-    content: `### CPF (Central Provident Fund)
+    content: `### Central Provident Fund (CPF)
 - Mandatory savings: up to 37% of salary (employee + employer)
-- OA: 2.5% interest (housing, education, investment)
-- SA: 4% interest (retirement)
-- MA: 4% interest (healthcare)
+- Ordinary Account (OA): 2.5% interest (housing, education, investment)
+- Special Account (SA): 4% interest (retirement)
+- MediSave Account (MA): 4% interest (healthcare)
 - Extra 1% on first $60K combined balances
 - CPF LIFE: Lifetime annuity from age 65
 
@@ -274,13 +276,13 @@ The fan chart shows percentile bands (p5 to p95) of portfolio paths over time.`,
 - Progressive income tax: 0% to 24%
 - No capital gains tax
 - No inheritance tax
-- SRS tax deduction: up to $15,300/year
+- Supplementary Retirement Scheme (SRS) tax deduction: up to $15,300/year
 
 ### Property
-- BSD: 1-6% progressive brackets
-- ABSD: 0-60% based on residency and property count
+- Buyer's Stamp Duty (BSD): 1-6% progressive brackets
+- Additional Buyer's Stamp Duty (ABSD): 0-60% based on residency and property count
 - 99-year leasehold is standard (Bala's Table for depreciation)
-- LTV cap: 75% for first property`,
+- Loan-to-Value (LTV) cap: 75% for first property`,
   },
   {
     id: 'healthcare',
@@ -293,7 +295,7 @@ The fan chart shows percentile bands (p5 to p95) of portfolio paths over time.`,
 - Premiums increase with age (e.g., ~$300/yr at age 40, ~$1,400/yr at age 70, ~$2,250/yr at age 90)
 - Premiums are fully payable from MediSave
 
-### Integrated Shield Plans (ISPs)
+### Integrated Shield Plans
 - Private insurance top-ups on MediShield Life, offered by 7 insurers
 - Tiers: Basic, Standard, Enhanced (private hospital coverage)
 - Additional premiums range from ~$200-$2,000+/yr depending on tier and age
@@ -464,7 +466,7 @@ Singapore's public healthcare system uses a tiered ward structure. B2/C ward pat
 
 ### Critical Illness Costs (Out-of-Pocket, SGD)
 
-| Condition | Subsidised OOP (B2/C + MediShield Life) | Private OOP (A/B1 + ISP) |
+| Condition | Subsidised out-of-pocket (B2/C + MediShield Life) | Private out-of-pocket (A/B1 + Shield Plan) |
 |---|---|---|
 | AMI (Heart Attack) | $5,000 – $15,000 | $30,000 – $80,000 |
 | Stroke | $8,000 – $20,000 | $40,000 – $100,000 |
@@ -518,7 +520,7 @@ In the stress-test tool, model retrenchment as a 1–2 year income gap combined 
 
 **Step 2: Inputs** — Fill in your financial details across 8 sections: Personal, FIRE Settings, Income, Expenses & Withdrawal, Net Worth, CPF, Property, and Asset Allocation. All changes save automatically.
 
-**Step 3: Projection** — Review the year-by-year deterministic trajectory. Toggle column groups to see income breakdowns, tax/CPF, balances, and portfolio details.
+**Step 3: Projection** — Review the year-by-year expected path (single-path projection). Toggle column groups to see income breakdowns, tax/CPF, balances, and portfolio details.
 
 **Step 4: Stress Test** — Run Monte Carlo simulations (10K paths), historical backtests, and sequence risk crisis scenarios to pressure-test your plan.
 
@@ -530,18 +532,18 @@ In the stress-test tool, model retrenchment as a 1–2 year income gap combined 
     id: 'glossary',
     title: 'Glossary',
     content: `- **FIRE Number**: Annual expenses / SWR. Portfolio size needed for financial independence.
-- **SWR**: Safe Withdrawal Rate. Maximum annual withdrawal as % of initial portfolio.
+- **Safe Withdrawal Rate (SWR)**: Maximum annual withdrawal as % of initial portfolio.
 - **Coast FIRE**: Enough saved that growth alone reaches FIRE number by traditional retirement age.
 - **Barista FIRE**: Gap between passive income and expenses covered by part-time work.
 - **CAPE**: Cyclically Adjusted Price-to-Earnings ratio. 10-year average real earnings.
-- **Sharpe Ratio**: (Return - Risk-Free Rate) / Standard Deviation. Higher = better risk-adjusted return.
-- **VaR**: Value at Risk. Maximum expected loss at a given confidence level.
-- **Cholesky Decomposition**: Mathematical method for generating correlated random variables.
-- **Bootstrap**: Resampling method using actual historical data.
+- **Risk-adjusted return (Sharpe Ratio)**: (Return - Risk-Free Rate) / Standard Deviation. Higher = better risk-adjusted return.
+- **Worst-case loss (VaR, Value at Risk)**: Maximum expected loss at a given confidence level.
+- **Cholesky Decomposition**: Mathematical method for generating correlated random variables used in the normal distribution simulation.
+- **Historical sampling (Bootstrap)**: Resampling method using actual historical data.
 - **Glide Path**: Gradual shift in asset allocation over time (e.g., from aggressive to conservative).
-- **BSD**: Buyer's Stamp Duty. Tax on property purchases in Singapore.
-- **ABSD**: Additional Buyer's Stamp Duty. Extra tax based on residency/property count.
-- **Bala's Table**: SLA table mapping remaining lease years to fraction of freehold value.`,
+- **Buyer's Stamp Duty (BSD)**: Tax on property purchases in Singapore.
+- **Additional Buyer's Stamp Duty (ABSD)**: Extra tax based on residency/property count.
+- **Leasehold depreciation schedule (Bala's Table)**: SLA table mapping remaining lease years to fraction of freehold value.`,
   },
 ]
 
