@@ -14,6 +14,9 @@ import { useDashboardMetrics } from '@/hooks/useDashboardMetrics'
 import { useSectionCompletion, type SectionId } from '@/hooks/useSectionCompletion'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { ExpenseTrackerCard } from '@/components/email/ExpenseTrackerCard'
+import { useExpenseTrackerDwell } from '@/hooks/useExpenseTrackerDwell'
+import { useExpenseTracker } from '@/hooks/useExpenseTracker'
 
 const KEY_SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'section-personal', label: 'Personal Details' },
@@ -26,6 +29,8 @@ export function DashboardPage() {
   usePageMeta({ title: 'Dashboard — SG FIRE Planner', description: 'Your FIRE dashboard with key metrics, risk assessment, and retirement readiness overview.', path: '/dashboard' })
   const metrics = useDashboardMetrics()
   const isEmpty = metrics.fireNumber === null
+  const { isEligible } = useExpenseTracker()
+  useExpenseTrackerDwell(!isEmpty, 20)
   const { sections } = useSectionCompletion()
 
   const lastMC = useSimulationStore((s) => s.lastMCSuccessRate)
@@ -106,6 +111,11 @@ export function DashboardPage() {
           <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
             <RiskDashboard />
           </div>
+          {isEligible && (
+            <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '440ms' }}>
+              <ExpenseTrackerCard />
+            </div>
+          )}
         </>
       )}
     </div>

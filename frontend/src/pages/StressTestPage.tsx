@@ -61,8 +61,9 @@ import { CRISIS_SCENARIOS } from '@/lib/data/crisisScenarios'
 import { formatPercent } from '@/lib/utils'
 import type { CrisisScenario } from '@/lib/types'
 import { trackEvent } from '@/lib/analytics'
-import { PostSimulationCapture } from '@/components/email/PostSimulationCapture'
-import { ContextualEmailNudge } from '@/components/email/ContextualEmailNudge'
+import { ExpenseTrackerCard } from '@/components/email/ExpenseTrackerCard'
+import { useExpenseTrackerDwell } from '@/hooks/useExpenseTrackerDwell'
+import { useExpenseTracker } from '@/hooks/useExpenseTracker'
 import { ActiveLifeEventsBar } from '@/components/stressTest/ActiveLifeEventsBar'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useCompanionPlannerBridge } from '@/hooks/useCompanionPlannerBridge'
@@ -591,6 +592,8 @@ export function StressTestPage() {
   const isStressAdvanced = stressMode === 'advanced'
   const analysisPortfolio = useAnalysisPortfolio()
   const mc = useMonteCarloQuery()
+  const { isEligible } = useExpenseTracker()
+  useExpenseTrackerDwell(Boolean(mc.data), 10)
   const companion = useCompanionPlannerBridge({ result: mc.data, isResultStale: mc.isStale })
   const isCompanionScenarioContextStale = companion.isCompanionMode
     && !!companion.lastRunScenarioId
@@ -998,13 +1001,7 @@ export function StressTestPage() {
 
       </Tabs>
 
-      <ContextualEmailNudge
-        pageId="stress-test"
-        message="Finding this useful? We're building section-by-section tips and guides for stress testing."
-        hidden={!!mc.data}
-      />
-
-      {mc.data && <PostSimulationCapture />}
+      {isEligible && mc.data && <ExpenseTrackerCard />}
 
       {!companion.isCompanionMode && (
         <p className="text-xs text-muted-foreground mt-4">

@@ -27,7 +27,9 @@ import { WithdrawalBasisToggle } from '@/components/shared/WithdrawalBasisToggle
 import { getStrategyLabel } from '@/hooks/useWithdrawalComparison'
 import { trackEvent } from '@/lib/analytics'
 import { usePageMeta } from '@/hooks/usePageMeta'
-import { PostSimulationCapture } from '@/components/email/PostSimulationCapture'
+import { ExpenseTrackerCard } from '@/components/email/ExpenseTrackerCard'
+import { useExpenseTrackerDwell } from '@/hooks/useExpenseTrackerDwell'
+import { useExpenseTracker } from '@/hooks/useExpenseTracker'
 import {
   buildProjectionColumns,
   type ColumnGroup,
@@ -55,6 +57,8 @@ const STRATEGY_SHORT_LABELS: Record<WithdrawalStrategyType, string> = {
 export function ProjectionPage() {
   usePageMeta({ title: 'Projection — SG FIRE Planner', description: 'Year-by-year financial projection with net worth trajectory, CPF balances, and retirement milestones.', path: '/projection' })
   const { rows, summary, hasErrors } = useProjection()
+  const { isEligible } = useExpenseTracker()
+  useExpenseTrackerDwell(Boolean(rows && rows.length > 0), 10)
   const retirementAge = useProfileStore((s) => s.retirementAge)
   const currentAge = useProfileStore((s) => s.currentAge)
   const inflation = useProfileStore((s) => s.inflation)
@@ -661,7 +665,7 @@ export function ProjectionPage() {
         </>
       )}
 
-      {rows && rows.length > 0 && <PostSimulationCapture />}
+      {isEligible && rows && rows.length > 0 && <ExpenseTrackerCard />}
 
       <Dialog open={expanded} onOpenChange={setExpanded}>
         <DialogContent className="max-w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-4">

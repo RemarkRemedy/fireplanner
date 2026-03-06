@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useExpenseTracker } from '@/components/email/ExpenseTrackerProvider'
+import { useExpenseTracker } from '@/hooks/useExpenseTracker'
 
 /**
  * Page-level dwell timer. When hasResults becomes true, starts a timer.
