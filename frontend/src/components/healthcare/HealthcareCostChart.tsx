@@ -77,7 +77,7 @@ export function HealthcareCostChart() {
               <Area
                 type="monotone"
                 dataKey="isp"
-                name="ISP Additional"
+                name="Shield Plan Additional"
                 stackId="cost"
                 stroke="#8b5cf6"
                 fill="#8b5cf6"
@@ -121,7 +121,7 @@ export function HealthcareCostChart() {
           </ResponsiveContainer>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          Stacked: premiums + OOP. Dashed green line: MediSave-deductible portion. Gap above green = cash outlay.
+          Stacked: premiums + out-of-pocket. Dashed green line: MediSave-deductible portion. Gap above green = cash outlay.
         </p>
       </CardContent>
     </Card>

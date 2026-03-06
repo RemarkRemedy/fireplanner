@@ -58,10 +58,10 @@ export function HealthcareSection() {
   )
 
   const oopPresets = useMemo(() => [
-    { label: 'Bottom-Up Estimate', amount: Math.round(1170 * ageMultiplier), source: 'GP + dental + optical + meds' },
-    { label: 'World Bank (Nominal)', amount: Math.round(1335 * ageMultiplier), source: 'WB OOP per capita 2023' },
-    { label: 'SingStat HES 2023', amount: Math.round(1896 * ageMultiplier), source: 'Household expenditure survey' },
-    { label: 'World Bank (PPP)', amount: Math.round(2200 * ageMultiplier), source: 'WB PPP-adjusted 2023' },
+    { label: 'Bottom-Up Estimate', amount: Math.round(1170 * ageMultiplier), source: 'GP + dental + optical + medications' },
+    { label: 'World Bank (Nominal)', amount: Math.round(1335 * ageMultiplier), source: 'World Bank out-of-pocket per capita 2023' },
+    { label: 'SingStat HES 2023', amount: Math.round(1896 * ageMultiplier), source: 'SingStat Household Expenditure Survey' },
+    { label: 'World Bank (PPP)', amount: Math.round(2200 * ageMultiplier), source: 'World Bank PPP-adjusted 2023' },
   ], [ageMultiplier])
 
   // Cost preview at key ages
@@ -81,7 +81,7 @@ export function HealthcareSection() {
         <CardTitle className="text-lg flex items-center gap-2">
           <div className="flex items-center gap-2 flex-1">
             Healthcare & Insurance
-            <InfoTooltip text="Model Singapore healthcare costs including MediShield Life, Integrated Shield Plans, CareShield LIFE, and out-of-pocket expenses. Costs are age-dependent and increase with age." />
+            <InfoTooltip text="Model Singapore healthcare costs including MediShield Life, Integrated Shield Plans (ISP), CareShield LIFE, and out-of-pocket expenses. Costs are age-dependent and increase with age." />
           </div>
           <Switch
             checked={config.enabled}
@@ -145,8 +145,8 @@ export function HealthcareSection() {
             <div className="space-y-3 pl-2 border-l-2 border-muted">
               <div className="flex items-center justify-between">
                 <Label className="text-sm flex items-center gap-1">
-                  ISP Tier Downgrade
-                  <InfoTooltip text="Optionally plan to downgrade your ISP tier at a later age to reduce premiums. Common strategy: Enhanced → Basic at 70 when hospitalization risk is better covered by MediSave." />
+                  Shield Plan Tier Downgrade
+                  <InfoTooltip text="Optionally plan to downgrade your Integrated Shield Plan tier at a later age to reduce premiums. Common strategy: Enhanced to Basic at 70 when hospitalization risk is better covered by MediSave." />
                 </Label>
                 <Switch
                   checked={hasDowngrade}
@@ -223,7 +223,7 @@ export function HealthcareSection() {
           <div className="space-y-3">
             <Label className="text-sm flex items-center gap-1">
               Out-of-Pocket Model
-              <InfoTooltip text="Out-of-pocket costs (consultations, medications, dental) increase with age. 'Age-Dependent' uses a research-based multiplier curve." />
+              <InfoTooltip text="Out-of-pocket costs (GP visits, medications, dental, optical) increase with age. 'Age-Dependent' uses a research-based multiplier curve." />
             </Label>
             <div className="flex gap-2">
               {OOP_MODEL_OPTIONS.map((opt) => (
@@ -243,8 +243,8 @@ export function HealthcareSection() {
 
             <div className="space-y-2">
               <Label className="text-sm flex items-center gap-1">
-                OOP Presets
-                <InfoTooltip text={`Research-backed annual out-of-pocket estimates scaled to your age (${currentAge}). Sources: World Bank health expenditure data (2023), SingStat HES 2023, and bottom-up cost modeling. Medical inflation scales this up over time.`} />
+                Out-of-Pocket Presets
+                <InfoTooltip text={`Research-backed annual out-of-pocket estimates scaled to your age (${currentAge}). Sources: World Bank health expenditure data (2023), SingStat Household Expenditure Survey 2023, and bottom-up cost modelling. Medical inflation scales this up over time.`} />
               </Label>
               <div className="grid grid-cols-2 gap-2">
                 {oopPresets.map((preset) => (
@@ -268,7 +268,7 @@ export function HealthcareSection() {
               <div className="space-y-2">
                 <Label className="text-sm flex items-center gap-1">
                   Age Multiplier Curve
-                  <InfoTooltip text="Controls how steeply OOP costs increase with age. 'Study-Backed' uses compressed multipliers from academic research (PMC4862090) reflecting Singapore's elderly subsidies. 'Conservative' assumes higher costs for private care or no means-tested subsidies." />
+                  <InfoTooltip text="Controls how steeply out-of-pocket costs increase with age. 'Study-Backed' uses compressed multipliers from academic research (PMC4862090) reflecting Singapore's elderly subsidies. 'Conservative' assumes higher costs for private care or no means-tested subsidies." />
                 </Label>
                 <div className="flex gap-2">
                   {([
@@ -293,7 +293,7 @@ export function HealthcareSection() {
             )}
 
             <CurrencyInput
-              label={config.oopModel === 'age-curve' ? `OOP Base Amount (at age ${currentAge})` : 'Annual OOP Amount'}
+              label={config.oopModel === 'age-curve' ? `Out-of-Pocket Base Amount (at age ${currentAge})` : 'Annual Out-of-Pocket Amount'}
               value={config.oopBaseAmount}
               onChange={(v) => updateConfig('oopBaseAmount', v)}
               error={validationErrors['healthcareConfig.oopBaseAmount']}
@@ -314,7 +314,7 @@ export function HealthcareSection() {
 
           {/* Disclaimer */}
           <p className="text-xs text-muted-foreground italic">
-            These estimates are for planning purposes only. Actual costs vary widely by individual health, lifestyle, and care choices. For healthy individuals, real spending may be significantly lower than projected.
+            Use these estimates as a starting point for your plan. Actual costs vary by individual health, lifestyle, and care choices. Review and adjust the inputs above to match your situation.
           </p>
 
           {/* MediSave Top-Up */}
@@ -323,7 +323,7 @@ export function HealthcareSection() {
             value={config.mediSaveTopUpAnnual}
             onChange={(v) => updateConfig('mediSaveTopUpAnnual', v)}
             error={validationErrors['healthcareConfig.mediSaveTopUpAnnual']}
-            tooltip="Voluntary annual top-up to MediSave account. Maximum $37,740 (current BHS cap). Helps offset future healthcare premiums. Source: CPF Board."
+            tooltip="Voluntary annual top-up to MediSave Account (MA). Maximum $37,740 (current Basic Healthcare Sum cap). Helps offset future healthcare premiums. Source: CPF Board."
           />
 
           {/* Cost Preview Table */}
@@ -336,13 +336,13 @@ export function HealthcareSection() {
                     <tr className="border-b">
                       <th className="text-left py-1.5 pr-2 text-muted-foreground font-medium">Age</th>
                       <th className="text-right py-1.5 px-2 text-muted-foreground font-medium">Premiums</th>
-                      <th className="text-right py-1.5 px-2 text-muted-foreground font-medium">OOP</th>
+                      <th className="text-right py-1.5 px-2 text-muted-foreground font-medium">Out-of-Pocket</th>
                       <th className="text-right py-1.5 px-2 text-muted-foreground font-medium">Total</th>
                       <th className="text-right py-1.5 px-2 text-muted-foreground font-medium">Cash Outlay</th>
                       {config.oopInflationRate > 0 && (
                         <th className="text-right py-1.5 pl-2 text-muted-foreground font-medium">
-                          Today's $
-                          <InfoTooltip text="Cash outlay with medical inflation removed from OOP, showing costs in today's purchasing power. Premiums are already in 2025 dollars." />
+                          Today's dollars
+                          <InfoTooltip text="Cash outlay with medical inflation removed from out-of-pocket costs, showing costs in today's purchasing power. Premiums are already in 2025 dollars." />
                         </th>
                       )}
                     </tr>
@@ -376,7 +376,7 @@ export function HealthcareSection() {
               </div>
               <p className="text-xs text-muted-foreground">
                 Cash outlay = total cost minus MediSave-deductible portion. Premiums are from CPF Board / MOH data (2025).
-                {config.oopInflationRate > 0 && ` Today's $ removes ${(config.oopInflationRate * 100).toFixed(1)}% medical inflation from OOP to show costs in current purchasing power.`}
+                {config.oopInflationRate > 0 && ` Today's dollars removes ${(config.oopInflationRate * 100).toFixed(1)}% medical inflation from out-of-pocket costs to show costs in current purchasing power.`}
               </p>
             </div>
           )}
