@@ -50,6 +50,13 @@ type AnalyticsEvent =
   | 'welcome_banner_cta_clicked'
   | 'cpf_estimated_from_age'
   | 'quick_mode_expanded'
+  | 'expense_tracker_impression'
+  | 'expense_tracker_cta_click'
+  | 'expense_tracker_modal_dismiss'
+  | 'expense_tracker_form_open'
+  | 'expense_tracker_submit_success'
+  | 'expense_tracker_submit_error'
+  | 'expense_tracker_form_abandon'
 
 export function trackEvent(event: AnalyticsEvent, data?: Record<string, string | number | boolean>) {
   if (isCompanionMode()) return
