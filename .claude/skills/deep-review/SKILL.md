@@ -1,9 +1,9 @@
 ---
-name: review
-description: Multi-agent code review of TypeScript/TSX source code changes on the current branch. Only for reviewing code, NOT for reviewing plans, docs, or markdown files.
+name: deep-review
+description: 5-agent deep code review of TypeScript/TSX source code changes on the current branch. Only for reviewing code, NOT for reviewing plans, docs, or markdown files.
 ---
 
-# Code Review Skill
+# Deep Code Review Skill
 
 Run a structured, multi-agent code review of all **code** changes on the current branch.
 

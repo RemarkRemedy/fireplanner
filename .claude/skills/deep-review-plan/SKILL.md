@@ -1,9 +1,9 @@
 ---
-name: review-plan
-description: Multi-agent review of an implementation plan for feasibility, CLAUDE.md compliance, and scope analysis. Only for reviewing plans, NOT for reviewing code.
+name: deep-review-plan
+description: 4-agent deep review of an implementation plan for feasibility, CLAUDE.md compliance, and scope analysis. Only for reviewing plans, NOT for reviewing code.
 ---
 
-# Plan Review Skill
+# Deep Plan Review Skill
 
 Run a structured, multi-agent review of an implementation plan before execution.
 
@@ -11,7 +11,7 @@ Run a structured, multi-agent review of an implementation plan before execution.
 
 This skill reviews plan files only (`.md` files in `.claude/plans/`, `docs/plans/`,
 or a plan presented in the current conversation). It does NOT review:
-- Source code (`.ts`, `.tsx`) — use `/review` instead
+- Source code (`.ts`, `.tsx`) — use `/deep-review` instead
 - Config files, skills, or documentation
 
 If invoked and there is no plan to review, ask the user which plan file to review and stop.
