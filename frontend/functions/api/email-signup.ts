@@ -4,6 +4,7 @@ import {
   EMAIL_RE,
   EMAIL_MAX_LENGTH,
 } from '../../src/lib/validation/emailConstants'
+import { jsonResponse, hashIP } from '../lib/serverUtils'
 
 interface Env {
   DB: D1Database
@@ -11,21 +12,6 @@ interface Env {
 }
 
 const RATE_LIMIT_MAX = 5
-
-function jsonResponse(body: Record<string, unknown>, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
-
-async function hashIP(ip: string, salt: string): Promise<string> {
-  const data = new TextEncoder().encode(salt + ip)
-  const hash = await crypto.subtle.digest('SHA-256', data)
-  return Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-}
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   // Parse JSON body safely — malformed payloads return 400, not 500

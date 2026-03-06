@@ -14,6 +14,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { StressTestPage } from './StressTestPage'
+import { ExpenseTrackerProvider } from '@/components/email/ExpenseTrackerProvider'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
@@ -134,7 +135,9 @@ function renderPage() {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={['/stress-test']}>
-        <StressTestPage />
+        <ExpenseTrackerProvider>
+          <StressTestPage />
+        </ExpenseTrackerProvider>
       </MemoryRouter>
     </QueryClientProvider>,
   )
