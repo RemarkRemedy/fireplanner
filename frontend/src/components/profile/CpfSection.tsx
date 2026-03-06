@@ -62,9 +62,9 @@ export function CpfSection() {
     { key: 'escalating', label: 'Escalating', note: '~4.8%, +2%/yr' },
   ]
   const sums: { key: 'brs' | 'frs' | 'ers'; label: string; value: number; baseline: number }[] = [
-    { key: 'brs', label: 'BRS', value: brsFrsErs.brs, baseline: BRS_BASE },
-    { key: 'frs', label: 'FRS', value: brsFrsErs.frs, baseline: FRS_BASE },
-    { key: 'ers', label: 'ERS', value: brsFrsErs.ers, baseline: ERS_BASE },
+    { key: 'brs', label: 'Basic (BRS)', value: brsFrsErs.brs, baseline: BRS_BASE },
+    { key: 'frs', label: 'Full (FRS)', value: brsFrsErs.frs, baseline: FRS_BASE },
+    { key: 'ers', label: 'Enhanced (ERS)', value: brsFrsErs.ers, baseline: ERS_BASE },
   ]
 
   const totalCpf = cpfOA + cpfSA + cpfMA + cpfRA
@@ -202,9 +202,9 @@ export function CpfSection() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="brs">BRS ({formatCurrency(brsFrsErs.brs)})</SelectItem>
-                  <SelectItem value="frs">FRS ({formatCurrency(brsFrsErs.frs)})</SelectItem>
-                  <SelectItem value="ers">ERS ({formatCurrency(brsFrsErs.ers)})</SelectItem>
+                  <SelectItem value="brs">Basic Retirement Sum ({formatCurrency(brsFrsErs.brs)})</SelectItem>
+                  <SelectItem value="frs">Full Retirement Sum ({formatCurrency(brsFrsErs.frs)})</SelectItem>
+                  <SelectItem value="ers">Enhanced Retirement Sum ({formatCurrency(brsFrsErs.ers)})</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -338,27 +338,27 @@ export function CpfSection() {
           <h4 className="text-sm font-medium mb-2">Current CPF Balances</h4>
           <div className={cn('grid gap-2 text-sm', currentAge >= 55 ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4')}>
             <CurrencyInput
-              label="OA"
+              label="Ordinary (OA)"
               value={cpfOA}
               onChange={(v) => setField('cpfOA', v)}
               error={validationErrors.cpfOA}
             />
             <CurrencyInput
-              label="SA"
+              label="Special (SA)"
               value={cpfSA}
               onChange={(v) => setField('cpfSA', v)}
               error={validationErrors.cpfSA}
             />
             {currentAge >= 55 && (
               <CurrencyInput
-                label="RA"
+                label="Retirement (RA)"
                 value={cpfRA}
                 onChange={(v) => setField('cpfRA', v)}
                 error={validationErrors.cpfRA}
               />
             )}
             <CurrencyInput
-              label="MA"
+              label="MediSave (MA)"
               value={cpfMA}
               onChange={(v) => setField('cpfMA', v)}
               error={validationErrors.cpfMA}
@@ -385,21 +385,21 @@ export function CpfSection() {
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <CurrencyInput
-            label="Annual SA Top-Up (RSTU)"
+            label="Annual SA Top-Up (Retirement Sum Top-Up)"
             value={cpfTopUpSA}
             onChange={(v) => setField('cpfTopUpSA', v)}
             error={validationErrors.cpfTopUpSA}
-            tooltip="Cash top-up to SA (or RA if 55+). Up to $8,000/year qualifies for tax relief. Source: IRAS."
+            tooltip="Cash top-up to Special Account (or Retirement Account if 55+). Up to $8,000/year qualifies for tax relief. Source: IRAS."
           />
           <CurrencyInput
-            label="Annual MA Top-Up"
+            label="Annual MediSave (MA) Top-Up"
             value={cpfTopUpMA}
             onChange={(v) => setField('cpfTopUpMA', v)}
             error={validationErrors.cpfTopUpMA}
-            tooltip="Voluntary MediSave contribution. Capped at BHS ($79,000) minus your current MA balance each year."
+            tooltip="Voluntary MediSave contribution. Capped at the Basic Healthcare Sum ($79,000) minus your current MA balance each year."
           />
           <CurrencyInput
-            label="Annual OA Top-Up"
+            label="Annual Ordinary Account (OA) Top-Up"
             value={cpfTopUpOA}
             onChange={(v) => setField('cpfTopUpOA', v)}
             error={validationErrors.cpfTopUpOA}
@@ -420,7 +420,7 @@ export function CpfSection() {
         {/* BRS/FRS/ERS projections */}
         <div>
           <h4 className="text-sm font-medium flex items-center mb-2">
-            Projected BRS/FRS/ERS at Age 55
+            Projected Retirement Sums (BRS/FRS/ERS) at Age 55
             <InfoTooltip text={`Based on ${RETIREMENT_SUM_BASE_YEAR} CPF Board published values growing at 3.5% p.a. These are the amounts needed in your Retirement Account at 55.`} />
           </h4>
           <div className="grid grid-cols-3 gap-2 text-sm">
@@ -532,9 +532,9 @@ export function CpfSection() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="brs">BRS ({formatCurrency(brsFrsErs.brs)})</SelectItem>
-                  <SelectItem value="frs">FRS ({formatCurrency(brsFrsErs.frs)})</SelectItem>
-                  <SelectItem value="ers">ERS ({formatCurrency(brsFrsErs.ers)})</SelectItem>
+                  <SelectItem value="brs">Basic Retirement Sum ({formatCurrency(brsFrsErs.brs)})</SelectItem>
+                  <SelectItem value="frs">Full Retirement Sum ({formatCurrency(brsFrsErs.frs)})</SelectItem>
+                  <SelectItem value="ers">Enhanced Retirement Sum ({formatCurrency(brsFrsErs.ers)})</SelectItem>
                 </SelectContent>
               </Select>
             </div>
