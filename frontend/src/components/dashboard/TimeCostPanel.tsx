@@ -88,7 +88,7 @@ export function TimeCostPanel() {
       {isOpen && (
         <CardContent className="space-y-5">
           <p className="text-sm text-muted-foreground">
-            See how a purchase or new expense delays your FIRE date.
+            See how a purchase or new recurring expense delays your FIRE date, measured in extra working time.
           </p>
 
           {/* Mode toggle */}
@@ -138,7 +138,7 @@ export function TimeCostPanel() {
             )}>
               {fireUnreachable ? (
                 <p className="text-sm text-red-700 dark:text-red-400 font-medium">
-                  Your current plan does not reach FIRE — this cost makes it worse but the delay cannot be computed.
+                  Your current plan does not reach FIRE, so the delay from this cost cannot be calculated. Try reducing expenses or increasing savings first.
                 </p>
               ) : result.delayYears === 0 && result.delayMonths === 0 ? (
                 <p className="text-sm text-muted-foreground">No measurable delay to your FIRE date.</p>

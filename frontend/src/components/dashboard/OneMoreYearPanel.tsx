@@ -59,7 +59,7 @@ export function OneMoreYearPanel() {
                   <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Portfolio</th>
                   <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Withdrawal</th>
                   <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Duration</th>
-                  <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Eff. SWR</th>
+                  <th className="py-2 pr-4 font-medium text-muted-foreground text-right">Effective SWR</th>
                   <th className="py-2 font-medium text-muted-foreground text-center">Risk</th>
                 </tr>
               </thead>
@@ -134,7 +134,7 @@ export function OneMoreYearPanel() {
                       <p className="font-medium">{s.retirementDuration} yrs</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Eff. SWR</p>
+                      <p className="text-xs text-muted-foreground">Effective SWR</p>
                       <p className="font-medium tabular-nums">
                         {isFinite(s.effectiveSwr) ? formatPercent(s.effectiveSwr) : '—'}
                       </p>

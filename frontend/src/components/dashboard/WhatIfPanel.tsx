@@ -56,7 +56,7 @@ function getSliderConfigs(profile: {
     },
     {
       key: 'swr',
-      label: 'Safe Withdrawal Rate',
+      label: 'Safe Withdrawal Rate (SWR)',
       min: 0.02,
       max: 0.08,
       step: 0.001,
@@ -132,7 +132,7 @@ function SlidersTab() {
   return (
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
-        Drag the sliders to explore how changes affect your FIRE timeline. These are temporary — your saved inputs are not modified.
+        Drag the sliders to explore how changes affect your FIRE timeline. These adjustments are temporary and do not modify your saved inputs.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
@@ -279,7 +279,7 @@ function DisruptionsTab() {
   return (
     <div className="space-y-5">
       <p className="text-sm text-muted-foreground">
-        See how life disruptions could affect your FIRE timeline. Select a scenario to preview the impact, then optionally add it to your plan.
+        Preview how life disruptions (job loss, career break, disability) could affect your FIRE timeline. Select a scenario, then optionally add it to your plan.
       </p>
 
       {/* Template buttons */}
