@@ -10,6 +10,7 @@ import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { useSectionCompletion, type SectionId } from '@/hooks/useSectionCompletion'
 import { useActiveSection } from '@/hooks/useActiveSection'
 import { exportToJson, importFromJson } from '@/lib/exportImport'
+import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 import { ShareButton } from '@/components/shared/ShareButton'
 import { ScenarioManager } from './ScenarioManager'
 import { ThemeToggle } from './ThemeToggle'
@@ -92,15 +93,6 @@ const ALREADY_FIRE_SECTIONS: InputSectionItem[] = [
   { label: 'Income', sectionId: 'section-income', icon: <DollarSign className="h-4 w-4" /> },
 ]
 
-const NON_INPUT_GROUPS: { title: string; items: NavItem[] }[] = [
-  {
-    title: 'START',
-    items: [
-      { label: 'Start Here', path: '/', icon: <HomeIcon className="h-4 w-4" /> },
-    ],
-  },
-]
-
 const AFTER_INPUTS_GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: 'PLAN',
@@ -152,6 +144,7 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const navigate = useNavigate()
   const companionMode = isCompanionMode()
+  const householdPlannerEnabled = isHouseholdPlannerV1Enabled()
   const sectionOrder = useUIStore((s) => s.sectionOrder)
   const { activeSection, isInputsPage } = useActiveSection()
   const { sections } = useSectionCompletion()
@@ -172,7 +165,18 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
       : STORY_FIRST_SECTIONS
 
   const inputSections = allInputSections.filter((s) => !hiddenSectionIds.has(s.sectionId))
-  const startGroups = companionMode ? [] : NON_INPUT_GROUPS
+  const startGroups = companionMode
+    ? []
+    : [{
+        title: 'START',
+        items: [
+          {
+            label: householdPlannerEnabled ? 'Plan Setup' : 'Start Here',
+            path: '/',
+            icon: <HomeIcon className="h-4 w-4" />,
+          },
+        ],
+      }]
   const afterInputGroups = companionMode
     ? AFTER_INPUTS_GROUPS.filter((group) => group.title === 'PLAN' || group.title === 'ANALYSIS')
     : AFTER_INPUTS_GROUPS
