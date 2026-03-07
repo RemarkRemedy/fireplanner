@@ -6,6 +6,7 @@ import type {
   SimulationState,
 } from '@/lib/types'
 import type { MonteCarloEngineParams } from '@/lib/simulation/monteCarlo'
+import { toMonteCarloAnalysisInputs } from '@/lib/household/toAnalysisInputs'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 import { generateIncomeProjection, sumPostRetirementIncome, getLifeEventExpenseImpact } from '@/lib/calculations/income'
 import { getEffectiveExpenses, getExpensesAtRetirement } from '@/lib/calculations/expenses'
@@ -33,7 +34,7 @@ interface BuildMonteCarloEngineParamsInput {
   profileOverrides?: Partial<Pick<ProfileState, 'annualExpenses' | 'retirementAge'>>
 }
 
-export function buildMonteCarloEngineParams({
+export function buildLegacyMonteCarloEngineParams({
   profile: baseProfile,
   income,
   allocation,
@@ -320,5 +321,26 @@ export function buildMonteCarloEngineParams({
           allocation.glidePathConfig,
         )
       : undefined,
+  }
+}
+
+export function buildMonteCarloEngineParams(
+  input: BuildMonteCarloEngineParamsInput
+): MonteCarloEngineParams {
+  const legacyParams = buildLegacyMonteCarloEngineParams(input)
+  const normalizedInputs = toMonteCarloAnalysisInputs({
+    profile: input.profile,
+    income: input.income,
+    property: input.property,
+    profileOverrides: input.profileOverrides,
+    scenarioOverrides: input.profileOverrides ?? null,
+  })
+
+  return {
+    ...legacyParams,
+    currentAge: normalizedInputs.currentAge,
+    retirementAge: normalizedInputs.retirementAge,
+    lifeExpectancy: normalizedInputs.lifeExpectancy,
+    portfolioAdjustments: normalizedInputs.portfolioAdjustments,
   }
 }
