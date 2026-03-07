@@ -21,6 +21,12 @@ interface SimulationActions {
   reset: () => void
 }
 
+interface SimulationRevisionState {
+  simulationRevision: number
+}
+
+type SimulationStoreState = SimulationState & SimulationRevisionState & SimulationActions
+
 const SIMULATION_DATA_KEYS = [
   'mcMethod', 'selectedStrategy', 'strategyParams', 'nSimulations',
   'lastMCSuccessRate', 'lastBacktestSuccessRate', 'withdrawalBasis', 'deterministicAccumulation',
@@ -63,13 +69,29 @@ const DEFAULT_SIMULATION: Omit<SimulationState, 'validationErrors'> = {
 }
 
 function extractSimulationData(
-  state: SimulationState & SimulationActions
+  state: SimulationStoreState
 ): Omit<SimulationState, 'validationErrors'> {
   const data: Record<string, unknown> = {}
   for (const key of SIMULATION_DATA_KEYS) {
     data[key] = state[key]
   }
   return data as Omit<SimulationState, 'validationErrors'>
+}
+
+const SIMULATION_SEMANTIC_KEYS = new Set<keyof Omit<SimulationState, 'validationErrors'>>([
+  'mcMethod',
+  'selectedStrategy',
+  'strategyParams',
+  'nSimulations',
+  'withdrawalBasis',
+  'deterministicAccumulation',
+])
+
+function bumpSimulationRevision(
+  revision: number,
+  semanticChange: boolean
+): number {
+  return semanticChange ? revision + 1 : revision
 }
 
 function computeValidationErrors(
@@ -83,10 +105,11 @@ function computeValidationErrors(
   return errors
 }
 
-export const useSimulationStore = create<SimulationState & SimulationActions>()(
+export const useSimulationStore = create<SimulationStoreState>()(
   persist(
     (set) => ({
       ...DEFAULT_SIMULATION,
+      simulationRevision: 0,
       validationErrors: computeValidationErrors(DEFAULT_SIMULATION),
 
       setField: (field, value) =>
@@ -95,6 +118,10 @@ export const useSimulationStore = create<SimulationState & SimulationActions>()(
           const updated = { ...stateData, [field]: value }
           return {
             [field]: value,
+            simulationRevision: bumpSimulationRevision(
+              state.simulationRevision,
+              SIMULATION_SEMANTIC_KEYS.has(field)
+            ),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -112,15 +139,17 @@ export const useSimulationStore = create<SimulationState & SimulationActions>()(
           const updated = { ...stateData, strategyParams: updatedParams }
           return {
             strategyParams: updatedParams,
+            simulationRevision: bumpSimulationRevision(state.simulationRevision, true),
             validationErrors: computeValidationErrors(updated),
           }
         }),
 
       reset: () =>
-        set({
+        set((state) => ({
           ...DEFAULT_SIMULATION,
+          simulationRevision: bumpSimulationRevision(state.simulationRevision, true),
           validationErrors: computeValidationErrors(DEFAULT_SIMULATION),
-        }),
+        })),
     }),
     {
       name: 'fireplanner-simulation',
@@ -181,6 +210,7 @@ export const useSimulationStore = create<SimulationState & SimulationActions>()(
         if (state) {
           const stateData = extractSimulationData(state)
           state.validationErrors = computeValidationErrors(stateData)
+          state.simulationRevision = bumpSimulationRevision(state.simulationRevision, true)
         }
       },
     }
