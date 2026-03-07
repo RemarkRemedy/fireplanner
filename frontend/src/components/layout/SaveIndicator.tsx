@@ -6,6 +6,7 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 
 export function SaveIndicator() {
   const [visible, setVisible] = useState(false)
@@ -35,6 +36,7 @@ export function SaveIndicator() {
       useSimulationStore.subscribe(show),
       useWithdrawalStore.subscribe(show),
       usePropertyStore.subscribe(show),
+      useHouseholdPlanStore.subscribe(show),
     ]
 
     return () => {
