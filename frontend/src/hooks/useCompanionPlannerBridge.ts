@@ -17,7 +17,7 @@ import {
 import { buildPlannerResultsPayload } from '@/lib/companion/resultsPayload'
 import { fetchPlannerSnapshot, postPlannerResults } from '@/lib/companion/companionClient'
 import { applySnapshotToStores } from '@/lib/companion/companionBridge'
-import type { PlannerResultsPayload } from '@/lib/companion/types'
+import type { ImportedPlanReview, PlannerResultsPayload } from '@/lib/companion/types'
 import {
   getCompanionToken,
   getCompanionBaseUrl,
@@ -61,6 +61,7 @@ export interface CompanionPlannerBridgeState {
   isCompanionMode: boolean
   bootstrapStatus: CompanionBootstrapStatus
   bootstrapError: string | null
+  importedPlanReview: ImportedPlanReview | null
   saveStatus: CompanionSaveStatus
   saveError: string | null
   canSaveResults: boolean
@@ -169,6 +170,7 @@ export function useCompanionPlannerBridge({
     companionMode && !!token ? 'loading' : 'idle',
   )
   const [bootstrapError, setBootstrapError] = useState<string | null>(null)
+  const [importedPlanReview, setImportedPlanReview] = useState<ImportedPlanReview | null>(null)
   const [saveStatus, setSaveStatus] = useState<CompanionSaveStatus>('idle')
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -282,11 +284,13 @@ export function useCompanionPlannerBridge({
     if (!companionMode || !token) return
 
     let cancelled = false
+    setImportedPlanReview(null)
 
     fetchPlannerSnapshot(baseUrl, token)
       .then((snapshot) => {
         if (cancelled) return
-        applySnapshotToStores(snapshot)
+        const review = applySnapshotToStores(snapshot)
+        setImportedPlanReview(review)
         if (typeof snapshot.deterministicFireAge === 'number' && Number.isFinite(snapshot.deterministicFireAge)) {
           setDeterministicFireAge(Math.round(snapshot.deterministicFireAge))
         }
@@ -568,6 +572,7 @@ export function useCompanionPlannerBridge({
     isCompanionMode: companionMode,
     bootstrapStatus: missingTokenError ? 'error' : bootstrapStatus,
     bootstrapError: missingTokenError ?? bootstrapError,
+    importedPlanReview,
     saveStatus: isSaveBlocked ? 'idle' : saveStatus,
     saveError: isSaveBlocked ? null : saveError,
     canSaveResults: !isSaveBlocked && saveStatus !== 'saving',

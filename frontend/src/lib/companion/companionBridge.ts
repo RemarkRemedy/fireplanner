@@ -7,7 +7,8 @@ import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
-import type { PlannerSnapshotResponse } from './types'
+import { fromExpenseImport } from '@/lib/household/fromExpenseImport'
+import type { ImportedPlanReview, PlannerSnapshotResponse } from './types'
 import { toFiniteNumber } from './utils'
 
 const MONTHS_PER_YEAR = 12
@@ -49,7 +50,7 @@ export function disableLocalStoragePersistence(): void {
  * Nil/null fields keep fireplanner defaults (no overwrite).
  * Percentages are converted to decimals (e.g. 2.5 → 0.025).
  */
-export function applySnapshotToStores(snapshot: PlannerSnapshotResponse): void {
+export function applySnapshotToStores(snapshot: PlannerSnapshotResponse): ImportedPlanReview {
   // Step 1: Prevent companion writes from touching localStorage
   disableLocalStoragePersistence()
 
@@ -126,4 +127,12 @@ export function applySnapshotToStores(snapshot: PlannerSnapshotResponse): void {
   if (snapshot.structuralMode === 'advanced' || snapshot.structuralMode === 'simple') {
     useUIStore.getState().setField('mode', snapshot.structuralMode)
   }
+
+  const imported = fromExpenseImport(snapshot)
+  useHouseholdPlanStore.getState().setPlan(imported.plan, {
+    source: 'json-import',
+    initializedAt: imported.review.provenance.importedAt,
+  })
+
+  return imported.review
 }
