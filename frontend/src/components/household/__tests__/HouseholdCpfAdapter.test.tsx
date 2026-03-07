@@ -257,10 +257,13 @@ describe('Household CPF prototype', () => {
     )
 
     expect(screen.getByText('Couple Inputs')).toBeInTheDocument()
-    expect(screen.getByText('Adapter pattern checkpoint')).toBeInTheDocument()
+    expect(screen.getByText('Household editor checkpoint')).toBeInTheDocument()
     expect(screen.getByText('People & Household')).toBeInTheDocument()
     expect(screen.getByText('Current CPF Status')).toBeInTheDocument()
     expect(screen.getAllByText('Household editor note').length).toBeGreaterThan(0)
+    expect(screen.getByText('Spending, Healthcare & Goals')).toBeInTheDocument()
+    expect(screen.getByText('Goal authoring moved into Spending')).toBeInTheDocument()
+    expect(screen.getByText('Editing CPF for')).toBeInTheDocument()
   })
 
   it('keeps household CPF callbacks stable across unrelated household rerenders', () => {
