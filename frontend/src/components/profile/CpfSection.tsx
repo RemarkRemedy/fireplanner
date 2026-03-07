@@ -19,10 +19,21 @@ import { getCpfRatesForAge, RETIREMENT_SUM_BASE_YEAR, BRS_BASE, FRS_BASE, ERS_BA
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { CpfProjectionTable } from '@/components/cpf/CpfProjectionTable'
 import { CpfAssumptionsPanel } from '@/components/cpf/CpfAssumptionsPanel'
+import type { CpfSectionModel } from '@/components/household/adapters/useHouseholdCpfAdapter'
 import { cn, formatCurrency, formatPercent } from '@/lib/utils'
 import { trackEvent } from '@/lib/analytics'
 
-export function CpfSection() {
+interface CpfSectionProps {
+  model?: CpfSectionModel
+}
+
+interface CpfSectionBodyProps {
+  model: CpfSectionModel
+  mode: 'simple' | 'advanced'
+  showProjectionTools: boolean
+}
+
+function LegacyCpfSection({ mode }: { mode: 'simple' | 'advanced' }) {
   const {
     currentAge, annualIncome, cpfOA, cpfSA, cpfMA, cpfRA,
     cpfLifeStartAge, cpfLifePlan, cpfRetirementSum,
@@ -38,9 +49,93 @@ export function CpfSection() {
   const cpfVirtualRebalancing = useProfileStore((s) => s.cpfVirtualRebalancing)
   const cpfVirtualRebalancingMode = useProfileStore((s) => s.cpfVirtualRebalancingMode)
   const incomeStreams = useIncomeStore((s) => s.incomeStreams)
+  const { projection } = useIncomeProjection()
+  const setLegacyField: CpfSectionModel['setField'] = (field, value) => {
+    setField(field as never, value as never)
+  }
+
+  const legacyModel: CpfSectionModel = {
+    currentAge,
+    annualIncome,
+    cpfOA,
+    cpfSA,
+    cpfMA,
+    cpfRA,
+    cpfLifeStartAge,
+    cpfLifePlan,
+    cpfRetirementSum,
+    lifeStage,
+    retirementPhase,
+    cpfLifeActualMonthlyPayout,
+    cpfisEnabled,
+    cpfisOaReturn,
+    cpfisSaReturn,
+    cpfOaWithdrawals,
+    cpfTopUpOA,
+    cpfTopUpSA,
+    cpfTopUpMA,
+    residencyStatus,
+    prMonths,
+    cpfAutoFallback,
+    cpfVirtualRebalancing,
+    cpfVirtualRebalancingMode,
+    incomeStreams,
+    projection,
+    validationErrors,
+    setField: setLegacyField,
+    addCpfOaWithdrawal,
+    removeCpfOaWithdrawal,
+    updateCpfOaWithdrawal,
+  }
+
+  return <CpfSectionBody model={legacyModel} mode={mode} showProjectionTools />
+}
+
+export function CpfSection({ model }: CpfSectionProps) {
   const mode = useEffectiveMode('section-cpf')
 
-  // Phase-aware rendering only applies to post-fire users
+  if (model) {
+    return <CpfSectionBody model={model} mode={mode} showProjectionTools={false} />
+  }
+
+  return <LegacyCpfSection mode={mode} />
+}
+
+function CpfSectionBody({ model, mode, showProjectionTools }: CpfSectionBodyProps) {
+  const {
+    currentAge,
+    annualIncome,
+    cpfOA,
+    cpfSA,
+    cpfMA,
+    cpfRA,
+    cpfLifeStartAge,
+    cpfLifePlan,
+    cpfRetirementSum,
+    lifeStage,
+    retirementPhase,
+    cpfLifeActualMonthlyPayout,
+    cpfisEnabled,
+    cpfisOaReturn,
+    cpfisSaReturn,
+    cpfOaWithdrawals,
+    cpfTopUpOA,
+    cpfTopUpSA,
+    cpfTopUpMA,
+    residencyStatus,
+    prMonths,
+    validationErrors,
+    setField,
+    cpfAutoFallback,
+    cpfVirtualRebalancing,
+    cpfVirtualRebalancingMode,
+    incomeStreams,
+    projection,
+    addCpfOaWithdrawal,
+    removeCpfOaWithdrawal,
+    updateCpfOaWithdrawal,
+  } = model
+
   const isPostFire = lifeStage === 'post-fire'
   const effectivePhase = isPostFire ? retirementPhase : null
 
@@ -68,9 +163,6 @@ export function CpfSection() {
   ]
 
   const totalCpf = cpfOA + cpfSA + cpfMA + cpfRA
-
-  // Project SA at 55 to check if user can reach selected retirement sum
-  const { projection } = useIncomeProjection()
 
   // RA earns 4% interest from age 55 until CPF LIFE starts — must compound to get realistic payout
   const raGrowthFactor = Math.pow(1 + SA_INTEREST_RATE, Math.max(0, cpfLifeStartAge - 55))
@@ -756,7 +848,7 @@ export function CpfSection() {
           </>
         )}
 
-        {mode === 'advanced' && (
+        {showProjectionTools && mode === 'advanced' && (
           <>
             <Separator />
 

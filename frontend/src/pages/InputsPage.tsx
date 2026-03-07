@@ -83,6 +83,7 @@ import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useUIStore } from '@/stores/useUIStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useUpdateNudges } from '@/hooks/useUpdateNudges'
 
 // Hooks
@@ -101,7 +102,9 @@ import { WelcomeBanner } from '@/components/shared/WelcomeBanner'
 import { ProjectionCTA } from '@/components/shared/ProjectionCTA'
 import { QuickModeBanner } from '@/components/shared/QuickModeBanner'
 import { pushUndo } from '@/lib/undo'
+import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 import { formatCurrency } from '@/lib/utils'
+import { useHouseholdCpfAdapter } from '@/components/household/adapters/useHouseholdCpfAdapter'
 import type { WithdrawalStrategyType } from '@/lib/types'
 import { getEffectiveExpenses, computeExpensePhases } from '@/lib/calculations/expenses'
 
@@ -708,6 +711,336 @@ function CpfContent() {
   )
 }
 
+const HOUSEHOLD_PLAN_LABELS = {
+  couple: 'Couple',
+  household: 'Household',
+} as const
+
+interface HouseholdPrototypeSectionProps {
+  sectionId: SectionId
+  title: string
+  description: string
+  isComplete: boolean
+  children: React.ReactNode
+}
+
+function HouseholdPrototypeSection({
+  sectionId,
+  title,
+  description,
+  isComplete,
+  children,
+}: HouseholdPrototypeSectionProps) {
+  return (
+    <section id={sectionId} className="scroll-mt-16 space-y-4">
+      <div className="space-y-1">
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          {title}
+          {isComplete ? (
+            <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+          ) : (
+            <Circle className="h-5 w-5 text-muted-foreground/40 shrink-0" />
+          )}
+        </h2>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
+      <div className="space-y-6">{children}</div>
+    </section>
+  )
+}
+
+function HouseholdPlaceholderCard({
+  title,
+  body,
+}: {
+  title: string
+  body: string
+}) {
+  return (
+    <Card className="border-dashed">
+      <CardContent className="py-5 space-y-1">
+        <p className="text-sm font-medium">{title}</p>
+        <p className="text-sm text-muted-foreground">{body}</p>
+      </CardContent>
+    </Card>
+  )
+}
+
+function HouseholdInputsPage() {
+  usePageMeta({ title: 'Plan Inputs — SG FIRE Planner', description: 'Configure your income, expenses, CPF, investments, and retirement assumptions for Singapore FIRE planning.', path: '/inputs' })
+  const plan = useHouseholdPlanStore((s) => s.plan)
+  const cpfEnabled = useUIStore((s) => s.cpfEnabled)
+  const healthcareEnabled = useUIStore((s) => s.healthcareEnabled)
+  const propertyEnabled = useUIStore((s) => s.propertyEnabled)
+  const { sections: sectionCompletion } = useSectionCompletion()
+
+  const adults = plan.adults
+  const defaultAdultId = adults.find((adult) => adult.owner === 'self')?.id ?? adults[0]?.id ?? ''
+  const [selectedAdultId, setSelectedAdultId] = useState(defaultAdultId)
+
+  useEffect(() => {
+    if (adults.length === 0) return
+    if (!adults.some((adult) => adult.id === selectedAdultId)) {
+      setSelectedAdultId(defaultAdultId)
+    }
+  }, [adults, defaultAdultId, selectedAdultId])
+
+  const selectedAdult = adults.find((adult) => adult.id === selectedAdultId) ?? adults[0] ?? null
+  const cpfModel = useHouseholdCpfAdapter(selectedAdult?.id)
+
+  const sectionOrder: SectionId[] = [
+    'section-personal',
+    'section-income',
+    'section-expenses',
+    'section-goals',
+    'section-net-worth',
+  ]
+  if (cpfEnabled) sectionOrder.push('section-cpf')
+  if (healthcareEnabled) sectionOrder.push('section-healthcare')
+  if (propertyEnabled) sectionOrder.push('section-property')
+  sectionOrder.push('section-fire-settings', 'section-allocation')
+
+  const completedCount = sectionOrder.filter((sectionId) => sectionCompletion[sectionId].isComplete).length
+  const totalSections = sectionOrder.length
+  const planLabel = HOUSEHOLD_PLAN_LABELS[plan.planType as keyof typeof HOUSEHOLD_PLAN_LABELS] ?? 'Household'
+
+  return (
+    <div className="space-y-10">
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-2xl font-bold">{planLabel} Inputs</h1>
+          <p className="text-sm text-muted-foreground">
+            This rollout step proves the household adapter seam with CPF first. The remaining sections keep their household-aware progress prompts and stable deep links while PR8B and PR8C land.
+          </p>
+        </div>
+
+        <Card className="border-blue-200 bg-blue-50/70 dark:border-blue-900 dark:bg-blue-950/20">
+          <CardContent className="py-4 space-y-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Adapter pattern checkpoint</p>
+                <p className="text-sm text-muted-foreground">
+                  `CpfSection` now renders against a household-backed model instead of the legacy authoring stores. This is the wrapper seam PR8B and PR8C can reuse where the legacy sections remain viable.
+                </p>
+              </div>
+              {selectedAdult && adults.length > 1 && (
+                <div className="w-full md:w-72 space-y-1">
+                  <Label htmlFor="household-cpf-adult">Editing CPF for</Label>
+                  <Select value={selectedAdult.id} onValueChange={setSelectedAdultId}>
+                    <SelectTrigger id="household-cpf-adult">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {adults.map((adult) => (
+                        <SelectItem key={adult.id} value={adult.id}>
+                          {adult.displayName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              {adults.map((adult) => {
+                const isSelected = adult.id === selectedAdult?.id
+                return (
+                  <div
+                    key={adult.id}
+                    className={cn(
+                      'rounded-lg border bg-background px-4 py-3',
+                      isSelected ? 'border-blue-400 shadow-sm' : 'border-border/70',
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-medium">{adult.displayName}</p>
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          {adult.owner === 'self' ? 'Self' : 'Partner'}
+                        </p>
+                      </div>
+                      <Badge variant={isSelected ? 'default' : 'secondary'}>
+                        {isSelected ? 'Selected' : 'Roster'}
+                      </Badge>
+                    </div>
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      Age {adult.currentAge}, retire at {adult.retirementAge}, life expectancy {adult.lifeExpectancy}.
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{completedCount} of {totalSections} sections meaningfully configured</span>
+                <span>{Math.round((completedCount / totalSections) * 100)}%</span>
+              </div>
+              <Progress value={(completedCount / totalSections) * 100} className="h-2" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <HouseholdPrototypeSection
+        sectionId="section-personal"
+        title="People & Household"
+        description="Roster setup, member naming, and who this plan covers."
+        isComplete={sectionCompletion['section-personal'].isComplete}
+      >
+        <Card>
+          <CardContent className="py-5 space-y-2">
+            <p className="text-sm font-medium">Setup flow is now the roster source of truth.</p>
+            <p className="text-sm text-muted-foreground">
+              PR8A keeps people editing lightweight here while CPF proves the adapter pattern. Full inline member editing, dependent timelines, and retirement-age controls arrive in PR8B.
+            </p>
+          </CardContent>
+        </Card>
+      </HouseholdPrototypeSection>
+
+      <HouseholdPrototypeSection
+        sectionId="section-income"
+        title="Income & Work"
+        description="Per-adult salary models, streams, life events, and tax relief inputs."
+        isComplete={sectionCompletion['section-income'].isComplete}
+      >
+        <HouseholdPlaceholderCard
+          title="PR8B follow-up"
+          body="Salary models, income streams, SRS tax planning, and life events move here once the CPF adapter seam is proven."
+        />
+      </HouseholdPrototypeSection>
+
+      <HouseholdPrototypeSection
+        sectionId="section-expenses"
+        title="Spending & Retirement Draws"
+        description="Shared spending, private spending, withdrawals, and support costs."
+        isComplete={sectionCompletion['section-expenses'].isComplete}
+      >
+        <HouseholdPlaceholderCard
+          title="PR8B follow-up"
+          body="Household spending, retirement withdrawals, parent support, healthcare, and cost ownership controls land in the next rollout unit."
+        />
+      </HouseholdPrototypeSection>
+
+      <HouseholdPrototypeSection
+        sectionId="section-goals"
+        title="Goals"
+        description="Milestone goals and household-specific future spending."
+        isComplete={sectionCompletion['section-goals'].isComplete}
+      >
+        <HouseholdPlaceholderCard
+          title="PR8B follow-up"
+          body="Goal authoring joins the household spending surface so ownership and timing stay visible by member."
+        />
+      </HouseholdPrototypeSection>
+
+      <HouseholdPrototypeSection
+        sectionId="section-net-worth"
+        title="Assets & Net Worth"
+        description="Liquid assets, CPF balances, SRS, and household balance-sheet coverage."
+        isComplete={sectionCompletion['section-net-worth'].isComplete}
+      >
+        <HouseholdPlaceholderCard
+          title="PR8C follow-up"
+          body="Liquid assets, SRS, locked assets, and cash reserves move onto household-native surfaces after the people and spending rollout."
+        />
+      </HouseholdPrototypeSection>
+
+      {cpfEnabled && (
+        <HouseholdPrototypeSection
+          sectionId="section-cpf"
+          title="CPF"
+          description={selectedAdult ? `${selectedAdult.displayName}'s CPF settings, balances, fallback rules, and projection helpers.` : 'CPF settings and balances.'}
+          isComplete={sectionCompletion['section-cpf'].isComplete}
+        >
+          {cpfModel ? (
+            <CpfSection model={cpfModel} />
+          ) : (
+            <HouseholdPlaceholderCard
+              title="No adult selected"
+              body="Select a planning adult to edit CPF settings."
+            />
+          )}
+        </HouseholdPrototypeSection>
+      )}
+
+      {healthcareEnabled && (
+        <HouseholdPrototypeSection
+          sectionId="section-healthcare"
+          title="Healthcare & Insurance"
+          description="Member-level healthcare assumptions and shield-plan settings."
+          isComplete={sectionCompletion['section-healthcare'].isComplete}
+        >
+          <HouseholdPlaceholderCard
+            title="PR8B follow-up"
+            body="Healthcare editing rejoins the household spending surface so each adult's assumptions stay aligned with the normalized analysis timeline."
+          />
+        </HouseholdPrototypeSection>
+      )}
+
+      {propertyEnabled && (
+        <HouseholdPrototypeSection
+          sectionId="section-property"
+          title="Property"
+          description="Ownership-scoped homes, mortgages, and housing decisions."
+          isComplete={sectionCompletion['section-property'].isComplete}
+        >
+          <HouseholdPlaceholderCard
+            title="PR8C follow-up"
+            body="Property ownership, HDB monetization, and downsizing scenarios move here after the adapter-vs-native component decision is locked in."
+          />
+        </HouseholdPrototypeSection>
+      )}
+
+      <HouseholdPrototypeSection
+        sectionId="section-fire-settings"
+        title="FIRE Settings"
+        description="Household-level assumptions, return settings, and normalized analysis controls."
+        isComplete={sectionCompletion['section-fire-settings'].isComplete}
+      >
+        <HouseholdPlaceholderCard
+          title="PR8C follow-up"
+          body="Household assumptions stay centralized and move here once the remaining authoring surfaces stop depending on legacy individual reads."
+        />
+      </HouseholdPrototypeSection>
+
+      <HouseholdPrototypeSection
+        sectionId="section-allocation"
+        title="Allocation"
+        description="Portfolio templates, glide paths, and household-aware portfolio assumptions."
+        isComplete={sectionCompletion['section-allocation'].isComplete}
+      >
+        <HouseholdPlaceholderCard
+          title="PR8C follow-up"
+          body="Allocation remains on the mixed-mode path until the assumptions surface and household analysis contract are both fully wired."
+        />
+      </HouseholdPrototypeSection>
+
+      <Card className="bg-primary/5 border-primary/20">
+        <CardContent className="py-6 md:py-6">
+          <h3 className="text-lg font-semibold mb-1">Continue validating the household plan</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Projection and Stress Test already read the normalized household slice. Use them after updating CPF to confirm the prototype behaves as expected.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild>
+              <Link to="/projection">
+                View Projection <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/stress-test">
+                Stress Test <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 function HealthcareContent() {
   return (
     <>
@@ -1261,7 +1594,7 @@ function SectionNudgeWrapper({ sectionId }: { sectionId: SectionId }) {
 
 // --- Main page component ---
 
-export function InputsPage() {
+function LegacyInputsPage() {
   usePageMeta({ title: 'Plan Inputs — SG FIRE Planner', description: 'Configure your income, expenses, CPF, investments, and retirement assumptions for Singapore FIRE planning.', path: '/inputs' })
   const sectionOrder = useUIStore((s) => s.sectionOrder)
   const cpfEnabled = useUIStore((s) => s.cpfEnabled)
@@ -1655,4 +1988,14 @@ export function InputsPage() {
       />
     </div>
   )
+}
+
+export function InputsPage() {
+  const householdPlan = useHouseholdPlanStore((state) => state.plan)
+
+  if (isHouseholdPlannerV1Enabled() && householdPlan.planType !== 'individual') {
+    return <HouseholdInputsPage />
+  }
+
+  return <LegacyInputsPage />
 }
