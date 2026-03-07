@@ -23,6 +23,7 @@ import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useUIStore } from '@/stores/useUIStore'
 import type { MonteCarloResult } from '@/lib/types'
 import type { ActionImpactRunnerOutput } from '@/lib/companion/actionImpacts'
+import * as incomeProjectionHooks from '@/hooks/useIncomeProjection'
 
 // ── Module mocks ─────────────────────────────────────────
 
@@ -113,6 +114,60 @@ function makeActionImpactOutput(
   }
 }
 
+function createMockNormalizedContext(overrides?: Partial<ReturnType<typeof incomeProjectionHooks.useNormalizedLegacyAnalysisContext>>) {
+  return {
+    cacheKey: 'legacy:1:1:1::00000000',
+    householdRevision: 'legacy:1:1:1',
+    scenarioOverrideHash: '00000000',
+    referenceAdultId: 'adult-self',
+    currentAge: 30,
+    retirementAge: 65,
+    lifeExpectancy: 90,
+    firstRetirementYearOffset: 35,
+    householdRetirementYearOffset: 35,
+    compiledPlan: {
+      assumptions: {
+        returns: {
+          inflation: 0.025,
+        },
+      },
+    },
+    entry: {
+      selectors: {
+        deterministic: { rows: [], milestones: [] },
+        projection: {
+          annualSavingsByYear: [],
+          postRetirementIncomeByYear: [],
+          retirementExpenseBaseByYear: [],
+          householdWithdrawalNeedByYear: [],
+          portfolioAdjustments: [],
+        },
+        monteCarlo: {
+          annualSavingsByYear: [],
+          postRetirementIncomeByYear: [],
+          householdWithdrawalNeedByYear: [],
+          portfolioAdjustments: [],
+        },
+        backtest: {
+          postRetirementIncomeByYear: [],
+          retirementExpenseBaseByYear: [],
+          householdWithdrawalNeedByYear: [],
+          portfolioAdjustments: [],
+        },
+        cpf: { cpfByAdultId: {} },
+        healthcare: { healthcareByAdultId: {} },
+        companion: {
+          milestones: [],
+          annualSavingsByYear: [],
+          postRetirementIncomeByYear: [],
+          householdWithdrawalNeedByYear: [],
+        },
+      },
+    },
+    ...overrides,
+  } as ReturnType<typeof incomeProjectionHooks.useNormalizedLegacyAnalysisContext>
+}
+
 // ── Helpers ──────────────────────────────────────────────
 
 function resetAllStores() {
@@ -176,6 +231,34 @@ afterEach(() => {
 // ── Tests ────────────────────────────────────────────────
 
 describe('StressTestPage companion orchestration', () => {
+  it('uses normalized retirement context when building companion action impact overrides', async () => {
+    const normalizedSpy = vi
+      .spyOn(incomeProjectionHooks, 'useNormalizedLegacyAnalysisContext')
+      .mockReturnValue(createMockNormalizedContext({
+        currentAge: 65,
+        retirementAge: 65,
+        firstRetirementYearOffset: 0,
+        householdRetirementYearOffset: 0,
+      }))
+
+    mockRunMC.mockResolvedValue(SAMPLE_MC_RESULT)
+    mockRunActionImpacts.mockResolvedValue(makeActionImpactOutput())
+
+    const user = userEvent.setup()
+    renderPage()
+
+    await waitForRunButton()
+    await user.click(getRunButton())
+
+    await waitFor(() => {
+      expect(mockRunActionImpacts).toHaveBeenCalled()
+    })
+
+    expect(mockRunActionImpacts.mock.calls[0]?.[0].profileOverrides?.retirementAge).toBe(66)
+
+    normalizedSpy.mockRestore()
+  })
+
   it('calls runActionImpactAnalysis after MC completes and shows results', async () => {
     // MC resolves immediately
     mockRunMC.mockResolvedValue(SAMPLE_MC_RESULT)

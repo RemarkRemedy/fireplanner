@@ -181,6 +181,41 @@ describe('useCompanionPlannerBridge', () => {
     expect(payload).toHaveProperty('scenario_id')
     expect(payload).toHaveProperty('input_signature')
 
+    const profile = useProfileStore.getState()
+    const allocation = useAllocationStore.getState()
+    const simulation = useSimulationStore.getState()
+    const scenarioRetirementAge = result.current.activeScenarioRetirementAge ?? profile.retirementAge
+    const scenarioAnnualExpenses = result.current.activeScenarioAnnualExpenses ?? profile.annualExpenses
+    const initialPortfolio = profile.liquidNetWorth + profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
+    const expectedPayload = buildPlannerResultsPayload({
+      result: SAMPLE_RESULT,
+      initialPortfolio,
+      currentAge: profile.currentAge,
+      annualIncome: profile.annualIncome,
+      annualExpenses: scenarioAnnualExpenses,
+      computedAtUtc: payload?.computed_at_utc,
+      expectedReturn: resolveDeterministicExpectedReturn(profile, allocation, {
+        retirementAge: scenarioRetirementAge,
+      }),
+      inflation: profile.inflation,
+      expenseRatio: profile.expenseRatio,
+      lifeExpectancy: profile.lifeExpectancy,
+      retirementAge: scenarioRetirementAge,
+      allocationWeights: allocation.currentWeights,
+      selectedStrategy: simulation.selectedStrategy,
+      strategyParams: simulation.strategyParams,
+      mcMethod: simulation.mcMethod,
+      scenarioId: result.current.activeScenarioId ?? undefined,
+      scenarioName: result.current.activeScenario?.name,
+    })
+    expect(payload).toEqual({
+      ...expectedPayload,
+      input_signature: JSON.stringify({
+        annualExpenses: scenarioAnnualExpenses,
+        retirementAge: scenarioRetirementAge,
+      }),
+    })
+
     await waitFor(() => {
       expect(result.current.saveStatus).toBe('saved')
     })
