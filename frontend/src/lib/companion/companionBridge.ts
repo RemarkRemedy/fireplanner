@@ -5,6 +5,7 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
 import type { PlannerSnapshotResponse } from './types'
 import { toFiniteNumber } from './utils'
@@ -33,6 +34,7 @@ export function disableLocalStoragePersistence(): void {
     useSimulationStore,
     useWithdrawalStore,
     usePropertyStore,
+    useHouseholdPlanStore,
     useUIStore,
   ] as const
 

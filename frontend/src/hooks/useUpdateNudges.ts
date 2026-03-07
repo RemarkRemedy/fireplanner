@@ -6,6 +6,7 @@ import { STORE_REGISTRY } from '@/lib/storeRegistry'
 
 /** Maps store keys to the section they affect on the Inputs page */
 const STORE_TO_SECTION: Record<string, string> = {
+  'fireplanner-household-plan-v1': 'section-personal',
   'fireplanner-profile': 'section-personal',
   'fireplanner-income': 'section-income',
   'fireplanner-allocation': 'section-allocation',
