@@ -16,7 +16,7 @@ import { usePageMeta } from '@/hooks/usePageMeta'
 import { PersonalSection } from '@/components/profile/PersonalSection'
 import { FinancialSection } from '@/components/profile/FinancialSection'
 import { FireTargetsSection } from '@/components/profile/FireTargetsSection'
-import { AssumptionsSection } from '@/components/profile/AssumptionsSection'
+import { AssumptionsSection as LegacyAssumptionsSection } from '@/components/profile/AssumptionsSection'
 import { CpfSection } from '@/components/profile/CpfSection'
 import { ParentSupportSection } from '@/components/profile/ParentSupportSection'
 import { CashReserveSection } from '@/components/profile/CashReserveSection'
@@ -108,6 +108,8 @@ import { useHouseholdCpfAdapter } from '@/components/household/adapters/useHouse
 import { PeopleSection } from '@/components/household/PeopleSection'
 import { IncomeSection } from '@/components/household/IncomeSection'
 import { SpendingGoalsSection } from '@/components/household/SpendingGoalsSection'
+import { AssetsPropertySection } from '@/components/household/AssetsPropertySection'
+import { AssumptionsSection as HouseholdAssumptionsSection } from '@/components/household/AssumptionsSection'
 import type { WithdrawalStrategyType } from '@/lib/types'
 import { getEffectiveExpenses, computeExpensePhases } from '@/lib/calculations/expenses'
 
@@ -220,7 +222,7 @@ function FireSettingsContent() {
   return (
     <>
       <FireTargetsSection />
-      <AssumptionsSection />
+      <LegacyAssumptionsSection />
     </>
   )
 }
@@ -813,7 +815,7 @@ function HouseholdInputsPage() {
         <div>
           <h1 className="text-2xl font-bold">{planLabel} Inputs</h1>
           <p className="text-sm text-muted-foreground">
-            Household people, income, spending, healthcare, and goals are now editable directly from the household plan. Assets, property, and assumptions stay on their dedicated household surfaces until the remaining inputs move over.
+            Manual household authoring now covers people, income, spending, healthcare, goals, assets, property, and assumptions. Expense import remains an optional review path until the dedicated review flow lands.
           </p>
         </div>
 
@@ -823,7 +825,7 @@ function HouseholdInputsPage() {
               <div className="space-y-1">
                 <p className="text-sm font-medium">Household editor checkpoint</p>
                 <p className="text-sm text-muted-foreground">
-                  CPF still uses the household-backed adapter, while people, income, spending, healthcare, and goals now write straight to the household plan store. The selected adult below drives the adult-specific cards across those mixed sections.
+                  People, income, spending, assets, property, and assumptions now write straight to the household plan store. CPF still uses the household-backed adapter while that editor stays on its own migration path.
                 </p>
               </div>
               {selectedAdult && adults.length > 1 && (
@@ -934,10 +936,7 @@ function HouseholdInputsPage() {
         description="Liquid assets, CPF balances, SRS, and household balance-sheet coverage."
         isComplete={sectionCompletion['section-net-worth'].isComplete}
       >
-        <HouseholdPlaceholderCard
-          title="Household editor note"
-          body="Liquid assets, SRS, locked assets, and cash reserves remain on their dedicated household balance-sheet surfaces until this page becomes the single editor."
-        />
+        <AssetsPropertySection mode="assets" />
       </HouseholdPrototypeSection>
 
       {cpfEnabled && (
@@ -979,10 +978,7 @@ function HouseholdInputsPage() {
           description="Ownership-scoped homes, mortgages, and housing decisions."
           isComplete={sectionCompletion['section-property'].isComplete}
         >
-          <HouseholdPlaceholderCard
-            title="Household editor note"
-            body="Property ownership, HDB monetization, and downsizing scenarios stay on the dedicated household property surface until this page takes over those controls directly."
-          />
+          <AssetsPropertySection mode="property" />
         </HouseholdPrototypeSection>
       )}
 
@@ -992,10 +988,7 @@ function HouseholdInputsPage() {
         description="Household-level assumptions, return settings, and normalized analysis controls."
         isComplete={sectionCompletion['section-fire-settings'].isComplete}
       >
-        <HouseholdPlaceholderCard
-          title="Household editor note"
-          body="Household assumptions stay centralized and remain on the mixed-mode path until the remaining authoring surfaces no longer depend on legacy individual reads."
-        />
+        <HouseholdAssumptionsSection mode="assumptions" />
       </HouseholdPrototypeSection>
 
       <HouseholdPrototypeSection
@@ -1004,17 +997,14 @@ function HouseholdInputsPage() {
         description="Portfolio templates, glide paths, and household-aware portfolio assumptions."
         isComplete={sectionCompletion['section-allocation'].isComplete}
       >
-        <HouseholdPlaceholderCard
-          title="Household editor note"
-          body="Allocation remains on the mixed-mode path until the assumptions surface and household analysis contract are both fully wired."
-        />
+        <HouseholdAssumptionsSection mode="allocation" />
       </HouseholdPrototypeSection>
 
       <Card className="bg-primary/5 border-primary/20">
         <CardContent className="py-6 md:py-6">
           <h3 className="text-lg font-semibold mb-1">Continue validating the household plan</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Projection and Stress Test already read the normalized household slice. Use them after updating CPF to confirm the prototype behaves as expected.
+            Projection and Stress Test already read the normalized household slice. Use them now that the manual household editor covers the full launch scope before Expense import arrives.
           </p>
           <div className="flex flex-wrap gap-3">
             <Button asChild>
