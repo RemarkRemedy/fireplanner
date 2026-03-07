@@ -9,6 +9,10 @@ interface CompanionResultsSummaryProps {
   actionImpactsPending?: boolean
   actionImpactsProgress?: { completed: number; total: number } | null
   actionImpactsError?: string | null
+  householdContext?: {
+    label: string
+    coverage: string
+  } | null
 }
 
 export function CompanionResultsSummary({
@@ -17,6 +21,7 @@ export function CompanionResultsSummary({
   actionImpactsPending,
   actionImpactsProgress,
   actionImpactsError,
+  householdContext,
 }: CompanionResultsSummaryProps) {
   const activeRow = companion.scenarioComparisons.find(
     (row) => row.id === companion.activeScenarioId,
@@ -33,8 +38,13 @@ export function CompanionResultsSummary({
       <Card className="companion-card">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold">
-            Results: {activeRow.name}
+            {householdContext ? `${householdContext.label} results: ${activeRow.name}` : `Results: ${activeRow.name}`}
           </CardTitle>
+          {householdContext ? (
+            <p className="text-xs text-muted-foreground">
+              {householdContext.coverage}. This top-line answer stays household-level for the active scenario.
+            </p>
+          ) : null}
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">

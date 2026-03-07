@@ -16,6 +16,12 @@ import { useSectionNudge } from '@/hooks/useSectionNudge'
 import { SectionNudge } from '@/components/shared/SectionNudge'
 import { useUIStore } from '@/stores/useUIStore'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
+import { compileHouseholdPlan } from '@/lib/household/compileHouseholdPlan'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { HouseholdOverviewBar } from '@/components/household/HouseholdOverviewBar'
+import { HouseholdMilestoneTimeline } from '@/components/household/HouseholdMilestoneTimeline'
+import { HouseholdBreakdownPanel } from '@/components/household/HouseholdBreakdownPanel'
 
 // Monte Carlo imports
 import { SimulationControls } from '@/components/simulation/SimulationControls'
@@ -610,7 +616,10 @@ export function StressTestPage() {
   const stressNudge = useSectionNudge('section-stress-test')
   const setSectionMode = useUIStore((s) => s.setSectionMode)
   const isStressAdvanced = stressMode === 'advanced'
+  const householdPlannerEnabled = isHouseholdPlannerV1Enabled()
   const normalized = useNormalizedLegacyAnalysisContext()
+  const householdPlan = useHouseholdPlanStore((state) => state.plan)
+  const householdPlanRevision = useHouseholdPlanStore((state) => state.householdPlanRevision)
   const analysisPortfolio = useAnalysisPortfolio()
   const mc = useMonteCarloQuery()
   const { isEligible } = useExpenseTracker()
@@ -640,6 +649,31 @@ export function StressTestPage() {
   const [actionImpactsProgress, setActionImpactsProgress] = useState<{ completed: number; total: number } | null>(null)
   const [actionImpactsError, setActionImpactsError] = useState<string | null>(null)
   const actionImpactTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const householdPresentationPlan = useMemo(() => {
+    if (!householdPlannerEnabled || householdPlan.planType === 'individual') {
+      return null
+    }
+
+    return compileHouseholdPlan(householdPlan)
+  }, [householdPlan, householdPlanRevision, householdPlannerEnabled])
+  const householdCompanionContext = useMemo(() => {
+    if (!householdPresentationPlan) {
+      return null
+    }
+
+    const adultNames = householdPresentationPlan.adultOrder.map(
+      (adultId) => householdPresentationPlan.adultsById[adultId]?.displayName ?? 'Adult',
+    )
+    const dependentCount = householdPresentationPlan.dependentOrder.length
+    const coverage = dependentCount > 0
+      ? `${adultNames.join(' + ')} + ${dependentCount} dependent${dependentCount === 1 ? '' : 's'}`
+      : adultNames.join(' + ')
+
+    return {
+      label: householdPresentationPlan.planType === 'couple' ? 'Couple' : 'Household',
+      coverage,
+    }
+  }, [householdPresentationPlan])
 
   const stressScenarioComparisonRows = useMemo(
     () => selectedStressScenarioIds
@@ -929,6 +963,16 @@ export function StressTestPage() {
         />
       )}
 
+      {householdPresentationPlan && (
+        <div className="space-y-4">
+          <HouseholdOverviewBar compiledPlan={householdPresentationPlan} />
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <HouseholdMilestoneTimeline compiledPlan={householdPresentationPlan} />
+            <HouseholdBreakdownPanel compiledPlan={householdPresentationPlan} />
+          </div>
+        </div>
+      )}
+
       {companion.isCompanionMode && (
         <>
           <CompanionScenarioSwitcher
@@ -943,6 +987,7 @@ export function StressTestPage() {
             actionImpactsPending={isActionImpactsPending}
             actionImpactsProgress={actionImpactsProgress}
             actionImpactsError={actionImpactsError}
+            householdContext={householdCompanionContext}
           />
           <CompanionStressComparison
             rows={stressScenarioComparisonRows}
