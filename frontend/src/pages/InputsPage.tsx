@@ -105,6 +105,9 @@ import { pushUndo } from '@/lib/undo'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 import { formatCurrency } from '@/lib/utils'
 import { useHouseholdCpfAdapter } from '@/components/household/adapters/useHouseholdCpfAdapter'
+import { PeopleSection } from '@/components/household/PeopleSection'
+import { IncomeSection } from '@/components/household/IncomeSection'
+import { SpendingGoalsSection } from '@/components/household/SpendingGoalsSection'
 import type { WithdrawalStrategyType } from '@/lib/types'
 import { getEffectiveExpenses, computeExpensePhases } from '@/lib/calculations/expenses'
 
@@ -810,7 +813,7 @@ function HouseholdInputsPage() {
         <div>
           <h1 className="text-2xl font-bold">{planLabel} Inputs</h1>
           <p className="text-sm text-muted-foreground">
-            This household input surface keeps CPF fully editable while the remaining sections preserve the same deep links and progress prompts used elsewhere in the planner.
+            Household people, income, spending, healthcare, and goals are now editable directly from the household plan. Assets, property, and assumptions stay on their dedicated household surfaces until the remaining inputs move over.
           </p>
         </div>
 
@@ -818,9 +821,9 @@ function HouseholdInputsPage() {
           <CardContent className="py-4 space-y-4">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="space-y-1">
-                <p className="text-sm font-medium">Adapter pattern checkpoint</p>
+                <p className="text-sm font-medium">Household editor checkpoint</p>
                 <p className="text-sm text-muted-foreground">
-                  `CpfSection` now renders against a household-backed model instead of the legacy authoring stores, so CPF editing stays native even while other sections still rely on lightweight guidance cards.
+                  CPF still uses the household-backed adapter, while people, income, spending, healthcare, and goals now write straight to the household plan store. The selected adult below drives the adult-specific cards across those mixed sections.
                 </p>
               </div>
               {selectedAdult && adults.length > 1 && (
@@ -889,14 +892,10 @@ function HouseholdInputsPage() {
         description="Roster setup, member naming, and who this plan covers."
         isComplete={sectionCompletion['section-personal'].isComplete}
       >
-        <Card>
-          <CardContent className="py-5 space-y-2">
-            <p className="text-sm font-medium">Setup flow is now the roster source of truth.</p>
-            <p className="text-sm text-muted-foreground">
-              People editing stays lightweight on this screen for now, while CPF uses the household-native adapter and the rest of the authoring surfaces keep their section anchors intact.
-            </p>
-          </CardContent>
-        </Card>
+        <PeopleSection
+          selectedAdultId={selectedAdult?.id ?? null}
+          onSelectedAdultIdChange={setSelectedAdultId}
+        />
       </HouseholdPrototypeSection>
 
       <HouseholdPrototypeSection
@@ -905,33 +904,27 @@ function HouseholdInputsPage() {
         description="Per-adult salary models, streams, life events, and tax relief inputs."
         isComplete={sectionCompletion['section-income'].isComplete}
       >
-        <HouseholdPlaceholderCard
-          title="Household editor note"
-          body="Salary models, income streams, SRS tax planning, and life events continue to use dedicated follow-up editing surfaces until this page switches fully to household-native authoring."
-        />
+        <IncomeSection selectedAdultId={selectedAdult?.id ?? null} />
       </HouseholdPrototypeSection>
 
       <HouseholdPrototypeSection
         sectionId="section-expenses"
-        title="Spending & Retirement Draws"
-        description="Shared spending, private spending, withdrawals, and support costs."
+        title="Spending, Healthcare & Goals"
+        description="Shared spending, private spending, healthcare, goals, and retirement draws."
         isComplete={sectionCompletion['section-expenses'].isComplete}
       >
-        <HouseholdPlaceholderCard
-          title="Household editor note"
-          body="Household spending, retirement withdrawals, parent support, healthcare, and cost ownership controls stay grouped on the dedicated spending editors until this page takes over those workflows directly."
-        />
+        <SpendingGoalsSection selectedAdultId={selectedAdult?.id ?? null} />
       </HouseholdPrototypeSection>
 
       <HouseholdPrototypeSection
         sectionId="section-goals"
         title="Goals"
-        description="Milestone goals and household-specific future spending."
+        description="Goal editing now lives inside the household spending surface."
         isComplete={sectionCompletion['section-goals'].isComplete}
       >
         <HouseholdPlaceholderCard
-          title="Household editor note"
-          body="Goal authoring stays on the dedicated household spending flow so ownership and timing remain visible by member."
+          title="Goal authoring moved into Spending"
+          body="Use the goal editor inside the Spending, Healthcare & Goals section above. This anchor stays in place so dashboard prompts and deep links remain stable during the rollout."
         />
       </HouseholdPrototypeSection>
 
@@ -969,12 +962,12 @@ function HouseholdInputsPage() {
         <HouseholdPrototypeSection
           sectionId="section-healthcare"
           title="Healthcare & Insurance"
-          description="Member-level healthcare assumptions and shield-plan settings."
+          description="Healthcare editing now lives inside the household spending surface."
           isComplete={sectionCompletion['section-healthcare'].isComplete}
         >
           <HouseholdPlaceholderCard
-            title="Household editor note"
-            body="Healthcare editing stays on the dedicated household spending surface so each adult's assumptions remain aligned with the normalized analysis timeline."
+            title="Healthcare editing moved into Spending"
+            body="Use the healthcare card inside the Spending, Healthcare & Goals section above. This anchor stays in place so section links remain stable while the household editor settles."
           />
         </HouseholdPrototypeSection>
       )}
