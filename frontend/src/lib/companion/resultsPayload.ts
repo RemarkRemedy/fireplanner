@@ -117,7 +117,11 @@ export interface BuildPayloadInput {
   result: MonteCarloResult
   initialPortfolio: number
   currentAge: number
+  annualIncome: number
   annualExpenses: number
+  expectedReturn: number
+  inflation: number
+  expenseRatio: number
   lifeExpectancy: number
   retirementAge: number
   allocationWeights: number[]
@@ -133,7 +137,11 @@ export function buildPlannerResultsPayload(input: BuildPayloadInput): PlannerRes
     result,
     initialPortfolio,
     currentAge,
+    annualIncome,
     annualExpenses,
+    expectedReturn,
+    inflation,
+    expenseRatio,
     lifeExpectancy,
     retirementAge,
     allocationWeights,
@@ -155,10 +163,21 @@ export function buildPlannerResultsPayload(input: BuildPayloadInput): PlannerRes
   const wrSafe85 = result.safe_swr?.confidence_85 != null
     ? roundRate(clamp01(result.safe_swr.confidence_85))
     : wrSafe50.value
+  const planningSafeRate = Math.max(wrSafe90, MIN_WR_DENOMINATOR)
+  const requiredPortfolio = annualExpenses <= 0 ? 0 : annualExpenses / planningSafeRate
+
+  const requiredSavingsRate = deriveRequiredSavingsRate({
+    annualIncome,
+    currentAge,
+    expenseRatio,
+    expectedReturn,
+    inflation,
+    initialPortfolio,
+    requiredPortfolio,
+    retirementAge,
+  })
 
   // FIRE age: first age where median portfolio >= required
-  const safeRate = Math.max(wrSafe50.value, MIN_WR_DENOMINATOR)
-  const requiredPortfolio = annualExpenses <= 0 ? 0 : annualExpenses / safeRate
   let fireAge = Math.round(retirementAge)
 
   const ages = result.percentile_bands.ages
@@ -205,8 +224,8 @@ export function buildPlannerResultsPayload(input: BuildPayloadInput): PlannerRes
     projected_fire_age_p50: fireAge,
     annual_expenses_target_real: roundMoney(annualExpenses),
     required_portfolio: roundMoney(requiredPortfolio),
-    required_portfolio_basis: 'wr_safe_50',
-    required_savings_rate: undefined,
+    required_portfolio_basis: 'wr_safe_90',
+    required_savings_rate: requiredSavingsRate,
     p_success: roundRate(clamp01(result.success_rate)),
     wr_safe_95: wrSafe95,
     wr_safe_90: wrSafe90,
@@ -222,4 +241,54 @@ export function buildPlannerResultsPayload(input: BuildPayloadInput): PlannerRes
     allocation_summary: buildAllocationSummary(allocationWeights),
     allocation_weights: buildAllocationWeightsObj(allocationWeights),
   }
+}
+
+function deriveRequiredSavingsRate(input: {
+  annualIncome: number
+  currentAge: number
+  expenseRatio: number
+  expectedReturn: number
+  inflation: number
+  initialPortfolio: number
+  requiredPortfolio: number
+  retirementAge: number
+}): number | undefined {
+  const {
+    annualIncome,
+    currentAge,
+    expenseRatio,
+    expectedReturn,
+    inflation,
+    initialPortfolio,
+    requiredPortfolio,
+    retirementAge,
+  } = input
+
+  if (!Number.isFinite(annualIncome) || annualIncome === 0) {
+    return requiredPortfolio <= initialPortfolio ? 0 : undefined
+  }
+
+  const yearsToTarget = Math.max(0, retirementAge - currentAge)
+  if (requiredPortfolio <= initialPortfolio) return 0
+
+  let requiredAnnualSavings: number
+  if (yearsToTarget === 0) {
+    requiredAnnualSavings = requiredPortfolio - initialPortfolio
+  } else {
+    const netRealReturn = expectedReturn - inflation - expenseRatio
+    if (Math.abs(netRealReturn) < 1e-10) {
+      requiredAnnualSavings = (requiredPortfolio - initialPortfolio) / yearsToTarget
+    } else {
+      const growthFactor = Math.pow(1 + netRealReturn, yearsToTarget)
+      requiredAnnualSavings = (requiredPortfolio - initialPortfolio * growthFactor)
+        * netRealReturn
+        / (growthFactor - 1)
+    }
+  }
+
+  return clampRequiredSavingsRate(requiredAnnualSavings / annualIncome)
+}
+
+function clampRequiredSavingsRate(value: number): number {
+  return roundRate(Math.min(2, Math.max(-1, value)))
 }

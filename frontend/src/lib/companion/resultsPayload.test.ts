@@ -151,7 +151,11 @@ describe('buildPlannerResultsPayload', () => {
     result: SAMPLE_RESULT,
     initialPortfolio: 1_000_000,
     currentAge: 30,
+    annualIncome: 100_000,
     annualExpenses: 50_000,
+    expectedReturn: 0.07,
+    inflation: 0.025,
+    expenseRatio: 0.003,
     lifeExpectancy: 90,
     retirementAge: 55,
     allocationWeights: [0.3, 0.1, 0.1, 0.2, 0.1, 0, 0.2, 0],
@@ -180,6 +184,9 @@ describe('buildPlannerResultsPayload', () => {
     expect(payload.n_simulations).toBe(10_000)
     expect(payload.projected_fire_age_p50).toBeDefined()
     expect(payload.portfolio_at_fire_p50).toBeDefined()
+    expect(payload.required_portfolio).toBe(1_428_571)
+    expect(payload.required_portfolio_basis).toBe('wr_safe_90')
+    expect(payload.required_savings_rate).toBeDefined()
     expect(payload.terminal_p5).toBe(10_000)
     expect(payload.terminal_p50).toBe(100_000)
     expect(payload.terminal_p95).toBe(300_000)
@@ -218,12 +225,21 @@ describe('buildPlannerResultsPayload', () => {
     const payload = buildPlannerResultsPayload({ ...BASE_INPUT, annualExpenses: 0 })
     expect(payload.projected_fire_age_p50).toBeDefined()
     expect(Number.isFinite(payload.p_success)).toBe(true)
+    expect(payload.required_savings_rate).toBe(0)
   })
 
   it('clamps NaN success_rate to 0', () => {
     const badResult = { ...SAMPLE_RESULT, success_rate: NaN }
     const payload = buildPlannerResultsPayload({ ...BASE_INPUT, result: badResult })
     expect(payload.p_success).toBe(0)
+  })
+
+  it('computes required_savings_rate from deterministic accumulation assumptions', () => {
+    const payload = buildPlannerResultsPayload({
+      ...BASE_INPUT,
+      initialPortfolio: 200_000,
+    })
+    expect(payload.required_savings_rate).toBeCloseTo(0.203145, 6)
   })
 
   it('emits no v1 alias keys', () => {
@@ -261,7 +277,11 @@ describe('schema conformance', () => {
       result: SAMPLE_RESULT,
       initialPortfolio: 1_000_000,
       currentAge: 30,
+      annualIncome: 100_000,
       annualExpenses: 50_000,
+      expectedReturn: 0.07,
+      inflation: 0.025,
+      expenseRatio: 0.003,
       lifeExpectancy: 90,
       retirementAge: 55,
       allocationWeights: [0.35, 0.15, 0.10, 0.25, 0.05, 0.03, 0.05, 0.02],
