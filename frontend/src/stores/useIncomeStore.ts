@@ -29,6 +29,12 @@ interface IncomeActions {
   reset: () => void
 }
 
+interface IncomeRevisionState {
+  incomeRevision: number
+}
+
+type IncomeStoreState = IncomeState & IncomeRevisionState & IncomeActions
+
 export const DEFAULT_CAREER_PHASES: CareerPhase[] = [
   { label: 'Early Career', minAge: 22, maxAge: 30, growthRate: 0.08 },
   { label: 'Mid Career', minAge: 30, maxAge: 40, growthRate: 0.05 },
@@ -62,12 +68,16 @@ export const DEFAULT_INCOME: Omit<IncomeState, 'validationErrors'> = {
   reliefBasisAge: null,
 }
 
-function extractIncomeData(state: IncomeState & IncomeActions): Omit<IncomeState, 'validationErrors'> {
+function extractIncomeData(state: IncomeStoreState): Omit<IncomeState, 'validationErrors'> {
   const data: Record<string, unknown> = {}
   for (const key of INCOME_DATA_KEYS) {
     data[key] = state[key]
   }
   return data as Omit<IncomeState, 'validationErrors'>
+}
+
+function bumpIncomeRevision(revision: number): number {
+  return revision + 1
 }
 
 function computeValidationErrors(
@@ -197,10 +207,11 @@ function migrateV1ToV2(persisted: V1State): Omit<IncomeState, 'validationErrors'
   }
 }
 
-export const useIncomeStore = create<IncomeState & IncomeActions>()(
+export const useIncomeStore = create<IncomeStoreState>()(
   persist(
     (set) => ({
       ...DEFAULT_INCOME,
+      incomeRevision: 0,
       validationErrors: computeValidationErrors(DEFAULT_INCOME),
 
       setField: (field, value) =>
@@ -209,6 +220,7 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
           const updated = { ...stateData, [field]: value }
           return {
             [field]: value,
+            incomeRevision: bumpIncomeRevision(state.incomeRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -218,6 +230,7 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
           const updated = { ...extractIncomeData(state), incomeStreams: [...state.incomeStreams, stream] }
           return {
             incomeStreams: updated.incomeStreams,
+            incomeRevision: bumpIncomeRevision(state.incomeRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -227,6 +240,7 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
           const updated = { ...extractIncomeData(state), incomeStreams: state.incomeStreams.filter((s) => s.id !== id) }
           return {
             incomeStreams: updated.incomeStreams,
+            incomeRevision: bumpIncomeRevision(state.incomeRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -239,6 +253,7 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
           const updated = { ...extractIncomeData(state), incomeStreams: newStreams }
           return {
             incomeStreams: newStreams,
+            incomeRevision: bumpIncomeRevision(state.incomeRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -248,6 +263,7 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
           const updated = { ...extractIncomeData(state), lifeEvents: [...state.lifeEvents, event] }
           return {
             lifeEvents: updated.lifeEvents,
+            incomeRevision: bumpIncomeRevision(state.incomeRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -257,6 +273,7 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
           const updated = { ...extractIncomeData(state), lifeEvents: state.lifeEvents.filter((e) => e.id !== id) }
           return {
             lifeEvents: updated.lifeEvents,
+            incomeRevision: bumpIncomeRevision(state.incomeRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -269,6 +286,7 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
           const updated = { ...extractIncomeData(state), lifeEvents: newEvents }
           return {
             lifeEvents: newEvents,
+            incomeRevision: bumpIncomeRevision(state.incomeRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -278,6 +296,7 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
           const updated = { ...extractIncomeData(state), realisticPhases: phases }
           return {
             realisticPhases: phases,
+            incomeRevision: bumpIncomeRevision(state.incomeRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -287,6 +306,7 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
           const updated = { ...extractIncomeData(state), promotionJumps: jumps }
           return {
             promotionJumps: jumps,
+            incomeRevision: bumpIncomeRevision(state.incomeRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -300,6 +320,7 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
             return {
               reliefBreakdown: null,
               reliefBasisAge: null,
+              incomeRevision: bumpIncomeRevision(state.incomeRevision),
               validationErrors: computeValidationErrors(updated),
             }
           }
@@ -316,15 +337,17 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
             reliefBreakdown: breakdown,
             reliefBasisAge: currentAge,
             personalReliefs: total,
+            incomeRevision: bumpIncomeRevision(state.incomeRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
 
       reset: () =>
-        set({
+        set((state) => ({
           ...DEFAULT_INCOME,
+          incomeRevision: bumpIncomeRevision(state.incomeRevision),
           validationErrors: computeValidationErrors(DEFAULT_INCOME),
-        }),
+        })),
     }),
     {
       name: 'fireplanner-income',
@@ -356,6 +379,7 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
         if (state) {
           const stateData = extractIncomeData(state)
           state.validationErrors = computeValidationErrors(stateData)
+          state.incomeRevision = bumpIncomeRevision(state.incomeRevision)
         }
       },
     }

@@ -21,6 +21,12 @@ interface WithdrawalActions {
   reset: () => void
 }
 
+interface WithdrawalRevisionState {
+  withdrawalRevision: number
+}
+
+type WithdrawalStoreState = WithdrawalState & WithdrawalRevisionState & WithdrawalActions
+
 const ALL_STRATEGIES: WithdrawalStrategyType[] = [
   'constant_dollar', 'vpw', 'guardrails', 'vanguard_dynamic', 'cape_based', 'floor_ceiling',
 ]
@@ -50,13 +56,17 @@ const DEFAULT_WITHDRAWAL: Omit<WithdrawalState, 'validationErrors'> = {
 }
 
 function extractWithdrawalData(
-  state: WithdrawalState & WithdrawalActions
+  state: WithdrawalStoreState
 ): Omit<WithdrawalState, 'validationErrors'> {
   const data: Record<string, unknown> = {}
   for (const key of WITHDRAWAL_DATA_KEYS) {
     data[key] = state[key]
   }
   return data as Omit<WithdrawalState, 'validationErrors'>
+}
+
+function bumpWithdrawalRevision(revision: number): number {
+  return revision + 1
 }
 
 function computeValidationErrors(
@@ -77,10 +87,11 @@ function computeValidationErrors(
   return errors
 }
 
-export const useWithdrawalStore = create<WithdrawalState & WithdrawalActions>()(
+export const useWithdrawalStore = create<WithdrawalStoreState>()(
   persist(
     (set) => ({
       ...DEFAULT_WITHDRAWAL,
+      withdrawalRevision: 0,
       validationErrors: computeValidationErrors(DEFAULT_WITHDRAWAL),
 
       setField: (field, value) =>
@@ -89,6 +100,7 @@ export const useWithdrawalStore = create<WithdrawalState & WithdrawalActions>()(
           const updated = { ...stateData, [field]: value }
           return {
             [field]: value,
+            withdrawalRevision: bumpWithdrawalRevision(state.withdrawalRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -106,6 +118,7 @@ export const useWithdrawalStore = create<WithdrawalState & WithdrawalActions>()(
           const updated = { ...stateData, strategyParams: updatedParams }
           return {
             strategyParams: updatedParams,
+            withdrawalRevision: bumpWithdrawalRevision(state.withdrawalRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -120,15 +133,17 @@ export const useWithdrawalStore = create<WithdrawalState & WithdrawalActions>()(
           const newState = { ...stateData, selectedStrategies: updated }
           return {
             selectedStrategies: updated,
+            withdrawalRevision: bumpWithdrawalRevision(state.withdrawalRevision),
             validationErrors: computeValidationErrors(newState),
           }
         }),
 
       reset: () =>
-        set({
+        set((state) => ({
           ...DEFAULT_WITHDRAWAL,
+          withdrawalRevision: bumpWithdrawalRevision(state.withdrawalRevision),
           validationErrors: computeValidationErrors(DEFAULT_WITHDRAWAL),
-        }),
+        })),
     }),
     {
       name: 'fireplanner-withdrawal',
@@ -159,6 +174,7 @@ export const useWithdrawalStore = create<WithdrawalState & WithdrawalActions>()(
         if (state) {
           const stateData = extractWithdrawalData(state)
           state.validationErrors = computeValidationErrors(stateData)
+          state.withdrawalRevision = bumpWithdrawalRevision(state.withdrawalRevision)
         }
       },
     }
