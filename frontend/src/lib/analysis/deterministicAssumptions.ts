@@ -38,9 +38,10 @@ export function resolveDeterministicExpectedReturn(
   }
 
   const overrideAge = options?.retirementAge
+  const fallbackAge = Number.isFinite(profile.retirementAge) ? profile.retirementAge : 65
   const retirementAge = (overrideAge != null && Number.isFinite(overrideAge))
     ? overrideAge
-    : profile.retirementAge
+    : fallbackAge
 
   const retirementWeights = getRetirementAgeWeights(
     allocation.glidePathConfig.enabled,

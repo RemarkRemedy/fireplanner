@@ -32,6 +32,7 @@ export type HouseholdPlanType = 'individual' | 'couple' | 'household'
 export type AdultOwner = 'self' | 'partner'
 export type EntryOwner = AdultOwner | 'shared'
 
+/** endAge is inclusive: age-range [startAge, endAge] covers endAge - startAge + 1 years. null = ongoing. */
 export type TimingRule =
   | { kind: 'single-age'; owner: AdultOwner; age: number }
   | { kind: 'age-range'; owner: AdultOwner; startAge: number; endAge: number | null }
@@ -56,7 +57,7 @@ export interface PlanningAdult {
   maritalStatus: MaritalStatus
   residencyStatus: ResidencyStatus
   prMonths: number
-  annualIncome: number
+  annualIncome: number // summary field from profile store; canonical salary is in income[] entries
   annualExpenses: number
   liquidNetWorth: number
   parentSupportEnabled: boolean

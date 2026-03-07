@@ -38,10 +38,6 @@ const PRIMARY_OWNER: AdultOwner = 'self'
 const PRIMARY_ADULT_ID = 'adult-self'
 
 function cloneTiming(timing: TimingRule): TimingRule {
-  if (timing.kind === 'single-age') {
-    return { ...timing }
-  }
-
   return { ...timing }
 }
 
@@ -101,7 +97,14 @@ function resolveReliefBasisAge(currentAge: number, income: LegacyIncomeSnapshot)
     }
   }
 
-  return bestDistance === Number.MAX_SAFE_INTEGER ? currentAge : bestAge
+  if (bestDistance === Number.MAX_SAFE_INTEGER) {
+    console.warn(
+      `[household] resolveReliefBasisAge: no age in 0-120 reconciles personalReliefs=${income.personalReliefs} with the stored breakdown; falling back to currentAge=${currentAge}`,
+    )
+    return currentAge
+  }
+
+  return bestAge
 }
 
 function mapPlanningAdult(snapshot: LegacyIndividualSnapshot): PlanningAdult {
@@ -176,7 +179,7 @@ function mapSalaryIncome(snapshot: LegacyIndividualSnapshot): IncomeSource {
     owner: PRIMARY_OWNER,
     label: 'Primary salary',
     kind: 'salary-model',
-    timing: ageRange(profile.currentAge, profile.retirementAge),
+    timing: ageRange(profile.currentAge, Math.max(profile.currentAge, profile.retirementAge)),
     annualAmount: income.annualSalary,
     growthRate: income.salaryGrowthRate,
     growthModel: 'fixed',

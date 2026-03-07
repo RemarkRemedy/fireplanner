@@ -117,6 +117,7 @@ export function normalizeHouseholdPlan(plan: HouseholdPlan): NormalizedHousehold
   const dependents = sortDependents(plan.dependents)
   const income = sortByOwnerThenTiming(plan.income)
   const expenses = sortByOwnerThenTiming(plan.expenses)
+  // AssetItem has no timing — sorts by owner then id (timingSortKey returns MAX for undefined)
   const assets = sortByOwnerThenTiming(plan.assets)
   const goals = sortByOwnerThenTiming(plan.goals)
   const properties = sortProperties(plan.properties)
