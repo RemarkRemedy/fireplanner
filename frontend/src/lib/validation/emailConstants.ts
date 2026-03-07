@@ -1,4 +1,4 @@
-// exit_intent is accepted by the backend but has no frontend component yet (Phase 2)
+// exit_intent triggers the expense tracker modal when the cursor leaves the viewport (useExitIntent hook)
 export const VALID_SOURCES = ['post_simulation', 'landing_page', 'exit_intent', 'contextual_nudge', 'expense_tracker'] as const
 export const VALID_FEATURES = ['cpf_optimization', 'couples_planning', 'insurance_gap', 'general', 'expense_tracker'] as const
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

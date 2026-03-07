@@ -20,6 +20,7 @@ import { isCompanionMode } from '@/lib/companion/isCompanionMode'
 import { ExpenseTrackerProvider } from '@/components/email/ExpenseTrackerProvider'
 import { useExpenseTracker } from '@/hooks/useExpenseTracker'
 import { ExpenseTrackerBanner } from '@/components/email/ExpenseTrackerBanner'
+import { useExitIntent } from '@/hooks/useExitIntent'
 import { ExpenseTrackerModal } from '@/components/email/ExpenseTrackerModal'
 
 // Pages that show the stats strip (inputs and analysis pages, not start/reference)
@@ -51,6 +52,11 @@ function AppLayoutFooterCta() {
       </button>
     </p>
   )
+}
+
+function ExitIntentTrigger() {
+  useExitIntent()
+  return null
 }
 
 function useIsDesktop() {
@@ -183,6 +189,7 @@ export function AppLayout() {
 
         {/* Single modal instance for entire app */}
         {!companionMode && <ExpenseTrackerModal />}
+        {!companionMode && <ExitIntentTrigger />}
 
         {/* Mobile FABs: Share + Help */}
         {!isDesktop && (
