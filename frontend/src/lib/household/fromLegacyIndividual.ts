@@ -1,14 +1,17 @@
 import type { IncomeState, ProfileState, PropertyState } from '@/lib/types'
 import { computeTotalReliefs } from '@/lib/data/taxBrackets'
 import {
+  DEFAULT_INCOME,
   INCOME_DATA_KEYS,
   useIncomeStore,
 } from '@/stores/useIncomeStore'
 import {
+  DEFAULT_PROFILE,
   PROFILE_DATA_KEYS,
   useProfileStore,
 } from '@/stores/useProfileStore'
 import {
+  DEFAULT_PROPERTY,
   PROPERTY_DATA_KEYS,
   usePropertyStore,
 } from '@/stores/usePropertyStore'
@@ -66,6 +69,14 @@ export function snapshotLegacyIndividual(): LegacyIndividualSnapshot {
     profile: pickSnapshot(useProfileStore.getState(), PROFILE_DATA_KEYS),
     income: pickSnapshot(useIncomeStore.getState(), INCOME_DATA_KEYS),
     property: pickSnapshot(usePropertyStore.getState(), PROPERTY_DATA_KEYS),
+  }
+}
+
+export function createDefaultLegacyIndividualSnapshot(): LegacyIndividualSnapshot {
+  return {
+    profile: structuredClone(DEFAULT_PROFILE),
+    income: structuredClone(DEFAULT_INCOME),
+    property: structuredClone(DEFAULT_PROPERTY),
   }
 }
 
