@@ -132,8 +132,8 @@ export function useCompanionPlannerBridge({
   const lifeExpectancy = profile.lifeExpectancy
   const initialPortfolio = profile.liquidNetWorth + profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
 
-  const effectiveExpectedReturn = useMemo(
-    () => resolveDeterministicExpectedReturn(profile, {
+  const deterministicAllocationInputs = useMemo(
+    () => ({
       currentWeights: allocationWeights,
       targetWeights: allocationTargetWeights,
       glidePathConfig: allocationGlidePathConfig,
@@ -141,7 +141,6 @@ export function useCompanionPlannerBridge({
       validationErrors: allocationValidationErrors,
     }),
     [
-      profile,
       allocationWeights,
       allocationTargetWeights,
       allocationReturnOverrides,
@@ -447,13 +446,19 @@ export function useCompanionPlannerBridge({
     runContext: ScenarioRunContext,
     mcResult: MonteCarloResult,
   ): PlannerResultsPayload => {
+    const expectedReturn = resolveDeterministicExpectedReturn(
+      profile,
+      deterministicAllocationInputs,
+      { retirementAge: runContext.retirementAge },
+    )
+
     const payload = buildPlannerResultsPayload({
       result: mcResult,
       initialPortfolio,
       currentAge,
       annualIncome: effectiveAnnualIncome,
       annualExpenses: runContext.annualExpenses,
-      expectedReturn: effectiveExpectedReturn,
+      expectedReturn,
       inflation,
       expenseRatio,
       lifeExpectancy,
@@ -470,7 +475,8 @@ export function useCompanionPlannerBridge({
     initialPortfolio,
     currentAge,
     effectiveAnnualIncome,
-    effectiveExpectedReturn,
+    profile,
+    deterministicAllocationInputs,
     inflation,
     expenseRatio,
     lifeExpectancy,
