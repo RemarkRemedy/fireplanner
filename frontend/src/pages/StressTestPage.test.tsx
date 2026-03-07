@@ -21,6 +21,7 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useUIStore } from '@/stores/useUIStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import type { MonteCarloResult } from '@/lib/types'
 import type { ActionImpactRunnerOutput } from '@/lib/companion/actionImpacts'
 import * as incomeProjectionHooks from '@/hooks/useIncomeProjection'
@@ -171,12 +172,74 @@ function createMockNormalizedContext(overrides?: Partial<ReturnType<typeof incom
 // ── Helpers ──────────────────────────────────────────────
 
 function resetAllStores() {
+  localStorage.removeItem('fireplanner-feature-householdPlannerV1')
   useProfileStore.getState().reset()
   useIncomeStore.getState().reset()
   useAllocationStore.getState().reset()
   useSimulationStore.getState().reset()
   usePropertyStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   useUIStore.setState({ mode: 'simple' })
+}
+
+function seedHouseholdPlan() {
+  const plan = structuredClone(useHouseholdPlanStore.getState().plan)
+  const self = structuredClone(plan.adults[0]!)
+  self.id = 'adult-self'
+  self.owner = 'self'
+  self.displayName = 'Taylor'
+  self.currentAge = 34
+  self.retirementAge = 60
+  self.lifeExpectancy = 90
+  self.annualIncome = 120_000
+  self.annualExpenses = 0
+  self.liquidNetWorth = 180_000
+  self.lifeEventsEnabled = false
+  self.lifeEvents = []
+
+  const partner = structuredClone(self)
+  partner.id = 'adult-partner'
+  partner.owner = 'partner'
+  partner.displayName = 'Jordan'
+  partner.currentAge = 33
+  partner.retirementAge = 58
+  partner.lifeExpectancy = 92
+  partner.annualIncome = 84_000
+  partner.liquidNetWorth = 95_000
+  partner.taxProfile = {
+    ...partner.taxProfile,
+    reliefBasisAge: 33,
+  }
+
+  plan.id = 'stress-household-plan'
+  plan.planType = 'couple'
+  plan.adults = [self, partner]
+  plan.dependents = [
+    {
+      id: 'dependent-maya',
+      owner: 'shared',
+      label: 'Maya',
+      relationship: 'child',
+      currentAge: 8,
+      timing: {
+        kind: 'age-range',
+        owner: 'self',
+        startAge: 34,
+        endAge: 52,
+      },
+      annualCost: 9_000,
+    },
+  ]
+  plan.income = []
+  plan.expenses = []
+  plan.assets = []
+  plan.goals = []
+  plan.properties = []
+
+  useHouseholdPlanStore.getState().setPlan(plan, {
+    source: 'manual',
+    initializedAt: '2026-03-07T00:00:00.000Z',
+  })
 }
 
 function renderPage() {
@@ -225,12 +288,37 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.restoreAllMocks()
 })
 
 // ── Tests ────────────────────────────────────────────────
 
 describe('StressTestPage companion orchestration', () => {
+  it('shows household presentation and household-level companion copy for couple plans', async () => {
+    localStorage.setItem('fireplanner-feature-householdPlannerV1', '1')
+    seedHouseholdPlan()
+
+    mockRunMC.mockResolvedValue(SAMPLE_MC_RESULT)
+    mockRunActionImpacts.mockResolvedValue(makeActionImpactOutput())
+
+    const user = userEvent.setup()
+    renderPage()
+
+    expect(screen.getByText('Who this analysis covers')).toBeInTheDocument()
+    expect(screen.getByText('Timeline highlights')).toBeInTheDocument()
+    expect(screen.getByText('Why this result looks the way it does')).toBeInTheDocument()
+
+    await waitForRunButton()
+    await user.click(getRunButton())
+
+    await waitFor(() => {
+      expect(screen.getByText(/This top-line answer stays household-level/)).toBeInTheDocument()
+    })
+
+    expect(screen.getByText(/Couple results:/)).toBeInTheDocument()
+  })
+
   it('uses normalized retirement context when building companion action impact overrides', async () => {
     const normalizedSpy = vi
       .spyOn(incomeProjectionHooks, 'useNormalizedLegacyAnalysisContext')
@@ -315,7 +403,15 @@ describe('StressTestPage companion orchestration', () => {
 
     await user.click(getRunButton())
 
-    // Wait for MC to complete and action impact to start
+    await waitFor(() => {
+      expect(mockRunMC).toHaveBeenCalled()
+    })
+
+    await act(async () => {
+      vi.advanceTimersByTime(0)
+      await Promise.resolve()
+    })
+
     await waitFor(() => {
       expect(mockRunActionImpacts).toHaveBeenCalled()
     })
@@ -323,6 +419,7 @@ describe('StressTestPage companion orchestration', () => {
     // Advance past the 15-second timeout
     await act(async () => {
       vi.advanceTimersByTime(16_000)
+      await Promise.resolve()
     })
 
     await waitFor(() => {
@@ -361,11 +458,21 @@ describe('StressTestPage companion orchestration', () => {
     await user.click(getRunButton())
 
     await waitFor(() => {
+      expect(mockRunMC).toHaveBeenCalled()
+    })
+
+    await act(async () => {
+      vi.advanceTimersByTime(0)
+      await Promise.resolve()
+    })
+
+    await waitFor(() => {
       expect(mockRunActionImpacts).toHaveBeenCalled()
     })
 
     await act(async () => {
       vi.advanceTimersByTime(16_000)
+      await Promise.resolve()
     })
 
     await waitFor(() => {
