@@ -6,6 +6,8 @@ import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useUIStore } from '@/stores/useUIStore'
+import { resolveDeterministicExpectedReturn } from '@/lib/analysis/deterministicAssumptions'
+import { buildPlannerResultsPayload } from '@/lib/companion/resultsPayload'
 import { useCompanionPlannerBridge } from './useCompanionPlannerBridge'
 
 vi.mock('@/lib/companion/companionClient', () => ({
@@ -232,6 +234,106 @@ describe('useCompanionPlannerBridge', () => {
 
     expect(mockPostPlannerResults).not.toHaveBeenCalled()
     expect(result.current.saveStatus).toBe('idle')
+  })
+
+  it('uses the active scenario retirement age for glide-path required_savings_rate', async () => {
+    enableCompanionMode('glide001')
+    mockFetchPlannerSnapshot.mockResolvedValue({ schemaVersion: 1 })
+    mockPostPlannerResults.mockResolvedValue()
+
+    useProfileStore.getState().setField('currentAge', 45)
+    useProfileStore.getState().setField('retirementAge', 65)
+    useProfileStore.getState().setField('lifeExpectancy', 90)
+    useProfileStore.getState().setField('annualIncome', 120_000)
+    useProfileStore.getState().setField('annualExpenses', 48_000)
+    useProfileStore.getState().setField('liquidNetWorth', 200_000)
+    useProfileStore.getState().setField('inflation', 0.02)
+    useProfileStore.getState().setField('expenseRatio', 0.001)
+    useProfileStore.getState().setField('usePortfolioReturn', true)
+    useIncomeStore.getState().setField('annualSalary', 120_000)
+
+    useAllocationStore.getState().setCurrentWeights([1, 0, 0, 0, 0, 0, 0, 0])
+    useAllocationStore.getState().setTargetWeights([0, 0, 0, 1, 0, 0, 0, 0])
+    useAllocationStore.getState().setReturnOverride(0, 0.1)
+    useAllocationStore.getState().setReturnOverride(3, 0.02)
+    useAllocationStore.getState().setGlidePathConfig({
+      enabled: true,
+      method: 'linear',
+      startAge: 55,
+      endAge: 65,
+    })
+
+    const { result, rerender } = renderHook(
+      ({ mc, stale }) => useCompanionPlannerBridge({ result: mc, isResultStale: stale }),
+      { initialProps: { mc: undefined as MonteCarloResult | undefined, stale: false } }
+    )
+
+    await waitFor(() => {
+      expect(result.current.bootstrapStatus).toBe('loaded')
+    })
+
+    act(() => {
+      result.current.selectScenario('retire-5-earlier')
+    })
+
+    await waitFor(() => {
+      expect(result.current.activeScenarioId).toBe('retire-5-earlier')
+      expect(result.current.activeScenarioRetirementAge).toBe(60)
+    })
+
+    act(() => {
+      result.current.prepareSimulationRun()
+    })
+    rerender({ mc: SAMPLE_RESULT, stale: false })
+
+    await waitFor(() => {
+      expect(mockPostPlannerResults).toHaveBeenCalledTimes(1)
+    })
+
+    const payload = mockPostPlannerResults.mock.calls[0]?.[2]
+    const profile = useProfileStore.getState()
+    const allocation = useAllocationStore.getState()
+    const simulation = useSimulationStore.getState()
+    const scenarioRetirementAge = result.current.activeScenarioRetirementAge ?? profile.retirementAge
+    const scenarioAnnualExpenses = result.current.activeScenarioAnnualExpenses ?? profile.annualExpenses
+    const initialPortfolio = profile.liquidNetWorth + profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
+
+    const scenarioExpectedReturn = resolveDeterministicExpectedReturn(profile, allocation, {
+      retirementAge: scenarioRetirementAge,
+    })
+    const baseExpectedReturn = resolveDeterministicExpectedReturn(profile, allocation)
+
+    expect(scenarioExpectedReturn).not.toBe(baseExpectedReturn)
+
+    const buildPayloadInput = {
+      result: SAMPLE_RESULT,
+      initialPortfolio,
+      currentAge: profile.currentAge,
+      annualIncome: profile.annualIncome,
+      annualExpenses: scenarioAnnualExpenses,
+      inflation: profile.inflation,
+      expenseRatio: profile.expenseRatio,
+      lifeExpectancy: profile.lifeExpectancy,
+      retirementAge: scenarioRetirementAge,
+      allocationWeights: allocation.currentWeights,
+      selectedStrategy: simulation.selectedStrategy,
+      strategyParams: simulation.strategyParams,
+      mcMethod: simulation.mcMethod,
+      scenarioId: 'retire-5-earlier',
+      scenarioName: 'Retire 5 years earlier',
+    }
+
+    const scenarioPayload = buildPlannerResultsPayload({
+      ...buildPayloadInput,
+      expectedReturn: scenarioExpectedReturn,
+    })
+    const basePayload = buildPlannerResultsPayload({
+      ...buildPayloadInput,
+      expectedReturn: baseExpectedReturn,
+    })
+
+    expect(payload?.required_savings_rate).toBe(scenarioPayload.required_savings_rate)
+    expect(payload?.required_savings_rate).not.toBe(basePayload.required_savings_rate)
   })
 
   it('blocks manual save when active scenario needs rerun', async () => {
