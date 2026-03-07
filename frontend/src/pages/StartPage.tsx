@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,10 @@ import type { RetirementPhase } from '@/lib/types'
 import { trackEvent } from '@/lib/analytics'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { LandingEmailSection } from '@/components/email/LandingEmailSection'
+import type { HouseholdPlanType } from '@/lib/household/types'
+import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
+import { PlanTypeSelector } from '@/components/household/PlanTypeSelector'
+import { HouseholdSetupWizard } from '@/components/household/HouseholdSetupWizard'
 
 type ActivePathway = 'goal-first' | 'story-first' | 'already-fire' | null
 
@@ -48,6 +52,7 @@ const PHASE_CARDS: { phase: RetirementPhase; label: string; description: string;
 
 export function StartPage() {
   usePageMeta({ title: 'SG FIRE Planner — Singapore Retirement Calculator', description: 'Free Singapore FIRE calculator with CPF, tax, Monte Carlo simulation, and 12 withdrawal strategies for retirement planning.', path: '/' })
+  const householdPlannerEnabled = isHouseholdPlannerV1Enabled()
   const profileStore = useProfileStore()
   const incomeStore = useIncomeStore()
   const setUIField = useUIStore((s) => s.setField)
@@ -56,6 +61,7 @@ export function StartPage() {
   const healthcareEnabled = useUIStore((s) => s.healthcareEnabled)
   const navigate = useNavigate()
   const [activePathway, setActivePathway] = useState<ActivePathway>(null)
+  const [selectedPlanType, setSelectedPlanType] = useState<HouseholdPlanType>('individual')
 
   // Check if returning user (has saved profile in localStorage)
   const [isReturningUser] = useState(() => {
@@ -68,6 +74,19 @@ export function StartPage() {
   const [draftIncome, setDraftIncome] = useState(profileStore.annualIncome)
   const [draftNetWorth, setDraftNetWorth] = useState(profileStore.liquidNetWorth)
   const [draftExpenses, setDraftExpenses] = useState(profileStore.annualExpenses)
+  const activePlanType: HouseholdPlanType = householdPlannerEnabled ? selectedPlanType : 'individual'
+
+  useEffect(() => {
+    if (!householdPlannerEnabled && selectedPlanType !== 'individual') {
+      setSelectedPlanType('individual')
+    }
+  }, [householdPlannerEnabled, selectedPlanType])
+
+  useEffect(() => {
+    if (activePlanType !== 'individual') {
+      setActivePathway(null)
+    }
+  }, [activePlanType])
 
   // Compute preliminary FIRE metrics from draft values
   const DEFAULT_SWR = 0.036
@@ -269,42 +288,52 @@ export function StartPage() {
         </div>
       )}
 
-      {/* Pathway cards */}
-      <div className="grid grid-cols-1 @2xl:grid-cols-3 gap-4">
-        {pathwayCards.map(({ key, label, description, icon: Icon }, index) => (
-          <button
-            key={key}
-            onClick={() => handlePathwayClick(key as ActivePathway)}
-            className="text-left h-full opacity-0 animate-fade-in-up"
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
-            <Card className={`h-full transition-all duration-200 cursor-pointer ${
-              activePathway === key
-                ? 'bg-primary/5 ring-2 ring-primary/20 border-primary shadow-md'
-                : activePathway !== null
-                  ? 'opacity-75 hover:opacity-100 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5'
-                  : 'hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5'
-            }`}>
-              <CardContent className="py-6 md:py-6">
-                <div className="flex items-start gap-4">
-                  <div className="rounded-lg bg-primary/10 p-3">
-                    <Icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-lg">{label}</div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {description}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </button>
-        ))}
-      </div>
+      {householdPlannerEnabled && (
+        <PlanTypeSelector value={activePlanType} onChange={setSelectedPlanType} />
+      )}
+
+      {activePlanType === 'individual' ? (
+        <>
+          {/* Pathway cards */}
+          <div className="grid grid-cols-1 @2xl:grid-cols-3 gap-4">
+            {pathwayCards.map(({ key, label, description, icon: Icon }, index) => (
+              <button
+                key={key}
+                onClick={() => handlePathwayClick(key as ActivePathway)}
+                className="text-left h-full opacity-0 animate-fade-in-up"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <Card className={`h-full transition-all duration-200 cursor-pointer ${
+                  activePathway === key
+                    ? 'bg-primary/5 ring-2 ring-primary/20 border-primary shadow-md'
+                    : activePathway !== null
+                      ? 'opacity-75 hover:opacity-100 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5'
+                      : 'hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5'
+                }`}>
+                  <CardContent className="py-6 md:py-6">
+                    <div className="flex items-start gap-4">
+                      <div className="rounded-lg bg-primary/10 p-3">
+                        <Icon className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-lg">{label}</div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {description}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </button>
+            ))}
+          </div>
+        </>
+      ) : (
+        <HouseholdSetupWizard planType={activePlanType} />
+      )}
 
       {/* Goal-first inline form */}
-      {activePathway === 'goal-first' && (
+      {activePlanType === 'individual' && activePathway === 'goal-first' && (
         <Card className="bg-muted/30">
           <CardHeader>
             <CardTitle className="text-lg">{PATHWAY_TITLES['goal-first']}</CardTitle>
@@ -372,7 +401,7 @@ export function StartPage() {
       )}
 
       {/* Story-first inline form */}
-      {activePathway === 'story-first' && (
+      {activePlanType === 'individual' && activePathway === 'story-first' && (
         <Card className="bg-muted/30">
           <CardHeader>
             <CardTitle className="text-lg">{PATHWAY_TITLES['story-first']}</CardTitle>
@@ -426,7 +455,7 @@ export function StartPage() {
       )}
 
       {/* Already FIRE: age + net worth, then phase cards */}
-      {activePathway === 'already-fire' && (
+      {activePlanType === 'individual' && activePathway === 'already-fire' && (
         <div className="space-y-4">
           <Card className="bg-muted/30">
             <CardHeader>
