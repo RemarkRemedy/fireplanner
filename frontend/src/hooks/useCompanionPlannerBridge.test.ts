@@ -304,7 +304,14 @@ describe('useCompanionPlannerBridge', () => {
     const baseExpectedReturn = resolveDeterministicExpectedReturn(profile, allocation)
 
     expect(scenarioExpectedReturn).not.toBe(baseExpectedReturn)
+    // Linear glide 55→65 at age 60: progress=0.5, weights=[0.5,0,0,0.5,…]
+    // Expected return = 0.5*0.10 + 0.5*0.02 = 0.06
+    expect(scenarioExpectedReturn).toBeCloseTo(0.06)
+    // Base at age 65 >= endAge: all target weights (bonds), return = 0.02
+    expect(baseExpectedReturn).toBeCloseTo(0.02)
 
+    // Note: hook uses effectiveAnnualIncome from generateIncomeProjection,
+    // which equals annualIncome here (simple salary model, no career phases)
     const buildPayloadInput = {
       result: SAMPLE_RESULT,
       initialPortfolio,

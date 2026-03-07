@@ -6,6 +6,7 @@ type DeterministicAllocationInputs = Pick<
   AllocationState,
   'currentWeights' | 'targetWeights' | 'glidePathConfig' | 'returnOverrides' | 'validationErrors'
 >
+type DeterministicOptions = { retirementAge?: number }
 
 export function getRetirementAgeWeights(
   glidePathEnabled: boolean,
@@ -30,13 +31,16 @@ export function getRetirementAgeWeights(
 export function resolveDeterministicExpectedReturn(
   profile: DeterministicProfileInputs,
   allocation: DeterministicAllocationInputs,
-  options?: { retirementAge?: number },
+  options?: DeterministicOptions,
 ): number {
   if (!profile.usePortfolioReturn || Object.keys(allocation.validationErrors).length > 0) {
     return profile.expectedReturn
   }
 
-  const retirementAge = options?.retirementAge ?? profile.retirementAge
+  const overrideAge = options?.retirementAge
+  const retirementAge = (overrideAge != null && Number.isFinite(overrideAge))
+    ? overrideAge
+    : profile.retirementAge
 
   const retirementWeights = getRetirementAgeWeights(
     allocation.glidePathConfig.enabled,
