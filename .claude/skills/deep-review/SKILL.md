@@ -50,7 +50,7 @@ If invoked and there are no `.ts`/`.tsx` changes, say "No code changes to review
    and improvements. Prompt: "Review these files for bugs, logic errors, type safety
    issues, and convention violations: [file list]. Read each file and report findings."
 
-   **Agent 5 — Gemini** (use `mcp__gemini-cli__ask-gemini` tool):
+   **Agent 5 — Gemini** (use `mcp__gemini-cli__ask-gemini` tool, model: `gemini-3-flash-preview`):
    Send the list of changed files using @ syntax for file inclusion. Prompt:
    "Review these changed files for bugs, logic errors, missed edge cases, and
    potential regressions. Focus on issues the other reviewers might miss —

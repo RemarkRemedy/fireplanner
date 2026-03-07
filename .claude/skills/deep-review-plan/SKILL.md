@@ -54,7 +54,7 @@ If invoked and there is no plan to review, ask the user which plan file to revie
    about existing code, scope creep, and any steps that contradict each other.
    The plan: [plan content]"
 
-   **Agent 4 — Gemini** (use `mcp__gemini-cli__ask-gemini` tool):
+   **Agent 4 — Gemini** (use `mcp__gemini-cli__ask-gemini` tool, model: `gemini-3-flash-preview`):
    Send the plan content to Gemini for an independent review. Prompt:
    "Review this implementation plan for a TypeScript/React retirement planner app.
    Look for: logical flaws, missing steps, contradictions between steps, unrealistic
