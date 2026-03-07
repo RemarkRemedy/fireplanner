@@ -67,6 +67,7 @@ import { useExpenseTracker } from '@/hooks/useExpenseTracker'
 import { ActiveLifeEventsBar } from '@/components/stressTest/ActiveLifeEventsBar'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useCompanionPlannerBridge } from '@/hooks/useCompanionPlannerBridge'
+import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { CompanionScenarioSwitcher } from '@/components/companion/CompanionScenarioSwitcher'
 import { CompanionResultsSummary } from '@/components/companion/CompanionResultsSummary'
 import { CompanionStressComparison } from '@/components/companion/CompanionStressComparison'
@@ -81,7 +82,11 @@ function TabIntro({ children }: { children: React.ReactNode }) {
 }
 
 interface MonteCarloTabProps {
+  currentAge: number
+  inflation: number
   isAdvanced: boolean
+  retirementAge: number
+  selectedStrategy: string
   stressScenarioComparisonRows: StressScenarioComparisonRow[]
   stressScenarioComparisonPending: boolean
   stressScenarioComparisonError: string | null
@@ -96,7 +101,11 @@ interface MonteCarloTabProps {
 }
 
 function MonteCarloTab({
+  currentAge,
+  inflation,
   isAdvanced,
+  retirementAge,
+  selectedStrategy,
   stressScenarioComparisonRows,
   stressScenarioComparisonPending,
   stressScenarioComparisonError,
@@ -109,8 +118,6 @@ function MonteCarloTab({
   isStale,
   progress,
 }: MonteCarloTabProps) {
-  const retirementAge = useProfileStore((s) => s.retirementAge)
-  const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
   const progressPercent = Math.round((progress?.progress ?? 0.1) * 100)
 
   const mcInterpretation = data ? (() => {
@@ -195,7 +202,12 @@ function MonteCarloTab({
             <WithdrawalDistributionChart bands={data.withdrawal_bands} />
           )}
           {isAdvanced && data.withdrawal_bands && (
-            <WithdrawalSchedule bands={data.withdrawal_bands} strategy={selectedStrategy} />
+            <WithdrawalSchedule
+              bands={data.withdrawal_bands}
+              currentAge={currentAge}
+              inflation={inflation}
+              strategy={selectedStrategy}
+            />
           )}
           <StressScenarioComparisonTable
             rows={stressScenarioComparisonRows}
@@ -208,12 +220,20 @@ function MonteCarloTab({
   )
 }
 
-function WithdrawalSchedule({ bands, strategy }: { bands: PercentileBands; strategy: string }) {
+function WithdrawalSchedule({
+  bands,
+  currentAge,
+  inflation,
+  strategy,
+}: {
+  bands: PercentileBands
+  currentAge: number
+  inflation: number
+  strategy: string
+}) {
   const [expanded, setExpanded] = useState(true)
   const [showAll, setShowAll] = useState(false)
   const [realDollars, setRealDollars] = useState(false)
-  const currentAge = useProfileStore((s) => s.currentAge)
-  const inflation = useProfileStore((s) => s.inflation)
   const isConstantDollar = strategy === 'constant_dollar'
 
   const rows = useMemo(() => {
@@ -590,6 +610,7 @@ export function StressTestPage() {
   const stressNudge = useSectionNudge('section-stress-test')
   const setSectionMode = useUIStore((s) => s.setSectionMode)
   const isStressAdvanced = stressMode === 'advanced'
+  const normalized = useNormalizedLegacyAnalysisContext()
   const analysisPortfolio = useAnalysisPortfolio()
   const mc = useMonteCarloQuery()
   const { isEligible } = useExpenseTracker()
@@ -601,7 +622,8 @@ export function StressTestPage() {
   const isCompanionResultStale = mc.isStale
     || companion.activeScenarioNeedsRerun
     || isCompanionScenarioContextStale
-  const currentRetirementAge = useProfileStore((s) => s.retirementAge)
+  const currentRetirementAge = normalized.retirementAge
+  const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
   const setSimField = useSimulationStore((s) => s.setField)
   const lifeEventCount = useIncomeStore((s) => s.lifeEvents.length)
   const [selectedStressScenarioIds, setSelectedStressScenarioIds] = useState<StressScenarioId[]>(['base'])
@@ -711,7 +733,7 @@ export function StressTestPage() {
     try {
       const profile = useProfileStore.getState()
       const annualIncome = profile.annualIncome ?? 0
-      const isRetiree = profile.currentAge >= (overrides?.retirementAge ?? profile.retirementAge)
+      const isRetiree = normalized.currentAge >= (overrides?.retirementAge ?? normalized.retirementAge)
 
       const output = await runActionImpactAnalysis({
         profile,
@@ -765,7 +787,12 @@ export function StressTestPage() {
         setActionImpactsProgress(null)
       }
     }
-  }, [analysisPortfolio.initialPortfolio, analysisPortfolio.allocationWeights])
+  }, [
+    analysisPortfolio.initialPortfolio,
+    analysisPortfolio.allocationWeights,
+    normalized.currentAge,
+    normalized.retirementAge,
+  ])
 
   const lastRunOverridesRef = useRef<{ annualExpenses?: number; retirementAge?: number } | undefined>(undefined)
 
@@ -773,7 +800,7 @@ export function StressTestPage() {
     const overrides = companion.isCompanionMode
       ? companion.prepareSimulationRun()
       : undefined
-    const baseRetirementAge = overrides?.retirementAge ?? useProfileStore.getState().retirementAge
+    const baseRetirementAge = overrides?.retirementAge ?? normalized.retirementAge
     lastBaseRetirementAgeRef.current = baseRetirementAge
     lastRunOverridesRef.current = overrides
 
@@ -801,7 +828,7 @@ export function StressTestPage() {
 
     mc.mutate(overrides)
     void runSelectedStressScenarios(selectedStressScenarioIds, overrides)
-  }, [companion, mc, runSelectedStressScenarios, selectedStressScenarioIds])
+  }, [companion, mc, normalized.retirementAge, runSelectedStressScenarios, selectedStressScenarioIds])
 
   useEffect(() => {
     if (!mc.data || !selectedStressScenarioIds.includes('base')) return
@@ -809,10 +836,10 @@ export function StressTestPage() {
       'base',
       mc.data,
       lastBaseRetirementAgeRef.current,
-      useProfileStore.getState().currentAge
+      normalized.currentAge
     )
     setStressScenarioResults((prev) => ({ ...prev, base: row }))
-  }, [mc.data, selectedStressScenarioIds])
+  }, [mc.data, normalized.currentAge, selectedStressScenarioIds])
 
   // Trigger action impact analysis after base MC completes in companion mode
   useEffect(() => {
@@ -958,7 +985,11 @@ export function StressTestPage() {
 
         <TabsContent value="monte-carlo">
           <MonteCarloTab
+            currentAge={normalized.currentAge}
+            inflation={normalized.compiledPlan.assumptions.returns.inflation}
             isAdvanced={isStressAdvanced}
+            retirementAge={normalized.retirementAge}
+            selectedStrategy={selectedStrategy}
             stressScenarioComparisonRows={stressScenarioComparisonRows}
             stressScenarioComparisonPending={isStressScenarioComparisonPending}
             stressScenarioComparisonError={stressScenarioComparisonError}

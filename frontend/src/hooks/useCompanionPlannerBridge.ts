@@ -7,7 +7,8 @@ import { useProfileStore } from '@/stores/useProfileStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { resolveDeterministicExpectedReturn } from '@/lib/analysis/deterministicAssumptions'
-import { buildProjectionParams } from '@/hooks/useIncomeProjection'
+import { buildProjectionParams, useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
+import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
 import {
   createCompanionScenarios,
   resolveScenarioInputs,
@@ -112,6 +113,8 @@ export function useCompanionPlannerBridge({
   const token = useMemo(() => companionMode ? getCompanionToken() : null, [companionMode])
   const baseUrl = useMemo(() => companionMode ? getCompanionBaseUrl() : '', [companionMode])
 
+  const normalized = useNormalizedLegacyAnalysisContext()
+  const analysisPortfolio = useAnalysisPortfolio()
   const allocationWeights = useAllocationStore((s) => s.currentWeights)
   const allocationTargetWeights = useAllocationStore((s) => s.targetWeights)
   const allocationReturnOverrides = useAllocationStore((s) => s.returnOverrides)
@@ -123,16 +126,16 @@ export function useCompanionPlannerBridge({
   const strategyParams = useSimulationStore((s) => s.strategyParams)
   const mcMethod = useSimulationStore((s) => s.mcMethod)
   const profile = useProfileStore()
-  const currentAge = profile.currentAge
   const annualIncome = profile.annualIncome
   const annualExpenses = profile.annualExpenses
   const inflation = profile.inflation
   const expenseRatio = profile.expenseRatio
-  const retirementAge = profile.retirementAge
+  const currentAge = normalized.currentAge
+  const retirementAge = normalized.retirementAge
   const profileExpectedReturn = useProfileStore((s) => s.expectedReturn)
   const usePortfolioReturn = useProfileStore((s) => s.usePortfolioReturn)
-  const lifeExpectancy = profile.lifeExpectancy
-  const initialPortfolio = profile.liquidNetWorth + profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
+  const lifeExpectancy = normalized.lifeExpectancy
+  const initialPortfolio = analysisPortfolio.initialPortfolio
 
   const deterministicAllocationInputs = useMemo(
     () => ({
