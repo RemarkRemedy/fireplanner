@@ -30,17 +30,20 @@ export function getRetirementAgeWeights(
 export function resolveDeterministicExpectedReturn(
   profile: DeterministicProfileInputs,
   allocation: DeterministicAllocationInputs,
+  options?: { retirementAge?: number },
 ): number {
   if (!profile.usePortfolioReturn || Object.keys(allocation.validationErrors).length > 0) {
     return profile.expectedReturn
   }
+
+  const retirementAge = options?.retirementAge ?? profile.retirementAge
 
   const retirementWeights = getRetirementAgeWeights(
     allocation.glidePathConfig.enabled,
     allocation.glidePathConfig,
     allocation.currentWeights,
     allocation.targetWeights,
-    profile.retirementAge,
+    retirementAge,
   )
 
   return calculatePortfolioReturn(retirementWeights, getEffectiveReturns(allocation.returnOverrides))
