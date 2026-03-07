@@ -8,6 +8,7 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import type { ScenarioMetadata } from '@/lib/scenarios'
 import { trackEvent } from '@/lib/analytics'
 
@@ -20,6 +21,7 @@ function rehydrateAllStores() {
     useSimulationStore,
     useWithdrawalStore,
     usePropertyStore,
+    useHouseholdPlanStore,
   ] as Array<{ persist: { rehydrate: () => void } }>
 
   for (const store of stores) {

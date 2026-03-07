@@ -11,6 +11,7 @@ if (isCompanionMode()) {
     'fireplanner-simulation',
     'fireplanner-withdrawal',
     'fireplanner-property',
+    'fireplanner-household-plan-v1',
     'fireplanner-ui',
   ]
   try {
