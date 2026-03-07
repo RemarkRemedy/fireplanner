@@ -5,6 +5,7 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
 import { resolveDeterministicExpectedReturn } from '@/lib/analysis/deterministicAssumptions'
 import { buildPlannerResultsPayload } from '@/lib/companion/resultsPayload'
@@ -94,6 +95,7 @@ beforeEach(() => {
   useIncomeStore.getState().reset()
   useAllocationStore.getState().reset()
   useSimulationStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   useUIStore.getState().setField('mode', 'simple')
 
   mockFetchPlannerSnapshot.mockReset()
@@ -129,6 +131,53 @@ describe('useCompanionPlannerBridge', () => {
     expect(useProfileStore.getState().annualExpenses).toBe(38_400)
     expect(useProfileStore.getState().liquidNetWorth).toBe(250_000)
     expect(useUIStore.getState().mode).toBe('advanced')
+  })
+
+  it('exposes imported household review metadata after bootstrap', async () => {
+    enableCompanionMode('import-review')
+    mockFetchPlannerSnapshot.mockResolvedValue({
+      schemaVersion: 1,
+      monthKey: '2026-03',
+      avgMonthlyIncome: 7_000,
+      avgMonthlyExpense: 4_500,
+      investableAssets: 220_000,
+      futureField: 'top-level-extra',
+      expenseImport: {
+        members: [
+          { role: 'self', name: 'Alex', currentAge: 41 },
+          { role: 'partner', name: 'Jamie', currentAge: 39 },
+          { role: 'dependent', name: 'Mia', age: 8, relationship: 'child', annualCost: 9_000 },
+        ],
+        unsupportedFields: ['debts.loan'],
+      },
+    })
+
+    const { result } = renderHook(() =>
+      useCompanionPlannerBridge({ result: undefined, isResultStale: false })
+    )
+
+    await waitFor(() => {
+      expect(result.current.bootstrapStatus).toBe('loaded')
+    })
+
+    expect(result.current.importedPlanReview?.detectedMembers.map((member) => member.label)).toEqual([
+      'Alex',
+      'Jamie',
+      'Mia',
+    ])
+    expect(result.current.importedPlanReview?.unsupportedFields).toEqual([
+      'debts.loan',
+      'snapshot.futureField',
+    ])
+    expect(result.current.importedPlanReview?.localEditabilityNote).toContain('local Fireplanner copies')
+    expect(useHouseholdPlanStore.getState().plan.planType).toBe('household')
+
+    const partnerId = useHouseholdPlanStore.getState().plan.adults.find((adult) => adult.owner === 'partner')?.id
+    expect(partnerId).toBeTruthy()
+    useHouseholdPlanStore.getState().updateAdult(partnerId!, { annualIncome: 42_000 })
+    expect(
+      useHouseholdPlanStore.getState().plan.adults.find((adult) => adult.owner === 'partner')?.annualIncome,
+    ).toBe(42_000)
   })
 
   it('posts companion results with required payload keys after simulation completes', async () => {
