@@ -129,6 +129,8 @@ export function useCompanionPlannerBridge({
   const inflation = profile.inflation
   const expenseRatio = profile.expenseRatio
   const retirementAge = profile.retirementAge
+  const profileExpectedReturn = useProfileStore((s) => s.expectedReturn)
+  const usePortfolioReturn = useProfileStore((s) => s.usePortfolioReturn)
   const lifeExpectancy = profile.lifeExpectancy
   const initialPortfolio = profile.liquidNetWorth + profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
 
@@ -447,7 +449,7 @@ export function useCompanionPlannerBridge({
     mcResult: MonteCarloResult,
   ): PlannerResultsPayload => {
     const expectedReturn = resolveDeterministicExpectedReturn(
-      profile,
+      { expectedReturn: profileExpectedReturn, retirementAge, usePortfolioReturn },
       deterministicAllocationInputs,
       { retirementAge: runContext.retirementAge },
     )
@@ -475,7 +477,9 @@ export function useCompanionPlannerBridge({
     initialPortfolio,
     currentAge,
     effectiveAnnualIncome,
-    profile,
+    profileExpectedReturn,
+    retirementAge,
+    usePortfolioReturn,
     deterministicAllocationInputs,
     inflation,
     expenseRatio,
