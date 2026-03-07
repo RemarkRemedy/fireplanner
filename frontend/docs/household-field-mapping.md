@@ -235,7 +235,7 @@ Snapshot date: `2026-03-07`
 - [useExplorePortfolio.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/hooks/useExplorePortfolio.ts)
 - [useFireCalculations.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/hooks/useFireCalculations.ts)
 - [useIncomeProjection.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/hooks/useIncomeProjection.ts)
-- [useMonteCarloWorkerQuery.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/hooks/useMonteCarloWorkerQuery.ts)
+- [useMonteCarloWorkerQuery.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/hooks/useMonteCarloWorkerQuery.ts) — PR 4B owner; replace serialized stale detection with normalized revision signatures from `useNormalizedAnalysisStore`
 - [useOneMoreYear.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/hooks/useOneMoreYear.ts)
 - [usePortfolioStats.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/hooks/usePortfolioStats.ts)
 - [useProjection.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/hooks/useProjection.ts)
