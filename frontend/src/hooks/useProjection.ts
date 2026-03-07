@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import type { ProjectionRow, ProjectionSummary } from '@/lib/types'
 import { generateProjection, type ProjectionParams } from '@/lib/calculations/projection'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
@@ -32,6 +33,7 @@ export function useProjection(): ProjectionResult {
   const allocation = useAllocationStore()
   const simulation = useSimulationStore()
   const property = usePropertyStore()
+  const normalized = useNormalizedLegacyAnalysisContext()
   const { projection: incomeProjection, hasErrors: incomeHasErrors, errors: incomeErrors } = useIncomeProjection()
   const { metrics: fireMetrics, hasErrors: fireHasErrors, errors: fireErrors } = useFireCalculations()
 
@@ -72,9 +74,9 @@ export function useProjection(): ProjectionResult {
 
     const projectionParams: ProjectionParams = {
       incomeProjection,
-      currentAge: profile.currentAge,
-      retirementAge: profile.retirementAge,
-      lifeExpectancy: profile.lifeExpectancy,
+      currentAge: normalized.currentAge,
+      retirementAge: normalized.retirementAge,
+      lifeExpectancy: normalized.lifeExpectancy,
       initialLiquidNW: profile.liquidNetWorth + (lbsResult?.cashProceeds ?? 0),
       swr: profile.swr,
       expectedReturn: effectiveReturn,
@@ -139,9 +141,6 @@ export function useProjection(): ProjectionResult {
     fireMetrics,
     fireHasErrors,
     fireErrors,
-    profile.currentAge,
-    profile.retirementAge,
-    profile.lifeExpectancy,
     profile.liquidNetWorth,
     profile.swr,
     profile.expectedReturn,
@@ -191,5 +190,8 @@ export function useProjection(): ProjectionResult {
     profile.cpfVirtualRebalancingMode,
     income.lifeEvents,
     income.lifeEventsEnabled,
+    normalized.currentAge,
+    normalized.lifeExpectancy,
+    normalized.retirementAge,
   ])
 }

@@ -4,6 +4,7 @@ import { calculateAllFireMetrics } from '@/lib/calculations/fire'
 import { computeCashReserveOffset } from '@/lib/calculations/cashReserve'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { generateIncomeProjection } from '@/lib/calculations/income'
+import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
@@ -27,6 +28,7 @@ export function useFireCalculations(): FireCalculationsResult {
   const income = useIncomeStore()
   const allocation = useAllocationStore()
   const property = usePropertyStore()
+  const normalized = useNormalizedLegacyAnalysisContext()
 
   return useMemo(() => {
     const profileErrors = profile.validationErrors
@@ -40,7 +42,12 @@ export function useFireCalculations(): FireCalculationsResult {
 
     // Try to get effective income from income projection
     let effectiveIncome = profile.annualIncome
-    const projectionParams = buildProjectionParams(profile, income, property)
+    const projectionParams = buildProjectionParams({
+      ...profile,
+      currentAge: normalized.currentAge,
+      retirementAge: normalized.retirementAge,
+      lifeExpectancy: normalized.lifeExpectancy,
+    }, income, property)
     if (projectionParams) {
       const projection = generateIncomeProjection(projectionParams)
       if (projection.length > 0) {
@@ -73,8 +80,8 @@ export function useFireCalculations(): FireCalculationsResult {
     )
 
     const metrics = calculateAllFireMetrics({
-      currentAge: profile.currentAge,
-      retirementAge: profile.retirementAge,
+      currentAge: normalized.currentAge,
+      retirementAge: normalized.retirementAge,
       annualIncome: effectiveIncome,
       annualExpenses: profile.annualExpenses,
       liquidNetWorth: profile.liquidNetWorth,
@@ -86,7 +93,7 @@ export function useFireCalculations(): FireCalculationsResult {
       fireType: profile.fireType,
       fireNumberBasis: profile.fireNumberBasis,
       cpfLifeStartAge: profile.cpfLifeStartAge,
-      lifeExpectancy: profile.lifeExpectancy,
+      lifeExpectancy: normalized.lifeExpectancy,
       retirementSpendingAdjustment: profile.retirementSpendingAdjustment,
       propertyEquity,
       parentSupport: profile.parentSupport,
@@ -99,5 +106,5 @@ export function useFireCalculations(): FireCalculationsResult {
 
     return { metrics, hasErrors: false, errors: {} }
     // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/preserve-manual-memoization -- Uses buildProjectionParams which reads many store fields; whole refs avoid stale omissions
-  }, [profile, income, allocation, property])
+  }, [allocation, income, normalized.currentAge, normalized.lifeExpectancy, normalized.retirementAge, profile, property])
 }
