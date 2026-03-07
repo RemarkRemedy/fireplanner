@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { generateHealthcareProjection } from '@/lib/calculations/healthcare'
@@ -19,9 +20,11 @@ interface RiskDimension {
 export function useRiskAssessment(): RiskDimension[] {
   const profile = useProfileStore()
   const allocation = useAllocationStore()
+  const normalized = useNormalizedLegacyAnalysisContext()
+  const healthcareSlot = normalized.entry.selectors.healthcare?.healthcareByAdultId[normalized.referenceAdultId]
 
   return useMemo(() => {
-    const retirementDuration = profile.lifeExpectancy - profile.retirementAge
+    const retirementDuration = normalized.lifeExpectancy - normalized.retirementAge
     const equityWeight = allocation.currentWeights[0] + allocation.currentWeights[1] + allocation.currentWeights[2]
 
     const dimensions: RiskDimension[] = [
@@ -63,14 +66,28 @@ export function useRiskAssessment(): RiskDimension[] {
       },
       (() => {
         // Use healthcare modeling if enabled, otherwise fall back to naive MA balance check
+        if (healthcareSlot) {
+          const avgAnnualCash = healthcareSlot.averageRetirementCashOutlay
+          return {
+            id: 'healthcare',
+            label: 'Healthcare Risk',
+            level: (avgAnnualCash > 10000 ? 'high' : avgAnnualCash > 5000 ? 'medium' : 'low') as RiskLevel,
+            description: `Estimated ${avgAnnualCash > 0 ? `$${Math.round(avgAnnualCash).toLocaleString()}/yr` : 'minimal'} cash outlay for healthcare in retirement.`,
+            recommendation: avgAnnualCash > 10000
+              ? 'Consider topping up MediSave or upgrading your ISP to reduce out-of-pocket costs.'
+              : avgAnnualCash > 5000
+                ? 'Your healthcare costs are moderate. Review ISP coverage periodically.'
+                : 'Your healthcare costs are well covered by MediSave.',
+          }
+        }
         if (profile.healthcareConfig?.enabled) {
           const projection = generateHealthcareProjection(
             profile.healthcareConfig,
-            profile.currentAge,
-            profile.lifeExpectancy,
+            normalized.currentAge,
+            normalized.lifeExpectancy,
           )
           const lifetimeCash = projection.lifetimeCashOutlay
-          const yearsInRetirement = profile.lifeExpectancy - profile.retirementAge
+          const yearsInRetirement = normalized.lifeExpectancy - normalized.retirementAge
           const avgAnnualCash = yearsInRetirement > 0 ? lifetimeCash / yearsInRetirement : 0
           return {
             id: 'healthcare',
@@ -107,9 +124,10 @@ export function useRiskAssessment(): RiskDimension[] {
 
     return dimensions
   }, [
-    profile.currentAge,
-    profile.retirementAge,
-    profile.lifeExpectancy,
+    healthcareSlot,
+    normalized.currentAge,
+    normalized.lifeExpectancy,
+    normalized.retirementAge,
     profile.inflation,
     profile.cpfMA,
     profile.healthcareConfig,

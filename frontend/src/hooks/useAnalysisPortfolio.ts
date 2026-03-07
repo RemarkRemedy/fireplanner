@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { projectPortfolioAtRetirement } from '@/lib/calculations/fire'
@@ -25,6 +26,7 @@ interface AnalysisPortfolioResult {
 export function useAnalysisPortfolio(): AnalysisPortfolioResult {
   const profile = useProfileStore()
   const allocation = useAllocationStore()
+  const normalized = useNormalizedLegacyAnalysisContext()
 
   return useMemo(() => {
     const currentWeights = allocation.currentWeights
@@ -33,21 +35,26 @@ export function useAnalysisPortfolio(): AnalysisPortfolioResult {
     // Compute deterministic projection for BT/SR
     const portfolioReturn = resolveDeterministicExpectedReturn(profile, allocation)
     const netRealReturn = portfolioReturn - profile.inflation - profile.expenseRatio
-    const currentExpenses = getEffectiveExpenses(profile.currentAge, profile.annualExpenses, profile.expenseAdjustments, profile.lifeExpectancy)
+    const currentExpenses = getEffectiveExpenses(
+      normalized.currentAge,
+      profile.annualExpenses,
+      profile.expenseAdjustments,
+      normalized.lifeExpectancy,
+    )
     const annualSavings = profile.annualIncome - currentExpenses
 
     const projected = projectPortfolioAtRetirement({
       currentNW: totalNW,
       annualSavings,
       netRealReturn,
-      yearsToRetirement: profile.retirementAge - profile.currentAge,
+      yearsToRetirement: normalized.householdRetirementYearOffset,
     })
 
     return {
       initialPortfolio: totalNW,
       retirementPortfolio: projected,
       allocationWeights: currentWeights,
-      portfolioLabel: `${formatCurrency(totalNW)} today → ~${formatCurrency(projected)} at age ${profile.retirementAge}`,
+      portfolioLabel: `${formatCurrency(totalNW)} today → ~${formatCurrency(projected)} at age ${normalized.retirementAge}`,
     }
   }, [
     profile.liquidNetWorth,
@@ -55,12 +62,9 @@ export function useAnalysisPortfolio(): AnalysisPortfolioResult {
     profile.cpfSA,
     profile.cpfMA,
     profile.cpfRA,
-    profile.currentAge,
-    profile.retirementAge,
     profile.annualIncome,
     profile.annualExpenses,
     profile.expenseAdjustments,
-    profile.lifeExpectancy,
     profile.expectedReturn,
     profile.usePortfolioReturn,
     profile.inflation,
@@ -70,5 +74,9 @@ export function useAnalysisPortfolio(): AnalysisPortfolioResult {
     allocation.glidePathConfig,
     allocation.returnOverrides,
     allocation.validationErrors,
+    normalized.currentAge,
+    normalized.householdRetirementYearOffset,
+    normalized.lifeExpectancy,
+    normalized.retirementAge,
   ])
 }
