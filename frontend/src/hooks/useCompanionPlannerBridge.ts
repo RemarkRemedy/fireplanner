@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MonteCarloResult } from '@/lib/types'
 import { useAllocationStore } from '@/stores/useAllocationStore'
+import { useIncomeStore } from '@/stores/useIncomeStore'
+import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
+import { generateIncomeProjection } from '@/lib/calculations/income'
+import { resolveDeterministicExpectedReturn } from '@/lib/analysis/deterministicAssumptions'
+import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 import {
   createCompanionScenarios,
   resolveScenarioInputs,
@@ -46,7 +51,7 @@ export interface CompanionScenarioComparison {
   projected_fire_age_p50: number | null
   portfolio_at_fire_p50: number | null
   wr_safe_95: number | null
-  wr_safe_90: number | null // populated for payload completeness; UI displays 95/50/85 only
+  wr_safe_90: number | null // summary shows 95/50/85; retiree guard uses 90%
   wr_safe_85: number | null
   needsRerun: boolean
 }
@@ -108,16 +113,50 @@ export function useCompanionPlannerBridge({
   const baseUrl = useMemo(() => companionMode ? getCompanionBaseUrl() : '', [companionMode])
 
   const allocationWeights = useAllocationStore((s) => s.currentWeights)
+  const allocationTargetWeights = useAllocationStore((s) => s.targetWeights)
+  const allocationReturnOverrides = useAllocationStore((s) => s.returnOverrides)
+  const allocationGlidePathConfig = useAllocationStore((s) => s.glidePathConfig)
+  const allocationValidationErrors = useAllocationStore((s) => s.validationErrors)
+  const income = useIncomeStore()
+  const property = usePropertyStore()
   const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
   const strategyParams = useSimulationStore((s) => s.strategyParams)
   const mcMethod = useSimulationStore((s) => s.mcMethod)
-  const currentAge = useProfileStore((s) => s.currentAge)
-  const annualExpenses = useProfileStore((s) => s.annualExpenses)
-  const retirementAge = useProfileStore((s) => s.retirementAge)
-  const lifeExpectancy = useProfileStore((s) => s.lifeExpectancy)
-  const initialPortfolio = useProfileStore(
-    (s) => s.liquidNetWorth + s.cpfOA + s.cpfSA + s.cpfMA + s.cpfRA,
+  const profile = useProfileStore()
+  const currentAge = profile.currentAge
+  const annualIncome = profile.annualIncome
+  const annualExpenses = profile.annualExpenses
+  const inflation = profile.inflation
+  const expenseRatio = profile.expenseRatio
+  const retirementAge = profile.retirementAge
+  const lifeExpectancy = profile.lifeExpectancy
+  const initialPortfolio = profile.liquidNetWorth + profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
+
+  const effectiveExpectedReturn = useMemo(
+    () => resolveDeterministicExpectedReturn(profile, {
+      currentWeights: allocationWeights,
+      targetWeights: allocationTargetWeights,
+      glidePathConfig: allocationGlidePathConfig,
+      returnOverrides: allocationReturnOverrides,
+      validationErrors: allocationValidationErrors,
+    }),
+    [
+      profile,
+      allocationWeights,
+      allocationTargetWeights,
+      allocationReturnOverrides,
+      allocationGlidePathConfig,
+      allocationValidationErrors,
+    ],
   )
+
+  const effectiveAnnualIncome = useMemo(() => {
+    const projectionParams = buildProjectionParams(profile, income, property)
+    if (!projectionParams) return annualIncome
+
+    const projection = generateIncomeProjection(projectionParams)
+    return projection[0]?.totalGross ?? annualIncome
+  }, [profile, income, property, annualIncome])
 
   const [bootstrapStatus, setBootstrapStatus] = useState<CompanionBootstrapStatus>(() =>
     companionMode && !!token ? 'loading' : 'idle',
@@ -412,7 +451,11 @@ export function useCompanionPlannerBridge({
       result: mcResult,
       initialPortfolio,
       currentAge,
+      annualIncome: effectiveAnnualIncome,
       annualExpenses: runContext.annualExpenses,
+      expectedReturn: effectiveExpectedReturn,
+      inflation,
+      expenseRatio,
       lifeExpectancy,
       retirementAge: runContext.retirementAge,
       allocationWeights,
@@ -426,6 +469,10 @@ export function useCompanionPlannerBridge({
   }, [
     initialPortfolio,
     currentAge,
+    effectiveAnnualIncome,
+    effectiveExpectedReturn,
+    inflation,
+    expenseRatio,
     lifeExpectancy,
     allocationWeights,
     selectedStrategy,
