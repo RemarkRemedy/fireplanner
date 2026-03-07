@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { applySnapshotToStores } from './companionBridge'
 import type { PlannerSnapshotResponse } from './types'
 
@@ -34,6 +35,7 @@ describe('applySnapshotToStores', () => {
     useProfileStore.setState(profileDefaults)
     const incomeDefaults = useIncomeStore.getInitialState()
     useIncomeStore.setState(incomeDefaults)
+    useHouseholdPlanStore.getState().reset()
   })
 
   it('maps full snapshot to stores', () => {
@@ -204,5 +206,42 @@ describe('applySnapshotToStores', () => {
     expect(profile.annualIncome).toBe(defaultIncome)
     expect(profile.currentAge).toBe(defaults.currentAge)
     expect(profile.inflation).toBe(defaults.inflation)
+  })
+
+  it('seeds an imported household plan that remains locally editable', () => {
+    const review = applySnapshotToStores(makeFullSnapshot({
+      monthKey: '2026-03',
+      futureField: 'keep-for-review',
+      expenseImport: {
+        members: [
+          { role: 'self', name: 'Alex', currentAge: 41 },
+          { role: 'partner', name: 'Jamie', currentAge: 39, annualIncome: 36_000, annualExpense: 12_000, investableAssets: 50_000 },
+          { role: 'dependent', name: 'Mia', age: 8, relationship: 'child', annualCost: 8_000 },
+        ],
+        unsupportedFields: ['debts.creditCard'],
+      },
+    }))
+
+    const household = useHouseholdPlanStore.getState()
+    const partner = household.plan.adults.find((adult) => adult.owner === 'partner')
+    const selfSalary = household.plan.income.find((income) => income.kind === 'salary-model' && income.owner === 'self')
+    const baseExpense = household.plan.expenses.find((expense) => expense.kind === 'base-living')
+
+    expect(household.provenance.source).toBe('json-import')
+    expect(household.plan.planType).toBe('household')
+    expect(household.plan.adults).toHaveLength(2)
+    expect(household.plan.dependents).toHaveLength(1)
+    expect(selfSalary?.annualAmount).toBe(36_000)
+    expect(baseExpense?.owner).toBe('shared')
+    expect(baseExpense?.amount).toBe(28_000)
+    expect(review.detectedMembers.map((member) => member.label)).toEqual(['Alex', 'Jamie', 'Mia'])
+    expect(review.unsupportedFields).toEqual(['debts.creditCard', 'snapshot.futureField'])
+    expect(review.localEditabilityNote).toContain('local Fireplanner copies')
+
+    expect(partner).toBeDefined()
+    useHouseholdPlanStore.getState().updateAdult(partner!.id, { retirementAge: 61 })
+    expect(
+      useHouseholdPlanStore.getState().plan.adults.find((adult) => adult.owner === 'partner')?.retirementAge,
+    ).toBe(61)
   })
 })
