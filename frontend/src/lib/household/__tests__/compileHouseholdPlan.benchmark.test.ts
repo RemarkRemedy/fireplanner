@@ -13,6 +13,7 @@ describe('compileHouseholdPlan launch-size benchmark', () => {
     expect(compiled.milestones.some((row) => row.kind === 'dependent-start')).toBe(true)
     expect(summary.sampleRuns).toBe(40)
     expect(summary.p95Ms).toBeGreaterThan(0)
+    expect(summary.p95Ms).toBeLessThan(20)
 
     console.info(
       `[benchmark] compileHouseholdPlan launch-size fixture p50=${summary.p50Ms.toFixed(2)}ms p95=${summary.p95Ms.toFixed(2)}ms mean=${summary.meanMs.toFixed(2)}ms samples=${summary.sampleRuns}`
