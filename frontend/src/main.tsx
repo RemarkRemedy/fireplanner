@@ -3,10 +3,17 @@ import './lib/companion/companionBootstrap' // Must be before App — clears loc
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import App from './App.tsx'
+import { bootstrapPortabilityStores } from './lib/storeRegistry'
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+async function start() {
+  bootstrapPortabilityStores()
+  const { default: App } = await import('./App.tsx')
+
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  )
+}
+
+void start()

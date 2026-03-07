@@ -28,7 +28,12 @@ import type {
 export const HOUSEHOLD_PLAN_STORAGE_KEY = 'fireplanner-household-plan-v1'
 export const HOUSEHOLD_PLAN_STORAGE_VERSION = 1
 
-export type HouseholdPlanProvenanceSource = 'manual' | 'legacy-individual'
+export type HouseholdPlanProvenanceSource =
+  | 'manual'
+  | 'legacy-individual'
+  | 'json-import'
+  | 'share-url'
+  | 'scenario'
 
 export interface HouseholdPlanProvenance {
   source: HouseholdPlanProvenanceSource
@@ -81,6 +86,12 @@ export interface HouseholdPlanStoreState extends HouseholdPlanRevisionState, Hou
   provenance: HouseholdPlanProvenance
   validationErrors: HouseholdValidationErrors
   hasValidationErrors: boolean
+}
+
+export interface HouseholdPlanPersistedState {
+  plan: HouseholdPlan
+  provenance: HouseholdPlanProvenance
+  householdPlanRevision: number
 }
 
 function nowIsoString(): string {
@@ -138,6 +149,22 @@ function buildValidatedState(
   }
 }
 
+function createPersistedState(
+  plan: HouseholdPlan,
+  provenance: HouseholdPlanProvenance,
+  householdPlanRevision: number,
+): HouseholdPlanPersistedState {
+  return {
+    plan: clonePlan(plan),
+    provenance: { ...provenance },
+    householdPlanRevision,
+  }
+}
+
+function isPersistedState(value: unknown): value is Partial<HouseholdPlanPersistedState> {
+  return typeof value === 'object' && value !== null
+}
+
 function replaceCollectionItem<T extends { id: string }>(
   items: T[],
   id: string,
@@ -155,6 +182,18 @@ function removeOwnerScopedEntries<T extends { owner: EntryOwner }>(
 
 const INITIAL_PROVENANCE = createProvenance('manual')
 const INITIAL_PLAN = createManualHouseholdPlan()
+
+export function createDefaultHouseholdPlanPersistedState(): HouseholdPlanPersistedState {
+  return createPersistedState(INITIAL_PLAN, INITIAL_PROVENANCE, 0)
+}
+
+export function createHouseholdPlanPersistedState(
+  plan: HouseholdPlan,
+  provenance: HouseholdPlanProvenance,
+  householdPlanRevision = 0,
+): HouseholdPlanPersistedState {
+  return createPersistedState(plan, provenance, householdPlanRevision)
+}
 
 export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
   persist(
@@ -377,6 +416,21 @@ export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
     {
       name: HOUSEHOLD_PLAN_STORAGE_KEY,
       version: HOUSEHOLD_PLAN_STORAGE_VERSION,
+      merge: (persistedState, currentState) => {
+        if (!isPersistedState(persistedState)) return currentState
+
+        const plan = persistedState.plan ?? currentState.plan
+        const provenance = persistedState.provenance ?? currentState.provenance
+        const hydratedRevision =
+          typeof persistedState.householdPlanRevision === 'number'
+            ? persistedState.householdPlanRevision + 1
+            : currentState.householdPlanRevision
+
+        return {
+          ...currentState,
+          ...buildValidatedState(clonePlan(plan), { ...provenance }, hydratedRevision),
+        }
+      },
       partialize: (state) => ({
         plan: state.plan,
         provenance: state.provenance,
