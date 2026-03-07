@@ -37,14 +37,14 @@ export const DEFAULT_CAREER_PHASES: CareerPhase[] = [
   { label: 'Pre-Retire', minAge: 58, maxAge: 65, growthRate: -0.02 },
 ]
 
-const INCOME_DATA_KEYS = [
+export const INCOME_DATA_KEYS = [
   'salaryModel', 'annualSalary', 'salaryGrowthRate', 'bonusMonths', 'employerCpfEnabled',
   'incomeStreams', 'lifeEvents', 'realisticPhases', 'promotionJumps',
   'momEducation', 'momAdjustment', 'lifeEventsEnabled', 'personalReliefs',
-  'reliefBreakdown',
+  'reliefBreakdown', 'reliefBasisAge',
 ] as const
 
-const DEFAULT_INCOME: Omit<IncomeState, 'validationErrors'> = {
+export const DEFAULT_INCOME: Omit<IncomeState, 'validationErrors'> = {
   salaryModel: 'simple',
   annualSalary: 72000,
   salaryGrowthRate: 0.03,
@@ -59,6 +59,7 @@ const DEFAULT_INCOME: Omit<IncomeState, 'validationErrors'> = {
   lifeEventsEnabled: false,
   personalReliefs: 20000,
   reliefBreakdown: null,
+  reliefBasisAge: null,
 }
 
 function extractIncomeData(state: IncomeState & IncomeActions): Omit<IncomeState, 'validationErrors'> {
@@ -192,6 +193,7 @@ function migrateV1ToV2(persisted: V1State): Omit<IncomeState, 'validationErrors'
     lifeEventsEnabled: DEFAULT_INCOME.lifeEventsEnabled,
     personalReliefs: DEFAULT_INCOME.personalReliefs,
     reliefBreakdown: null,
+    reliefBasisAge: null,
   }
 }
 
@@ -294,17 +296,25 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
           const stateData = extractIncomeData(state)
           if (breakdown === null) {
             // Switch to Simple mode: keep current personalReliefs, clear breakdown
+            const updated = { ...stateData, reliefBreakdown: null, reliefBasisAge: null }
             return {
               reliefBreakdown: null,
-              validationErrors: computeValidationErrors({ ...stateData, reliefBreakdown: null }),
+              reliefBasisAge: null,
+              validationErrors: computeValidationErrors(updated),
             }
           }
           // Detailed mode: auto-compute personalReliefs from breakdown
           const currentAge = useProfileStore.getState().currentAge ?? 30
           const total = computeTotalReliefs(breakdown, currentAge)
-          const updated = { ...stateData, reliefBreakdown: breakdown, personalReliefs: total }
+          const updated = {
+            ...stateData,
+            reliefBreakdown: breakdown,
+            reliefBasisAge: currentAge,
+            personalReliefs: total,
+          }
           return {
             reliefBreakdown: breakdown,
+            reliefBasisAge: currentAge,
             personalReliefs: total,
             validationErrors: computeValidationErrors(updated),
           }
@@ -318,7 +328,7 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
     }),
     {
       name: 'fireplanner-income',
-      version: 4,
+      version: 5,
       partialize: (state) => {
         const data: Record<string, unknown> = {}
         for (const key of INCOME_DATA_KEYS) {
@@ -336,6 +346,9 @@ export const useIncomeStore = create<IncomeState & IncomeActions>()(
         }
         if (version < 4) {
           state.bonusMonths = state.bonusMonths ?? 0
+        }
+        if (version < 5) {
+          state.reliefBasisAge = state.reliefBasisAge ?? null
         }
         return state as Omit<IncomeState, 'validationErrors'>
       },

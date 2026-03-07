@@ -32,7 +32,7 @@ interface ProfileActions {
   reset: () => void
 }
 
-const PROFILE_DATA_KEYS = [
+export const PROFILE_DATA_KEYS = [
   'currentAge', 'retirementAge', 'lifeExpectancy', 'lifeStage', 'maritalStatus',
   'residencyStatus', 'prMonths', 'annualIncome', 'annualExpenses', 'liquidNetWorth',
   'cpfOA', 'cpfSA', 'cpfMA', 'cpfRA', 'srsBalance', 'srsAnnualContribution', 'srsInvestmentReturn', 'srsDrawdownStartAge', 'srsPostFireEnabled',
@@ -55,7 +55,7 @@ const PROFILE_DATA_KEYS = [
   'cashReserveMonths', 'cashReserveReturn', 'retirementMitigation',
 ] as const
 
-const DEFAULT_HEALTHCARE_CONFIG: HealthcareConfig = {
+export const DEFAULT_HEALTHCARE_CONFIG: HealthcareConfig = {
   enabled: false,
   mediShieldLifeEnabled: true,
   ispTier: 'none',
@@ -68,7 +68,7 @@ const DEFAULT_HEALTHCARE_CONFIG: HealthcareConfig = {
   mediSaveTopUpAnnual: 0,
 }
 
-const DEFAULT_PROFILE: Omit<ProfileState, 'validationErrors'> = {
+export const DEFAULT_PROFILE: Omit<ProfileState, 'validationErrors'> = {
   currentAge: 30,
   retirementAge: 65,
   lifeExpectancy: 90,

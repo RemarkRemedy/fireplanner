@@ -14,7 +14,7 @@ interface PropertyActions {
   reset: () => void
 }
 
-const DEFAULT_DOWNSIZING: DownsizingConfig = {
+export const DEFAULT_DOWNSIZING: DownsizingConfig = {
   scenario: 'none',
   sellAge: 65,
   expectedSalePrice: 1500000,
@@ -26,7 +26,7 @@ const DEFAULT_DOWNSIZING: DownsizingConfig = {
   rentGrowthRate: 0.03,
 }
 
-const PROPERTY_DATA_KEYS = [
+export const PROPERTY_DATA_KEYS = [
   'propertyType', 'purchasePrice', 'leaseYears', 'appreciationRate',
   'rentalYield', 'mortgageRate', 'mortgageTerm', 'ltv',
   'residencyForAbsd', 'propertyCount',
@@ -41,7 +41,7 @@ const PROPERTY_DATA_KEYS = [
   'hdbSublettingRooms', 'hdbSublettingRate', 'hdbCpfUsedForHousing',
 ] as const
 
-const DEFAULT_PROPERTY: Omit<PropertyState, 'validationErrors'> = {
+export const DEFAULT_PROPERTY: Omit<PropertyState, 'validationErrors'> = {
   propertyType: 'condo',
   purchasePrice: 1500000,
   leaseYears: 99,
