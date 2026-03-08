@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
+import type { PlanningAdult } from '@/lib/household/types'
 import type {
   FireNumberBasis,
   FireType,
@@ -31,110 +32,119 @@ const GLIDE_PATH_LABELS: Record<GlidePathMethod, string> = {
   fastStart: 'Fast start',
 }
 
+function AllocationAssumptionsContent({
+  referenceAdult,
+}: {
+  referenceAdult: PlanningAdult | null
+}) {
+  const glidePathConfig = useAllocationStore((state) => state.glidePathConfig)
+  const allocationValidationErrors = useAllocationStore((state) => state.validationErrors)
+  const setGlidePathConfig = useAllocationStore((state) => state.setGlidePathConfig)
+
+  const toggleGlidePath = (enabled: boolean) => {
+    if (!referenceAdult) return
+    setGlidePathConfig({
+      ...glidePathConfig,
+      enabled,
+      startAge: enabled ? glidePathConfig.startAge || Math.max(referenceAdult.currentAge, referenceAdult.retirementAge - 5) : glidePathConfig.startAge,
+      endAge: enabled ? glidePathConfig.endAge || referenceAdult.retirementAge + 10 : glidePathConfig.endAge,
+    })
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card className="border-dashed">
+        <CardContent className="py-5 space-y-2 text-sm text-muted-foreground">
+          <p className="font-medium text-foreground">Allocation stays global, not member-specific.</p>
+          <p>
+            Use this surface for the shared portfolio template and glide path that the household analysis reads.
+            Defaults key off the primary adult&apos;s timeline instead of the legacy profile store.
+          </p>
+        </CardContent>
+      </Card>
+
+      <AllocationBuilder />
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              Household Glide Path
+              <InfoTooltip text="Transition from the current allocation to the retirement allocation over a household-aware age range anchored to the primary planning adult." />
+            </CardTitle>
+            <Switch checked={glidePathConfig.enabled} onCheckedChange={toggleGlidePath} />
+          </div>
+        </CardHeader>
+        {glidePathConfig.enabled && (
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Reference adult: {referenceAdult?.displayName ?? 'Primary adult'}.
+            </p>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-1">
+                <Label>Method</Label>
+                <Select
+                  value={glidePathConfig.method}
+                  onValueChange={(value) => setGlidePathConfig({
+                    ...glidePathConfig,
+                    method: value as GlidePathMethod,
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GLIDE_PATH_METHODS.map((method) => (
+                      <SelectItem key={method} value={method}>
+                        {GLIDE_PATH_LABELS[method]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <NumberInput
+                label="Start age"
+                value={glidePathConfig.startAge}
+                onChange={(value) => setGlidePathConfig({
+                  ...glidePathConfig,
+                  startAge: value,
+                })}
+                integer
+                min={referenceAdult?.currentAge ?? 18}
+                max={100}
+                error={allocationValidationErrors['glidePathConfig.startAge']}
+              />
+              <NumberInput
+                label="End age"
+                value={glidePathConfig.endAge}
+                onChange={(value) => setGlidePathConfig({
+                  ...glidePathConfig,
+                  endAge: value,
+                })}
+                integer
+                min={glidePathConfig.startAge + 1}
+                max={120}
+                error={allocationValidationErrors['glidePathConfig.endAge']}
+              />
+            </div>
+          </CardContent>
+        )}
+      </Card>
+    </div>
+  )
+}
+
 export function AssumptionsSection({ mode }: AssumptionsSectionProps) {
   const plan = useHouseholdPlanStore((state) => state.plan)
   const validationErrors = useHouseholdPlanStore((state) => state.validationErrors)
   const updateAssumptions = useHouseholdPlanStore((state) => state.updateAssumptions)
-  const allocation = useAllocationStore()
 
   const assumptionsErrors = validationErrors[`assumptions:${plan.id}`] ?? {}
   const referenceAdult = plan.adults.find((adult) => adult.owner === 'self') ?? plan.adults[0] ?? null
   const retirementMitigation = plan.assumptions.retirementMitigation
 
   if (mode === 'allocation') {
-    const glidePathConfig = allocation.glidePathConfig
-
-    const toggleGlidePath = (enabled: boolean) => {
-      if (!referenceAdult) return
-      allocation.setGlidePathConfig({
-        ...glidePathConfig,
-        enabled,
-        startAge: enabled ? glidePathConfig.startAge || Math.max(referenceAdult.currentAge, referenceAdult.retirementAge - 5) : glidePathConfig.startAge,
-        endAge: enabled ? glidePathConfig.endAge || referenceAdult.retirementAge + 10 : glidePathConfig.endAge,
-      })
-    }
-
-    return (
-      <div className="space-y-6">
-        <Card className="border-dashed">
-          <CardContent className="py-5 space-y-2 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">Allocation stays global, not member-specific.</p>
-            <p>
-              Use this surface for the shared portfolio template and glide path that the household analysis reads.
-              Defaults key off the primary adult&apos;s timeline instead of the legacy profile store.
-            </p>
-          </CardContent>
-        </Card>
-
-        <AllocationBuilder />
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between gap-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                Household Glide Path
-                <InfoTooltip text="Transition from the current allocation to the retirement allocation over a household-aware age range anchored to the primary planning adult." />
-              </CardTitle>
-              <Switch checked={glidePathConfig.enabled} onCheckedChange={toggleGlidePath} />
-            </div>
-          </CardHeader>
-          {glidePathConfig.enabled && (
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Reference adult: {referenceAdult?.displayName ?? 'Primary adult'}.
-              </p>
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-1">
-                  <Label>Method</Label>
-                  <Select
-                    value={glidePathConfig.method}
-                    onValueChange={(value) => allocation.setGlidePathConfig({
-                      ...glidePathConfig,
-                      method: value as GlidePathMethod,
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {GLIDE_PATH_METHODS.map((method) => (
-                        <SelectItem key={method} value={method}>
-                          {GLIDE_PATH_LABELS[method]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <NumberInput
-                  label="Start age"
-                  value={glidePathConfig.startAge}
-                  onChange={(value) => allocation.setGlidePathConfig({
-                    ...glidePathConfig,
-                    startAge: value,
-                  })}
-                  integer
-                  min={referenceAdult?.currentAge ?? 18}
-                  max={100}
-                  error={allocation.validationErrors['glidePathConfig.startAge']}
-                />
-                <NumberInput
-                  label="End age"
-                  value={glidePathConfig.endAge}
-                  onChange={(value) => allocation.setGlidePathConfig({
-                    ...glidePathConfig,
-                    endAge: value,
-                  })}
-                  integer
-                  min={glidePathConfig.startAge + 1}
-                  max={120}
-                  error={allocation.validationErrors['glidePathConfig.endAge']}
-                />
-              </div>
-            </CardContent>
-          )}
-        </Card>
-      </div>
-    )
+    return <AllocationAssumptionsContent referenceAdult={referenceAdult} />
   }
 
   return (
