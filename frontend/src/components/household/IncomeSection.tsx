@@ -12,12 +12,13 @@ import { NumberInput } from '@/components/shared/NumberInput'
 import { PercentInput } from '@/components/shared/PercentInput'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { calculateDataDrivenSalary, calculateRealisticSalary, calculateSimpleSalary } from '@/lib/calculations/income'
+import { createId } from '@/lib/household/ids'
+import { ensureAgeRangeTiming, getSelectedAdult, ownerLabel } from '@/lib/household/editorUtils'
 import type {
   AdultOwner,
   EntryOwner,
   IncomeSource,
   PlanningAdult,
-  TimingRule,
 } from '@/lib/household/types'
 import type {
   CareerPhase,
@@ -40,41 +41,6 @@ const EDUCATION_OPTIONS: Array<{ value: EducationLevel; label: string }> = [
   { value: 'diploma', label: 'Diploma' },
   { value: 'degree', label: 'Degree' },
 ]
-
-function createId(prefix: string): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`
-  }
-
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-}
-
-function ownerLabel(owner: AdultOwner): string {
-  return owner === 'self' ? 'Self' : 'Partner'
-}
-
-function getSelectedAdult(plan: { adults: PlanningAdult[] }, selectedAdultId: string | null): PlanningAdult | null {
-  return plan.adults.find((adult) => adult.id === selectedAdultId)
-    ?? plan.adults.find((adult) => adult.owner === 'self')
-    ?? plan.adults[0]
-    ?? null
-}
-
-function ensureAgeRangeTiming(
-  timing: TimingRule,
-  owner: AdultOwner,
-): Extract<TimingRule, { kind: 'age-range' }> {
-  if (timing.kind === 'age-range') {
-    return timing
-  }
-
-  return {
-    kind: 'age-range',
-    owner,
-    startAge: timing.age,
-    endAge: timing.age,
-  }
-}
 
 function createDefaultRealisticPhases(currentAge: number): CareerPhase[] {
   return [
@@ -525,16 +491,17 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {plan.income.filter((entry) => entry.kind === 'income-stream').length === 0 ? (
+          {selectedAdultStreams.length === 0 ? (
             <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
               No non-salary income streams yet.
             </div>
           ) : (
-            plan.income.filter((entry) => entry.kind === 'income-stream').map((stream) => {
+            selectedAdultStreams.map((stream) => {
               const streamErrors = getIncomeErrors(validationErrors, stream.id)
               const timing = ensureAgeRangeTiming(
                 stream.timing,
                 selectedAdult.owner,
+                selectedAdult.currentAge,
               )
 
               return (
