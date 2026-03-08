@@ -333,14 +333,25 @@ export function buildMonteCarloEngineParams(
     income: input.income,
     property: input.property,
     profileOverrides: input.profileOverrides,
-    scenarioOverrides: input.profileOverrides ?? null,
+    scenarioOverrides: null,
   })
 
+  // C2 fix: Override annualSavings and postRetirementIncome from the
+  // normalized path too, not just ages and adjustments. Using legacy
+  // annualSavings with normalized retirementAge would cause an array
+  // length mismatch (annualSavings.length !== retirementAge - currentAge).
+  // W36: Both pre- and post-retirement expense calculations now come from
+  // the same normalized source. The legacy path's expense calculations
+  // (which used inline projection + manual property/goal/healthcare
+  // adjustments) are fully superseded.
   return {
     ...legacyParams,
     currentAge: normalizedInputs.currentAge,
     retirementAge: normalizedInputs.retirementAge,
     lifeExpectancy: normalizedInputs.lifeExpectancy,
+    annualSavings: normalizedInputs.annualSavings,
+    postRetirementIncome: normalizedInputs.postRetirementIncome,
+    annualExpensesAtRetirement: normalizedInputs.annualExpensesAtRetirement,
     portfolioAdjustments: normalizedInputs.portfolioAdjustments,
   }
 }
