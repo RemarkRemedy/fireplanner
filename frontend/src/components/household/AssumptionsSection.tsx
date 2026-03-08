@@ -58,7 +58,7 @@ function AllocationAssumptionsContent({
           <p className="font-medium text-foreground">Allocation stays global, not member-specific.</p>
           <p>
             Use this surface for the shared portfolio template and glide path that the household analysis reads.
-            Defaults key off the primary adult&apos;s timeline instead of the legacy profile store.
+            Defaults follow the first adult&apos;s timeline instead of the legacy profile store.
           </p>
         </CardContent>
       </Card>
@@ -70,7 +70,7 @@ function AllocationAssumptionsContent({
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-lg flex items-center gap-2">
               Household Glide Path
-              <InfoTooltip text="Transition from the current allocation to the retirement allocation over a household-aware age range anchored to the primary planning adult." />
+              <InfoTooltip text="Transition from the current allocation to the retirement allocation over a household-aware age range anchored to the first adult." />
             </CardTitle>
             <Switch checked={glidePathConfig.enabled} onCheckedChange={toggleGlidePath} />
           </div>
@@ -78,7 +78,7 @@ function AllocationAssumptionsContent({
         {glidePathConfig.enabled && (
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Reference adult: {referenceAdult?.displayName ?? 'Primary adult'}.
+              Age timeline follows {referenceAdult?.displayName ?? 'the first adult'}.
             </p>
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-1">
