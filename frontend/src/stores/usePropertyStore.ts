@@ -136,7 +136,7 @@ function computeValidationErrors(
       errors.mortgageCpfMonthly = 'CPF portion cannot exceed total monthly payment'
     }
     if (state.ownershipPercent <= 0 || state.ownershipPercent > 1) {
-      errors.ownershipPercent = 'Ownership share must be between 1% and 100%'
+      errors.ownershipPercent = 'Ownership share must be greater than 0% and at most 100%'
     }
     if (state.existingAppreciationRate < -0.1 || state.existingAppreciationRate > 0.2) {
       errors.existingAppreciationRate = 'Appreciation rate must be between -10% and 20%'

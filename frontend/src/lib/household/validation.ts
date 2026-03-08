@@ -208,7 +208,7 @@ function validatePropertyPlan(
   validateCommonOwnedEntry(property, errors, 'property', adultOwners)
 
   if (property.ownershipPercent <= 0 || property.ownershipPercent > 1) {
-    addEntityError(errors, 'property', property.id, 'ownershipPercent', 'Ownership share must be between 1% and 100%.')
+    addEntityError(errors, 'property', property.id, 'ownershipPercent', 'Ownership share must be greater than 0% and at most 100%.')
   }
   if (property.purchasePrice < 0) {
     addEntityError(errors, 'property', property.id, 'purchasePrice', 'Purchase price cannot be negative.')
