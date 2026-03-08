@@ -10,6 +10,7 @@ import {
   calculateSellAndDownsize,
   calculateSellAndRent,
 } from '@/lib/calculations/property'
+import { DEFAULT_DOWNSIZING_RENT_GROWTH_RATE } from '@/lib/data/propertyDefaults'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
@@ -206,7 +207,7 @@ export function useSequenceRiskQuery(): UseSequenceRiskQueryResult {
               } else if (ds?.scenario === 'sell-and-rent') {
                 mortgageForYear = 0
                 const yearsSinceSell = row.age - dsSellAge!
-                downsizingRentForYear = dsAnnualRent * Math.pow(1 + (ds.rentGrowthRate ?? 0.03), yearsSinceSell)
+                downsizingRentForYear = dsAnnualRent * Math.pow(1 + (ds.rentGrowthRate ?? DEFAULT_DOWNSIZING_RENT_GROWTH_RATE), yearsSinceSell)
               } else {
                 mortgageForYear = 0
               }

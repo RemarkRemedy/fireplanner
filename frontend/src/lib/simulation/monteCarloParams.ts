@@ -18,6 +18,7 @@ import {
   calculateSellAndRent,
 } from '@/lib/calculations/property'
 import { computeCashReservePlan, computeCashReserveOffset } from '@/lib/calculations/cashReserve'
+import { DEFAULT_DOWNSIZING_RENT_GROWTH_RATE } from '@/lib/data/propertyDefaults'
 import { CORRELATION_MATRIX } from '@/lib/data/historicalReturns'
 import { flattenStrategyParams } from '@/lib/simulation/workerClient'
 import { getEffectiveReturns, getEffectiveStdDevs, buildYearlyWeights } from '@/lib/calculations/portfolio'
@@ -143,7 +144,7 @@ export function buildMonteCarloEngineParams({
           } else if (ds?.scenario === 'sell-and-rent') {
             mortgageForYear = 0
             const yearsSinceSell = row.age - dsSellAge!
-            downsizingRentForYear = dsAnnualRent * Math.pow(1 + (ds.rentGrowthRate ?? 0.03), yearsSinceSell)
+            downsizingRentForYear = dsAnnualRent * Math.pow(1 + (ds.rentGrowthRate ?? DEFAULT_DOWNSIZING_RENT_GROWTH_RATE), yearsSinceSell)
           } else {
             mortgageForYear = 0
           }
@@ -209,7 +210,7 @@ export function buildMonteCarloEngineParams({
           } else if (ds?.scenario === 'sell-and-rent') {
             mortgageForYear = 0
             const yearsSinceSell = row.age - dsSellAge!
-            downsizingRentForYear = dsAnnualRent * Math.pow(1 + (ds.rentGrowthRate ?? 0.03), yearsSinceSell)
+            downsizingRentForYear = dsAnnualRent * Math.pow(1 + (ds.rentGrowthRate ?? DEFAULT_DOWNSIZING_RENT_GROWTH_RATE), yearsSinceSell)
           } else {
             mortgageForYear = 0
           }

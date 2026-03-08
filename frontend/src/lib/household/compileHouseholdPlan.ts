@@ -20,10 +20,13 @@ import {
 } from '@/lib/calculations/property'
 import {
   BRS_BASE,
+  BRS_GROWTH_RATE,
+  CPF_RETIREMENT_ACCOUNT_AGE,
   ERS_BASE,
   FRS_BASE,
   RETIREMENT_SUM_BASE_YEAR,
 } from '@/lib/data/cpfRates'
+import { DEFAULT_DOWNSIZING_RENT_GROWTH_RATE } from '@/lib/data/propertyDefaults'
 import type {
   IncomeProjectionRow,
   IncomeStream,
@@ -34,6 +37,7 @@ import {
   type NormalizedHouseholdPlan,
 } from './normalized'
 import {
+  type AdultsByOwner,
   buildAdultsByOwner,
   isYearOffsetActive,
   resolveAdultTimingOffsets,
@@ -58,6 +62,7 @@ export type HouseholdCompilerWarningCode =
   | 'dependent-timing-assumed-ongoing'
   | 'hdb-lbs-not-yet-compiled'
   | 'multiple-salary-sources'
+  | 'overlapping-income-timing'
   | 'property-shared-age-anchor-assumed-self'
   | 'shared-income-assumed-gross'
 
@@ -224,12 +229,10 @@ function addTimingWarnings(
 
 function resolveDependentWindow(
   dependent: Dependent,
-  normalized: NormalizedHouseholdPlan,
+  adultsByOwner: AdultsByOwner,
   warnings: HouseholdCompilerWarning[],
   seenWarnings: Set<string>
 ): ResolvedTimingWindow | null {
-  const adultsByOwner = buildAdultsByOwner(normalized.adultOrder.map((adultId) => normalized.adultsById[adultId]))
-
   if (dependent.timing) {
     const result = resolveTimingRule(
       dependent.timing,
@@ -272,6 +275,7 @@ function resolveDependentWindow(
 function resolveAssetUnlockYearOffset(
   assetId: string,
   normalized: NormalizedHouseholdPlan,
+  adultsByOwner: AdultsByOwner,
   warnings: HouseholdCompilerWarning[],
   seenWarnings: Set<string>
 ): number | null {
@@ -280,7 +284,6 @@ function resolveAssetUnlockYearOffset(
     return null
   }
 
-  const adultsByOwner = buildAdultsByOwner(normalized.adultOrder.map((adultId) => normalized.adultsById[adultId]))
   const referenceAdult = asset.owner === 'shared'
     ? (adultsByOwner.self ?? adultsByOwner.partner)
     : adultsByOwner[asset.owner]
@@ -320,10 +323,10 @@ function resolveAssetUnlockYearOffset(
 
 function createResolvedTiming(
   normalized: NormalizedHouseholdPlan,
+  adultsByOwner: AdultsByOwner,
   warnings: HouseholdCompilerWarning[],
   seenWarnings: Set<string>
 ): ResolvedHouseholdTiming {
-  const adultsByOwner = buildAdultsByOwner(normalized.adultOrder.map((adultId) => normalized.adultsById[adultId]))
   const incomeById: Record<string, ResolvedTimingWindow> = {}
   const expenseById: Record<string, ResolvedTimingWindow> = {}
   const goalById: Record<string, ResolvedTimingWindow> = {}
@@ -359,14 +362,14 @@ function createResolvedTiming(
 
   for (const dependentId of normalized.dependentOrder) {
     const dependent = normalized.dependentsById[dependentId]
-    const window = resolveDependentWindow(dependent, normalized, warnings, seenWarnings)
+    const window = resolveDependentWindow(dependent, adultsByOwner, warnings, seenWarnings)
     if (window) {
       dependentById[dependentId] = window
     }
   }
 
   for (const assetId of normalized.assetOrder) {
-    const unlockYearOffset = resolveAssetUnlockYearOffset(assetId, normalized, warnings, seenWarnings)
+    const unlockYearOffset = resolveAssetUnlockYearOffset(assetId, normalized, adultsByOwner, warnings, seenWarnings)
     if (unlockYearOffset != null) {
       assetUnlockYearOffsetById[assetId] = unlockYearOffset
     }
@@ -500,6 +503,7 @@ function buildCpfProjectionRows(
   projection: IncomeProjectionRow[]
 ): HouseholdCpfProjectionRow[] {
   const currentAge = adult.currentAge
+  const growthFactor = (1 + BRS_GROWTH_RATE).toFixed(3)
   const cpfLifeStartAge = adult.cpf.lifeStartAge
   const cpfLifePlan = adult.cpf.lifePlan
   const brsFrsErs = calculateBrsFrsErs(currentAge)
@@ -541,7 +545,7 @@ function buildCpfProjectionRows(
       milestone = 'cpfLifeStart'
       cpfLifeStarted = true
     }
-    if (row.age === 55 && row.cpfRA > 0 && milestone === null) {
+    if (row.age === CPF_RETIREMENT_ACCOUNT_AGE && row.cpfRA > 0 && milestone === null) {
       milestone = 'raCreated'
     }
 
@@ -570,14 +574,14 @@ function buildCpfProjectionRows(
 
     let milestoneFormula: string | null = null
     if (milestone === 'frs') {
-      const years = Math.max(0, 55 - currentAge) + Math.max(0, new Date().getFullYear() - RETIREMENT_SUM_BASE_YEAR)
-      milestoneFormula = `FRS at 55: ${formatCurrency(FRS_BASE)} (${RETIREMENT_SUM_BASE_YEAR}) × 1.035^${years} = ${formatCurrency(brsFrsErs.frs)}`
+      const years = Math.max(0, CPF_RETIREMENT_ACCOUNT_AGE - currentAge) + Math.max(0, new Date().getFullYear() - RETIREMENT_SUM_BASE_YEAR)
+      milestoneFormula = `FRS at ${CPF_RETIREMENT_ACCOUNT_AGE}: ${formatCurrency(FRS_BASE)} (${RETIREMENT_SUM_BASE_YEAR}) × ${growthFactor}^${years} = ${formatCurrency(brsFrsErs.frs)}`
     } else if (milestone === 'brs') {
-      const years = Math.max(0, 55 - currentAge) + Math.max(0, new Date().getFullYear() - RETIREMENT_SUM_BASE_YEAR)
-      milestoneFormula = `BRS at 55: ${formatCurrency(BRS_BASE)} (${RETIREMENT_SUM_BASE_YEAR}) × 1.035^${years} = ${formatCurrency(brsFrsErs.brs)}`
+      const years = Math.max(0, CPF_RETIREMENT_ACCOUNT_AGE - currentAge) + Math.max(0, new Date().getFullYear() - RETIREMENT_SUM_BASE_YEAR)
+      milestoneFormula = `BRS at ${CPF_RETIREMENT_ACCOUNT_AGE}: ${formatCurrency(BRS_BASE)} (${RETIREMENT_SUM_BASE_YEAR}) × ${growthFactor}^${years} = ${formatCurrency(brsFrsErs.brs)}`
     } else if (milestone === 'ers') {
-      const years = Math.max(0, 55 - currentAge) + Math.max(0, new Date().getFullYear() - RETIREMENT_SUM_BASE_YEAR)
-      milestoneFormula = `ERS at 55: ${formatCurrency(ERS_BASE)} (${RETIREMENT_SUM_BASE_YEAR}) × 1.035^${years} = ${formatCurrency(brsFrsErs.ers)}`
+      const years = Math.max(0, CPF_RETIREMENT_ACCOUNT_AGE - currentAge) + Math.max(0, new Date().getFullYear() - RETIREMENT_SUM_BASE_YEAR)
+      milestoneFormula = `ERS at ${CPF_RETIREMENT_ACCOUNT_AGE}: ${formatCurrency(ERS_BASE)} (${RETIREMENT_SUM_BASE_YEAR}) × ${growthFactor}^${years} = ${formatCurrency(brsFrsErs.ers)}`
     } else if (milestone === 'raCreated') {
       const prevSA = prevRow ? prevRow.cpfSA : 0
       milestoneFormula = `SA (${formatCurrency(prevSA)}) → RA. Target: FRS = ${formatCurrency(brsFrsErs.frs)}`
@@ -741,12 +745,10 @@ function evaluateSharedIncomeSource(
 
 function resolvePropertyReferenceAdult(
   property: PropertyPlan,
-  normalized: NormalizedHouseholdPlan,
+  adultsByOwner: AdultsByOwner,
   warnings: HouseholdCompilerWarning[],
   seenWarnings: Set<string>
 ): PlanningAdult | null {
-  const adultsByOwner = buildAdultsByOwner(normalized.adultOrder.map((adultId) => normalized.adultsById[adultId]))
-
   if (property.owner === 'shared') {
     if (adultsByOwner.self) {
       if (adultsByOwner.partner) {
@@ -766,7 +768,7 @@ function resolvePropertyReferenceAdult(
 
 function compilePropertyCashflows(
   property: PropertyPlan,
-  normalized: NormalizedHouseholdPlan,
+  adultsByOwner: AdultsByOwner,
   yearCount: number,
   warnings: HouseholdCompilerWarning[],
   seenWarnings: Set<string>
@@ -799,7 +801,7 @@ function compilePropertyCashflows(
     (property.existingMonthlyPayment - property.mortgageCpfMonthly) * 12 * (property.ownershipPercent ?? 1)
   )
   const mortgageYearCount = Math.max(0, Math.ceil(property.existingMortgageRemainingYears))
-  const referenceAdult = resolvePropertyReferenceAdult(property, normalized, warnings, seenWarnings)
+  const referenceAdult = resolvePropertyReferenceAdult(property, adultsByOwner, warnings, seenWarnings)
 
   let sellYearOffset: number | null = null
   let postSaleAnnualMortgage = 0
@@ -891,8 +893,9 @@ function compilePropertyCashflows(
       expenseByYear[yearOffset] += postSaleAnnualMortgage
     } else if (property.downsizing.scenario === 'sell-and-rent') {
       const yearsSinceSale = yearOffset - (sellYearOffset ?? yearOffset)
+      // Sell-and-rent uses a nominal rent escalator, matching the rest of the compiler's nominal property cashflows.
       expenseByYear[yearOffset] += postSaleAnnualRent * Math.pow(
-        1 + (property.downsizing.rentGrowthRate ?? 0.03),
+        1 + (property.downsizing.rentGrowthRate ?? DEFAULT_DOWNSIZING_RENT_GROWTH_RATE),
         Math.max(0, yearsSinceSale)
       )
     }
@@ -924,17 +927,54 @@ function sortAdjustments(
   })
 }
 
+function addIncomeOverlapWarnings(
+  normalized: NormalizedHouseholdPlan,
+  resolvedTiming: ResolvedHouseholdTiming,
+  warnings: HouseholdCompilerWarning[],
+  seenWarnings: Set<string>,
+) {
+  const ownerSpecificSources = normalized.incomeOrder
+    .map((incomeId) => normalized.incomeById[incomeId])
+    .filter((source) => source.owner !== 'shared' && source.isActive)
+
+  for (let index = 0; index < ownerSpecificSources.length; index += 1) {
+    const current = ownerSpecificSources[index]
+    const currentWindow = resolvedTiming.incomeById[current.id]
+    if (!currentWindow) continue
+
+    for (let nextIndex = index + 1; nextIndex < ownerSpecificSources.length; nextIndex += 1) {
+      const other = ownerSpecificSources[nextIndex]
+      if (other.owner !== current.owner) continue
+
+      const otherWindow = resolvedTiming.incomeById[other.id]
+      if (!otherWindow) continue
+
+      const overlaps = currentWindow.startYearOffset <= otherWindow.endYearOffset
+        && otherWindow.startYearOffset <= currentWindow.endYearOffset
+      if (!overlaps) continue
+
+      addWarning(warnings, seenWarnings, {
+        code: 'overlapping-income-timing',
+        path: `income.${current.id}`,
+        message: `Income ${current.id} overlaps ${other.id} on the ${current.owner} timeline; the compiler will sum both cashflows during overlapping years.`,
+      })
+    }
+  }
+}
+
 export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan {
   const normalized = normalizeHouseholdPlan(plan)
   const warnings: HouseholdCompilerWarning[] = []
   const seenWarnings = new Set<string>()
+  const adultsByOwner = buildAdultsByOwner(normalized.adultOrder.map((adultId) => normalized.adultsById[adultId]))
   const adultTimingById = Object.fromEntries(
     normalized.adultOrder.map((adultId) => {
       const adult = normalized.adultsById[adultId]
       return [adultId, resolveAdultTimingOffsets(adult)]
     })
   ) as Record<string, AdultTimingOffsets>
-  const resolvedTiming = createResolvedTiming(normalized, warnings, seenWarnings)
+  const resolvedTiming = createResolvedTiming(normalized, adultsByOwner, warnings, seenWarnings)
+  addIncomeOverlapWarnings(normalized, resolvedTiming, warnings, seenWarnings)
   const yearCount = Math.max(
     1,
     ...normalized.adultOrder.map((adultId) => adultTimingById[adultId].lifeExpectancyYearOffset + 1)
@@ -1002,8 +1042,6 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
   const baseExpenseAdjustedByYear = zeroes(yearCount)
   const portfolioAdjustments: HouseholdPortfolioAdjustment[] = []
   const milestones: HouseholdMilestoneRow[] = []
-
-  const adultsByOwner = buildAdultsByOwner(normalized.adultOrder.map((adultId) => normalized.adultsById[adultId]))
 
   for (const adultId of normalized.adultOrder) {
     const adult = normalized.adultsById[adultId]
@@ -1251,7 +1289,7 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
     const property = normalized.propertiesById[propertyId]
     const compiled = compilePropertyCashflows(
       property,
-      normalized,
+      adultsByOwner,
       yearCount,
       warnings,
       seenWarnings

@@ -605,13 +605,49 @@ describe('compileHouseholdPlan', () => {
   })
 
   it('emits warnings when timing must be inferred or shared semantics stay ambiguous', () => {
-    const compiled = compileHouseholdPlan(makeCouplePlan({ ambiguousWarnings: true }))
+    const plan = makeCouplePlan({ ambiguousWarnings: true })
+    plan.income.push({
+      id: 'income-partner-consulting',
+      owner: 'partner',
+      label: 'Partner consulting',
+      kind: 'income-stream',
+      timing: {
+        kind: 'age-range',
+        owner: 'partner',
+        startAge: 41,
+        endAge: 43,
+      },
+      annualAmount: 18_000,
+      growthRate: 0,
+      growthModel: 'none',
+      taxTreatment: 'taxable',
+      isCpfApplicable: false,
+      isActive: true,
+      streamType: 'business',
+    })
+
+    const compiled = compileHouseholdPlan(plan)
     const warningCodes = compiled.warnings.map((warning) => warning.code)
 
     expect(warningCodes).toEqual(expect.arrayContaining([
       'dependent-timing-assumed-ongoing',
+      'overlapping-income-timing',
       'property-shared-age-anchor-assumed-self',
       'shared-income-assumed-gross',
     ]))
+  })
+
+  it('throws when duplicate ids would overwrite normalized entries', () => {
+    const plan = makeCouplePlan()
+    plan.income[1].id = plan.income[0].id
+
+    expect(() => compileHouseholdPlan(plan)).toThrow('Duplicate income id "income-salary-self" in household plan.')
+  })
+
+  it('throws on unknown owner values instead of silently dropping entries', () => {
+    const plan = makeCouplePlan()
+    ;((plan.income[0] as unknown) as { owner: string }).owner = 'pet'
+
+    expect(() => compileHouseholdPlan(plan)).toThrow('Unknown owner "pet" at income-salary-self.owner. Expected "self", "partner", or "shared".')
   })
 })
