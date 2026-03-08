@@ -6,8 +6,6 @@ import type {
   SimulationState,
 } from '@/lib/types'
 import type { MonteCarloEngineParams } from '@/lib/simulation/monteCarlo'
-import { toMonteCarloAnalysisInputs } from '@/lib/household/toAnalysisInputs'
-import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 import { generateIncomeProjection, sumPostRetirementIncome, getLifeEventExpenseImpact } from '@/lib/calculations/income'
 import { getEffectiveExpenses, getExpensesAtRetirement } from '@/lib/calculations/expenses'
 import { getPropertyRentalIncome } from '@/lib/calculations/hdb'
@@ -22,6 +20,8 @@ import { computeCashReservePlan, computeCashReserveOffset } from '@/lib/calculat
 import { CORRELATION_MATRIX } from '@/lib/data/historicalReturns'
 import { flattenStrategyParams } from '@/lib/simulation/workerClient'
 import { getEffectiveReturns, getEffectiveStdDevs, buildYearlyWeights } from '@/lib/calculations/portfolio'
+import { buildProjectionParams } from '@/hooks/useIncomeProjection'
+import { toMonteCarloAnalysisInputs } from '@/stores/useNormalizedAnalysisStore'
 
 interface BuildMonteCarloEngineParamsInput {
   profile: ProfileState
