@@ -191,6 +191,7 @@ export interface DisruptionImpactResult {
 
 export function useDisruptionImpact(costTier: CostTierKey = 'subsidised', overrides?: DisruptionOverrides): DisruptionImpactResult {
   const { profile, income, property, normalized } = useHouseholdRuntimeInputs()
+  const allocation = useAllocationStore()
   const plan = useHouseholdPlanStore((state) => state.plan)
   const selectedAdult = plan.adults.find((adult) => adult.id === normalized.referenceAdultId)
     ?? plan.adults.find((adult) => adult.owner === 'self')
@@ -232,7 +233,6 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised', overri
     }
 
     // Compute base metrics from the household-backed runtime snapshot.
-    const allocation = useAllocationStore.getState()
     const baseInputs = getBaseInputs(profile, income, allocation, property)
     const baseMetrics = computeMetrics(baseInputs)
 
@@ -372,7 +372,7 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised', overri
       hasData: true,
     }
   }, [
-    income, profile, property, selectedAdultLifeEvents,
+    income, profile, allocation, property, selectedAdultLifeEvents,
     template, effectiveStartAge, costTier,
     overrides?.incomeImpact, overrides?.expenseReduction,
     overrides?.additionalAnnualExpense, overrides?.lumpSumCost,
