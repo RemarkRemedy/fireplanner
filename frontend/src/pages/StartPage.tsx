@@ -16,6 +16,9 @@ import type { RetirementPhase } from '@/lib/types'
 import { trackEvent } from '@/lib/analytics'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { LandingEmailSection } from '@/components/email/LandingEmailSection'
+import { grossUpFromTakeHome, netDownFromGross, getCpfEmployeeRateLabel, isAboveOwCeiling } from '@/lib/calculations/grossUp'
+import { Checkbox } from '@/components/ui/checkbox'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 
 type ActivePathway = 'goal-first' | 'story-first' | 'already-fire' | null
 
@@ -70,9 +73,42 @@ export function StartPage() {
   // Local draft state for inline forms
   const [draftAge, setDraftAge] = useState(storedAge)
   const [draftRetirementAge, setDraftRetirementAge] = useState(storedRetirementAge)
-  const [draftIncome, setDraftIncome] = useState(storedAnnualIncome)
   const [draftNetWorth, setDraftNetWorth] = useState(storedLiquidNetWorth)
-  const [draftExpenses, setDraftExpenses] = useState(storedAnnualExpenses)
+
+  // Monthly income state
+  const [incomeType, setIncomeType] = useState<'take-home' | 'gross'>('take-home')
+  const [draftMonthlyIncome, setDraftMonthlyIncome] = useState(
+    () => Math.round(netDownFromGross(storedAnnualIncome / 12, storedAge))
+  )
+  const [hasBonusAws, setHasBonusAws] = useState(false)
+  const [bonusMonths, setBonusMonths] = useState(1)
+
+  // Monthly expenses state
+  const [draftMonthlyExpenses, setDraftMonthlyExpenses] = useState(
+    () => Math.round(storedAnnualExpenses / 12)
+  )
+
+  // Derived annual values — used by FIRE calcs and store writes
+  const grossMonthly = incomeType === 'take-home'
+    ? grossUpFromTakeHome(draftMonthlyIncome, draftAge)
+    : draftMonthlyIncome
+  const draftBaseSalary = grossMonthly * 12
+  const draftBonusMonths = hasBonusAws ? bonusMonths : 0
+  const draftIncome = grossMonthly * (12 + draftBonusMonths)
+  const draftExpenses = draftMonthlyExpenses * 12
+
+  // Convert the displayed value when switching modes so annual income stays stable
+  const handleIncomeTypeChange = (newType: 'take-home' | 'gross') => {
+    if (newType === incomeType) return
+    if (newType === 'gross') {
+      // Switching to gross: show the gross equivalent of the current take-home
+      setDraftMonthlyIncome(Math.round(grossMonthly))
+    } else {
+      // Switching to take-home: show the take-home equivalent of the current gross
+      setDraftMonthlyIncome(Math.round(netDownFromGross(draftMonthlyIncome, draftAge)))
+    }
+    setIncomeType(newType)
+  }
 
   // Compute preliminary FIRE metrics from draft values
   const DEFAULT_SWR = 0.036
@@ -129,9 +165,12 @@ export function StartPage() {
     // Reset drafts to current store values
     setDraftAge(storedAge)
     setDraftRetirementAge(storedRetirementAge)
-    setDraftIncome(storedAnnualIncome)
-    setDraftExpenses(storedAnnualExpenses)
     setDraftNetWorth(storedLiquidNetWorth)
+    setIncomeType('take-home')
+    setDraftMonthlyIncome(Math.round(netDownFromGross(storedAnnualIncome / 12, storedAge)))
+    setDraftMonthlyExpenses(Math.round(storedAnnualExpenses / 12))
+    setHasBonusAws(false)
+    setBonusMonths(1)
   }
 
   const handleGoalFirstContinue = () => {
@@ -141,7 +180,8 @@ export function StartPage() {
     setProfileField('annualExpenses', draftExpenses)
     setProfileField('liquidNetWorth', draftNetWorth)
     setProfileField('lifeStage', 'pre-fire')
-    setIncomeField('annualSalary', draftIncome)
+    setIncomeField('annualSalary', draftBaseSalary)
+    setIncomeField('bonusMonths', draftBonusMonths)
     setUIField('sectionOrder', 'goal-first')
     trackEvent('onboarding_continue', { pathway: 'goal-first' })
     navigate('/inputs')
@@ -153,7 +193,8 @@ export function StartPage() {
     setProfileField('annualExpenses', draftExpenses)
     setProfileField('liquidNetWorth', draftNetWorth)
     setProfileField('lifeStage', 'pre-fire')
-    setIncomeField('annualSalary', draftIncome)
+    setIncomeField('annualSalary', draftBaseSalary)
+    setIncomeField('bonusMonths', draftBonusMonths)
     setUIField('sectionOrder', 'story-first')
     trackEvent('onboarding_continue', { pathway: 'story-first' })
     navigate('/inputs')
@@ -167,6 +208,8 @@ export function StartPage() {
     setProfileField('liquidNetWorth', draftNetWorth)
     setProfileField('lifeStage', 'post-fire')
     setProfileField('retirementPhase', phase)
+    setIncomeField('annualSalary', draftBaseSalary)
+    setIncomeField('bonusMonths', draftBonusMonths)
     setUIField('sectionOrder', 'already-fire')
     trackEvent('onboarding_continue', { pathway: 'already-fire', phase })
     navigate('/inputs')
@@ -341,17 +384,23 @@ export function StartPage() {
                   <p className="text-xs text-destructive">Must be after current age</p>
                 )}
               </div>
-              <CurrencyInput
-                label="Annual Income"
-                value={draftIncome}
-                onChange={setDraftIncome}
-                tooltip="Total annual income before tax and CPF"
+              <MonthlyIncomeInput
+                incomeType={incomeType}
+                onIncomeTypeChange={handleIncomeTypeChange}
+                monthlyIncome={draftMonthlyIncome}
+                onMonthlyIncomeChange={setDraftMonthlyIncome}
+                hasBonusAws={hasBonusAws}
+                onHasBonusAwsChange={setHasBonusAws}
+                bonusMonths={bonusMonths}
+                onBonusMonthsChange={setBonusMonths}
+                grossMonthly={grossMonthly}
+                annualIncome={draftIncome}
+                age={draftAge}
               />
-              <CurrencyInput
-                label="Annual Expenses (excluding healthcare & mortgage)"
-                value={draftExpenses}
-                onChange={setDraftExpenses}
-                tooltip="Healthcare insurance and mortgage payments are modelled separately in their own sections."
+              <MonthlyExpenseInput
+                monthlyExpenses={draftMonthlyExpenses}
+                onMonthlyExpensesChange={setDraftMonthlyExpenses}
+                annualExpenses={draftExpenses}
               />
               <CurrencyInput
                 label="Cash & Investments"
@@ -395,17 +444,23 @@ export function StartPage() {
                   className="mt-auto border-blue-300"
                 />
               </div>
-              <CurrencyInput
-                label="Annual Income"
-                value={draftIncome}
-                onChange={setDraftIncome}
-                tooltip="Total annual income before tax and CPF"
+              <MonthlyIncomeInput
+                incomeType={incomeType}
+                onIncomeTypeChange={handleIncomeTypeChange}
+                monthlyIncome={draftMonthlyIncome}
+                onMonthlyIncomeChange={setDraftMonthlyIncome}
+                hasBonusAws={hasBonusAws}
+                onHasBonusAwsChange={setHasBonusAws}
+                bonusMonths={bonusMonths}
+                onBonusMonthsChange={setBonusMonths}
+                grossMonthly={grossMonthly}
+                annualIncome={draftIncome}
+                age={draftAge}
               />
-              <CurrencyInput
-                label="Annual Expenses (excluding healthcare & mortgage)"
-                value={draftExpenses}
-                onChange={setDraftExpenses}
-                tooltip="Healthcare insurance and mortgage payments are modelled separately in their own sections."
+              <MonthlyExpenseInput
+                monthlyExpenses={draftMonthlyExpenses}
+                onMonthlyExpensesChange={setDraftMonthlyExpenses}
+                annualExpenses={draftExpenses}
               />
               <CurrencyInput
                 label="Cash & Investments"
@@ -450,17 +505,23 @@ export function StartPage() {
                     className="mt-auto border-blue-300"
                   />
                 </div>
-                <CurrencyInput
-                  label="Annual Income"
-                  value={draftIncome}
-                  onChange={setDraftIncome}
-                  tooltip="Total annual income before tax and CPF"
+                <MonthlyIncomeInput
+                  incomeType={incomeType}
+                  onIncomeTypeChange={handleIncomeTypeChange}
+                  monthlyIncome={draftMonthlyIncome}
+                  onMonthlyIncomeChange={setDraftMonthlyIncome}
+                  hasBonusAws={hasBonusAws}
+                  onHasBonusAwsChange={setHasBonusAws}
+                  bonusMonths={bonusMonths}
+                  onBonusMonthsChange={setBonusMonths}
+                  grossMonthly={grossMonthly}
+                  annualIncome={draftIncome}
+                  age={draftAge}
                 />
-                <CurrencyInput
-                  label="Annual Expenses (excluding healthcare & mortgage)"
-                  value={draftExpenses}
-                  onChange={setDraftExpenses}
-                  tooltip="Healthcare insurance and mortgage payments are modelled separately in their own sections."
+                <MonthlyExpenseInput
+                  monthlyExpenses={draftMonthlyExpenses}
+                  onMonthlyExpensesChange={setDraftMonthlyExpenses}
+                  annualExpenses={draftExpenses}
                 />
                 <CurrencyInput
                   label="Cash & Investments"
@@ -528,6 +589,150 @@ export function StartPage() {
               <ArrowRight className="ml-1 h-3 w-3" />
             </Link>
           </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MonthlyIncomeInput({
+  incomeType,
+  onIncomeTypeChange,
+  monthlyIncome,
+  onMonthlyIncomeChange,
+  hasBonusAws,
+  onHasBonusAwsChange,
+  bonusMonths,
+  onBonusMonthsChange,
+  grossMonthly,
+  annualIncome,
+  age,
+}: {
+  incomeType: 'take-home' | 'gross'
+  onIncomeTypeChange: (type: 'take-home' | 'gross') => void
+  monthlyIncome: number
+  onMonthlyIncomeChange: (value: number) => void
+  hasBonusAws: boolean
+  onHasBonusAwsChange: (checked: boolean) => void
+  bonusMonths: number
+  onBonusMonthsChange: (value: number) => void
+  grossMonthly: number
+  annualIncome: number
+  age: number
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <Label className="text-sm flex items-center gap-1">
+        Monthly Income
+        <InfoTooltip text="Your monthly salary. Choose whether to enter take-home (after CPF) or gross (before CPF)." />
+      </Label>
+
+      {/* Take-home / Gross pill selector */}
+      <div className="flex gap-1 mb-1">
+        <button
+          type="button"
+          onClick={() => onIncomeTypeChange('take-home')}
+          className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+            incomeType === 'take-home'
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'bg-muted text-muted-foreground border-border hover:border-primary/50'
+          }`}
+        >
+          Take-home
+        </button>
+        <button
+          type="button"
+          onClick={() => onIncomeTypeChange('gross')}
+          className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+            incomeType === 'gross'
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'bg-muted text-muted-foreground border-border hover:border-primary/50'
+          }`}
+        >
+          Gross
+        </button>
+      </div>
+
+      {/* Dollar input */}
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+          $
+        </span>
+        <NumberInput
+          value={monthlyIncome}
+          onChange={onMonthlyIncomeChange}
+          integer
+          formatWithCommas
+          className="pl-7 border-blue-300"
+        />
+      </div>
+
+      {/* Bonus / AWS checkbox */}
+      <div className="flex items-center gap-2 mt-1">
+        <Checkbox
+          id="bonus-aws"
+          checked={hasBonusAws}
+          onCheckedChange={(checked) => onHasBonusAwsChange(checked === true)}
+        />
+        <label htmlFor="bonus-aws" className="text-xs text-muted-foreground cursor-pointer">
+          I receive bonus / AWS
+        </label>
+        {hasBonusAws && (
+          <div className="flex items-center gap-1">
+            <NumberInput
+              value={bonusMonths}
+              onChange={onBonusMonthsChange}
+              integer
+              min={0}
+              max={6}
+              className="w-14 h-7 text-xs border-blue-300"
+            />
+            <span className="text-xs text-muted-foreground">extra month(s)</span>
+          </div>
+        )}
+      </div>
+
+      {/* Transparency line */}
+      <div className="text-xs text-muted-foreground mt-1">
+        {incomeType === 'take-home' && monthlyIncome > 0 ? (
+          <>
+            <div>
+              Estimated gross: ~${grossMonthly.toLocaleString('en-SG', { maximumFractionDigits: 0 })}/mo
+              {' '}(~${annualIncome.toLocaleString('en-SG', { maximumFractionDigits: 0 })}/year)
+            </div>
+            <div className="text-muted-foreground/70">
+              Based on {getCpfEmployeeRateLabel(age)} employee CPF
+              {isAboveOwCeiling(monthlyIncome, age) ? ' (capped at $8,000/mo ceiling)' : ''}
+            </div>
+          </>
+        ) : monthlyIncome > 0 ? (
+          <div>(~${annualIncome.toLocaleString('en-SG', { maximumFractionDigits: 0 })}/year)</div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+function MonthlyExpenseInput({
+  monthlyExpenses,
+  onMonthlyExpensesChange,
+  annualExpenses,
+}: {
+  monthlyExpenses: number
+  onMonthlyExpensesChange: (value: number) => void
+  annualExpenses: number
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <CurrencyInput
+        label="Monthly Expenses (excluding healthcare & mortgage)"
+        value={monthlyExpenses}
+        onChange={onMonthlyExpensesChange}
+        tooltip="Healthcare insurance and mortgage payments are modelled separately in their own sections."
+      />
+      {monthlyExpenses > 0 && (
+        <div className="text-xs text-muted-foreground">
+          (~${annualExpenses.toLocaleString('en-SG', { maximumFractionDigits: 0 })}/year)
         </div>
       )}
     </div>
