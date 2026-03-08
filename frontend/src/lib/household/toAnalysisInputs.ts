@@ -30,7 +30,7 @@ interface LegacyNormalizedEntryInput {
   income: RevisionedIncomeState
   property: RevisionedPropertyState
   profileOverrides?: Partial<Pick<ProfileState, 'annualExpenses' | 'retirementAge'>>
-  scenarioOverrides?: unknown
+  scenarioOverrides?: Record<string, unknown> | null
 }
 
 export interface NormalizedMonteCarloAnalysisInputs {
@@ -169,6 +169,11 @@ function resolveLegacyPortfolioAdjustmentAmount(
     if (matchingWithdrawal) {
       return -matchingWithdrawal.amount
     }
+
+    console.warn(
+      `[toAnalysisInputs] retirement-withdrawal lookup failed for sourceId="${adjustment.sourceId}". ` +
+      `Falling back to compiled amount (${adjustment.amount}).`
+    )
   }
 
   return adjustment.amount
@@ -229,7 +234,7 @@ export function toMonteCarloAnalysisInputs(
     input.profile,
     compiledPlan.annualSavingsByYear.slice(
       0,
-      compiledPlan.householdRetirementYearOffset + 1
+      compiledPlan.householdRetirementYearOffset
     )
   )
 
@@ -247,7 +252,6 @@ export function toMonteCarloAnalysisInputs(
     annualExpensesAtRetirement:
       compiledPlan.retirementExpenseBaseByYear[compiledPlan.householdRetirementYearOffset] ?? 0,
     portfolioAdjustments: compiledPlan.portfolioAdjustments
-      .filter((adjustment) => adjustment.kind !== 'goal')
       .map((adjustment) => ({
         year: adjustment.yearOffset,
         amount: resolveLegacyPortfolioAdjustmentAmount(adjustment, input.profile),
