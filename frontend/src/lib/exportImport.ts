@@ -6,12 +6,12 @@
  */
 
 import {
-  PORTABILITY_STORE_KEYS,
   applyResolvedPortabilityData,
   buildPortabilityEnvelope,
   resolvePortabilityData,
   type PortabilityEnvelopeV2,
 } from './storeRegistry'
+import { PORTABILITY_STORE_KEYS } from './storeKeys'
 import { validateStoreData } from './validation/schemas'
 
 export interface ImportResult {
@@ -43,7 +43,7 @@ export function exportToJson(): void {
  * 2. Normalize v1 or v2 data into the v2 portability contract
  * 3. Materialize mixed-mode runtime stores for the current app
  * 4. Validate the runtime stores
- * 5. Write to localStorage and reload
+ * 5. Write to localStorage and reload when validation passes
  */
 export async function importFromJson(file: File): Promise<ImportResult> {
   const result: ImportResult = {
@@ -75,15 +75,19 @@ export async function importFromJson(file: File): Promise<ImportResult> {
       }
     }
 
-    result.storesImported = applyResolvedPortabilityData(resolved)
-
     for (const key of PORTABILITY_STORE_KEYS) {
       if (!(key in resolved.portableStores)) {
         result.warnings.push(`Store "${key}" not present in import file`)
       }
     }
 
+    if (Object.keys(result.validationErrors).length > 0) {
+      result.error = 'Import contains invalid data. Fix the reported sections and try again.'
+      return result
+    }
+
     result.success = true
+    result.storesImported = applyResolvedPortabilityData(resolved)
     window.location.reload()
     return result
   } catch (err) {

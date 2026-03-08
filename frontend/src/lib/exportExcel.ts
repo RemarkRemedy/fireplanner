@@ -1,15 +1,22 @@
-import { useAllocationStore } from '@/stores/useAllocationStore'
-import { useSimulationStore } from '@/stores/useSimulationStore'
-import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
-import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { toLegacyIndividual } from '@/lib/household/toLegacyIndividual'
 import type { HouseholdPlan, PlanningAdult, PropertyPlan } from '@/lib/household/types'
 import type { LegacyIndividualSnapshot } from '@/lib/household/fromLegacyIndividual'
+import type { AllocationState, SimulationState, WithdrawalState } from '@/lib/types'
 import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 import { formatCurrency, formatPercent } from '@/lib/utils'
 import { computeExpensePhases } from '@/lib/calculations/expenses'
 
 type Row = [string, string | number]
+type AllocationExportState = Pick<AllocationState, 'currentWeights' | 'targetWeights' | 'selectedTemplate' | 'glidePathConfig'>
+type SimulationExportState = Pick<SimulationState, 'mcMethod' | 'nSimulations'>
+type WithdrawalExportState = Pick<WithdrawalState, 'selectedStrategies' | 'strategyParams'>
+
+export interface ExcelExportData {
+  householdPlan: HouseholdPlan
+  allocation: AllocationExportState
+  simulation: SimulationExportState
+  withdrawal: WithdrawalExportState
+}
 
 function section(label: string): Row {
   return [`── ${label} ──`, '']
@@ -37,10 +44,9 @@ function addLegacyWorkbook(
     addWorksheet: (name: string) => { addRow: (values: (string | number)[]) => void }
   },
   snapshot: LegacyIndividualSnapshot,
+  data: Pick<ExcelExportData, 'allocation' | 'simulation' | 'withdrawal'>,
 ): void {
-  const allocation = useAllocationStore.getState()
-  const simulation = useSimulationStore.getState()
-  const withdrawal = useWithdrawalStore.getState()
+  const { allocation, simulation, withdrawal } = data
   const { profile, income, property } = snapshot
 
   const profileSheet = wb.addWorksheet('Profile')
@@ -303,11 +309,10 @@ function sharedHouseholdRows(plan: HouseholdPlan): Row[] {
   return rows.length > 0 ? rows : [['Shared entries', 'None']]
 }
 
-function allocationAndSimulationRows(): Row[] {
-  const allocation = useAllocationStore.getState()
-  const simulation = useSimulationStore.getState()
-  const withdrawal = useWithdrawalStore.getState()
-
+function allocationAndSimulationRows(
+  data: Pick<ExcelExportData, 'allocation' | 'simulation' | 'withdrawal'>,
+): Row[] {
+  const { allocation, simulation, withdrawal } = data
   const rows: Row[] = [
     section('Allocation'),
     ['Template', allocation.selectedTemplate],
@@ -348,19 +353,18 @@ function propertyRows(properties: PropertyPlan[]): Row[] {
   return rows
 }
 
-export async function exportToExcel(): Promise<void> {
+export async function exportToExcel(data: ExcelExportData): Promise<void> {
   const { default: ExcelJS } = await import('exceljs')
   const wb = new ExcelJS.Workbook()
-  const householdState = useHouseholdPlanStore.getState()
-  const legacySnapshot = toLegacyIndividual(householdState.plan)
+  const legacySnapshot = toLegacyIndividual(data.householdPlan)
 
   if (legacySnapshot) {
-    addLegacyWorkbook(wb, legacySnapshot)
+    addLegacyWorkbook(wb, legacySnapshot, data)
   } else {
     const summarySheet = wb.addWorksheet('Household Summary')
-    addRows(summarySheet, householdSummaryRows(householdState.plan))
+    addRows(summarySheet, householdSummaryRows(data.householdPlan))
 
-    householdState.plan.adults.forEach((adult, index) => {
+    data.householdPlan.adults.forEach((adult, index) => {
       const fallbackName = `Adult ${index + 1}`
       const name = adult.displayName.trim() || fallbackName
       const adultSheet = wb.addWorksheet(worksheetName(`Adult - ${name}`))
@@ -368,14 +372,14 @@ export async function exportToExcel(): Promise<void> {
     })
 
     const sharedSheet = wb.addWorksheet('Shared Household')
-    addRows(sharedSheet, sharedHouseholdRows(householdState.plan))
+    addRows(sharedSheet, sharedHouseholdRows(data.householdPlan))
 
     const settingsSheet = wb.addWorksheet('Allocation & Simulation')
-    addRows(settingsSheet, allocationAndSimulationRows())
+    addRows(settingsSheet, allocationAndSimulationRows(data))
 
-    if (householdState.plan.properties.some((property) => property.ownsProperty || property.propertyCount > 0)) {
+    if (data.householdPlan.properties.some((property) => property.ownsProperty || property.propertyCount > 0)) {
       const propertySheet = wb.addWorksheet('Property')
-      addRows(propertySheet, propertyRows(householdState.plan.properties))
+      addRows(propertySheet, propertyRows(data.householdPlan.properties))
     }
   }
 

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { HOUSEHOLD_PLAN_STORAGE_KEY } from '@/lib/storeKeys'
 import {
   createDefaultLegacyIndividualSnapshot,
   fromLegacyIndividual,
@@ -24,8 +25,7 @@ import type {
   PlanningAdult,
   PropertyPlan,
 } from '@/lib/household/types'
-
-export const HOUSEHOLD_PLAN_STORAGE_KEY = 'fireplanner-household-plan-v1'
+export { HOUSEHOLD_PLAN_STORAGE_KEY } from '@/lib/storeKeys'
 export const HOUSEHOLD_PLAN_STORAGE_VERSION = 1
 
 export type HouseholdPlanProvenanceSource =

@@ -1,8 +1,8 @@
 /**
  * Share Plan via URL.
  *
- * The compressed payload now carries the v2 portability envelope, while the
- * decoder still returns a mixed-mode runtime store map for the current app.
+ * The compressed payload carries the v2 portability envelope, and the decoder
+ * resolves it once into runtime-ready store data for the current app.
  */
 
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
@@ -10,6 +10,7 @@ import {
   applyResolvedPortabilityData,
   buildPortabilityEnvelope,
   resolvePortabilityData,
+  type ResolvedPortabilityData,
 } from './storeRegistry'
 
 const MAX_URL_LENGTH = 8000
@@ -19,13 +20,12 @@ export function encodeStoresForUrl(): string {
   return compressToEncodedURIComponent(JSON.stringify(buildPortabilityEnvelope()))
 }
 
-/** Decode a compressed string back to store data. Returns null on failure. */
-export function decodeStoresFromUrl(compressed: string): Record<string, unknown> | null {
+/** Decode a compressed string back to resolved portability data. Returns null on failure. */
+export function decodeStoresFromUrl(compressed: string): ResolvedPortabilityData | null {
   try {
     const json = decompressFromEncodedURIComponent(compressed)
     if (!json) return null
-    const resolved = resolvePortabilityData(JSON.parse(json), 'share-url')
-    return resolved ? resolved.runtimeStores as Record<string, unknown> : null
+    return resolvePortabilityData(JSON.parse(json), 'share-url')
   } catch {
     return null
   }
@@ -40,9 +40,7 @@ export function generateShareUrl(): { url: string; tooLong: boolean } {
 }
 
 /** Write decoded store data to localStorage. Does NOT reload — caller handles that. */
-export function applyStoreData(stores: Record<string, unknown>): void {
-  const resolved = resolvePortabilityData(stores, 'share-url')
-  if (!resolved) return
+export function applyStoreData(resolved: ResolvedPortabilityData): void {
   applyResolvedPortabilityData(resolved)
 }
 

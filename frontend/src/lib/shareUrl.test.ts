@@ -73,9 +73,9 @@ describe('shareUrl', () => {
 
     expect(encoded).toBeTruthy()
     expect(decoded).not.toBeNull()
-    expect(decoded![HOUSEHOLD_PLAN_STORAGE_KEY]).toBeDefined()
-    expect(decoded!['fireplanner-profile']).toBeDefined()
-    expect((decoded!['fireplanner-profile'] as { state: { currentAge: number } }).state.currentAge).toBe(32)
+    expect(decoded!.runtimeStores[HOUSEHOLD_PLAN_STORAGE_KEY]).toBeDefined()
+    expect(decoded!.runtimeStores['fireplanner-profile']).toBeDefined()
+    expect(((decoded!.runtimeStores['fireplanner-profile'] as unknown) as { state: { currentAge: number } }).state.currentAge).toBe(32)
   })
 
   it('backward-loads a legacy raw share payload', () => {
@@ -96,8 +96,8 @@ describe('shareUrl', () => {
 
     const decoded = decodeStoresFromUrl(encoded)
     expect(decoded).not.toBeNull()
-    expect(decoded![HOUSEHOLD_PLAN_STORAGE_KEY]).toBeDefined()
-    expect(decoded!['fireplanner-income']).toBeDefined()
+    expect(decoded!.runtimeStores[HOUSEHOLD_PLAN_STORAGE_KEY]).toBeDefined()
+    expect(decoded!.runtimeStores['fireplanner-income']).toBeDefined()
   })
 
   it('applies a multi-adult v2 share payload and clears stale legacy authoring keys', () => {
@@ -119,7 +119,7 @@ describe('shareUrl', () => {
 
     const decoded = decodeStoresFromUrl(encoded)
     expect(decoded).not.toBeNull()
-    expect(decoded!['fireplanner-profile']).toBeUndefined()
+    expect(decoded!.runtimeStores['fireplanner-profile']).toBeUndefined()
 
     applyStoreData(decoded!)
 
