@@ -102,7 +102,8 @@ function validateAdult(adult: PlanningAdult, errors: HouseholdValidationErrors) 
   if (!Number.isFinite(adult.currentAge) || adult.currentAge < 0) {
     addEntityError(errors, 'adult', adult.id, 'currentAge', 'Current age must be zero or greater.')
   }
-  if (!Number.isFinite(adult.retirementAge) || adult.retirementAge <= adult.currentAge) {
+  const isRetiredAdult = adult.cpf.retirementPhase !== null
+  if (!Number.isFinite(adult.retirementAge) || (!isRetiredAdult && adult.retirementAge <= adult.currentAge)) {
     addEntityError(errors, 'adult', adult.id, 'retirementAge', 'Retirement age must be greater than current age.')
   }
   if (!Number.isFinite(adult.lifeExpectancy) || adult.lifeExpectancy <= adult.retirementAge) {
@@ -159,7 +160,8 @@ function validateExpenseItem(
   validateCommonOwnedEntry(expense, errors, 'expense', adultOwners)
   validateTimingRule(expense.timing, errors, 'expense', expense.id, 'timing', adultOwners)
 
-  if (expense.amount < 0) {
+  const allowsNegativeAmount = expense.kind === 'expense-adjustment'
+  if (!allowsNegativeAmount && expense.amount < 0) {
     addEntityError(errors, 'expense', expense.id, 'amount', 'Amount cannot be negative.')
   }
   if (expense.durationYears != null && expense.durationYears < 1) {
