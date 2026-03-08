@@ -578,6 +578,32 @@ describe('compileHouseholdPlan', () => {
     expect(compiledRow?.annualInterest).toBeCloseTo(targetRow?.cpfAnnualInterest ?? 0, 6)
   })
 
+  it('retains both adults when milestone years collide', () => {
+    const plan = makeCouplePlan()
+    plan.adults[1].retirementAge = 58
+    plan.adults[1].cpf.lifeStartAge = 63
+
+    const compiled = compileHouseholdPlan(plan)
+
+    expect(
+      compiled.milestones.filter(
+        (row) => row.kind === 'adult-retirement' && row.yearOffset === 20
+      )
+    ).toEqual(expect.arrayContaining([
+      expect.objectContaining({ sourceId: 'adult-self', adultId: 'adult-self' }),
+      expect.objectContaining({ sourceId: 'adult-partner', adultId: 'adult-partner' }),
+    ]))
+
+    expect(
+      compiled.milestones.filter(
+        (row) => row.kind === 'cpf-life-start' && row.yearOffset === 25
+      )
+    ).toEqual(expect.arrayContaining([
+      expect.objectContaining({ sourceId: 'adult-self', adultId: 'adult-self' }),
+      expect.objectContaining({ sourceId: 'adult-partner', adultId: 'adult-partner' }),
+    ]))
+  })
+
   it('emits warnings when timing must be inferred or shared semantics stay ambiguous', () => {
     const compiled = compileHouseholdPlan(makeCouplePlan({ ambiguousWarnings: true }))
     const warningCodes = compiled.warnings.map((warning) => warning.code)
