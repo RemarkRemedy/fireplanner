@@ -252,4 +252,66 @@ describe('useHouseholdPlanStore', () => {
     expect(state.validationErrors).toEqual({})
     expect(state.hasValidationErrors).toBe(false)
   })
+
+  it('preserves nested CPF fields when partial adult updates are applied', () => {
+    const self = useHouseholdPlanStore.getState().plan.adults[0]
+    const originalCpf = structuredClone(self.cpf)
+
+    useHouseholdPlanStore.getState().updateAdult(self.id, {
+      cpf: {
+        balances: {
+          oa: originalCpf.balances.oa + 5_000,
+        },
+      },
+    } as Partial<PlanningAdult>)
+
+    const updatedAdult = useHouseholdPlanStore.getState().plan.adults[0]
+
+    expect(updatedAdult?.cpf.balances.oa).toBe(originalCpf.balances.oa + 5_000)
+    expect(updatedAdult?.cpf.balances.sa).toBe(originalCpf.balances.sa)
+    expect(updatedAdult?.cpf.lifePlan).toBe(originalCpf.lifePlan)
+    expect(updatedAdult?.cpf.retirementSum).toBe(originalCpf.retirementSum)
+  })
+
+  it('allows negative legacy expense adjustments after household hydration', () => {
+    useHouseholdPlanStore.getState().initializeFromLegacy(LEGACY_PARITY_FIXTURES.goalsAndLifeEvents)
+
+    const state = useHouseholdPlanStore.getState()
+    const adjustment = state.plan.expenses.find((expense) => expense.id === 'expense-adjustment-downsized-commuting')
+
+    expect(adjustment?.amount).toBe(-1_800)
+    expect(state.validationErrors['expense:expense-adjustment-downsized-commuting']?.amount).toBeUndefined()
+    expect(state.hasValidationErrors).toBe(false)
+  })
+
+  it('allows already-retired adults when a retirement phase is present', () => {
+    const self = useHouseholdPlanStore.getState().plan.adults[0]
+
+    useHouseholdPlanStore.getState().updateAdult(self.id, {
+      currentAge: 67,
+      retirementAge: 65,
+      cpf: {
+        ...self.cpf,
+        retirementPhase: '65-plus',
+      },
+    })
+
+    const state = useHouseholdPlanStore.getState()
+
+    expect(state.validationErrors['adult:adult-self']?.retirementAge).toBeUndefined()
+    expect(state.hasValidationErrors).toBe(false)
+  })
+
+  it('keeps the mandatory self adult when removeAdult is called with self', () => {
+    const initialRevision = useHouseholdPlanStore.getState().householdPlanRevision
+    const selfId = useHouseholdPlanStore.getState().plan.adults[0]!.id
+
+    useHouseholdPlanStore.getState().removeAdult(selfId)
+
+    const state = useHouseholdPlanStore.getState()
+
+    expect(state.plan.adults).toHaveLength(1)
+    expect(state.plan.adults[0]?.owner).toBe('self')
+    expect(state.householdPlanRevision).toBe(initialRevision)
+  })
 })
