@@ -37,6 +37,8 @@ type ParsedImportedMember = {
 }
 
 const MONTHS_PER_YEAR = 12
+/** Default salary growth rate for imported plans (matches useIncomeStore default). */
+const DEFAULT_SALARY_GROWTH_RATE = 0.03
 const PARTNER_ADULT_ID = 'adult-partner'
 const LOCAL_EDITABILITY_NOTE =
   'Imported plans are local Fireplanner copies. You can redistribute owners, edit fields, and keep planning here without syncing changes back to Expense.'
@@ -193,6 +195,7 @@ function parseImportedMembers(snapshot: PlannerSnapshotResponse): ParsedImported
       lifeExpectancy: readFiniteNumber(record, 'lifeExpectancy'),
       annualIncome: annualIncome ?? (monthlyIncome !== null ? monthlyIncome * MONTHS_PER_YEAR : null),
       annualExpense: annualExpense ?? (monthlyExpense !== null ? monthlyExpense * MONTHS_PER_YEAR : null),
+      // Monthly -> annual conversion. Downstream treats this as annual amount (see createDependent).
       annualCost: annualCost ?? (monthlyExpense !== null ? monthlyExpense * MONTHS_PER_YEAR : null),
       liquidNetWorth: readFiniteNumber(record, 'investableAssets', 'liquidNetWorth'),
       relationship,
@@ -331,7 +334,7 @@ function createSalaryIncome(adult: PlanningAdult): IncomeSource | null {
       endAge: adult.retirementAge,
     },
     annualAmount: adult.annualIncome,
-    growthRate: 0.03,
+    growthRate: DEFAULT_SALARY_GROWTH_RATE,
     growthModel: 'fixed',
     taxTreatment: 'taxable',
     isCpfApplicable: true,
@@ -350,7 +353,7 @@ function createBaseExpense(
   timingOwner: 'self' | 'partner',
   amount: number,
   startAge: number,
-  retirementAge: number,
+  lifeExpectancy: number,
   label: string,
 ): ExpenseItem | null {
   if (amount <= 0) return null
@@ -364,12 +367,12 @@ function createBaseExpense(
       kind: 'age-range',
       owner: timingOwner,
       startAge,
-      endAge: retirementAge,
+      endAge: lifeExpectancy,
     },
     amount,
     periodicity: 'annual',
     growthRate: 0,
-    retirementSpendingAdjustment: 0,
+    retirementSpendingAdjustment: 1,
   }
 }
 
@@ -489,10 +492,13 @@ export function fromExpenseImport(snapshot: PlannerSnapshotResponse): ImportedHo
   const partnerAnnualIncome = Math.max(0, partnerMember?.annualIncome ?? 0)
   const partnerAnnualExpense = Math.max(0, partnerMember?.annualExpense ?? 0)
   const partnerLiquidNetWorth = Math.max(0, partnerMember?.liquidNetWorth ?? 0)
-  const dependentAnnualIncome = dependentMembers.reduce((sum, member) => sum + Math.max(0, member.annualIncome ?? 0), 0)
+  // Dependent income is not subtracted from the household total because dependents
+  // are not modeled as separate income-producing entities in the plan. Their annualCost
+  // is tracked on the Dependent entry; subtracting their income without adding matching
+  // income entries would silently lose that income from the plan.
   const dependentAnnualCost = dependentMembers.reduce((sum, member) => sum + Math.max(0, member.annualCost ?? 0), 0)
 
-  const residualAnnualIncome = Math.max(0, (totalAnnualIncome ?? 0) - partnerAnnualIncome - dependentAnnualIncome)
+  const residualAnnualIncome = Math.max(0, (totalAnnualIncome ?? 0) - partnerAnnualIncome)
   const residualAnnualExpense = Math.max(0, (totalAnnualExpense ?? 0) - partnerAnnualExpense - dependentAnnualCost)
   const residualLiquidNetWorth = Math.max(0, totalLiquidNetWorth - partnerLiquidNetWorth)
 
@@ -569,7 +575,7 @@ export function fromExpenseImport(snapshot: PlannerSnapshotResponse): ImportedHo
       'partner',
       partnerAdult.annualExpenses,
       partnerAdult.currentAge,
-      partnerAdult.retirementAge,
+      partnerAdult.lifeExpectancy,
       `${partnerAdult.displayName} living costs`,
     )
     if (partnerExpense) {

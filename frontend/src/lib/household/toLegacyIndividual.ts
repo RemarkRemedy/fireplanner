@@ -60,7 +60,8 @@ function cloneIncomeSource(stream: IncomeSource) {
     name: stream.label,
     annualAmount: stream.annualAmount,
     startAge,
-    endAge: endAge ?? 120,
+    // Household endAge is inclusive; legacy endAge is exclusive (income.ts: age >= endAge => 0).
+    endAge: (endAge ?? 119) + 1,
     growthRate: stream.growthRate,
     type: stream.streamType,
     growthModel: stream.growthModel,
@@ -134,7 +135,13 @@ function cloneParentSupport(expense: ExpenseItem, fallbackEndAge: number) {
 }
 
 function cloneRetirementWithdrawal(expense: ExpenseItem) {
-  if (expense.periodicity === 'monthly') return null
+  const annualAmount = toAnnualAmount(expense)
+  if (annualAmount === null) {
+    console.warn(
+      `[toLegacyIndividual] Skipping retirement-withdrawal "${expense.label}" with unsupported periodicity "${expense.periodicity}".`,
+    )
+    return null
+  }
 
   const { startAge, endAge } = toAgeRange(expense.timing)
   const durationYears = expense.durationYears ?? (endAge === null ? 1 : Math.max(endAge - startAge + 1, 1))
@@ -142,7 +149,7 @@ function cloneRetirementWithdrawal(expense: ExpenseItem) {
   return {
     id: expense.id.replace(/^expense-retirement-withdrawal-/, ''),
     label: expense.label,
-    amount: expense.amount,
+    amount: annualAmount,
     age: startAge,
     durationYears,
     inflationAdjusted: expense.inflationAdjusted ?? false,
