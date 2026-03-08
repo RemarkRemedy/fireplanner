@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import {
   getOrCreateLegacyNormalizedAnalysisEntry,
   toMonteCarloAnalysisInputs,
-} from '@/lib/household/toAnalysisInputs'
+} from '@/stores/useNormalizedAnalysisStore'
 import { LEGACY_PARITY_FIXTURES } from '@/lib/household/__tests__/legacyParityFixtures'
 import {
   buildLegacyHouseholdRevision,
