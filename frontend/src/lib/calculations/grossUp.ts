@@ -31,7 +31,7 @@ export function netDownFromGross(gross: number, age: number): number {
 
   const { employeeRate } = getCpfRatesForAge(age)
 
-  if (gross > OW_CEILING_MONTHLY) {
+  if (gross >= OW_CEILING_MONTHLY) {
     return gross - OW_CEILING_MONTHLY * employeeRate
   }
   return gross * (1 - employeeRate)
@@ -43,7 +43,7 @@ export function netDownFromGross(gross: number, age: number): number {
 export function getCpfEmployeeRateLabel(age: number): string {
   const { employeeRate } = getCpfRatesForAge(age)
   const pct = employeeRate * 100
-  return `${pct % 1 === 0 ? pct.toFixed(0) : pct}%`
+  return `${pct % 1 === 0 ? pct.toFixed(0) : pct.toString()}%`
 }
 
 /**
