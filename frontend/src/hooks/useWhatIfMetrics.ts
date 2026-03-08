@@ -1,8 +1,10 @@
 import { useMemo } from 'react'
 import { calculateAllFireMetrics, projectPortfolioAtRetirement } from '@/lib/calculations/fire'
+import { computeCashReserveOffset } from '@/lib/calculations/cashReserve'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
+import type { AllocationState, IncomeState, ProfileState, PropertyState } from '@/lib/types'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
@@ -44,11 +46,11 @@ export interface WhatIfMetricsResult {
 }
 
 export function getBaseInputs(
-  profile: ReturnType<typeof useProfileStore.getState>,
-  income: ReturnType<typeof useIncomeStore.getState>,
-  allocation: ReturnType<typeof useAllocationStore.getState>,
-  property: ReturnType<typeof usePropertyStore.getState>,
-  timingOverride?: Pick<ReturnType<typeof useProfileStore.getState>, 'currentAge' | 'retirementAge' | 'lifeExpectancy'>,
+  profile: ProfileState,
+  income: IncomeState,
+  allocation: AllocationState,
+  property: PropertyState,
+  timingOverride?: Pick<ProfileState, 'currentAge' | 'retirementAge' | 'lifeExpectancy'>,
 ) {
   const cpfTotal = profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
   const currentAge = timingOverride?.currentAge ?? profile.currentAge
@@ -82,6 +84,15 @@ export function getBaseInputs(
     ? Math.max(0, property.existingPropertyValue - property.existingMortgageBalance) * ownershipPct
     : 0
 
+  const cashReserveOffset = computeCashReserveOffset(
+    profile.liquidNetWorth,
+    profile.cashReserveEnabled,
+    profile.cashReserveMode,
+    profile.cashReserveFixedAmount,
+    profile.cashReserveMonths,
+    profile.annualExpenses,
+  )
+
   return {
     currentAge,
     retirementAge,
@@ -103,6 +114,8 @@ export function getBaseInputs(
     parentSupport: profile.parentSupport,
     parentSupportEnabled: profile.parentSupportEnabled,
     healthcareConfig: profile.healthcareConfig?.enabled ? profile.healthcareConfig : null,
+    cashReserveOffset,
+    lockedAssets: profile.lockedAssets,
   }
 }
 
