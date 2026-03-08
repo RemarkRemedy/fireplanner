@@ -81,6 +81,20 @@ import { runActionImpactAnalysis, type ActionImpactResult } from '@/lib/companio
 
 const ALL_STRESS_SCENARIO_IDS = STRESS_SCENARIOS.map((s) => s.id)
 
+interface ScenarioActionImpactState {
+  impacts: ActionImpactResult[] | null
+  isPending: boolean
+  progress: { completed: number; total: number } | null
+  error: string | null
+}
+
+const DEFAULT_SCENARIO_ACTION_IMPACT_STATE: ScenarioActionImpactState = {
+  impacts: null,
+  isPending: false,
+  progress: null,
+  error: null,
+}
+
 function TabIntro({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-sm text-muted-foreground">{children}</p>
@@ -643,11 +657,9 @@ export function StressTestPage() {
   >({})
   const scenarioBatchAbortRef = useRef<AbortController | null>(null)
   const actionImpactAbortRef = useRef<AbortController | null>(null)
+  const lastActionImpactScenarioIdRef = useRef<string | null>(null)
   const lastBaseRetirementAgeRef = useRef(currentRetirementAge)
-  const [actionImpacts, setActionImpacts] = useState<ActionImpactResult[] | null>(null)
-  const [isActionImpactsPending, setIsActionImpactsPending] = useState(false)
-  const [actionImpactsProgress, setActionImpactsProgress] = useState<{ completed: number; total: number } | null>(null)
-  const [actionImpactsError, setActionImpactsError] = useState<string | null>(null)
+  const [actionImpactStates, setActionImpactStates] = useState<Record<string, ScenarioActionImpactState>>({})
   const actionImpactTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const householdPresentationPlan = useMemo(() => {
     if (!householdPlannerEnabled || householdPlan.planType === 'individual') {
@@ -681,6 +693,9 @@ export function StressTestPage() {
       .filter((row): row is StressScenarioComparisonRow => !!row),
     [selectedStressScenarioIds, stressScenarioResults]
   )
+  const activeActionImpactState = companion.activeScenarioId
+    ? (actionImpactStates[companion.activeScenarioId] ?? DEFAULT_SCENARIO_ACTION_IMPACT_STATE)
+    : DEFAULT_SCENARIO_ACTION_IMPACT_STATE
 
   const runSelectedStressScenarios = useCallback(async (
     scenarioIds: StressScenarioId[],
@@ -745,6 +760,7 @@ export function StressTestPage() {
 
   const runCompanionActionImpacts = useCallback(async (
     baseResult: import('@/lib/types').MonteCarloResult,
+    scenarioId: string,
     overrides?: { annualExpenses?: number; retirementAge?: number },
   ) => {
     actionImpactAbortRef.current?.abort()
@@ -754,10 +770,15 @@ export function StressTestPage() {
     }
     const controller = new AbortController()
     actionImpactAbortRef.current = controller
-    setIsActionImpactsPending(true)
-    setActionImpacts(null)
-    setActionImpactsProgress(null)
-    setActionImpactsError(null)
+    setActionImpactStates((prev) => ({
+      ...prev,
+      [scenarioId]: {
+        impacts: null,
+        isPending: true,
+        progress: null,
+        error: null,
+      },
+    }))
 
     // 15s timeout guardrail
     actionImpactTimeoutRef.current = setTimeout(() => {
@@ -789,26 +810,54 @@ export function StressTestPage() {
           : undefined,
         onProgress: (completed, total) => {
           if (!controller.signal.aborted) {
-            setActionImpactsProgress({ completed, total })
+            setActionImpactStates((prev) => ({
+              ...prev,
+              [scenarioId]: {
+                ...(prev[scenarioId] ?? DEFAULT_SCENARIO_ACTION_IMPACT_STATE),
+                isPending: true,
+                progress: { completed, total },
+              },
+            }))
           }
         },
       })
 
       // Runner returns partial results on abort/timeout instead of throwing
       if (controller.signal.reason === 'timeout') {
-        setActionImpacts(output.impacts.length > 0 ? output.impacts : null)
-        setActionImpactsError(
-          output.impacts.length > 0
-            ? `Analysis timed out. Showing ${output.completedLevers}/${output.totalLevers} results.`
-            : 'Analysis timed out after 15 seconds. Please try again.',
-        )
+        setActionImpactStates((prev) => ({
+          ...prev,
+          [scenarioId]: {
+            impacts: output.impacts.length > 0 ? output.impacts : null,
+            isPending: false,
+            progress: null,
+            error: output.impacts.length > 0
+              ? `Analysis timed out. Showing ${output.completedLevers}/${output.totalLevers} results.`
+              : 'Analysis timed out after 15 seconds. Please try again.',
+          },
+        }))
       } else if (!controller.signal.aborted) {
-        setActionImpacts(output.impacts)
+        setActionImpactStates((prev) => ({
+          ...prev,
+          [scenarioId]: {
+            impacts: output.impacts,
+            isPending: false,
+            progress: null,
+            error: null,
+          },
+        }))
       }
     } catch (error) {
       if (!controller.signal.aborted) {
         console.error('action_impacts_failed', error)
-        setActionImpactsError('Action impact analysis failed. Please try again.')
+        setActionImpactStates((prev) => ({
+          ...prev,
+          [scenarioId]: {
+            ...(prev[scenarioId] ?? DEFAULT_SCENARIO_ACTION_IMPACT_STATE),
+            isPending: false,
+            progress: null,
+            error: 'Action impact analysis failed. Please try again.',
+          },
+        }))
       }
     } finally {
       if (actionImpactTimeoutRef.current) {
@@ -817,8 +866,20 @@ export function StressTestPage() {
       }
       if (actionImpactAbortRef.current === controller) {
         actionImpactAbortRef.current = null
-        setIsActionImpactsPending(false)
-        setActionImpactsProgress(null)
+        setActionImpactStates((prev) => {
+          const current = prev[scenarioId]
+          if (!current) {
+            return prev
+          }
+          return {
+            ...prev,
+            [scenarioId]: {
+              ...current,
+              isPending: false,
+              progress: null,
+            },
+          }
+        })
       }
     }
   }, [
@@ -849,15 +910,24 @@ export function StressTestPage() {
 
     // Abort in-flight action impact analysis and clear previous results
     if (companion.isCompanionMode) {
+      const activeScenarioId = companion.activeScenarioId
+      lastActionImpactScenarioIdRef.current = activeScenarioId
       actionImpactAbortRef.current?.abort()
       actionImpactAbortRef.current = null
       if (actionImpactTimeoutRef.current) {
         clearTimeout(actionImpactTimeoutRef.current)
         actionImpactTimeoutRef.current = null
       }
-      setActionImpacts(null)
-      setActionImpactsError(null)
-      setIsActionImpactsPending(false)
+      if (activeScenarioId) {
+        setActionImpactStates((prev) => {
+          if (!(activeScenarioId in prev)) {
+            return prev
+          }
+          const next = { ...prev }
+          delete next[activeScenarioId]
+          return next
+        })
+      }
     }
 
     mc.mutate(overrides)
@@ -877,8 +947,9 @@ export function StressTestPage() {
 
   // Trigger action impact analysis after base MC completes in companion mode
   useEffect(() => {
-    if (!companion.isCompanionMode || !mc.data || mc.isPending) return
-    void runCompanionActionImpacts(mc.data, lastRunOverridesRef.current)
+    const scenarioId = lastActionImpactScenarioIdRef.current
+    if (!companion.isCompanionMode || !mc.data || mc.isPending || !scenarioId) return
+    void runCompanionActionImpacts(mc.data, scenarioId, lastRunOverridesRef.current)
   }, [companion.isCompanionMode, mc.data, mc.isPending, runCompanionActionImpacts])
 
   useEffect(() => {
@@ -983,10 +1054,10 @@ export function StressTestPage() {
           />
           <CompanionResultsSummary
             companion={companion}
-            actionImpacts={actionImpacts}
-            actionImpactsPending={isActionImpactsPending}
-            actionImpactsProgress={actionImpactsProgress}
-            actionImpactsError={actionImpactsError}
+            actionImpacts={activeActionImpactState.impacts}
+            actionImpactsPending={activeActionImpactState.isPending}
+            actionImpactsProgress={activeActionImpactState.progress}
+            actionImpactsError={activeActionImpactState.error}
             householdContext={householdCompanionContext}
           />
           <CompanionStressComparison

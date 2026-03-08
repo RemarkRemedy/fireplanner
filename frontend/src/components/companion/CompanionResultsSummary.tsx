@@ -1,4 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { DeltaBadge } from '@/components/shared/DeltaBadge'
+import { formatWRBand } from '@/components/companion/companionResultsSummaryUtils'
 import { formatCurrency, formatPercent } from '@/lib/utils'
 import type { CompanionPlannerBridgeState } from '@/hooks/useCompanionPlannerBridge'
 import type { ActionImpactResult } from '@/lib/companion/actionImpacts'
@@ -194,7 +196,7 @@ function ActionImpactsSection({
             {error}
           </div>
         )}
-        {!isPending && !error && top3.length > 0 && (
+        {!isPending && top3.length > 0 && (
           <div className="space-y-3">
             {top3.map((impact, idx) => (
               <ActionImpactRow key={impact.lever.id} impact={impact} rank={idx + 1} />
@@ -207,12 +209,12 @@ function ActionImpactsSection({
             {impacts.slice(3).map((impact) => (
               <div key={impact.lever.id} className="flex items-center justify-between py-1 text-xs text-muted-foreground">
                 <span>{impact.lever.shortLabel}</span>
-                <DeltaDisplay value={impact.delta_p_success} />
+                <ImpactDeltaBadge value={impact.delta_p_success} />
               </div>
             ))}
           </div>
         )}
-        {!isPending && impacts && impacts.length === 0 && (
+        {!isPending && impacts && impacts.length === 0 && !error && (
           <div className="text-sm text-muted-foreground">
             No applicable actions for your current lifecycle stage.
           </div>
@@ -236,7 +238,7 @@ function ActionImpactRow({ impact, rank }: { impact: ActionImpactResult; rank: n
           <div className="text-xs text-muted-foreground">{impact.rationale}</div>
         </div>
         <div className="text-right shrink-0">
-          <DeltaDisplay value={deltaP} />
+          <ImpactDeltaBadge value={deltaP} />
           {impact.delta_fail_prob_0_5y < -0.005 && (
             <div className="text-[10px] text-green-600 dark:text-green-400 mt-0.5">
               {formatPercent(Math.abs(impact.delta_fail_prob_0_5y), 1)} less early risk
@@ -248,18 +250,13 @@ function ActionImpactRow({ impact, rank }: { impact: ActionImpactResult; rank: n
   )
 }
 
-function DeltaDisplay({ value }: { value: number }) {
+function ImpactDeltaBadge({ value }: { value: number }) {
   if (Math.abs(value) < 0.001) {
     return <span className="text-xs text-muted-foreground">~0pp</span>
   }
-  const isPositive = value > 0
-  const cls = isPositive
-    ? 'text-green-600 dark:text-green-400'
-    : 'text-red-600 dark:text-red-400'
+
   return (
-    <span className={`text-sm font-semibold tabular-nums ${cls}`}>
-      {isPositive ? '+' : ''}{(value * 100).toFixed(1)}pp
-    </span>
+    <DeltaBadge value={value} format={(delta) => `${(delta * 100).toFixed(1)}pp`} />
   )
 }
 
@@ -289,12 +286,4 @@ function MetricCell({
       {subtitle && <div className="text-[10px] text-muted-foreground">{subtitle}</div>}
     </div>
   )
-}
-
-function formatWRBand(low: number | null, mid: number | null, high: number | null): string {
-  if (mid == null) return '\u2014'
-  if (low != null && high != null) {
-    return `${formatPercent(low, 1)} / ${formatPercent(mid, 1)} / ${formatPercent(high, 1)}`
-  }
-  return formatPercent(mid, 1)
 }

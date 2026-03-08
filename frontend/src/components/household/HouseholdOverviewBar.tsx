@@ -36,6 +36,9 @@ function buildCoverageSummary(compiledPlan: CompiledHouseholdPlan): string {
 
 function findFirstRetirementLabel(compiledPlan: CompiledHouseholdPlan): string {
   const firstAdultId = compiledPlan.adultOrder.reduce<string | null>((earliestId, adultId) => {
+    if (!compiledPlan.adultsById[adultId]) {
+      return earliestId
+    }
     if (!earliestId) return adultId
 
     const nextOffset = compiledPlan.adultTimingById[adultId]?.retirementYearOffset ?? Number.MAX_SAFE_INTEGER
@@ -48,6 +51,9 @@ function findFirstRetirementLabel(compiledPlan: CompiledHouseholdPlan): string {
   }
 
   const adult = compiledPlan.adultsById[firstAdultId]
+  if (!adult) {
+    return 'Not set'
+  }
   const retirementOffset = compiledPlan.adultTimingById[firstAdultId]?.retirementYearOffset ?? 0
   const retirementAge = adult.currentAge + retirementOffset
 
@@ -97,7 +103,7 @@ export function HouseholdOverviewBar({
                 const adult = compiledPlan.adultsById[adultId]
                 return (
                   <Badge key={adultId} variant="outline" className="bg-background/80">
-                    {adult.displayName} • age {adult.currentAge}
+                    {adult?.displayName ?? 'Adult'} • age {adult?.currentAge ?? '—'}
                   </Badge>
                 )
               })}
@@ -105,8 +111,8 @@ export function HouseholdOverviewBar({
                 const dependent = compiledPlan.dependentsById[dependentId]
                 return (
                   <Badge key={dependentId} variant="outline" className="bg-background/80">
-                    {dependent.label}
-                    {dependent.currentAge != null ? ` • age ${dependent.currentAge}` : ' • dependent'}
+                    {dependent?.label ?? 'Dependent'}
+                    {dependent?.currentAge != null ? ` • age ${dependent.currentAge}` : ' • dependent'}
                   </Badge>
                 )
               })}

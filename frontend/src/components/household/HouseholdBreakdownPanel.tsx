@@ -79,11 +79,17 @@ function sumActiveExpensesByOwner(compiledPlan: CompiledHouseholdPlan, owner: En
 
   const propertyCosts = compiledPlan.propertyOrder.reduce((sum, propertyId) => {
     const property = compiledPlan.propertiesById[propertyId]
-    if (!property || property.owner !== owner) return sum
+    if (!property || property.owner !== owner || !property.ownsProperty) return sum
     return sum + property.existingMonthlyPayment * 12
   }, 0)
 
   return directExpenses + dependentCosts + healthcareCosts + propertyCosts
+}
+
+function sumCurrentHouseholdCosts(compiledPlan: CompiledHouseholdPlan): number {
+  return sumActiveExpensesByOwner(compiledPlan, 'self')
+    + sumActiveExpensesByOwner(compiledPlan, 'partner')
+    + sumActiveExpensesByOwner(compiledPlan, 'shared')
 }
 
 function sumAssetsByOwner(compiledPlan: CompiledHouseholdPlan, owner: EntryOwner): number {
@@ -132,7 +138,7 @@ function buildOwnerSection(
   const labels = collectOwnerLabels(compiledPlan, owner)
   const matchingAdult = compiledPlan.adultOrder
     .map((adultId) => compiledPlan.adultsById[adultId])
-    .find((adult) => adult.owner === owner)
+    .find((adult) => !!adult && adult.owner === owner)
 
   const propertyCount = compiledPlan.propertyOrder.filter(
     (propertyId) => compiledPlan.propertiesById[propertyId]?.owner === owner,
@@ -185,6 +191,7 @@ function buildHouseholdSection(compiledPlan: CompiledHouseholdPlan): BreakdownSe
   const retirementRow = compiledPlan.rows[
     Math.min(compiledPlan.householdRetirementYearOffset, Math.max(0, compiledPlan.rows.length - 1))
   ]
+  const authoredCostsToday = sumCurrentHouseholdCosts(compiledPlan)
   const itemLabels = [
     ...compiledPlan.adultOrder.map((adultId) => compiledPlan.adultsById[adultId]?.displayName ?? 'Adult'),
     ...compiledPlan.dependentOrder.map((dependentId) => compiledPlan.dependentsById[dependentId]?.label ?? 'Dependent'),
@@ -204,8 +211,8 @@ function buildHouseholdSection(compiledPlan: CompiledHouseholdPlan): BreakdownSe
       },
       {
         label: 'Costs today',
-        value: formatMetric(currentRow?.retirementExpenseBase ?? 0),
-        detail: 'Recurring spending, healthcare, dependents, and property costs.',
+        value: formatMetric(authoredCostsToday),
+        detail: 'Current authored costs rolled up from the household, self, partner, and shared sections.',
       },
       {
         label: 'Net today',

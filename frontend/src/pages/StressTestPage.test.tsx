@@ -115,6 +115,25 @@ function makeActionImpactOutput(
   }
 }
 
+function makeSingleActionImpactOutput(label: string, id: string): ActionImpactRunnerOutput {
+  return makeActionImpactOutput({
+    impacts: [{
+      lever: {
+        id,
+        label,
+        shortLabel: label,
+        description: label,
+        applicableTo: 'all',
+      },
+      metrics: { p_success: 0.95, fail_prob_0_5y: 0.001, fail_prob_6_10y: 0.002 },
+      delta_p_success: 0.04,
+      delta_fail_prob_0_5y: -0.002,
+      delta_fail_prob_6_10y: -0.001,
+      rationale: `${label} improves success by 4.0pp.`,
+    }],
+  })
+}
+
 function createMockNormalizedContext(overrides?: Partial<ReturnType<typeof incomeProjectionHooks.useNormalizedLegacyAnalysisContext>>) {
   return {
     cacheKey: 'legacy:1:1:1::00000000',
@@ -403,10 +422,6 @@ describe('StressTestPage companion orchestration', () => {
 
     await user.click(getRunButton())
 
-    await waitFor(() => {
-      expect(mockRunMC).toHaveBeenCalled()
-    })
-
     await act(async () => {
       vi.advanceTimersByTime(0)
       await Promise.resolve()
@@ -425,6 +440,7 @@ describe('StressTestPage companion orchestration', () => {
     await waitFor(() => {
       expect(screen.getByText(/Analysis timed out\. Showing 1\/3 results\./)).toBeInTheDocument()
     })
+    expect(screen.getByText('Cut expenses by 10%')).toBeInTheDocument()
 
     vi.useRealTimers()
   })
@@ -456,10 +472,6 @@ describe('StressTestPage companion orchestration', () => {
     await waitForRunButton()
 
     await user.click(getRunButton())
-
-    await waitFor(() => {
-      expect(mockRunMC).toHaveBeenCalled()
-    })
 
     await act(async () => {
       vi.advanceTimersByTime(0)
@@ -524,6 +536,40 @@ describe('StressTestPage companion orchestration', () => {
 
     // Resolve the first to prevent hanging
     resolveFirst?.()
+  })
+
+  it('keeps action impact results scoped to the active companion scenario', async () => {
+    mockRunMC.mockImplementation(async () => structuredClone(SAMPLE_MC_RESULT))
+    mockRunActionImpacts
+      .mockResolvedValueOnce(makeSingleActionImpactOutput('Base action', 'base-action'))
+      .mockResolvedValueOnce(makeSingleActionImpactOutput('Cut scenario action', 'cut-action'))
+
+    const user = userEvent.setup()
+    renderPage()
+
+    await waitForRunButton()
+
+    await user.click(getRunButton())
+
+    await waitFor(() => {
+      expect(mockRunActionImpacts).toHaveBeenCalledTimes(1)
+      expect(screen.getByText('Base action')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Cut $300/mo' }))
+    await user.click(getRunButton())
+
+    await waitFor(() => {
+      expect(mockRunActionImpacts).toHaveBeenCalledTimes(2)
+      expect(screen.getByText('Cut scenario action')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Base' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Base action')).toBeInTheDocument()
+    })
+    expect(screen.queryByText('Cut scenario action')).not.toBeInTheDocument()
   })
 
   it('shows error message when runActionImpactAnalysis rejects', async () => {
