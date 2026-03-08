@@ -28,6 +28,9 @@ function hasHealthcarePlanningData(adult: PlanningAdult): boolean {
     || healthcare.oopBaseAmount !== DEFAULT_HEALTHCARE_CONFIG.oopBaseAmount
     || healthcare.oopInflationRate !== DEFAULT_HEALTHCARE_CONFIG.oopInflationRate
     || healthcare.oopModel !== DEFAULT_HEALTHCARE_CONFIG.oopModel
+    /** W60: Include oopCurveVariant in healthcare section visibility heuristic. */
+    || (healthcare.oopCurveVariant != null
+      && healthcare.oopCurveVariant !== DEFAULT_HEALTHCARE_CONFIG.oopCurveVariant)
     || healthcare.mediShieldLifeEnabled !== DEFAULT_HEALTHCARE_CONFIG.mediShieldLifeEnabled
     || healthcare.careShieldLifeEnabled !== DEFAULT_HEALTHCARE_CONFIG.careShieldLifeEnabled
 }

@@ -72,7 +72,10 @@ export function HouseholdMilestoneTimeline({
 }: {
   compiledPlan: CompiledHouseholdPlan
 }) {
-  const milestoneRows = compiledPlan.milestones.slice(0, MAX_TIMELINE_ITEMS)
+  /** W56: Sort chronologically before slicing to ensure earliest milestones are shown. */
+  const milestoneRows = [...compiledPlan.milestones]
+    .sort((a, b) => a.yearOffset - b.yearOffset)
+    .slice(0, MAX_TIMELINE_ITEMS)
 
   return (
     <Card>

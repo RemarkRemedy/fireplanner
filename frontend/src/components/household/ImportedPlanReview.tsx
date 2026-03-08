@@ -8,6 +8,13 @@ const ROLE_LABELS: Record<ImportedPlanReviewModel['detectedMembers'][number]['ro
   dependent: 'Dependent',
 }
 
+/** W58: Display-friendly owner labels instead of raw owner identifiers. */
+const OWNER_LABELS: Record<string, string> = {
+  self: 'Self',
+  partner: 'Partner',
+  shared: 'Shared',
+}
+
 interface ImportedPlanReviewProps {
   review: ImportedPlanReviewModel
 }
@@ -26,8 +33,9 @@ function renderItems(items: string[], emptyLabel: string) {
 
   return (
     <ul className="space-y-2 text-sm text-muted-foreground">
-      {items.map((item) => (
-        <li key={item} className="rounded-md border bg-muted/30 px-3 py-2">
+      {/* W57: Use composite key to avoid collision when items have duplicate labels. */}
+      {items.map((item, index) => (
+        <li key={`${item}-${index}`} className="rounded-md border bg-muted/30 px-3 py-2">
           {item}
         </li>
       ))}
@@ -59,7 +67,7 @@ export function ImportedPlanReview({ review }: ImportedPlanReviewProps) {
                   <Badge variant="outline">{ROLE_LABELS[member.role]}</Badge>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Owner: {member.owner === 'shared' ? 'Shared' : member.owner}
+                  Owner: {OWNER_LABELS[member.owner] ?? member.owner}
                   {member.age !== null ? ` • Age ${member.age}` : ''}
                 </p>
               </div>

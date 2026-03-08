@@ -68,6 +68,12 @@ export function HouseholdOverviewBar({
   compiledPlan: CompiledHouseholdPlan
 }) {
   const currentRow = compiledPlan.rows[0]
+  /** W54: Warn when retirement row index clamp activates. */
+  if (compiledPlan.householdRetirementYearOffset >= compiledPlan.rows.length) {
+    console.warn(
+      `[HouseholdOverviewBar] householdRetirementYearOffset (${compiledPlan.householdRetirementYearOffset}) >= rows.length (${compiledPlan.rows.length}), clamping to last row`,
+    )
+  }
   const retirementRow = compiledPlan.rows[
     Math.min(compiledPlan.householdRetirementYearOffset, Math.max(0, compiledPlan.rows.length - 1))
   ]
