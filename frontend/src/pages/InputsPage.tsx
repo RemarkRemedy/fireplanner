@@ -112,18 +112,15 @@ export function InputsPage() {
   const selectedAdult = adults.find((adult) => adult.id === selectedAdultId) ?? adults[0] ?? null
   const cpfModel = useHouseholdCpfAdapter(selectedAdult?.id)
 
+  // Goals and Healthcare are sub-sections of Spending — excluded from progress bar
   const sectionOrder: SectionId[] = [
     'section-personal',
     'section-income',
     'section-expenses',
-    'section-goals',
     'section-net-worth',
   ]
   if (cpfEnabled) {
     sectionOrder.push('section-cpf')
-  }
-  if (healthcareEnabled) {
-    sectionOrder.push('section-healthcare')
   }
   if (propertyEnabled) {
     sectionOrder.push('section-property')
@@ -254,17 +251,8 @@ export function InputsPage() {
         <SpendingGoalsSection selectedAdultId={selectedAdult?.id ?? null} />
       </HouseholdPrototypeSection>
 
-      <HouseholdPrototypeSection
-        sectionId="section-goals"
-        title="Goals"
-        description="Goal editing now lives inside the household spending surface."
-        isComplete={sectionCompletion['section-goals'].isComplete}
-      >
-        <HouseholdPlaceholderCard
-          title="Goal authoring moved into Spending"
-          body="Use the goal editor inside the Spending, Healthcare & Goals section above. This anchor stays in place so dashboard prompts and deep links remain stable during the rollout."
-        />
-      </HouseholdPrototypeSection>
+      {/* Invisible scroll anchor — Goals editing lives inside SpendingGoalsSection */}
+      <div id="section-goals" className="scroll-mt-16" />
 
       <HouseholdPrototypeSection
         sectionId="section-net-worth"
@@ -297,19 +285,8 @@ export function InputsPage() {
         </HouseholdPrototypeSection>
       )}
 
-      {healthcareEnabled && (
-        <HouseholdPrototypeSection
-          sectionId="section-healthcare"
-          title="Healthcare & Insurance"
-          description="Healthcare editing now lives inside the household spending surface."
-          isComplete={sectionCompletion['section-healthcare'].isComplete}
-        >
-          <HouseholdPlaceholderCard
-            title="Healthcare editing moved into Spending"
-            body="Use the healthcare card inside the Spending, Healthcare & Goals section above. This anchor stays in place so section links remain stable while the household editor settles."
-          />
-        </HouseholdPrototypeSection>
-      )}
+      {/* Invisible scroll anchor — Healthcare editing lives inside SpendingGoalsSection */}
+      {healthcareEnabled && <div id="section-healthcare" className="scroll-mt-16" />}
 
       {propertyEnabled && (
         <HouseholdPrototypeSection
