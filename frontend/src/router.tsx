@@ -1,9 +1,10 @@
 /* eslint-disable react-refresh/only-export-components -- Router config, not a component file */
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { createBrowserRouter, Navigate, Link } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { isCompanionMode } from '@/lib/companion/isCompanionMode'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
+import { deriveHouseholdSectionToggles } from '@/lib/household/sectionVisibility'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
 
@@ -44,16 +45,31 @@ function NotFound() {
 }
 
 function PlannerRouteShell() {
-  const plan = useHouseholdPlanStore((state) => state.plan)
+  const planType = useHouseholdPlanStore((state) => state.plan.planType)
   const provenanceSource = useHouseholdPlanStore((state) => state.provenance.source)
+  const requiredCpfEnabled = useHouseholdPlanStore((state) => deriveHouseholdSectionToggles(state.plan).cpfEnabled)
+  const requiredPropertyEnabled = useHouseholdPlanStore((state) => deriveHouseholdSectionToggles(state.plan).propertyEnabled)
+  const requiredHealthcareEnabled = useHouseholdPlanStore((state) => deriveHouseholdSectionToggles(state.plan).healthcareEnabled)
   const ensureHouseholdDataVisible = useUIStore((state) => state.ensureHouseholdDataVisible)
-  const householdPlannerEnabled = isHouseholdPlannerV1Enabled()
+  const [householdPlannerEnabled] = useState(() => isHouseholdPlannerV1Enabled())
 
   useEffect(() => {
-    if (provenanceSource !== 'manual' || (householdPlannerEnabled && plan.planType !== 'individual')) {
-      ensureHouseholdDataVisible(plan)
+    if (provenanceSource !== 'manual' || (householdPlannerEnabled && planType !== 'individual')) {
+      ensureHouseholdDataVisible({
+        cpfEnabled: requiredCpfEnabled,
+        propertyEnabled: requiredPropertyEnabled,
+        healthcareEnabled: requiredHealthcareEnabled,
+      })
     }
-  }, [ensureHouseholdDataVisible, householdPlannerEnabled, plan, provenanceSource])
+  }, [
+    ensureHouseholdDataVisible,
+    householdPlannerEnabled,
+    planType,
+    provenanceSource,
+    requiredCpfEnabled,
+    requiredPropertyEnabled,
+    requiredHealthcareEnabled,
+  ])
 
   return <AppLayout />
 }

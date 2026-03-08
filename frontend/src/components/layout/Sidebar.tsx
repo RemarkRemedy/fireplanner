@@ -144,7 +144,7 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const navigate = useNavigate()
   const companionMode = isCompanionMode()
-  const householdPlannerEnabled = isHouseholdPlannerV1Enabled()
+  const [householdPlannerEnabled] = useState(() => isHouseholdPlannerV1Enabled())
   const sectionOrder = useUIStore((s) => s.sectionOrder)
   const { activeSection, isInputsPage } = useActiveSection()
   const { sections } = useSectionCompletion()

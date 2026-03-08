@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { createId } from '@/lib/household/ids'
 import { HOUSEHOLD_PLAN_STORAGE_KEY } from '@/lib/storeKeys'
 import {
   createDefaultLegacyIndividualSnapshot,
@@ -96,14 +97,6 @@ export interface HouseholdPlanPersistedState {
 
 function nowIsoString(): string {
   return new Date().toISOString()
-}
-
-function createId(prefix: string): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`
-  }
-
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 }
 
 function clonePlan(plan: HouseholdPlan): HouseholdPlan {
