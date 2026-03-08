@@ -144,7 +144,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                           onChange={(event) => handleUpdateAsset(asset, { label: event.target.value })}
                           className="max-w-sm"
                         />
-                        <Badge variant="secondary">{entryOwnerLabel(asset.owner)}</Badge>
+                        <Badge variant="secondary">{entryOwnerLabel(asset.owner, plan.adults)}</Badge>
                       </div>
                       <Button type="button" variant="ghost" onClick={() => handleRemoveAsset(asset.id)}>
                         Remove
@@ -182,7 +182,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                           <SelectContent>
                             {ownerOptions.map((option) => (
                               <SelectItem key={option} value={option}>
-                                {entryOwnerLabel(option)}
+                                {entryOwnerLabel(option, plan.adults)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -261,7 +261,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                         onChange={(event) => updateProperty(property.id, { label: event.target.value })}
                         className="max-w-sm"
                       />
-                      <Badge variant="secondary">{entryOwnerLabel(property.owner)}</Badge>
+                      <Badge variant="secondary">{entryOwnerLabel(property.owner, plan.adults)}</Badge>
                     </div>
                     <Button type="button" variant="ghost" onClick={() => removeProperty(property.id)}>
                       Remove
@@ -281,7 +281,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                         <SelectContent>
                           {ownerOptions.map((option) => (
                             <SelectItem key={option} value={option}>
-                              {entryOwnerLabel(option)}
+                              {entryOwnerLabel(option, plan.adults)}
                             </SelectItem>
                           ))}
                         </SelectContent>

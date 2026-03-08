@@ -133,7 +133,7 @@ describe('Household assets, property, and assumptions editors', () => {
     if (!(liquidCard instanceof HTMLElement)) {
       throw new Error('Could not find liquid asset card')
     }
-    await chooseSelectOption(user, liquidCard, 'Owner', 'Self')
+    await chooseSelectOption(user, liquidCard, 'Owner', 'Taylor (You)')
     setNumericInput(getFieldInput(liquidCard, 'Amount'), '150000')
 
     const lockedCard = screen.getByDisplayValue('Locked asset').closest('div.rounded-lg.border')
