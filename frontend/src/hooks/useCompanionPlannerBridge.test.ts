@@ -7,6 +7,7 @@ import { useProfileStore } from '@/stores/useProfileStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
+import { HOUSEHOLD_PLAN_STORAGE_KEY } from '@/stores/useHouseholdPlanStore'
 import { resolveDeterministicExpectedReturn } from '@/lib/analysis/deterministicAssumptions'
 import { buildPlannerResultsPayload } from '@/lib/companion/resultsPayload'
 import { useCompanionPlannerBridge } from './useCompanionPlannerBridge'
@@ -95,6 +96,8 @@ beforeEach(() => {
   useIncomeStore.getState().reset()
   useAllocationStore.getState().reset()
   useSimulationStore.getState().reset()
+  useHouseholdPlanStore.persist.clearStorage()
+  localStorage.removeItem(HOUSEHOLD_PLAN_STORAGE_KEY)
   useHouseholdPlanStore.getState().reset()
   useUIStore.getState().setField('mode', 'simple')
 
@@ -178,6 +181,30 @@ describe('useCompanionPlannerBridge', () => {
     expect(
       useHouseholdPlanStore.getState().plan.adults.find((adult) => adult.owner === 'partner')?.annualIncome,
     ).toBe(42_000)
+    await waitFor(() => {
+      expect(localStorage.getItem(HOUSEHOLD_PLAN_STORAGE_KEY)).not.toBeNull()
+    })
+  })
+
+  it('reacts when companion mode becomes enabled after the hook has already mounted', async () => {
+    mockFetchPlannerSnapshot.mockResolvedValue({ schemaVersion: 1 })
+
+    const { result, rerender } = renderHook(
+      ({ mc, stale }) => useCompanionPlannerBridge({ result: mc, isResultStale: stale }),
+      { initialProps: { mc: undefined as MonteCarloResult | undefined, stale: false } },
+    )
+
+    expect(result.current.isCompanionMode).toBe(false)
+
+    enableCompanionMode('flip001')
+    rerender({ mc: undefined, stale: false })
+
+    await waitFor(() => {
+      expect(result.current.isCompanionMode).toBe(true)
+      expect(result.current.bootstrapStatus).toBe('loaded')
+    })
+
+    expect(mockFetchPlannerSnapshot).toHaveBeenCalledWith('http://localhost:3000', 'flip001')
   })
 
   it('posts companion results with required payload keys after simulation completes', async () => {

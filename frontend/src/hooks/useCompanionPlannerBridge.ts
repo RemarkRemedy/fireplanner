@@ -110,9 +110,9 @@ export function useCompanionPlannerBridge({
   result,
   isResultStale,
 }: CompanionPlannerBridgeInput): CompanionPlannerBridgeState {
-  const companionMode = useMemo(() => isCompanionMode(), [])
-  const token = useMemo(() => companionMode ? getCompanionToken() : null, [companionMode])
-  const baseUrl = useMemo(() => companionMode ? getCompanionBaseUrl() : '', [companionMode])
+  const companionMode = isCompanionMode()
+  const token = companionMode ? getCompanionToken() : null
+  const baseUrl = companionMode ? getCompanionBaseUrl() : ''
 
   const normalized = useNormalizedLegacyAnalysisContext()
   const analysisPortfolio = useAnalysisPortfolio()

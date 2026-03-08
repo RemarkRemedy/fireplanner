@@ -12,6 +12,13 @@ interface ImportedPlanReviewProps {
   review: ImportedPlanReviewModel
 }
 
+function formatImportedAt(value: string): string {
+  return new Date(value).toLocaleString('en-SG', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  })
+}
+
 function renderItems(items: string[], emptyLabel: string) {
   if (items.length === 0) {
     return <p className="text-sm text-muted-foreground">{emptyLabel}</p>
@@ -37,7 +44,7 @@ export function ImportedPlanReview({ review }: ImportedPlanReviewProps) {
           <Badge variant="secondary">{review.provenance.source}</Badge>
         </div>
         <p className="text-sm text-muted-foreground">
-          Imported {new Date(review.provenance.importedAt).toLocaleString()}
+          Imported {formatImportedAt(review.provenance.importedAt)}
           {review.provenance.monthKey ? ` • Snapshot month ${review.provenance.monthKey}` : ''}
         </p>
       </CardHeader>
