@@ -11,6 +11,9 @@ const SRC_ROOT = path.resolve(FRONTEND_ROOT, 'src')
 const ALLOWED_IMPORTERS = [
   path.resolve(FRONTEND_ROOT, 'src/lib/household/fromLegacyIndividual.ts'),
   path.resolve(FRONTEND_ROOT, 'src/lib/storeRegistry.ts'),
+  // StartPage imports DEFAULT_PROFILE constant (not a store subscription) for
+  // canonical default values used in the onboarding calculator.
+  path.resolve(FRONTEND_ROOT, 'src/pages/StartPage.tsx'),
 ].sort()
 const LEGACY_STORE_IMPORT_PATTERN = /from\s+['"][^'"]*use(Profile|Income|Property)Store['"]/m
 
