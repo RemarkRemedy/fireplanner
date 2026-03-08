@@ -8,12 +8,24 @@ import type {
 
 export type AgeRangeTiming = Extract<TimingRule, { kind: 'age-range' }>
 
-export function ownerLabel(owner: AdultOwner): string {
-  return owner === 'self' ? 'Self' : 'Partner'
+export function ownerLabel(
+  owner: AdultOwner,
+  adults?: ReadonlyArray<Pick<PlanningAdult, 'owner' | 'displayName'>>,
+): string {
+  if (adults) {
+    const adult = adults.find((a) => a.owner === owner)
+    if (adult) {
+      return owner === 'self' ? `${adult.displayName} (You)` : adult.displayName
+    }
+  }
+  return owner === 'self' ? 'You' : 'Partner'
 }
 
-export function entryOwnerLabel(owner: EntryOwner): string {
-  return owner === 'shared' ? 'Shared' : ownerLabel(owner)
+export function entryOwnerLabel(
+  owner: EntryOwner,
+  adults?: ReadonlyArray<Pick<PlanningAdult, 'owner' | 'displayName'>>,
+): string {
+  return owner === 'shared' ? 'Shared' : ownerLabel(owner, adults)
 }
 
 export function getSelectedAdult(
