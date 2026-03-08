@@ -793,6 +793,9 @@ export function StressTestPage() {
       const annualIncome = normalized.compiledPlan.rows[0]?.totalNetIncome ?? profile.annualIncome ?? 0
       const isRetiree = normalized.currentAge >= (overrides?.retirementAge ?? normalized.retirementAge)
 
+      // getState() is intentional for allocation/simulation — avoids stale closure in async callback.
+      // This runs inside a useCallback that triggers an async analysis; subscribing
+      // via selectors would capture stale values at callback creation time.
       const output = await runActionImpactAnalysis({
         profile,
         income,
