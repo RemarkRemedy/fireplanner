@@ -55,6 +55,7 @@ export function NullableNumberInput({
     return clamped
   }, [max, min])
 
+  /** W51: Only emit null on genuinely empty input. For intermediate typing states, keep previous value. */
   const parseValue = useCallback((rawValue: string): number | null => {
     if (rawValue.trim() === '') {
       return null
@@ -62,11 +63,11 @@ export function NullableNumberInput({
 
     const parsed = integer ? parseInt(rawValue, 10) : parseFloat(rawValue)
     if (Number.isNaN(parsed)) {
-      return null
+      return value // keep previous value during intermediate typing (e.g., "-", ".", "1e")
     }
 
     return clamp(parsed)
-  }, [clamp, integer])
+  }, [clamp, integer, value])
 
   const input = (
     <Input

@@ -789,7 +789,8 @@ export function StressTestPage() {
     }, 15_000)
 
     try {
-      const annualIncome = profile.annualIncome ?? 0
+      /** C27: Use compiled total income (includes bonuses, partner income) instead of raw profile salary. */
+      const annualIncome = normalized.compiledPlan.rows[0]?.totalNetIncome ?? profile.annualIncome ?? 0
       const isRetiree = normalized.currentAge >= (overrides?.retirementAge ?? normalized.retirementAge)
 
       const output = await runActionImpactAnalysis({

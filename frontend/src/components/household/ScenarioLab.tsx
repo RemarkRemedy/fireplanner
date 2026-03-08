@@ -21,6 +21,7 @@ import {
   summarizeHouseholdScenario,
 } from '@/lib/household/scenarios'
 import { compileHouseholdPlan } from '@/lib/household/compileHouseholdPlan'
+import { DeltaBadge } from '@/components/shared/DeltaBadge'
 import { formatCurrency, formatPercent } from '@/lib/utils'
 
 function SummaryRow({
@@ -150,13 +151,16 @@ export function ScenarioLab({ plan: providedPlan }: ScenarioLabProps) {
                   />
                 </div>
 
-                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                  <Badge variant="secondary">
-                    Savings delta {savingsDelta >= 0 ? '+' : ''}{formatCurrency(savingsDelta)}/yr
-                  </Badge>
-                  <Badge variant="secondary">
-                    Gap delta {retirementGapDelta >= 0 ? '+' : ''}{formatCurrency(retirementGapDelta)}/yr
-                  </Badge>
+                {/* W53: Use canonical DeltaBadge for savings and gap deltas. */}
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center">
+                    Savings
+                    <DeltaBadge value={savingsDelta} format={(v) => `${formatCurrency(v)}/yr`} />
+                  </span>
+                  <span className="inline-flex items-center">
+                    Gap
+                    <DeltaBadge value={retirementGapDelta} format={(v) => `${formatCurrency(v)}/yr`} invert />
+                  </span>
                   <Badge variant="secondary">
                     Active income {scenario.summary.activeIncomeSources}
                   </Badge>

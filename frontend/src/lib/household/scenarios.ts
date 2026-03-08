@@ -255,6 +255,13 @@ export function summarizeHouseholdScenario(compiledPlan: CompiledHouseholdPlan):
     return Math.min(earliestAge, nextAge)
   }, null)
 
+  /**
+   * C30 dollar basis note: currentAnnualSavings is in year-0 nominal dollars,
+   * retirementGap is in retirement-year nominal dollars. These are NOT directly
+   * comparable in absolute terms. However, the ScenarioLab only displays deltas
+   * (scenario minus baseline), and both baseline and scenario share the same
+   * inflation path, so delta comparisons remain valid across year bases.
+   */
   return {
     currentAnnualSavings: currentRow?.annualSavings ?? 0,
     retirementGap: retirementRow?.householdWithdrawalNeed ?? 0,
@@ -291,11 +298,28 @@ export function buildBuiltInHouseholdScenarios(plan: HouseholdPlan): HouseholdSc
   const scenarios: HouseholdScenarioDefinition[] = []
   const selfAdult = findAdult(plan, 'self')
   const partnerAdult = findAdult(plan, 'partner')
-  const sharedExpenses = plan.expenses.filter((expense) => expense.owner === 'shared')
+  /** C28: Exclude one-off and retirement-withdrawal expenses from shared expense overrides. */
+  const sharedExpenses = plan.expenses.filter(
+    (expense) => expense.owner === 'shared'
+      && expense.periodicity !== 'one-off'
+      && expense.kind !== 'retirement-withdrawal',
+  )
+  /** W49: Only target income that is both active AND currently earning (timing check). */
   const activeIncome = [...plan.income]
-    .filter((income) => income.isActive)
+    .filter((income) => {
+      if (!income.isActive) return false
+      if (income.timing.kind === 'age-range') {
+        const ownerAdult = findAdult(plan, income.timing.owner)
+        if (ownerAdult) {
+          const currentAge = ownerAdult.currentAge
+          return income.timing.startAge <= currentAge && (income.timing.endAge == null || currentAge <= income.timing.endAge)
+        }
+      }
+      return true
+    })
     .sort((left, right) => right.annualAmount - left.annualAmount)
-  const firstDependent = plan.dependents[0]
+  /** W50: Skip zero-cost or expired dependents. */
+  const firstDependent = plan.dependents.find((d) => (d.annualCost ?? 0) > 0)
 
   if (selfAdult && selfAdult.retirementAge < selfAdult.lifeExpectancy - 1) {
     const overrides = buildRetirementScenarioOverrides(plan, selfAdult, selfAdult.retirementAge + 2)
@@ -383,7 +407,8 @@ export function buildBuiltInHouseholdScenarios(plan: HouseholdPlan): HouseholdSc
       assumptions: {
         returns: {
           usePortfolioReturn: false,
-          expectedReturn: Math.max(0, plan.assumptions.returns.expectedReturn - 0.01),
+          /** C29: Negative expected returns are valid for bearish scenarios. */
+          expectedReturn: plan.assumptions.returns.expectedReturn - 0.01,
         },
       },
     },
@@ -416,7 +441,12 @@ export function createCustomHouseholdScenario(
 
   if (input.sharedExpenseChangePct != null && Number.isFinite(input.sharedExpenseChangePct)) {
     const multiplier = Math.max(0, 1 + input.sharedExpenseChangePct / 100)
-    const sharedExpenses = plan.expenses.filter((expense) => expense.owner === 'shared')
+    /** C28: Exclude one-off and retirement-withdrawal expenses from shared expense overrides. */
+    const sharedExpenses = plan.expenses.filter(
+      (expense) => expense.owner === 'shared'
+        && expense.periodicity !== 'one-off'
+        && expense.kind !== 'retirement-withdrawal',
+    )
 
     if (sharedExpenses.length > 0) {
       overrides = mergeScenarioOverrides(overrides, {
@@ -461,7 +491,8 @@ export function createCustomHouseholdScenario(
     overrides = mergeScenarioOverrides(overrides, {
       assumptions: {
         returns: {
-          expectedReturn: Math.max(0, input.expectedReturnPct / 100),
+          /** C29: Negative expected returns are valid for bearish scenarios. */
+          expectedReturn: input.expectedReturnPct / 100,
           usePortfolioReturn: false,
         },
       },

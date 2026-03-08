@@ -398,8 +398,9 @@ function writeStoreDataToLocalStorage(
     try {
       localStorage.setItem(key, JSON.stringify(payload))
       writtenKeys.push(key)
-    } catch {
-      // Storage unavailable.
+    } catch (err) {
+      /** W59: Surface write failures so callers can distinguish partial vs full success. */
+      console.warn(`[storeRegistry] Failed to write store key "${key}" to localStorage:`, err)
     }
   }
 
