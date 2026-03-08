@@ -105,11 +105,15 @@ export function buildBacktestWorkerParams(input: {
   const postRetirementIncome = normalized.entry.selectors.backtest?.postRetirementIncomeByYear
     .slice(retirementOffset + 1, retirementOffset + 1 + retirementDuration)
     ?? []
+  // C9/W38: Include all portfolio adjustment kinds (goals, downsizing, life
+  // events, etc.), not just retirement-withdrawal. The backtest engine treats
+  // positive oneTimeWithdrawals.amount as additional withdrawal from portfolio.
+  // Compiled plan uses the opposite sign convention: negative = cost/withdrawal,
+  // positive = injection. So we negate: -adjustment.amount.
   const oneTimeWithdrawals = (normalized.entry.selectors.backtest?.portfolioAdjustments ?? [])
-    .filter((adjustment) => adjustment.kind === 'retirement-withdrawal')
     .map((adjustment) => ({
       year: adjustment.yearOffset - retirementOffset,
-      amount: Math.abs(adjustment.amount),
+      amount: -adjustment.amount,
     }))
     .filter((adjustment) => adjustment.year >= 0 && adjustment.year < retirementDuration)
 
