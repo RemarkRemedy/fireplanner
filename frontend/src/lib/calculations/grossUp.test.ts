@@ -14,6 +14,17 @@ describe('grossUpFromTakeHome', () => {
     expect(grossUpFromTakeHome(4800, 55)).toBeCloseTo(6000, 0)
   })
 
+  // Bracket-entry tests: first age in each new bracket
+  it('grosses up take-home for age 56 (18% CPF — first in 55-60 bracket)', () => {
+    // $4,100 / 0.82 = $5,000
+    expect(grossUpFromTakeHome(4100, 56)).toBeCloseTo(5000, 0)
+  })
+
+  it('grosses up take-home for age 61 (12.5% CPF — first in 60-65 bracket)', () => {
+    // $4,375 / 0.875 = $5,000
+    expect(grossUpFromTakeHome(4375, 61)).toBeCloseTo(5000, 0)
+  })
+
   it('grosses up take-home for age 58 (18% CPF)', () => {
     expect(grossUpFromTakeHome(4100, 58)).toBeCloseTo(5000, 0)
   })
