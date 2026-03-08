@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label'
 import type { RetirementPhase } from '@/lib/types'
 import { trackEvent } from '@/lib/analytics'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { DEFAULT_PROFILE } from '@/stores/useProfileStore'
 import { LandingEmailSection } from '@/components/email/LandingEmailSection'
 import type { HouseholdPlanType } from '@/lib/household/types'
 import { PlanTypeSelector } from '@/components/household/PlanTypeSelector'
@@ -87,14 +88,9 @@ export function StartPage() {
     }
   }, [activePlanType])
 
-  // Compute preliminary FIRE metrics from draft values
-  const DEFAULT_SWR = 0.036
-  const DEFAULT_RETURN = 0.07
-  const DEFAULT_INFLATION = 0.025
-  const DEFAULT_EXPENSE_RATIO = 0.003
-
-  const draftFireNumber = calculateFireNumber(draftExpenses, DEFAULT_SWR)
-  const draftNetRealReturn = DEFAULT_RETURN - DEFAULT_INFLATION - DEFAULT_EXPENSE_RATIO
+  // Compute preliminary FIRE metrics from draft values using canonical profile defaults
+  const draftFireNumber = calculateFireNumber(draftExpenses, DEFAULT_PROFILE.swr)
+  const draftNetRealReturn = DEFAULT_PROFILE.expectedReturn - DEFAULT_PROFILE.inflation - DEFAULT_PROFILE.expenseRatio
   const draftAnnualSavings = draftIncome - draftExpenses
   const draftYearsToFire = calculateYearsToFire(
     draftNetRealReturn,

@@ -1,5 +1,11 @@
 import { createId } from '@/lib/household/ids'
 import { entryOwnerLabel } from '@/lib/household/editorUtils'
+import {
+  DEFAULT_LTV,
+  DEFAULT_HDB_LEASE_YEARS,
+  DEFAULT_MORTGAGE_RATE,
+  DEFAULT_HDB_SUBLETTING_RATE,
+} from '@/lib/data/propertyDefaults'
 import type {
   AssetItem,
   EntryOwner,
@@ -64,35 +70,43 @@ export function createDefaultHouseholdProperty(owner: EntryOwner): PropertyPlan 
     id: createId('property'),
     owner,
     label: 'Household property',
+    // Household planner defaults to HDB (most common SG property type).
+    // Legacy property store defaults to 'condo' for backward compatibility
+    // with early users who were more likely to model condo scenarios.
     propertyType: 'hdb',
     purchasePrice: 850_000,
-    leaseYears: 99,
+    leaseYears: DEFAULT_HDB_LEASE_YEARS,
     appreciationRate: 0.02,
     rentalYield: 0.03,
-    mortgageRate: 0.03,
+    mortgageRate: DEFAULT_MORTGAGE_RATE,
     mortgageTerm: 25,
-    ltv: 0.75,
+    ltv: DEFAULT_LTV,
     residencyForAbsd: 'citizen',
     propertyCount: 1,
     ownsProperty: true,
     existingPropertyValue: 850_000,
     existingMortgageBalance: 300_000,
     existingMonthlyPayment: 1_900,
-    existingMortgageRate: 0.03,
+    existingMortgageRate: DEFAULT_MORTGAGE_RATE,
     existingMortgageRemainingYears: 20,
     mortgageCpfMonthly: 600,
+    // Default 100% for individual; adjusted to 50% when partner added
     ownershipPercent: owner === 'shared' ? 0.5 : 1,
     existingAppreciationRate: 0.02,
     existingLeaseYears: 93,
+    // Household planner defaults Bala decay to OFF so new users see the simpler
+    // (appreciation-only) model first. Legacy property store defaults to true
+    // because existing users already had decay enabled. Users can toggle it on
+    // in the property section when they want leasehold-adjusted projections.
     existingApplyBalaDecay: false,
     downsizing: {
       scenario: 'none',
       sellAge: 65,
       expectedSalePrice: 950_000,
       newPropertyCost: 650_000,
-      newMortgageRate: 0.03,
+      newMortgageRate: DEFAULT_MORTGAGE_RATE,
       newMortgageTerm: 20,
-      newLtv: 0.75,
+      newLtv: DEFAULT_LTV,
       monthlyRent: 2_200,
       rentGrowthRate: 0.03,
     },
@@ -100,7 +114,7 @@ export function createDefaultHouseholdProperty(owner: EntryOwner): PropertyPlan 
     hdbMonetizationStrategy: 'none',
     hdbLbsRetainedLease: 30,
     hdbSublettingRooms: 1,
-    hdbSublettingRate: 900,
+    hdbSublettingRate: DEFAULT_HDB_SUBLETTING_RATE,
     hdbCpfUsedForHousing: 0,
   }
 }

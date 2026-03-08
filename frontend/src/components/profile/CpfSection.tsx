@@ -12,7 +12,7 @@ import { PercentInput } from '@/components/shared/PercentInput'
 import { useEffectiveMode } from '@/hooks/useEffectiveMode'
 import { calculateCpfContribution, calculateBrsFrsErs, estimateCpfLifePayout, calculateCpfLifePayoutAtAge, getRetirementSumAmount, estimateCpfBalancesFromAge } from '@/lib/calculations/cpf'
 import type { CpfLifePlan, CpfRetirementSum } from '@/lib/types'
-import { getCpfRatesForAge, RETIREMENT_SUM_BASE_YEAR, BRS_BASE, FRS_BASE, ERS_BASE, SA_INTEREST_RATE, CPFIS_OA_RETENTION, CPFIS_SA_RETENTION } from '@/lib/data/cpfRates'
+import { getCpfRatesForAge, RETIREMENT_SUM_BASE_YEAR, BRS_BASE, FRS_BASE, ERS_BASE, SA_INTEREST_RATE, CPFIS_OA_RETENTION, CPFIS_SA_RETENTION, CPF_LIFE_BASIC_RATE, CPF_LIFE_STANDARD_RATE, CPF_LIFE_ESCALATING_RATE } from '@/lib/data/cpfRates'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { CpfProjectionTable } from '@/components/cpf/CpfProjectionTable'
 import { CpfAssumptionsPanel } from '@/components/cpf/CpfAssumptionsPanel'
@@ -88,9 +88,9 @@ function CpfSectionBody({ model, mode, showProjectionTools }: CpfSectionBodyProp
 
   // 3x3 payout grid: 3 plans x 3 retirement sums
   const plans: { key: CpfLifePlan; label: string; note: string }[] = [
-    { key: 'basic', label: 'Basic', note: '~5.4%' },
-    { key: 'standard', label: 'Standard', note: '~6.3%' },
-    { key: 'escalating', label: 'Escalating', note: '~4.8%, +2%/yr' },
+    { key: 'basic', label: 'Basic', note: `~${(CPF_LIFE_BASIC_RATE * 100).toFixed(1)}%` },
+    { key: 'standard', label: 'Standard', note: `~${(CPF_LIFE_STANDARD_RATE * 100).toFixed(1)}%` },
+    { key: 'escalating', label: 'Escalating', note: `~${(CPF_LIFE_ESCALATING_RATE * 100).toFixed(1)}%, +2%/yr` },
   ]
   const sums: { key: 'brs' | 'frs' | 'ers'; label: string; value: number; baseline: number }[] = [
     { key: 'brs', label: 'Basic (BRS)', value: brsFrsErs.brs, baseline: BRS_BASE },
@@ -214,9 +214,9 @@ function CpfSectionBody({ model, mode, showProjectionTools }: CpfSectionBodyProp
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="basic">Basic (~5.4%)</SelectItem>
-                  <SelectItem value="standard">Standard (~6.3%)</SelectItem>
-                  <SelectItem value="escalating">Escalating (~4.8%, +2%/yr)</SelectItem>
+                  <SelectItem value="basic">Basic (~{(CPF_LIFE_BASIC_RATE * 100).toFixed(1)}%)</SelectItem>
+                  <SelectItem value="standard">Standard (~{(CPF_LIFE_STANDARD_RATE * 100).toFixed(1)}%)</SelectItem>
+                  <SelectItem value="escalating">Escalating (~{(CPF_LIFE_ESCALATING_RATE * 100).toFixed(1)}%, +2%/yr)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -544,9 +544,9 @@ function CpfSectionBody({ model, mode, showProjectionTools }: CpfSectionBodyProp
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="basic">Basic (~5.4%)</SelectItem>
-                  <SelectItem value="standard">Standard (~6.3%)</SelectItem>
-                  <SelectItem value="escalating">Escalating (~4.8%, +2%/yr)</SelectItem>
+                  <SelectItem value="basic">Basic (~{(CPF_LIFE_BASIC_RATE * 100).toFixed(1)}%)</SelectItem>
+                  <SelectItem value="standard">Standard (~{(CPF_LIFE_STANDARD_RATE * 100).toFixed(1)}%)</SelectItem>
+                  <SelectItem value="escalating">Escalating (~{(CPF_LIFE_ESCALATING_RATE * 100).toFixed(1)}%, +2%/yr)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

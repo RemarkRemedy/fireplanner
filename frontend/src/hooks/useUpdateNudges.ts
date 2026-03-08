@@ -3,16 +3,25 @@ import { useUIStore } from '@/stores/useUIStore'
 import { CHANGELOG, DATA_VINTAGE } from '@/lib/data/changelog'
 import { getDetectedMigrations } from '@/lib/migrationDetector'
 import { STORE_REGISTRY } from '@/lib/storeRegistry'
+import {
+  HOUSEHOLD_PLAN_STORAGE_KEY,
+  PROFILE_STORAGE_KEY,
+  INCOME_STORAGE_KEY,
+  ALLOCATION_STORAGE_KEY,
+  PROPERTY_STORAGE_KEY,
+  WITHDRAWAL_STORAGE_KEY,
+  SIMULATION_STORAGE_KEY,
+} from '@/lib/storeKeys'
 
 /** Maps store keys to the section they affect on the Inputs page */
 const STORE_TO_SECTION: Record<string, string> = {
-  'fireplanner-household-plan-v1': 'section-personal',
-  'fireplanner-profile': 'section-personal',
-  'fireplanner-income': 'section-income',
-  'fireplanner-allocation': 'section-allocation',
-  'fireplanner-property': 'section-property',
-  'fireplanner-withdrawal': 'section-fire-settings',
-  'fireplanner-simulation': 'section-stress-test',
+  [HOUSEHOLD_PLAN_STORAGE_KEY]: 'section-personal',
+  [PROFILE_STORAGE_KEY]: 'section-personal',
+  [INCOME_STORAGE_KEY]: 'section-income',
+  [ALLOCATION_STORAGE_KEY]: 'section-allocation',
+  [PROPERTY_STORAGE_KEY]: 'section-property',
+  [WITHDRAWAL_STORAGE_KEY]: 'section-fire-settings',
+  [SIMULATION_STORAGE_KEY]: 'section-stress-test',
 }
 
 export interface UpdateNudge {
