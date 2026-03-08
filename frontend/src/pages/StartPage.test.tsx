@@ -55,8 +55,8 @@ describe('StartPage', () => {
     const user = userEvent.setup()
     renderStartPage()
     await user.click(screen.getByText("Show me what's possible"))
-    // Story-first form has "Annual Income" label
-    expect(screen.getByText('Annual Income')).toBeInTheDocument()
+    // Story-first form has "Monthly Income" label
+    expect(screen.getByText('Monthly Income')).toBeInTheDocument()
     expect(screen.getByText('Build my full plan')).toBeInTheDocument()
   })
 
@@ -130,5 +130,105 @@ describe('StartPage', () => {
 
     // Default ages: current=30, retirement=55 — should be enabled
     expect(continueButton).not.toBeDisabled()
+  })
+
+  it('shows take-home/gross selector when pathway form opens', async () => {
+    const user = userEvent.setup()
+    renderStartPage()
+    await user.click(screen.getByText("Show me what's possible"))
+    expect(screen.getByText('Take-home')).toBeInTheDocument()
+    expect(screen.getByText('Gross')).toBeInTheDocument()
+  })
+
+  it('shows bonus months input when checkbox is checked', async () => {
+    const user = userEvent.setup()
+    renderStartPage()
+    await user.click(screen.getByText("Show me what's possible"))
+
+    const checkbox = screen.getByLabelText('I receive bonus / AWS')
+    expect(screen.queryByText('extra month(s)')).not.toBeInTheDocument()
+
+    await user.click(checkbox)
+    expect(screen.getByText('extra month(s)')).toBeInTheDocument()
+  })
+
+  it('shows estimated gross when take-home is selected', async () => {
+    const user = userEvent.setup()
+    renderStartPage()
+    await user.click(screen.getByText("Show me what's possible"))
+
+    // Default take-home mode with default value should show gross estimate
+    expect(screen.getByText(/estimated gross/i)).toBeInTheDocument()
+    expect(screen.getByText(/employee CPF/i)).toBeInTheDocument()
+  })
+
+  it('hides gross estimate and shows annual equivalent when switching to gross mode', async () => {
+    const user = userEvent.setup()
+    renderStartPage()
+    await user.click(screen.getByText("Show me what's possible"))
+
+    // Switch to gross mode
+    await user.click(screen.getByText('Gross'))
+
+    // In gross mode, should NOT show "Estimated gross"
+    expect(screen.queryByText(/estimated gross/i)).not.toBeInTheDocument()
+    // Should show annual equivalent with tilde prefix
+    expect(screen.getByText(/~\$72,000\/year/)).toBeInTheDocument()
+  })
+
+  it('shows annual equivalent for monthly expenses', async () => {
+    const user = userEvent.setup()
+    renderStartPage()
+    await user.click(screen.getByText("Show me what's possible"))
+
+    // Default $4,000/mo expenses → should show ~$48,000/year
+    expect(screen.getByText(/~\$48,000\/year/)).toBeInTheDocument()
+  })
+
+  it('writes annual base salary and bonus months to stores when continuing', async () => {
+    const user = userEvent.setup()
+    renderStartPage()
+    await user.click(screen.getByText("Show me what's possible"))
+
+    const continueBtn = screen.getByRole('button', { name: /build my full plan/i })
+    await user.click(continueBtn)
+
+    const profile = useProfileStore.getState()
+    const income = useIncomeStore.getState()
+    // Default take-home $4,800 at age 30 grosses up to $6,000/mo = $72,000/year
+    expect(profile.annualIncome).toBeCloseTo(72000, -2)
+    expect(profile.annualExpenses).toBe(48000)
+    expect(income.annualSalary).toBeCloseTo(72000, -2)
+    expect(income.bonusMonths).toBe(0)
+  })
+
+  it('writes bonus months separately when bonus is enabled', async () => {
+    const user = userEvent.setup()
+    renderStartPage()
+    await user.click(screen.getByText("Show me what's possible"))
+
+    // Enable bonus with default 1 month
+    const checkbox = screen.getByLabelText('I receive bonus / AWS')
+    await user.click(checkbox)
+
+    const continueBtn = screen.getByRole('button', { name: /build my full plan/i })
+    await user.click(continueBtn)
+
+    const income = useIncomeStore.getState()
+    expect(income.bonusMonths).toBe(1)
+    // Base salary should be 12 months worth, not 13
+    expect(income.annualSalary).toBeCloseTo(72000, -2)
+  })
+
+  it('writes income to income store in already-fire pathway', async () => {
+    const user = userEvent.setup()
+    renderStartPage()
+    await user.click(screen.getByText('I already have enough'))
+
+    // Click a phase card to continue
+    await user.click(screen.getByText('Before 55'))
+
+    const income = useIncomeStore.getState()
+    expect(income.annualSalary).toBeCloseTo(72000, -2)
   })
 })
