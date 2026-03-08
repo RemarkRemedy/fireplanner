@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useWhatIfMetrics } from './useWhatIfMetrics'
+import { useFireCalculations } from './useFireCalculations'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
@@ -92,6 +93,42 @@ describe('useWhatIfMetrics', () => {
     expect(result.current.hasData).toBe(true)
     expect(result.current.baseMetrics).not.toBeNull()
     expect(result.current.baseMetrics!.fireNumber).toBeGreaterThan(0)
+  })
+
+  it('matches useFireCalculations for base FIRE metrics with cash reserve and locked assets enabled', () => {
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      annualIncome: 72_000,
+      annualExpenses: 48_000,
+      cashReserveEnabled: true,
+      cashReserveMode: 'months',
+      cashReserveMonths: 6,
+      cashReserveFixedAmount: 0,
+      lockedAssets: [
+        {
+          id: 'bond-ladder',
+          name: 'Bond Ladder',
+          amount: 80_000,
+          unlockAge: 60,
+          growthRate: 0.02,
+        },
+      ],
+      validationErrors: {},
+    })
+    useIncomeStore.setState({
+      ...useIncomeStore.getState(),
+      annualSalary: 96_000,
+      validationErrors: {},
+    })
+
+    const { result: fire } = renderHook(() => useFireCalculations())
+    const { result: whatIf } = renderHook(() => useWhatIfMetrics({}))
+
+    expect(fire.current.metrics).not.toBeNull()
+    expect(whatIf.current.baseMetrics).not.toBeNull()
+    expect(whatIf.current.baseMetrics!.fireNumber).toBeCloseTo(fire.current.metrics!.fireNumber, 6)
+    expect(whatIf.current.baseMetrics!.yearsToFire).toBeCloseTo(fire.current.metrics!.yearsToFire, 6)
+    expect(whatIf.current.baseMetrics!.fireAge).toBeCloseTo(fire.current.metrics!.fireAge, 6)
   })
 
   it('usePortfolioReturn changes base metrics via expected return', () => {
