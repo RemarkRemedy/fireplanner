@@ -163,7 +163,7 @@ export function InputsPage() {
               </div>
               {selectedAdult && adults.length > 1 && (
                 <div className="w-full md:w-72 space-y-1">
-                  <Label htmlFor="household-cpf-adult">Editing CPF for</Label>
+                  <Label htmlFor="household-cpf-adult">Editing adult</Label>
                   <Select value={selectedAdult.id} onValueChange={setSelectedAdultId}>
                     <SelectTrigger id="household-cpf-adult">
                       <SelectValue />
@@ -195,7 +195,7 @@ export function InputsPage() {
                       <div>
                         <p className="font-medium">{adult.displayName}</p>
                         <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                          {adult.owner === 'self' ? 'Self' : 'Partner'}
+                          {adult.owner === 'self' ? 'You' : 'Partner'}
                         </p>
                       </div>
                       <Badge variant={isSelected ? 'default' : 'secondary'}>

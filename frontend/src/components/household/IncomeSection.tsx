@@ -229,7 +229,7 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-lg flex items-center gap-2">
               {selectedAdult.displayName}'s Salary Model
-              <Badge variant="secondary">{ownerLabel(selectedAdult.owner)}</Badge>
+              <Badge variant="secondary">{ownerLabel(selectedAdult.owner, adults)}</Badge>
             </CardTitle>
             {!hasPersistedSalaryModel && (
               <Button type="button" variant="outline" onClick={() => upsertSalaryModel({})}>
@@ -483,7 +483,7 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-lg flex items-center gap-2">
               Income Streams
-              <InfoTooltip text="Additional employment, business, rental, investment, or government income. Use owner plus timing anchor so the household compiler knows who receives the money and whose timeline it follows." />
+              <InfoTooltip text="Additional employment, business, rental, investment, or government income. Set the owner and age basis so the planner knows who receives the money and whose timeline it follows." />
             </CardTitle>
             <Button type="button" variant="outline" onClick={() => addIncome(createIncomeStream(selectedAdult.owner, selectedAdult.currentAge))}>
               Add stream
@@ -514,9 +514,9 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
                           onChange={(event) => updateIncome(stream.id, { label: event.target.value })}
                           className="max-w-xs"
                         />
-                        <Badge variant="secondary">{stream.owner === 'shared' ? 'Shared' : ownerLabel(stream.owner)}</Badge>
+                        <Badge variant="secondary">{stream.owner === 'shared' ? 'Shared' : ownerLabel(stream.owner, adults)}</Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">Owner controls who receives the money. Timing anchor controls whose age drives the start and end ages.</p>
+                      <p className="text-sm text-muted-foreground">Owner controls who receives the money. Age basis controls whose age drives the start and end ages.</p>
                     </div>
                     <Button type="button" variant="ghost" onClick={() => removeIncome(stream.id)}>
                       Remove
@@ -536,7 +536,7 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
                         <SelectContent>
                           {visibleIncomeOwnerOptions.map((option) => (
                             <SelectItem key={option} value={option}>
-                              {option === 'shared' ? 'Shared' : ownerLabel(option)}
+                              {option === 'shared' ? 'Shared' : ownerLabel(option, adults)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -546,7 +546,7 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
                       )}
                     </div>
                     <div className="space-y-1">
-                      <Label>Timing Anchor</Label>
+                      <Label>Age based on</Label>
                       <Select
                         value={timing.owner}
                         onValueChange={(value) => updateIncome(stream.id, {
@@ -559,7 +559,7 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
                         <SelectContent>
                           {visibleAdultOwnerOptions.map((option) => (
                             <SelectItem key={option} value={option}>
-                              {ownerLabel(option)}
+                              {ownerLabel(option, adults)}
                             </SelectItem>
                           ))}
                         </SelectContent>

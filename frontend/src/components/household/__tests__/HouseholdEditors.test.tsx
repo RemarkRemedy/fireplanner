@@ -113,12 +113,14 @@ function setHouseholdPlan(plan = makeHouseholdPlan()) {
 }
 
 function getCardByText(text: string): HTMLElement {
-  const element = screen.getByText(text)
-  const card = element.closest('div.rounded-lg.border')
-  if (!card) {
-    throw new Error(`Could not find card for ${text}`)
+  const elements = screen.getAllByText(text)
+  for (const element of elements) {
+    const card = element.closest('div.rounded-lg.border')
+    if (card) {
+      return card as HTMLElement
+    }
   }
-  return card as HTMLElement
+  throw new Error(`Could not find card for ${text}`)
 }
 
 function getFieldInput(container: HTMLElement, label: string): HTMLInputElement {
@@ -259,7 +261,7 @@ describe('Household editors', () => {
     }
     await chooseSelectOption(user, streamCard, 'Owner', 'Shared')
     setNumericInput(getFieldInput(streamCard, 'Annual amount'), '24000')
-    await chooseSelectOption(user, streamCard, 'Timing Anchor', 'Self')
+    await chooseSelectOption(user, streamCard, 'Age based on', 'Taylor (You)')
 
     const taxCard = getCardByText("Pat's Tax & SRS Settings")
     setNumericInput(getFieldInput(taxCard, 'Personal reliefs'), '12000')
@@ -308,8 +310,8 @@ describe('Household editors', () => {
     if (!(livingCostCard instanceof HTMLElement)) {
       throw new Error('Could not find living cost card')
     }
-    await chooseSelectOption(user, livingCostCard, 'Owner', 'Partner')
-    await chooseSelectOption(user, livingCostCard, 'Timing Anchor', 'Self')
+    await chooseSelectOption(user, livingCostCard, 'Owner', 'Pat')
+    await chooseSelectOption(user, livingCostCard, 'Age based on', 'Taylor (You)')
     setNumericInput(getFieldInput(livingCostCard, 'Amount'), '3600')
 
     const parentSupportCard = screen.getByDisplayValue('Parent support').closest('div.rounded-lg.border')
@@ -333,7 +335,7 @@ describe('Household editors', () => {
     if (!(goalCard instanceof HTMLElement)) {
       throw new Error('Could not find goal card')
     }
-    await chooseSelectOption(user, goalCard, 'Owner', 'Self')
+    await chooseSelectOption(user, goalCard, 'Owner', 'Taylor (You)')
     setNumericInput(getFieldInput(goalCard, 'Amount'), '80000')
     setNumericInput(getFieldInput(goalCard, 'Duration (years)'), '4')
 

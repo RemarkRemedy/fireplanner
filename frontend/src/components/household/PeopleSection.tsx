@@ -213,7 +213,7 @@ export function PeopleSection({
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold">{adult.displayName}</h3>
                       <Badge variant={adult.owner === 'self' ? 'default' : 'secondary'}>
-                        {ownerLabel(adult.owner)}
+                        {ownerLabel(adult.owner, adults)}
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
@@ -369,7 +369,7 @@ export function PeopleSection({
                         <SelectContent>
                           {dependentOwnerOptions.map((option) => (
                             <SelectItem key={option} value={option}>
-                              {option === 'shared' ? 'Shared' : ownerLabel(option)}
+                              {option === 'shared' ? 'Shared' : ownerLabel(option, adults)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -379,7 +379,7 @@ export function PeopleSection({
                       )}
                     </div>
                     <div className="space-y-1">
-                      <Label>Timing Anchor</Label>
+                      <Label>Age based on</Label>
                       <Select
                         value={timing.owner}
                         onValueChange={(value) => updateDependent(dependent.id, {
@@ -392,7 +392,7 @@ export function PeopleSection({
                         <SelectContent>
                           {ADULT_OWNER_OPTIONS.filter((option) => adults.some((adult) => adult.owner === option)).map((option) => (
                             <SelectItem key={option} value={option}>
-                              {ownerLabel(option)}
+                              {ownerLabel(option, adults)}
                             </SelectItem>
                           ))}
                         </SelectContent>

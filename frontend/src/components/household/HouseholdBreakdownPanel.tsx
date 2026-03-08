@@ -23,7 +23,7 @@ export function HouseholdBreakdownPanel({
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Expand the household, self, partner, and shared buckets to see which authored inputs are shaping the
+          Expand the household, individual, and shared sections to see which authored inputs are shaping the
           normalized analysis.
         </p>
 

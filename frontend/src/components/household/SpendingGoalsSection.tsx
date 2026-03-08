@@ -21,6 +21,7 @@ import type {
   EntryOwner,
   ExpenseItem,
   GoalItem,
+  PlanningAdult,
 } from '@/lib/household/types'
 import type { GoalCategory, HealthcareConfig, IspTierOption, OopCurveVariant, OopModel } from '@/lib/types'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
@@ -35,6 +36,7 @@ function createExpense(
   startAge: number,
   retirementAge: number,
   lifeExpectancy: number,
+  adults?: ReadonlyArray<Pick<PlanningAdult, 'owner' | 'displayName'>>,
 ): ExpenseItem {
   switch (kind) {
     case 'expense-adjustment':
@@ -91,7 +93,7 @@ function createExpense(
       return {
         id: createId('expense-base-living'),
         owner,
-        label: owner === 'shared' ? 'Shared living costs' : `${ownerLabel(timingOwner)} living costs`,
+        label: owner === 'shared' ? 'Shared living costs' : `${ownerLabel(timingOwner, adults)} living costs`,
         kind: 'base-living',
         timing: {
           kind: 'age-range',
@@ -194,13 +196,13 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-lg flex items-center gap-2">
               Spending Items
-              <InfoTooltip text="Explicit owner plus timing anchor keeps household cashflow compilation deterministic. Use shared for household-wide costs and self or partner for private costs." />
+              <InfoTooltip text="Explicit owner plus age basis keeps household cashflow compilation deterministic. Use shared for household-wide costs and self or partner for private costs." />
             </CardTitle>
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('base-living', 'shared', selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge, selectedAdult.lifeExpectancy))}>
+              <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('base-living', 'shared', selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge, selectedAdult.lifeExpectancy, adults))}>
                 Add living cost
               </Button>
-              <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('expense-adjustment', selectedAdult.owner, selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge, selectedAdult.lifeExpectancy))}>
+              <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('expense-adjustment', selectedAdult.owner, selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge, selectedAdult.lifeExpectancy, adults))}>
                 Add adjustment
               </Button>
             </div>
@@ -261,14 +263,14 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                         <SelectContent>
                           {availableOwnerOptions.map((option) => (
                             <SelectItem key={option} value={option}>
-                              {option === 'shared' ? 'Shared' : ownerLabel(option)}
+                              {option === 'shared' ? 'Shared' : ownerLabel(option, adults)}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-1">
-                      <Label>Timing Anchor</Label>
+                      <Label>Age based on</Label>
                       <Select
                         value={timing.owner}
                         onValueChange={(value) => updateExpenseList(expense.id, {
@@ -281,7 +283,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                         <SelectContent>
                           {availableAdultOwners.map((option) => (
                             <SelectItem key={option} value={option}>
-                              {ownerLabel(option)}
+                              {ownerLabel(option, adults)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -348,7 +350,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-lg">Parent Support</CardTitle>
-            <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('parent-support', selectedAdult.owner, selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge, selectedAdult.lifeExpectancy))}>
+            <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('parent-support', selectedAdult.owner, selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge, selectedAdult.lifeExpectancy, adults))}>
               Add parent support
             </Button>
           </div>
@@ -392,7 +394,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                         <SelectContent>
                           {availableOwnerOptions.map((option) => (
                             <SelectItem key={option} value={option}>
-                              {option === 'shared' ? 'Shared' : ownerLabel(option)}
+                              {option === 'shared' ? 'Shared' : ownerLabel(option, adults)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -541,7 +543,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-lg">Retirement Withdrawals</CardTitle>
-            <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('retirement-withdrawal', selectedAdult.owner, selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge, selectedAdult.lifeExpectancy))}>
+            <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('retirement-withdrawal', selectedAdult.owner, selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge, selectedAdult.lifeExpectancy, adults))}>
               Add withdrawal
             </Button>
           </div>
@@ -591,7 +593,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                         <SelectContent>
                           {availableOwnerOptions.map((option) => (
                             <SelectItem key={option} value={option}>
-                              {option === 'shared' ? 'Shared' : ownerLabel(option)}
+                              {option === 'shared' ? 'Shared' : ownerLabel(option, adults)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -703,14 +705,14 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                         <SelectContent>
                           {availableOwnerOptions.map((option) => (
                             <SelectItem key={option} value={option}>
-                              {option === 'shared' ? 'Shared' : ownerLabel(option)}
+                              {option === 'shared' ? 'Shared' : ownerLabel(option, adults)}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-1">
-                      <Label>Timing Anchor</Label>
+                      <Label>Age based on</Label>
                       <Select
                         value={timing.owner}
                         onValueChange={(value) => updateGoalList(goal.id, {
@@ -723,7 +725,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                         <SelectContent>
                           {availableAdultOwners.map((option) => (
                             <SelectItem key={option} value={option}>
-                              {ownerLabel(option)}
+                              {ownerLabel(option, adults)}
                             </SelectItem>
                           ))}
                         </SelectContent>
