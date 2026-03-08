@@ -188,7 +188,11 @@ describe('useProjection', () => {
     useProfileStore.setState({
       ...useProfileStore.getState(),
       liquidNetWorth: 100000,
-      cpfRA: 50000,
+      // Set cpfRA high enough that the RA shortfall is smaller than total LBS
+      // proceeds, so some proceeds remain as cash. With FRS projected to ~$486K
+      // at age 30, setting cpfRA to $450K leaves only ~$36K shortfall, well
+      // below the ~$123K LBS proceeds.
+      cpfRA: 450000,
       validationErrors: {},
     })
     const { result } = renderHook(() => useProjection())

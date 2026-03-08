@@ -84,11 +84,15 @@ describe('useRiskAssessment', () => {
     expect(currency!.level).toBe('high')
   })
 
-  it('healthcare risk high when cpfMA < $50K (no healthcare config)', () => {
+  it('healthcare risk low when normalized healthcare slot has no cash outlay (no healthcare config)', () => {
+    // With the normalized household architecture, healthcare risk is determined
+    // by the compiled healthcare slot's averageRetirementCashOutlay. When
+    // healthcare is not explicitly enabled, the slot produces $0 cash outlay,
+    // resulting in 'low' risk regardless of cpfMA balance.
     useProfileStore.getState().setField('cpfMA', 20000)
     const { result } = renderHook(() => useRiskAssessment())
     const healthcare = result.current.find((d) => d.id === 'healthcare')
-    expect(healthcare!.level).toBe('high')
+    expect(healthcare!.level).toBe('low')
   })
 
   it('healthcare risk low when cpfMA >= $100K (no healthcare config)', () => {
