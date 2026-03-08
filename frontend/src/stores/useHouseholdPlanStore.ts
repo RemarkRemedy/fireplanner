@@ -25,6 +25,7 @@ import type {
   IncomeSource,
   PlanningAdult,
   PropertyPlan,
+  TimingRule,
 } from '@/lib/household/types'
 export { HOUSEHOLD_PLAN_STORAGE_KEY } from '@/lib/storeKeys'
 export const HOUSEHOLD_PLAN_STORAGE_VERSION = 1
@@ -173,6 +174,38 @@ function removeOwnerScopedEntries<T extends { owner: EntryOwner }>(
   return items.filter((item) => item.owner !== owner)
 }
 
+function replaceTimingOwner(
+  timing: TimingRule | null,
+  removedOwner: AdultOwner,
+  replacementOwner: AdultOwner,
+): TimingRule | null {
+  if (!timing || timing.owner !== removedOwner) {
+    return timing
+  }
+
+  return {
+    ...timing,
+    owner: replacementOwner,
+  }
+}
+
+function reanchorTimedEntries<T extends { timing: TimingRule | null }>(
+  items: T[],
+  removedOwner: AdultOwner,
+  replacementOwner: AdultOwner,
+): T[] {
+  return items.map((item) => {
+    if (item.timing?.owner !== removedOwner) {
+      return item
+    }
+
+    return {
+      ...item,
+      timing: replaceTimingOwner(item.timing, removedOwner, replacementOwner),
+    }
+  })
+}
+
 const INITIAL_PROVENANCE = createProvenance('manual')
 const INITIAL_PLAN = createManualHouseholdPlan()
 
@@ -263,12 +296,39 @@ export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
           if (!targetAdult) return state
 
           nextPlan.adults = nextPlan.adults.filter((adult) => adult.id !== id)
+          const fallbackTimingOwner =
+            nextPlan.adults.find((adult) => adult.owner === 'self')?.owner
+            ?? nextPlan.adults[0]?.owner
+            ?? null
           nextPlan.dependents = removeOwnerScopedEntries(nextPlan.dependents, targetAdult.owner)
           nextPlan.income = removeOwnerScopedEntries(nextPlan.income, targetAdult.owner)
           nextPlan.expenses = removeOwnerScopedEntries(nextPlan.expenses, targetAdult.owner)
           nextPlan.assets = removeOwnerScopedEntries(nextPlan.assets, targetAdult.owner)
           nextPlan.goals = removeOwnerScopedEntries(nextPlan.goals, targetAdult.owner)
           nextPlan.properties = removeOwnerScopedEntries(nextPlan.properties, targetAdult.owner)
+
+          if (fallbackTimingOwner) {
+            nextPlan.dependents = reanchorTimedEntries(
+              nextPlan.dependents,
+              targetAdult.owner,
+              fallbackTimingOwner,
+            )
+            nextPlan.income = reanchorTimedEntries(
+              nextPlan.income,
+              targetAdult.owner,
+              fallbackTimingOwner,
+            )
+            nextPlan.expenses = reanchorTimedEntries(
+              nextPlan.expenses,
+              targetAdult.owner,
+              fallbackTimingOwner,
+            )
+            nextPlan.goals = reanchorTimedEntries(
+              nextPlan.goals,
+              targetAdult.owner,
+              fallbackTimingOwner,
+            )
+          }
 
           return buildValidatedState(nextPlan, state.provenance, state.householdPlanRevision + 1)
         }),

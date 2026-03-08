@@ -9,13 +9,18 @@ import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { PercentInput } from '@/components/shared/PercentInput'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
+import { createId } from '@/lib/household/ids'
+import {
+  ensureAgeRangeTiming,
+  getSelectedAdult,
+  ownerLabel,
+  syncTimingDuration,
+} from '@/lib/household/editorUtils'
 import type {
   AdultOwner,
   EntryOwner,
   ExpenseItem,
   GoalItem,
-  PlanningAdult,
-  TimingRule,
 } from '@/lib/household/types'
 import type { GoalCategory, HealthcareConfig, IspTierOption, OopCurveVariant, OopModel } from '@/lib/types'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
@@ -23,47 +28,13 @@ import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 const OWNER_OPTIONS: EntryOwner[] = ['self', 'partner', 'shared']
 const ADULT_OWNER_OPTIONS: AdultOwner[] = ['self', 'partner']
 
-function createId(prefix: string): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`
-  }
-
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-}
-
-function ownerLabel(owner: AdultOwner): string {
-  return owner === 'self' ? 'Self' : 'Partner'
-}
-
-function getSelectedAdult(plan: { adults: PlanningAdult[] }, selectedAdultId: string | null): PlanningAdult | null {
-  return plan.adults.find((adult) => adult.id === selectedAdultId)
-    ?? plan.adults.find((adult) => adult.owner === 'self')
-    ?? plan.adults[0]
-    ?? null
-}
-
-function ensureAgeRangeTiming(
-  timing: TimingRule,
-  owner: AdultOwner,
-): Extract<TimingRule, { kind: 'age-range' }> {
-  if (timing.kind === 'age-range') {
-    return timing
-  }
-
-  return {
-    kind: 'age-range',
-    owner,
-    startAge: timing.age,
-    endAge: timing.age,
-  }
-}
-
 function createExpense(
   kind: ExpenseItem['kind'],
   owner: EntryOwner,
   timingOwner: AdultOwner,
   startAge: number,
   retirementAge: number,
+  lifeExpectancy: number,
 ): ExpenseItem {
   switch (kind) {
     case 'expense-adjustment':
@@ -126,7 +97,7 @@ function createExpense(
           kind: 'age-range',
           owner: timingOwner,
           startAge,
-          endAge: retirementAge,
+          endAge: lifeExpectancy,
         },
         amount: 3_000,
         periodicity: 'monthly',
@@ -222,10 +193,10 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
               <InfoTooltip text="Explicit owner plus timing anchor keeps household cashflow compilation deterministic. Use shared for household-wide costs and self or partner for private costs." />
             </CardTitle>
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('base-living', 'shared', selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge))}>
+              <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('base-living', 'shared', selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge, selectedAdult.lifeExpectancy))}>
                 Add living cost
               </Button>
-              <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('expense-adjustment', selectedAdult.owner, selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge))}>
+              <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('expense-adjustment', selectedAdult.owner, selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge, selectedAdult.lifeExpectancy))}>
                 Add adjustment
               </Button>
             </div>
@@ -242,6 +213,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
               const timing = ensureAgeRangeTiming(
                 expense.timing,
                 selectedAdult.owner,
+                selectedAdult.currentAge,
               )
 
               return (
@@ -372,7 +344,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-lg">Parent Support</CardTitle>
-            <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('parent-support', selectedAdult.owner, selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge))}>
+            <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('parent-support', selectedAdult.owner, selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge, selectedAdult.lifeExpectancy))}>
               Add parent support
             </Button>
           </div>
@@ -384,7 +356,11 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
             </div>
           ) : (
             parentSupportExpenses.map((expense) => {
-              const timing = ensureAgeRangeTiming(expense.timing, selectedAdult.owner)
+              const timing = ensureAgeRangeTiming(
+                expense.timing,
+                selectedAdult.owner,
+                selectedAdult.currentAge,
+              )
 
               return (
                 <div key={expense.id} className="rounded-lg border p-4 space-y-4">
@@ -561,7 +537,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-lg">Retirement Withdrawals</CardTitle>
-            <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('retirement-withdrawal', selectedAdult.owner, selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge))}>
+            <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('retirement-withdrawal', selectedAdult.owner, selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge, selectedAdult.lifeExpectancy))}>
               Add withdrawal
             </Button>
           </div>
@@ -573,7 +549,16 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
             </div>
           ) : (
             retirementWithdrawals.map((expense) => {
-              const timing = ensureAgeRangeTiming(expense.timing, selectedAdult.owner)
+              const timing = ensureAgeRangeTiming(
+                expense.timing,
+                selectedAdult.owner,
+                selectedAdult.retirementAge,
+              )
+              const timedWithdrawal = syncTimingDuration(
+                timing,
+                { durationYears: expense.durationYears ?? 1 },
+                selectedAdult.lifeExpectancy,
+              )
 
               return (
                 <div key={expense.id} className="rounded-lg border p-4 space-y-4">
@@ -618,17 +603,29 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                       min={selectedAdult.retirementAge}
                       max={selectedAdult.lifeExpectancy}
                       value={timing.startAge}
-                      onChange={(value) => updateExpenseList(expense.id, {
-                        timing: { ...timing, startAge: value, endAge: value },
-                      })}
+                      onChange={(value) => updateExpenseList(
+                        expense.id,
+                        syncTimingDuration(
+                          timing,
+                          { startAge: value, durationYears: expense.durationYears ?? 1 },
+                          selectedAdult.lifeExpectancy,
+                        ),
+                      )}
                     />
                     <NumberInput
                       label="Duration (years)"
                       integer
                       min={1}
-                      max={20}
-                      value={expense.durationYears ?? 1}
-                      onChange={(value) => updateExpenseList(expense.id, { durationYears: value })}
+                      max={Math.max(1, selectedAdult.lifeExpectancy - timing.startAge + 1)}
+                      value={timedWithdrawal.durationYears}
+                      onChange={(value) => updateExpenseList(
+                        expense.id,
+                        syncTimingDuration(
+                          timing,
+                          { durationYears: value },
+                          selectedAdult.lifeExpectancy,
+                        ),
+                      )}
                     />
                   </div>
 
@@ -663,7 +660,16 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
           ) : (
             plan.goals.map((goal) => {
               const goalErrors = getEntityErrors(validationErrors, 'goal', goal.id)
-              const timing = ensureAgeRangeTiming(goal.timing, selectedAdult.owner)
+              const timing = ensureAgeRangeTiming(
+                goal.timing,
+                selectedAdult.owner,
+                selectedAdult.currentAge + 5,
+              )
+              const timedGoal = syncTimingDuration(
+                timing,
+                { durationYears: goal.durationYears },
+                selectedAdult.lifeExpectancy,
+              )
 
               return (
                 <div key={goal.id} className="rounded-lg border p-4 space-y-4">
@@ -729,17 +735,29 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                       min={selectedAdult.currentAge + 1}
                       max={selectedAdult.lifeExpectancy}
                       value={timing.startAge}
-                      onChange={(value) => updateGoalList(goal.id, {
-                        timing: { ...timing, startAge: value, endAge: value },
-                      })}
+                      onChange={(value) => updateGoalList(
+                        goal.id,
+                        syncTimingDuration(
+                          timing,
+                          { startAge: value, durationYears: goal.durationYears },
+                          selectedAdult.lifeExpectancy,
+                        ),
+                      )}
                     />
                     <NumberInput
                       label="Duration (years)"
                       integer
                       min={1}
-                      max={20}
-                      value={goal.durationYears}
-                      onChange={(value) => updateGoalList(goal.id, { durationYears: value })}
+                      max={Math.max(1, selectedAdult.lifeExpectancy - timing.startAge + 1)}
+                      value={timedGoal.durationYears}
+                      onChange={(value) => updateGoalList(
+                        goal.id,
+                        syncTimingDuration(
+                          timing,
+                          { durationYears: value },
+                          selectedAdult.lifeExpectancy,
+                        ),
+                      )}
                     />
                     <div className="space-y-1">
                       <Label>Priority</Label>

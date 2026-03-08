@@ -252,4 +252,56 @@ describe('useHouseholdPlanStore', () => {
     expect(state.validationErrors).toEqual({})
     expect(state.hasValidationErrors).toBe(false)
   })
+
+  it('reanchors shared timeline entries when removing an adult owner', () => {
+    const self = useHouseholdPlanStore.getState().plan.adults[0]
+    const partner = makePartnerAdult(self)
+
+    useHouseholdPlanStore.getState().setPlanType('couple')
+    useHouseholdPlanStore.getState().addAdult(partner)
+    useHouseholdPlanStore.getState().addDependent({
+      ...makeDependent(),
+      id: 'dependent-shared-partner-timing',
+      timing: {
+        kind: 'age-range',
+        owner: 'partner',
+        startAge: 33,
+        endAge: 45,
+      },
+    })
+    useHouseholdPlanStore.getState().addIncome({
+      ...makeIncome(),
+      id: 'income-shared-partner-timing',
+      owner: 'shared',
+    })
+    useHouseholdPlanStore.getState().addExpense({
+      ...makeExpense(),
+      id: 'expense-shared-partner-timing',
+      timing: {
+        kind: 'age-range',
+        owner: 'partner',
+        startAge: 35,
+        endAge: 45,
+      },
+    })
+    useHouseholdPlanStore.getState().addGoal({
+      ...makeGoal(),
+      id: 'goal-shared-partner-timing',
+      timing: {
+        kind: 'single-age',
+        owner: 'partner',
+        age: 42,
+      },
+    })
+
+    useHouseholdPlanStore.getState().removeAdult(partner.id)
+
+    const state = useHouseholdPlanStore.getState()
+
+    expect(state.plan.adults).toHaveLength(1)
+    expect(state.plan.dependents[0]?.timing?.owner).toBe('self')
+    expect(state.plan.income[0]?.timing.owner).toBe('self')
+    expect(state.plan.expenses[0]?.timing.owner).toBe('self')
+    expect(state.plan.goals[0]?.timing.owner).toBe('self')
+  })
 })

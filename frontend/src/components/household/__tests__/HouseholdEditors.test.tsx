@@ -195,9 +195,50 @@ describe('Household editors', () => {
     expect(state.plan.adults).toHaveLength(2)
     expect(selfAdult?.retirementAge).toBe(60)
     expect(partnerAdult?.displayName).toBe('Pat')
+    expect(partnerAdult?.annualIncome).toBe(0)
     expect(partnerAdult?.retirementAge).toBe(64)
     expect(state.plan.dependents).toHaveLength(1)
     expect(state.plan.dependents[0]?.label).toBe('Avery')
+  })
+
+  it('shows only income streams anchored to the selected adult timeline', () => {
+    const plan = makeHouseholdPlan({ includePartner: true, planType: 'couple' })
+    plan.income = [
+      {
+        id: 'income-self-stream',
+        owner: 'self',
+        label: 'Self consulting',
+        kind: 'income-stream',
+        timing: { kind: 'age-range', owner: 'self', startAge: 34, endAge: 40 },
+        annualAmount: 12_000,
+        growthRate: 0.02,
+        growthModel: 'fixed',
+        taxTreatment: 'taxable',
+        isCpfApplicable: false,
+        isActive: true,
+        streamType: 'business',
+      },
+      {
+        id: 'income-partner-stream',
+        owner: 'partner',
+        label: 'Partner rental',
+        kind: 'income-stream',
+        timing: { kind: 'age-range', owner: 'partner', startAge: 32, endAge: 50 },
+        annualAmount: 18_000,
+        growthRate: 0.02,
+        growthModel: 'fixed',
+        taxTreatment: 'taxable',
+        isCpfApplicable: false,
+        isActive: true,
+        streamType: 'rental',
+      },
+    ]
+    setHouseholdPlan(plan)
+
+    render(<IncomeSection selectedAdultId="adult-partner" />)
+
+    expect(screen.getByDisplayValue('Partner rental')).toBeInTheDocument()
+    expect(screen.queryByDisplayValue('Self consulting')).not.toBeInTheDocument()
   })
 
   it('edits partner salary, income ownership, tax reliefs, SRS, and life events from the household income section', async () => {
@@ -217,8 +258,8 @@ describe('Household editors', () => {
       throw new Error('Could not find income stream card')
     }
     await chooseSelectOption(user, streamCard, 'Owner', 'Shared')
-    await chooseSelectOption(user, streamCard, 'Timing Anchor', 'Self')
     setNumericInput(getFieldInput(streamCard, 'Annual amount'), '24000')
+    await chooseSelectOption(user, streamCard, 'Timing Anchor', 'Self')
 
     const taxCard = getCardByText("Pat's Tax & SRS Settings")
     setNumericInput(getFieldInput(taxCard, 'Personal reliefs'), '12000')
@@ -286,6 +327,7 @@ describe('Household editors', () => {
       throw new Error('Could not find withdrawal card')
     }
     setNumericInput(getFieldInput(withdrawalCard, 'Amount'), '45000')
+    setNumericInput(getFieldInput(withdrawalCard, 'Duration (years)'), '3')
 
     const goalCard = screen.getByDisplayValue('Household goal').closest('div.rounded-lg.border')
     if (!(goalCard instanceof HTMLElement)) {
@@ -293,6 +335,7 @@ describe('Household editors', () => {
     }
     await chooseSelectOption(user, goalCard, 'Owner', 'Self')
     setNumericInput(getFieldInput(goalCard, 'Amount'), '80000')
+    setNumericInput(getFieldInput(goalCard, 'Duration (years)'), '4')
 
     const state = useHouseholdPlanStore.getState()
     const partnerAdult = state.plan.adults.find((adult) => adult.id === 'adult-partner')
@@ -304,11 +347,25 @@ describe('Household editors', () => {
     expect(baseLivingExpense?.owner).toBe('partner')
     expect(baseLivingExpense?.timing.owner).toBe('self')
     expect(baseLivingExpense?.amount).toBe(3_600)
+    expect(baseLivingExpense?.timing.kind).toBe('age-range')
+    if (baseLivingExpense?.timing.kind === 'age-range') {
+      expect(baseLivingExpense.timing.endAge).toBe(92)
+    }
     expect(parentSupportExpense?.amount).toBe(900)
     expect(withdrawalExpense?.amount).toBe(45_000)
+    expect(withdrawalExpense?.durationYears).toBe(3)
+    expect(withdrawalExpense?.timing.kind).toBe('age-range')
+    if (withdrawalExpense?.timing.kind === 'age-range') {
+      expect(withdrawalExpense.timing.endAge).toBe(withdrawalExpense.timing.startAge + 2)
+    }
     expect(partnerAdult?.healthcare.enabled).toBe(true)
     expect(partnerAdult?.healthcare.oopBaseAmount).toBe(1_500)
     expect(goal?.owner).toBe('self')
     expect(goal?.amount).toBe(80_000)
+    expect(goal?.durationYears).toBe(4)
+    expect(goal?.timing.kind).toBe('age-range')
+    if (goal?.timing.kind === 'age-range') {
+      expect(goal.timing.endAge).toBe(goal.timing.startAge + 3)
+    }
   })
 })

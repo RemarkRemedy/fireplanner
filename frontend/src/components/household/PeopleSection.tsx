@@ -2,12 +2,15 @@ import { useMemo } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CurrencyInput } from '@/components/shared/CurrencyInput'
+import { NullableNumberInput } from '@/components/shared/NullableNumberInput'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { PeopleRosterEditor } from '@/components/household/PeopleRosterEditor'
+import { createId } from '@/lib/household/ids'
+import { ensureAgeRangeTiming, ownerLabel } from '@/lib/household/editorUtils'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import type {
   AdultOwner,
@@ -15,19 +18,10 @@ import type {
   DependentRelationship,
   EntryOwner,
   PlanningAdult,
-  TimingRule,
 } from '@/lib/household/types'
 import { cn } from '@/lib/utils'
 
 const ADULT_OWNER_OPTIONS: AdultOwner[] = ['self', 'partner']
-
-function createId(prefix: string): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`
-  }
-
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-}
 
 function createPartnerAdult(referenceAdult: PlanningAdult): PlanningAdult {
   return {
@@ -36,6 +30,7 @@ function createPartnerAdult(referenceAdult: PlanningAdult): PlanningAdult {
     owner: 'partner',
     displayName: referenceAdult.displayName === 'You' ? 'Partner' : `${referenceAdult.displayName}'s partner`,
     maritalStatus: 'married',
+    annualIncome: 0,
     cpf: {
       ...structuredClone(referenceAdult.cpf),
       oaWithdrawals: [],
@@ -69,36 +64,6 @@ function getEntityErrors(
   entityId: string,
 ): Record<string, string> {
   return validationErrors[`${entityKind}:${entityId}`] ?? {}
-}
-
-function ensureAgeRangeTiming(
-  timing: TimingRule | null,
-  owner: AdultOwner,
-  startAge: number,
-): Extract<TimingRule, { kind: 'age-range' }> {
-  if (timing?.kind === 'age-range') {
-    return timing
-  }
-
-  if (timing?.kind === 'single-age') {
-    return {
-      kind: 'age-range',
-      owner: timing.owner,
-      startAge: timing.age,
-      endAge: timing.age,
-    }
-  }
-
-  return {
-    kind: 'age-range',
-    owner,
-    startAge,
-    endAge: startAge + 18,
-  }
-}
-
-function ownerLabel(owner: AdultOwner): string {
-  return owner === 'self' ? 'Self' : 'Partner'
 }
 
 interface PeopleSectionProps {
@@ -198,7 +163,7 @@ export function PeopleSection({
           id: dependent.id,
           label: dependent.label,
           relationship: dependent.relationship,
-          currentAge: dependent.currentAge ?? '',
+          currentAge: dependent.currentAge ?? 0,
         }))}
         onAddDependent={() => addDependent(createDependent(selectedAdult?.owner ?? 'self', selectedAdult?.currentAge ?? selfAdult.currentAge))}
         onUpdateDependent={(id, updates) => {
@@ -467,32 +432,24 @@ export function PeopleSection({
                       </Select>
                     </div>
                     <div className="space-y-1">
-                      <Label>Current Age</Label>
-                      <Input
-                        type="number"
-                        inputMode="numeric"
-                        value={dependent.currentAge ?? ''}
-                        onChange={(event) => {
-                          const nextValue = event.target.value
-                          updateDependent(dependent.id, {
-                            currentAge: nextValue === '' ? null : Number(nextValue),
-                          })
-                        }}
+                      <NullableNumberInput
+                        label="Current Age"
+                        integer
+                        min={0}
+                        max={120}
+                        value={dependent.currentAge}
+                        onChange={(value) => updateDependent(dependent.id, { currentAge: value })}
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label>Annual Cost</Label>
-                      <Input
-                        type="number"
-                        inputMode="decimal"
+                      <CurrencyInput
+                        label="Annual Cost"
                         value={dependent.annualCost}
-                        onChange={(event) => updateDependent(dependent.id, {
-                          annualCost: Number(event.target.value) || 0,
+                        onChange={(value) => updateDependent(dependent.id, {
+                          annualCost: value,
                         })}
+                        error={dependentErrors.annualCost}
                       />
-                      {dependentErrors.annualCost && (
-                        <p className="text-xs text-destructive">{dependentErrors.annualCost}</p>
-                      )}
                     </div>
                   </div>
                 </div>
