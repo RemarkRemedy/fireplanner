@@ -117,6 +117,36 @@ function validateAdult(adult: PlanningAdult, errors: HouseholdValidationErrors) 
   if (adult.liquidNetWorth < 0) {
     addEntityError(errors, 'adult', adult.id, 'liquidNetWorth', 'Liquid net worth cannot be negative.')
   }
+
+  // CPF balance sub-fields
+  if (adult.cpf.balances.oa < 0) {
+    addEntityError(errors, 'adult', adult.id, 'cpf.balances.oa', 'CPF OA balance cannot be negative.')
+  }
+  if (adult.cpf.balances.sa < 0) {
+    addEntityError(errors, 'adult', adult.id, 'cpf.balances.sa', 'CPF SA balance cannot be negative.')
+  }
+  if (adult.cpf.balances.ma < 0) {
+    addEntityError(errors, 'adult', adult.id, 'cpf.balances.ma', 'CPF MA balance cannot be negative.')
+  }
+  if (adult.cpf.balances.ra < 0) {
+    addEntityError(errors, 'adult', adult.id, 'cpf.balances.ra', 'CPF RA balance cannot be negative.')
+  }
+
+  // SRS sub-fields
+  if (adult.srs.balance < 0) {
+    addEntityError(errors, 'adult', adult.id, 'srs.balance', 'SRS balance cannot be negative.')
+  }
+  if (adult.srs.annualContribution < 0) {
+    addEntityError(errors, 'adult', adult.id, 'srs.annualContribution', 'SRS annual contribution cannot be negative.')
+  }
+
+  // Healthcare config
+  if (adult.healthcare.oopBaseAmount < 0) {
+    addEntityError(errors, 'adult', adult.id, 'healthcare.oopBaseAmount', 'Out-of-pocket base amount cannot be negative.')
+  }
+  if (adult.healthcare.mediSaveTopUpAnnual < 0) {
+    addEntityError(errors, 'adult', adult.id, 'healthcare.mediSaveTopUpAnnual', 'MediSave top-up cannot be negative.')
+  }
 }
 
 function validateDependent(
@@ -219,6 +249,15 @@ function validatePropertyPlan(
   }
   if (property.existingMonthlyPayment < 0) {
     addEntityError(errors, 'property', property.id, 'existingMonthlyPayment', 'Existing monthly payment cannot be negative.')
+  }
+  if (property.mortgageRate < 0 || property.mortgageRate > 1) {
+    addEntityError(errors, 'property', property.id, 'mortgageRate', 'Mortgage rate must be between 0% and 100%.')
+  }
+  if (property.ltv < 0 || property.ltv > 1) {
+    addEntityError(errors, 'property', property.id, 'ltv', 'Loan-to-value must be between 0% and 100%.')
+  }
+  if (property.mortgageTerm < 1 || property.mortgageTerm > 40) {
+    addEntityError(errors, 'property', property.id, 'mortgageTerm', 'Mortgage term must be between 1 and 40 years.')
   }
 }
 

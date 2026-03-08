@@ -170,6 +170,10 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
     return null
   }
 
+  /** Resolve the adult whose ages should bound a timing-anchored row. */
+  const getTimingAdult = (timingOwner: AdultOwner) =>
+    adults.find((adult) => adult.owner === timingOwner) ?? selectedAdult
+
   const baseExpenses = plan.expenses.filter((expense) => expense.kind === 'base-living' || expense.kind === 'expense-adjustment')
   const parentSupportExpenses = plan.expenses.filter((expense) => expense.kind === 'parent-support')
   const retirementWithdrawals = plan.expenses.filter((expense) => expense.kind === 'retirement-withdrawal')
@@ -554,10 +558,11 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                 selectedAdult.owner,
                 selectedAdult.retirementAge,
               )
+              const timingAdult = getTimingAdult(timing.owner)
               const timedWithdrawal = syncTimingDuration(
                 timing,
                 { durationYears: expense.durationYears ?? 1 },
-                selectedAdult.lifeExpectancy,
+                timingAdult.lifeExpectancy,
               )
 
               return (
@@ -600,15 +605,15 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                     <NumberInput
                       label="Start age"
                       integer
-                      min={selectedAdult.retirementAge}
-                      max={selectedAdult.lifeExpectancy}
+                      min={timingAdult.retirementAge}
+                      max={timingAdult.lifeExpectancy}
                       value={timing.startAge}
                       onChange={(value) => updateExpenseList(
                         expense.id,
                         syncTimingDuration(
                           timing,
                           { startAge: value, durationYears: expense.durationYears ?? 1 },
-                          selectedAdult.lifeExpectancy,
+                          timingAdult.lifeExpectancy,
                         ),
                       )}
                     />
@@ -616,14 +621,14 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                       label="Duration (years)"
                       integer
                       min={1}
-                      max={Math.max(1, selectedAdult.lifeExpectancy - timing.startAge + 1)}
+                      max={Math.max(1, timingAdult.lifeExpectancy - timing.startAge + 1)}
                       value={timedWithdrawal.durationYears}
                       onChange={(value) => updateExpenseList(
                         expense.id,
                         syncTimingDuration(
                           timing,
                           { durationYears: value },
-                          selectedAdult.lifeExpectancy,
+                          timingAdult.lifeExpectancy,
                         ),
                       )}
                     />
@@ -665,10 +670,11 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                 selectedAdult.owner,
                 selectedAdult.currentAge + 5,
               )
+              const goalTimingAdult = getTimingAdult(timing.owner)
               const timedGoal = syncTimingDuration(
                 timing,
                 { durationYears: goal.durationYears },
-                selectedAdult.lifeExpectancy,
+                goalTimingAdult.lifeExpectancy,
               )
 
               return (
@@ -732,15 +738,15 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                     <NumberInput
                       label="Target age"
                       integer
-                      min={selectedAdult.currentAge + 1}
-                      max={selectedAdult.lifeExpectancy}
+                      min={goalTimingAdult.currentAge + 1}
+                      max={goalTimingAdult.lifeExpectancy}
                       value={timing.startAge}
                       onChange={(value) => updateGoalList(
                         goal.id,
                         syncTimingDuration(
                           timing,
                           { startAge: value, durationYears: goal.durationYears },
-                          selectedAdult.lifeExpectancy,
+                          goalTimingAdult.lifeExpectancy,
                         ),
                       )}
                     />
@@ -748,14 +754,14 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                       label="Duration (years)"
                       integer
                       min={1}
-                      max={Math.max(1, selectedAdult.lifeExpectancy - timing.startAge + 1)}
+                      max={Math.max(1, goalTimingAdult.lifeExpectancy - timing.startAge + 1)}
                       value={timedGoal.durationYears}
                       onChange={(value) => updateGoalList(
                         goal.id,
                         syncTimingDuration(
                           timing,
                           { durationYears: value },
-                          selectedAdult.lifeExpectancy,
+                          goalTimingAdult.lifeExpectancy,
                         ),
                       )}
                     />

@@ -36,6 +36,9 @@ export function disableLocalStoragePersistence(): () => void {
   }))
 
   for (const store of stores) {
+    // Storage swap requires a cast because each store's PersistStorage is
+    // parameterized over a different state type. The no-op storage is
+    // structurally compatible at runtime but the type union is inexpressible.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     store.persist.setOptions({ storage: noopPersistStorage as any })
   }

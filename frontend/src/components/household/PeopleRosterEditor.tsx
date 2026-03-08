@@ -71,7 +71,7 @@ export function PeopleRosterEditor({
               <NumberInput
                 integer
                 min={18}
-                max={100}
+                max={99}
                 value={selfAge}
                 onChange={onSelfAgeChange}
               />
@@ -110,7 +110,7 @@ export function PeopleRosterEditor({
                 <NumberInput
                   integer
                   min={18}
-                  max={100}
+                  max={99}
                   value={partnerAge}
                   onChange={onPartnerAgeChange}
                 />

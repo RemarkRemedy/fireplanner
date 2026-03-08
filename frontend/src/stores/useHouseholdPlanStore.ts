@@ -156,7 +156,7 @@ function createPersistedState(
 }
 
 function isPersistedState(value: unknown): value is Partial<HouseholdPlanPersistedState> {
-  return typeof value === 'object' && value !== null
+  return typeof value === 'object' && value !== null && ('plan' in value || 'provenance' in value)
 }
 
 function replaceCollectionItem<T extends { id: string }>(
@@ -189,6 +189,24 @@ function replaceTimingOwner(
   }
 }
 
+/** Recalculate each adult's liquidNetWorth from the plan's asset entries. */
+function recalcAdultLiquidNetWorths(plan: HouseholdPlan): void {
+  const adultCount = plan.adults.length
+  if (adultCount === 0) return
+
+  const sharedLiquidTotal = plan.assets
+    .filter((asset) => asset.kind === 'liquid-net-worth' && asset.owner === 'shared')
+    .reduce((sum, asset) => sum + asset.amount, 0)
+  const sharedLiquidShare = sharedLiquidTotal / adultCount
+
+  for (const adult of plan.adults) {
+    const ownedLiquid = plan.assets
+      .filter((asset) => asset.kind === 'liquid-net-worth' && asset.owner === adult.owner)
+      .reduce((sum, asset) => sum + asset.amount, 0)
+    adult.liquidNetWorth = ownedLiquid + sharedLiquidShare
+  }
+}
+
 function reanchorTimedEntries<T extends { timing: TimingRule | null }>(
   items: T[],
   removedOwner: AdultOwner,
@@ -207,10 +225,19 @@ function reanchorTimedEntries<T extends { timing: TimingRule | null }>(
 }
 
 const INITIAL_PROVENANCE = createProvenance('manual')
-const INITIAL_PLAN = createManualHouseholdPlan()
+
+// Lazy factory so the default plan is not computed at module load time.
+// This avoids side-effects from fromLegacyIndividual running during import.
+let _initialPlan: HouseholdPlan | null = null
+function getInitialPlan(): HouseholdPlan {
+  if (!_initialPlan) {
+    _initialPlan = createManualHouseholdPlan()
+  }
+  return _initialPlan
+}
 
 export function createDefaultHouseholdPlanPersistedState(): HouseholdPlanPersistedState {
-  return createPersistedState(INITIAL_PLAN, INITIAL_PROVENANCE, 0)
+  return createPersistedState(getInitialPlan(), INITIAL_PROVENANCE, 0)
 }
 
 export function createHouseholdPlanPersistedState(
@@ -224,7 +251,7 @@ export function createHouseholdPlanPersistedState(
 export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
   persist(
     (set) => ({
-      ...buildValidatedState(INITIAL_PLAN, INITIAL_PROVENANCE, 0),
+      ...buildValidatedState(getInitialPlan(), INITIAL_PROVENANCE, 0),
 
       initializeManualPlan: (planType = 'individual') =>
         set((state) => buildValidatedState(
@@ -329,6 +356,9 @@ export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
               fallbackTimingOwner,
             )
           }
+
+          // Recalculate liquid net worth distribution after removing an adult (W41)
+          recalcAdultLiquidNetWorths(nextPlan)
 
           return buildValidatedState(nextPlan, state.provenance, state.householdPlanRevision + 1)
         }),
@@ -469,6 +499,7 @@ export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
     {
       name: HOUSEHOLD_PLAN_STORAGE_KEY,
       version: HOUSEHOLD_PLAN_STORAGE_VERSION,
+      migrate: (persistedState, _version) => persistedState,
       merge: (persistedState, currentState) => {
         if (!isPersistedState(persistedState)) return currentState
 
