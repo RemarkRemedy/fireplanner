@@ -7,7 +7,7 @@ import {
 import { LEGACY_PARITY_FIXTURES } from '@/lib/household/__tests__/legacyParityFixtures'
 import { DEFAULT_INCOME } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { useNormalizedAnalysisStore } from '@/stores/useNormalizedAnalysisStore'
+import { buildCacheOpsFromStore, useNormalizedAnalysisStore } from '@/stores/useNormalizedAnalysisStore'
 import { DEFAULT_PROFILE } from '@/stores/useProfileStore'
 import { DEFAULT_PROPERTY } from '@/stores/usePropertyStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
@@ -86,6 +86,7 @@ function buildParityInput(snapshot: (typeof LEGACY_PARITY_FIXTURES)[keyof typeof
       validationErrors: {},
       propertyRevision: 1,
     },
+    cacheOps: buildCacheOpsFromStore(),
   }
 }
 

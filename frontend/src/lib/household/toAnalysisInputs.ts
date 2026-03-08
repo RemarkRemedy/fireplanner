@@ -17,9 +17,11 @@ import {
   buildNormalizedAnalysisCacheKey,
   MONTE_CARLO_NORMALIZED_OWNER,
   stableScenarioOverrideHash,
-  useNormalizedAnalysisStore,
+  type NormalizedAnalysisCacheOps,
   type NormalizedAnalysisEntry,
 } from '@/stores/useNormalizedAnalysisStore'
+
+export type { NormalizedAnalysisCacheOps }
 
 type RevisionedProfileState = ProfileState & { profileRevision?: number }
 type RevisionedIncomeState = IncomeState & { incomeRevision?: number }
@@ -180,24 +182,26 @@ function resolveLegacyPortfolioAdjustmentAmount(
 }
 
 export function getOrCreateLegacyNormalizedAnalysisEntry(
-  input: LegacyNormalizedEntryInput
+  input: LegacyNormalizedEntryInput,
+  cacheOps: NormalizedAnalysisCacheOps
 ): NormalizedAnalysisEntry {
   const householdRevision = buildLegacyHouseholdRevision({
     profileRevision: input.profile.profileRevision ?? 0,
     incomeRevision: input.income.incomeRevision ?? 0,
     propertyRevision: input.property.propertyRevision ?? 0,
   })
-  const scenarioOverrideHash = stableScenarioOverrideHash(
-    input.scenarioOverrides ?? input.profileOverrides ?? null
-  )
+  const scenarioOverrideHash = stableScenarioOverrideHash({
+    profileOverrides: input.profileOverrides ?? null,
+    scenarioOverrides: input.scenarioOverrides ?? null,
+  })
   const cacheKey = buildNormalizedAnalysisCacheKey({
     householdRevision,
     scenarioOverrideHash,
   })
 
-  const existingEntry = useNormalizedAnalysisStore.getState().entries[cacheKey]
+  const existingEntry = cacheOps.getEntry(cacheKey)
   if (existingEntry?.compiledPlan) {
-    useNormalizedAnalysisStore.getState().setActiveCacheKey(cacheKey)
+    cacheOps.setActiveCacheKey(cacheKey)
     return existingEntry
   }
 
@@ -210,16 +214,17 @@ export function getOrCreateLegacyNormalizedAnalysisEntry(
     scenarioOverrideHash
   )
 
-  useNormalizedAnalysisStore.getState().upsertEntry(entry)
-  useNormalizedAnalysisStore.getState().setActiveCacheKey(cacheKey)
+  cacheOps.upsertEntry(entry)
+  cacheOps.setActiveCacheKey(cacheKey)
 
   return entry
 }
 
 export function toMonteCarloAnalysisInputs(
-  input: LegacyNormalizedEntryInput
+  input: LegacyNormalizedEntryInput,
+  cacheOps: NormalizedAnalysisCacheOps
 ): NormalizedMonteCarloAnalysisInputs {
-  const entry = getOrCreateLegacyNormalizedAnalysisEntry(input)
+  const entry = getOrCreateLegacyNormalizedAnalysisEntry(input, cacheOps)
   const compiledPlan = entry.compiledPlan
 
   if (!compiledPlan) {

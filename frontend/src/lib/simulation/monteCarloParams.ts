@@ -6,7 +6,7 @@ import type {
   SimulationState,
 } from '@/lib/types'
 import type { MonteCarloEngineParams } from '@/lib/simulation/monteCarlo'
-import { toMonteCarloAnalysisInputs } from '@/lib/household/toAnalysisInputs'
+import { toMonteCarloAnalysisInputs, type NormalizedAnalysisCacheOps } from '@/lib/household/toAnalysisInputs'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 import { generateIncomeProjection, sumPostRetirementIncome, getLifeEventExpenseImpact } from '@/lib/calculations/income'
 import { getEffectiveExpenses, getExpensesAtRetirement } from '@/lib/calculations/expenses'
@@ -32,6 +32,7 @@ interface BuildMonteCarloEngineParamsInput {
   initialPortfolio?: number
   allocationWeights?: number[]
   profileOverrides?: Partial<Pick<ProfileState, 'annualExpenses' | 'retirementAge'>>
+  cacheOps?: NormalizedAnalysisCacheOps
 }
 
 export function buildLegacyMonteCarloEngineParams({
@@ -327,6 +328,13 @@ export function buildLegacyMonteCarloEngineParams({
 export function buildMonteCarloEngineParams(
   input: BuildMonteCarloEngineParamsInput
 ): MonteCarloEngineParams {
+  if (!input.cacheOps) {
+    throw new Error(
+      'buildMonteCarloEngineParams requires cacheOps. ' +
+      'Use buildCacheOpsFromStore() at the call site to construct it.'
+    )
+  }
+
   const legacyParams = buildLegacyMonteCarloEngineParams(input)
   const normalizedInputs = toMonteCarloAnalysisInputs({
     profile: input.profile,
@@ -334,7 +342,7 @@ export function buildMonteCarloEngineParams(
     property: input.property,
     profileOverrides: input.profileOverrides,
     scenarioOverrides: null,
-  })
+  }, input.cacheOps)
 
   // C2 fix: Override annualSavings and postRetirementIncome from the
   // normalized path too, not just ages and adjustments. Using legacy

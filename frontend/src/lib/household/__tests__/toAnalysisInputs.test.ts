@@ -5,6 +5,7 @@ import {
 } from '@/lib/household/toAnalysisInputs'
 import { LEGACY_PARITY_FIXTURES } from '@/lib/household/__tests__/legacyParityFixtures'
 import {
+  buildCacheOpsFromStore,
   buildLegacyHouseholdRevision,
   buildNormalizedAnalysisCacheKey,
   stableScenarioOverrideHash,
@@ -58,7 +59,7 @@ describe('toAnalysisInputs', () => {
         retirementAge: 55,
         annualExpenses: 50_000,
       },
-    })
+    }, buildCacheOpsFromStore())
 
     expect(entry.cacheKey).toBe(buildNormalizedAnalysisCacheKey({
       householdRevision: buildLegacyHouseholdRevision({
@@ -67,8 +68,11 @@ describe('toAnalysisInputs', () => {
         propertyRevision: 11,
       }),
       scenarioOverrideHash: stableScenarioOverrideHash({
-        annualExpenses: 50_000,
-        retirementAge: 55,
+        profileOverrides: null,
+        scenarioOverrides: {
+          retirementAge: 55,
+          annualExpenses: 50_000,
+        },
       }),
     }))
     expect(entry.selectors.monteCarlo?.annualSavingsByYear.length).toBeGreaterThan(0)
@@ -96,7 +100,7 @@ describe('toAnalysisInputs', () => {
         annualExpenses: 50_000,
         retirementAge: 55,
       },
-    })
+    }, buildCacheOpsFromStore())
 
     expect(reusedEntry.cacheKey).toBe(entry.cacheKey)
     expect(Object.keys(useNormalizedAnalysisStore.getState().entries)).toHaveLength(1)
@@ -123,13 +127,13 @@ describe('toAnalysisInputs', () => {
         'propertyRevision',
         1
       ),
-    })
+    }, buildCacheOpsFromStore())
 
     expect(inputs.currentAge).toBe(snapshot.profile.currentAge)
     expect(inputs.retirementAge).toBe(snapshot.profile.retirementAge)
     expect(inputs.lifeExpectancy).toBe(snapshot.profile.lifeExpectancy)
     expect(inputs.annualSavings).toHaveLength(
-      snapshot.profile.retirementAge - snapshot.profile.currentAge + 1
+      snapshot.profile.retirementAge - snapshot.profile.currentAge
     )
     expect(inputs.postRetirementIncome.length).toBeGreaterThan(0)
     expect(inputs.annualExpensesAtRetirement).toBeGreaterThan(0)
