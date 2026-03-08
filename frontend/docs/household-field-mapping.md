@@ -252,6 +252,7 @@ Snapshot date: `2026-03-07`
 ### Portability / Runtime Helpers
 
 - [fromLegacyIndividual.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/lib/household/fromLegacyIndividual.ts)
+- [fromExpenseImport.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/lib/household/fromExpenseImport.ts)
 - [companionBridge.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/lib/companion/companionBridge.ts)
 - [exportExcel.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/lib/exportExcel.ts)
 - [storeRegistry.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/lib/storeRegistry.ts)

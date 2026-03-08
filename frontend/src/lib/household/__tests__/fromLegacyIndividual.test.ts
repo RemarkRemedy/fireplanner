@@ -289,12 +289,21 @@ describe('household-field-mapping contract', () => {
   it('covers every direct legacy-store consumer and the required indirect route surfaces', () => {
     const doc = readFileSync(DOC_PATH, 'utf8')
 
+    // The doc uses absolute paths rooted at the original repo, which differ
+    // from worktree paths. Extract the /src/... suffix for comparison.
+    const extractSrcSuffix = (p: string) => {
+      const idx = p.indexOf('/src/')
+      return idx >= 0 ? p.slice(idx) : p
+    }
+
     for (const consumer of collectLegacyConsumers(SRC_ROOT)) {
-      expect(doc).toContain(consumer)
+      const suffix = extractSrcSuffix(consumer)
+      expect(doc, `consumer not documented: ${consumer}`).toContain(suffix)
     }
 
     for (const routeSurface of INDIRECT_ROUTE_SURFACES) {
-      expect(doc).toContain(routeSurface)
+      const suffix = extractSrcSuffix(routeSurface)
+      expect(doc, `route surface not documented: ${routeSurface}`).toContain(suffix)
     }
   })
 
