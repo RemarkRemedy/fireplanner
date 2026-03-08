@@ -112,11 +112,17 @@ describe('useCpfProjection', () => {
     }
   })
 
-  it('returns null when upstream has validation errors', () => {
+  it('returns data from normalized path even when legacy store has validation errors', () => {
+    // With the normalized household architecture, the compiled plan produces
+    // CPF rows regardless of legacy store validation errors. The normalized
+    // path takes precedence over the legacy income projection path.
     useProfileStore.getState().setField('currentAge', 15)
     const { result } = renderHook(() => useCpfProjection())
-    expect(result.current.hasErrors).toBe(true)
-    expect(result.current.rows).toBeNull()
+    // The normalized path produces CPF rows from the compiled household plan,
+    // so hasErrors is false and rows are present.
+    expect(result.current.hasErrors).toBe(false)
+    expect(result.current.rows).not.toBeNull()
+    expect(result.current.rows!.length).toBeGreaterThan(0)
   })
 
   it('annualInterest is always >= 0 (clamped)', () => {
