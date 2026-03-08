@@ -65,9 +65,21 @@ function buildWithdrawalMonteCarloRunSignature(input: {
 export function WithdrawalPage() {
   usePageMeta({ title: 'Withdrawal Strategies — SG FIRE Planner', description: 'Compare 12 retirement withdrawal strategies including the 4% rule, VPW, guardrails, and CAPE-based approaches.', path: '/withdrawal' })
   const { profile } = useHouseholdRuntimeInputs()
-  const allocation = useAllocationStore()
-  const simulation = useSimulationStore()
+  // Normalized context for household-aware ages and revision tracking
   const normalized = useNormalizedLegacyAnalysisContext()
+  // Allocation selectors
+  const allocationValidationErrors = useAllocationStore((s) => s.validationErrors)
+  const allocationReturnOverrides = useAllocationStore((s) => s.returnOverrides)
+  const allocationStdDevOverrides = useAllocationStore((s) => s.stdDevOverrides)
+  const allocationRevision = useAllocationStore((s) => s.allocationRevision)
+  // Simulation selectors
+  const simulationValidationErrors = useSimulationStore((s) => s.validationErrors)
+  const simulationMcMethod = useSimulationStore((s) => s.mcMethod)
+  const simulationNSimulations = useSimulationStore((s) => s.nSimulations)
+  const simulationSelectedStrategy = useSimulationStore((s) => s.selectedStrategy)
+  const simulationStrategyParams = useSimulationStore((s) => s.strategyParams)
+  const simulationWithdrawalBasis = useSimulationStore((s) => s.withdrawalBasis)
+  const simulationRevision = useSimulationStore((s) => s.simulationRevision)
   const selectedStrategies = useWithdrawalStore((s) => s.selectedStrategies)
   const toggleStrategy = useWithdrawalStore((s) => s.toggleStrategy)
 
@@ -99,9 +111,7 @@ export function WithdrawalPage() {
 
   // Validation gating
   const profileErrors = profile.validationErrors
-  const allocationErrors = allocation.validationErrors
-  const simulationErrors = simulation.validationErrors
-  const mcValidationErrors = { ...profileErrors, ...allocationErrors, ...simulationErrors }
+  const mcValidationErrors = { ...profileErrors, ...allocationValidationErrors, ...simulationValidationErrors }
   const canRunExplore = explore.initialPortfolio > 0
     && explore.startAge < normalized.lifeExpectancy
     && explore.startAge >= normalized.currentAge
@@ -110,7 +120,7 @@ export function WithdrawalPage() {
   // Stale detection
   const [lastRunSig, setLastRunSig] = useState<string | null>(null)
   const currentSig = useMemo(() => buildWithdrawalMonteCarloRunSignature({
-    allocationRevision: allocation.allocationRevision,
+    allocationRevision,
     explore: {
       allocationWeights: explore.allocationWeights,
       balanceMode: explore.balanceMode,
@@ -119,16 +129,16 @@ export function WithdrawalPage() {
     },
     householdRevision: normalized.householdRevision,
     scenarioOverrideHash: normalized.scenarioOverrideHash,
-    simulationRevision: simulation.simulationRevision,
+    simulationRevision,
   }), [
-    allocation.allocationRevision,
+    allocationRevision,
     explore.allocationWeights,
     explore.balanceMode,
     explore.initialPortfolio,
     explore.startAge,
     normalized.householdRevision,
     normalized.scenarioOverrideHash,
-    simulation.simulationRevision,
+    simulationRevision,
   ])
 
   const buildMCParams = (): MonteCarloEngineParams => {
@@ -141,22 +151,22 @@ export function WithdrawalPage() {
     return {
       initialPortfolio: explore.initialPortfolio,
       allocationWeights: explore.allocationWeights,
-      expectedReturns: getEffectiveReturns(allocation.returnOverrides),
-      stdDevs: getEffectiveStdDevs(allocation.stdDevOverrides),
+      expectedReturns: getEffectiveReturns(allocationReturnOverrides),
+      stdDevs: getEffectiveStdDevs(allocationStdDevOverrides),
       correlationMatrix: CORRELATION_MATRIX,
       currentAge: explore.startAge,
       retirementAge: explore.startAge,       // forces pure decumulation (nYearsAccum = 0)
       lifeExpectancy: normalized.lifeExpectancy,
       annualSavings: [],
       postRetirementIncome: Array(nDecumYears).fill(0),
-      method: simulation.mcMethod,
-      nSimulations: simulation.nSimulations,
-      withdrawalStrategy: simulation.selectedStrategy,
-      strategyParams: flattenStrategyParams(simulation.selectedStrategy, simulation.strategyParams),
+      method: simulationMcMethod,
+      nSimulations: simulationNSimulations,
+      withdrawalStrategy: simulationSelectedStrategy,
+      strategyParams: flattenStrategyParams(simulationSelectedStrategy, simulationStrategyParams),
       expenseRatio: profile.expenseRatio,
       inflation: profile.inflation,
       annualExpensesAtRetirement,
-      withdrawalBasis: simulation.withdrawalBasis,
+      withdrawalBasis: simulationWithdrawalBasis,
       extractPaths: true,
     }
   }
@@ -371,7 +381,7 @@ export function WithdrawalPage() {
                     <SpendingMetricsPanel
                       metrics={mcMutation.data.spending_metrics}
                       nSimulations={mcMutation.data.n_simulations}
-                      strategy={simulation.selectedStrategy}
+                      strategy={simulationSelectedStrategy}
                     />
                   )}
                   <FanChart bands={mcMutation.data.percentile_bands} retirementAge={explore.startAge} />

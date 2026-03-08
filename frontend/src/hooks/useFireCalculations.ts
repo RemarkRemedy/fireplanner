@@ -25,7 +25,10 @@ interface FireCalculationsResult {
 export function useFireCalculations(): FireCalculationsResult {
   const plan = useHouseholdPlanStore((state) => state.plan)
   const hasValidationErrors = useHouseholdPlanStore((state) => state.hasValidationErrors)
-  const allocation = useAllocationStore()
+  // Allocation: only 3 fields used — subscribe via selectors instead of full store
+  const allocationValidationErrors = useAllocationStore((s) => s.validationErrors)
+  const allocationCurrentWeights = useAllocationStore((s) => s.currentWeights)
+  const allocationReturnOverrides = useAllocationStore((s) => s.returnOverrides)
   const normalized = useNormalizedLegacyAnalysisContext()
   const { profile, income, property } = useMemo(
     () => buildHouseholdRuntimeLegacyInputs(plan, normalized.compiledPlan),
@@ -56,11 +59,10 @@ export function useFireCalculations(): FireCalculationsResult {
 
     // Use portfolio expected return from allocation when user has opted in and allocation is valid
     let expectedReturn = profile.expectedReturn
-    const allocationErrors = allocation.validationErrors
-    const allocationHasErrors = Object.keys(allocationErrors).length > 0
+    const allocationHasErrors = Object.keys(allocationValidationErrors).length > 0
 
     if (profile.usePortfolioReturn && !allocationHasErrors) {
-      expectedReturn = calculatePortfolioReturn(allocation.currentWeights, getEffectiveReturns(allocation.returnOverrides))
+      expectedReturn = calculatePortfolioReturn(allocationCurrentWeights, getEffectiveReturns(allocationReturnOverrides))
     }
 
     // Compute property equity from existing property (scaled by ownership %)
@@ -105,5 +107,5 @@ export function useFireCalculations(): FireCalculationsResult {
 
     return { metrics, hasErrors: false, errors: {} }
     // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/preserve-manual-memoization -- Uses buildProjectionParams which reads many store fields; whole refs avoid stale omissions
-  }, [allocation, hasValidationErrors, income, normalized.currentAge, normalized.lifeExpectancy, normalized.retirementAge, profile, property])
+  }, [hasValidationErrors, income, normalized.currentAge, normalized.lifeExpectancy, normalized.retirementAge, profile, property, allocationValidationErrors, allocationCurrentWeights, allocationReturnOverrides])
 }
