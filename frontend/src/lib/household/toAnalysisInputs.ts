@@ -44,6 +44,12 @@ export interface NormalizedMonteCarloAnalysisInputs {
   portfolioAdjustments: { year: number; amount: number }[]
 }
 
+export interface LegacyNormalizedAnalysisIdentity {
+  cacheKey: string
+  householdRevision: string
+  scenarioOverrideHash: string
+}
+
 export interface LegacyNormalizedAnalysisEntry {
   cacheKey: string
   householdRevision: string
@@ -217,9 +223,9 @@ function resolveLegacyPortfolioAdjustmentAmount(
   return adjustment.amount
 }
 
-export function createLegacyNormalizedAnalysisEntry(
+export function buildLegacyNormalizedAnalysisIdentity(
   input: LegacyNormalizedEntryInput
-): LegacyNormalizedAnalysisEntry {
+): LegacyNormalizedAnalysisIdentity {
   const householdRevision = buildLegacyHouseholdRevision({
     profileRevision: input.profile.profileRevision ?? 0,
     incomeRevision: input.income.incomeRevision ?? 0,
@@ -228,6 +234,22 @@ export function createLegacyNormalizedAnalysisEntry(
   const scenarioOverrideHash = stableScenarioOverrideHash(
     input.scenarioOverrides ?? input.profileOverrides ?? null
   )
+
+  return {
+    cacheKey: buildNormalizedAnalysisCacheKey({
+      householdRevision,
+      scenarioOverrideHash,
+    }),
+    householdRevision,
+    scenarioOverrideHash,
+  }
+}
+
+export function createLegacyNormalizedAnalysisEntry(
+  input: LegacyNormalizedEntryInput
+): LegacyNormalizedAnalysisEntry {
+  const { householdRevision, scenarioOverrideHash } =
+    buildLegacyNormalizedAnalysisIdentity(input)
 
   const compiledPlan = compileHouseholdPlan(
     fromLegacyIndividual(createLegacySnapshot(input))

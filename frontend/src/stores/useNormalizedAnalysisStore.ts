@@ -23,6 +23,7 @@ import {
   type NormalizedAnalysisCacheKeyParts,
 } from '@/lib/household/normalizedAnalysisCache'
 import {
+  buildLegacyNormalizedAnalysisIdentity,
   buildMonteCarloAnalysisInputsFromEntry,
   createLegacyNormalizedAnalysisEntry,
   type LegacyNormalizedAnalysisEntry,
@@ -131,14 +132,15 @@ export const useNormalizedAnalysisStore = create<NormalizedAnalysisState>()(
 export function getOrCreateLegacyNormalizedAnalysisEntry(
   input: LegacyNormalizedEntryInput
 ): NormalizedAnalysisEntry {
-  const entry = createLegacyNormalizedAnalysisEntry(input)
-  const existingEntry = useNormalizedAnalysisStore.getState().entries[entry.cacheKey]
+  const identity = buildLegacyNormalizedAnalysisIdentity(input)
+  const existingEntry = useNormalizedAnalysisStore.getState().entries[identity.cacheKey]
 
   if (existingEntry?.compiledPlan) {
-    useNormalizedAnalysisStore.getState().setActiveCacheKey(entry.cacheKey)
+    useNormalizedAnalysisStore.getState().setActiveCacheKey(identity.cacheKey)
     return existingEntry
   }
 
+  const entry = createLegacyNormalizedAnalysisEntry(input)
   useNormalizedAnalysisStore.getState().upsertEntry(entry as NormalizedAnalysisEntry)
   useNormalizedAnalysisStore.getState().setActiveCacheKey(entry.cacheKey)
 

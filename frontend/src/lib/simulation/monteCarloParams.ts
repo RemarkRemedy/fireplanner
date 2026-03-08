@@ -6,6 +6,7 @@ import type {
   SimulationState,
 } from '@/lib/types'
 import type { MonteCarloEngineParams } from '@/lib/simulation/monteCarlo'
+import type { NormalizedMonteCarloAnalysisInputs } from '@/lib/household/toAnalysisInputs'
 import { generateIncomeProjection, sumPostRetirementIncome, getLifeEventExpenseImpact } from '@/lib/calculations/income'
 import { getEffectiveExpenses, getExpensesAtRetirement } from '@/lib/calculations/expenses'
 import { getPropertyRentalIncome } from '@/lib/calculations/hdb'
@@ -21,7 +22,6 @@ import { CORRELATION_MATRIX } from '@/lib/data/historicalReturns'
 import { flattenStrategyParams } from '@/lib/simulation/workerClient'
 import { getEffectiveReturns, getEffectiveStdDevs, buildYearlyWeights } from '@/lib/calculations/portfolio'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
-import { toMonteCarloAnalysisInputs } from '@/stores/useNormalizedAnalysisStore'
 
 interface BuildMonteCarloEngineParamsInput {
   profile: ProfileState
@@ -32,6 +32,7 @@ interface BuildMonteCarloEngineParamsInput {
   initialPortfolio?: number
   allocationWeights?: number[]
   profileOverrides?: Partial<Pick<ProfileState, 'annualExpenses' | 'retirementAge'>>
+  normalizedAnalysisInputs?: NormalizedMonteCarloAnalysisInputs
 }
 
 export function buildLegacyMonteCarloEngineParams({
@@ -328,19 +329,20 @@ export function buildMonteCarloEngineParams(
   input: BuildMonteCarloEngineParamsInput
 ): MonteCarloEngineParams {
   const legacyParams = buildLegacyMonteCarloEngineParams(input)
-  const normalizedInputs = toMonteCarloAnalysisInputs({
-    profile: input.profile,
-    income: input.income,
-    property: input.property,
-    profileOverrides: input.profileOverrides,
-    scenarioOverrides: input.profileOverrides ?? null,
-  })
+  const normalizedInputs = input.normalizedAnalysisInputs
+
+  if (!normalizedInputs) {
+    return legacyParams
+  }
 
   return {
     ...legacyParams,
     currentAge: normalizedInputs.currentAge,
     retirementAge: normalizedInputs.retirementAge,
     lifeExpectancy: normalizedInputs.lifeExpectancy,
+    annualSavings: normalizedInputs.annualSavings,
+    postRetirementIncome: normalizedInputs.postRetirementIncome,
+    annualExpensesAtRetirement: normalizedInputs.annualExpensesAtRetirement,
     portfolioAdjustments: normalizedInputs.portfolioAdjustments,
   }
 }
