@@ -11,6 +11,7 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import {
+  buildCacheOpsFromStore,
   buildMonteCarloRunSignature,
   stableRunOverrideHash,
 } from '@/stores/useNormalizedAnalysisStore'
@@ -186,6 +187,7 @@ export function useMonteCarloWorkerQuery(): UseMonteCarloWorkerQueryResult {
         initialPortfolio: analysisPortfolio.initialPortfolio,
         allocationWeights: analysisPortfolio.allocationWeights,
         profileOverrides,
+        cacheOps: buildCacheOpsFromStore(),
       })
 
       try {

@@ -41,6 +41,7 @@ import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { buildMonteCarloEngineParams } from '@/lib/simulation/monteCarloParams'
+import { buildCacheOpsFromStore } from '@/stores/useNormalizedAnalysisStore'
 import { runMonteCarloWorker } from '@/lib/simulation/workerClient'
 import {
   STRESS_SCENARIOS,
@@ -730,6 +731,7 @@ export function StressTestPage() {
               ...(overrides.retirementAge != null ? { retirementAge: overrides.retirementAge } : {}),
             }
           : undefined,
+        cacheOps: buildCacheOpsFromStore(),
       })
 
       const runPlan = buildStressScenarioRunPlan(params, nonBaseScenarioIds)
@@ -808,6 +810,7 @@ export function StressTestPage() {
               ...(overrides.retirementAge != null ? { retirementAge: overrides.retirementAge } : {}),
             }
           : undefined,
+        cacheOps: buildCacheOpsFromStore(),
         onProgress: (completed, total) => {
           if (!controller.signal.aborted) {
             setActionImpactStates((prev) => ({

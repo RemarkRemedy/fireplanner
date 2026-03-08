@@ -30,6 +30,7 @@ import type {
 } from '@/lib/types'
 import { buildProofCyclesFromHistoricalBlended, buildProofCyclesFromMonteCarlo } from './proofData'
 import { buildMonteCarloEngineParams } from './monteCarloParams'
+import type { NormalizedAnalysisCacheOps } from '@/stores/useNormalizedAnalysisStore'
 
 interface ScenarioCoreStores {
   profile: ProfileState
@@ -338,6 +339,7 @@ export async function buildProofCyclesFromScenarioSnapshot(
   scenarioStores: Record<string, unknown>,
   source: ProofSource,
   blendRatio: number,
+  cacheOps: NormalizedAnalysisCacheOps,
 ): Promise<ProofCycle[]> {
   const core = extractScenarioCoreStores(scenarioStores)
   if (!core) {
@@ -380,6 +382,7 @@ export async function buildProofCyclesFromScenarioSnapshot(
     property: core.property,
     initialPortfolio: core.profile.liquidNetWorth + core.profile.cpfOA + core.profile.cpfSA + core.profile.cpfMA + core.profile.cpfRA,
     allocationWeights: core.allocation.currentWeights,
+    cacheOps,
   })
   const engineResult = await runMonteCarloWorker(mcParams)
 

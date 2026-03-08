@@ -183,6 +183,22 @@ export function buildMonteCarloRunSignature(
   ].join(':')
 }
 
+export interface NormalizedAnalysisCacheOps {
+  getEntry: (cacheKey: string) => NormalizedAnalysisEntry | undefined
+  upsertEntry: (entry: NormalizedAnalysisEntry) => void
+  setActiveCacheKey: (cacheKey: string) => void
+}
+
+/** Build cache operations from the store's current state. Use this at
+ *  call sites in hooks/components to pass into pure lib/ functions. */
+export function buildCacheOpsFromStore(): NormalizedAnalysisCacheOps {
+  return {
+    getEntry: (cacheKey) => useNormalizedAnalysisStore.getState().entries[cacheKey],
+    upsertEntry: (entry) => useNormalizedAnalysisStore.getState().upsertEntry(entry),
+    setActiveCacheKey: (cacheKey) => useNormalizedAnalysisStore.getState().setActiveCacheKey(cacheKey),
+  }
+}
+
 // Gate A locks the cache shape and key builders; PR4A wires compilation and selectors into it.
 export const useNormalizedAnalysisStore = create<NormalizedAnalysisState>()(
   (set) => ({
