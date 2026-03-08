@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, Loader2, Send } from 'lucide-react'
+import { trackEvent } from '@/lib/analytics'
 import {
   EMAIL_MAX_LENGTH,
   EXPENSE_TRACKING_OPTIONS,
@@ -28,7 +29,7 @@ export function ExpenseTrackerForm({ signup, surface, pagePath }: ExpenseTracker
 
   if (isSignedUp) {
     return (
-      <div className="space-y-1" aria-live="polite">
+      <div className="space-y-2" aria-live="polite">
         <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
           <CheckCircle className="h-4 w-4" />
           <p className="text-sm font-medium">You're in.</p>
@@ -36,6 +37,16 @@ export function ExpenseTrackerForm({ signup, surface, pagePath }: ExpenseTracker
         <p className="text-sm text-muted-foreground">
           Thanks, I'll reach out when early access is ready.
         </p>
+        <a
+          href="https://t.me/sgfireplannerann"
+          target="_blank"
+          rel="noopener"
+          onClick={() => trackEvent('telegram_join_clicked', { surface })}
+          className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 transition-colors"
+        >
+          <Send className="h-3.5 w-3.5" />
+          Join Telegram for instant updates
+        </a>
       </div>
     )
   }

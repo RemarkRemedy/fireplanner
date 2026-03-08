@@ -25,13 +25,7 @@ export function ExpenseTrackerModal() {
     }
   }, [dismissModal, closeModal, signup.isSignedUp])
 
-  // Auto-close after successful signup
-  useEffect(() => {
-    if (signup.isSignedUp && modalOpen) {
-      const timer = setTimeout(() => closeModal(), 2000)
-      return () => clearTimeout(timer)
-    }
-  }, [signup.isSignedUp, modalOpen, closeModal])
+  // Let user dismiss manually so they can see the Telegram CTA
 
   const title = "Want your real spending to update your FIRE plan?"
   const description = "I'm building a companion expense tracker for SGFirePlanner users. Join early access if you want a simpler way to keep your plan aligned with real-life spending."
