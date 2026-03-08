@@ -74,7 +74,7 @@ export function buildSequenceRiskWorkerParams(input: {
   const retirementDuration = normalized.lifeExpectancy - normalized.retirementAge
   const portfolioAdjustments = normalized.entry.selectors.backtest?.portfolioAdjustments ?? []
   const postRetirementIncome = normalized.entry.selectors.backtest?.postRetirementIncomeByYear
-    .slice(retirementOffset + 1, retirementOffset + 1 + retirementDuration)
+    ?.slice(retirementOffset, retirementOffset + retirementDuration)
     ?? []
   const oneTimeWithdrawals = portfolioAdjustments
     .filter((adjustment) => adjustment.kind === 'retirement-withdrawal')
