@@ -120,22 +120,25 @@ export function useCompanionPlannerBridge({
   const allocationReturnOverrides = useAllocationStore((s) => s.returnOverrides)
   const allocationGlidePathConfig = useAllocationStore((s) => s.glidePathConfig)
   const allocationValidationErrors = useAllocationStore((s) => s.validationErrors)
-  const income = useIncomeStore()
-  const property = usePropertyStore()
+  const profileRevision = useProfileStore((s) => s.profileRevision)
+  const incomeRevision = useIncomeStore((s) => s.incomeRevision)
+  const propertyRevision = usePropertyStore((s) => s.propertyRevision)
   const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
   const strategyParams = useSimulationStore((s) => s.strategyParams)
   const mcMethod = useSimulationStore((s) => s.mcMethod)
-  const profile = useProfileStore()
-  const annualIncome = profile.annualIncome
-  const annualExpenses = profile.annualExpenses
-  const inflation = profile.inflation
-  const expenseRatio = profile.expenseRatio
-  const currentAge = normalized.currentAge
-  const retirementAge = normalized.retirementAge
+  const annualIncome = useProfileStore((s) => s.annualIncome)
+  const annualExpenses = useProfileStore((s) => s.annualExpenses)
+  const inflation = useProfileStore((s) => s.inflation)
+  const expenseRatio = useProfileStore((s) => s.expenseRatio)
   const profileExpectedReturn = useProfileStore((s) => s.expectedReturn)
   const usePortfolioReturn = useProfileStore((s) => s.usePortfolioReturn)
+  const currentAge = normalized.currentAge
+  const retirementAge = normalized.retirementAge
   const lifeExpectancy = normalized.lifeExpectancy
   const initialPortfolio = analysisPortfolio.initialPortfolio
+  const profile = useMemo(() => useProfileStore.getState(), [profileRevision])
+  const income = useMemo(() => useIncomeStore.getState(), [incomeRevision])
+  const property = useMemo(() => usePropertyStore.getState(), [propertyRevision])
 
   const deterministicAllocationInputs = useMemo(
     () => ({
