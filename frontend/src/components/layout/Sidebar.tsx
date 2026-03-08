@@ -52,6 +52,8 @@ interface InputSectionItem {
   label: string
   sectionId: string
   icon: React.ReactNode
+  /** Sub-items render indented without status dots and are excluded from progress. */
+  isSubItem?: boolean
 }
 
 const GOAL_FIRST_SECTIONS: InputSectionItem[] = [
@@ -59,10 +61,10 @@ const GOAL_FIRST_SECTIONS: InputSectionItem[] = [
   { label: 'FIRE Settings', sectionId: 'section-fire-settings', icon: <Target className="h-4 w-4" /> },
   { label: 'Income', sectionId: 'section-income', icon: <DollarSign className="h-4 w-4" /> },
   { label: 'Expenses', sectionId: 'section-expenses', icon: <TrendingDown className="h-4 w-4" /> },
-  { label: 'Goals', sectionId: 'section-goals', icon: <Banknote className="h-4 w-4" /> },
+  { label: 'Goals', sectionId: 'section-goals', icon: <Banknote className="h-4 w-4" />, isSubItem: true },
+  { label: 'Healthcare', sectionId: 'section-healthcare', icon: <HeartPulse className="h-4 w-4" />, isSubItem: true },
   { label: 'Net Worth', sectionId: 'section-net-worth', icon: <Wallet className="h-4 w-4" /> },
   { label: 'CPF', sectionId: 'section-cpf', icon: <Landmark className="h-4 w-4" /> },
-  { label: 'Healthcare', sectionId: 'section-healthcare', icon: <HeartPulse className="h-4 w-4" /> },
   { label: 'Property', sectionId: 'section-property', icon: <Building className="h-4 w-4" /> },
   { label: 'Allocation', sectionId: 'section-allocation', icon: <PieChart className="h-4 w-4" /> },
 ]
@@ -71,10 +73,10 @@ const STORY_FIRST_SECTIONS: InputSectionItem[] = [
   { label: 'Personal', sectionId: 'section-personal', icon: <User className="h-4 w-4" /> },
   { label: 'Income', sectionId: 'section-income', icon: <DollarSign className="h-4 w-4" /> },
   { label: 'Expenses', sectionId: 'section-expenses', icon: <TrendingDown className="h-4 w-4" /> },
-  { label: 'Goals', sectionId: 'section-goals', icon: <Banknote className="h-4 w-4" /> },
+  { label: 'Goals', sectionId: 'section-goals', icon: <Banknote className="h-4 w-4" />, isSubItem: true },
+  { label: 'Healthcare', sectionId: 'section-healthcare', icon: <HeartPulse className="h-4 w-4" />, isSubItem: true },
   { label: 'Net Worth', sectionId: 'section-net-worth', icon: <Wallet className="h-4 w-4" /> },
   { label: 'CPF', sectionId: 'section-cpf', icon: <Landmark className="h-4 w-4" /> },
-  { label: 'Healthcare', sectionId: 'section-healthcare', icon: <HeartPulse className="h-4 w-4" /> },
   { label: 'Property', sectionId: 'section-property', icon: <Building className="h-4 w-4" /> },
   { label: 'Allocation', sectionId: 'section-allocation', icon: <PieChart className="h-4 w-4" /> },
   { label: 'FIRE Settings', sectionId: 'section-fire-settings', icon: <Target className="h-4 w-4" /> },
@@ -85,8 +87,8 @@ const ALREADY_FIRE_SECTIONS: InputSectionItem[] = [
   { label: 'Net Worth', sectionId: 'section-net-worth', icon: <Wallet className="h-4 w-4" /> },
   { label: 'Property', sectionId: 'section-property', icon: <Building className="h-4 w-4" /> },
   { label: 'Expenses', sectionId: 'section-expenses', icon: <TrendingDown className="h-4 w-4" /> },
-  { label: 'Goals', sectionId: 'section-goals', icon: <Banknote className="h-4 w-4" /> },
-  { label: 'Healthcare', sectionId: 'section-healthcare', icon: <HeartPulse className="h-4 w-4" /> },
+  { label: 'Goals', sectionId: 'section-goals', icon: <Banknote className="h-4 w-4" />, isSubItem: true },
+  { label: 'Healthcare', sectionId: 'section-healthcare', icon: <HeartPulse className="h-4 w-4" />, isSubItem: true },
   { label: 'Allocation', sectionId: 'section-allocation', icon: <PieChart className="h-4 w-4" /> },
   { label: 'FIRE Settings', sectionId: 'section-fire-settings', icon: <Target className="h-4 w-4" /> },
   { label: 'CPF', sectionId: 'section-cpf', icon: <Landmark className="h-4 w-4" /> },
@@ -236,17 +238,18 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
               key={item.sectionId}
               onClick={() => handleSectionClick(item.sectionId)}
               className={cn(
-                'flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors text-left w-full',
+                'flex items-center gap-2 py-2 rounded-md text-sm transition-colors text-left w-full',
+                item.isSubItem ? 'pl-6 pr-2' : 'px-2',
                 isInputsPage && activeSection === item.sectionId
                   ? 'bg-primary text-primary-foreground'
-                  : isInputsPage
-                    ? 'hover:bg-accent'
-                    : 'hover:bg-accent'
+                  : 'hover:bg-accent'
               )}
             >
               {item.icon}
               {item.label}
-              <StatusDot sectionId={item.sectionId} sections={sections} />
+              {!item.isSubItem && (
+                <StatusDot sectionId={item.sectionId} sections={sections} />
+              )}
             </button>
           ))}
         </div>
