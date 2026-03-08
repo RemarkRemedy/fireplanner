@@ -177,26 +177,35 @@ describe('useProjection', () => {
     expect(p.annualRentalIncome).toBe(19200)
   })
 
-  it('LBS proceeds add to initialLiquidNW', () => {
+  it('LBS cash proceeds add to initialLiquidNW', () => {
     usePropertyStore.setState({
       ...usePropertyStore.getState(),
       ownsProperty: true,
       propertyType: 'hdb',
       hdbMonetizationStrategy: 'lbs',
-      existingPropertyValue: 500000,
-      existingLeaseYears: 60,
+      existingPropertyValue: 2500000,
+      existingLeaseYears: 70,
       hdbLbsRetainedLease: 30,
     })
     useProfileStore.setState({
       ...useProfileStore.getState(),
+      currentAge: 35,
       liquidNetWorth: 100000,
       cpfRA: 50000,
       validationErrors: {},
     })
     const { result } = renderHook(() => useProjection())
     const p = result.current.params!
-    // LBS proceeds should be added to base liquidNetWorth of 100000
-    expect(p.initialLiquidNW).toBeGreaterThan(100000)
+    const expected = computeLbsProceeds({
+      flatValue: 2500000,
+      remainingLease: 70,
+      retainedLease: 30,
+      cpfRaBalance: 50000,
+      retirementSum: getRetirementSumAmount('frs', 35),
+    })
+
+    expect(expected.cashProceeds).toBeGreaterThan(0)
+    expect(p.initialLiquidNW).toBeCloseTo(100000 + expected.cashProceeds, 6)
   })
 
   it('uses the cohort FRS when computing LBS proceeds', () => {
