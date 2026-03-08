@@ -9,6 +9,7 @@ import { flattenStrategyParams } from '@/lib/simulation/workerClient'
 import type { CrisisScenario } from '@/lib/types'
 import { LEGACY_PARITY_FIXTURES } from '@/lib/household/__tests__/legacyParityFixtures'
 import { generateIncomeProjection } from '@/lib/calculations/income'
+import { getRetirementSumAmount } from '@/lib/calculations/cpf'
 import { calculateAllFireMetrics, projectPortfolioAtRetirement } from '@/lib/calculations/fire'
 import { computeCashReserveOffset } from '@/lib/calculations/cashReserve'
 import { calculatePortfolioReturn, getEffectiveReturns, getEffectiveStdDevs, buildYearlyWeights } from '@/lib/calculations/portfolio'
@@ -222,7 +223,7 @@ function buildLegacyProjectionSurface(input: FixtureState) {
         remainingLease: property.existingLeaseYears,
         retainedLease: property.hdbLbsRetainedLease,
         cpfRaBalance: profile.cpfRA,
-        retirementSum: 213000,
+        retirementSum: getRetirementSumAmount('frs', profile.currentAge),
       })
     : null
 
