@@ -316,6 +316,7 @@ export interface IncomeProjectionRow {
   cpfSA: number
   cpfMA: number
   cpfRA: number
+  cpfAnnualInterest?: number
   isRetired: boolean
   activeLifeEvents: string[]
   cpfLifePayout: number

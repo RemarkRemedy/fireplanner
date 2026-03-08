@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { compileHouseholdPlan } from '@/lib/household/compileHouseholdPlan'
 import { fromLegacyIndividual } from '@/lib/household/fromLegacyIndividual'
 import { LEGACY_PARITY_FIXTURES } from '@/lib/household/__tests__/legacyParityFixtures'
+import { generateIncomeProjection } from '@/lib/calculations/income'
 import type {
   HouseholdPlan,
   PlanningAdult,
   PropertyPlan,
+  IncomeSource,
 } from '@/lib/household/types'
 
 function makePartnerAdult(self: PlanningAdult): PlanningAdult {
@@ -380,6 +382,72 @@ function makeCouplePlan(options?: {
   return plan
 }
 
+function buildProjectionForAdult(plan: HouseholdPlan, adultId: string) {
+  const adult = plan.adults.find((entry) => entry.id === adultId)
+  if (!adult) {
+    throw new Error(`Missing adult ${adultId}`)
+  }
+
+  const salary = plan.income.find(
+    (entry): entry is IncomeSource & { kind: 'salary-model' } =>
+      entry.owner === adult.owner && entry.kind === 'salary-model'
+  )
+  if (!salary) {
+    throw new Error(`Missing salary source for ${adultId}`)
+  }
+
+  return generateIncomeProjection({
+    currentAge: adult.currentAge,
+    retirementAge: adult.retirementAge,
+    lifeExpectancy: adult.lifeExpectancy,
+    salaryModel: salary.salaryModel ?? 'simple',
+    annualSalary: salary.annualAmount,
+    salaryGrowthRate: salary.growthRate,
+    bonusMonths: salary.bonusMonths,
+    realisticPhases: salary.realisticPhases ?? [],
+    promotionJumps: salary.promotionJumps ?? [],
+    momEducation: adult.taxProfile.momEducation,
+    momAdjustment: adult.taxProfile.momAdjustment,
+    employerCpfEnabled: salary.employerCpfEnabled ?? false,
+    incomeStreams: [],
+    lifeEvents: adult.lifeEvents,
+    lifeEventsEnabled: adult.lifeEventsEnabled,
+    annualExpenses: 0,
+    inflation: plan.assumptions.returns.inflation,
+    personalReliefs: adult.taxProfile.personalReliefs,
+    srsAnnualContribution: adult.srs.annualContribution,
+    initialCpfOA: adult.cpf.balances.oa,
+    initialCpfSA: adult.cpf.balances.sa,
+    initialCpfMA: adult.cpf.balances.ma,
+    initialCpfRA: adult.cpf.balances.ra,
+    cpfLifeStartAge: adult.cpf.lifeStartAge,
+    cpfLifePlan: adult.cpf.lifePlan,
+    cpfRetirementSum: adult.cpf.retirementSum,
+    cpfHousingMode: 'none',
+    cpfHousingMonthly: 0,
+    cpfMortgageYearsLeft: 0,
+    cpfLifeActualMonthlyPayout: adult.cpf.lifeActualMonthlyPayout,
+    residencyStatus: adult.residencyStatus,
+    prMonths: adult.prMonths,
+    srsBalance: adult.srs.balance,
+    srsInvestmentReturn: adult.srs.investmentReturn,
+    srsDrawdownStartAge: adult.srs.drawdownStartAge,
+    cpfOaWithdrawals: adult.cpf.oaWithdrawals,
+    cpfisEnabled: adult.cpf.cpfisEnabled,
+    cpfisOaReturn: adult.cpf.cpfisOaReturn,
+    cpfisSaReturn: adult.cpf.cpfisSaReturn,
+    cpfTopUpOA: adult.cpf.annualTopUps.oa,
+    cpfTopUpSA: adult.cpf.annualTopUps.sa,
+    cpfTopUpMA: adult.cpf.annualTopUps.ma,
+    lockedAssets: [],
+    expenseAdjustments: [],
+    cpfAutoFallback: adult.cpf.autoFallback,
+    cpfAutoFallbackIncludeSA: adult.cpf.autoFallbackIncludeSA,
+    cpfVirtualRebalancing: adult.cpf.virtualRebalancing,
+    cpfVirtualRebalancingMode: adult.cpf.virtualRebalancingMode,
+  })
+}
+
 describe('compileHouseholdPlan', () => {
   it('resolves staggered retirement offsets, dependent windows, and milestone rows', () => {
     const compiled = compileHouseholdPlan(makeCouplePlan())
@@ -482,6 +550,32 @@ describe('compileHouseholdPlan', () => {
       yearOffset: 25,
       age: 65,
     })
+  })
+
+  it('preserves explicit CPF interest in years with post-interest OA withdrawals', () => {
+    const plan = makeCouplePlan()
+    const compiled = compileHouseholdPlan(plan)
+    const projection = buildProjectionForAdult(plan, 'adult-partner')
+    const targetRow = projection.find((row) => row.age === 56)
+    const prevRow = projection.find((row) => row.age === 55)
+    const compiledRow = compiled.cpfByAdultId['adult-partner'].rows.find((row) => row.age === 56)
+
+    expect(targetRow).toBeDefined()
+    expect(prevRow).toBeDefined()
+    expect(compiledRow).toBeDefined()
+
+    const legacyResidualInterest = (
+      (targetRow?.cpfOA ?? 0)
+      + (targetRow?.cpfSA ?? 0)
+      + (targetRow?.cpfMA ?? 0)
+      + (targetRow?.cpfRA ?? 0)
+      - ((prevRow?.cpfOA ?? 0) + (prevRow?.cpfSA ?? 0) + (prevRow?.cpfMA ?? 0) + (prevRow?.cpfRA ?? 0))
+      - ((targetRow?.cpfEmployee ?? 0) + (targetRow?.cpfEmployer ?? 0))
+      + (targetRow?.cpfOaHousingDeduction ?? 0)
+    )
+
+    expect(targetRow?.cpfAnnualInterest).toBeGreaterThan(legacyResidualInterest)
+    expect(compiledRow?.annualInterest).toBeCloseTo(targetRow?.cpfAnnualInterest ?? 0, 6)
   })
 
   it('emits warnings when timing must be inferred or shared semantics stay ambiguous', () => {
