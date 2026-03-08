@@ -44,7 +44,7 @@ type HouseholdAssumptionUpdates = {
 
 interface HouseholdPlanActions {
   initializeManualPlan: (planType?: HouseholdPlanType) => void
-  initializeFromLegacy: (snapshot?: LegacyIndividualSnapshot) => void
+  initializeFromLegacy: (snapshot: LegacyIndividualSnapshot) => void
   setPlan: (plan: HouseholdPlan, provenance?: HouseholdPlanProvenance) => void
   setPlanType: (planType: HouseholdPlanType) => void
   updateAssumptions: (updates: HouseholdAssumptionUpdates) => void
@@ -110,7 +110,7 @@ function createManualHouseholdPlan(planType: HouseholdPlanType = 'individual'): 
   return template
 }
 
-function createLegacyHydratedHouseholdPlan(snapshot?: LegacyIndividualSnapshot): HouseholdPlan {
+function createLegacyHydratedHouseholdPlan(snapshot: LegacyIndividualSnapshot): HouseholdPlan {
   const plan = fromLegacyIndividual(snapshot)
   plan.id = createId('household')
   return plan
