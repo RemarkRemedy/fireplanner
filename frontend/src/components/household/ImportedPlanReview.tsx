@@ -10,7 +10,7 @@ const ROLE_LABELS: Record<ImportedPlanReviewModel['detectedMembers'][number]['ro
 
 /** W58: Display-friendly owner labels instead of raw owner identifiers. */
 const OWNER_LABELS: Record<string, string> = {
-  self: 'Self',
+  self: 'You',
   partner: 'Partner',
   shared: 'Shared',
 }
