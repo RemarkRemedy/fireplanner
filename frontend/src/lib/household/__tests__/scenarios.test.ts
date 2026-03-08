@@ -259,10 +259,29 @@ describe('household scenarios', () => {
     ])
 
     expect(byId['self-retires-later'].plan.adults.find((adult) => adult.owner === 'self')?.retirementAge).toBe(62)
+    expect(byId['self-retires-later'].plan.income.find((income) => income.id === 'income-self-salary')?.timing).toEqual({
+      kind: 'age-range',
+      owner: 'self',
+      startAge: 34,
+      endAge: 62,
+    })
     expect(byId['partner-retires-later'].plan.adults.find((adult) => adult.owner === 'partner')?.retirementAge).toBe(60)
+    expect(byId['partner-retires-later'].plan.income.find((income) => income.id === 'income-partner-salary')?.timing).toEqual({
+      kind: 'age-range',
+      owner: 'partner',
+      startAge: 33,
+      endAge: 60,
+    })
     expect(byId['shared-expenses-down'].summary.currentAnnualSavings).toBeGreaterThan(baseSummary.currentAnnualSavings)
     expect(byId['one-income-stops'].summary.currentAnnualSavings).toBeLessThan(baseSummary.currentAnnualSavings)
     expect(byId['dependent-costs-end'].summary.activeDependents).toBeLessThan(baseSummary.activeDependents)
+    expect(byId['dependent-costs-end'].plan.dependents[0]?.timing).toEqual({
+      kind: 'age-range',
+      owner: 'self',
+      startAge: 34,
+      endAge: 34,
+    })
+    expect(byId['dependent-costs-end'].plan.dependents[0]?.annualCost).toBe(0)
     expect(byId['de-risk-allocation'].plan.assumptions.returns.expectedReturn).toBeLessThan(plan.assumptions.returns.expectedReturn)
     expect(byId['de-risk-allocation'].plan.assumptions.returns.usePortfolioReturn).toBe(false)
   })
@@ -332,9 +351,70 @@ describe('household scenarios', () => {
 
     expect(compiled.label).toBe('Custom family reset')
     expect(compiled.plan.adults.find((adult) => adult.owner === 'self')?.retirementAge).toBe(61)
+    expect(compiled.plan.income.find((income) => income.id === 'income-self-salary')?.timing).toEqual({
+      kind: 'age-range',
+      owner: 'self',
+      startAge: 34,
+      endAge: 61,
+    })
     expect(compiled.plan.income.find((income) => income.id === 'income-shared-consulting')?.isActive).toBe(false)
     expect(compiled.plan.assumptions.returns.expectedReturn).toBeCloseTo(0.048)
     expect(compiled.summary.activeDependents).toBe(0)
     expect(compiled.summary.currentAnnualSavings).toBeGreaterThan(0)
+  })
+
+  it('keeps single-adult plans on self-only scenario variants', () => {
+    const plan = makeHouseholdPlan()
+    plan.planType = 'individual'
+    plan.adults = [plan.adults[0]!]
+    plan.income = plan.income.filter((income) => income.owner !== 'partner')
+    plan.expenses = plan.expenses.filter((expense) => expense.owner !== 'partner')
+    plan.dependents = []
+
+    const scenarioIds = buildBuiltInHouseholdScenarios(plan).map((scenario) => scenario.id)
+
+    expect(scenarioIds).toContain('self-retires-later')
+    expect(scenarioIds).not.toContain('partner-retires-later')
+    expect(scenarioIds).not.toContain('dependent-costs-end')
+  })
+
+  it('delays already-retired adults to a future age and keeps the description honest', () => {
+    const plan = makeHouseholdPlan()
+    const self = plan.adults.find((adult) => adult.owner === 'self')!
+    self.currentAge = 60
+    self.retirementAge = 60
+
+    const selfSalary = plan.income.find((income) => income.id === 'income-self-salary')!
+    selfSalary.timing = {
+      kind: 'age-range',
+      owner: 'self',
+      startAge: 34,
+      endAge: 60,
+    }
+
+    const scenario = buildBuiltInHouseholdScenarios(plan).find((entry) => entry.id === 'self-retires-later')
+
+    expect(scenario?.description).toBe("Delay Taylor's retirement by 2 years.")
+    expect(scenario?.overrides.adults?.['adult-self']?.retirementAge).toBe(62)
+    expect(scenario?.overrides.income?.['income-self-salary']?.timing).toEqual({
+      kind: 'age-range',
+      owner: 'self',
+      startAge: 34,
+      endAge: 62,
+    })
+  })
+
+  it('returns null when the custom scenario form has no effective overrides', () => {
+    const plan = makeHouseholdPlan()
+
+    expect(createCustomHouseholdScenario(plan, {
+      label: 'Custom scenario',
+      selfRetirementAge: null,
+      partnerRetirementAge: null,
+      sharedExpenseChangePct: null,
+      stopIncomeSourceId: null,
+      endDependentId: null,
+      expectedReturnPct: null,
+    })).toBeNull()
   })
 })
