@@ -10,6 +10,7 @@ interface NullableNumberInputProps {
   min?: number
   max?: number
   step?: number
+  placeholder?: string
   className?: string
   disabled?: boolean
   id?: string
@@ -25,6 +26,7 @@ export function NullableNumberInput({
   min,
   max,
   step,
+  placeholder,
   className,
   disabled,
   id,
@@ -88,6 +90,7 @@ export function NullableNumberInput({
       min={min}
       max={max}
       step={step}
+      placeholder={placeholder}
       className={className}
       disabled={disabled}
       aria-describedby={touched && error ? errorId : undefined}

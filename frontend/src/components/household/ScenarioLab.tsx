@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { NullableNumberInput } from '@/components/shared/NullableNumberInput'
 import type { HouseholdPlan } from '@/lib/household/types'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import {
@@ -20,17 +21,7 @@ import {
   summarizeHouseholdScenario,
 } from '@/lib/household/scenarios'
 import { compileHouseholdPlan } from '@/lib/household/compileHouseholdPlan'
-import { formatCurrency } from '@/lib/utils'
-
-function formatPercent(value: number): string {
-  return `${(value * 100).toFixed(1)}%`
-}
-
-function parseNumber(value: string): number | null {
-  if (value.trim() === '') return null
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : null
-}
+import { formatCurrency, formatPercent } from '@/lib/utils'
 
 function SummaryRow({
   label,
@@ -55,10 +46,10 @@ export function ScenarioLab({ plan: providedPlan }: ScenarioLabProps) {
   const storePlan = useHouseholdPlanStore((state) => state.plan)
   const plan = providedPlan ?? storePlan
   const [customLabel, setCustomLabel] = useState('Custom scenario')
-  const [selfRetirementAge, setSelfRetirementAge] = useState('')
-  const [partnerRetirementAge, setPartnerRetirementAge] = useState('')
-  const [sharedExpenseChangePct, setSharedExpenseChangePct] = useState('')
-  const [expectedReturnPct, setExpectedReturnPct] = useState('')
+  const [selfRetirementAge, setSelfRetirementAge] = useState<number | null>(null)
+  const [partnerRetirementAge, setPartnerRetirementAge] = useState<number | null>(null)
+  const [sharedExpenseChangePct, setSharedExpenseChangePct] = useState<number | null>(null)
+  const [expectedReturnPct, setExpectedReturnPct] = useState<number | null>(null)
   const [stopIncomeSourceId, setStopIncomeSourceId] = useState<string>('none')
   const [endDependentId, setEndDependentId] = useState<string>('none')
 
@@ -73,12 +64,12 @@ export function ScenarioLab({ plan: providedPlan }: ScenarioLabProps) {
   const customScenario = useMemo(() => {
     const scenario = createCustomHouseholdScenario(plan, {
       label: customLabel,
-      selfRetirementAge: parseNumber(selfRetirementAge),
-      partnerRetirementAge: parseNumber(partnerRetirementAge),
-      sharedExpenseChangePct: parseNumber(sharedExpenseChangePct),
+      selfRetirementAge,
+      partnerRetirementAge,
+      sharedExpenseChangePct,
       stopIncomeSourceId: stopIncomeSourceId === 'none' ? null : stopIncomeSourceId,
       endDependentId: endDependentId === 'none' ? null : endDependentId,
-      expectedReturnPct: parseNumber(expectedReturnPct),
+      expectedReturnPct,
     })
 
     return scenario ? compileHouseholdScenario(plan, scenario) : null
@@ -95,10 +86,10 @@ export function ScenarioLab({ plan: providedPlan }: ScenarioLabProps) {
 
   const resetCustomScenario = () => {
     setCustomLabel('Custom scenario')
-    setSelfRetirementAge('')
-    setPartnerRetirementAge('')
-    setSharedExpenseChangePct('')
-    setExpectedReturnPct('')
+    setSelfRetirementAge(null)
+    setPartnerRetirementAge(null)
+    setSharedExpenseChangePct(null)
+    setExpectedReturnPct(null)
     setStopIncomeSourceId('none')
     setEndDependentId('none')
   }
@@ -123,7 +114,7 @@ export function ScenarioLab({ plan: providedPlan }: ScenarioLabProps) {
             />
             <SummaryRow
               label="Base expected return"
-              value={formatPercent(plan.assumptions.returns.expectedReturn)}
+              value={formatPercent(plan.assumptions.returns.expectedReturn, 1)}
             />
           </div>
         </CardContent>
@@ -194,43 +185,47 @@ export function ScenarioLab({ plan: providedPlan }: ScenarioLabProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="scenario-expected-return">Expected return (%)</Label>
-              <Input
-                id="scenario-expected-return"
-                type="number"
+              <NullableNumberInput
                 value={expectedReturnPct}
-                onChange={(event) => setExpectedReturnPct(event.target.value)}
+                onChange={setExpectedReturnPct}
+                label="Expected return (%)"
+                step={0.1}
                 placeholder={(plan.assumptions.returns.expectedReturn * 100).toFixed(1)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="scenario-self-retirement">Self retirement age</Label>
-              <Input
-                id="scenario-self-retirement"
-                type="number"
+              <NullableNumberInput
                 value={selfRetirementAge}
-                onChange={(event) => setSelfRetirementAge(event.target.value)}
+                onChange={setSelfRetirementAge}
+                label="Self retirement age"
+                integer
+                min={(plan.adults.find((adult) => adult.owner === 'self')?.currentAge ?? 0) + 1}
+                max={(plan.adults.find((adult) => adult.owner === 'self')?.lifeExpectancy ?? 0) - 1}
                 placeholder={String(plan.adults.find((adult) => adult.owner === 'self')?.retirementAge ?? '')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="scenario-partner-retirement">Partner retirement age</Label>
-              <Input
-                id="scenario-partner-retirement"
-                type="number"
+              <NullableNumberInput
                 value={partnerRetirementAge}
-                onChange={(event) => setPartnerRetirementAge(event.target.value)}
+                onChange={setPartnerRetirementAge}
+                label="Partner retirement age"
+                integer
+                min={plan.adults.some((adult) => adult.owner === 'partner')
+                  ? (plan.adults.find((adult) => adult.owner === 'partner')?.currentAge ?? 0) + 1
+                  : undefined}
+                max={plan.adults.some((adult) => adult.owner === 'partner')
+                  ? (plan.adults.find((adult) => adult.owner === 'partner')?.lifeExpectancy ?? 0) - 1
+                  : undefined}
                 placeholder={String(plan.adults.find((adult) => adult.owner === 'partner')?.retirementAge ?? '')}
                 disabled={!plan.adults.some((adult) => adult.owner === 'partner')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="scenario-shared-expenses">Shared expense delta (%)</Label>
-              <Input
-                id="scenario-shared-expenses"
-                type="number"
+              <NullableNumberInput
                 value={sharedExpenseChangePct}
-                onChange={(event) => setSharedExpenseChangePct(event.target.value)}
+                onChange={setSharedExpenseChangePct}
+                label="Shared expense delta (%)"
+                step={0.1}
                 placeholder="-10"
               />
             </div>
@@ -297,7 +292,7 @@ export function ScenarioLab({ plan: providedPlan }: ScenarioLabProps) {
                 />
                 <SummaryRow
                   label="Expected return"
-                  value={formatPercent(customScenario.plan.assumptions.returns.expectedReturn)}
+                  value={formatPercent(customScenario.plan.assumptions.returns.expectedReturn, 1)}
                 />
               </CardContent>
             </Card>
