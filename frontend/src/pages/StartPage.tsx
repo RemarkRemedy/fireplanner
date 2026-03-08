@@ -367,9 +367,9 @@ export function StartPage() {
             ))}
           </div>
         </>
-      ) : (
+      ) : householdPlannerEnabled ? (
         <HouseholdSetupWizard planType={activePlanType} />
-      )}
+      ) : null}
 
       {/* Goal-first inline form */}
       {activePlanType === 'individual' && activePathway === 'goal-first' && (

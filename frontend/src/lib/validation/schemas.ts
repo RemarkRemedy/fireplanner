@@ -356,10 +356,43 @@ export interface StoreValidationResult {
   warnings: string[]
 }
 
+// Basic structural schema for HouseholdPlan. Full field-level validation is
+// handled by validateHouseholdPlan() in lib/household/validation.ts; this
+// schema validates the envelope shape for import-time store validation.
+export const householdPlanStructuralSchema = z.object({
+  id: z.string(),
+  planType: z.enum(['individual', 'couple', 'household']),
+  adults: z.array(z.object({
+    id: z.string(),
+    owner: z.enum(['self', 'partner']),
+    currentAge: z.number().int().min(0),
+    retirementAge: z.number().int().min(0),
+    lifeExpectancy: z.number().int().min(0),
+  }).passthrough()).min(1),
+  dependents: z.array(z.object({ id: z.string() }).passthrough()),
+  income: z.array(z.object({ id: z.string() }).passthrough()),
+  expenses: z.array(z.object({ id: z.string() }).passthrough()),
+  assets: z.array(z.object({ id: z.string() }).passthrough()),
+  goals: z.array(z.object({ id: z.string() }).passthrough()),
+  properties: z.array(z.object({ id: z.string() }).passthrough()),
+  assumptions: z.object({}).passthrough(),
+}).passthrough()
+
+// Wrapper for the persisted household plan store state.
+const householdPlanStoreSchema = z.object({
+  plan: householdPlanStructuralSchema,
+  provenance: z.object({
+    source: z.string(),
+    initializedAt: z.string(),
+  }).passthrough(),
+  householdPlanRevision: z.number().int().min(0),
+})
+
 const STORE_SCHEMAS: Record<string, z.ZodType> = {
   'fireplanner-profile': profileSchema,
   'fireplanner-income': incomeSchema,
   'fireplanner-allocation': allocationSchema,
+  'fireplanner-household-plan-v1': householdPlanStoreSchema,
   // simulation, withdrawal, property — add schemas here as they exist
   // For stores without a full schema, we skip validation (passthrough)
 }
