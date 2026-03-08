@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { createElement, type ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useSequenceRiskQuery } from './useSequenceRiskQuery'
+import { buildSequenceRiskWorkerParams, useSequenceRiskQuery } from './useSequenceRiskQuery'
 import type { CrisisScenario } from '@/lib/types'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
@@ -11,6 +11,8 @@ import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useNormalizedAnalysisStore } from '@/stores/useNormalizedAnalysisStore'
+import { useAnalysisPortfolio } from './useAnalysisPortfolio'
+import { useNormalizedLegacyAnalysisContext } from './useIncomeProjection'
 
 const { mockRunSequenceRiskWorker } = vi.hoisted(() => ({
   mockRunSequenceRiskWorker: vi.fn(async () => ({
@@ -70,6 +72,47 @@ beforeEach(() => {
   useSimulationStore.getState().reset()
 })
 
+function buildWorkerInput(overrides?: {
+  retirementOffset?: number
+  postRetirementIncomeByYear?: number[]
+}) {
+  const allocation = useAllocationStore.getState()
+  const analysisPortfolio = {
+    retirementPortfolio: 700_000,
+    allocationWeights: allocation.currentWeights,
+  } as ReturnType<typeof useAnalysisPortfolio>
+  const normalized = {
+    householdRetirementYearOffset: overrides?.retirementOffset ?? 2,
+    retirementAge: 65,
+    currentAge: 63,
+    lifeExpectancy: 90,
+    entry: {
+      selectors: {
+        backtest: {
+          postRetirementIncomeByYear: overrides?.postRetirementIncomeByYear,
+          portfolioAdjustments: [],
+        },
+      },
+    },
+  } as unknown as ReturnType<typeof useNormalizedLegacyAnalysisContext>
+
+  return {
+    allocation,
+    analysisPortfolio,
+    crisis: CRISIS,
+    normalized,
+    profile: {
+      ...useProfileStore.getState(),
+      currentAge: 63,
+      retirementAge: 65,
+      lifeExpectancy: 90,
+      annualExpenses: 48_000,
+    },
+    simulation: useSimulationStore.getState(),
+    withdrawal: useWithdrawalStore.getState(),
+  }
+}
+
 describe('useSequenceRiskQuery stale detection', () => {
   it('marks completed results stale after a semantic planner-input change', async () => {
     const { result } = renderHook(() => useSequenceRiskQuery(), { wrapper: createWrapper() })
@@ -118,5 +161,21 @@ describe('useSequenceRiskQuery stale detection', () => {
 
     await waitFor(() => expect(mockRunSequenceRiskWorker).toHaveBeenCalledTimes(1))
     await waitFor(() => expect(result.current.data?.success_degradation).toBe(0.13))
+  })
+})
+
+describe('buildSequenceRiskWorkerParams', () => {
+  it('returns an empty post-retirement income array when the selector data is missing', () => {
+    const params = buildSequenceRiskWorkerParams(buildWorkerInput())
+    expect(params.postRetirementIncome).toEqual([])
+  })
+
+  it('keeps the first retirement-year supplemental income in the worker params', () => {
+    const params = buildSequenceRiskWorkerParams(buildWorkerInput({
+      retirementOffset: 2,
+      postRetirementIncomeByYear: [4_000, 5_000, 6_000, 7_000, 8_000],
+    }))
+
+    expect(params.postRetirementIncome).toEqual([6_000, 7_000, 8_000])
   })
 })

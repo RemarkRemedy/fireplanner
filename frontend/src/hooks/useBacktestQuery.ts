@@ -103,7 +103,7 @@ export function buildBacktestWorkerParams(input: {
   const retirementOffset = normalized.householdRetirementYearOffset
   const retirementDuration = config.retirementDuration
   const postRetirementIncome = normalized.entry.selectors.backtest?.postRetirementIncomeByYear
-    .slice(retirementOffset + 1, retirementOffset + 1 + retirementDuration)
+    ?.slice(retirementOffset, retirementOffset + retirementDuration)
     ?? []
   const oneTimeWithdrawals = (normalized.entry.selectors.backtest?.portfolioAdjustments ?? [])
     .filter((adjustment) => adjustment.kind === 'retirement-withdrawal')
