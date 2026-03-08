@@ -810,7 +810,7 @@ function HouseholdInputsPage() {
         <div>
           <h1 className="text-2xl font-bold">{planLabel} Inputs</h1>
           <p className="text-sm text-muted-foreground">
-            This rollout step proves the household adapter seam with CPF first. The remaining sections keep their household-aware progress prompts and stable deep links while PR8B and PR8C land.
+            This household input surface keeps CPF fully editable while the remaining sections preserve the same deep links and progress prompts used elsewhere in the planner.
           </p>
         </div>
 
@@ -820,7 +820,7 @@ function HouseholdInputsPage() {
               <div className="space-y-1">
                 <p className="text-sm font-medium">Adapter pattern checkpoint</p>
                 <p className="text-sm text-muted-foreground">
-                  `CpfSection` now renders against a household-backed model instead of the legacy authoring stores. This is the wrapper seam PR8B and PR8C can reuse where the legacy sections remain viable.
+                  `CpfSection` now renders against a household-backed model instead of the legacy authoring stores, so CPF editing stays native even while other sections still rely on lightweight guidance cards.
                 </p>
               </div>
               {selectedAdult && adults.length > 1 && (
@@ -893,7 +893,7 @@ function HouseholdInputsPage() {
           <CardContent className="py-5 space-y-2">
             <p className="text-sm font-medium">Setup flow is now the roster source of truth.</p>
             <p className="text-sm text-muted-foreground">
-              PR8A keeps people editing lightweight here while CPF proves the adapter pattern. Full inline member editing, dependent timelines, and retirement-age controls arrive in PR8B.
+              People editing stays lightweight on this screen for now, while CPF uses the household-native adapter and the rest of the authoring surfaces keep their section anchors intact.
             </p>
           </CardContent>
         </Card>
@@ -906,8 +906,8 @@ function HouseholdInputsPage() {
         isComplete={sectionCompletion['section-income'].isComplete}
       >
         <HouseholdPlaceholderCard
-          title="PR8B follow-up"
-          body="Salary models, income streams, SRS tax planning, and life events move here once the CPF adapter seam is proven."
+          title="Household editor note"
+          body="Salary models, income streams, SRS tax planning, and life events continue to use dedicated follow-up editing surfaces until this page switches fully to household-native authoring."
         />
       </HouseholdPrototypeSection>
 
@@ -918,8 +918,8 @@ function HouseholdInputsPage() {
         isComplete={sectionCompletion['section-expenses'].isComplete}
       >
         <HouseholdPlaceholderCard
-          title="PR8B follow-up"
-          body="Household spending, retirement withdrawals, parent support, healthcare, and cost ownership controls land in the next rollout unit."
+          title="Household editor note"
+          body="Household spending, retirement withdrawals, parent support, healthcare, and cost ownership controls stay grouped on the dedicated spending editors until this page takes over those workflows directly."
         />
       </HouseholdPrototypeSection>
 
@@ -930,8 +930,8 @@ function HouseholdInputsPage() {
         isComplete={sectionCompletion['section-goals'].isComplete}
       >
         <HouseholdPlaceholderCard
-          title="PR8B follow-up"
-          body="Goal authoring joins the household spending surface so ownership and timing stay visible by member."
+          title="Household editor note"
+          body="Goal authoring stays on the dedicated household spending flow so ownership and timing remain visible by member."
         />
       </HouseholdPrototypeSection>
 
@@ -942,8 +942,8 @@ function HouseholdInputsPage() {
         isComplete={sectionCompletion['section-net-worth'].isComplete}
       >
         <HouseholdPlaceholderCard
-          title="PR8C follow-up"
-          body="Liquid assets, SRS, locked assets, and cash reserves move onto household-native surfaces after the people and spending rollout."
+          title="Household editor note"
+          body="Liquid assets, SRS, locked assets, and cash reserves remain on their dedicated household balance-sheet surfaces until this page becomes the single editor."
         />
       </HouseholdPrototypeSection>
 
@@ -973,8 +973,8 @@ function HouseholdInputsPage() {
           isComplete={sectionCompletion['section-healthcare'].isComplete}
         >
           <HouseholdPlaceholderCard
-            title="PR8B follow-up"
-            body="Healthcare editing rejoins the household spending surface so each adult's assumptions stay aligned with the normalized analysis timeline."
+            title="Household editor note"
+            body="Healthcare editing stays on the dedicated household spending surface so each adult's assumptions remain aligned with the normalized analysis timeline."
           />
         </HouseholdPrototypeSection>
       )}
@@ -987,8 +987,8 @@ function HouseholdInputsPage() {
           isComplete={sectionCompletion['section-property'].isComplete}
         >
           <HouseholdPlaceholderCard
-            title="PR8C follow-up"
-            body="Property ownership, HDB monetization, and downsizing scenarios move here after the adapter-vs-native component decision is locked in."
+            title="Household editor note"
+            body="Property ownership, HDB monetization, and downsizing scenarios stay on the dedicated household property surface until this page takes over those controls directly."
           />
         </HouseholdPrototypeSection>
       )}
@@ -1000,8 +1000,8 @@ function HouseholdInputsPage() {
         isComplete={sectionCompletion['section-fire-settings'].isComplete}
       >
         <HouseholdPlaceholderCard
-          title="PR8C follow-up"
-          body="Household assumptions stay centralized and move here once the remaining authoring surfaces stop depending on legacy individual reads."
+          title="Household editor note"
+          body="Household assumptions stay centralized and remain on the mixed-mode path until the remaining authoring surfaces no longer depend on legacy individual reads."
         />
       </HouseholdPrototypeSection>
 
@@ -1012,7 +1012,7 @@ function HouseholdInputsPage() {
         isComplete={sectionCompletion['section-allocation'].isComplete}
       >
         <HouseholdPlaceholderCard
-          title="PR8C follow-up"
+          title="Household editor note"
           body="Allocation remains on the mixed-mode path until the assumptions surface and household analysis contract are both fully wired."
         />
       </HouseholdPrototypeSection>

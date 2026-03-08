@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import type {
   CpfOaWithdrawal,
   IncomeProjectionRow,
@@ -261,14 +261,14 @@ export function useHouseholdCpfAdapter(selectedAdultId?: string): CpfSectionMode
     return null
   }
 
-  const updateCpf = (updater: (currentCpf: PlanningAdult['cpf']) => PlanningAdult['cpf']) => {
+  const updateCpf = useCallback((updater: (currentCpf: PlanningAdult['cpf']) => PlanningAdult['cpf']) => {
     const currentPlan = useHouseholdPlanStore.getState().plan
     const currentAdult = getSelectedAdult(currentPlan, selectedAdult.id)
     if (!currentAdult) return
     updateAdult(currentAdult.id, { cpf: updater(currentAdult.cpf) })
-  }
+  }, [selectedAdult.id, updateAdult])
 
-  const setField: CpfSectionModel['setField'] = (field, value) => {
+  const setField = useCallback<CpfSectionModel['setField']>((field, value) => {
     switch (field) {
       case 'cpfOA':
         updateCpf((currentCpf) => ({
@@ -373,9 +373,32 @@ export function useHouseholdCpfAdapter(selectedAdultId?: string): CpfSectionMode
         }))
         return
     }
-  }
+  }, [updateCpf])
 
-  return {
+  const addCpfOaWithdrawal = useCallback<CpfSectionModel['addCpfOaWithdrawal']>((entry) => {
+    updateCpf((currentCpf) => ({
+      ...currentCpf,
+      oaWithdrawals: [...currentCpf.oaWithdrawals, { ...entry }],
+    }))
+  }, [updateCpf])
+
+  const removeCpfOaWithdrawal = useCallback<CpfSectionModel['removeCpfOaWithdrawal']>((id) => {
+    updateCpf((currentCpf) => ({
+      ...currentCpf,
+      oaWithdrawals: currentCpf.oaWithdrawals.filter((entry) => entry.id !== id),
+    }))
+  }, [updateCpf])
+
+  const updateCpfOaWithdrawal = useCallback<CpfSectionModel['updateCpfOaWithdrawal']>((id, updates) => {
+    updateCpf((currentCpf) => ({
+      ...currentCpf,
+      oaWithdrawals: currentCpf.oaWithdrawals.map((entry) => (
+        entry.id === id ? { ...entry, ...updates } : entry
+      )),
+    }))
+  }, [updateCpf])
+
+  return useMemo(() => ({
     currentAge: selectedAdult.currentAge,
     annualIncome,
     cpfOA: selectedAdult.cpf.balances.oa,
@@ -404,25 +427,18 @@ export function useHouseholdCpfAdapter(selectedAdultId?: string): CpfSectionMode
     projection,
     validationErrors,
     setField,
-    addCpfOaWithdrawal: (entry) => {
-      updateCpf((currentCpf) => ({
-        ...currentCpf,
-        oaWithdrawals: [...currentCpf.oaWithdrawals, { ...entry }],
-      }))
-    },
-    removeCpfOaWithdrawal: (id) => {
-      updateCpf((currentCpf) => ({
-        ...currentCpf,
-        oaWithdrawals: currentCpf.oaWithdrawals.filter((entry) => entry.id !== id),
-      }))
-    },
-    updateCpfOaWithdrawal: (id, updates) => {
-      updateCpf((currentCpf) => ({
-        ...currentCpf,
-        oaWithdrawals: currentCpf.oaWithdrawals.map((entry) => (
-          entry.id === id ? { ...entry, ...updates } : entry
-        )),
-      }))
-    },
-  }
+    addCpfOaWithdrawal,
+    removeCpfOaWithdrawal,
+    updateCpfOaWithdrawal,
+  }), [
+    addCpfOaWithdrawal,
+    annualIncome,
+    incomeStreams,
+    projection,
+    removeCpfOaWithdrawal,
+    selectedAdult,
+    setField,
+    updateCpfOaWithdrawal,
+    validationErrors,
+  ])
 }

@@ -1,9 +1,13 @@
+import { useMemo } from 'react'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 import type { AdultOwner, HouseholdPlan } from '@/lib/household/types'
 import type {
   HouseholdValidationEntityKind,
   HouseholdValidationErrors,
 } from '@/lib/household/validation'
+import type { ProfileState } from '@/lib/types'
+import { validateProfileField } from '@/lib/validation/schemas'
+import { validateProfileConsistency } from '@/lib/validation/rules'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
@@ -42,6 +46,19 @@ const PROFILE_FIRE_FIELDS = ['swr', 'fireType', 'expectedReturn', 'inflation']
 const PROFILE_EXPENSES_FIELDS = ['annualExpenses', 'retirementSpendingAdjustment']
 const PROFILE_NW_FIELDS = ['liquidNetWorth', 'annualIncome']
 const PROFILE_CPF_FIELDS = ['cpfOA', 'cpfSA']
+const HOUSEHOLD_CPF_VALIDATION_FIELDS = [
+  'cpfOA',
+  'cpfSA',
+  'cpfMA',
+  'cpfRA',
+  'cpfTopUpOA',
+  'cpfTopUpSA',
+  'cpfTopUpMA',
+  'cpfLifeActualMonthlyPayout',
+  'cpfLifeStartAge',
+  'cpfisOaReturn',
+  'cpfisSaReturn',
+] as const
 
 function countErrors(errors: Record<string, string>, fields: string[]): number {
   return fields.filter((field) => field in errors).length
@@ -200,6 +217,97 @@ function hasPropertyData(plan: HouseholdPlan): boolean {
   ))
 }
 
+function getAdultAnnualIncome(plan: HouseholdPlan, owner: AdultOwner, fallbackIncome: number): number {
+  const salaryModel = plan.income.find((entry) => (
+    entry.kind === 'salary-model'
+    && entry.owner === owner
+    && entry.timing.owner === owner
+    && entry.isActive
+  ))
+
+  return salaryModel?.annualAmount ?? fallbackIncome
+}
+
+function countHouseholdCpfErrors(plan: HouseholdPlan): number {
+  return plan.adults.reduce((total, adult) => {
+    const annualIncome = getAdultAnnualIncome(plan, adult.owner, adult.annualIncome)
+    const snapshot = {
+      currentAge: adult.currentAge,
+      retirementAge: adult.retirementAge,
+      lifeExpectancy: adult.lifeExpectancy,
+      lifeStage: adult.lifeStage,
+      annualIncome,
+      cpfOA: adult.cpf.balances.oa,
+      cpfSA: adult.cpf.balances.sa,
+      cpfMA: adult.cpf.balances.ma,
+      cpfRA: adult.cpf.balances.ra,
+      cpfTopUpOA: adult.cpf.annualTopUps.oa,
+      cpfTopUpSA: adult.cpf.annualTopUps.sa,
+      cpfTopUpMA: adult.cpf.annualTopUps.ma,
+      cpfLifeActualMonthlyPayout: adult.cpf.lifeActualMonthlyPayout,
+      cpfLifeStartAge: adult.cpf.lifeStartAge,
+      cpfLifePlan: adult.cpf.lifePlan,
+      cpfRetirementSum: adult.cpf.retirementSum,
+      cpfisEnabled: adult.cpf.cpfisEnabled,
+      cpfisOaReturn: adult.cpf.cpfisOaReturn,
+      cpfisSaReturn: adult.cpf.cpfisSaReturn,
+      cpfAutoFallback: adult.cpf.autoFallback,
+      cpfAutoFallbackIncludeSA: adult.cpf.autoFallbackIncludeSA,
+      cpfVirtualRebalancing: adult.cpf.virtualRebalancing,
+      cpfVirtualRebalancingMode: adult.cpf.virtualRebalancingMode,
+      retirementPhase: adult.cpf.retirementPhase,
+      parentSupportEnabled: adult.parentSupportEnabled,
+      parentSupport: [],
+      healthcareConfig: adult.healthcare,
+      retirementWithdrawals: [],
+      financialGoals: [],
+      cpfOaWithdrawals: adult.cpf.oaWithdrawals,
+      expenseAdjustments: [],
+      lockedAssets: [],
+    } satisfies Pick<
+      ProfileState,
+      | 'currentAge'
+      | 'retirementAge'
+      | 'lifeExpectancy'
+      | 'lifeStage'
+      | 'annualIncome'
+      | 'cpfOA'
+      | 'cpfSA'
+      | 'cpfMA'
+      | 'cpfRA'
+      | 'cpfTopUpOA'
+      | 'cpfTopUpSA'
+      | 'cpfTopUpMA'
+      | 'cpfLifeActualMonthlyPayout'
+      | 'cpfLifeStartAge'
+      | 'cpfLifePlan'
+      | 'cpfRetirementSum'
+      | 'cpfisEnabled'
+      | 'cpfisOaReturn'
+      | 'cpfisSaReturn'
+      | 'cpfAutoFallback'
+      | 'cpfAutoFallbackIncludeSA'
+      | 'cpfVirtualRebalancing'
+      | 'cpfVirtualRebalancingMode'
+      | 'retirementPhase'
+      | 'parentSupportEnabled'
+      | 'parentSupport'
+      | 'healthcareConfig'
+      | 'retirementWithdrawals'
+      | 'financialGoals'
+      | 'cpfOaWithdrawals'
+      | 'expenseAdjustments'
+      | 'lockedAssets'
+    >
+
+    const fieldErrorCount = HOUSEHOLD_CPF_VALIDATION_FIELDS.reduce((count, field) => {
+      return count + (validateProfileField(field, snapshot[field]) ? 1 : 0)
+    }, 0)
+
+    return total + fieldErrorCount + Object.keys(validateProfileConsistency(snapshot)).length
+  }, 0)
+}
+
 function buildHouseholdSectionCompletion(
   plan: HouseholdPlan,
   householdErrors: HouseholdValidationErrors,
@@ -285,6 +393,7 @@ function buildHouseholdSectionCompletion(
   const goalsErrors = countHouseholdErrors(householdErrors, ['goal'])
   const netWorthErrors = countHouseholdErrors(householdErrors, ['asset'])
   const propertyErrors = countHouseholdErrors(householdErrors, ['property'])
+  const cpfErrors = countHouseholdCpfErrors(plan)
 
   const sections: Record<SectionId, SectionCompletion> = {
     'section-personal': {
@@ -319,8 +428,8 @@ function buildHouseholdSectionCompletion(
     },
     'section-cpf': {
       isComplete: cpfCustomized,
-      status: getStatus(cpfCustomized, 0),
-      errorCount: 0,
+      status: getStatus(cpfCustomized, cpfErrors),
+      errorCount: cpfErrors,
     },
     'section-healthcare': {
       isComplete: healthcareCustomized,
@@ -347,18 +456,34 @@ function buildHouseholdSectionCompletion(
 }
 
 export function useSectionCompletion(): UseSectionCompletionResult {
-  const profile = useProfileStore()
-  const income = useIncomeStore()
-  const allocation = useAllocationStore()
-  const property = usePropertyStore()
   const householdPlan = useHouseholdPlanStore((state) => state.plan)
   const householdErrors = useHouseholdPlanStore((state) => state.validationErrors)
-
   const householdEnabled = isHouseholdPlannerV1Enabled() && householdPlan.planType !== 'individual'
+  const profileRevision = useProfileStore((state) => (householdEnabled ? 0 : state.profileRevision))
+  const incomeRevision = useIncomeStore((state) => (householdEnabled ? 0 : state.incomeRevision))
+  const propertyRevision = usePropertyStore((state) => (householdEnabled ? 0 : state.propertyRevision))
+  const allocationRevision = useAllocationStore((state) => state.allocationRevision)
 
-  if (householdEnabled) {
-    return buildHouseholdSectionCompletion(householdPlan, householdErrors, allocation)
-  }
+  return useMemo(() => {
+    const allocation = useAllocationStore.getState()
 
-  return buildLegacySectionCompletion(profile, income, allocation, property)
+    if (householdEnabled) {
+      return buildHouseholdSectionCompletion(householdPlan, householdErrors, allocation)
+    }
+
+    return buildLegacySectionCompletion(
+      useProfileStore.getState(),
+      useIncomeStore.getState(),
+      allocation,
+      usePropertyStore.getState(),
+    )
+  }, [
+    householdEnabled,
+    householdPlan,
+    householdErrors,
+    profileRevision,
+    incomeRevision,
+    propertyRevision,
+    allocationRevision,
+  ])
 }

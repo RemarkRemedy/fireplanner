@@ -12,6 +12,7 @@ import { useProfileStore } from '@/stores/useProfileStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useUIStore } from '@/stores/useUIStore'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
+import { useSectionCompletion } from '@/hooks/useSectionCompletion'
 
 vi.mock('@/lib/household/featureFlag', () => ({
   HOUSEHOLD_PLANNER_V1_FLAG_KEY: 'fireplanner-feature-householdPlannerV1',
@@ -259,7 +260,45 @@ describe('Household CPF prototype', () => {
     expect(screen.getByText('Adapter pattern checkpoint')).toBeInTheDocument()
     expect(screen.getByText('People & Household')).toBeInTheDocument()
     expect(screen.getByText('Current CPF Status')).toBeInTheDocument()
-    expect(screen.getAllByText('PR8B follow-up').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Household editor note').length).toBeGreaterThan(0)
+  })
+
+  it('keeps household CPF callbacks stable across unrelated household rerenders', () => {
+    setHouseholdPlan(makeCouplePlan({ includePartnerIncome: true }))
+
+    const { result } = renderHook(() => useHouseholdCpfAdapter('adult-partner'))
+    const firstSetField = result.current?.setField
+    const firstAddWithdrawal = result.current?.addCpfOaWithdrawal
+    const firstRemoveWithdrawal = result.current?.removeCpfOaWithdrawal
+    const firstUpdateWithdrawal = result.current?.updateCpfOaWithdrawal
+
+    act(() => {
+      useHouseholdPlanStore.getState().updateAdult('adult-self', { displayName: 'Taylor Tan' })
+    })
+
+    expect(result.current?.setField).toBe(firstSetField)
+    expect(result.current?.addCpfOaWithdrawal).toBe(firstAddWithdrawal)
+    expect(result.current?.removeCpfOaWithdrawal).toBe(firstRemoveWithdrawal)
+    expect(result.current?.updateCpfOaWithdrawal).toBe(firstUpdateWithdrawal)
+  })
+
+  it('surfaces household CPF validation errors in section completion', () => {
+    const plan = makeCouplePlan()
+    plan.adults[1] = {
+      ...plan.adults[1]!,
+      cpf: {
+        ...plan.adults[1]!.cpf,
+        cpfisOaReturn: 0.25,
+      },
+    }
+
+    localStorage.setItem('fireplanner-feature-householdPlannerV1', '1')
+    setHouseholdPlan(plan)
+
+    const { result } = renderHook(() => useSectionCompletion())
+
+    expect(result.current.sections['section-cpf'].status).toBe('error')
+    expect(result.current.sections['section-cpf'].errorCount).toBeGreaterThan(0)
   })
 
   it('shows the save indicator for household plan edits during the mixed-mode window', () => {
