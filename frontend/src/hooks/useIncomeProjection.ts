@@ -224,7 +224,8 @@ export function useNormalizedLegacyAnalysisContext(
 export function buildProjectionParams(
   profile: ProfileState,
   income: IncomeState,
-  property: { mortgageCpfMonthly: number; existingMortgageRemainingYears: number; ownershipPercent?: number }
+  property: { mortgageCpfMonthly: number; existingMortgageRemainingYears: number; ownershipPercent?: number },
+  ageOverrides?: Pick<IncomeProjectionParams, 'currentAge' | 'retirementAge' | 'lifeExpectancy'>
 ): IncomeProjectionParams | null {
   const profileErrors = profile.validationErrors
   const incomeErrors = income.validationErrors
@@ -233,9 +234,9 @@ export function buildProjectionParams(
   }
   const cpfHousing = deriveCpfHousingFromProperty(property)
   return {
-    currentAge: profile.currentAge,
-    retirementAge: profile.retirementAge,
-    lifeExpectancy: profile.lifeExpectancy,
+    currentAge: ageOverrides?.currentAge ?? profile.currentAge,
+    retirementAge: ageOverrides?.retirementAge ?? profile.retirementAge,
+    lifeExpectancy: ageOverrides?.lifeExpectancy ?? profile.lifeExpectancy,
     salaryModel: income.salaryModel,
     annualSalary: income.annualSalary,
     salaryGrowthRate: income.salaryGrowthRate,
@@ -302,7 +303,6 @@ export function useIncomeProjection(): IncomeProjectionResult {
   const income = useIncomeStore()
   const property = usePropertyStore()
   const normalized = useNormalizedLegacyAnalysisContext()
-  const cpfHousing = deriveCpfHousingFromProperty(property)
 
   return useMemo(() => {
     const profileErrors = profile.validationErrors
@@ -326,109 +326,31 @@ export function useIncomeProjection(): IncomeProjectionResult {
       return { projection: null, summary: null, hasErrors: true, errors: allErrors }
     }
 
-    const projection = generateIncomeProjection({
-      currentAge: normalized.currentAge,
-      retirementAge: normalized.retirementAge,
-      lifeExpectancy: normalized.lifeExpectancy,
-      salaryModel: income.salaryModel,
-      annualSalary: income.annualSalary,
-      salaryGrowthRate: income.salaryGrowthRate,
-      bonusMonths: income.bonusMonths,
-      realisticPhases: income.realisticPhases,
-      promotionJumps: income.promotionJumps,
-      momEducation: income.momEducation,
-      momAdjustment: income.momAdjustment,
-      employerCpfEnabled: income.employerCpfEnabled,
-      incomeStreams: income.incomeStreams,
-      lifeEvents: income.lifeEvents,
-      lifeEventsEnabled: income.lifeEventsEnabled,
-      annualExpenses: profile.annualExpenses,
-      inflation: profile.inflation,
-      personalReliefs: income.personalReliefs,
-      srsAnnualContribution: profile.srsAnnualContribution,
-      srsPostFireEnabled: profile.srsPostFireEnabled,
-      initialCpfOA: profile.cpfOA,
-      initialCpfSA: profile.cpfSA,
-      initialCpfMA: profile.cpfMA,
-      initialCpfRA: profile.cpfRA,
-      cpfLifeStartAge: profile.cpfLifeStartAge,
-      cpfLifePlan: profile.cpfLifePlan,
-      cpfRetirementSum: profile.cpfRetirementSum,
-      cpfHousingMode: cpfHousing.cpfHousingMode,
-      cpfHousingMonthly: cpfHousing.cpfHousingMonthly,
-      cpfMortgageYearsLeft: cpfHousing.cpfMortgageYearsLeft,
-      cpfLifeActualMonthlyPayout: profile.cpfLifeActualMonthlyPayout,
-      residencyStatus: profile.residencyStatus,
-      srsBalance: profile.srsBalance,
-      srsInvestmentReturn: profile.srsInvestmentReturn,
-      srsDrawdownStartAge: profile.srsDrawdownStartAge,
-      cpfOaWithdrawals: profile.cpfOaWithdrawals,
-      cpfisEnabled: profile.cpfisEnabled,
-      cpfisOaReturn: profile.cpfisOaReturn,
-      cpfisSaReturn: profile.cpfisSaReturn,
-      cpfTopUpOA: profile.cpfTopUpOA,
-      cpfTopUpSA: profile.cpfTopUpSA,
-      cpfTopUpMA: profile.cpfTopUpMA,
-      lockedAssets: profile.lockedAssets,
-      expenseAdjustments: profile.expenseAdjustments,
-      cpfAutoFallback: profile.cpfAutoFallback,
-      cpfAutoFallbackIncludeSA: profile.cpfAutoFallbackIncludeSA,
-      cpfVirtualRebalancing: profile.cpfVirtualRebalancing,
-      cpfVirtualRebalancingMode: profile.cpfVirtualRebalancingMode,
-    })
+    const projectionParams = buildProjectionParams(
+      profile,
+      income,
+      property,
+      {
+        currentAge: normalized.currentAge,
+        retirementAge: normalized.retirementAge,
+        lifeExpectancy: normalized.lifeExpectancy,
+      }
+    )
+    if (!projectionParams) {
+      return { projection: null, summary: null, hasErrors: true, errors: allErrors }
+    }
+
+    const projection = generateIncomeProjection(projectionParams)
 
     const summary = calculateIncomeSummary(projection, profile.annualExpenses)
 
     return { projection, summary, hasErrors: false, errors: {} }
   }, [
+    income,
     normalized.currentAge,
     normalized.retirementAge,
     normalized.lifeExpectancy,
-    profile.annualExpenses,
-    profile.inflation,
-    profile.srsAnnualContribution,
-    profile.cpfOA,
-    profile.cpfSA,
-    profile.cpfMA,
-    profile.cpfRA,
-    profile.cpfLifeStartAge,
-    profile.cpfLifePlan,
-    profile.cpfRetirementSum,
-    cpfHousing.cpfHousingMode,
-    cpfHousing.cpfHousingMonthly,
-    cpfHousing.cpfMortgageYearsLeft,
-    profile.cpfLifeActualMonthlyPayout,
-    profile.residencyStatus,
-    profile.srsBalance,
-    profile.srsInvestmentReturn,
-    profile.srsDrawdownStartAge,
-    profile.cpfOaWithdrawals,
-    profile.cpfisEnabled,
-    profile.cpfisOaReturn,
-    profile.cpfisSaReturn,
-    profile.cpfTopUpOA,
-    profile.cpfTopUpSA,
-    profile.cpfTopUpMA,
-    profile.lockedAssets,
-    profile.expenseAdjustments,
-    profile.cpfAutoFallback,
-    profile.cpfAutoFallbackIncludeSA,
-    profile.cpfVirtualRebalancing,
-    profile.cpfVirtualRebalancingMode,
-    profile.validationErrors,
-    income.salaryModel,
-    income.annualSalary,
-    income.salaryGrowthRate,
-    income.bonusMonths,
-    income.realisticPhases,
-    income.promotionJumps,
-    income.momEducation,
-    income.momAdjustment,
-    income.employerCpfEnabled,
-    income.incomeStreams,
-    income.lifeEvents,
-    income.lifeEventsEnabled,
-    income.personalReliefs,
-    income.validationErrors,
+    profile,
+    property,
   ])
 }
