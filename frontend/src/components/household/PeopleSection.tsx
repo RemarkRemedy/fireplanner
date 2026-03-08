@@ -24,6 +24,13 @@ import { cn } from '@/lib/utils'
 const ADULT_OWNER_OPTIONS: AdultOwner[] = ['self', 'partner']
 
 function createPartnerAdult(referenceAdult: PlanningAdult): PlanningAdult {
+  const partnerCpf = structuredClone(referenceAdult.cpf)
+  // Zero out CPF balances and top-ups — partner starts fresh
+  partnerCpf.balances = { oa: 0, sa: 0, ma: 0, ra: 0 }
+  partnerCpf.annualTopUps = { oa: 0, sa: 0, ma: 0 }
+  partnerCpf.lifeActualMonthlyPayout = 0
+  partnerCpf.oaWithdrawals = []
+
   return {
     ...structuredClone(referenceAdult),
     id: createId('adult-partner'),
@@ -31,11 +38,14 @@ function createPartnerAdult(referenceAdult: PlanningAdult): PlanningAdult {
     displayName: referenceAdult.displayName === 'You' ? 'Partner' : `${referenceAdult.displayName}'s partner`,
     maritalStatus: 'married',
     annualIncome: 0,
-    cpf: {
-      ...structuredClone(referenceAdult.cpf),
-      oaWithdrawals: [],
+    annualExpenses: 0,
+    liquidNetWorth: 0,
+    cpf: partnerCpf,
+    srs: {
+      ...structuredClone(referenceAdult.srs),
+      balance: 0,
+      annualContribution: 0,
     },
-    srs: structuredClone(referenceAdult.srs),
     taxProfile: structuredClone(referenceAdult.taxProfile),
     lifeEvents: [],
   }
@@ -80,6 +90,7 @@ export function PeopleSection({
   const addAdult = useHouseholdPlanStore((state) => state.addAdult)
   const updateAdult = useHouseholdPlanStore((state) => state.updateAdult)
   const removeAdult = useHouseholdPlanStore((state) => state.removeAdult)
+  const setPlanType = useHouseholdPlanStore((state) => state.setPlanType)
   const addDependent = useHouseholdPlanStore((state) => state.addDependent)
   const updateDependent = useHouseholdPlanStore((state) => state.updateDependent)
   const removeDependent = useHouseholdPlanStore((state) => state.removeDependent)
@@ -141,10 +152,12 @@ export function PeopleSection({
         onPartnerEnabledChange={(value) => {
           if (value && !partnerAdult) {
             addAdult(createPartnerAdult(selfAdult))
+            setPlanType('couple')
             return
           }
           if (!value && partnerAdult) {
             removeAdult(partnerAdult.id)
+            setPlanType('individual')
           }
         }}
         partnerName={partnerAdult?.displayName ?? ''}

@@ -19,6 +19,7 @@ import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import type {
   AssetItem,
   EntryOwner,
+  PlanningAdult,
 } from '@/lib/household/types'
 import type {
   DownsizingScenario,
@@ -39,10 +40,11 @@ function getEntityErrors(
 }
 
 function syncAdultLiquidNetWorths(
-  adultCount: number,
-  updateAdult: (id: string, updates: Record<string, unknown>) => void,
+  updateAdult: (id: string, updates: Partial<PlanningAdult>) => void,
 ) {
+  // Read the plan in a single tick so adultCount and asset list are consistent
   const currentPlan = useHouseholdPlanStore.getState().plan
+  const adultCount = currentPlan.adults.length
   const sharedLiquidTotal = currentPlan.assets
     .filter((asset) => asset.kind === 'liquid-net-worth' && asset.owner === 'shared')
     .reduce((sum, asset) => sum + asset.amount, 0)
@@ -79,19 +81,19 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
   const ownerOptions: EntryOwner[] = plan.adults.length > 1 ? ENTRY_OWNER_OPTIONS : ['self']
   const handleAddAsset = (kind: AssetItem['kind']) => {
     addAsset(createDefaultHouseholdAsset(kind, plan.adults.length > 1 ? 'shared' : 'self'))
-    syncAdultLiquidNetWorths(plan.adults.length, updateAdult)
+    syncAdultLiquidNetWorths(updateAdult)
   }
 
   const handleUpdateAsset = (asset: AssetItem, updates: Partial<AssetItem>) => {
     updateAsset(asset.id, updates)
     if (asset.kind === 'liquid-net-worth' || updates.kind === 'liquid-net-worth' || updates.owner) {
-      syncAdultLiquidNetWorths(plan.adults.length, updateAdult)
+      syncAdultLiquidNetWorths(updateAdult)
     }
   }
 
   const handleRemoveAsset = (assetId: string) => {
     removeAsset(assetId)
-    syncAdultLiquidNetWorths(plan.adults.length, updateAdult)
+    syncAdultLiquidNetWorths(updateAdult)
   }
 
   if (mode === 'assets') {

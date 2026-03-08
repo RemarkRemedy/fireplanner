@@ -71,15 +71,23 @@ export function HouseholdSetupWizard({ planType }: HouseholdSetupWizardProps) {
   const canCreatePlan = planType === 'couple' ? partnerName.trim().length > 0 : true
 
   const handleCreatePlan = () => {
+    // Sequential store mutations are acceptable here because each call
+    // triggers buildValidatedState atomically within its own set(). The
+    // intermediate states are consistent; they just produce extra renders
+    // that React batches. A single-action alternative would need a new
+    // store action with a complex parameter object. (W44)
     householdStore.initializeManualPlan(planType)
 
     const selfAdult = useHouseholdPlanStore.getState().plan.adults[0]
     if (!selfAdult) return
 
+    const effectiveRetirementAge = Math.max(selfAge + 1, selfAdult.retirementAge)
+
     useHouseholdPlanStore.getState().updateAdult(selfAdult.id, {
       displayName: selfName.trim() || 'You',
       currentAge: selfAge,
-      retirementAge: Math.max(selfAge + 1, selfAdult.retirementAge),
+      retirementAge: effectiveRetirementAge,
+      lifeStage: selfAge >= 65 ? 'post-fire' : selfAdult.lifeStage,
       taxProfile: {
         ...structuredClone(selfAdult.taxProfile),
         reliefBasisAge: selfAge,
@@ -89,6 +97,26 @@ export function HouseholdSetupWizard({ planType }: HouseholdSetupWizardProps) {
         oopReferenceAge: selfAge,
       },
     })
+
+    // For 65+ users, retime income rows so the salary doesn't immediately expire.
+    // The default plan seeds a salary-model ending at retirementAge (65 by default),
+    // which is useless for someone already 65+.
+    if (selfAge >= 65) {
+      const currentPlan = useHouseholdPlanStore.getState().plan
+      for (const income of currentPlan.income) {
+        if (income.kind === 'salary-model' && income.owner === 'self') {
+          useHouseholdPlanStore.getState().updateIncome(income.id, {
+            timing: {
+              kind: 'age-range',
+              owner: 'self',
+              startAge: selfAge,
+              endAge: effectiveRetirementAge,
+            },
+            // Income is likely 0 at this stage; user can adjust in the editor
+          })
+        }
+      }
+    }
 
     if (planType === 'couple' || partnerEnabled) {
       useHouseholdPlanStore.getState().addAdult(
