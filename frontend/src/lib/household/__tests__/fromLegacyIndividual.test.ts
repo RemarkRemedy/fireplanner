@@ -215,6 +215,35 @@ describe('fromLegacyIndividual', () => {
     })
   })
 
+  it('converts legacy exclusive end ages into inclusive household timing windows', () => {
+    const plan = getFixturePlan('goalsAndLifeEvents')
+    const sideBusiness = plan.income.find((entry) => entry.id === 'income-stream-side-business')
+    const parentSupport = plan.expenses.find((entry) => entry.id === 'expense-parent-support-parent-support-mom')
+    const travelStepUp = plan.expenses.find((entry) => entry.id === 'expense-adjustment-travel-step-up')
+    const downsizedCommuting = plan.expenses.find((entry) => entry.id === 'expense-adjustment-downsized-commuting')
+
+    expect(sideBusiness?.timing).toMatchObject({
+      kind: 'age-range',
+      startAge: 38,
+      endAge: 54,
+    })
+    expect(parentSupport?.timing).toMatchObject({
+      kind: 'age-range',
+      startAge: 37,
+      endAge: 69,
+    })
+    expect(travelStepUp?.timing).toMatchObject({
+      kind: 'age-range',
+      startAge: 45,
+      endAge: 54,
+    })
+    expect(downsizedCommuting?.timing).toMatchObject({
+      kind: 'age-range',
+      startAge: 58,
+      endAge: null,
+    })
+  })
+
   it('preserves PR residency and relief coupling metadata in the residency transition fixture', () => {
     const plan = getFixturePlan('prResidencyTransition')
     const adult = plan.adults[0]
