@@ -7,6 +7,10 @@
  *
  * During the mixed-mode rollout the legacy profile/income/property stores remain
  * runtime-compatible, so loaders can still materialize a one-adult legacy view.
+ *
+ * TODO(W1): This module imports every Zustand store to build the registry at
+ * module load time, creating a coupling hub. Consider lazy-loading store
+ * entries or inverting the dependency so stores register themselves.
  */
 
 import { fromLegacyIndividual, createDefaultLegacyIndividualSnapshot, type LegacyIndividualSnapshot } from '@/lib/household/fromLegacyIndividual'
@@ -97,6 +101,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 
+/** Typed cast helper to avoid repeated `as unknown as Record<string, unknown>`. */
+function toStoreRecord<T>(state: T): Record<string, unknown> {
+  return state as unknown as Record<string, unknown>
+}
+
 function hasAnyKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
   return keys.some((key) => key in value)
 }
@@ -127,7 +136,7 @@ export const STORE_REGISTRY: Record<string, StoreRegistryEntry> = {
   'fireplanner-property': extractEntry(usePropertyStore, {}),
   [HOUSEHOLD_PLAN_STORAGE_KEY]: extractEntry(
     useHouseholdPlanStore,
-    createDefaultHouseholdPlanPersistedState() as unknown as Record<string, unknown>,
+    toStoreRecord(createDefaultHouseholdPlanPersistedState()),
   ),
 }
 
@@ -245,14 +254,14 @@ function buildHouseholdStoreData(
 ): MigratedStoreData {
   return createStoreData(
     HOUSEHOLD_PLAN_STORAGE_KEY,
-    createHouseholdPlanPersistedState(
+    toStoreRecord(createHouseholdPlanPersistedState(
       plan,
       {
         source,
         initializedAt: nowIsoString(),
       },
       householdPlanRevision,
-    ) as unknown as Record<string, unknown>,
+    )),
   )
 }
 
@@ -282,14 +291,14 @@ function retagHouseholdStoreData(
 
   return createStoreData(
     HOUSEHOLD_PLAN_STORAGE_KEY,
-    createHouseholdPlanPersistedState(
+    toStoreRecord(createHouseholdPlanPersistedState(
       plan,
       {
         source,
         initializedAt: nowIsoString(),
       },
       householdPlanRevision,
-    ) as unknown as Record<string, unknown>,
+    )),
     storeData.version,
   )
 }
@@ -306,15 +315,15 @@ function buildLegacyRuntimeStoresFromHouseholdStore(
   return {
     'fireplanner-profile': createStoreData(
       'fireplanner-profile',
-      snapshot.profile as unknown as Record<string, unknown>,
+      toStoreRecord(snapshot.profile),
     ),
     'fireplanner-income': createStoreData(
       'fireplanner-income',
-      snapshot.income as unknown as Record<string, unknown>,
+      toStoreRecord(snapshot.income),
     ),
     'fireplanner-property': createStoreData(
       'fireplanner-property',
-      snapshot.property as unknown as Record<string, unknown>,
+      toStoreRecord(snapshot.property),
     ),
   }
 }

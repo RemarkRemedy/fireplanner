@@ -71,6 +71,18 @@ function countHouseholdErrors(
   }, 0)
 }
 
+/** W24: Count healthcare-related errors from adult validation entries. */
+function countHouseholdHealthcareErrors(
+  errors: HouseholdValidationErrors,
+): number {
+  return Object.entries(errors).reduce((count, [key, fieldErrors]) => {
+    const [kind] = key.split(':', 1)
+    if (kind !== 'adult') return count
+
+    return count + Object.keys(fieldErrors).filter((field) => field.startsWith('healthcare.')).length
+  }, 0)
+}
+
 function hasIncomeCoverage(plan: HouseholdPlan, owner: AdultOwner): boolean {
   return plan.income.some((entry) => (
     entry.isActive
@@ -108,6 +120,10 @@ function getAdultAnnualIncome(plan: HouseholdPlan, owner: AdultOwner, fallbackIn
   return salaryModel?.annualAmount ?? fallbackIncome
 }
 
+// TODO(W42): This function duplicates CPF field validation logic from
+// the household adapter. Consider extracting shared CPF validation into
+// a single utility and calling it from both useSectionCompletion and
+// the household CPF adapter to avoid divergence.
 function countHouseholdCpfErrors(plan: HouseholdPlan): number {
   return plan.adults.reduce((total, adult) => {
     const annualIncome = getAdultAnnualIncome(plan, adult.owner, adult.annualIncome)
@@ -274,6 +290,7 @@ function buildHouseholdSectionCompletion(
   const netWorthErrors = countHouseholdErrors(householdErrors, ['asset'])
   const propertyErrors = countHouseholdErrors(householdErrors, ['property'])
   const cpfErrors = countHouseholdCpfErrors(plan)
+  const healthcareErrors = countHouseholdHealthcareErrors(householdErrors)
 
   const sections: Record<SectionId, SectionCompletion> = {
     'section-personal': {
@@ -313,8 +330,8 @@ function buildHouseholdSectionCompletion(
     },
     'section-healthcare': {
       isComplete: healthcareCustomized,
-      status: getStatus(healthcareCustomized, 0),
-      errorCount: 0,
+      status: getStatus(healthcareCustomized, healthcareErrors),
+      errorCount: healthcareErrors,
     },
     'section-property': {
       isComplete: propertyCustomized,
