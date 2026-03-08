@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useFireCalculations } from '@/hooks/useFireCalculations'
-import { useProfileStore } from '@/stores/useProfileStore'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
 
 interface ChartDataPoint {
@@ -19,7 +19,7 @@ interface DashboardChartData {
  */
 export function useDashboardCharts(): DashboardChartData {
   const { metrics } = useFireCalculations()
-  const profile = useProfileStore()
+  const { profile } = useHouseholdRuntimeInputs()
 
   return useMemo(() => {
     if (!metrics) {

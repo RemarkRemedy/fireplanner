@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useIncomeProjection } from '@/hooks/useIncomeProjection'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { calculateBrsFrsErs } from '@/lib/calculations/cpf'
 import { RETIREMENT_SUM_BASE_YEAR, BRS_BASE, FRS_BASE, ERS_BASE } from '@/lib/data/cpfRates'
 import { formatCurrency } from '@/lib/utils'
@@ -37,9 +37,10 @@ export function useCpfProjection(): {
 } {
   const { projection, hasErrors } = useIncomeProjection()
   const normalized = useNormalizedLegacyAnalysisContext()
-  const cpfLifeStartAge = useProfileStore((s) => s.cpfLifeStartAge)
-  const cpfLifePlan = useProfileStore((s) => s.cpfLifePlan)
-  const currentAge = useProfileStore((s) => s.currentAge)
+  const { profile } = useHouseholdRuntimeInputs()
+  const cpfLifeStartAge = profile.cpfLifeStartAge
+  const cpfLifePlan = profile.cpfLifePlan
+  const currentAge = profile.currentAge
   const normalizedSlot = normalized.entry.selectors.cpf?.cpfByAdultId[normalized.referenceAdultId]
 
   return useMemo(() => {

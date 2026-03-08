@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { generateHealthcareProjection } from '@/lib/calculations/healthcare'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 
 type RiskLevel = 'low' | 'medium' | 'high'
 
@@ -18,9 +19,13 @@ interface RiskDimension {
  * Derived hook: evaluates 6 risk dimensions based on profile + allocation.
  */
 export function useRiskAssessment(): RiskDimension[] {
-  const profile = useProfileStore()
+  const plan = useHouseholdPlanStore((state) => state.plan)
   const allocation = useAllocationStore()
   const normalized = useNormalizedLegacyAnalysisContext()
+  const { profile } = useMemo(
+    () => buildHouseholdRuntimeLegacyInputs(plan, normalized.compiledPlan),
+    [normalized.compiledPlan, plan]
+  )
   const healthcareSlot = normalized.entry.selectors.healthcare?.healthcareByAdultId[normalized.referenceAdultId]
 
   return useMemo(() => {

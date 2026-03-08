@@ -7,11 +7,9 @@ import { buildProofCyclesFromScenarioSnapshot, summarizeProofCycles } from '@/li
 import { formatCurrency, formatPercent } from '@/lib/utils'
 import type { ProofCycle, ProofSource } from '@/lib/types'
 import { useSimulationStore } from '@/stores/useSimulationStore'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 
 const STORAGE_KEY = 'fireplanner-proof-compare-v1'
 const SCHEMA_VERSION = 1
@@ -77,12 +75,10 @@ function writeSnapshots(rows: ProofCompareSnapshot[]): void {
 
 function rehydrateAllStores() {
   const stores = [
-    useProfileStore,
-    useIncomeStore,
     useAllocationStore,
     useSimulationStore,
     useWithdrawalStore,
-    usePropertyStore,
+    useHouseholdPlanStore,
   ] as Array<{ persist: { rehydrate: () => void } }>
 
   for (const store of stores) {

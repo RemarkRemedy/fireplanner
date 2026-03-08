@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { ProjectionRow } from '@/lib/types'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useProjection } from '@/hooks/useProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
 
 // ============================================================
 // Cash Flow Chart Types
@@ -110,7 +110,8 @@ function mapProjectionRow(row: ProjectionRow): CashFlowRow {
 
 export function useCashFlowChart(phase: CashFlowPhase): CashFlowChartData | null {
   const { rows: projectionRows } = useProjection()
-  const retirementAge = useProfileStore((s) => s.retirementAge)
+  const { profile } = useHouseholdRuntimeInputs()
+  const retirementAge = profile.retirementAge
 
   return useMemo(() => {
     if (!projectionRows || projectionRows.length === 0) return null

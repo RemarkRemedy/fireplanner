@@ -1,11 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Check } from 'lucide-react'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 
 export function SaveIndicator() {
@@ -30,12 +27,9 @@ export function SaveIndicator() {
     }
 
     const unsubs = [
-      useProfileStore.subscribe(show),
-      useIncomeStore.subscribe(show),
       useAllocationStore.subscribe(show),
       useSimulationStore.subscribe(show),
       useWithdrawalStore.subscribe(show),
-      usePropertyStore.subscribe(show),
       useHouseholdPlanStore.subscribe(show),
     ]
 

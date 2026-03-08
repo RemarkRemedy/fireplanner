@@ -2,10 +2,8 @@ import { useMemo } from 'react'
 import { projectPortfolioAtRetirement } from '@/lib/calculations/fire'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { generateIncomeProjection } from '@/lib/calculations/income'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 
@@ -38,10 +36,8 @@ function getRiskLevel(swr: number): RiskLevel {
  * Deterministic — no Monte Carlo needed.
  */
 export function useOneMoreYear(): OneMoreYearResult {
-  const profile = useProfileStore()
-  const income = useIncomeStore()
+  const { profile, income, property } = useHouseholdRuntimeInputs()
   const allocation = useAllocationStore()
-  const property = usePropertyStore()
 
   return useMemo(() => {
     if (Object.keys(profile.validationErrors).length > 0) {
@@ -114,5 +110,5 @@ export function useOneMoreYear(): OneMoreYearResult {
     }
 
     return { scenarios, hasData: scenarios.length > 0 }
-  }, [profile, income, allocation, property])
+  }, [allocation, income, profile, property])
 }

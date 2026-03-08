@@ -5,13 +5,13 @@ import { Slider } from '@/components/ui/slider'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { SlidersHorizontal, RotateCcw, AlertTriangle, Plus } from 'lucide-react'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useWhatIfMetrics, type WhatIfOverrides } from '@/hooks/useWhatIfMetrics'
 import {
   useDisruptionImpact,
   DISRUPTION_TEMPLATES,
 } from '@/hooks/useDisruptionImpact'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { formatCurrency } from '@/lib/utils'
 import { DeltaBadge } from '@/components/shared/DeltaBadge'
 import { cn } from '@/lib/utils'
@@ -100,7 +100,7 @@ const MAX_EVENTS = 4
 // ============================================================
 
 function SlidersTab() {
-  const profile = useProfileStore()
+  const { profile } = useHouseholdRuntimeInputs()
   const [overrides, setOverrides] = useState<WhatIfOverrides>({})
   const { baseMetrics, deltas } = useWhatIfMetrics(overrides)
 
@@ -228,8 +228,9 @@ function SlidersTab() {
 // ============================================================
 
 function DisruptionsTab() {
-  const profile = useProfileStore()
-  const income = useIncomeStore()
+  const { profile, normalized } = useHouseholdRuntimeInputs()
+  const plan = useHouseholdPlanStore((state) => state.plan)
+  const updateAdult = useHouseholdPlanStore((state) => state.updateAdult)
   const {
     selectedIndex,
     startAge,
@@ -240,37 +241,43 @@ function DisruptionsTab() {
     setStartAge,
   } = useDisruptionImpact()
 
+  const targetAdult = plan.adults.find((adult) => adult.id === normalized.referenceAdultId)
+    ?? plan.adults.find((adult) => adult.owner === 'self')
+    ?? plan.adults[0]
+    ?? null
+
   if (!baseMetrics) return null
 
   const currentAge = profile.currentAge
   const retirementAge = profile.retirementAge
-  const lifeEventsCount = income.lifeEvents.length
+  const lifeEventsCount = targetAdult?.lifeEvents.length ?? 0
   const atEventLimit = lifeEventsCount >= MAX_EVENTS
   const selectedTemplate = selectedIndex !== null ? DISRUPTION_TEMPLATES[selectedIndex] : null
 
   const handleAddToPlan = () => {
-    if (!selectedTemplate || atEventLimit) return
+    if (!selectedTemplate || atEventLimit || !targetAdult) return
 
     // Create a LifeEvent from the template
     const clampedStartAge = Math.max(currentAge + 1, startAge)
     const endAge = clampedStartAge + selectedTemplate.durationYears
     const id = `event-${crypto.randomUUID()}`
 
-    income.addLifeEvent({
-      id,
-      name: selectedTemplate.event.name,
-      startAge: clampedStartAge,
-      endAge,
-      incomeImpact: selectedTemplate.event.incomeImpact,
-      affectedStreamIds: [],
-      savingsPause: selectedTemplate.event.savingsPause,
-      cpfPause: selectedTemplate.event.cpfPause,
+    updateAdult(targetAdult.id, {
+      lifeEventsEnabled: true,
+      lifeEvents: [
+        ...targetAdult.lifeEvents,
+        {
+          id,
+          name: selectedTemplate.event.name,
+          startAge: clampedStartAge,
+          endAge,
+          incomeImpact: selectedTemplate.event.incomeImpact,
+          affectedStreamIds: [],
+          savingsPause: selectedTemplate.event.savingsPause,
+          cpfPause: selectedTemplate.event.cpfPause,
+        },
+      ],
     })
-
-    // Enable life events if not already
-    if (!income.lifeEventsEnabled) {
-      income.setField('lifeEventsEnabled', true)
-    }
 
     // Clear selection after adding
     selectTemplate(null)

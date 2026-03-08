@@ -18,9 +18,9 @@ import { FanChart } from '@/components/simulation/FanChart'
 import { FailureDistributionChart } from '@/components/simulation/FailureDistributionChart'
 import { SpendingMetricsPanel } from '@/components/simulation/SpendingMetricsPanel'
 import { InterpretationCallout } from '@/components/shared/InterpretationCallout'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useWithdrawalComparison } from '@/hooks/useWithdrawalComparison'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
-import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useEffectiveMode } from '@/hooks/useEffectiveMode'
@@ -64,7 +64,7 @@ function buildWithdrawalMonteCarloRunSignature(input: {
 
 export function WithdrawalPage() {
   usePageMeta({ title: 'Withdrawal Strategies — SG FIRE Planner', description: 'Compare 12 retirement withdrawal strategies including the 4% rule, VPW, guardrails, and CAPE-based approaches.', path: '/withdrawal' })
-  const profile = useProfileStore()
+  const { profile } = useHouseholdRuntimeInputs()
   const allocation = useAllocationStore()
   const simulation = useSimulationStore()
   const normalized = useNormalizedLegacyAnalysisContext()

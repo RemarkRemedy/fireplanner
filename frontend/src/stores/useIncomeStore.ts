@@ -10,7 +10,6 @@ import type {
 } from '@/lib/types'
 import { validateIncomeField } from '@/lib/validation/schemas'
 import { computeTotalReliefs, type ReliefBreakdown } from '@/lib/data/taxBrackets'
-import { useProfileStore } from '@/stores/useProfileStore'
 
 interface IncomeActions {
   setField: <K extends keyof Omit<IncomeState, 'validationErrors' | 'incomeStreams' | 'lifeEvents' | 'realisticPhases' | 'promotionJumps'>>(
@@ -325,7 +324,7 @@ export const useIncomeStore = create<IncomeStoreState>()(
             }
           }
           // Detailed mode: auto-compute personalReliefs from breakdown
-          const currentAge = useProfileStore.getState().currentAge ?? 30
+          const currentAge = stateData.reliefBasisAge ?? 30
           const total = computeTotalReliefs(breakdown, currentAge)
           const updated = {
             ...stateData,

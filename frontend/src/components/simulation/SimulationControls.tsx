@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { useSimulationStore } from '@/stores/useSimulationStore'
-import { useProfileStore } from '@/stores/useProfileStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import type { MonteCarloMethod, WithdrawalStrategyType } from '@/lib/types'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { WithdrawalBasisToggle } from '@/components/shared/WithdrawalBasisToggle'
@@ -49,8 +49,9 @@ export function SimulationControls({
   beforeRunControls,
 }: SimulationControlsProps) {
   const simulation = useSimulationStore()
-  const currentAge = useProfileStore((s) => s.currentAge)
-  const retirementAge = useProfileStore((s) => s.retirementAge)
+  const { normalized } = useHouseholdRuntimeInputs()
+  const currentAge = normalized.currentAge
+  const retirementAge = normalized.retirementAge
   const mode = useEffectiveMode('section-stress-test')
   const strategies = mode === 'advanced' ? ALL_STRATEGIES : SIMPLE_STRATEGIES
 

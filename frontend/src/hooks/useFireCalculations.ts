@@ -5,11 +5,10 @@ import { computeCashReserveOffset } from '@/lib/calculations/cashReserve'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 
 interface FireCalculationsResult {
   metrics: FireMetrics | null
@@ -24,18 +23,18 @@ interface FireCalculationsResult {
  * When income projection is available, uses row 0's totalGross as effective income.
  */
 export function useFireCalculations(): FireCalculationsResult {
-  const profile = useProfileStore()
-  const income = useIncomeStore()
+  const plan = useHouseholdPlanStore((state) => state.plan)
+  const hasValidationErrors = useHouseholdPlanStore((state) => state.hasValidationErrors)
   const allocation = useAllocationStore()
-  const property = usePropertyStore()
   const normalized = useNormalizedLegacyAnalysisContext()
+  const { profile, income, property } = useMemo(
+    () => buildHouseholdRuntimeLegacyInputs(plan, normalized.compiledPlan),
+    [normalized.compiledPlan, plan]
+  )
 
   return useMemo(() => {
-    const profileErrors = profile.validationErrors
-
-    // If profile has validation errors, don't compute
-    if (Object.keys(profileErrors).length > 0) {
-      return { metrics: null, hasErrors: true, errors: profileErrors }
+    if (hasValidationErrors) {
+      return { metrics: null, hasErrors: true, errors: {} }
     }
 
     const cpfTotal = profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
@@ -106,5 +105,5 @@ export function useFireCalculations(): FireCalculationsResult {
 
     return { metrics, hasErrors: false, errors: {} }
     // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/preserve-manual-memoization -- Uses buildProjectionParams which reads many store fields; whole refs avoid stale omissions
-  }, [allocation, income, normalized.currentAge, normalized.lifeExpectancy, normalized.retirementAge, profile, property])
+  }, [allocation, hasValidationErrors, income, normalized.currentAge, normalized.lifeExpectancy, normalized.retirementAge, profile, property])
 }
