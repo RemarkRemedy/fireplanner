@@ -90,23 +90,28 @@ export function HouseholdMilestoneTimeline({
         ) : (
           <div className="space-y-4">
             {milestoneRows.map((milestone, index) => (
-              <div key={`${milestone.kind}-${milestone.sourceId ?? milestone.label}-${milestone.yearOffset}`}>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">{milestone.label}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatMilestoneWindow(compiledPlan, milestone)}
-                    </p>
+              (() => {
+                const milestoneOwnerLabel = ownerLabel(compiledPlan, milestone)
+                return (
+                  <div key={`${milestone.kind}-${milestone.sourceId ?? milestone.label}-${milestone.yearOffset}`}>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">{milestone.label}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatMilestoneWindow(compiledPlan, milestone)}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="outline">{milestoneKindLabel(milestone.kind)}</Badge>
+                        {milestoneOwnerLabel ? (
+                          <Badge variant="secondary">{milestoneOwnerLabel}</Badge>
+                        ) : null}
+                      </div>
+                    </div>
+                    {index < milestoneRows.length - 1 ? <Separator className="mt-4" /> : null}
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">{milestoneKindLabel(milestone.kind)}</Badge>
-                    {ownerLabel(compiledPlan, milestone) ? (
-                      <Badge variant="secondary">{ownerLabel(compiledPlan, milestone)}</Badge>
-                    ) : null}
-                  </div>
-                </div>
-                {index < milestoneRows.length - 1 ? <Separator className="mt-4" /> : null}
-              </div>
+                )
+              })()
             ))}
           </div>
         )}

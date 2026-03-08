@@ -5,6 +5,7 @@ import { compileHouseholdPlan } from '@/lib/household/compileHouseholdPlan'
 import { HouseholdOverviewBar } from '@/components/household/HouseholdOverviewBar'
 import { HouseholdMilestoneTimeline } from '@/components/household/HouseholdMilestoneTimeline'
 import { HouseholdBreakdownPanel } from '@/components/household/HouseholdBreakdownPanel'
+import { formatCurrency } from '@/lib/utils'
 import {
   HOUSEHOLD_PLAN_STORAGE_KEY,
   useHouseholdPlanStore,
@@ -272,5 +273,88 @@ describe('Household analysis presentation', () => {
     expect(screen.getByText('Household living')).toBeInTheDocument()
     expect(screen.getByText('Shared consulting')).toBeInTheDocument()
     expect(screen.getByText('Study fund')).toBeInTheDocument()
+  })
+
+  it('aligns household costs with authored owner buckets and ignores non-owned property payments', async () => {
+    const user = userEvent.setup()
+    const compiledPlan = makeCompiledPlan()
+
+    compiledPlan.propertiesById['property-analysis-only'] = {
+      id: 'property-analysis-only',
+      owner: 'self',
+      label: 'Future condo analysis',
+      propertyType: 'condo',
+      purchasePrice: 0,
+      leaseYears: 99,
+      appreciationRate: 0,
+      rentalYield: 0,
+      mortgageRate: 0,
+      mortgageTerm: 0,
+      ltv: 0,
+      residencyForAbsd: 'citizen',
+      propertyCount: 1,
+      ownsProperty: false,
+      existingPropertyValue: 0,
+      existingMortgageBalance: 0,
+      existingMonthlyPayment: 2_500,
+      mortgageCpfMonthly: 0,
+      existingMortgageRate: 0,
+      existingMortgageRemainingYears: 0,
+      ownershipPercent: 1,
+      existingAppreciationRate: 0,
+      existingLeaseYears: 99,
+      existingApplyBalaDecay: false,
+      downsizing: {
+        scenario: 'none',
+        sellAge: 65,
+        expectedSalePrice: 0,
+        newPropertyCost: 0,
+        newMortgageRate: 0,
+        newMortgageTerm: 0,
+        newLtv: 0,
+        monthlyRent: 0,
+        rentGrowthRate: 0,
+      },
+      hdbFlatType: '4-room',
+      hdbMonetizationStrategy: 'none',
+      hdbLbsRetainedLease: 30,
+      hdbSublettingRooms: 0,
+      hdbSublettingRate: 0,
+      hdbCpfUsedForHousing: 0,
+    }
+    compiledPlan.propertyOrder = ['property-analysis-only']
+
+    render(
+      <div className="space-y-4">
+        <HouseholdOverviewBar compiledPlan={compiledPlan} />
+        <HouseholdMilestoneTimeline compiledPlan={compiledPlan} />
+        <HouseholdBreakdownPanel compiledPlan={compiledPlan} />
+      </div>,
+    )
+
+    expect(screen.getByText(`${formatCurrency(74_400)}/yr`)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Taylor/i }))
+
+    expect(screen.getByText(`${formatCurrency(4_200)}/yr`)).toBeInTheDocument()
+  })
+
+  it('renders fallback labels when compiled household references are missing', () => {
+    const compiledPlan = makeCompiledPlan()
+
+    delete compiledPlan.adultsById['adult-partner']
+    delete compiledPlan.dependentsById['dependent-maya']
+
+    render(
+      <div className="space-y-4">
+        <HouseholdOverviewBar compiledPlan={compiledPlan} />
+        <HouseholdMilestoneTimeline compiledPlan={compiledPlan} />
+        <HouseholdBreakdownPanel compiledPlan={compiledPlan} />
+      </div>,
+    )
+
+    expect(screen.getByText('Adult • age —')).toBeInTheDocument()
+    expect(screen.getByText('Dependent • dependent')).toBeInTheDocument()
+    expect(screen.getByText('Taylor at 60')).toBeInTheDocument()
   })
 })
