@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { renderHook } from '@testing-library/react'
+import { act, renderHook } from '@testing-library/react'
 import { useCpfProjection } from './useCpfProjection'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
@@ -115,6 +115,21 @@ describe('useCpfProjection', () => {
   it('returns null when upstream has validation errors', () => {
     useProfileStore.getState().setField('currentAge', 15)
     const { result } = renderHook(() => useCpfProjection())
+    expect(result.current.hasErrors).toBe(true)
+    expect(result.current.rows).toBeNull()
+  })
+
+  it('drops cached normalized rows once upstream validation fails', () => {
+    const { result, rerender } = renderHook(() => useCpfProjection())
+
+    expect(result.current.hasErrors).toBe(false)
+    expect(result.current.rows).not.toBeNull()
+
+    act(() => {
+      useProfileStore.getState().setField('currentAge', 15)
+    })
+    rerender()
+
     expect(result.current.hasErrors).toBe(true)
     expect(result.current.rows).toBeNull()
   })

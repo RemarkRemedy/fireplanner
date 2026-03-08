@@ -43,6 +43,10 @@ export function useCpfProjection(): {
   const normalizedSlot = normalized.entry.selectors.cpf?.cpfByAdultId[normalized.referenceAdultId]
 
   return useMemo(() => {
+    if (hasErrors) {
+      return { rows: null, hasErrors: true }
+    }
+
     if (normalizedSlot?.rows.length) {
       return {
         rows: normalizedSlot.rows.map((row) => ({
@@ -68,7 +72,7 @@ export function useCpfProjection(): {
       }
     }
 
-    if (hasErrors || !projection || projection.length === 0) {
+    if (!projection || projection.length === 0) {
       return { rows: null, hasErrors: true }
     }
 
