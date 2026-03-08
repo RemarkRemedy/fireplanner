@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, ExternalLink } from 'lucide-react'
-import { useProfileStore } from '@/stores/useProfileStore'
 import { calculateBrsFrsErs } from '@/lib/calculations/cpf'
 import { getCpfRatesForAge } from '@/lib/data/cpfRates'
 import {
@@ -21,6 +20,7 @@ import {
   OW_CEILING_MONTHLY,
   AW_CEILING_TOTAL,
 } from '@/lib/data/cpfRates'
+import type { CpfLifePlan, ResidencyStatus } from '@/lib/types'
 import { formatCurrency, formatPercent } from '@/lib/utils'
 
 const CPF_SOURCES = {
@@ -29,13 +29,22 @@ const CPF_SOURCES = {
   interestRates: 'https://www.cpf.gov.sg/member/growing-your-savings/earning-higher-returns/earning-attractive-interest',
 }
 
-export function CpfAssumptionsPanel() {
+interface CpfAssumptionsPanelProps {
+  currentAge: number
+  residencyStatus: ResidencyStatus
+  prMonths: number
+  cpfLifeStartAge: number
+  cpfLifePlan: CpfLifePlan
+}
+
+export function CpfAssumptionsPanel({
+  currentAge,
+  residencyStatus,
+  prMonths,
+  cpfLifeStartAge,
+  cpfLifePlan,
+}: CpfAssumptionsPanelProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const currentAge = useProfileStore((s) => s.currentAge)
-  const residencyStatus = useProfileStore((s) => s.residencyStatus)
-  const prMonths = useProfileStore((s) => s.prMonths)
-  const cpfLifeStartAge = useProfileStore((s) => s.cpfLifeStartAge)
-  const cpfLifePlan = useProfileStore((s) => s.cpfLifePlan)
 
   const rates = getCpfRatesForAge(currentAge, residencyStatus, prMonths)
   const brsFrsErs = calculateBrsFrsErs(currentAge)

@@ -2,10 +2,10 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { runBacktestWorker, flattenStrategyParams } from '@/lib/simulation/workerClient'
 import { getExpensesAtRetirement } from '@/lib/calculations/expenses'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import type { BacktestSummary, PerYearResult, BacktestDataset, WithdrawalStrategyType, HeatmapConfig, HeatmapData } from '@/lib/types'
 import type { BacktestEngineParams } from '@/lib/simulation/backtest'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
@@ -86,7 +86,7 @@ export function buildBacktestWorkerParams(input: {
   allocation: ReturnType<typeof useAllocationStore.getState>
   config: BacktestConfig
   normalized: ReturnType<typeof useNormalizedLegacyAnalysisContext>
-  profile: ReturnType<typeof useProfileStore.getState>
+  profile: ReturnType<typeof useHouseholdRuntimeInputs>['profile']
   simulation: ReturnType<typeof useSimulationStore.getState>
   withdrawal: ReturnType<typeof useWithdrawalStore.getState>
 }): BacktestEngineParams {
@@ -149,7 +149,7 @@ export function buildBacktestWorkerParams(input: {
 }
 
 export function useBacktestQuery(): UseBacktestQueryResult {
-  const profile = useProfileStore()
+  const { profile } = useHouseholdRuntimeInputs()
   const allocation = useAllocationStore()
   const withdrawal = useWithdrawalStore()
   const simulation = useSimulationStore()

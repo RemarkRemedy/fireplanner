@@ -6,8 +6,8 @@ import {
   createColumnHelper,
   type ColumnDef,
 } from '@tanstack/react-table'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useCpfProjection, type CpfProjectionRow } from '@/hooks/useCpfProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
 import { formatCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
@@ -24,7 +24,8 @@ function optionalCurrencyCell(value: number): string {
 
 export function CpfProjectionTable() {
   const { rows, hasErrors } = useCpfProjection()
-  const retirementAge = useProfileStore((s) => s.retirementAge)
+  const { profile } = useHouseholdRuntimeInputs()
+  const retirementAge = profile.retirementAge
 
   const hasHousingDeduction = rows?.some((r) => r.oaHousingDeduction > 0) ?? false
   const hasRA = rows?.some((r) => r.raBalance > 0) ?? false

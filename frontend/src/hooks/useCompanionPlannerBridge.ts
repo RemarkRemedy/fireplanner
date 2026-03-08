@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MonteCarloResult } from '@/lib/types'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
-import { useProfileStore } from '@/stores/useProfileStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { resolveDeterministicExpectedReturn } from '@/lib/analysis/deterministicAssumptions'
@@ -114,6 +112,7 @@ export function useCompanionPlannerBridge({
   const token = companionMode ? getCompanionToken() : null
   const baseUrl = companionMode ? getCompanionBaseUrl() : ''
 
+  const { income, profile, property } = useHouseholdRuntimeInputs()
   const normalized = useNormalizedLegacyAnalysisContext()
   const analysisPortfolio = useAnalysisPortfolio()
   const allocationWeights = useAllocationStore((s) => s.currentWeights)
@@ -121,25 +120,19 @@ export function useCompanionPlannerBridge({
   const allocationReturnOverrides = useAllocationStore((s) => s.returnOverrides)
   const allocationGlidePathConfig = useAllocationStore((s) => s.glidePathConfig)
   const allocationValidationErrors = useAllocationStore((s) => s.validationErrors)
-  const profileRevision = useProfileStore((s) => s.profileRevision)
-  const incomeRevision = useIncomeStore((s) => s.incomeRevision)
-  const propertyRevision = usePropertyStore((s) => s.propertyRevision)
   const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
   const strategyParams = useSimulationStore((s) => s.strategyParams)
   const mcMethod = useSimulationStore((s) => s.mcMethod)
-  const annualIncome = useProfileStore((s) => s.annualIncome)
-  const annualExpenses = useProfileStore((s) => s.annualExpenses)
-  const inflation = useProfileStore((s) => s.inflation)
-  const expenseRatio = useProfileStore((s) => s.expenseRatio)
-  const profileExpectedReturn = useProfileStore((s) => s.expectedReturn)
-  const usePortfolioReturn = useProfileStore((s) => s.usePortfolioReturn)
+  const annualIncome = profile.annualIncome
+  const annualExpenses = profile.annualExpenses
+  const inflation = profile.inflation
+  const expenseRatio = profile.expenseRatio
+  const profileExpectedReturn = profile.expectedReturn
+  const usePortfolioReturn = profile.usePortfolioReturn
   const currentAge = normalized.currentAge
   const retirementAge = normalized.retirementAge
   const lifeExpectancy = normalized.lifeExpectancy
   const initialPortfolio = analysisPortfolio.initialPortfolio
-  const profile = useMemo(() => useProfileStore.getState(), [profileRevision])
-  const income = useMemo(() => useIncomeStore.getState(), [incomeRevision])
-  const property = useMemo(() => usePropertyStore.getState(), [propertyRevision])
 
   const deterministicAllocationInputs = useMemo(
     () => ({
@@ -164,7 +157,7 @@ export function useCompanionPlannerBridge({
 
     const projection = generateIncomeProjection(projectionParams)
     return projection[0]?.totalGross ?? annualIncome
-  }, [profile, income, property, annualIncome])
+  }, [annualIncome, income, profile, property])
 
   const [bootstrapStatus, setBootstrapStatus] = useState<CompanionBootstrapStatus>(() =>
     companionMode && !!token ? 'loading' : 'idle',

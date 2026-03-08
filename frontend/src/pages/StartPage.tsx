@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
+import {
+  HOUSEHOLD_PLAN_STORAGE_KEY,
+  useHouseholdPlanStore,
+} from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
 import { calculateFireNumber, calculateYearsToFire, projectNetWorthPath } from '@/lib/calculations/fire'
 import { Target, TrendingUp, CheckCircle, Clock, CalendarClock, Landmark, ArrowRight, Building, Heart, Info } from 'lucide-react'
@@ -17,7 +20,6 @@ import { trackEvent } from '@/lib/analytics'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { LandingEmailSection } from '@/components/email/LandingEmailSection'
 import type { HouseholdPlanType } from '@/lib/household/types'
-import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 import { PlanTypeSelector } from '@/components/household/PlanTypeSelector'
 import { HouseholdSetupWizard } from '@/components/household/HouseholdSetupWizard'
 
@@ -52,12 +54,7 @@ const PHASE_CARDS: { phase: RetirementPhase; label: string; description: string;
 
 export function StartPage() {
   usePageMeta({ title: 'SG FIRE Planner — Singapore Retirement Calculator', description: 'Free Singapore FIRE calculator with CPF, tax, Monte Carlo simulation, and 12 withdrawal strategies for retirement planning.', path: '/' })
-  const [householdPlannerEnabled] = useState(() => isHouseholdPlannerV1Enabled())
-  const profileCurrentAge = useProfileStore((state) => state.currentAge)
-  const profileRetirementAge = useProfileStore((state) => state.retirementAge)
-  const profileAnnualIncome = useProfileStore((state) => state.annualIncome)
-  const profileLiquidNetWorth = useProfileStore((state) => state.liquidNetWorth)
-  const profileAnnualExpenses = useProfileStore((state) => state.annualExpenses)
+  const { profile } = useHouseholdRuntimeInputs()
   const setUIField = useUIStore((s) => s.setField)
   const cpfEnabled = useUIStore((s) => s.cpfEnabled)
   const propertyEnabled = useUIStore((s) => s.propertyEnabled)
@@ -68,22 +65,21 @@ export function StartPage() {
 
   // Check if returning user (has saved profile in localStorage)
   const [isReturningUser] = useState(() => {
-    try { return localStorage.getItem('fireplanner-profile') !== null } catch { return false }
+    try {
+      return localStorage.getItem(HOUSEHOLD_PLAN_STORAGE_KEY) !== null
+        || localStorage.getItem('fireplanner-profile') !== null
+    } catch {
+      return false
+    }
   })
 
   // Local draft state for inline forms
-  const [draftAge, setDraftAge] = useState(profileCurrentAge)
-  const [draftRetirementAge, setDraftRetirementAge] = useState(profileRetirementAge)
-  const [draftIncome, setDraftIncome] = useState(profileAnnualIncome)
-  const [draftNetWorth, setDraftNetWorth] = useState(profileLiquidNetWorth)
-  const [draftExpenses, setDraftExpenses] = useState(profileAnnualExpenses)
-  const activePlanType: HouseholdPlanType = householdPlannerEnabled ? selectedPlanType : 'individual'
-
-  useEffect(() => {
-    if (!householdPlannerEnabled && selectedPlanType !== 'individual') {
-      setSelectedPlanType('individual')
-    }
-  }, [householdPlannerEnabled, selectedPlanType])
+  const [draftAge, setDraftAge] = useState(profile.currentAge)
+  const [draftRetirementAge, setDraftRetirementAge] = useState(profile.retirementAge)
+  const [draftIncome, setDraftIncome] = useState(profile.annualIncome)
+  const [draftNetWorth, setDraftNetWorth] = useState(profile.liquidNetWorth)
+  const [draftExpenses, setDraftExpenses] = useState(profile.annualExpenses)
+  const activePlanType: HouseholdPlanType = selectedPlanType
 
   useEffect(() => {
     if (activePlanType !== 'individual') {
@@ -144,49 +140,92 @@ export function StartPage() {
     setActivePathway(pathway)
     if (pathway) trackEvent('onboarding_pathway_selected', { pathway })
     // Reset drafts to current store values
-    setDraftAge(profileCurrentAge)
-    setDraftRetirementAge(profileRetirementAge)
-    setDraftIncome(profileAnnualIncome)
-    setDraftExpenses(profileAnnualExpenses)
-    setDraftNetWorth(profileLiquidNetWorth)
+    setDraftAge(profile.currentAge)
+    setDraftRetirementAge(profile.retirementAge)
+    setDraftIncome(profile.annualIncome)
+    setDraftExpenses(profile.annualExpenses)
+    setDraftNetWorth(profile.liquidNetWorth)
+  }
+
+  const applyIndividualDraft = (
+    nextRetirementAge: number,
+    lifeStage: 'pre-fire' | 'post-fire',
+    retirementPhase: RetirementPhase | null = null,
+  ) => {
+    const householdStore = useHouseholdPlanStore.getState()
+    householdStore.initializeManualPlan('individual')
+
+    const nextPlan = useHouseholdPlanStore.getState().plan
+    const selfAdult = nextPlan.adults.find((adult) => adult.owner === 'self')
+    if (!selfAdult) {
+      return
+    }
+
+    householdStore.updateAdult(selfAdult.id, {
+      currentAge: draftAge,
+      retirementAge: nextRetirementAge,
+      annualIncome: draftIncome,
+      annualExpenses: draftExpenses,
+      liquidNetWorth: draftNetWorth,
+      lifeStage,
+      cpf: {
+        ...selfAdult.cpf,
+        retirementPhase,
+      },
+    })
+
+    const refreshedPlan = useHouseholdPlanStore.getState().plan
+    const salaryModel = refreshedPlan.income.find((entry) => (
+      entry.kind === 'salary-model'
+      && entry.owner === 'self'
+      && entry.timing.owner === 'self'
+      && entry.timing.kind === 'age-range'
+    ))
+    if (salaryModel?.timing.kind === 'age-range') {
+      householdStore.updateIncome(salaryModel.id, {
+        annualAmount: draftIncome,
+        timing: {
+          ...salaryModel.timing,
+          startAge: draftAge,
+          endAge: nextRetirementAge,
+        },
+      })
+    }
+
+    const baseExpense = refreshedPlan.expenses.find((expense) => (
+      expense.kind === 'base-living'
+      && expense.owner === 'self'
+      && expense.timing.kind === 'age-range'
+      && expense.timing.owner === 'self'
+    ))
+    if (baseExpense?.timing.kind === 'age-range') {
+      householdStore.updateExpense(baseExpense.id, {
+        amount: draftExpenses,
+        timing: {
+          ...baseExpense.timing,
+          startAge: draftAge,
+          endAge: null,
+        },
+      })
+    }
   }
 
   const handleGoalFirstContinue = () => {
-    const profileStore = useProfileStore.getState()
-    profileStore.setField('currentAge', draftAge)
-    profileStore.setField('retirementAge', draftRetirementAge)
-    profileStore.setField('annualIncome', draftIncome)
-    profileStore.setField('annualExpenses', draftExpenses)
-    profileStore.setField('liquidNetWorth', draftNetWorth)
-    profileStore.setField('lifeStage', 'pre-fire')
-    useIncomeStore.getState().setField('annualSalary', draftIncome)
+    applyIndividualDraft(draftRetirementAge, 'pre-fire')
     setUIField('sectionOrder', 'goal-first')
     trackEvent('onboarding_continue', { pathway: 'goal-first' })
     navigate('/inputs')
   }
 
   const handleStoryFirstContinue = () => {
-    const profileStore = useProfileStore.getState()
-    profileStore.setField('currentAge', draftAge)
-    profileStore.setField('annualIncome', draftIncome)
-    profileStore.setField('annualExpenses', draftExpenses)
-    profileStore.setField('liquidNetWorth', draftNetWorth)
-    profileStore.setField('lifeStage', 'pre-fire')
-    useIncomeStore.getState().setField('annualSalary', draftIncome)
+    applyIndividualDraft(profile.retirementAge, 'pre-fire')
     setUIField('sectionOrder', 'story-first')
     trackEvent('onboarding_continue', { pathway: 'story-first' })
     navigate('/inputs')
   }
 
   const handleAlreadyFirePhase = (phase: RetirementPhase) => {
-    const profileStore = useProfileStore.getState()
-    profileStore.setField('currentAge', draftAge)
-    profileStore.setField('retirementAge', draftAge)
-    profileStore.setField('annualIncome', draftIncome)
-    profileStore.setField('annualExpenses', draftExpenses)
-    profileStore.setField('liquidNetWorth', draftNetWorth)
-    profileStore.setField('lifeStage', 'post-fire')
-    profileStore.setField('retirementPhase', phase)
+    applyIndividualDraft(draftAge, 'post-fire', phase)
     setUIField('sectionOrder', 'already-fire')
     trackEvent('onboarding_continue', { pathway: 'already-fire', phase })
     navigate('/inputs')
@@ -294,9 +333,7 @@ export function StartPage() {
         </div>
       )}
 
-      {householdPlannerEnabled && (
-        <PlanTypeSelector value={activePlanType} onChange={setSelectedPlanType} />
-      )}
+      <PlanTypeSelector value={activePlanType} onChange={setSelectedPlanType} />
 
       {activePlanType === 'individual' ? (
         <>

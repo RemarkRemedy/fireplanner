@@ -14,8 +14,8 @@ import { runBacktestWorker, runDetailedWindowWorker, flattenStrategyParams } fro
 import type { BacktestResult, PerYearResult } from '@/lib/types'
 import type { DetailedWindowResult, BacktestEngineParams } from '@/lib/simulation/backtest'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
-import { useProfileStore } from '@/stores/useProfileStore'
 import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import {
@@ -56,7 +56,7 @@ export function BacktestDrillDown({
   blendRatio,
 }: BacktestDrillDownProps) {
   const isMobile = useIsMobile()
-  const profile = useProfileStore()
+  const { profile } = useHouseholdRuntimeInputs()
   const withdrawal = useWithdrawalStore()
   const analysisPortfolio = useAnalysisPortfolio()
 

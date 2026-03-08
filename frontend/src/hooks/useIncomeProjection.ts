@@ -6,18 +6,20 @@ import {
   compileHouseholdPlan,
   type CompiledHouseholdPlan,
 } from '@/lib/household/compileHouseholdPlan'
-import { fromLegacyIndividual } from '@/lib/household/fromLegacyIndividual'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import {
-  buildLegacyHouseholdRevision,
+  buildHouseholdPlanRevision,
   buildNormalizedAnalysisCacheKey,
   MONTE_CARLO_NORMALIZED_OWNER,
   stableScenarioOverrideHash,
   useNormalizedAnalysisStore,
   type NormalizedAnalysisEntry,
 } from '@/stores/useNormalizedAnalysisStore'
+import {
+  applyHouseholdScenarioOverrides,
+  type HouseholdScenarioOverrides,
+} from '@/lib/household/scenarios'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 import { validateCrossStoreRules } from '@/lib/validation/rules'
 
 /** Derive CPF housing params from property store (single source of truth) */
@@ -110,58 +112,49 @@ export interface NormalizedLegacyAnalysisContext {
 export function useNormalizedLegacyAnalysisContext(
   scenarioOverrides?: unknown
 ): NormalizedLegacyAnalysisContext {
-  const profile = useProfileStore()
-  const income = useIncomeStore()
-  const property = usePropertyStore()
-  const cachedEntry = useNormalizedAnalysisStore((state) => state.entries[
-    buildNormalizedAnalysisCacheKey({
-      householdRevision: buildLegacyHouseholdRevision({
-        profileRevision: profile.profileRevision ?? 0,
-        incomeRevision: income.incomeRevision ?? 0,
-        propertyRevision: property.propertyRevision ?? 0,
-      }),
-      scenarioOverrideHash: stableScenarioOverrideHash(scenarioOverrides ?? null),
-    })
-  ])
-  const upsertEntry = useNormalizedAnalysisStore((state) => state.upsertEntry)
-  const setActiveCacheKey = useNormalizedAnalysisStore((state) => state.setActiveCacheKey)
-
-  const householdRevision = useMemo(() => buildLegacyHouseholdRevision({
-    profileRevision: profile.profileRevision ?? 0,
-    incomeRevision: income.incomeRevision ?? 0,
-    propertyRevision: property.propertyRevision ?? 0,
-  }), [profile.profileRevision, income.incomeRevision, property.propertyRevision])
-
+  const plan = useHouseholdPlanStore((state) => state.plan)
+  const householdPlanRevision = useHouseholdPlanStore((state) => state.householdPlanRevision)
   const scenarioOverrideHash = useMemo(
     () => stableScenarioOverrideHash(scenarioOverrides ?? null),
     [scenarioOverrides]
+  )
+  const householdRevision = useMemo(
+    () => buildHouseholdPlanRevision(householdPlanRevision),
+    [householdPlanRevision]
   )
   const cacheKey = useMemo(() => buildNormalizedAnalysisCacheKey({
     householdRevision,
     scenarioOverrideHash,
   }), [householdRevision, scenarioOverrideHash])
+  const cachedEntry = useNormalizedAnalysisStore((state) => state.entries[
+    cacheKey
+  ])
+  const upsertEntry = useNormalizedAnalysisStore((state) => state.upsertEntry)
+  const setActiveCacheKey = useNormalizedAnalysisStore((state) => state.setActiveCacheKey)
 
   const normalizedEntry = useMemo(() => {
     if (cachedEntry?.compiledPlan) {
       return cachedEntry
     }
 
+    const scenarioPlan = scenarioOverrides
+      ? applyHouseholdScenarioOverrides(
+          plan,
+          scenarioOverrides as HouseholdScenarioOverrides,
+        )
+      : plan
+
     return createNormalizedAnalysisEntry(
-      compileHouseholdPlan(fromLegacyIndividual({
-        profile,
-        income,
-        property,
-      })),
+      compileHouseholdPlan(scenarioPlan),
       householdRevision,
       scenarioOverrideHash,
     )
   }, [
     cachedEntry,
     householdRevision,
-    income,
-    profile,
-    property,
+    plan,
     scenarioOverrideHash,
+    scenarioOverrides,
   ])
 
   useEffect(() => {
@@ -298,15 +291,20 @@ interface IncomeProjectionResult {
  * Returns null projection/summary when upstream validation fails.
  */
 export function useIncomeProjection(): IncomeProjectionResult {
-  const profile = useProfileStore()
-  const income = useIncomeStore()
-  const property = usePropertyStore()
+  const plan = useHouseholdPlanStore((state) => state.plan)
+  const hasValidationErrors = useHouseholdPlanStore((state) => state.hasValidationErrors)
   const normalized = useNormalizedLegacyAnalysisContext()
-  const cpfHousing = deriveCpfHousingFromProperty(property)
+  const runtime = useMemo(
+    () => buildHouseholdRuntimeLegacyInputs(plan, normalized.compiledPlan),
+    [normalized.compiledPlan, plan]
+  )
+  const { profile, income, property } = runtime
+  const cpfHousing = useMemo(
+    () => deriveCpfHousingFromProperty(property),
+    [property]
+  )
 
   return useMemo(() => {
-    const profileErrors = profile.validationErrors
-    const incomeErrors = income.validationErrors
     const crossStoreErrors = validateCrossStoreRules(
       {
         currentAge: normalized.currentAge,
@@ -320,9 +318,9 @@ export function useIncomeProjection(): IncomeProjectionResult {
         promotionJumps: income.promotionJumps,
       }
     )
-    const allErrors = { ...profileErrors, ...incomeErrors, ...crossStoreErrors }
+    const allErrors = { ...crossStoreErrors }
 
-    if (Object.keys(allErrors).length > 0) {
+    if (hasValidationErrors || Object.keys(allErrors).length > 0) {
       return { projection: null, summary: null, hasErrors: true, errors: allErrors }
     }
 
@@ -415,7 +413,6 @@ export function useIncomeProjection(): IncomeProjectionResult {
     profile.cpfAutoFallbackIncludeSA,
     profile.cpfVirtualRebalancing,
     profile.cpfVirtualRebalancingMode,
-    profile.validationErrors,
     income.salaryModel,
     income.annualSalary,
     income.salaryGrowthRate,
@@ -429,6 +426,6 @@ export function useIncomeProjection(): IncomeProjectionResult {
     income.lifeEvents,
     income.lifeEventsEnabled,
     income.personalReliefs,
-    income.validationErrors,
+    hasValidationErrors,
   ])
 }

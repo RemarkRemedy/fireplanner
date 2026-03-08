@@ -4,10 +4,8 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { Clock, ShoppingCart } from 'lucide-react'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { calculateOneTimeCost, calculateRecurringCost, type TimeCostBaseInput } from '@/lib/calculations/timeCost'
@@ -17,10 +15,8 @@ import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 type CostMode = 'one-time' | 'recurring'
 
 export function TimeCostPanel() {
-  const profile = useProfileStore()
-  const income = useIncomeStore()
+  const { profile, income, property } = useHouseholdRuntimeInputs()
   const allocation = useAllocationStore()
-  const property = usePropertyStore()
 
   const [mode, setMode] = useState<CostMode>('one-time')
   const [oneTimeAmount, setOneTimeAmount] = useState(50000)
@@ -56,7 +52,7 @@ export function TimeCostPanel() {
       retirementAge: profile.retirementAge,
       currentAge: profile.currentAge,
     }
-  }, [profile, income, allocation, property])
+  }, [allocation, income, profile, property])
 
   const result = useMemo(() => {
     if (!baseInput) return null

@@ -9,9 +9,6 @@ import { Plus, Trash2 } from 'lucide-react'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { PercentInput } from '@/components/shared/PercentInput'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
-import { useIncomeProjection } from '@/hooks/useIncomeProjection'
 import { useEffectiveMode } from '@/hooks/useEffectiveMode'
 import { calculateCpfContribution, calculateBrsFrsErs, estimateCpfLifePayout, calculateCpfLifePayoutAtAge, getRetirementSumAmount, estimateCpfBalancesFromAge } from '@/lib/calculations/cpf'
 import type { CpfLifePlan, CpfRetirementSum } from '@/lib/types'
@@ -32,73 +29,12 @@ interface CpfSectionBodyProps {
   mode: 'simple' | 'advanced'
   showProjectionTools: boolean
 }
-
-function LegacyCpfSection({ mode }: { mode: 'simple' | 'advanced' }) {
-  const {
-    currentAge, annualIncome, cpfOA, cpfSA, cpfMA, cpfRA,
-    cpfLifeStartAge, cpfLifePlan, cpfRetirementSum,
-    lifeStage, retirementPhase, cpfLifeActualMonthlyPayout,
-    cpfisEnabled, cpfisOaReturn, cpfisSaReturn,
-    cpfOaWithdrawals,
-    addCpfOaWithdrawal, removeCpfOaWithdrawal, updateCpfOaWithdrawal,
-    cpfTopUpOA, cpfTopUpSA, cpfTopUpMA,
-    residencyStatus, prMonths,
-    validationErrors, setField,
-  } = useProfileStore()
-  const cpfAutoFallback = useProfileStore((s) => s.cpfAutoFallback)
-  const cpfVirtualRebalancing = useProfileStore((s) => s.cpfVirtualRebalancing)
-  const cpfVirtualRebalancingMode = useProfileStore((s) => s.cpfVirtualRebalancingMode)
-  const incomeStreams = useIncomeStore((s) => s.incomeStreams)
-  const { projection } = useIncomeProjection()
-  const setLegacyField: CpfSectionModel['setField'] = (field, value) => {
-    setField(field as never, value as never)
-  }
-
-  const legacyModel: CpfSectionModel = {
-    currentAge,
-    annualIncome,
-    cpfOA,
-    cpfSA,
-    cpfMA,
-    cpfRA,
-    cpfLifeStartAge,
-    cpfLifePlan,
-    cpfRetirementSum,
-    lifeStage,
-    retirementPhase,
-    cpfLifeActualMonthlyPayout,
-    cpfisEnabled,
-    cpfisOaReturn,
-    cpfisSaReturn,
-    cpfOaWithdrawals,
-    cpfTopUpOA,
-    cpfTopUpSA,
-    cpfTopUpMA,
-    residencyStatus,
-    prMonths,
-    cpfAutoFallback,
-    cpfVirtualRebalancing,
-    cpfVirtualRebalancingMode,
-    incomeStreams,
-    projection,
-    validationErrors,
-    setField: setLegacyField,
-    addCpfOaWithdrawal,
-    removeCpfOaWithdrawal,
-    updateCpfOaWithdrawal,
-  }
-
-  return <CpfSectionBody model={legacyModel} mode={mode} showProjectionTools />
-}
-
 export function CpfSection({ model }: CpfSectionProps) {
   const mode = useEffectiveMode('section-cpf')
-
-  if (model) {
-    return <CpfSectionBody model={model} mode={mode} showProjectionTools={false} />
+  if (!model) {
+    return null
   }
-
-  return <LegacyCpfSection mode={mode} />
+  return <CpfSectionBody model={model} mode={mode} showProjectionTools={false} />
 }
 
 function CpfSectionBody({ model, mode, showProjectionTools }: CpfSectionBodyProps) {
@@ -858,7 +794,13 @@ function CpfSectionBody({ model, mode, showProjectionTools }: CpfSectionBodyProp
                 Year-by-Year CPF Projection
                 <InfoTooltip text="Projected CPF balances based on your income model, contribution rates, and CPF LIFE configuration. Milestone rows are highlighted when balances cross BRS/FRS/ERS thresholds." />
               </h4>
-              <CpfAssumptionsPanel />
+              <CpfAssumptionsPanel
+                currentAge={currentAge}
+                residencyStatus={residencyStatus}
+                prMonths={prMonths}
+                cpfLifeStartAge={cpfLifeStartAge}
+                cpfLifePlan={cpfLifePlan}
+              />
               <CpfProjectionTable />
             </div>
           </>

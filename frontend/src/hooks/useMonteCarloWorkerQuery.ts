@@ -5,12 +5,10 @@ import {
   type MonteCarloWorkerProgress,
 } from '@/lib/simulation/workerClient'
 import type { MonteCarloResult } from '@/lib/types'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import {
   buildMonteCarloRunSignature,
@@ -82,11 +80,9 @@ export function buildCurrentMonteCarloRunSignature(input: {
 }
 
 export function useMonteCarloWorkerQuery(): UseMonteCarloWorkerQueryResult {
-  const profile = useProfileStore()
-  const income = useIncomeStore()
+  const { profile, income, property } = useHouseholdRuntimeInputs()
   const allocation = useAllocationStore()
   const simulation = useSimulationStore()
-  const propertyStore = usePropertyStore()
   const withdrawal = useWithdrawalStore()
   const analysisPortfolio = useAnalysisPortfolio()
   const normalized = useNormalizedLegacyAnalysisContext()
@@ -186,7 +182,7 @@ export function useMonteCarloWorkerQuery(): UseMonteCarloWorkerQueryResult {
         income,
         allocation,
         simulation,
-        property: propertyStore,
+        property,
         initialPortfolio: analysisPortfolio.initialPortfolio,
         allocationWeights: analysisPortfolio.allocationWeights,
         profileOverrides,

@@ -37,10 +37,9 @@ import { MCProjectionTable } from '@/components/simulation/MCProjectionTable'
 import { StressScenarioComparisonTable } from '@/components/simulation/StressScenarioComparisonTable'
 // import { ProofWorkspace } from '@/components/proof/ProofWorkspace'
 import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
-import { useProfileStore } from '@/stores/useProfileStore'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 import { buildMonteCarloEngineParams } from '@/lib/simulation/monteCarloParams'
 import { runMonteCarloWorker } from '@/lib/simulation/workerClient'
 import {
@@ -71,9 +70,7 @@ import { ExpenseTrackerCard } from '@/components/email/ExpenseTrackerCard'
 import { useExpenseTrackerDwell } from '@/hooks/useExpenseTrackerDwell'
 import { useExpenseTracker } from '@/hooks/useExpenseTracker'
 import { ActiveLifeEventsBar } from '@/components/stressTest/ActiveLifeEventsBar'
-import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useCompanionPlannerBridge } from '@/hooks/useCompanionPlannerBridge'
-import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { CompanionScenarioSwitcher } from '@/components/companion/CompanionScenarioSwitcher'
 import { CompanionResultsSummary } from '@/components/companion/CompanionResultsSummary'
 import { CompanionStressComparison } from '@/components/companion/CompanionStressComparison'
@@ -631,7 +628,7 @@ export function StressTestPage() {
   const setSectionMode = useUIStore((s) => s.setSectionMode)
   const isStressAdvanced = stressMode === 'advanced'
   const householdPlannerEnabled = isHouseholdPlannerV1Enabled()
-  const normalized = useNormalizedLegacyAnalysisContext()
+  const { income, normalized, profile, property } = useHouseholdRuntimeInputs()
   const householdPlan = useHouseholdPlanStore((state) => state.plan)
   const householdPlanRevision = useHouseholdPlanStore((state) => state.householdPlanRevision)
   const analysisPortfolio = useAnalysisPortfolio()
@@ -648,7 +645,11 @@ export function StressTestPage() {
   const currentRetirementAge = normalized.retirementAge
   const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
   const setSimField = useSimulationStore((s) => s.setField)
-  const lifeEventCount = useIncomeStore((s) => s.lifeEvents.length)
+  const activeAdult = householdPlan.adults.find((adult) => adult.id === normalized.referenceAdultId)
+    ?? householdPlan.adults.find((adult) => adult.owner === 'self')
+    ?? householdPlan.adults[0]
+    ?? null
+  const lifeEventCount = activeAdult?.lifeEvents.length ?? 0
   const [selectedStressScenarioIds, setSelectedStressScenarioIds] = useState<StressScenarioId[]>(['base'])
   const [stressScenarioComparisonError, setStressScenarioComparisonError] = useState<string | null>(null)
   const [isStressScenarioComparisonPending, setIsStressScenarioComparisonPending] = useState(false)
@@ -716,11 +717,11 @@ export function StressTestPage() {
 
     try {
       const params = buildMonteCarloEngineParams({
-        profile: useProfileStore.getState(),
-        income: useIncomeStore.getState(),
+        profile,
+        income,
         allocation: useAllocationStore.getState(),
         simulation: useSimulationStore.getState(),
-        property: usePropertyStore.getState(),
+        property,
         initialPortfolio: analysisPortfolio.initialPortfolio,
         allocationWeights: analysisPortfolio.allocationWeights,
         profileOverrides: overrides
@@ -756,7 +757,7 @@ export function StressTestPage() {
         setIsStressScenarioComparisonPending(false)
       }
     }
-  }, [analysisPortfolio.initialPortfolio, analysisPortfolio.allocationWeights])
+  }, [analysisPortfolio.allocationWeights, analysisPortfolio.initialPortfolio, income, profile, property])
 
   const runCompanionActionImpacts = useCallback(async (
     baseResult: import('@/lib/types').MonteCarloResult,
@@ -786,16 +787,15 @@ export function StressTestPage() {
     }, 15_000)
 
     try {
-      const profile = useProfileStore.getState()
       const annualIncome = profile.annualIncome ?? 0
       const isRetiree = normalized.currentAge >= (overrides?.retirementAge ?? normalized.retirementAge)
 
       const output = await runActionImpactAnalysis({
         profile,
-        income: useIncomeStore.getState(),
+        income,
         allocation: useAllocationStore.getState(),
         simulation: useSimulationStore.getState(),
-        property: usePropertyStore.getState(),
+        property,
         initialPortfolio: analysisPortfolio.initialPortfolio,
         allocationWeights: analysisPortfolio.allocationWeights,
         baseResult,
@@ -885,8 +885,11 @@ export function StressTestPage() {
   }, [
     analysisPortfolio.initialPortfolio,
     analysisPortfolio.allocationWeights,
+    income,
     normalized.currentAge,
     normalized.retirementAge,
+    profile,
+    property,
   ])
 
   const lastRunOverridesRef = useRef<{ annualExpenses?: number; retirementAge?: number } | undefined>(undefined)

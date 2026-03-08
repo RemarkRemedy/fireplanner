@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 import type { AdultOwner, HouseholdPlan } from '@/lib/household/types'
 import type {
   HouseholdValidationEntityKind,
@@ -10,9 +9,6 @@ import { validateProfileField } from '@/lib/validation/schemas'
 import { validateProfileConsistency } from '@/lib/validation/rules'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 
 export type SectionId =
   | 'section-personal'
@@ -41,11 +37,6 @@ interface UseSectionCompletionResult {
   hasAnyErrors: boolean
 }
 
-const PROFILE_PERSONAL_FIELDS = ['currentAge', 'retirementAge', 'lifeExpectancy', 'maritalStatus', 'residencyStatus']
-const PROFILE_FIRE_FIELDS = ['swr', 'fireType', 'expectedReturn', 'inflation']
-const PROFILE_EXPENSES_FIELDS = ['annualExpenses', 'retirementSpendingAdjustment']
-const PROFILE_NW_FIELDS = ['liquidNetWorth', 'annualIncome']
-const PROFILE_CPF_FIELDS = ['cpfOA', 'cpfSA']
 const HOUSEHOLD_CPF_VALIDATION_FIELDS = [
   'cpfOA',
   'cpfSA',
@@ -59,10 +50,6 @@ const HOUSEHOLD_CPF_VALIDATION_FIELDS = [
   'cpfisOaReturn',
   'cpfisSaReturn',
 ] as const
-
-function countErrors(errors: Record<string, string>, fields: string[]): number {
-  return fields.filter((field) => field in errors).length
-}
 
 function getStatus(isCustomized: boolean, errorCount: number): SectionStatus {
   if (errorCount > 0) return 'error'
@@ -80,115 +67,8 @@ function countHouseholdErrors(
       return count
     }
 
-    return count + Object.keys(fieldErrors).length
+  return count + Object.keys(fieldErrors).length
   }, 0)
-}
-
-function buildLegacySectionCompletion(
-  profile: ReturnType<typeof useProfileStore.getState>,
-  income: ReturnType<typeof useIncomeStore.getState>,
-  allocation: ReturnType<typeof useAllocationStore.getState>,
-  property: ReturnType<typeof usePropertyStore.getState>,
-): UseSectionCompletionResult {
-  const profileErrors = profile.validationErrors
-  const incomeErrors = income.validationErrors
-  const allocationErrors = allocation.validationErrors
-  const propertyErrors = property.validationErrors
-
-  const personalErrors = countErrors(profileErrors, PROFILE_PERSONAL_FIELDS)
-  const fireErrors = countErrors(profileErrors, PROFILE_FIRE_FIELDS)
-  const incomeErrorCount = Object.keys(incomeErrors).length
-  const expensesErrors = countErrors(profileErrors, PROFILE_EXPENSES_FIELDS)
-  const nwErrors = countErrors(profileErrors, PROFILE_NW_FIELDS)
-  const cpfErrors = countErrors(profileErrors, PROFILE_CPF_FIELDS)
-  const propertyErrorCount = Object.keys(propertyErrors).length
-  const allocationErrorCount = Object.keys(allocationErrors).length
-
-  const personalCustomized =
-    profile.currentAge !== 30 ||
-    profile.retirementAge !== 65 ||
-    profile.lifeExpectancy !== 90 ||
-    profile.maritalStatus !== 'single' ||
-    profile.residencyStatus !== 'citizen'
-
-  const fireCustomized =
-    profile.swr !== 0.036 ||
-    profile.fireType !== 'regular' ||
-    profile.expectedReturn !== 0.07 ||
-    profile.inflation !== 0.025
-
-  const incomeCustomized =
-    income.annualSalary !== 72000 ||
-    income.salaryModel !== 'simple' ||
-    income.incomeStreams.length > 0
-
-  const expensesCustomized = profile.annualExpenses !== 48000
-  const nwCustomized = profile.liquidNetWorth !== 0
-  const cpfCustomized = profile.cpfOA !== 0 || profile.cpfSA !== 0
-  const healthcareCustomized = profile.healthcareConfig.enabled
-  const propertyCustomized = property.ownsProperty !== false
-  const allocationCustomized = allocation.selectedTemplate !== 'balanced'
-  const goalsCustomized = profile.financialGoals.length > 0
-  const goalsErrorCount = Object.keys(profileErrors).filter((key) => key.startsWith('goal_')).length
-
-  const sections: Record<SectionId, SectionCompletion> = {
-    'section-personal': {
-      isComplete: personalCustomized,
-      status: getStatus(personalCustomized, personalErrors),
-      errorCount: personalErrors,
-    },
-    'section-fire-settings': {
-      isComplete: fireCustomized,
-      status: getStatus(fireCustomized, fireErrors),
-      errorCount: fireErrors,
-    },
-    'section-income': {
-      isComplete: incomeCustomized,
-      status: getStatus(incomeCustomized, incomeErrorCount),
-      errorCount: incomeErrorCount,
-    },
-    'section-expenses': {
-      isComplete: expensesCustomized,
-      status: getStatus(expensesCustomized, expensesErrors),
-      errorCount: expensesErrors,
-    },
-    'section-goals': {
-      isComplete: goalsCustomized,
-      status: getStatus(goalsCustomized, goalsErrorCount),
-      errorCount: goalsErrorCount,
-    },
-    'section-net-worth': {
-      isComplete: nwCustomized,
-      status: getStatus(nwCustomized, nwErrors),
-      errorCount: nwErrors,
-    },
-    'section-cpf': {
-      isComplete: cpfCustomized,
-      status: getStatus(cpfCustomized, cpfErrors),
-      errorCount: cpfErrors,
-    },
-    'section-healthcare': {
-      isComplete: healthcareCustomized,
-      status: getStatus(healthcareCustomized, 0),
-      errorCount: 0,
-    },
-    'section-property': {
-      isComplete: propertyCustomized,
-      status: getStatus(propertyCustomized, propertyErrorCount),
-      errorCount: propertyErrorCount,
-    },
-    'section-allocation': {
-      isComplete: allocationCustomized,
-      status: getStatus(allocationCustomized, allocationErrorCount),
-      errorCount: allocationErrorCount,
-    },
-  }
-
-  const completedCount = Object.values(sections).filter((section) => section.isComplete).length
-  const totalSections = Object.keys(sections).length
-  const hasAnyErrors = Object.values(sections).some((section) => section.errorCount > 0)
-
-  return { sections, completedCount, totalSections, hasAnyErrors }
 }
 
 function hasIncomeCoverage(plan: HouseholdPlan, owner: AdultOwner): boolean {
@@ -458,32 +338,17 @@ function buildHouseholdSectionCompletion(
 export function useSectionCompletion(): UseSectionCompletionResult {
   const householdPlan = useHouseholdPlanStore((state) => state.plan)
   const householdErrors = useHouseholdPlanStore((state) => state.validationErrors)
-  const householdEnabled = isHouseholdPlannerV1Enabled() && householdPlan.planType !== 'individual'
-  const profileRevision = useProfileStore((state) => (householdEnabled ? 0 : state.profileRevision))
-  const incomeRevision = useIncomeStore((state) => (householdEnabled ? 0 : state.incomeRevision))
-  const propertyRevision = usePropertyStore((state) => (householdEnabled ? 0 : state.propertyRevision))
   const allocationRevision = useAllocationStore((state) => state.allocationRevision)
 
   return useMemo(() => {
-    const allocation = useAllocationStore.getState()
-
-    if (householdEnabled) {
-      return buildHouseholdSectionCompletion(householdPlan, householdErrors, allocation)
-    }
-
-    return buildLegacySectionCompletion(
-      useProfileStore.getState(),
-      useIncomeStore.getState(),
-      allocation,
-      usePropertyStore.getState(),
+    return buildHouseholdSectionCompletion(
+      householdPlan,
+      householdErrors,
+      useAllocationStore.getState(),
     )
   }, [
-    householdEnabled,
     householdPlan,
     householdErrors,
-    profileRevision,
-    incomeRevision,
-    propertyRevision,
     allocationRevision,
   ])
 }

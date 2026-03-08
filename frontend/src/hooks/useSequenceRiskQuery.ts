@@ -4,8 +4,8 @@ import { runSequenceRiskWorker, flattenStrategyParams } from '@/lib/simulation/w
 import type { CrisisScenario, SequenceRiskResult } from '@/lib/types'
 import type { SequenceRiskEngineParams } from '@/lib/simulation/sequenceRisk'
 import { getExpensesAtRetirement } from '@/lib/calculations/expenses'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
@@ -56,7 +56,7 @@ export function buildSequenceRiskWorkerParams(input: {
   analysisPortfolio: ReturnType<typeof useAnalysisPortfolio>
   crisis: CrisisScenario
   normalized: ReturnType<typeof useNormalizedLegacyAnalysisContext>
-  profile: ReturnType<typeof useProfileStore.getState>
+  profile: ReturnType<typeof useHouseholdRuntimeInputs>['profile']
   simulation: ReturnType<typeof useSimulationStore.getState>
   withdrawal: ReturnType<typeof useWithdrawalStore.getState>
 }): SequenceRiskEngineParams {
@@ -134,7 +134,7 @@ export function buildSequenceRiskWorkerParams(input: {
 }
 
 export function useSequenceRiskQuery(): UseSequenceRiskQueryResult {
-  const profile = useProfileStore()
+  const { profile } = useHouseholdRuntimeInputs()
   const allocation = useAllocationStore()
   const withdrawal = useWithdrawalStore()
   const simulation = useSimulationStore()

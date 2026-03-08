@@ -1,11 +1,12 @@
 import { useMemo } from 'react'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { projectPortfolioAtRetirement } from '@/lib/calculations/fire'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
 import { resolveDeterministicExpectedReturn } from '@/lib/analysis/deterministicAssumptions'
 import { formatCurrency } from '@/lib/utils'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 
 interface AnalysisPortfolioResult {
   initialPortfolio: number
@@ -24,9 +25,13 @@ interface AnalysisPortfolioResult {
  * own useExplorePortfolio hook with local state.
  */
 export function useAnalysisPortfolio(): AnalysisPortfolioResult {
-  const profile = useProfileStore()
+  const plan = useHouseholdPlanStore((state) => state.plan)
   const allocation = useAllocationStore()
   const normalized = useNormalizedLegacyAnalysisContext()
+  const { profile } = useMemo(
+    () => buildHouseholdRuntimeLegacyInputs(plan, normalized.compiledPlan),
+    [normalized.compiledPlan, plan]
+  )
 
   return useMemo(() => {
     const currentWeights = allocation.currentWeights
