@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useProjection } from '@/hooks/useProjection'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
@@ -22,8 +21,7 @@ function formatRate(rate: number | null): string {
 }
 
 function useStatsData(): StatChip[] {
-  const { metrics } = useFireCalculations()
-  const { summary } = useProjection()
+  const { fireMetrics: metrics, summary } = useProjection()
   const currentAge = useProfileStore((s) => s.currentAge)
   const lifeExpectancy = useProfileStore((s) => s.lifeExpectancy)
   const lastMCSuccessRate = useSimulationStore((s) => s.lastMCSuccessRate)

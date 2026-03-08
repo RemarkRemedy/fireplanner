@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useProjection } from '@/hooks/useProjection'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
@@ -38,8 +37,7 @@ interface AdjustedFireNumberResult {
  * simple FIRE number before computing deviation.
  */
 export function useAdjustedFireNumber(): AdjustedFireNumberResult {
-  const { metrics } = useFireCalculations()
-  const { rows } = useProjection()
+  const { fireMetrics: metrics, rows } = useProjection()
   const swr = useProfileStore((s) => s.swr)
   const inflation = useProfileStore((s) => s.inflation)
   const currentAge = useProfileStore((s) => s.currentAge)
@@ -177,7 +175,7 @@ export function useAdjustedFireNumber(): AdjustedFireNumberResult {
  *  Unlike the projection path, the formula side applies FIRE_TYPE_MULTIPLIERS via
  *  computeMetrics, so the lean/fat labels here accurately reflect the amounts. */
 function buildFormulaSideWaterfall(
-  metrics: NonNullable<ReturnType<typeof useFireCalculations>['metrics']>,
+  metrics: NonNullable<ReturnType<typeof useProjection>['fireMetrics']>,
   fireType: FireType,
   basisFactor: number,
 ): WaterfallItem[] {

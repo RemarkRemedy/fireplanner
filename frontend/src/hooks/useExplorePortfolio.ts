@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useProjection } from '@/hooks/useProjection'
 import { formatCurrency } from '@/lib/utils'
 import { interpolateGlidePath } from '@/lib/calculations/portfolio'
@@ -28,8 +27,7 @@ export function useExplorePortfolio(): ExplorePortfolioResult {
   const [balanceMode, setBalanceMode] = useState<ExploreBalanceMode>('myPlan')
   const allocation = useAllocationStore()
   const normalized = useNormalizedLegacyAnalysisContext()
-  const { metrics } = useFireCalculations()
-  const { rows } = useProjection()
+  const { fireMetrics: metrics, rows } = useProjection()
 
   return useMemo(() => {
     const currentYear = new Date().getFullYear()

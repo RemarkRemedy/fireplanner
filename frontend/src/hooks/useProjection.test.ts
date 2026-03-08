@@ -21,15 +21,18 @@ describe('useProjection', () => {
   it('produces non-null result with valid defaults', () => {
     const { result } = renderHook(() => useProjection())
     expect(result.current.hasErrors).toBe(false)
+    expect(result.current.fireMetrics).not.toBeNull()
     expect(result.current.rows).not.toBeNull()
     expect(result.current.summary).not.toBeNull()
     expect(result.current.params).not.toBeNull()
+    expect(result.current.params!.fireNumber).toBeCloseTo(result.current.fireMetrics!.fireNumber, 6)
   })
 
   it('returns null when income has validation errors', () => {
     useIncomeStore.getState().setField('annualSalary', -1)
     const { result } = renderHook(() => useProjection())
     expect(result.current.hasErrors).toBe(true)
+    expect(result.current.fireMetrics).toBeNull()
     expect(result.current.rows).toBeNull()
     expect(result.current.params).toBeNull()
   })
@@ -38,6 +41,7 @@ describe('useProjection', () => {
     useProfileStore.getState().setField('currentAge', 15)
     const { result } = renderHook(() => useProjection())
     expect(result.current.hasErrors).toBe(true)
+    expect(result.current.fireMetrics).toBeNull()
     expect(result.current.rows).toBeNull()
   })
 

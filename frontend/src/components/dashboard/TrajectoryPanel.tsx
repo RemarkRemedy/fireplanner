@@ -3,13 +3,11 @@ import { ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { QuickProjectionChart } from '@/components/shared/QuickProjectionChart'
 import { useProjection } from '@/hooks/useProjection'
-import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useProfileStore } from '@/stores/useProfileStore'
 
 export function TrajectoryPanel() {
   const retirementAge = useProfileStore((s) => s.retirementAge)
-  const { rows } = useProjection()
-  const { metrics } = useFireCalculations()
+  const { fireMetrics: metrics, rows } = useProjection()
 
   if (!rows || rows.length === 0 || !metrics) return null
 

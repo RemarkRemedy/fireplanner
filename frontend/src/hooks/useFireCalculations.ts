@@ -1,12 +1,11 @@
 import { useMemo } from 'react'
 import type { FireMetrics } from '@/lib/types'
-import { calculateAllFireMetrics } from '@/lib/calculations/fire'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
-import { getBaseInputs } from '@/hooks/useWhatIfMetrics'
+import { computeMetricSnapshot, getBaseInputs } from '@/hooks/useWhatIfMetrics'
 
 interface FireCalculationsResult {
   metrics: FireMetrics | null
@@ -35,7 +34,7 @@ export function useFireCalculations(): FireCalculationsResult {
       return { metrics: null, hasErrors: true, errors: profileErrors }
     }
 
-    const metrics = calculateAllFireMetrics(
+    const { fireMetrics: metrics } = computeMetricSnapshot(
       getBaseInputs(profile, income, allocation, property, {
         currentAge: normalized.currentAge,
         retirementAge: normalized.retirementAge,
