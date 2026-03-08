@@ -46,8 +46,8 @@ function AllocationAssumptionsContent({
     setGlidePathConfig({
       ...glidePathConfig,
       enabled,
-      startAge: enabled ? glidePathConfig.startAge || Math.max(referenceAdult.currentAge, referenceAdult.retirementAge - 5) : glidePathConfig.startAge,
-      endAge: enabled ? glidePathConfig.endAge || referenceAdult.retirementAge + 10 : glidePathConfig.endAge,
+      startAge: enabled ? glidePathConfig.startAge ?? Math.max(referenceAdult.currentAge, referenceAdult.retirementAge - 5) : glidePathConfig.startAge,
+      endAge: enabled ? glidePathConfig.endAge ?? referenceAdult.retirementAge + 10 : glidePathConfig.endAge,
     })
   }
 

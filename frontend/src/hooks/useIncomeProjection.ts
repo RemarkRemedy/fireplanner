@@ -168,7 +168,13 @@ export function useNormalizedLegacyAnalysisContext(
 
   const compiledPlan = normalizedEntry.compiledPlan
   if (!compiledPlan) {
-    throw new Error('Normalized analysis entry is missing a compiled household plan.')
+    // This should never happen: createNormalizedAnalysisEntry always produces a
+    // compiled plan, and the cache lookup above falls back to a fresh compile.
+    // If it somehow does, log and re-throw so the nearest React Error Boundary
+    // can present a recovery UI rather than leaving the user with a blank screen.
+    const error = new Error('Normalized analysis entry missing compiled plan — this is a bug. Please refresh the page.')
+    console.error(error)
+    throw error
   }
 
   const referenceAdultId = getReferenceAdultId(compiledPlan)
@@ -304,6 +310,7 @@ export function useIncomeProjection(): IncomeProjectionResult {
     profile.annualExpenses,
     profile.inflation,
     profile.srsAnnualContribution,
+    profile.srsPostFireEnabled,
     profile.cpfOA,
     profile.cpfSA,
     profile.cpfMA,

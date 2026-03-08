@@ -4,6 +4,7 @@ import type { ProjectionRow, ProjectionSummary } from '@/lib/types'
 import { generateProjection, type ProjectionParams } from '@/lib/calculations/projection'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { getPropertyRentalIncome, computeLbsProceeds } from '@/lib/calculations/hdb'
+import { getRetirementSumAmount } from '@/lib/calculations/cpf'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
@@ -67,7 +68,7 @@ export function useProjection(): ProjectionResult {
           remainingLease: property.existingLeaseYears,
           retainedLease: property.hdbLbsRetainedLease,
           cpfRaBalance: profile.cpfRA,
-          retirementSum: 213000,
+          retirementSum: getRetirementSumAmount(profile.cpfRetirementSum, profile.currentAge),
         })
       : null
 
@@ -184,6 +185,8 @@ export function useProjection(): ProjectionResult {
     profile.financialGoals,
     profile.cpfLifeStartAge,
     profile.cpfLifePlan,
+    profile.cpfRetirementSum,
+    profile.currentAge,
     profile.expenseAdjustments,
     profile.cpfAutoFallback,
     profile.cpfAutoFallbackIncludeSA,
