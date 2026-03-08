@@ -51,7 +51,7 @@ describe('fromExpenseImport', () => {
     ])
   })
 
-  it('removes dependent income from the primary-adult residual import totals', () => {
+  it('does not subtract dependent income from the primary-adult residual (dependents are not income entities)', () => {
     const imported = fromExpenseImport(makeSnapshot({
       avgMonthlyIncome: 10_000,
       expenseImport: {
@@ -66,7 +66,23 @@ describe('fromExpenseImport', () => {
     const selfSalary = imported.plan.income.find((income) => income.owner === 'self' && income.kind === 'salary-model')
 
     expect(imported.plan.planType).toBe('household')
-    expect(selfAdult?.annualIncome).toBe(108_000)
-    expect(selfSalary?.annualAmount).toBe(108_000)
+    // Dependent income is not subtracted: 10_000 * 12 = 120_000 (full household total)
+    expect(selfAdult?.annualIncome).toBe(120_000)
+    expect(selfSalary?.annualAmount).toBe(120_000)
+  })
+
+  it('converts monthly-only dependent costs to annual amounts', () => {
+    const imported = fromExpenseImport(makeSnapshot({
+      expenseImport: {
+        members: [
+          { role: 'self', name: 'Alex', currentAge: 41 },
+          { role: 'dependent', name: 'Sam', relationship: 'child', age: 5, monthlyExpense: 500 },
+        ],
+      },
+    }))
+
+    const dependent = imported.plan.dependents.find((d) => d.label === 'Sam')
+    // Monthly -> annual: 500 * 12 = 6_000
+    expect(dependent?.annualCost).toBe(6_000)
   })
 })
