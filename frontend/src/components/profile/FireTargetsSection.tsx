@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { useProfileStore } from '@/stores/useProfileStore'
-import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useProjection } from '@/hooks/useProjection'
 import { PercentInput } from '@/components/shared/PercentInput'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
@@ -26,8 +25,7 @@ export function FireTargetsSection() {
   const setField = useProfileStore((s) => s.setField)
   const validationErrors = useProfileStore((s) => s.validationErrors)
   const mode = useEffectiveMode('section-fire-settings')
-  const { metrics, hasErrors } = useFireCalculations()
-  const { summary: projSummary } = useProjection()
+  const { fireMetrics: metrics, hasErrors, summary: projSummary } = useProjection()
   const { waterfallItems, netAnnualNeed, cpfOaMortgageCoverPct } = useAdjustedFireNumber()
 
   // Prefer projection's simulated FIRE age over NPER estimate

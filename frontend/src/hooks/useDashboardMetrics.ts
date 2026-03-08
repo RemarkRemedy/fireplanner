@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useProjection } from '@/hooks/useProjection'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useAdjustedFireNumber } from '@/hooks/useAdjustedFireNumber'
@@ -27,8 +26,7 @@ interface DashboardMetrics {
  * No state stored — purely computed from other stores.
  */
 export function useDashboardMetrics(): DashboardMetrics {
-  const { metrics } = useFireCalculations()
-  const { summary: projSummary } = useProjection()
+  const { fireMetrics: metrics, summary: projSummary } = useProjection()
   const profile = useProfileStore()
   const adjusted = useAdjustedFireNumber()
 
