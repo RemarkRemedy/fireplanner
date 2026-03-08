@@ -103,7 +103,7 @@ export function ScenarioLab({ plan: providedPlan }: ScenarioLabProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Compare built-in and custom household questions against the same authored `HouseholdPlan`.
+            Compare built-in and custom household questions against the same authored plan.
             Each card recompiles the normalized household timeline without mutating the base plan.
           </p>
 
@@ -201,7 +201,7 @@ export function ScenarioLab({ plan: providedPlan }: ScenarioLabProps) {
               <NullableNumberInput
                 value={selfRetirementAge}
                 onChange={setSelfRetirementAge}
-                label="Self retirement age"
+                label={`${plan.adults.find((a) => a.owner === 'self')?.displayName ?? 'Your'} retirement age`}
                 integer
                 min={(plan.adults.find((adult) => adult.owner === 'self')?.currentAge ?? 0) + 1}
                 max={(plan.adults.find((adult) => adult.owner === 'self')?.lifeExpectancy ?? 0) - 1}
@@ -212,7 +212,7 @@ export function ScenarioLab({ plan: providedPlan }: ScenarioLabProps) {
               <NullableNumberInput
                 value={partnerRetirementAge}
                 onChange={setPartnerRetirementAge}
-                label="Partner retirement age"
+                label={`${plan.adults.find((a) => a.owner === 'partner')?.displayName ?? 'Partner'} retirement age`}
                 integer
                 min={plan.adults.some((adult) => adult.owner === 'partner')
                   ? (plan.adults.find((adult) => adult.owner === 'partner')?.currentAge ?? 0) + 1

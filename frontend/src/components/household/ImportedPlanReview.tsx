@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { ImportedPlanReview as ImportedPlanReviewModel } from '@/lib/companion/types'
 
 const ROLE_LABELS: Record<ImportedPlanReviewModel['detectedMembers'][number]['role'], string> = {
-  self: 'Primary adult',
+  self: 'You',
   partner: 'Partner',
   dependent: 'Dependent',
 }

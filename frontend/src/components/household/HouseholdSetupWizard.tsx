@@ -60,7 +60,7 @@ export function HouseholdSetupWizard({ planType }: HouseholdSetupWizardProps) {
   const [selfName, setSelfName] = useState('You')
   const [selfAge, setSelfAge] = useState(30)
   const [partnerEnabled, setPartnerEnabled] = useState(planType === 'couple')
-  const [partnerName, setPartnerName] = useState('Partner')
+  const [partnerName, setPartnerName] = useState('')
   const [partnerAge, setPartnerAge] = useState(30)
   const [dependents, setDependents] = useState<SetupDependentDraft[]>([])
   const [cpfEnabled, setCpfEnabled] = useState(true)
