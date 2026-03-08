@@ -11,8 +11,6 @@ import {
 } from '@/stores/useNormalizedAnalysisStore'
 import { LEGACY_PARITY_FIXTURES } from '@/lib/household/__tests__/legacyParityFixtures'
 import {
-  buildLegacyHouseholdRevision,
-  buildNormalizedAnalysisCacheKey,
   stableScenarioOverrideHash,
 } from '@/lib/household/normalizedAnalysisCache'
 import { DEFAULT_PROFILE } from '@/stores/useProfileStore'
@@ -42,6 +40,30 @@ describe('toAnalysisInputs', () => {
   it('caches legacy compiled entries by revision tuple and canonical override hash', () => {
     const snapshot = LEGACY_PARITY_FIXTURES.goalsAndLifeEvents
     const compileSpy = vi.spyOn(householdCompiler, 'compileHouseholdPlan')
+    const identity = buildLegacyNormalizedAnalysisIdentity({
+      profile: buildRevisionedSnapshotState(
+        DEFAULT_PROFILE,
+        snapshot.profile,
+        'profileRevision',
+        4
+      ),
+      income: buildRevisionedSnapshotState(
+        DEFAULT_INCOME,
+        snapshot.income,
+        'incomeRevision',
+        7
+      ),
+      property: buildRevisionedSnapshotState(
+        DEFAULT_PROPERTY,
+        snapshot.property,
+        'propertyRevision',
+        11
+      ),
+      scenarioOverrides: {
+        retirementAge: 55,
+        annualExpenses: 50_000,
+      },
+    })
     const entry = getOrCreateLegacyNormalizedAnalysisEntry({
       profile: buildRevisionedSnapshotState(
         DEFAULT_PROFILE,
@@ -67,17 +89,12 @@ describe('toAnalysisInputs', () => {
       },
     })
 
-    expect(entry.cacheKey).toBe(
-      buildNormalizedAnalysisCacheKey({
-        householdRevision: buildLegacyHouseholdRevision({
-          profileRevision: 4,
-          incomeRevision: 7,
-          propertyRevision: 11,
-        }),
-        scenarioOverrideHash: stableScenarioOverrideHash({
-          annualExpenses: 50_000,
-          retirementAge: 55,
-        }),
+    expect(entry.cacheKey).toBe(identity.cacheKey)
+    expect(entry.householdRevision).toBe(identity.householdRevision)
+    expect(entry.scenarioOverrideHash).toBe(
+      stableScenarioOverrideHash({
+        annualExpenses: 50_000,
+        retirementAge: 55,
       }),
     )
     expect(entry.selectors.monteCarlo?.annualSavingsByYear.length).toBeGreaterThan(0)
@@ -109,6 +126,50 @@ describe('toAnalysisInputs', () => {
 
     expect(reusedEntry.cacheKey).toBe(entry.cacheKey)
     expect(Object.keys(useNormalizedAnalysisStore.getState().entries)).toHaveLength(1)
+    expect(compileSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('reuses the compiled entry when only non-compiler FIRE metadata changes', () => {
+    const snapshot = LEGACY_PARITY_FIXTURES.salaryOnly
+    const compileSpy = vi.spyOn(householdCompiler, 'compileHouseholdPlan')
+
+    const baseInput = {
+      profile: buildRevisionedSnapshotState(
+        DEFAULT_PROFILE,
+        snapshot.profile,
+        'profileRevision',
+        1
+      ),
+      income: buildRevisionedSnapshotState(
+        DEFAULT_INCOME,
+        snapshot.income,
+        'incomeRevision',
+        1
+      ),
+      property: buildRevisionedSnapshotState(
+        DEFAULT_PROPERTY,
+        snapshot.property,
+        'propertyRevision',
+        1
+      ),
+    }
+
+    const entry = getOrCreateLegacyNormalizedAnalysisEntry(baseInput)
+    const updatedProfile = {
+      ...baseInput.profile,
+      profileRevision: 2,
+      fireType: 'fat' as const,
+      swr: 0.03,
+      fireNumberBasis: 'today' as const,
+      cashReserveEnabled: !baseInput.profile.cashReserveEnabled,
+      cashReserveMonths: baseInput.profile.cashReserveMonths + 6,
+    }
+    const reusedEntry = getOrCreateLegacyNormalizedAnalysisEntry({
+      ...baseInput,
+      profile: updatedProfile,
+    })
+
+    expect(reusedEntry.cacheKey).toBe(entry.cacheKey)
     expect(compileSpy).toHaveBeenCalledTimes(1)
   })
 

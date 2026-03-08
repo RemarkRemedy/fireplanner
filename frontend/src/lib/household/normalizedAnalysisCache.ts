@@ -1,9 +1,10 @@
 export type HouseholdRevision = string
+type LegacyRevisionFragment = string | number
 
 export interface LegacyAuthoringRevisions {
-  profileRevision: number
-  incomeRevision: number
-  propertyRevision: number
+  profileRevision: LegacyRevisionFragment
+  incomeRevision: LegacyRevisionFragment
+  propertyRevision: LegacyRevisionFragment
 }
 
 export interface GlobalPlannerInputRevisions {
@@ -62,6 +63,10 @@ function fnv1aHash(input: string): string {
 
 function hashCanonicalValue(value: unknown): string {
   return fnv1aHash(JSON.stringify(canonicalizeForHash(value)))
+}
+
+export function stableRevisionHash(value: unknown): string {
+  return hashCanonicalValue(value)
 }
 
 export function stableScenarioOverrideHash(overrides: unknown): string {
