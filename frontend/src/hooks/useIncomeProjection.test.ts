@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useIncomeProjection, buildProjectionParams } from './useIncomeProjection'
+import { generateIncomeProjection } from '@/lib/calculations/income'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
@@ -49,6 +50,31 @@ describe('buildProjectionParams', () => {
     expect(params.initialCpfRA).toBe(profile.cpfRA)
     expect(params.cpfLifeStartAge).toBe(profile.cpfLifeStartAge)
     expect(params.cpfLifePlan).toBe(profile.cpfLifePlan)
+  })
+
+  it('supports normalized age overrides and preserves PR-month inputs', () => {
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      currentAge: 30,
+      retirementAge: 60,
+      lifeExpectancy: 90,
+      residencyStatus: 'pr',
+      prMonths: 6,
+      validationErrors: {},
+    })
+    const profile = useProfileStore.getState()
+    const income = useIncomeStore.getState()
+    const property = usePropertyStore.getState()
+    const params = buildProjectionParams(profile, income, property, {
+      currentAge: 42,
+      retirementAge: 67,
+      lifeExpectancy: 93,
+    })!
+
+    expect(params.currentAge).toBe(42)
+    expect(params.retirementAge).toBe(67)
+    expect(params.lifeExpectancy).toBe(93)
+    expect(params.prMonths).toBe(6)
   })
 })
 
@@ -130,5 +156,23 @@ describe('useIncomeProjection', () => {
     if (postRetRow) {
       expect(postRetRow.salary).toBe(0)
     }
+  })
+
+  it('uses the shared projection builder for PR-residency inputs', () => {
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      residencyStatus: 'pr',
+      prMonths: 6,
+      validationErrors: {},
+    })
+
+    const profile = useProfileStore.getState()
+    const income = useIncomeStore.getState()
+    const property = usePropertyStore.getState()
+    const expected = generateIncomeProjection(buildProjectionParams(profile, income, property)!)
+    const { result } = renderHook(() => useIncomeProjection())
+
+    expect(result.current.projection![0].cpfEmployee).toBeCloseTo(expected[0].cpfEmployee, 6)
+    expect(result.current.projection![0].cpfEmployer).toBeCloseTo(expected[0].cpfEmployer, 6)
   })
 })
