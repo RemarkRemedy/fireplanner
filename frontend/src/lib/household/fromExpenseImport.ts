@@ -11,6 +11,7 @@ import {
   fromLegacyIndividual,
   type LegacyIndividualSnapshot,
 } from './fromLegacyIndividual'
+import { createId } from './ids'
 import type {
   AssetItem,
   Dependent,
@@ -70,18 +71,14 @@ function nowIsoString(): string {
   return new Date().toISOString()
 }
 
-function createId(prefix: string): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`
-  }
-
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-}
-
 function asRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
     ? value as Record<string, unknown>
     : null
+}
+
+function normalizeImportToken(value: string | null): string | null {
+  return value?.trim().toLowerCase() ?? null
 }
 
 function readString(record: Record<string, unknown> | null, ...keys: string[]): string | null {
@@ -121,7 +118,7 @@ function readFiniteNumber(
 }
 
 function normalizeRelationship(value: string | null): Dependent['relationship'] {
-  switch (value) {
+  switch (normalizeImportToken(value)) {
     case 'child':
       return 'child'
     case 'parent':
@@ -136,8 +133,9 @@ function normalizeRole(
   fallbackIndex: number,
   relationship: Dependent['relationship'],
 ): ImportedPlanMemberRole {
-  if (value === 'self' || value === 'partner' || value === 'dependent') {
-    return value
+  const normalizedValue = normalizeImportToken(value)
+  if (normalizedValue === 'self' || normalizedValue === 'partner' || normalizedValue === 'dependent') {
+    return normalizedValue
   }
 
   if (relationship !== 'other') {
@@ -166,12 +164,14 @@ function parseImportedMembers(snapshot: PlannerSnapshotResponse): ParsedImported
   const rawMembers = getSnapshotValue(snapshot, 'members')
   if (!Array.isArray(rawMembers)) return []
 
-  return rawMembers.flatMap((rawMember, index) => {
+  const parsedMembers: ParsedImportedMember[] = []
+
+  for (const rawMember of rawMembers) {
     const record = asRecord(rawMember)
-    if (!record) return []
+    if (!record) continue
 
     const relationship = normalizeRelationship(readString(record, 'relationship'))
-    const role = normalizeRole(readString(record, 'role', 'type'), index, relationship)
+    const role = normalizeRole(readString(record, 'role', 'type'), parsedMembers.length, relationship)
     const label = readString(record, 'label', 'displayName', 'name')
       ?? (role === 'self'
         ? 'Imported primary adult'
@@ -184,7 +184,7 @@ function parseImportedMembers(snapshot: PlannerSnapshotResponse): ParsedImported
     const monthlyExpense = readFiniteNumber(record, 'monthlyExpense')
     const annualCost = readFiniteNumber(record, 'annualCost', 'costAnnual')
 
-    return [{
+    parsedMembers.push({
       id: readString(record, 'id') ?? createId(`imported-${role}`),
       label,
       role,
@@ -196,8 +196,10 @@ function parseImportedMembers(snapshot: PlannerSnapshotResponse): ParsedImported
       annualCost: annualCost ?? (monthlyExpense !== null ? monthlyExpense * MONTHS_PER_YEAR : null),
       liquidNetWorth: readFiniteNumber(record, 'investableAssets', 'liquidNetWorth'),
       relationship,
-    }]
-  })
+    })
+  }
+
+  return parsedMembers
 }
 
 function resolveAnnualIncome(snapshot: PlannerSnapshotResponse): number | null {
@@ -487,9 +489,10 @@ export function fromExpenseImport(snapshot: PlannerSnapshotResponse): ImportedHo
   const partnerAnnualIncome = Math.max(0, partnerMember?.annualIncome ?? 0)
   const partnerAnnualExpense = Math.max(0, partnerMember?.annualExpense ?? 0)
   const partnerLiquidNetWorth = Math.max(0, partnerMember?.liquidNetWorth ?? 0)
+  const dependentAnnualIncome = dependentMembers.reduce((sum, member) => sum + Math.max(0, member.annualIncome ?? 0), 0)
   const dependentAnnualCost = dependentMembers.reduce((sum, member) => sum + Math.max(0, member.annualCost ?? 0), 0)
 
-  const residualAnnualIncome = Math.max(0, (totalAnnualIncome ?? 0) - partnerAnnualIncome)
+  const residualAnnualIncome = Math.max(0, (totalAnnualIncome ?? 0) - partnerAnnualIncome - dependentAnnualIncome)
   const residualAnnualExpense = Math.max(0, (totalAnnualExpense ?? 0) - partnerAnnualExpense - dependentAnnualCost)
   const residualLiquidNetWorth = Math.max(0, totalLiquidNetWorth - partnerLiquidNetWorth)
 
@@ -505,7 +508,7 @@ export function fromExpenseImport(snapshot: PlannerSnapshotResponse): ImportedHo
   const hasDependents = dependentMembers.length > 0
 
   plan.id = createId('household-import')
-  plan.planType = hasPartner ? (hasDependents ? 'household' : 'couple') : 'household'
+  plan.planType = hasPartner ? (hasDependents ? 'household' : 'couple') : (hasDependents ? 'household' : 'individual')
 
   const selfAdult = plan.adults[0]
   selfAdult.displayName = selfMember.label
