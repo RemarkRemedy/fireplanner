@@ -40,6 +40,8 @@ interface HouseholdPrototypeSectionProps {
   title: string
   description: string
   isComplete: boolean
+  /** Optional scope label, e.g. "Editing: Taylor" or "Scope: household" */
+  scopeLabel?: string
   children: React.ReactNode
 }
 
@@ -48,6 +50,7 @@ function HouseholdPrototypeSection({
   title,
   description,
   isComplete,
+  scopeLabel,
   children,
 }: HouseholdPrototypeSectionProps) {
   return (
@@ -58,6 +61,9 @@ function HouseholdPrototypeSection({
           <Badge variant={isComplete ? 'default' : 'secondary'}>
             {isComplete ? 'Configured' : 'Needs review'}
           </Badge>
+          {scopeLabel && (
+            <span className="text-xs text-muted-foreground">{scopeLabel}</span>
+          )}
         </div>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
@@ -238,6 +244,7 @@ export function InputsPage() {
         title="Income & Work"
         description="Per-adult salary models, streams, life events, and tax relief inputs."
         isComplete={sectionCompletion['section-income'].isComplete}
+        scopeLabel={selectedAdult ? `Editing: ${selectedAdult.displayName}` : undefined}
       >
         <IncomeSection selectedAdultId={selectedAdult?.id ?? null} />
       </HouseholdPrototypeSection>
@@ -247,6 +254,7 @@ export function InputsPage() {
         title="Spending, Healthcare & Goals"
         description="Shared spending, private spending, healthcare, goals, and retirement draws."
         isComplete={sectionCompletion['section-expenses'].isComplete}
+        scopeLabel="Scope: shared & per-adult"
       >
         <SpendingGoalsSection selectedAdultId={selectedAdult?.id ?? null} />
       </HouseholdPrototypeSection>
@@ -259,6 +267,7 @@ export function InputsPage() {
         title="Assets & Net Worth"
         description="Liquid assets, CPF balances, SRS, and household balance-sheet coverage."
         isComplete={sectionCompletion['section-net-worth'].isComplete}
+        scopeLabel="Scope: household"
       >
         <AssetsPropertySection mode="assets" />
       </HouseholdPrototypeSection>
@@ -273,6 +282,7 @@ export function InputsPage() {
               : 'CPF settings and balances.'
           }
           isComplete={sectionCompletion['section-cpf'].isComplete}
+          scopeLabel={selectedAdult ? `Editing: ${selectedAdult.displayName}` : undefined}
         >
           {cpfModel ? (
             <CpfSection model={cpfModel} />
@@ -294,6 +304,7 @@ export function InputsPage() {
           title="Property"
           description="Ownership-scoped homes, mortgages, and housing decisions."
           isComplete={sectionCompletion['section-property'].isComplete}
+          scopeLabel="Scope: household"
         >
           <AssetsPropertySection mode="property" />
         </HouseholdPrototypeSection>
@@ -304,6 +315,7 @@ export function InputsPage() {
         title="FIRE Settings"
         description="Household-level assumptions, return settings, and normalized analysis controls."
         isComplete={sectionCompletion['section-fire-settings'].isComplete}
+        scopeLabel="Scope: household"
       >
         <HouseholdAssumptionsSection mode="assumptions" />
       </HouseholdPrototypeSection>
@@ -313,6 +325,7 @@ export function InputsPage() {
         title="Allocation"
         description="Portfolio templates, glide paths, and household-aware portfolio assumptions."
         isComplete={sectionCompletion['section-allocation'].isComplete}
+        scopeLabel="Scope: household"
       >
         <HouseholdAssumptionsSection mode="allocation" />
       </HouseholdPrototypeSection>
