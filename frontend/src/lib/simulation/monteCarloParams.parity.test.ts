@@ -113,5 +113,40 @@ describe('normalized monte carlo parity snapshots', () => {
 
     expectDeepClose(normalizedSurface, legacySurface)
     expect(normalizedSurface).toMatchSnapshot()
+    expect(useNormalizedAnalysisStore.getState().activeCacheKey).toBeNull()
+    expect(Object.keys(useNormalizedAnalysisStore.getState().entries)).toHaveLength(0)
+  })
+
+  it('applies explicit normalized monte carlo inputs without hybrid mixing', () => {
+    const input = buildParityInput(LEGACY_PARITY_FIXTURES.salaryOnly)
+    const normalizedAnalysisInputs = {
+      cacheKey: 'legacy:1:1:1::override',
+      householdRevision: 'legacy:1:1:1',
+      scenarioOverrideHash: 'override',
+      currentAge: 41,
+      retirementAge: 54,
+      lifeExpectancy: 93,
+      annualSavings: [11_000, 12_500],
+      postRetirementIncome: [4_200, 4_500, 4_900],
+      annualExpensesAtRetirement: 63_000,
+      portfolioAdjustments: [{ year: 3, amount: -9_500 }],
+    }
+
+    const params = buildMonteCarloEngineParams({
+      ...input,
+      normalizedAnalysisInputs,
+    })
+
+    expect(params.currentAge).toBe(normalizedAnalysisInputs.currentAge)
+    expect(params.retirementAge).toBe(normalizedAnalysisInputs.retirementAge)
+    expect(params.lifeExpectancy).toBe(normalizedAnalysisInputs.lifeExpectancy)
+    expect(params.annualSavings).toEqual(normalizedAnalysisInputs.annualSavings)
+    expect(params.postRetirementIncome).toEqual(normalizedAnalysisInputs.postRetirementIncome)
+    expect(params.annualExpensesAtRetirement).toBe(
+      normalizedAnalysisInputs.annualExpensesAtRetirement
+    )
+    expect(params.portfolioAdjustments).toEqual(
+      normalizedAnalysisInputs.portfolioAdjustments
+    )
   })
 })
