@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LEGACY_PARITY_FIXTURES } from '@/lib/household/__tests__/legacyParityFixtures'
 import { fromLegacyIndividual } from '@/lib/household/fromLegacyIndividual'
 import type { HouseholdPlan } from '@/lib/household/types'
+import { useAllocationStore } from '@/stores/useAllocationStore'
+import { useSimulationStore } from '@/stores/useSimulationStore'
+import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { exportToJson, importFromJson } from './exportImport'
 import {
   STORE_REGISTRY,
@@ -156,6 +159,7 @@ describe('STORE_REGISTRY', () => {
 
 describe('PR6 portability', () => {
   it('builds a v2 export envelope from legacy local data without dual-writing legacy authoring keys', async () => {
+    localStorage.removeItem(HOUSEHOLD_PLAN_STORAGE_KEY)
     seedLegacySnapshot()
 
     const envelope = buildPortabilityEnvelope()
@@ -168,6 +172,25 @@ describe('PR6 portability', () => {
     const download = mockDownloadCapture()
     exportToJson()
     expect(download.clickMock).toHaveBeenCalled()
+  })
+
+  it('prefers an existing household plan over stale legacy authoring stores', () => {
+    seedLegacySnapshot()
+    localStorage.setItem(HOUSEHOLD_PLAN_STORAGE_KEY, JSON.stringify({
+      state: createHouseholdPlanPersistedState(
+        makeCouplePlan(),
+        {
+          source: 'manual',
+          initializedAt: new Date().toISOString(),
+        },
+      ),
+      version: STORE_REGISTRY[HOUSEHOLD_PLAN_STORAGE_KEY].currentVersion,
+    }))
+
+    const envelope = buildPortabilityEnvelope()
+    const persisted = envelope.stores[HOUSEHOLD_PLAN_STORAGE_KEY].state as { plan: HouseholdPlan }
+    expect(persisted.plan.planType).toBe('couple')
+    expect(persisted.plan.adults).toHaveLength(2)
   })
 
   it('normalizes a legacy v1 payload into the v2 household store plus mixed-mode runtime stores', () => {
@@ -293,7 +316,7 @@ describe('PR6 portability', () => {
 
     const reloadMock = mockReload()
     expect(loadScenario('legacy-v1')).toBe(true)
-    expect(reloadMock).toHaveBeenCalled()
+    expect(reloadMock).not.toHaveBeenCalled()
     expect(localStorage.getItem(HOUSEHOLD_PLAN_STORAGE_KEY)).toBeTruthy()
   })
 
@@ -348,7 +371,12 @@ describe('PR6 portability', () => {
     const legacyDownload = mockDownloadCapture()
     useHouseholdPlanStore.getState().initializeFromLegacy(LEGACY_PARITY_FIXTURES.salaryOnly)
     const { exportToExcel: exportLegacyWorkbook } = await import('./exportExcel')
-    await exportLegacyWorkbook()
+    await exportLegacyWorkbook({
+      householdPlan: useHouseholdPlanStore.getState().plan,
+      allocation: useAllocationStore.getState(),
+      simulation: useSimulationStore.getState(),
+      withdrawal: useWithdrawalStore.getState(),
+    })
     expect(legacyDownload.clickMock).toHaveBeenCalled()
     expect(legacyWorkbookNames).toEqual(
       expect.arrayContaining(['Profile', 'Income', 'Allocation', 'Withdrawal']),
@@ -391,7 +419,12 @@ describe('PR6 portability', () => {
       initializedAt: new Date().toISOString(),
     })
     const { exportToExcel: exportHouseholdWorkbook } = await import('./exportExcel')
-    await exportHouseholdWorkbook()
+    await exportHouseholdWorkbook({
+      householdPlan: useHouseholdPlanStore.getState().plan,
+      allocation: useAllocationStore.getState(),
+      simulation: useSimulationStore.getState(),
+      withdrawal: useWithdrawalStore.getState(),
+    })
     expect(householdDownload.clickMock).toHaveBeenCalled()
     expect(householdWorkbookNames).toEqual(
       expect.arrayContaining([

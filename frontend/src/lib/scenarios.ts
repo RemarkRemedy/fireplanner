@@ -40,7 +40,7 @@ function generateId(): string {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === 'object'
+  return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 
 function isScenarioMetadata(value: unknown): value is ScenarioMetadata {
@@ -149,13 +149,10 @@ export function loadScenario(id: string, rehydrate?: () => void): boolean {
   )
   if (!resolved) return false
 
-  applyResolvedPortabilityData(resolved)
+  applyResolvedPortabilityData(resolved, { rehydrate: !rehydrate })
 
-  // Rehydrate stores if callback provided, otherwise fall back to reload
   if (rehydrate) {
     rehydrate()
-  } else {
-    window.location.reload()
   }
   return true
 }

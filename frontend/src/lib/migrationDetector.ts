@@ -4,21 +4,7 @@
  * After hydration, getDetectedMigrations() compares pre vs current versions.
  */
 
-const STORE_KEYS = [
-  'fireplanner-profile',
-  'fireplanner-income',
-  'fireplanner-allocation',
-  'fireplanner-simulation',
-  'fireplanner-withdrawal',
-  'fireplanner-property',
-  'fireplanner-household-plan-v1',
-] as const
-
-const LEGACY_AUTHORING_STORE_KEYS = [
-  'fireplanner-profile',
-  'fireplanner-income',
-  'fireplanner-property',
-] as const
+import { ALL_RUNTIME_STORE_KEYS, LEGACY_AUTHORING_STORE_KEYS, HOUSEHOLD_PLAN_STORAGE_KEY } from '@/lib/storeKeys'
 
 export interface DetectedMigration {
   storeKey: string
@@ -29,7 +15,7 @@ export interface DetectedMigration {
 // Read raw localStorage versions at module load time (before store hydration)
 const preHydrationVersions = new Map<string, number>()
 let hadLegacyAuthoringDataPreHydration = false
-for (const key of STORE_KEYS) {
+for (const key of ALL_RUNTIME_STORE_KEYS) {
   try {
     const raw = localStorage.getItem(key)
     if (raw) {
@@ -61,13 +47,13 @@ export function getDetectedMigrations(
     }
   }
 
-  const householdEntry = registry['fireplanner-household-plan-v1']
-  const sawHouseholdBeforeHydration = preHydrationVersions.has('fireplanner-household-plan-v1')
+  const householdEntry = registry[HOUSEHOLD_PLAN_STORAGE_KEY]
+  const sawHouseholdBeforeHydration = preHydrationVersions.has(HOUSEHOLD_PLAN_STORAGE_KEY)
   if (householdEntry && !sawHouseholdBeforeHydration && hadLegacyAuthoringDataPreHydration) {
     try {
-      if (localStorage.getItem('fireplanner-household-plan-v1')) {
+      if (localStorage.getItem(HOUSEHOLD_PLAN_STORAGE_KEY)) {
         migrations.push({
-          storeKey: 'fireplanner-household-plan-v1',
+          storeKey: HOUSEHOLD_PLAN_STORAGE_KEY,
           fromVersion: 0,
           toVersion: householdEntry.currentVersion,
         })

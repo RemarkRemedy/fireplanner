@@ -3,6 +3,10 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/useUIStore'
+import { useAllocationStore } from '@/stores/useAllocationStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { useSimulationStore } from '@/stores/useSimulationStore'
+import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { useSectionCompletion, type SectionId } from '@/hooks/useSectionCompletion'
 import { useActiveSection } from '@/hooks/useActiveSection'
 import { exportToJson, importFromJson } from '@/lib/exportImport'
@@ -286,7 +290,12 @@ function DataActions() {
   const handleExcelExport = async () => {
     try {
       const { exportToExcel } = await import('@/lib/exportExcel')
-      await exportToExcel()
+      await exportToExcel({
+        householdPlan: useHouseholdPlanStore.getState().plan,
+        allocation: useAllocationStore.getState(),
+        simulation: useSimulationStore.getState(),
+        withdrawal: useWithdrawalStore.getState(),
+      })
       toast.success('Excel exported')
       trackEvent('data_exported', { format: 'excel' })
     } catch {
@@ -299,17 +308,15 @@ function DataActions() {
     if (!file) return
     const result = await importFromJson(file)
     if (!result.success) {
-      toast.error(result.error ?? 'Failed to import — invalid file format')
-    } else {
-      const storeCount = result.storesImported.length
       const errorCount = Object.keys(result.validationErrors).length
       if (errorCount > 0) {
-        toast.warning(
-          `Imported ${storeCount} sections (${errorCount} had validation warnings — check your inputs)`
-        )
+        toast.warning(`Import blocked: ${errorCount} section${errorCount === 1 ? '' : 's'} failed validation`)
       } else {
-        toast.success(`Imported ${storeCount} sections successfully`)
+        toast.error(result.error ?? 'Failed to import — invalid file format')
       }
+    } else {
+      const storeCount = result.storesImported.length
+      toast.success(`Imported ${storeCount} sections successfully`)
       trackEvent('data_imported', { stores: storeCount })
     }
     // Reset so the same file can be re-selected

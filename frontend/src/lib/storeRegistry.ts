@@ -12,6 +12,12 @@
 import { fromLegacyIndividual, createDefaultLegacyIndividualSnapshot, type LegacyIndividualSnapshot } from '@/lib/household/fromLegacyIndividual'
 import { toLegacyIndividual } from '@/lib/household/toLegacyIndividual'
 import type { HouseholdPlan } from '@/lib/household/types'
+import {
+  ALL_RUNTIME_STORE_KEYS,
+  GLOBAL_PLANNER_STORE_KEYS,
+  LEGACY_AUTHORING_STORE_KEYS,
+  PORTABILITY_STORE_KEYS,
+} from '@/lib/storeKeys'
 import { PROFILE_DATA_KEYS, useProfileStore } from '@/stores/useProfileStore'
 import { INCOME_DATA_KEYS, useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
@@ -27,27 +33,12 @@ import {
   type HouseholdPlanProvenanceSource,
 } from '@/stores/useHouseholdPlanStore'
 
-export const LEGACY_AUTHORING_STORE_KEYS = [
-  'fireplanner-profile',
-  'fireplanner-income',
-  'fireplanner-property',
-] as const
-
-export const GLOBAL_PLANNER_STORE_KEYS = [
-  'fireplanner-allocation',
-  'fireplanner-simulation',
-  'fireplanner-withdrawal',
-] as const
-
-export const PORTABILITY_STORE_KEYS = [
-  HOUSEHOLD_PLAN_STORAGE_KEY,
-  ...GLOBAL_PLANNER_STORE_KEYS,
-] as const
-
-export const ALL_RUNTIME_STORE_KEYS = [
-  ...LEGACY_AUTHORING_STORE_KEYS,
-  ...PORTABILITY_STORE_KEYS,
-] as const
+export {
+  ALL_RUNTIME_STORE_KEYS,
+  GLOBAL_PLANNER_STORE_KEYS,
+  LEGACY_AUTHORING_STORE_KEYS,
+  PORTABILITY_STORE_KEYS,
+} from '@/lib/storeKeys'
 
 const LEGACY_AUTHORING_STORE_KEY_SET = new Set<string>(LEGACY_AUTHORING_STORE_KEYS)
 const GLOBAL_PLANNER_STORE_KEY_SET = new Set<string>(GLOBAL_PLANNER_STORE_KEYS)
@@ -333,19 +324,19 @@ function buildPortableStoresFromStoreValues(
   source: HouseholdPlanProvenanceSource | null,
 ): Record<string, MigratedStoreData> {
   const stores: Record<string, MigratedStoreData> = {}
-  const legacySnapshot = buildLegacySnapshotFromStoreValues(storeValues)
+  const household = normalizeStoreData(HOUSEHOLD_PLAN_STORAGE_KEY, storeValues[HOUSEHOLD_PLAN_STORAGE_KEY])
 
-  if (legacySnapshot) {
-    stores[HOUSEHOLD_PLAN_STORAGE_KEY] = buildHouseholdStoreDataFromLegacySnapshot(
-      legacySnapshot,
-      source ?? 'legacy-individual',
-    )
+  if (household) {
+    stores[HOUSEHOLD_PLAN_STORAGE_KEY] = source
+      ? retagHouseholdStoreData(household, source)
+      : household
   } else {
-    const household = normalizeStoreData(HOUSEHOLD_PLAN_STORAGE_KEY, storeValues[HOUSEHOLD_PLAN_STORAGE_KEY])
-    if (household) {
-      stores[HOUSEHOLD_PLAN_STORAGE_KEY] = source
-        ? retagHouseholdStoreData(household, source)
-        : household
+    const legacySnapshot = buildLegacySnapshotFromStoreValues(storeValues)
+    if (legacySnapshot) {
+      stores[HOUSEHOLD_PLAN_STORAGE_KEY] = buildHouseholdStoreDataFromLegacySnapshot(
+        legacySnapshot,
+        source ?? 'legacy-individual',
+      )
     }
   }
 
@@ -450,9 +441,7 @@ export function resolvePortabilityData(
 
   let rawStores: Record<string, unknown> | null = null
 
-  if (input.version === 2 && isRecord(input.stores)) {
-    rawStores = input.stores
-  } else if (input.version === 1 && isRecord(input.stores)) {
+  if ((input.version === 1 || input.version === 2) && isRecord(input.stores)) {
     rawStores = input.stores
   } else if (hasAnyKeys(input, ALL_RUNTIME_STORE_KEYS)) {
     rawStores = input
