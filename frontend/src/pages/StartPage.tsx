@@ -52,9 +52,12 @@ const PHASE_CARDS: { phase: RetirementPhase; label: string; description: string;
 
 export function StartPage() {
   usePageMeta({ title: 'SG FIRE Planner — Singapore Retirement Calculator', description: 'Free Singapore FIRE calculator with CPF, tax, Monte Carlo simulation, and 12 withdrawal strategies for retirement planning.', path: '/' })
-  const householdPlannerEnabled = isHouseholdPlannerV1Enabled()
-  const profileStore = useProfileStore()
-  const incomeStore = useIncomeStore()
+  const [householdPlannerEnabled] = useState(() => isHouseholdPlannerV1Enabled())
+  const profileCurrentAge = useProfileStore((state) => state.currentAge)
+  const profileRetirementAge = useProfileStore((state) => state.retirementAge)
+  const profileAnnualIncome = useProfileStore((state) => state.annualIncome)
+  const profileLiquidNetWorth = useProfileStore((state) => state.liquidNetWorth)
+  const profileAnnualExpenses = useProfileStore((state) => state.annualExpenses)
   const setUIField = useUIStore((s) => s.setField)
   const cpfEnabled = useUIStore((s) => s.cpfEnabled)
   const propertyEnabled = useUIStore((s) => s.propertyEnabled)
@@ -69,11 +72,11 @@ export function StartPage() {
   })
 
   // Local draft state for inline forms
-  const [draftAge, setDraftAge] = useState(profileStore.currentAge)
-  const [draftRetirementAge, setDraftRetirementAge] = useState(profileStore.retirementAge)
-  const [draftIncome, setDraftIncome] = useState(profileStore.annualIncome)
-  const [draftNetWorth, setDraftNetWorth] = useState(profileStore.liquidNetWorth)
-  const [draftExpenses, setDraftExpenses] = useState(profileStore.annualExpenses)
+  const [draftAge, setDraftAge] = useState(profileCurrentAge)
+  const [draftRetirementAge, setDraftRetirementAge] = useState(profileRetirementAge)
+  const [draftIncome, setDraftIncome] = useState(profileAnnualIncome)
+  const [draftNetWorth, setDraftNetWorth] = useState(profileLiquidNetWorth)
+  const [draftExpenses, setDraftExpenses] = useState(profileAnnualExpenses)
   const activePlanType: HouseholdPlanType = householdPlannerEnabled ? selectedPlanType : 'individual'
 
   useEffect(() => {
@@ -141,39 +144,42 @@ export function StartPage() {
     setActivePathway(pathway)
     if (pathway) trackEvent('onboarding_pathway_selected', { pathway })
     // Reset drafts to current store values
-    setDraftAge(profileStore.currentAge)
-    setDraftRetirementAge(profileStore.retirementAge)
-    setDraftIncome(profileStore.annualIncome)
-    setDraftExpenses(profileStore.annualExpenses)
-    setDraftNetWorth(profileStore.liquidNetWorth)
+    setDraftAge(profileCurrentAge)
+    setDraftRetirementAge(profileRetirementAge)
+    setDraftIncome(profileAnnualIncome)
+    setDraftExpenses(profileAnnualExpenses)
+    setDraftNetWorth(profileLiquidNetWorth)
   }
 
   const handleGoalFirstContinue = () => {
+    const profileStore = useProfileStore.getState()
     profileStore.setField('currentAge', draftAge)
     profileStore.setField('retirementAge', draftRetirementAge)
     profileStore.setField('annualIncome', draftIncome)
     profileStore.setField('annualExpenses', draftExpenses)
     profileStore.setField('liquidNetWorth', draftNetWorth)
     profileStore.setField('lifeStage', 'pre-fire')
-    incomeStore.setField('annualSalary', draftIncome)
+    useIncomeStore.getState().setField('annualSalary', draftIncome)
     setUIField('sectionOrder', 'goal-first')
     trackEvent('onboarding_continue', { pathway: 'goal-first' })
     navigate('/inputs')
   }
 
   const handleStoryFirstContinue = () => {
+    const profileStore = useProfileStore.getState()
     profileStore.setField('currentAge', draftAge)
     profileStore.setField('annualIncome', draftIncome)
     profileStore.setField('annualExpenses', draftExpenses)
     profileStore.setField('liquidNetWorth', draftNetWorth)
     profileStore.setField('lifeStage', 'pre-fire')
-    incomeStore.setField('annualSalary', draftIncome)
+    useIncomeStore.getState().setField('annualSalary', draftIncome)
     setUIField('sectionOrder', 'story-first')
     trackEvent('onboarding_continue', { pathway: 'story-first' })
     navigate('/inputs')
   }
 
   const handleAlreadyFirePhase = (phase: RetirementPhase) => {
+    const profileStore = useProfileStore.getState()
     profileStore.setField('currentAge', draftAge)
     profileStore.setField('retirementAge', draftAge)
     profileStore.setField('annualIncome', draftIncome)

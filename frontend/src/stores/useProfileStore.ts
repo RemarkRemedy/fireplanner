@@ -1,9 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { ProfileState, ParentSupport, RetirementWithdrawal, CpfOaWithdrawal, FinancialGoal, LockedAsset, ExpenseAdjustment, HealthcareConfig, OopCurveVariant, ValidationErrors } from '@/lib/types'
+import type { ProfileState, ParentSupport, RetirementWithdrawal, CpfOaWithdrawal, FinancialGoal, LockedAsset, ExpenseAdjustment, OopCurveVariant, ValidationErrors } from '@/lib/types'
 import { validateProfileField } from '@/lib/validation/schemas'
 import { validateProfileConsistency } from '@/lib/validation/rules'
 import { interpolateOopMultiplier } from '@/lib/data/healthcareOop'
+import { DEFAULT_HEALTHCARE_CONFIG } from '@/lib/data/defaultHealthcareConfig'
 
 interface ProfileActions {
   setField: <K extends keyof Omit<ProfileState, 'validationErrors'>>(
@@ -60,19 +61,6 @@ export const PROFILE_DATA_KEYS = [
   'cashReserveEnabled', 'cashReserveMode', 'cashReserveFixedAmount',
   'cashReserveMonths', 'cashReserveReturn', 'retirementMitigation',
 ] as const
-
-export const DEFAULT_HEALTHCARE_CONFIG: HealthcareConfig = {
-  enabled: false,
-  mediShieldLifeEnabled: true,
-  ispTier: 'none',
-  careShieldLifeEnabled: true,
-  oopBaseAmount: 1200,
-  oopModel: 'age-curve',
-  oopInflationRate: 0.03,
-  oopReferenceAge: 30,
-  oopCurveVariant: 'study-backed',
-  mediSaveTopUpAnnual: 0,
-}
 
 export const DEFAULT_PROFILE: Omit<ProfileState, 'validationErrors'> = {
   currentAge: 30,

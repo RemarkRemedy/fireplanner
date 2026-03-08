@@ -4,9 +4,10 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { StartPage } from '@/pages/StartPage'
 import { Sidebar } from '@/components/layout/Sidebar'
+import { deriveHouseholdSectionToggles } from '@/lib/household/sectionVisibility'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
-import { deriveHouseholdSectionToggles, useUIStore } from '@/stores/useUIStore'
+import { useUIStore } from '@/stores/useUIStore'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 
@@ -109,16 +110,13 @@ describe('Household setup flow', () => {
   })
 
   it('shows the setup entry in the sidebar only when the feature flag is on', () => {
-    const { rerender } = renderSidebar()
+    const { unmount } = renderSidebar()
     expect(screen.getByText('Start Here')).toBeInTheDocument()
     expect(screen.queryByText('Plan Setup')).not.toBeInTheDocument()
 
+    unmount()
     mockIsHouseholdPlannerV1Enabled.mockReturnValue(true)
-    rerender(
-      <MemoryRouter initialEntries={['/']}>
-        <Sidebar />
-      </MemoryRouter>,
-    )
+    renderSidebar()
 
     expect(screen.getByText('Plan Setup')).toBeInTheDocument()
     expect(screen.queryByText('Start Here')).not.toBeInTheDocument()
@@ -136,15 +134,19 @@ describe('Household setup flow', () => {
     await user.click(screen.getByRole('button', { name: 'Add dependent' }))
     await user.clear(screen.getByLabelText('Name'))
     await user.type(screen.getByLabelText('Name'), 'Avery')
+    await user.click(screen.getAllByRole('switch')[0]!)
 
     await user.click(screen.getByRole('button', { name: 'Create plan' }))
 
     const state = useHouseholdPlanStore.getState()
     expect(state.plan.planType).toBe('couple')
     expect(state.plan.adults).toHaveLength(2)
+    expect(state.plan.adults[1]?.annualIncome).toBe(0)
     expect(state.plan.dependents).toHaveLength(1)
     expect(state.plan.dependents[0]?.label).toBe('Avery')
+    expect(state.plan.dependents[0]?.currentAge).toBe(0)
     expect(state.provenance.source).toBe('manual')
+    expect(useUIStore.getState().cpfEnabled).toBe(false)
   })
 
   it('forces household toggles on when migrated data already exists', () => {
@@ -165,11 +167,31 @@ describe('Household setup flow', () => {
       healthcareEnabled: true,
     })
 
-    useUIStore.getState().ensureHouseholdDataVisible(plan)
+    useUIStore.getState().ensureHouseholdDataVisible(deriveHouseholdSectionToggles(plan))
 
     const state = useUIStore.getState()
     expect(state.cpfEnabled).toBe(true)
     expect(state.propertyEnabled).toBe(true)
     expect(state.healthcareEnabled).toBe(true)
+  })
+
+  it('does not force CPF visibility on for a fresh citizen household with no CPF data', () => {
+    useUIStore.setState({
+      cpfEnabled: false,
+      propertyEnabled: false,
+      healthcareEnabled: false,
+    })
+
+    const plan = structuredClone(useHouseholdPlanStore.getState().plan)
+    plan.planType = 'couple'
+
+    expect(deriveHouseholdSectionToggles(plan)).toEqual({
+      cpfEnabled: false,
+      propertyEnabled: false,
+      healthcareEnabled: false,
+    })
+
+    useUIStore.getState().ensureHouseholdDataVisible(deriveHouseholdSectionToggles(plan))
+    expect(useUIStore.getState().cpfEnabled).toBe(false)
   })
 })

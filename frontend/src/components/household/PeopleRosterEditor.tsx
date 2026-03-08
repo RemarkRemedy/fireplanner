@@ -11,7 +11,7 @@ export interface SetupDependentDraft {
   id: string
   label: string
   relationship: DependentRelationship
-  currentAge: number | ''
+  currentAge: number
 }
 
 interface PeopleRosterEditorProps {
@@ -173,7 +173,7 @@ export function PeopleRosterEditor({
                       integer
                       min={0}
                       max={120}
-                      value={dependent.currentAge === '' ? 0 : dependent.currentAge}
+                      value={dependent.currentAge}
                       onChange={(value) => onUpdateDependent(dependent.id, { currentAge: value })}
                     />
                   </div>

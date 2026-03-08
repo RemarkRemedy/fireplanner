@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
+import { createId } from '@/lib/household/ids'
+import { deriveHouseholdSectionToggles } from '@/lib/household/sectionVisibility'
 import type {
   Dependent,
   HouseholdPlanType,
@@ -18,14 +20,6 @@ interface HouseholdSetupWizardProps {
   planType: Exclude<HouseholdPlanType, 'individual'>
 }
 
-function createId(prefix: string): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`
-  }
-
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-}
-
 function buildPartnerAdult(template: PlanningAdult, name: string, age: number): PlanningAdult {
   return {
     ...structuredClone(template),
@@ -34,6 +28,7 @@ function buildPartnerAdult(template: PlanningAdult, name: string, age: number): 
     displayName: name || 'Partner',
     currentAge: age,
     retirementAge: Math.max(age + 1, template.retirementAge),
+    annualIncome: 0,
     annualExpenses: 0,
     liquidNetWorth: 0,
     lifeEvents: [],
@@ -53,7 +48,7 @@ function buildDependentDraft(index: number): SetupDependentDraft {
     id: createId('dependent'),
     label: `Dependent ${index + 1}`,
     relationship: 'child',
-    currentAge: '',
+    currentAge: 0,
   }
 }
 
@@ -78,8 +73,7 @@ export function HouseholdSetupWizard({ planType }: HouseholdSetupWizardProps) {
   const handleCreatePlan = () => {
     householdStore.initializeManualPlan(planType)
 
-    const initialPlan = useHouseholdPlanStore.getState().plan
-    const selfAdult = initialPlan.adults[0]
+    const selfAdult = useHouseholdPlanStore.getState().plan.adults[0]
     if (!selfAdult) return
 
     useHouseholdPlanStore.getState().updateAdult(selfAdult.id, {
@@ -108,7 +102,7 @@ export function HouseholdSetupWizard({ planType }: HouseholdSetupWizardProps) {
         owner: 'shared',
         label: dependent.label.trim() || 'Dependent',
         relationship: dependent.relationship,
-        currentAge: dependent.currentAge === '' ? null : dependent.currentAge,
+        currentAge: dependent.currentAge,
         timing: null,
         annualCost: 0,
       }
@@ -120,7 +114,7 @@ export function HouseholdSetupWizard({ planType }: HouseholdSetupWizardProps) {
     setUIField('healthcareEnabled', healthcareEnabled)
 
     const plan = useHouseholdPlanStore.getState().plan
-    ensureHouseholdDataVisible(plan)
+    ensureHouseholdDataVisible(deriveHouseholdSectionToggles(plan))
 
     trackEvent('onboarding_continue', {
       pathway: `${planType}-setup`,
