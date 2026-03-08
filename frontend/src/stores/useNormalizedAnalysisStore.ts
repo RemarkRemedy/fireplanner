@@ -91,9 +91,14 @@ export interface NormalizedAnalysisEntry {
   monteCarloOwner: typeof MONTE_CARLO_NORMALIZED_OWNER
 }
 
+/** Maximum number of cached entries before LRU eviction kicks in. */
+const MAX_CACHE_ENTRIES = 10
+
 interface NormalizedAnalysisState {
   activeCacheKey: string | null
   entries: Record<string, NormalizedAnalysisEntry>
+  /** Tracks insertion/access order for LRU eviction (oldest first). */
+  cacheOrder: string[]
   setActiveCacheKey: (cacheKey: string | null) => void
   upsertEntry: (entry: NormalizedAnalysisEntry) => void
   removeEntry: (cacheKey: string) => void
@@ -183,13 +188,22 @@ export const useNormalizedAnalysisStore = create<NormalizedAnalysisState>()(
   (set) => ({
     activeCacheKey: null,
     entries: {},
+    cacheOrder: [],
     setActiveCacheKey: (cacheKey) => set({ activeCacheKey: cacheKey }),
-    upsertEntry: (entry) => set((state) => ({
-      entries: {
-        ...state.entries,
-        [entry.cacheKey]: entry,
-      },
-    })),
+    upsertEntry: (entry) => set((state) => {
+      // Move key to end of order (most recently used)
+      const orderWithoutKey = state.cacheOrder.filter((k) => k !== entry.cacheKey)
+      const nextOrder = [...orderWithoutKey, entry.cacheKey]
+      const nextEntries = { ...state.entries, [entry.cacheKey]: entry }
+
+      // LRU eviction: if over max, remove the oldest entries
+      while (nextOrder.length > MAX_CACHE_ENTRIES) {
+        const evictKey = nextOrder.shift()!
+        delete nextEntries[evictKey]
+      }
+
+      return { entries: nextEntries, cacheOrder: nextOrder }
+    }),
     removeEntry: (cacheKey) => set((state) => {
       const nextEntries = { ...state.entries }
       delete nextEntries[cacheKey]
@@ -197,11 +211,13 @@ export const useNormalizedAnalysisStore = create<NormalizedAnalysisState>()(
       return {
         activeCacheKey: state.activeCacheKey === cacheKey ? null : state.activeCacheKey,
         entries: nextEntries,
+        cacheOrder: state.cacheOrder.filter((k) => k !== cacheKey),
       }
     }),
     clearEntries: () => set({
       activeCacheKey: null,
       entries: {},
+      cacheOrder: [],
     }),
   })
 )
