@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import type { ProjectionRow, ProjectionSummary } from '@/lib/types'
 import { generateProjection, type ProjectionParams } from '@/lib/calculations/projection'
+import { getRetirementSumAmount } from '@/lib/calculations/cpf'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { getPropertyRentalIncome, computeLbsProceeds } from '@/lib/calculations/hdb'
 import { useProfileStore } from '@/stores/useProfileStore'
@@ -66,7 +67,7 @@ export function useProjection(): ProjectionResult {
           remainingLease: property.existingLeaseYears,
           retainedLease: property.hdbLbsRetainedLease,
           cpfRaBalance: profile.cpfRA,
-          retirementSum: 213000,
+          retirementSum: getRetirementSumAmount('frs', normalized.currentAge),
         })
       : null
 

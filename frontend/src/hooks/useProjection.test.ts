@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useProjection } from './useProjection'
+import { getRetirementSumAmount } from '@/lib/calculations/cpf'
+import { computeLbsProceeds } from '@/lib/calculations/hdb'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
@@ -195,6 +197,36 @@ describe('useProjection', () => {
     const p = result.current.params!
     // LBS proceeds should be added to base liquidNetWorth of 100000
     expect(p.initialLiquidNW).toBeGreaterThan(100000)
+  })
+
+  it('uses the cohort FRS when computing LBS proceeds', () => {
+    usePropertyStore.setState({
+      ...usePropertyStore.getState(),
+      ownsProperty: true,
+      propertyType: 'hdb',
+      hdbMonetizationStrategy: 'lbs',
+      existingPropertyValue: 500000,
+      existingLeaseYears: 60,
+      hdbLbsRetainedLease: 30,
+    })
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      currentAge: 35,
+      liquidNetWorth: 100000,
+      cpfRA: 50000,
+      validationErrors: {},
+    })
+
+    const { result } = renderHook(() => useProjection())
+    const expected = computeLbsProceeds({
+      flatValue: 500000,
+      remainingLease: 60,
+      retainedLease: 30,
+      cpfRaBalance: 50000,
+      retirementSum: getRetirementSumAmount('frs', 35),
+    })
+
+    expect(result.current.params!.initialLiquidNW).toBeCloseTo(100000 + expected.cashProceeds, 6)
   })
 
   it('downsizing included when scenario is not none', () => {
