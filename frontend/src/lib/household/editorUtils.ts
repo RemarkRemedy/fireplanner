@@ -1,5 +1,6 @@
 import type {
   AdultOwner,
+  EntryOwner,
   HouseholdPlan,
   PlanningAdult,
   TimingRule,
@@ -9,6 +10,10 @@ export type AgeRangeTiming = Extract<TimingRule, { kind: 'age-range' }>
 
 export function ownerLabel(owner: AdultOwner): string {
   return owner === 'self' ? 'Self' : 'Partner'
+}
+
+export function entryOwnerLabel(owner: EntryOwner): string {
+  return owner === 'shared' ? 'Shared' : ownerLabel(owner)
 }
 
 export function getSelectedAdult(

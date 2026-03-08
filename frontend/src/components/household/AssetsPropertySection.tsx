@@ -9,12 +9,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import {
+  createDefaultHouseholdAsset,
+  createDefaultHouseholdProperty,
+  normalizeAssetKindChange,
+} from '@/lib/household/assetPropertyDefaults'
+import { entryOwnerLabel } from '@/lib/household/editorUtils'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import type {
-  AdultOwner,
   AssetItem,
   EntryOwner,
-  PropertyPlan,
 } from '@/lib/household/types'
 import type {
   DownsizingScenario,
@@ -26,90 +30,6 @@ import type {
 
 const ENTRY_OWNER_OPTIONS: EntryOwner[] = ['self', 'partner', 'shared']
 
-function createId(prefix: string): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`
-  }
-
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-}
-
-function ownerLabel(owner: AdultOwner): string {
-  return owner === 'self' ? 'Self' : 'Partner'
-}
-
-function entryOwnerLabel(owner: EntryOwner): string {
-  return owner === 'shared' ? 'Shared' : ownerLabel(owner)
-}
-
-function createAsset(kind: AssetItem['kind'], owner: EntryOwner): AssetItem {
-  if (kind === 'locked-asset') {
-    return {
-      id: createId('asset-locked'),
-      owner,
-      label: 'Locked asset',
-      kind,
-      amount: 25_000,
-      unlockAge: 45,
-      growthRate: 0.04,
-    }
-  }
-
-  return {
-    id: createId('asset-liquid'),
-    owner,
-    label: owner === 'shared' ? 'Shared liquid balance' : `${entryOwnerLabel(owner)} liquid balance`,
-    kind: 'liquid-net-worth',
-    amount: 100_000,
-  }
-}
-
-function createProperty(owner: EntryOwner): PropertyPlan {
-  return {
-    id: createId('property'),
-    owner,
-    label: 'Household property',
-    propertyType: 'hdb',
-    purchasePrice: 850_000,
-    leaseYears: 99,
-    appreciationRate: 0.02,
-    rentalYield: 0.03,
-    mortgageRate: 0.03,
-    mortgageTerm: 25,
-    ltv: 0.75,
-    residencyForAbsd: 'citizen',
-    propertyCount: 1,
-    ownsProperty: true,
-    existingPropertyValue: 850_000,
-    existingMortgageBalance: 300_000,
-    existingMonthlyPayment: 1_900,
-    existingMortgageRate: 0.03,
-    existingMortgageRemainingYears: 20,
-    mortgageCpfMonthly: 600,
-    ownershipPercent: 1,
-    existingAppreciationRate: 0.02,
-    existingLeaseYears: 93,
-    existingApplyBalaDecay: false,
-    downsizing: {
-      scenario: 'none',
-      sellAge: 65,
-      expectedSalePrice: 950_000,
-      newPropertyCost: 650_000,
-      newMortgageRate: 0.03,
-      newMortgageTerm: 20,
-      newLtv: 0.75,
-      monthlyRent: 2_200,
-      rentGrowthRate: 0.03,
-    },
-    hdbFlatType: '4-room',
-    hdbMonetizationStrategy: 'none',
-    hdbLbsRetainedLease: 30,
-    hdbSublettingRooms: 1,
-    hdbSublettingRate: 900,
-    hdbCpfUsedForHousing: 0,
-  }
-}
-
 function getEntityErrors(
   validationErrors: Record<string, Record<string, string>>,
   entityKind: 'asset' | 'property',
@@ -119,13 +39,19 @@ function getEntityErrors(
 }
 
 function syncAdultLiquidNetWorths(
+  adultCount: number,
   updateAdult: (id: string, updates: Record<string, unknown>) => void,
 ) {
   const currentPlan = useHouseholdPlanStore.getState().plan
+  const sharedLiquidTotal = currentPlan.assets
+    .filter((asset) => asset.kind === 'liquid-net-worth' && asset.owner === 'shared')
+    .reduce((sum, asset) => sum + asset.amount, 0)
+  const sharedLiquidShare = adultCount > 0 ? sharedLiquidTotal / adultCount : 0
+
   for (const adult of currentPlan.adults) {
     const liquidTotal = currentPlan.assets
       .filter((asset) => asset.kind === 'liquid-net-worth' && asset.owner === adult.owner)
-      .reduce((sum, asset) => sum + asset.amount, 0)
+      .reduce((sum, asset) => sum + asset.amount, sharedLiquidShare)
 
     if (adult.liquidNetWorth !== liquidTotal) {
       updateAdult(adult.id, { liquidNetWorth: liquidTotal })
@@ -152,20 +78,20 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
 
   const ownerOptions: EntryOwner[] = plan.adults.length > 1 ? ENTRY_OWNER_OPTIONS : ['self']
   const handleAddAsset = (kind: AssetItem['kind']) => {
-    addAsset(createAsset(kind, plan.adults.length > 1 ? 'shared' : 'self'))
-    syncAdultLiquidNetWorths(updateAdult)
+    addAsset(createDefaultHouseholdAsset(kind, plan.adults.length > 1 ? 'shared' : 'self'))
+    syncAdultLiquidNetWorths(plan.adults.length, updateAdult)
   }
 
   const handleUpdateAsset = (asset: AssetItem, updates: Partial<AssetItem>) => {
     updateAsset(asset.id, updates)
     if (asset.kind === 'liquid-net-worth' || updates.kind === 'liquid-net-worth' || updates.owner) {
-      syncAdultLiquidNetWorths(updateAdult)
+      syncAdultLiquidNetWorths(plan.adults.length, updateAdult)
     }
   }
 
   const handleRemoveAsset = (assetId: string) => {
     removeAsset(assetId)
-    syncAdultLiquidNetWorths(updateAdult)
+    syncAdultLiquidNetWorths(plan.adults.length, updateAdult)
   }
 
   if (mode === 'assets') {
@@ -186,7 +112,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
             <div className="flex items-center justify-between gap-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 Liquid & Locked Assets
-                <InfoTooltip text="Track liquid balances, shared cash pools, and assets that unlock at a specific age. Self and partner liquid rows roll up into each adult's liquid net worth summary automatically." />
+                <InfoTooltip text="Track liquid balances, shared cash pools, and assets that unlock at a specific age. Shared liquid rows split evenly across active adults when updating each adult's liquid net worth summary." />
               </CardTitle>
               <div className="flex flex-wrap gap-2">
                 <Button type="button" variant="outline" size="sm" onClick={() => handleAddAsset('liquid-net-worth')}>
@@ -228,7 +154,10 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                         <Label>Kind</Label>
                         <Select
                           value={asset.kind}
-                          onValueChange={(value) => handleUpdateAsset(asset, { kind: value as AssetItem['kind'] })}
+                          onValueChange={(value) => handleUpdateAsset(
+                            asset,
+                            normalizeAssetKindChange(asset, value as AssetItem['kind']),
+                          )}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -307,7 +236,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-lg">Property Ownership & Housing Plans</CardTitle>
-            <Button type="button" variant="outline" size="sm" onClick={() => addProperty(createProperty(plan.adults.length > 1 ? 'shared' : 'self'))}>
+            <Button type="button" variant="outline" size="sm" onClick={() => addProperty(createDefaultHouseholdProperty(plan.adults.length > 1 ? 'shared' : 'self'))}>
               Add property
             </Button>
           </div>

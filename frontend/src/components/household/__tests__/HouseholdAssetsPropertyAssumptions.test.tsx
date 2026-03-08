@@ -155,6 +155,38 @@ describe('Household assets, property, and assumptions editors', () => {
     expect(selfAdult?.liquidNetWorth).toBe(150_000)
   })
 
+  it('splits shared liquid balances across each adult summary and seeds locked-asset defaults on kind changes', async () => {
+    const user = userEvent.setup()
+    setHouseholdPlan()
+
+    render(<AssetsPropertySection mode="assets" />)
+
+    await user.click(screen.getByRole('button', { name: 'Add liquid balance' }))
+
+    const assetCard = screen.getByDisplayValue('Shared liquid balance').closest('div.rounded-lg.border')
+    if (!(assetCard instanceof HTMLElement)) {
+      throw new Error('Could not find shared liquid asset card')
+    }
+
+    setNumericInput(getFieldInput(assetCard, 'Amount'), '120000')
+
+    let state = useHouseholdPlanStore.getState()
+    let selfAdult = state.plan.adults.find((adult) => adult.owner === 'self')
+    let partnerAdult = state.plan.adults.find((adult) => adult.owner === 'partner')
+
+    expect(selfAdult?.liquidNetWorth).toBe(60_000)
+    expect(partnerAdult?.liquidNetWorth).toBe(60_000)
+
+    await chooseSelectOption(user, assetCard, 'Kind', 'Locked asset')
+
+    state = useHouseholdPlanStore.getState()
+    const lockedAsset = state.plan.assets[0]
+
+    expect(lockedAsset?.kind).toBe('locked-asset')
+    expect(lockedAsset?.unlockAge).toBe(45)
+    expect(lockedAsset?.growthRate).toBe(0.04)
+  })
+
   it('edits shared property ownership, HDB monetization, and downsizing fields', async () => {
     const user = userEvent.setup()
     setHouseholdPlan()
@@ -169,7 +201,9 @@ describe('Household assets, property, and assumptions editors', () => {
     }
 
     await chooseSelectOption(user, propertyCard, 'Owner', 'Shared')
-    setNumericInput(getFieldInput(propertyCard, 'Household share (%)'), '50')
+    const shareInput = getFieldInput(propertyCard, 'Household share (%)')
+    expect(shareInput.value).toBe('50')
+    setNumericInput(shareInput, '75')
     await chooseSelectOption(user, propertyCard, 'Monetization strategy', 'Sublet room(s)')
     setNumericInput(getFieldInput(propertyCard, 'Rooms to sublet'), '2')
     await chooseSelectOption(user, propertyCard, 'Scenario', 'Sell & rent')
@@ -178,7 +212,7 @@ describe('Household assets, property, and assumptions editors', () => {
     const property = useHouseholdPlanStore.getState().plan.properties[0]
 
     expect(property?.owner).toBe('shared')
-    expect(property?.ownershipPercent).toBe(0.5)
+    expect(property?.ownershipPercent).toBe(0.75)
     expect(property?.hdbMonetizationStrategy).toBe('sublet')
     expect(property?.hdbSublettingRooms).toBe(2)
     expect(property?.downsizing.scenario).toBe('sell-and-rent')
