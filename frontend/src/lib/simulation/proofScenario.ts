@@ -1,7 +1,7 @@
 import { percentile } from '@/lib/math/stats'
 import { migrateStoreData } from '@/lib/storeRegistry'
 import { toStorePayload } from '@/lib/scenarios'
-import { buildProjectionParams } from '@/hooks/useIncomeProjection'
+import { buildProjectionParams } from '@/lib/calculations/projectionParams'
 import { FRS_BASE } from '@/lib/data/cpfRates'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import type { ProjectionParams } from '@/lib/calculations/projection'

@@ -7,7 +7,7 @@ import type {
 } from '@/lib/types'
 import type { MonteCarloEngineParams } from '@/lib/simulation/monteCarlo'
 import { toMonteCarloAnalysisInputs, type NormalizedAnalysisCacheOps } from '@/lib/household/toAnalysisInputs'
-import { buildProjectionParams } from '@/hooks/useIncomeProjection'
+import { buildProjectionParams } from '@/lib/calculations/projectionParams'
 import { generateIncomeProjection, sumPostRetirementIncome, getLifeEventExpenseImpact } from '@/lib/calculations/income'
 import { getEffectiveExpenses, getExpensesAtRetirement } from '@/lib/calculations/expenses'
 import { getPropertyRentalIncome } from '@/lib/calculations/hdb'
