@@ -16,6 +16,7 @@ import {
   buildLegacyHouseholdRevision,
   buildNormalizedAnalysisCacheKey,
   MONTE_CARLO_NORMALIZED_OWNER,
+  stableRevisionHash,
   stableScenarioOverrideHash,
 } from '@/lib/household/normalizedAnalysisCache'
 
@@ -106,6 +107,34 @@ function createLegacySnapshot(
     income: { ...input.income },
     property: { ...input.property },
   }
+}
+
+function createLegacyHouseholdPlan(input: LegacyNormalizedEntryInput) {
+  return fromLegacyIndividual(createLegacySnapshot(input))
+}
+
+function buildLegacyCompiledPlanRevision(
+  householdPlan: ReturnType<typeof createLegacyHouseholdPlan>
+): string {
+  return buildLegacyHouseholdRevision({
+    profileRevision: stableRevisionHash({
+      schemaVersion: householdPlan.schemaVersion,
+      householdId: householdPlan.id,
+      planType: householdPlan.planType,
+      adults: householdPlan.adults,
+      dependents: householdPlan.dependents,
+      expenses: householdPlan.expenses,
+      assets: householdPlan.assets,
+      goals: householdPlan.goals,
+      inflation: householdPlan.assumptions.returns.inflation,
+    }),
+    incomeRevision: stableRevisionHash({
+      income: householdPlan.income,
+    }),
+    propertyRevision: stableRevisionHash({
+      properties: householdPlan.properties,
+    }),
+  })
 }
 
 function createNormalizedAnalysisEntry(
@@ -226,11 +255,8 @@ function resolveLegacyPortfolioAdjustmentAmount(
 export function buildLegacyNormalizedAnalysisIdentity(
   input: LegacyNormalizedEntryInput
 ): LegacyNormalizedAnalysisIdentity {
-  const householdRevision = buildLegacyHouseholdRevision({
-    profileRevision: input.profile.profileRevision ?? 0,
-    incomeRevision: input.income.incomeRevision ?? 0,
-    propertyRevision: input.property.propertyRevision ?? 0,
-  })
+  const householdPlan = createLegacyHouseholdPlan(input)
+  const householdRevision = buildLegacyCompiledPlanRevision(householdPlan)
   const scenarioOverrideHash = stableScenarioOverrideHash(
     input.scenarioOverrides ?? input.profileOverrides ?? null
   )
@@ -248,12 +274,12 @@ export function buildLegacyNormalizedAnalysisIdentity(
 export function createLegacyNormalizedAnalysisEntry(
   input: LegacyNormalizedEntryInput
 ): LegacyNormalizedAnalysisEntry {
-  const { householdRevision, scenarioOverrideHash } =
-    buildLegacyNormalizedAnalysisIdentity(input)
-
-  const compiledPlan = compileHouseholdPlan(
-    fromLegacyIndividual(createLegacySnapshot(input))
+  const householdPlan = createLegacyHouseholdPlan(input)
+  const householdRevision = buildLegacyCompiledPlanRevision(householdPlan)
+  const scenarioOverrideHash = stableScenarioOverrideHash(
+    input.scenarioOverrides ?? input.profileOverrides ?? null
   )
+  const compiledPlan = compileHouseholdPlan(householdPlan)
   return createNormalizedAnalysisEntry(
     compiledPlan,
     householdRevision,
