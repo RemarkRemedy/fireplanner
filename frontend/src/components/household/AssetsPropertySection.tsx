@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -96,6 +97,44 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
   }
 
   const isMultiAdult = plan.adults.length > 1
+
+  // Auto-seed a liquid-net-worth entry for any adult who doesn't have one yet.
+  // Also dedup any liquid assets with the same owner (cleanup from earlier bug).
+  useEffect(() => {
+    const store = useHouseholdPlanStore.getState()
+    const current = store.plan
+    const liquidAssets = current.assets.filter((a) => a.kind === 'liquid-net-worth')
+
+    // Deduplicate: keep the first liquid asset per owner, remove extras
+    const seenOwners = new Set<string>()
+    for (const asset of liquidAssets) {
+      if (seenOwners.has(asset.owner)) {
+        store.removeAsset(asset.id)
+      } else {
+        seenOwners.add(asset.owner)
+      }
+    }
+
+    // Seed missing: create $0 entry for any adult without a liquid asset
+    const freshPlan = useHouseholdPlanStore.getState().plan
+    const liquidOwners = new Set(
+      freshPlan.assets
+        .filter((a) => a.kind === 'liquid-net-worth')
+        .map((a) => a.owner),
+    )
+    for (const adult of freshPlan.adults) {
+      if (!liquidOwners.has(adult.owner)) {
+        store.addAsset({
+          id: `asset-liquid-${adult.owner}`,
+          owner: adult.owner,
+          label: `${adult.displayName} liquid balance`,
+          kind: 'liquid-net-worth',
+          amount: 0,
+        })
+        liquidOwners.add(adult.owner)
+      }
+    }
+  }, [plan.adults.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (mode === 'assets') {
     const liquidAssets = plan.assets.filter((asset) => asset.kind === 'liquid-net-worth')
