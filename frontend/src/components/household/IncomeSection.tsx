@@ -613,16 +613,19 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
       </Card>
 
       {isMultiAdult && (
-        <Tabs value={projectionView} onValueChange={setProjectionView}>
-          <TabsList>
-            {adults.map((adult) => (
-              <TabsTrigger key={adult.id} value={adult.id}>
-                {adult.displayName}
-              </TabsTrigger>
-            ))}
-            <TabsTrigger value="joint">Joint</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="space-y-1">
+          <Tabs value={projectionView} onValueChange={setProjectionView}>
+            <TabsList>
+              {adults.map((adult) => (
+                <TabsTrigger key={adult.id} value={adult.id}>
+                  {adult.displayName}
+                </TabsTrigger>
+              ))}
+              <TabsTrigger value="joint">Joint</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <p className="text-xs text-muted-foreground">Switches the projection view only — inputs are always edited per person below.</p>
+        </div>
       )}
 
       {activeSummary && <SummaryPanel summary={activeSummary} />}
