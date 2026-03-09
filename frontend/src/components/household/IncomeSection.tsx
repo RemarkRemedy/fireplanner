@@ -845,35 +845,6 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
         </CardContent>
       </Card>
 
-      {isMultiAdult && (
-        <div className="space-y-1">
-          <Tabs value={projectionView} onValueChange={setProjectionView}>
-            <TabsList>
-              {adults.map((adult) => (
-                <TabsTrigger key={adult.id} value={adult.id}>
-                  {adult.displayName}
-                </TabsTrigger>
-              ))}
-              <TabsTrigger value="joint">Joint</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <p className="text-xs text-muted-foreground">Switches the projection view only — inputs are always edited per person below.</p>
-        </div>
-      )}
-
-      {activeSummary && <SummaryPanel summary={activeSummary} />}
-
-      {activeProjection && activeProjection.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">{projectionLabel}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ProjectionTable data={activeProjection} retirementAge={projectionRetirementAge} />
-          </CardContent>
-        </Card>
-      )}
-
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
@@ -1083,6 +1054,35 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
           )}
         </CardContent>
       </Card>
+
+      {isMultiAdult && (
+        <div className="space-y-1">
+          <Tabs value={projectionView} onValueChange={setProjectionView}>
+            <TabsList>
+              {adults.map((adult) => (
+                <TabsTrigger key={adult.id} value={adult.id}>
+                  {adult.displayName}
+                </TabsTrigger>
+              ))}
+              <TabsTrigger value="joint">Joint</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <p className="text-xs text-muted-foreground">Switches the projection view only — inputs are always edited per person below.</p>
+        </div>
+      )}
+
+      {activeSummary && <SummaryPanel summary={activeSummary} />}
+
+      {activeProjection && activeProjection.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">{projectionLabel}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProjectionTable data={activeProjection} retirementAge={projectionRetirementAge} />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
