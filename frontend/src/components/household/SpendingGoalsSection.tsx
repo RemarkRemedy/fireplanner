@@ -37,10 +37,33 @@ import type {
   PlanningAdult,
 } from '@/lib/household/types'
 import type { GoalCategory, HealthcareConfig, IspTierOption, OopCurveVariant, OopModel } from '@/lib/types'
+import { calculateHealthcareCostAtAge, generateHealthcareProjection } from '@/lib/calculations/healthcare'
+import { formatCurrency } from '@/lib/utils'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { useMemo } from 'react'
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 
 const OWNER_OPTIONS: EntryOwner[] = ['self', 'partner', 'shared']
 const ADULT_OWNER_OPTIONS: AdultOwner[] = ['self', 'partner']
+
+const OOP_PRESETS = [
+  { label: 'Bottom-Up Estimate', amount: 1170, description: 'GP + dental + optical + medications' },
+  { label: 'World Bank (Nominal)', amount: 1335, description: 'World Bank out-of-pocket per capita 2023' },
+  { label: 'SingStat HES 2023', amount: 1896, description: 'SingStat Household Expenditure Survey' },
+  { label: 'World Bank (PPP)', amount: 2200, description: 'World Bank PPP-adjusted 2023' },
+] as const
+
+/** Sample ages for the cost preview table */
+const PREVIEW_AGES = [40, 50, 60, 70, 80, 90] as const
 
 const CATEGORY_ICONS: Record<GoalCategory, React.ReactNode> = {
   wedding: <Heart className="h-4 w-4" />,
@@ -184,6 +207,281 @@ function updateGoalList(
   updates: Partial<GoalItem>,
 ) {
   useHouseholdPlanStore.getState().updateGoal(goalId, updates)
+}
+
+/** Extracted healthcare details sub-component with presets, preview table, and chart */
+function HealthcareDetails({ adult, onUpdate }: {
+  adult: PlanningAdult
+  onUpdate: (updates: Partial<HealthcareConfig>) => void
+}) {
+  const hc = adult.healthcare
+  const inflationRate = hc.oopInflationRate ?? 0.03
+
+  // Cost preview at sample ages
+  const previewRows = useMemo(() =>
+    PREVIEW_AGES.map((age) => {
+      const cost = calculateHealthcareCostAtAge(hc, age)
+      const premiums = cost.mediShieldLifePremium + cost.ispAdditionalPremium + cost.careShieldLifePremium
+      // Today's dollars: deflate by medical inflation from reference age
+      const refAge = hc.oopReferenceAge ?? 30
+      const deflator = Math.pow(1 + inflationRate, Math.max(0, age - refAge))
+      const todaysDollars = deflator > 0 ? cost.cashOutlay / deflator : cost.cashOutlay
+      return { age, premiums, oop: cost.oopExpense, total: cost.totalCost, cashOutlay: cost.cashOutlay, todaysDollars }
+    }),
+    [hc, inflationRate],
+  )
+
+  // Retirement summary
+  const retCost = useMemo(
+    () => calculateHealthcareCostAtAge(hc, adult.retirementAge),
+    [hc, adult.retirementAge],
+  )
+
+  // Chart data: full projection from current age to life expectancy
+  const chartData = useMemo(() => {
+    const proj = generateHealthcareProjection(hc, adult.currentAge, adult.lifeExpectancy)
+    return proj.rows.map((row) => ({
+      age: row.age,
+      premiums: row.mediShieldLifePremium + row.ispAdditionalPremium + row.careShieldLifePremium,
+      oop: row.oopExpense,
+      mediSave: row.mediSaveDeductible,
+    }))
+  }, [hc, adult.currentAge, adult.lifeExpectancy])
+
+  return (
+    <div className="space-y-4">
+      {/* MediShield Life & CareShield LIFE toggles */}
+      <div className="flex flex-wrap gap-4">
+        <div className="flex items-center gap-2 rounded-md border p-3">
+          <span className="text-sm">MediShield Life</span>
+          <InfoTooltip text="Mandatory national health insurance. Premiums are fully MediSave-deductible." />
+          <Switch
+            checked={hc.mediShieldLifeEnabled}
+            onCheckedChange={(checked) => onUpdate({ mediShieldLifeEnabled: checked })}
+          />
+        </div>
+        <div className="flex items-center gap-2 rounded-md border p-3">
+          <span className="text-sm">CareShield LIFE</span>
+          <InfoTooltip text="Long-term disability insurance. Premiums paid ages 30-67, fully MediSave-deductible." />
+          <Switch
+            checked={hc.careShieldLifeEnabled}
+            onCheckedChange={(checked) => onUpdate({ careShieldLifeEnabled: checked })}
+          />
+        </div>
+      </div>
+
+      {/* ISP Tier — segmented buttons */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-1">
+          <Label>Integrated Shield Plan (ISP) Tier</Label>
+          <InfoTooltip text="Optional upgrade to MediShield Life. Higher tiers cover private wards but have higher premiums." />
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          {(['none', 'basic', 'standard', 'enhanced'] as const).map((tier) => {
+            const labels: Record<string, [string, string]> = {
+              none: ['None', 'MediShield Life only'],
+              basic: ['Basic', 'B2/C ward coverage'],
+              standard: ['Standard', 'B1 ward coverage'],
+              enhanced: ['Enhanced', 'A ward / private hospital'],
+            }
+            const [label, desc] = labels[tier]
+            const isSelected = hc.ispTier === tier
+            return (
+              <button
+                key={tier}
+                type="button"
+                className={`rounded-md border p-2 text-left text-sm transition-colors ${isSelected ? 'border-primary bg-primary/10 font-medium' : 'hover:bg-muted'}`}
+                onClick={() => onUpdate({ ispTier: tier as IspTierOption })}
+              >
+                <div>{label}</div>
+                <div className="text-xs text-muted-foreground">{desc}</div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Out-of-Pocket Model */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-1">
+          <Label>Out-of-Pocket Model</Label>
+          <InfoTooltip text="Age-Dependent uses a research-backed curve that increases with age. Fixed uses a constant annual amount adjusted for inflation." />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {(['age-curve', 'fixed'] as const).map((model) => {
+            const labels: Record<string, [string, string]> = {
+              'age-curve': ['Age-Dependent (Recommended)', 'Increases with age based on research'],
+              fixed: ['Fixed Annual Amount', 'Constant amount adjusted for inflation'],
+            }
+            const [label, desc] = labels[model]
+            const isSelected = hc.oopModel === model
+            return (
+              <button
+                key={model}
+                type="button"
+                className={`rounded-md border p-2 text-left text-sm transition-colors ${isSelected ? 'border-primary bg-primary/10 font-medium' : 'hover:bg-muted'}`}
+                onClick={() => onUpdate({ oopModel: model as OopModel })}
+              >
+                <div>{label}</div>
+                <div className="text-xs text-muted-foreground">{desc}</div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* OOP Presets */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-1">
+          <Label>Out-of-Pocket Presets</Label>
+          <InfoTooltip text="Pre-filled base amounts from official sources. Click one to set the OOP base amount." />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {OOP_PRESETS.map((preset) => {
+            const isSelected = hc.oopBaseAmount === preset.amount
+            return (
+              <button
+                key={preset.label}
+                type="button"
+                className={`rounded-md border p-2 text-left text-sm transition-colors ${isSelected ? 'border-primary bg-primary/10 font-medium' : 'hover:bg-muted'}`}
+                onClick={() => onUpdate({ oopBaseAmount: preset.amount })}
+              >
+                <div className="font-medium">{preset.label}</div>
+                <div className="text-xs text-muted-foreground">${preset.amount.toLocaleString()}/yr — {preset.description}</div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Age Multiplier Curve (only for age-curve model) */}
+      {hc.oopModel === 'age-curve' && (
+        <div className="space-y-1">
+          <div className="flex items-center gap-1">
+            <Label>Age Multiplier Curve</Label>
+            <InfoTooltip text="Study-Backed accounts for Singapore elderly subsidies. Conservative assumes higher costs (private care, no subsidies)." />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {(['study-backed', 'conservative'] as const).map((variant) => {
+              const labels: Record<string, [string, string]> = {
+                'study-backed': ['Study-Backed (Recommended)', 'Accounts for SG elderly subsidies'],
+                conservative: ['Conservative', 'Private care / higher costs'],
+              }
+              const [label, desc] = labels[variant]
+              const isSelected = (hc.oopCurveVariant ?? 'study-backed') === variant
+              return (
+                <button
+                  key={variant}
+                  type="button"
+                  className={`rounded-md border p-2 text-left text-sm transition-colors ${isSelected ? 'border-primary bg-primary/10 font-medium' : 'hover:bg-muted'}`}
+                  onClick={() => onUpdate({ oopCurveVariant: variant as OopCurveVariant })}
+                >
+                  <div>{label}</div>
+                  <div className="text-xs text-muted-foreground">{desc}</div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* OOP Base Amount + Medical Inflation */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <CurrencyInput
+          label="Out-of-Pocket Base Amount (at age 30)"
+          tooltip="Annual out-of-pocket healthcare spending at age 30 in today's dollars. The age curve multiplies this by an age factor."
+          value={hc.oopBaseAmount}
+          onChange={(value) => onUpdate({ oopBaseAmount: value })}
+        />
+        <PercentInput
+          label="Medical Inflation Rate"
+          tooltip="Annual rate at which healthcare costs increase above general inflation. Singapore averages 3-5%."
+          value={hc.oopInflationRate}
+          onChange={(value) => onUpdate({ oopInflationRate: value })}
+        />
+      </div>
+
+      <p className="text-xs text-muted-foreground italic">
+        Use these estimates as a starting point for your plan. Actual costs vary by individual health, lifestyle, and care choices. Review and adjust the inputs above to match your situation.
+      </p>
+
+      {/* MediSave Top-Up */}
+      <CurrencyInput
+        label="Annual MediSave Top-Up"
+        tooltip="Voluntary annual top-up to your MediSave Account. Helps offset premium deductions and extends MediSave runway."
+        value={hc.mediSaveTopUpAnnual}
+        onChange={(value) => onUpdate({ mediSaveTopUpAnnual: value })}
+      />
+
+      {/* Cost Preview by Age */}
+      <div className="space-y-2">
+        <Label>Cost Preview by Age</Label>
+        <div className="overflow-auto rounded-md border">
+          <table className="w-full text-sm">
+            <thead className="border-b bg-muted/50">
+              <tr>
+                <th className="px-3 py-2 text-left font-medium">Age</th>
+                <th className="px-3 py-2 text-right font-medium">Premiums</th>
+                <th className="px-3 py-2 text-right font-medium">Out-of-Pocket</th>
+                <th className="px-3 py-2 text-right font-medium">Total</th>
+                <th className="px-3 py-2 text-right font-medium text-primary">Cash Outlay</th>
+                <th className="px-3 py-2 text-right font-medium">
+                  Today's dollars
+                  <InfoTooltip text={`Removes ${(inflationRate * 100).toFixed(1)}% medical inflation from out-of-pocket costs to show costs in current purchasing power.`} />
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {previewRows.map((row) => (
+                <tr key={row.age} className="border-b last:border-0">
+                  <td className="px-3 py-1.5 font-medium">{row.age}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">{formatCurrency(row.premiums)}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">{formatCurrency(row.oop)}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">{formatCurrency(row.total)}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums text-primary font-medium">{formatCurrency(row.cashOutlay)}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">{formatCurrency(row.todaysDollars)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Cash outlay = total cost minus MediSave-deductible portion. Premiums are from CPF Board / MOH data (2025). Today's dollars removes {(inflationRate * 100).toFixed(1)}% medical inflation from out-of-pocket costs to show costs in current purchasing power.
+        </p>
+      </div>
+
+      {/* Retirement summary */}
+      <div className="rounded-md border border-primary/30 bg-primary/5 px-4 py-2 text-sm">
+        At retirement (age {adult.retirementAge}): <strong>{formatCurrency(retCost.cashOutlay)}/yr cash outlay</strong> out of {formatCurrency(retCost.totalCost)}/yr total
+      </div>
+
+      {/* Healthcare Cost Composition Chart */}
+      {chartData.length > 0 && (
+        <div className="space-y-2">
+          <Label>Healthcare Cost Composition</Label>
+          <div className="rounded-md border p-4">
+            <ResponsiveContainer width="100%" height={280}>
+              <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                <XAxis dataKey="age" tick={{ fontSize: 11 }} label={{ value: 'Age', position: 'insideBottom', offset: -2, fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}K`} />
+                <Tooltip
+                  formatter={(value: number, name: string) => [formatCurrency(value), name === 'premiums' ? 'Premiums' : name === 'oop' ? 'Out-of-Pocket' : 'MediSave Deductible']}
+                  labelFormatter={(label: number) => `Age ${label}`}
+                />
+                <Area type="monotone" dataKey="premiums" stackId="1" fill="#93c5fd" stroke="#3b82f6" name="premiums" />
+                <Area type="monotone" dataKey="oop" stackId="1" fill="#fdba74" stroke="#f97316" name="oop" />
+                <Line type="monotone" dataKey="mediSave" stroke="#22c55e" strokeDasharray="5 5" dot={false} name="mediSave" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Stacked: premiums + out-of-pocket. Dashed green line: MediSave-deductible portion. Gap above green = cash outlay.
+          </p>
+        </div>
+      )}
+    </div>
+  )
 }
 
 interface SpendingGoalsSectionProps {
@@ -493,84 +791,10 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
           </div>
 
           {selectedAdult.healthcare.enabled && (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <div className="space-y-1">
-                <Label>ISP tier</Label>
-                <Select
-                  value={selectedAdult.healthcare.ispTier}
-                  onValueChange={(value) => updateSelectedAdultHealthcare({ ispTier: value as IspTierOption })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    <SelectItem value="basic">Basic</SelectItem>
-                    <SelectItem value="standard">Standard</SelectItem>
-                    <SelectItem value="enhanced">Enhanced</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label>Out-of-pocket model</Label>
-                <Select
-                  value={selectedAdult.healthcare.oopModel}
-                  onValueChange={(value) => updateSelectedAdultHealthcare({ oopModel: value as OopModel })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="age-curve">Age curve</SelectItem>
-                    <SelectItem value="fixed">Fixed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label>OOP curve</Label>
-                <Select
-                  value={selectedAdult.healthcare.oopCurveVariant ?? 'study-backed'}
-                  onValueChange={(value) => updateSelectedAdultHealthcare({ oopCurveVariant: value as OopCurveVariant })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="study-backed">Study-backed</SelectItem>
-                    <SelectItem value="conservative">Conservative</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <CurrencyInput
-                label="OOP base amount"
-                value={selectedAdult.healthcare.oopBaseAmount}
-                onChange={(value) => updateSelectedAdultHealthcare({ oopBaseAmount: value })}
-              />
-              <PercentInput
-                label="OOP inflation"
-                value={selectedAdult.healthcare.oopInflationRate}
-                onChange={(value) => updateSelectedAdultHealthcare({ oopInflationRate: value })}
-              />
-              <CurrencyInput
-                label="MediSave top-up"
-                value={selectedAdult.healthcare.mediSaveTopUpAnnual}
-                onChange={(value) => updateSelectedAdultHealthcare({ mediSaveTopUpAnnual: value })}
-              />
-              <div className="flex items-center justify-between rounded-md border p-3">
-                <span className="text-sm">MediShield Life</span>
-                <Switch
-                  checked={selectedAdult.healthcare.mediShieldLifeEnabled}
-                  onCheckedChange={(checked) => updateSelectedAdultHealthcare({ mediShieldLifeEnabled: checked })}
-                />
-              </div>
-              <div className="flex items-center justify-between rounded-md border p-3">
-                <span className="text-sm">CareShield LIFE</span>
-                <Switch
-                  checked={selectedAdult.healthcare.careShieldLifeEnabled}
-                  onCheckedChange={(checked) => updateSelectedAdultHealthcare({ careShieldLifeEnabled: checked })}
-                />
-              </div>
-            </div>
+            <HealthcareDetails
+              adult={selectedAdult}
+              onUpdate={updateSelectedAdultHealthcare}
+            />
           )}
         </CardContent>
       </Card>
