@@ -104,6 +104,16 @@ function clonePlan(plan: HouseholdPlan): HouseholdPlan {
   return structuredClone(plan)
 }
 
+/** Derive planType from roster composition:
+ *  1 adult, no dependents → individual
+ *  2 adults, no dependents → couple
+ *  any adults with dependents → household */
+function derivePlanType(plan: HouseholdPlan): HouseholdPlanType {
+  if (plan.dependents.length > 0) return 'household'
+  if (plan.adults.length >= 2) return 'couple'
+  return 'individual'
+}
+
 function createManualHouseholdPlan(planType: HouseholdPlanType = 'individual'): HouseholdPlan {
   const template = fromLegacyIndividual(createDefaultLegacyIndividualSnapshot())
   template.id = createId('household')
@@ -329,6 +339,7 @@ export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
         set((state) => {
           const nextPlan = clonePlan(state.plan)
           nextPlan.adults.push(structuredClone(adult))
+          nextPlan.planType = derivePlanType(nextPlan)
           return buildValidatedState(nextPlan, state.provenance, state.householdPlanRevision + 1)
         }),
 
@@ -383,6 +394,7 @@ export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
           // Recalculate liquid net worth distribution after removing an adult (W41)
           recalcAdultLiquidNetWorths(nextPlan)
 
+          nextPlan.planType = derivePlanType(nextPlan)
           return buildValidatedState(nextPlan, state.provenance, state.householdPlanRevision + 1)
         }),
 
@@ -390,6 +402,7 @@ export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
         set((state) => {
           const nextPlan = clonePlan(state.plan)
           nextPlan.dependents.push(structuredClone(dependent))
+          nextPlan.planType = derivePlanType(nextPlan)
           return buildValidatedState(nextPlan, state.provenance, state.householdPlanRevision + 1)
         }),
 
@@ -403,7 +416,8 @@ export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
       removeDependent: (id) =>
         set((state) => {
           const nextPlan = clonePlan(state.plan)
-          nextPlan.dependents = nextPlan.dependents.filter((dependent) => dependent.id !== id)
+          nextPlan.dependents = nextPlan.dependents.filter((dep) => dep.id !== id)
+          nextPlan.planType = derivePlanType(nextPlan)
           return buildValidatedState(nextPlan, state.provenance, state.householdPlanRevision + 1)
         }),
 
