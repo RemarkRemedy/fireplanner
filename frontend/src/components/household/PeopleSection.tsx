@@ -144,6 +144,7 @@ export function PeopleSection({
     <div className="space-y-6">
       <PeopleRosterEditor
         planType={plan.planType === 'couple' ? 'couple' : 'household'}
+        showAllControls
         selfName={selfAdult.displayName}
         selfAge={selfAdult.currentAge}
         onSelfNameChange={(value) => updateAdultProfile(selfAdult, { displayName: value })}

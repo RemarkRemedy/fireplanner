@@ -16,6 +16,8 @@ export interface SetupDependentDraft {
 
 interface PeopleRosterEditorProps {
   planType: Exclude<HouseholdPlanType, 'individual'>
+  /** When true, always show partner toggle and dependents regardless of planType. Defaults to false. */
+  showAllControls?: boolean
   selfName: string
   selfAge: number
   onSelfNameChange: (value: string) => void
@@ -34,6 +36,7 @@ interface PeopleRosterEditorProps {
 
 export function PeopleRosterEditor({
   planType,
+  showAllControls = false,
   selfName,
   selfAge,
   onSelfNameChange,
@@ -49,7 +52,7 @@ export function PeopleRosterEditor({
   onUpdateDependent,
   onRemoveDependent,
 }: PeopleRosterEditorProps) {
-  const showPartnerToggle = planType === 'household'
+  const showPartnerToggle = showAllControls || planType === 'household'
   const showPartnerFields = planType === 'couple' || partnerEnabled
 
   return (
@@ -120,7 +123,7 @@ export function PeopleRosterEditor({
         </CardContent>
       </Card>
 
-      {planType === 'household' && (
+      {(showAllControls || planType === 'household') && (
         <Card>
           <CardContent className="pt-6 space-y-4">
             <div className="flex items-center justify-between">
