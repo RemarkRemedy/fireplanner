@@ -5,12 +5,15 @@ import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 
 beforeEach(() => {
+  localStorage.removeItem('fireplanner-feature-householdPlannerV1')
   useProfileStore.getState().reset()
   useIncomeStore.getState().reset()
   useAllocationStore.getState().reset()
   usePropertyStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
 })
 
 describe('useSectionCompletion', () => {

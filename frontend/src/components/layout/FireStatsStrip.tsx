@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useFireCalculations } from '@/hooks/useFireCalculations'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useProjection } from '@/hooks/useProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useUIStore } from '@/stores/useUIStore'
 import { useAdjustedFireNumber } from '@/hooks/useAdjustedFireNumber'
@@ -24,8 +24,7 @@ function formatRate(rate: number | null): string {
 function useStatsData(): StatChip[] {
   const { metrics } = useFireCalculations()
   const { summary } = useProjection()
-  const currentAge = useProfileStore((s) => s.currentAge)
-  const lifeExpectancy = useProfileStore((s) => s.lifeExpectancy)
+  const { profile } = useHouseholdRuntimeInputs()
   const lastMCSuccessRate = useSimulationStore((s) => s.lastMCSuccessRate)
   const lastBacktestSuccessRate = useSimulationStore((s) => s.lastBacktestSuccessRate)
   const adjusted = useAdjustedFireNumber()
@@ -44,13 +43,13 @@ function useStatsData(): StatChip[] {
   const projFireAge = summary?.fireAchievedAge ?? null
   const fireAge = projFireAge ?? (isFinite(metrics.fireAge) ? Math.ceil(metrics.fireAge) : null)
   const yearsToFire = fireAge !== null
-    ? Math.max(0, fireAge - currentAge)
+    ? Math.max(0, fireAge - profile.currentAge)
     : isFinite(metrics.yearsToFire)
       ? Math.ceil(metrics.yearsToFire)
       : null
 
   // FIRE is unreachable when the calculated age exceeds life expectancy
-  const unreachable = fireAge === null || fireAge > lifeExpectancy
+  const unreachable = fireAge === null || fireAge > profile.lifeExpectancy
 
   return [
     {

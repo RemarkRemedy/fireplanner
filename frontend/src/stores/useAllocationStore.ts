@@ -18,6 +18,12 @@ interface AllocationActions {
   reset: () => void
 }
 
+interface AllocationRevisionState {
+  allocationRevision: number
+}
+
+type AllocationStoreState = AllocationState & AllocationRevisionState & AllocationActions
+
 const ALLOCATION_DATA_KEYS = [
   'currentWeights', 'targetWeights', 'selectedTemplate', 'selectedTargetTemplate',
   'returnOverrides', 'stdDevOverrides', 'glidePathConfig',
@@ -39,13 +45,17 @@ const DEFAULT_ALLOCATION: Omit<AllocationState, 'validationErrors'> = {
 }
 
 function extractAllocationData(
-  state: AllocationState & AllocationActions
+  state: AllocationStoreState
 ): Omit<AllocationState, 'validationErrors'> {
   const data: Record<string, unknown> = {}
   for (const key of ALLOCATION_DATA_KEYS) {
     data[key] = state[key]
   }
   return data as Omit<AllocationState, 'validationErrors'>
+}
+
+function bumpAllocationRevision(revision: number): number {
+  return revision + 1
 }
 
 function computeValidationErrors(
@@ -82,10 +92,11 @@ function computeValidationErrors(
   return errors
 }
 
-export const useAllocationStore = create<AllocationState & AllocationActions>()(
+export const useAllocationStore = create<AllocationStoreState>()(
   persist(
     (set) => ({
       ...DEFAULT_ALLOCATION,
+      allocationRevision: 0,
       validationErrors: computeValidationErrors(DEFAULT_ALLOCATION),
 
       setCurrentWeights: (weights) =>
@@ -95,6 +106,7 @@ export const useAllocationStore = create<AllocationState & AllocationActions>()(
           return {
             currentWeights: weights,
             selectedTemplate: 'custom',
+            allocationRevision: bumpAllocationRevision(state.allocationRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -106,6 +118,7 @@ export const useAllocationStore = create<AllocationState & AllocationActions>()(
           return {
             targetWeights: weights,
             selectedTargetTemplate: 'custom',
+            allocationRevision: bumpAllocationRevision(state.allocationRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -119,6 +132,7 @@ export const useAllocationStore = create<AllocationState & AllocationActions>()(
             return {
               currentWeights: templateWeights,
               selectedTemplate: template,
+              allocationRevision: bumpAllocationRevision(state.allocationRevision),
               validationErrors: computeValidationErrors(updated),
             }
           } else {
@@ -126,6 +140,7 @@ export const useAllocationStore = create<AllocationState & AllocationActions>()(
             return {
               targetWeights: templateWeights,
               selectedTargetTemplate: template,
+              allocationRevision: bumpAllocationRevision(state.allocationRevision),
               validationErrors: computeValidationErrors(updated),
             }
           }
@@ -139,6 +154,7 @@ export const useAllocationStore = create<AllocationState & AllocationActions>()(
           const updated = { ...stateData, returnOverrides: overrides }
           return {
             returnOverrides: overrides,
+            allocationRevision: bumpAllocationRevision(state.allocationRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -151,6 +167,7 @@ export const useAllocationStore = create<AllocationState & AllocationActions>()(
           const updated = { ...stateData, stdDevOverrides: overrides }
           return {
             stdDevOverrides: overrides,
+            allocationRevision: bumpAllocationRevision(state.allocationRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -161,6 +178,7 @@ export const useAllocationStore = create<AllocationState & AllocationActions>()(
           const updated = { ...stateData, glidePathConfig: config }
           return {
             glidePathConfig: config,
+            allocationRevision: bumpAllocationRevision(state.allocationRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -171,15 +189,17 @@ export const useAllocationStore = create<AllocationState & AllocationActions>()(
           const updated = { ...stateData, [field]: value }
           return {
             [field]: value,
+            allocationRevision: bumpAllocationRevision(state.allocationRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
 
       reset: () =>
-        set({
+        set((state) => ({
           ...DEFAULT_ALLOCATION,
+          allocationRevision: bumpAllocationRevision(state.allocationRevision),
           validationErrors: computeValidationErrors(DEFAULT_ALLOCATION),
-        }),
+        })),
     }),
     {
       name: 'fireplanner-allocation',
@@ -231,6 +251,7 @@ export const useAllocationStore = create<AllocationState & AllocationActions>()(
         if (state) {
           const stateData = extractAllocationData(state)
           state.validationErrors = computeValidationErrors(stateData)
+          state.allocationRevision = bumpAllocationRevision(state.allocationRevision)
         }
       },
     }

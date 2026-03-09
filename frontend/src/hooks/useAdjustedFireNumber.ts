@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
 import { useFireCalculations } from '@/hooks/useFireCalculations'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useProjection } from '@/hooks/useProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 import { calculateProjectionFireNumber, normalizeProjectionFireNumber } from '@/lib/calculations/fire'
 import type { FireType } from '@/lib/types'
 
@@ -40,13 +39,14 @@ interface AdjustedFireNumberResult {
 export function useAdjustedFireNumber(): AdjustedFireNumberResult {
   const { metrics } = useFireCalculations()
   const { rows } = useProjection()
-  const swr = useProfileStore((s) => s.swr)
-  const inflation = useProfileStore((s) => s.inflation)
-  const currentAge = useProfileStore((s) => s.currentAge)
-  const fireType = useProfileStore((s) => s.fireType)
-  const ownsProperty = usePropertyStore((s) => s.ownsProperty)
-  const existingMonthlyPayment = usePropertyStore((s) => s.existingMonthlyPayment)
-  const mortgageCpfMonthly = usePropertyStore((s) => s.mortgageCpfMonthly)
+  const { profile, property } = useHouseholdRuntimeInputs()
+  const swr = profile.swr
+  const inflation = profile.inflation
+  const currentAge = profile.currentAge
+  const fireType = profile.fireType
+  const ownsProperty = property.ownsProperty
+  const existingMonthlyPayment = property.existingMonthlyPayment
+  const mortgageCpfMonthly = property.mortgageCpfMonthly
 
   return useMemo(() => {
     const emptyResult = {

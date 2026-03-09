@@ -10,6 +10,7 @@ import {
   type LeverContext,
 } from './actionImpacts'
 import type { MonteCarloResult, StrategyParamsMap, WithdrawalStrategyType } from '@/lib/types'
+import type { NormalizedAnalysisCacheOps } from '@/stores/useNormalizedAnalysisStore'
 import { runMonteCarloWorker } from '@/lib/simulation/workerClient'
 
 vi.mock('@/lib/simulation/workerClient', () => ({
@@ -18,6 +19,12 @@ vi.mock('@/lib/simulation/workerClient', () => ({
 vi.mock('@/lib/simulation/monteCarloParams', () => ({
   buildMonteCarloEngineParams: vi.fn(() => ({})),
 }))
+
+const MOCK_CACHE_OPS: NormalizedAnalysisCacheOps = {
+  getEntry: () => undefined,
+  upsertEntry: () => {},
+  setActiveCacheKey: () => {},
+}
 
 // ── Fixtures ──────────────────────────────────────────────
 
@@ -393,6 +400,7 @@ describe('runActionImpactAnalysis', () => {
       baseResult: SAMPLE_RESULT,
       isRetiree: false,
       annualIncome: 100_000,
+      cacheOps: MOCK_CACHE_OPS,
       onProgress: (completed, total) => progress.push([completed, total]),
     })
 
@@ -426,6 +434,7 @@ describe('runActionImpactAnalysis', () => {
       baseResult: SAMPLE_RESULT,
       isRetiree: false,
       annualIncome: 100_000,
+      cacheOps: MOCK_CACHE_OPS,
       signal: controller.signal,
     })
 
@@ -452,6 +461,7 @@ describe('runActionImpactAnalysis', () => {
       baseResult: SAMPLE_RESULT,
       isRetiree: false,
       annualIncome: 100_000,
+      cacheOps: MOCK_CACHE_OPS,
       signal: controller.signal,
     })
 
@@ -478,6 +488,7 @@ describe('runActionImpactAnalysis', () => {
       baseResult: SAMPLE_RESULT,
       isRetiree: true, // retiree so withdrawal_down_10pct would normally apply
       annualIncome: 100_000,
+      cacheOps: MOCK_CACHE_OPS,
     })
 
     const leverIds = output.impacts.map((i) => i.lever.id)

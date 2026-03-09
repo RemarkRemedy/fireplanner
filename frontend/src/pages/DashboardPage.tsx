@@ -17,12 +17,21 @@ import { usePageMeta } from '@/hooks/usePageMeta'
 import { ExpenseTrackerCard } from '@/components/email/ExpenseTrackerCard'
 import { useExpenseTrackerDwell } from '@/hooks/useExpenseTrackerDwell'
 import { useExpenseTracker } from '@/hooks/useExpenseTracker'
+import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 
-const KEY_SECTIONS: { id: SectionId; label: string }[] = [
+const INDIVIDUAL_KEY_SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'section-personal', label: 'Personal Details' },
   { id: 'section-income', label: 'Income' },
   { id: 'section-expenses', label: 'Expenses' },
   { id: 'section-net-worth', label: 'Net Worth' },
+]
+
+const HOUSEHOLD_KEY_SECTIONS: { id: SectionId; label: string }[] = [
+  { id: 'section-personal', label: 'People & Household' },
+  { id: 'section-income', label: 'Income & Work' },
+  { id: 'section-expenses', label: 'Spending & Goals' },
+  { id: 'section-net-worth', label: 'Assets & Net Worth' },
 ]
 
 export function DashboardPage() {
@@ -32,12 +41,15 @@ export function DashboardPage() {
   const { isEligible } = useExpenseTracker()
   useExpenseTrackerDwell(!isEmpty, 20)
   const { sections } = useSectionCompletion()
+  const householdPlanType = useHouseholdPlanStore((state) => state.plan.planType)
 
   const lastMC = useSimulationStore((s) => s.lastMCSuccessRate)
   const lastBT = useSimulationStore((s) => s.lastBacktestSuccessRate)
   const hasRunSimulation = lastMC !== null || lastBT !== null
 
-  const uncustomized = KEY_SECTIONS.filter((s) => !sections[s.id].isComplete)
+  const isHouseholdMode = isHouseholdPlannerV1Enabled() && householdPlanType !== 'individual'
+  const keySections = isHouseholdMode ? HOUSEHOLD_KEY_SECTIONS : INDIVIDUAL_KEY_SECTIONS
+  const uncustomized = keySections.filter((section) => !sections[section.id].isComplete)
 
   return (
     <div className="space-y-8">
@@ -52,7 +64,11 @@ export function DashboardPage() {
         <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-3">
           <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
           <div className="text-sm text-blue-800 dark:text-blue-200">
-            <p>You're using default values for some sections. Personalize your inputs for accurate results:</p>
+            <p>
+              {isHouseholdMode
+                ? "Some household sections still look under-specified. Personalize them so the combined analysis reflects who the plan covers."
+                : "You're using default values for some sections. Personalize your inputs for accurate results:"}
+            </p>
             <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
               {uncustomized.map((s) => (
                 <Link

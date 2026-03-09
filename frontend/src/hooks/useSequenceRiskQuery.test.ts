@@ -1,24 +1,67 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import { createElement, type ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useSequenceRiskQuery } from './useSequenceRiskQuery'
+import type { CrisisScenario } from '@/lib/types'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
+import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useNormalizedAnalysisStore } from '@/stores/useNormalizedAnalysisStore'
 
-const queryClient = new QueryClient({
-  defaultOptions: { mutations: { retry: false } },
+const { mockRunSequenceRiskWorker } = vi.hoisted(() => ({
+  mockRunSequenceRiskWorker: vi.fn(async () => ({
+    normal_success_rate: 0.86,
+    crisis_success_rate: 0.73,
+    success_degradation: 0.13,
+    normal_percentile_bands: { p10: [], p25: [], p50: [], p75: [], p90: [] },
+    crisis_percentile_bands: { p10: [], p25: [], p50: [], p75: [], p90: [] },
+    mitigations: [],
+    computation_time_ms: 3,
+  })),
+}))
+
+vi.mock('@/lib/analytics', () => ({
+  trackEvent: vi.fn(),
+}))
+
+vi.mock('@/lib/simulation/workerClient', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/simulation/workerClient')>()
+  return {
+    ...actual,
+    runSequenceRiskWorker: mockRunSequenceRiskWorker,
+  }
 })
 
-function wrapper({ children }: { children: ReactNode }) {
-  return createElement(QueryClientProvider, { client: queryClient }, children)
+function createWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: { mutations: { retry: false } },
+  })
+
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return createElement(QueryClientProvider, { client: queryClient }, children)
+  }
+}
+
+const CRISIS: CrisisScenario = {
+  id: 'test-crisis',
+  name: 'Test Crisis',
+  region: 'US',
+  startYear: 2000,
+  peakDrawdown: -0.4,
+  durationYears: 3,
+  recoveryYears: 5,
+  equityReturnSequence: [-0.3, -0.15, 0.05],
+  description: 'Synthetic crisis for stale detection tests',
 }
 
 beforeEach(() => {
+  vi.clearAllMocks()
+  localStorage.clear()
+  useNormalizedAnalysisStore.getState().clearEntries()
   useProfileStore.getState().reset()
   useIncomeStore.getState().reset()
   useAllocationStore.getState().reset()
@@ -28,57 +71,52 @@ beforeEach(() => {
 })
 
 describe('useSequenceRiskQuery stale detection', () => {
-  // Note: Full isStale=true verification requires a completed simulation run via Web Worker,
-  // which is not available in unit tests. These tests verify the hook includes lifeEvents
-  // in its dependency chain (rerenders on mutation) and doesn't crash.
+  it('marks completed results stale after a semantic planner-input change', async () => {
+    const { result } = renderHook(() => useSequenceRiskQuery(), { wrapper: createWrapper() })
 
-  it('includes lifeEvents in param signature (mutating lifeEvents triggers re-render)', () => {
-    const { result, rerender } = renderHook(() => useSequenceRiskQuery(), { wrapper })
-
-    expect(result.current.isStale).toBe(false)
-
-    // Mutate lifeEvents in the income store
     act(() => {
-      useIncomeStore.getState().addLifeEvent({
-        id: 'test-event',
-        name: 'Test Event',
-        startAge: 35,
-        endAge: 36,
-        incomeImpact: 0.5,
-        affectedStreamIds: [],
-        savingsPause: false,
-        cpfPause: false,
-      })
+      result.current.mutate(CRISIS)
     })
 
-    rerender()
-
-    // Pre-run: isStale is always false (no data to compare against).
-    expect(result.current.data).toBeUndefined()
+    await waitFor(() => expect(result.current.data).toBeDefined())
     expect(result.current.isStale).toBe(false)
-    expect(result.current.canRun).toBe(true)
+
+    act(() => {
+      useAllocationStore.getState().setReturnOverride(0, 0.09)
+    })
+
+    await waitFor(() => expect(result.current.isStale).toBe(true))
   })
 
-  it('includes lifeEventsEnabled in param signature', () => {
-    const { result, rerender } = renderHook(() => useSequenceRiskQuery(), { wrapper })
+  it('keeps completed results fresh when proof-only UI fields change', async () => {
+    const { result } = renderHook(() => useSequenceRiskQuery(), { wrapper: createWrapper() })
 
     act(() => {
-      useIncomeStore.getState().setField('lifeEventsEnabled', true)
+      result.current.mutate(CRISIS)
     })
-    rerender()
+
+    await waitFor(() => expect(result.current.data).toBeDefined())
+    expect(result.current.isStale).toBe(false)
 
     act(() => {
-      useIncomeStore.getState().setField('lifeEventsEnabled', false)
+      useSimulationStore.getState().setField('proofChartType', 'individual_cycles')
+      useSimulationStore.getState().setField('proofSelectedYear', 4)
     })
-    rerender()
 
-    expect(result.current.canRun).toBe(true)
+    await waitFor(() => expect(result.current.isStale).toBe(false))
   })
 
-  it('can run with valid default stores', () => {
-    const { result } = renderHook(() => useSequenceRiskQuery(), { wrapper })
+  it('runs with valid defaults and routes through the worker path', async () => {
+    const { result } = renderHook(() => useSequenceRiskQuery(), { wrapper: createWrapper() })
+
     expect(result.current.canRun).toBe(true)
     expect(result.current.isStale).toBe(false)
-    expect(result.current.data).toBeUndefined()
+
+    act(() => {
+      result.current.mutate(CRISIS)
+    })
+
+    await waitFor(() => expect(mockRunSequenceRiskWorker).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(result.current.data?.success_degradation).toBe(0.13))
   })
 })

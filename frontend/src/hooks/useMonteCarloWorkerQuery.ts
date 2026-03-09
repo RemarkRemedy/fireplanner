@@ -5,11 +5,16 @@ import {
   type MonteCarloWorkerProgress,
 } from '@/lib/simulation/workerClient'
 import type { MonteCarloResult } from '@/lib/types'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
+import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
+import {
+  buildCacheOpsFromStore,
+  buildMonteCarloRunSignature,
+  stableRunOverrideHash,
+} from '@/stores/useNormalizedAnalysisStore'
 import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
 import { trackEvent } from '@/lib/analytics'
 import { buildMonteCarloEngineParams } from '@/lib/simulation/monteCarloParams'
@@ -57,13 +62,31 @@ function isAbortError(error: Error): boolean {
   return error.name === 'AbortError'
 }
 
+export function buildCurrentMonteCarloRunSignature(input: {
+  allocationRevision: number
+  householdRevision: string
+  overrides?: MonteCarloRunOverrides | null
+  scenarioOverrideHash: string
+  simulationRevision: number
+  withdrawalRevision: number
+}): string {
+  return buildMonteCarloRunSignature({
+    householdRevision: input.householdRevision,
+    scenarioOverrideHash: input.scenarioOverrideHash,
+    allocationRevision: input.allocationRevision,
+    simulationRevision: input.simulationRevision,
+    withdrawalRevision: input.withdrawalRevision,
+    runOverrideHash: stableRunOverrideHash(input.overrides ?? null),
+  })
+}
+
 export function useMonteCarloWorkerQuery(): UseMonteCarloWorkerQueryResult {
-  const profile = useProfileStore()
-  const income = useIncomeStore()
+  const { profile, income, property } = useHouseholdRuntimeInputs()
   const allocation = useAllocationStore()
   const simulation = useSimulationStore()
-  const propertyStore = usePropertyStore()
+  const withdrawal = useWithdrawalStore()
   const analysisPortfolio = useAnalysisPortfolio()
+  const normalized = useNormalizedLegacyAnalysisContext()
 
   // Gate on upstream validation
   const profileErrors = profile.validationErrors
@@ -80,83 +103,23 @@ export function useMonteCarloWorkerQuery(): UseMonteCarloWorkerQueryResult {
   const activeAbortControllerRef = useRef<AbortController | null>(null)
   const activeRunIdRef = useRef(0)
 
-  const currentParamsSig = useMemo(() => JSON.stringify({
-    initialPortfolio: analysisPortfolio.initialPortfolio,
-    allocationWeights: analysisPortfolio.allocationWeights,
-    currentAge: profile.currentAge,
-    retirementAge: profile.retirementAge,
-    lifeExpectancy: profile.lifeExpectancy,
-    mcMethod: simulation.mcMethod,
-    nSimulations: simulation.nSimulations,
-    selectedStrategy: simulation.selectedStrategy,
-    strategyParams: simulation.strategyParams,
-    expenseRatio: profile.expenseRatio,
-    inflation: profile.inflation,
-    returnOverrides: allocation.returnOverrides,
-    stdDevOverrides: allocation.stdDevOverrides,
-    annualSalary: income.annualSalary,
-    salaryModel: income.salaryModel,
-    bonusMonths: income.bonusMonths,
-    incomeStreams: income.incomeStreams,
-    lifeEvents: income.lifeEvents,
-    lifeEventsEnabled: income.lifeEventsEnabled,
-    parentSupportEnabled: profile.parentSupportEnabled,
-    parentSupport: profile.parentSupport,
-    downsizing: propertyStore.downsizing,
-    ownsProperty: propertyStore.ownsProperty,
-    propertyType: propertyStore.propertyType,
-    hdbMonetizationStrategy: propertyStore.hdbMonetizationStrategy,
-    hdbSublettingRooms: propertyStore.hdbSublettingRooms,
-    hdbSublettingRate: propertyStore.hdbSublettingRate,
-    healthcareConfig: profile.healthcareConfig,
-    retirementWithdrawals: profile.retirementWithdrawals,
-    cashReserveEnabled: profile.cashReserveEnabled,
-    cashReserveMode: profile.cashReserveMode,
-    cashReserveFixedAmount: profile.cashReserveFixedAmount,
-    cashReserveMonths: profile.cashReserveMonths,
-    cashReserveReturn: profile.cashReserveReturn,
-    retirementMitigation: profile.retirementMitigation,
-    annualExpenses: profile.annualExpenses,
-    expenseAdjustments: profile.expenseAdjustments,
-    financialGoals: profile.financialGoals,
-    existingMonthlyPayment: propertyStore.existingMonthlyPayment,
-    existingMortgageBalance: propertyStore.existingMortgageBalance,
-    existingMortgageRate: propertyStore.existingMortgageRate,
-    existingMortgageRemainingYears: propertyStore.existingMortgageRemainingYears,
-    mortgageCpfMonthly: propertyStore.mortgageCpfMonthly,
-    ownershipPercent: propertyStore.ownershipPercent,
-    residencyForAbsd: propertyStore.residencyForAbsd,
-    withdrawalBasis: simulation.withdrawalBasis,
-    deterministicAccumulation: simulation.deterministicAccumulation,
-    glidePathConfig: allocation.glidePathConfig,
-    targetWeights: allocation.targetWeights,
-  }), [
-    analysisPortfolio.initialPortfolio, analysisPortfolio.allocationWeights,
-    profile.currentAge, profile.retirementAge, profile.lifeExpectancy, profile.expenseRatio, profile.inflation,
-    simulation.mcMethod, simulation.nSimulations, simulation.selectedStrategy, simulation.strategyParams,
-    allocation.returnOverrides, allocation.stdDevOverrides,
-    allocation.glidePathConfig, allocation.targetWeights,
-    income.annualSalary, income.salaryModel, income.bonusMonths, income.incomeStreams,
-    income.lifeEvents, income.lifeEventsEnabled,
-    profile.parentSupportEnabled, profile.parentSupport,
-    propertyStore.downsizing, propertyStore.ownsProperty,
-    propertyStore.propertyType, propertyStore.hdbMonetizationStrategy,
-    propertyStore.hdbSublettingRooms, propertyStore.hdbSublettingRate,
-    profile.healthcareConfig,
-    profile.retirementWithdrawals,
-    profile.cashReserveEnabled, profile.cashReserveMode, profile.cashReserveFixedAmount,
-    profile.cashReserveMonths, profile.cashReserveReturn, profile.retirementMitigation,
-    profile.annualExpenses, profile.expenseAdjustments,
-    profile.financialGoals,
-    propertyStore.existingMonthlyPayment, propertyStore.existingMortgageBalance,
-    propertyStore.existingMortgageRate, propertyStore.existingMortgageRemainingYears,
-    propertyStore.mortgageCpfMonthly, propertyStore.ownershipPercent, propertyStore.residencyForAbsd,
-    simulation.withdrawalBasis, simulation.deterministicAccumulation,
-  ])
-
   const currentRunSig = useMemo(
-    () => JSON.stringify({ params: currentParamsSig, overrides: lastRunOverrides }),
-    [currentParamsSig, lastRunOverrides]
+    () => buildCurrentMonteCarloRunSignature({
+      allocationRevision: allocation.allocationRevision,
+      householdRevision: normalized.householdRevision,
+      overrides: lastRunOverrides,
+      scenarioOverrideHash: normalized.scenarioOverrideHash,
+      simulationRevision: simulation.simulationRevision,
+      withdrawalRevision: withdrawal.withdrawalRevision,
+    }),
+    [
+      allocation.allocationRevision,
+      lastRunOverrides,
+      normalized.householdRevision,
+      normalized.scenarioOverrideHash,
+      simulation.simulationRevision,
+      withdrawal.withdrawalRevision,
+    ]
   )
 
   const mutation = useMutation({
@@ -187,7 +150,14 @@ export function useMonteCarloWorkerQuery(): UseMonteCarloWorkerQueryResult {
       }
 
       setLastRunOverrides(normalizedOverrides)
-      setLastRunParams(JSON.stringify({ params: currentParamsSig, overrides: normalizedOverrides }))
+      setLastRunParams(buildCurrentMonteCarloRunSignature({
+        allocationRevision: allocation.allocationRevision,
+        householdRevision: normalized.householdRevision,
+        overrides: normalizedOverrides,
+        scenarioOverrideHash: normalized.scenarioOverrideHash,
+        simulationRevision: simulation.simulationRevision,
+        withdrawalRevision: withdrawal.withdrawalRevision,
+      }))
       setProgress({ stage: 'queued', progress: 0.02, message: 'Queued simulation in worker' })
 
       // Cancel any prior run when a re-run is triggered.
@@ -213,10 +183,11 @@ export function useMonteCarloWorkerQuery(): UseMonteCarloWorkerQueryResult {
         income,
         allocation,
         simulation,
-        property: propertyStore,
+        property,
         initialPortfolio: analysisPortfolio.initialPortfolio,
         allocationWeights: analysisPortfolio.allocationWeights,
         profileOverrides,
+        cacheOps: buildCacheOpsFromStore(),
       })
 
       try {

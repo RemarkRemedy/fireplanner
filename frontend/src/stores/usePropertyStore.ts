@@ -14,7 +14,13 @@ interface PropertyActions {
   reset: () => void
 }
 
-const DEFAULT_DOWNSIZING: DownsizingConfig = {
+interface PropertyRevisionState {
+  propertyRevision: number
+}
+
+type PropertyStoreState = PropertyState & PropertyRevisionState & PropertyActions
+
+export const DEFAULT_DOWNSIZING: DownsizingConfig = {
   scenario: 'none',
   sellAge: 65,
   expectedSalePrice: 1500000,
@@ -26,7 +32,7 @@ const DEFAULT_DOWNSIZING: DownsizingConfig = {
   rentGrowthRate: 0.03,
 }
 
-const PROPERTY_DATA_KEYS = [
+export const PROPERTY_DATA_KEYS = [
   'propertyType', 'purchasePrice', 'leaseYears', 'appreciationRate',
   'rentalYield', 'mortgageRate', 'mortgageTerm', 'ltv',
   'residencyForAbsd', 'propertyCount',
@@ -41,7 +47,7 @@ const PROPERTY_DATA_KEYS = [
   'hdbSublettingRooms', 'hdbSublettingRate', 'hdbCpfUsedForHousing',
 ] as const
 
-const DEFAULT_PROPERTY: Omit<PropertyState, 'validationErrors'> = {
+export const DEFAULT_PROPERTY: Omit<PropertyState, 'validationErrors'> = {
   propertyType: 'condo',
   purchasePrice: 1500000,
   leaseYears: 99,
@@ -73,13 +79,17 @@ const DEFAULT_PROPERTY: Omit<PropertyState, 'validationErrors'> = {
 }
 
 function extractPropertyData(
-  state: PropertyState & PropertyActions
+  state: PropertyStoreState
 ): Omit<PropertyState, 'validationErrors'> {
   const data: Record<string, unknown> = {}
   for (const key of PROPERTY_DATA_KEYS) {
     data[key] = state[key]
   }
   return data as Omit<PropertyState, 'validationErrors'>
+}
+
+function bumpPropertyRevision(revision: number): number {
+  return revision + 1
 }
 
 function computeValidationErrors(
@@ -171,10 +181,11 @@ function computeValidationErrors(
   return errors
 }
 
-export const usePropertyStore = create<PropertyState & PropertyActions>()(
+export const usePropertyStore = create<PropertyStoreState>()(
   persist(
     (set) => ({
       ...DEFAULT_PROPERTY,
+      propertyRevision: 0,
       validationErrors: computeValidationErrors(DEFAULT_PROPERTY),
 
       setField: (field, value) =>
@@ -183,6 +194,7 @@ export const usePropertyStore = create<PropertyState & PropertyActions>()(
           const updated = { ...stateData, [field]: value }
           return {
             [field]: value,
+            propertyRevision: bumpPropertyRevision(state.propertyRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -194,15 +206,17 @@ export const usePropertyStore = create<PropertyState & PropertyActions>()(
           const updated = { ...stateData, downsizing: updatedDownsizing }
           return {
             downsizing: updatedDownsizing,
+            propertyRevision: bumpPropertyRevision(state.propertyRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
 
       reset: () =>
-        set({
+        set((state) => ({
           ...DEFAULT_PROPERTY,
+          propertyRevision: bumpPropertyRevision(state.propertyRevision),
           validationErrors: computeValidationErrors(DEFAULT_PROPERTY),
-        }),
+        })),
     }),
     {
       name: 'fireplanner-property',
@@ -264,6 +278,7 @@ export const usePropertyStore = create<PropertyState & PropertyActions>()(
         if (state) {
           const stateData = extractPropertyData(state)
           state.validationErrors = computeValidationErrors(stateData)
+          state.propertyRevision = bumpPropertyRevision(state.propertyRevision)
         }
       },
     }

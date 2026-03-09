@@ -14,6 +14,7 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { buildMonteCarloEngineParams } from '@/lib/simulation/monteCarloParams'
+import { buildCacheOpsFromStore } from '@/stores/useNormalizedAnalysisStore'
 import { buildLeverOverrides, ACTION_LEVERS } from './actionImpacts'
 
 // Partial mock: preserve flattenStrategyParams (used by buildMonteCarloEngineParams),
@@ -61,6 +62,7 @@ function buildBaselineParams() {
     simulation,
     property,
     allocationWeights: allocation.currentWeights,
+    cacheOps: buildCacheOpsFromStore(),
   })
 }
 
@@ -93,6 +95,7 @@ function buildLeverParams(leverId: string) {
     property,
     allocationWeights: overrides.allocationWeights ?? allocation.currentWeights,
     profileOverrides: overrides.profileOverrides,
+    cacheOps: buildCacheOpsFromStore(),
   })
 }
 

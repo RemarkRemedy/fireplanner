@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import type { PortfolioStats } from '@/lib/types'
 import { calculatePortfolioStats, getGlidePathAllocations, getEffectiveReturns, getEffectiveStdDevs } from '@/lib/calculations/portfolio'
-import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { validateAllocationCrossStoreRules } from '@/lib/validation/rules'
 import { CORRELATION_MATRIX } from '@/lib/data/historicalReturns'
 
@@ -20,7 +20,7 @@ interface PortfolioStatsResult {
  * When glide path is enabled, generates year-by-year allocation schedule.
  */
 export function usePortfolioStats(): PortfolioStatsResult {
-  const profile = useProfileStore()
+  const { profile } = useHouseholdRuntimeInputs()
   const allocation = useAllocationStore()
 
   return useMemo(() => {

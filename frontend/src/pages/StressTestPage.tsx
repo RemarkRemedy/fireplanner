@@ -16,6 +16,12 @@ import { useSectionNudge } from '@/hooks/useSectionNudge'
 import { SectionNudge } from '@/components/shared/SectionNudge'
 import { useUIStore } from '@/stores/useUIStore'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
+import { compileHouseholdPlan } from '@/lib/household/compileHouseholdPlan'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { HouseholdOverviewBar } from '@/components/household/HouseholdOverviewBar'
+import { HouseholdMilestoneTimeline } from '@/components/household/HouseholdMilestoneTimeline'
+import { HouseholdBreakdownPanel } from '@/components/household/HouseholdBreakdownPanel'
 
 // Monte Carlo imports
 import { SimulationControls } from '@/components/simulation/SimulationControls'
@@ -31,11 +37,11 @@ import { MCProjectionTable } from '@/components/simulation/MCProjectionTable'
 import { StressScenarioComparisonTable } from '@/components/simulation/StressScenarioComparisonTable'
 // import { ProofWorkspace } from '@/components/proof/ProofWorkspace'
 import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
-import { useProfileStore } from '@/stores/useProfileStore'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 import { buildMonteCarloEngineParams } from '@/lib/simulation/monteCarloParams'
+import { buildCacheOpsFromStore } from '@/stores/useNormalizedAnalysisStore'
 import { runMonteCarloWorker } from '@/lib/simulation/workerClient'
 import {
   STRESS_SCENARIOS,
@@ -65,7 +71,6 @@ import { ExpenseTrackerCard } from '@/components/email/ExpenseTrackerCard'
 import { useExpenseTrackerDwell } from '@/hooks/useExpenseTrackerDwell'
 import { useExpenseTracker } from '@/hooks/useExpenseTracker'
 import { ActiveLifeEventsBar } from '@/components/stressTest/ActiveLifeEventsBar'
-import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useCompanionPlannerBridge } from '@/hooks/useCompanionPlannerBridge'
 import { CompanionScenarioSwitcher } from '@/components/companion/CompanionScenarioSwitcher'
 import { CompanionResultsSummary } from '@/components/companion/CompanionResultsSummary'
@@ -74,6 +79,20 @@ import { runActionImpactAnalysis, type ActionImpactResult } from '@/lib/companio
 
 const ALL_STRESS_SCENARIO_IDS = STRESS_SCENARIOS.map((s) => s.id)
 
+interface ScenarioActionImpactState {
+  impacts: ActionImpactResult[] | null
+  isPending: boolean
+  progress: { completed: number; total: number } | null
+  error: string | null
+}
+
+const DEFAULT_SCENARIO_ACTION_IMPACT_STATE: ScenarioActionImpactState = {
+  impacts: null,
+  isPending: false,
+  progress: null,
+  error: null,
+}
+
 function TabIntro({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-sm text-muted-foreground">{children}</p>
@@ -81,7 +100,11 @@ function TabIntro({ children }: { children: React.ReactNode }) {
 }
 
 interface MonteCarloTabProps {
+  currentAge: number
+  inflation: number
   isAdvanced: boolean
+  retirementAge: number
+  selectedStrategy: string
   stressScenarioComparisonRows: StressScenarioComparisonRow[]
   stressScenarioComparisonPending: boolean
   stressScenarioComparisonError: string | null
@@ -96,7 +119,11 @@ interface MonteCarloTabProps {
 }
 
 function MonteCarloTab({
+  currentAge,
+  inflation,
   isAdvanced,
+  retirementAge,
+  selectedStrategy,
   stressScenarioComparisonRows,
   stressScenarioComparisonPending,
   stressScenarioComparisonError,
@@ -109,8 +136,6 @@ function MonteCarloTab({
   isStale,
   progress,
 }: MonteCarloTabProps) {
-  const retirementAge = useProfileStore((s) => s.retirementAge)
-  const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
   const progressPercent = Math.round((progress?.progress ?? 0.1) * 100)
 
   const mcInterpretation = data ? (() => {
@@ -195,7 +220,12 @@ function MonteCarloTab({
             <WithdrawalDistributionChart bands={data.withdrawal_bands} />
           )}
           {isAdvanced && data.withdrawal_bands && (
-            <WithdrawalSchedule bands={data.withdrawal_bands} strategy={selectedStrategy} />
+            <WithdrawalSchedule
+              bands={data.withdrawal_bands}
+              currentAge={currentAge}
+              inflation={inflation}
+              strategy={selectedStrategy}
+            />
           )}
           <StressScenarioComparisonTable
             rows={stressScenarioComparisonRows}
@@ -208,12 +238,20 @@ function MonteCarloTab({
   )
 }
 
-function WithdrawalSchedule({ bands, strategy }: { bands: PercentileBands; strategy: string }) {
+function WithdrawalSchedule({
+  bands,
+  currentAge,
+  inflation,
+  strategy,
+}: {
+  bands: PercentileBands
+  currentAge: number
+  inflation: number
+  strategy: string
+}) {
   const [expanded, setExpanded] = useState(true)
   const [showAll, setShowAll] = useState(false)
   const [realDollars, setRealDollars] = useState(false)
-  const currentAge = useProfileStore((s) => s.currentAge)
-  const inflation = useProfileStore((s) => s.inflation)
   const isConstantDollar = strategy === 'constant_dollar'
 
   const rows = useMemo(() => {
@@ -590,6 +628,10 @@ export function StressTestPage() {
   const stressNudge = useSectionNudge('section-stress-test')
   const setSectionMode = useUIStore((s) => s.setSectionMode)
   const isStressAdvanced = stressMode === 'advanced'
+  const householdPlannerEnabled = isHouseholdPlannerV1Enabled()
+  const { income, normalized, profile, property } = useHouseholdRuntimeInputs()
+  const householdPlan = useHouseholdPlanStore((state) => state.plan)
+  const householdPlanRevision = useHouseholdPlanStore((state) => state.householdPlanRevision)
   const analysisPortfolio = useAnalysisPortfolio()
   const mc = useMonteCarloQuery()
   const { isEligible } = useExpenseTracker()
@@ -601,9 +643,14 @@ export function StressTestPage() {
   const isCompanionResultStale = mc.isStale
     || companion.activeScenarioNeedsRerun
     || isCompanionScenarioContextStale
-  const currentRetirementAge = useProfileStore((s) => s.retirementAge)
+  const currentRetirementAge = normalized.retirementAge
+  const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
   const setSimField = useSimulationStore((s) => s.setField)
-  const lifeEventCount = useIncomeStore((s) => s.lifeEvents.length)
+  const activeAdult = householdPlan.adults.find((adult) => adult.id === normalized.referenceAdultId)
+    ?? householdPlan.adults.find((adult) => adult.owner === 'self')
+    ?? householdPlan.adults[0]
+    ?? null
+  const lifeEventCount = activeAdult?.lifeEvents.length ?? 0
   const [selectedStressScenarioIds, setSelectedStressScenarioIds] = useState<StressScenarioId[]>(['base'])
   const [stressScenarioComparisonError, setStressScenarioComparisonError] = useState<string | null>(null)
   const [isStressScenarioComparisonPending, setIsStressScenarioComparisonPending] = useState(false)
@@ -612,12 +659,35 @@ export function StressTestPage() {
   >({})
   const scenarioBatchAbortRef = useRef<AbortController | null>(null)
   const actionImpactAbortRef = useRef<AbortController | null>(null)
+  const lastActionImpactScenarioIdRef = useRef<string | null>(null)
   const lastBaseRetirementAgeRef = useRef(currentRetirementAge)
-  const [actionImpacts, setActionImpacts] = useState<ActionImpactResult[] | null>(null)
-  const [isActionImpactsPending, setIsActionImpactsPending] = useState(false)
-  const [actionImpactsProgress, setActionImpactsProgress] = useState<{ completed: number; total: number } | null>(null)
-  const [actionImpactsError, setActionImpactsError] = useState<string | null>(null)
+  const [actionImpactStates, setActionImpactStates] = useState<Record<string, ScenarioActionImpactState>>({})
   const actionImpactTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const householdPresentationPlan = useMemo(() => {
+    if (!householdPlannerEnabled || householdPlan.planType === 'individual') {
+      return null
+    }
+
+    return compileHouseholdPlan(householdPlan)
+  }, [householdPlan, householdPlanRevision, householdPlannerEnabled])
+  const householdCompanionContext = useMemo(() => {
+    if (!householdPresentationPlan) {
+      return null
+    }
+
+    const adultNames = householdPresentationPlan.adultOrder.map(
+      (adultId) => householdPresentationPlan.adultsById[adultId]?.displayName ?? 'Adult',
+    )
+    const dependentCount = householdPresentationPlan.dependentOrder.length
+    const coverage = dependentCount > 0
+      ? `${adultNames.join(' + ')} + ${dependentCount} dependent${dependentCount === 1 ? '' : 's'}`
+      : adultNames.join(' + ')
+
+    return {
+      label: householdPresentationPlan.planType === 'couple' ? 'Couple' : 'Household',
+      coverage,
+    }
+  }, [householdPresentationPlan])
 
   const stressScenarioComparisonRows = useMemo(
     () => selectedStressScenarioIds
@@ -625,6 +695,9 @@ export function StressTestPage() {
       .filter((row): row is StressScenarioComparisonRow => !!row),
     [selectedStressScenarioIds, stressScenarioResults]
   )
+  const activeActionImpactState = companion.activeScenarioId
+    ? (actionImpactStates[companion.activeScenarioId] ?? DEFAULT_SCENARIO_ACTION_IMPACT_STATE)
+    : DEFAULT_SCENARIO_ACTION_IMPACT_STATE
 
   const runSelectedStressScenarios = useCallback(async (
     scenarioIds: StressScenarioId[],
@@ -645,11 +718,11 @@ export function StressTestPage() {
 
     try {
       const params = buildMonteCarloEngineParams({
-        profile: useProfileStore.getState(),
-        income: useIncomeStore.getState(),
+        profile,
+        income,
         allocation: useAllocationStore.getState(),
         simulation: useSimulationStore.getState(),
-        property: usePropertyStore.getState(),
+        property,
         initialPortfolio: analysisPortfolio.initialPortfolio,
         allocationWeights: analysisPortfolio.allocationWeights,
         profileOverrides: overrides
@@ -658,6 +731,7 @@ export function StressTestPage() {
               ...(overrides.retirementAge != null ? { retirementAge: overrides.retirementAge } : {}),
             }
           : undefined,
+        cacheOps: buildCacheOpsFromStore(),
       })
 
       const runPlan = buildStressScenarioRunPlan(params, nonBaseScenarioIds)
@@ -685,10 +759,11 @@ export function StressTestPage() {
         setIsStressScenarioComparisonPending(false)
       }
     }
-  }, [analysisPortfolio.initialPortfolio, analysisPortfolio.allocationWeights])
+  }, [analysisPortfolio.allocationWeights, analysisPortfolio.initialPortfolio, income, profile, property])
 
   const runCompanionActionImpacts = useCallback(async (
     baseResult: import('@/lib/types').MonteCarloResult,
+    scenarioId: string,
     overrides?: { annualExpenses?: number; retirementAge?: number },
   ) => {
     actionImpactAbortRef.current?.abort()
@@ -698,10 +773,15 @@ export function StressTestPage() {
     }
     const controller = new AbortController()
     actionImpactAbortRef.current = controller
-    setIsActionImpactsPending(true)
-    setActionImpacts(null)
-    setActionImpactsProgress(null)
-    setActionImpactsError(null)
+    setActionImpactStates((prev) => ({
+      ...prev,
+      [scenarioId]: {
+        impacts: null,
+        isPending: true,
+        progress: null,
+        error: null,
+      },
+    }))
 
     // 15s timeout guardrail
     actionImpactTimeoutRef.current = setTimeout(() => {
@@ -709,16 +789,19 @@ export function StressTestPage() {
     }, 15_000)
 
     try {
-      const profile = useProfileStore.getState()
-      const annualIncome = profile.annualIncome ?? 0
-      const isRetiree = profile.currentAge >= (overrides?.retirementAge ?? profile.retirementAge)
+      /** C27: Use compiled total income (includes bonuses, partner income) instead of raw profile salary. */
+      const annualIncome = normalized.compiledPlan.rows[0]?.totalNetIncome ?? profile.annualIncome ?? 0
+      const isRetiree = normalized.currentAge >= (overrides?.retirementAge ?? normalized.retirementAge)
 
+      // getState() is intentional for allocation/simulation — avoids stale closure in async callback.
+      // This runs inside a useCallback that triggers an async analysis; subscribing
+      // via selectors would capture stale values at callback creation time.
       const output = await runActionImpactAnalysis({
         profile,
-        income: useIncomeStore.getState(),
+        income,
         allocation: useAllocationStore.getState(),
         simulation: useSimulationStore.getState(),
-        property: usePropertyStore.getState(),
+        property,
         initialPortfolio: analysisPortfolio.initialPortfolio,
         allocationWeights: analysisPortfolio.allocationWeights,
         baseResult,
@@ -731,28 +814,57 @@ export function StressTestPage() {
               ...(overrides.retirementAge != null ? { retirementAge: overrides.retirementAge } : {}),
             }
           : undefined,
+        cacheOps: buildCacheOpsFromStore(),
         onProgress: (completed, total) => {
           if (!controller.signal.aborted) {
-            setActionImpactsProgress({ completed, total })
+            setActionImpactStates((prev) => ({
+              ...prev,
+              [scenarioId]: {
+                ...(prev[scenarioId] ?? DEFAULT_SCENARIO_ACTION_IMPACT_STATE),
+                isPending: true,
+                progress: { completed, total },
+              },
+            }))
           }
         },
       })
 
       // Runner returns partial results on abort/timeout instead of throwing
       if (controller.signal.reason === 'timeout') {
-        setActionImpacts(output.impacts.length > 0 ? output.impacts : null)
-        setActionImpactsError(
-          output.impacts.length > 0
-            ? `Analysis timed out. Showing ${output.completedLevers}/${output.totalLevers} results.`
-            : 'Analysis timed out after 15 seconds. Please try again.',
-        )
+        setActionImpactStates((prev) => ({
+          ...prev,
+          [scenarioId]: {
+            impacts: output.impacts.length > 0 ? output.impacts : null,
+            isPending: false,
+            progress: null,
+            error: output.impacts.length > 0
+              ? `Analysis timed out. Showing ${output.completedLevers}/${output.totalLevers} results.`
+              : 'Analysis timed out after 15 seconds. Please try again.',
+          },
+        }))
       } else if (!controller.signal.aborted) {
-        setActionImpacts(output.impacts)
+        setActionImpactStates((prev) => ({
+          ...prev,
+          [scenarioId]: {
+            impacts: output.impacts,
+            isPending: false,
+            progress: null,
+            error: null,
+          },
+        }))
       }
     } catch (error) {
       if (!controller.signal.aborted) {
         console.error('action_impacts_failed', error)
-        setActionImpactsError('Action impact analysis failed. Please try again.')
+        setActionImpactStates((prev) => ({
+          ...prev,
+          [scenarioId]: {
+            ...(prev[scenarioId] ?? DEFAULT_SCENARIO_ACTION_IMPACT_STATE),
+            isPending: false,
+            progress: null,
+            error: 'Action impact analysis failed. Please try again.',
+          },
+        }))
       }
     } finally {
       if (actionImpactTimeoutRef.current) {
@@ -761,11 +873,31 @@ export function StressTestPage() {
       }
       if (actionImpactAbortRef.current === controller) {
         actionImpactAbortRef.current = null
-        setIsActionImpactsPending(false)
-        setActionImpactsProgress(null)
+        setActionImpactStates((prev) => {
+          const current = prev[scenarioId]
+          if (!current) {
+            return prev
+          }
+          return {
+            ...prev,
+            [scenarioId]: {
+              ...current,
+              isPending: false,
+              progress: null,
+            },
+          }
+        })
       }
     }
-  }, [analysisPortfolio.initialPortfolio, analysisPortfolio.allocationWeights])
+  }, [
+    analysisPortfolio.initialPortfolio,
+    analysisPortfolio.allocationWeights,
+    income,
+    normalized.currentAge,
+    normalized.retirementAge,
+    profile,
+    property,
+  ])
 
   const lastRunOverridesRef = useRef<{ annualExpenses?: number; retirementAge?: number } | undefined>(undefined)
 
@@ -773,7 +905,7 @@ export function StressTestPage() {
     const overrides = companion.isCompanionMode
       ? companion.prepareSimulationRun()
       : undefined
-    const baseRetirementAge = overrides?.retirementAge ?? useProfileStore.getState().retirementAge
+    const baseRetirementAge = overrides?.retirementAge ?? normalized.retirementAge
     lastBaseRetirementAgeRef.current = baseRetirementAge
     lastRunOverridesRef.current = overrides
 
@@ -788,20 +920,29 @@ export function StressTestPage() {
 
     // Abort in-flight action impact analysis and clear previous results
     if (companion.isCompanionMode) {
+      const activeScenarioId = companion.activeScenarioId
+      lastActionImpactScenarioIdRef.current = activeScenarioId
       actionImpactAbortRef.current?.abort()
       actionImpactAbortRef.current = null
       if (actionImpactTimeoutRef.current) {
         clearTimeout(actionImpactTimeoutRef.current)
         actionImpactTimeoutRef.current = null
       }
-      setActionImpacts(null)
-      setActionImpactsError(null)
-      setIsActionImpactsPending(false)
+      if (activeScenarioId) {
+        setActionImpactStates((prev) => {
+          if (!(activeScenarioId in prev)) {
+            return prev
+          }
+          const next = { ...prev }
+          delete next[activeScenarioId]
+          return next
+        })
+      }
     }
 
     mc.mutate(overrides)
     void runSelectedStressScenarios(selectedStressScenarioIds, overrides)
-  }, [companion, mc, runSelectedStressScenarios, selectedStressScenarioIds])
+  }, [companion, mc, normalized.retirementAge, runSelectedStressScenarios, selectedStressScenarioIds])
 
   useEffect(() => {
     if (!mc.data || !selectedStressScenarioIds.includes('base')) return
@@ -809,15 +950,16 @@ export function StressTestPage() {
       'base',
       mc.data,
       lastBaseRetirementAgeRef.current,
-      useProfileStore.getState().currentAge
+      normalized.currentAge
     )
     setStressScenarioResults((prev) => ({ ...prev, base: row }))
-  }, [mc.data, selectedStressScenarioIds])
+  }, [mc.data, normalized.currentAge, selectedStressScenarioIds])
 
   // Trigger action impact analysis after base MC completes in companion mode
   useEffect(() => {
-    if (!companion.isCompanionMode || !mc.data || mc.isPending) return
-    void runCompanionActionImpacts(mc.data, lastRunOverridesRef.current)
+    const scenarioId = lastActionImpactScenarioIdRef.current
+    if (!companion.isCompanionMode || !mc.data || mc.isPending || !scenarioId) return
+    void runCompanionActionImpacts(mc.data, scenarioId, lastRunOverridesRef.current)
   }, [companion.isCompanionMode, mc.data, mc.isPending, runCompanionActionImpacts])
 
   useEffect(() => {
@@ -902,6 +1044,16 @@ export function StressTestPage() {
         />
       )}
 
+      {householdPresentationPlan && (
+        <div className="space-y-4">
+          <HouseholdOverviewBar compiledPlan={householdPresentationPlan} />
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <HouseholdMilestoneTimeline compiledPlan={householdPresentationPlan} />
+            <HouseholdBreakdownPanel compiledPlan={householdPresentationPlan} />
+          </div>
+        </div>
+      )}
+
       {companion.isCompanionMode && (
         <>
           <CompanionScenarioSwitcher
@@ -912,10 +1064,11 @@ export function StressTestPage() {
           />
           <CompanionResultsSummary
             companion={companion}
-            actionImpacts={actionImpacts}
-            actionImpactsPending={isActionImpactsPending}
-            actionImpactsProgress={actionImpactsProgress}
-            actionImpactsError={actionImpactsError}
+            actionImpacts={activeActionImpactState.impacts}
+            actionImpactsPending={activeActionImpactState.isPending}
+            actionImpactsProgress={activeActionImpactState.progress}
+            actionImpactsError={activeActionImpactState.error}
+            householdContext={householdCompanionContext}
           />
           <CompanionStressComparison
             rows={stressScenarioComparisonRows}
@@ -958,7 +1111,11 @@ export function StressTestPage() {
 
         <TabsContent value="monte-carlo">
           <MonteCarloTab
+            currentAge={normalized.currentAge}
+            inflation={normalized.compiledPlan.assumptions.returns.inflation}
             isAdvanced={isStressAdvanced}
+            retirementAge={normalized.retirementAge}
+            selectedStrategy={selectedStrategy}
             stressScenarioComparisonRows={stressScenarioComparisonRows}
             stressScenarioComparisonPending={isStressScenarioComparisonPending}
             stressScenarioComparisonError={stressScenarioComparisonError}

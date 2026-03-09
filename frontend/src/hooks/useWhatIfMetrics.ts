@@ -2,12 +2,13 @@ import { useMemo } from 'react'
 import { calculateAllFireMetrics, projectPortfolioAtRetirement } from '@/lib/calculations/fire'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { generateIncomeProjection } from '@/lib/calculations/income'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
+import type { IncomeState, ProfileState, PropertyState } from '@/lib/types'
 
 export interface WhatIfOverrides {
   annualExpenses?: number
@@ -43,16 +44,25 @@ export interface WhatIfMetricsResult {
 }
 
 export function getBaseInputs(
-  profile: ReturnType<typeof useProfileStore.getState>,
-  income: ReturnType<typeof useIncomeStore.getState>,
+  profile: ProfileState,
+  income: IncomeState,
   allocation: ReturnType<typeof useAllocationStore.getState>,
-  property: ReturnType<typeof usePropertyStore.getState>,
+  property: PropertyState,
+  timingOverride?: Pick<ProfileState, 'currentAge' | 'retirementAge' | 'lifeExpectancy'>,
 ) {
   const cpfTotal = profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
+  const currentAge = timingOverride?.currentAge ?? profile.currentAge
+  const retirementAge = timingOverride?.retirementAge ?? profile.retirementAge
+  const lifeExpectancy = timingOverride?.lifeExpectancy ?? profile.lifeExpectancy
 
   // Effective income from income projection
   let effectiveIncome = profile.annualIncome
-  const projectionParams = buildProjectionParams(profile, income, property)
+  const projectionParams = buildProjectionParams({
+    ...profile,
+    currentAge,
+    retirementAge,
+    lifeExpectancy,
+  }, income, property)
   if (projectionParams) {
     const projection = generateIncomeProjection(projectionParams)
     if (projection.length > 0) {
@@ -73,8 +83,8 @@ export function getBaseInputs(
     : 0
 
   return {
-    currentAge: profile.currentAge,
-    retirementAge: profile.retirementAge,
+    currentAge,
+    retirementAge,
     annualIncome: effectiveIncome,
     annualExpenses: profile.annualExpenses,
     expenseAdjustments: profile.expenseAdjustments,
@@ -87,7 +97,7 @@ export function getBaseInputs(
     fireType: profile.fireType,
     fireNumberBasis: profile.fireNumberBasis,
     cpfLifeStartAge: profile.cpfLifeStartAge,
-    lifeExpectancy: profile.lifeExpectancy,
+    lifeExpectancy,
     retirementSpendingAdjustment: profile.retirementSpendingAdjustment,
     propertyEquity,
     parentSupport: profile.parentSupport,
@@ -126,19 +136,26 @@ export function computeMetrics(inputs: WhatIfBaseInputs) {
  * (no Web Worker needed).
  */
 export function useWhatIfMetrics(overrides: WhatIfOverrides): WhatIfMetricsResult {
-  const profile = useProfileStore()
-  const income = useIncomeStore()
+  const plan = useHouseholdPlanStore((state) => state.plan)
+  const hasValidationErrors = useHouseholdPlanStore((state) => state.hasValidationErrors)
   const allocation = useAllocationStore()
-  const property = usePropertyStore()
+  const normalized = useNormalizedLegacyAnalysisContext()
+  const { profile, income, property } = useMemo(
+    () => buildHouseholdRuntimeLegacyInputs(plan, normalized.compiledPlan),
+    [normalized.compiledPlan, plan]
+  )
 
   // eslint-disable-next-line react-hooks/preserve-manual-memoization -- Granular deps intentional for perf
   return useMemo(() => {
-    const profileErrors = profile.validationErrors
-    if (Object.keys(profileErrors).length > 0) {
+    if (hasValidationErrors) {
       return { baseMetrics: null, overrideMetrics: null, deltas: null, hasData: false }
     }
 
-    const baseInputs = getBaseInputs(profile, income, allocation, property)
+    const baseInputs = getBaseInputs(profile, income, allocation, property, {
+      currentAge: normalized.currentAge,
+      retirementAge: normalized.retirementAge,
+      lifeExpectancy: normalized.lifeExpectancy,
+    })
     const baseMetrics = computeMetrics(baseInputs)
 
     // Apply overrides
@@ -172,7 +189,7 @@ export function useWhatIfMetrics(overrides: WhatIfOverrides): WhatIfMetricsResul
 
     return { baseMetrics, overrideMetrics, deltas, hasData: true }
   }, [
-    profile, income, allocation, property,
+    allocation, hasValidationErrors, income, normalized.currentAge, normalized.lifeExpectancy, normalized.retirementAge, profile, property,
     overrides.annualExpenses, overrides.annualIncome, overrides.swr,
     overrides.expectedReturn, overrides.retirementAge, overrides.liquidNetWorth,
   ])

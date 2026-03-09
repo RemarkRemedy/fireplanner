@@ -1,29 +1,54 @@
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
-import { useAllocationStore } from '@/stores/useAllocationStore'
-import { useSimulationStore } from '@/stores/useSimulationStore'
-import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
+import { toLegacyIndividual } from '@/lib/household/toLegacyIndividual'
+import type { HouseholdPlan, PlanningAdult, PropertyPlan } from '@/lib/household/types'
+import type { LegacyIndividualSnapshot } from '@/lib/household/fromLegacyIndividual'
+import type { AllocationState, SimulationState, WithdrawalState } from '@/lib/types'
 import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 import { formatCurrency, formatPercent } from '@/lib/utils'
 import { computeExpensePhases } from '@/lib/calculations/expenses'
 
 type Row = [string, string | number]
+type AllocationExportState = Pick<AllocationState, 'currentWeights' | 'targetWeights' | 'selectedTemplate' | 'glidePathConfig'>
+type SimulationExportState = Pick<SimulationState, 'mcMethod' | 'nSimulations'>
+type WithdrawalExportState = Pick<WithdrawalState, 'selectedStrategies' | 'strategyParams'>
 
-function section(label: string): Row { return [`── ${label} ──`, ''] }
+export interface ExcelExportData {
+  householdPlan: HouseholdPlan
+  allocation: AllocationExportState
+  simulation: SimulationExportState
+  withdrawal: WithdrawalExportState
+}
 
-export async function exportToExcel(): Promise<void> {
-  const { default: ExcelJS } = await import('exceljs')
-  const wb = new ExcelJS.Workbook()
+function section(label: string): Row {
+  return [`── ${label} ──`, '']
+}
 
-  const profile = useProfileStore.getState()
-  const income = useIncomeStore.getState()
-  const allocation = useAllocationStore.getState()
-  const simulation = useSimulationStore.getState()
-  const withdrawal = useWithdrawalStore.getState()
-  const property = usePropertyStore.getState()
+function ownerLabel(owner: 'self' | 'partner' | 'shared'): string {
+  if (owner === 'self') return 'Self'
+  if (owner === 'partner') return 'Partner'
+  return 'Shared'
+}
 
-  // --- Profile sheet ---
+function worksheetName(label: string): string {
+  return label.slice(0, 31)
+}
+
+function addRows(ws: { addRow: (values: (string | number)[]) => void }, rows: Row[]) {
+  ws.addRow(['Field', 'Value'])
+  for (const [field, value] of rows) {
+    ws.addRow([field, value])
+  }
+}
+
+function addLegacyWorkbook(
+  wb: {
+    addWorksheet: (name: string) => { addRow: (values: (string | number)[]) => void }
+  },
+  snapshot: LegacyIndividualSnapshot,
+  data: Pick<ExcelExportData, 'allocation' | 'simulation' | 'withdrawal'>,
+): void {
+  const { allocation, simulation, withdrawal } = data
+  const { profile, income, property } = snapshot
+
   const profileSheet = wb.addWorksheet('Profile')
   const profileRows: Row[] = [
     section('Personal'),
@@ -37,16 +62,23 @@ export async function exportToExcel(): Promise<void> {
     ['Annual Expenses (base)', formatCurrency(profile.annualExpenses)],
     ['Retirement Spending Adjustment', formatPercent(profile.retirementSpendingAdjustment)],
     ['Inflation', formatPercent(profile.inflation)],
-    ...(profile.expenseAdjustments.length > 0 ? [
-      section('Expense Adjustments'),
-      ...profile.expenseAdjustments.map((adj): Row => [
-        adj.label,
-        `${adj.amount >= 0 ? '+' : ''}${formatCurrency(adj.amount)}/yr, ages ${adj.startAge}–${adj.endAge ?? 'ongoing'}`,
-      ]),
-      section('Effective Spending by Phase'),
-      ...computeExpensePhases(profile.annualExpenses, profile.expenseAdjustments, profile.currentAge, profile.lifeExpectancy, profile.lifeExpectancy)
-        .map((p): Row => [`Age ${p.fromAge}–${p.toAge}`, `${formatCurrency(p.amount)}/yr`]),
-    ] as Row[] : []),
+    ...(profile.expenseAdjustments.length > 0
+      ? [
+          section('Expense Adjustments'),
+          ...profile.expenseAdjustments.map((adj): Row => [
+            adj.label,
+            `${adj.amount >= 0 ? '+' : ''}${formatCurrency(adj.amount)}/yr, ages ${adj.startAge}–${adj.endAge ?? 'ongoing'}`,
+          ]),
+          section('Effective Spending by Phase'),
+          ...computeExpensePhases(
+            profile.annualExpenses,
+            profile.expenseAdjustments,
+            profile.currentAge,
+            profile.lifeExpectancy,
+            profile.lifeExpectancy,
+          ).map((phase): Row => [`Age ${phase.fromAge}–${phase.toAge}`, `${formatCurrency(phase.amount)}/yr`]),
+        ]
+      : []),
     section('Net Worth'),
     ['Liquid Net Worth', formatCurrency(profile.liquidNetWorth)],
     ['CPF OA', formatCurrency(profile.cpfOA)],
@@ -68,7 +100,6 @@ export async function exportToExcel(): Promise<void> {
   ]
   addRows(profileSheet, profileRows)
 
-  // --- Income sheet ---
   const incomeSheet = wb.addWorksheet('Income')
   const incomeRows: Row[] = [
     section('Salary Model'),
@@ -79,25 +110,30 @@ export async function exportToExcel(): Promise<void> {
   ]
   if (income.incomeStreams.length > 0) {
     incomeRows.push(section('Income Streams'))
-    for (const s of income.incomeStreams) {
-      incomeRows.push([`${s.name} (${s.type})`, `${formatCurrency(s.annualAmount)}/yr, ages ${s.startAge}-${s.endAge}, ${s.isActive ? 'active' : 'inactive'}`])
+    for (const stream of income.incomeStreams) {
+      incomeRows.push([
+        `${stream.name} (${stream.type})`,
+        `${formatCurrency(stream.annualAmount)}/yr, ages ${stream.startAge}-${stream.endAge}, ${stream.isActive ? 'active' : 'inactive'}`,
+      ])
     }
   }
   if (income.lifeEventsEnabled && income.lifeEvents.length > 0) {
     incomeRows.push(section('Life Events'))
-    for (const e of income.lifeEvents) {
-      incomeRows.push([`${e.name} (ages ${e.startAge}-${e.endAge})`, `Income impact: ${formatCurrency(e.incomeImpact)}`])
+    for (const event of income.lifeEvents) {
+      incomeRows.push([
+        `${event.name} (ages ${event.startAge}-${event.endAge})`,
+        `Income impact: ${formatCurrency(event.incomeImpact)}`,
+      ])
     }
   }
   addRows(incomeSheet, incomeRows)
 
-  // --- Allocation sheet ---
   const allocationSheet = wb.addWorksheet('Allocation')
   const allocationRows: Row[] = [
     section('Current Weights'),
-    ...ASSET_CLASSES.map((ac, i): Row => [ac.label, formatPercent(allocation.currentWeights[i])]),
+    ...ASSET_CLASSES.map((assetClass, index): Row => [assetClass.label, formatPercent(allocation.currentWeights[index])]),
     section('Target Weights'),
-    ...ASSET_CLASSES.map((ac, i): Row => [ac.label, formatPercent(allocation.targetWeights[i])]),
+    ...ASSET_CLASSES.map((assetClass, index): Row => [assetClass.label, formatPercent(allocation.targetWeights[index])]),
     section('Settings'),
     ['Template', allocation.selectedTemplate],
     ['Glide Path Enabled', allocation.glidePathConfig.enabled ? 'Yes' : 'No'],
@@ -105,16 +141,15 @@ export async function exportToExcel(): Promise<void> {
   if (allocation.glidePathConfig.enabled) {
     allocationRows.push(
       ['Glide Path Method', allocation.glidePathConfig.method],
-    ['Glide Path Ages', `${allocation.glidePathConfig.startAge} - ${allocation.glidePathConfig.endAge}`],
+      ['Glide Path Ages', `${allocation.glidePathConfig.startAge} - ${allocation.glidePathConfig.endAge}`],
     )
   }
   addRows(allocationSheet, allocationRows)
 
-  // --- Withdrawal sheet ---
   const withdrawalSheet = wb.addWorksheet('Withdrawal')
   const withdrawalRows: Row[] = [
     section('Selected Strategies'),
-    ...withdrawal.selectedStrategies.map((s): Row => ['Strategy', s]),
+    ...withdrawal.selectedStrategies.map((strategy): Row => ['Strategy', strategy]),
     section('Simulation Settings'),
     ['MC Method', simulation.mcMethod],
     ['MC Simulations', simulation.nSimulations],
@@ -123,14 +158,16 @@ export async function exportToExcel(): Promise<void> {
     const params = withdrawal.strategyParams[strategy]
     if (params && Object.keys(params).length > 0) {
       withdrawalRows.push(section(`Params: ${strategy}`))
-      for (const [k, v] of Object.entries(params)) {
-        withdrawalRows.push([k, typeof v === 'number' && v < 1 && v > 0 ? formatPercent(v) : String(v)])
+      for (const [key, value] of Object.entries(params)) {
+        withdrawalRows.push([
+          key,
+          typeof value === 'number' && value < 1 && value > 0 ? formatPercent(value) : String(value),
+        ])
       }
     }
   }
   addRows(withdrawalSheet, withdrawalRows)
 
-  // --- Property sheet (if enabled) ---
   if (property.ownsProperty) {
     const propertySheet = wb.addWorksheet('Property')
     const propertyRows: Row[] = [
@@ -141,7 +178,10 @@ export async function exportToExcel(): Promise<void> {
       ['Monthly Payment', formatCurrency(property.existingMonthlyPayment)],
       ['CPF Monthly', formatCurrency(property.mortgageCpfMonthly)],
       ['Mortgage Rate', formatPercent(property.existingMortgageRate)],
-      ['Remaining Tenure', `${Math.floor(property.existingMortgageRemainingYears)}y ${Math.round((property.existingMortgageRemainingYears % 1) * 12)}m`],
+      [
+        'Remaining Tenure',
+        `${Math.floor(property.existingMortgageRemainingYears)}y ${Math.round((property.existingMortgageRemainingYears % 1) * 12)}m`,
+      ],
       ['Equity', formatCurrency(Math.max(0, property.existingPropertyValue - property.existingMortgageBalance))],
     ]
     if (property.propertyType === 'hdb') {
@@ -161,8 +201,188 @@ export async function exportToExcel(): Promise<void> {
     }
     addRows(propertySheet, propertyRows)
   }
+}
 
-  // Style all sheets
+function adultSheetRows(adult: PlanningAdult): Row[] {
+  return [
+    section('Personal'),
+    ['Name', adult.displayName],
+    ['Owner', ownerLabel(adult.owner)],
+    ['Current Age', adult.currentAge],
+    ['Retirement Age', adult.retirementAge],
+    ['Life Expectancy', adult.lifeExpectancy],
+    ['Residency Status', adult.residencyStatus],
+    section('Summary'),
+    ['Annual Income', formatCurrency(adult.annualIncome)],
+    ['Annual Expenses', formatCurrency(adult.annualExpenses)],
+    ['Liquid Net Worth', formatCurrency(adult.liquidNetWorth)],
+    section('CPF'),
+    ['OA Balance', formatCurrency(adult.cpf.balances.oa)],
+    ['SA Balance', formatCurrency(adult.cpf.balances.sa)],
+    ['MA Balance', formatCurrency(adult.cpf.balances.ma)],
+    ['RA Balance', formatCurrency(adult.cpf.balances.ra)],
+    ['CPF LIFE Start Age', adult.cpf.lifeStartAge],
+    ['CPF LIFE Plan', adult.cpf.lifePlan],
+    section('SRS'),
+    ['SRS Balance', formatCurrency(adult.srs.balance)],
+    ['Annual Contribution', formatCurrency(adult.srs.annualContribution)],
+    ['Investment Return', formatPercent(adult.srs.investmentReturn)],
+    ['Drawdown Start Age', adult.srs.drawdownStartAge],
+    section('Healthcare'),
+    ['Enabled', adult.healthcare.enabled ? 'Yes' : 'No'],
+    ['OOP Base', formatCurrency(adult.healthcare.oopBaseAmount)],
+    ['OOP Inflation', formatPercent(adult.healthcare.oopInflationRate)],
+    ['MediSave Top-Up', formatCurrency(adult.healthcare.mediSaveTopUpAnnual)],
+  ]
+}
+
+function householdSummaryRows(plan: HouseholdPlan): Row[] {
+  return [
+    section('Plan'),
+    ['Plan Type', plan.planType],
+    ['Adults', plan.adults.length],
+    ['Dependents', plan.dependents.length],
+    section('FIRE Assumptions'),
+    ['FIRE Type', plan.assumptions.fire.fireType],
+    ['SWR', formatPercent(plan.assumptions.fire.swr)],
+    ['Basis', plan.assumptions.fire.fireNumberBasis],
+    section('Return Assumptions'),
+    ['Expected Return', formatPercent(plan.assumptions.returns.expectedReturn)],
+    ['Inflation', formatPercent(plan.assumptions.returns.inflation)],
+    ['Expense Ratio', formatPercent(plan.assumptions.returns.expenseRatio)],
+    section('Cash Reserve'),
+    ['Enabled', plan.assumptions.cashReserve.enabled ? 'Yes' : 'No'],
+    ['Mode', plan.assumptions.cashReserve.mode],
+    ['Fixed Amount', formatCurrency(plan.assumptions.cashReserve.fixedAmount)],
+    ['Months', plan.assumptions.cashReserve.months],
+  ]
+}
+
+function sharedHouseholdRows(plan: HouseholdPlan): Row[] {
+  const rows: Row[] = []
+
+  if (plan.dependents.length > 0) {
+    rows.push(section('Dependents'))
+    for (const dependent of plan.dependents) {
+      rows.push([
+        dependent.label,
+        `${ownerLabel(dependent.owner)} • ${formatCurrency(dependent.annualCost)}/yr`,
+      ])
+    }
+  }
+
+  const sharedCollections: Array<{
+    label: string
+    rows: Row[]
+  }> = [
+    {
+      label: 'Income',
+      rows: plan.income
+        .filter((entry) => entry.owner === 'shared')
+        .map((entry): Row => [entry.label, `${formatCurrency(entry.annualAmount)}/yr`]),
+    },
+    {
+      label: 'Expenses',
+      rows: plan.expenses
+        .filter((entry) => entry.owner === 'shared')
+        .map((entry): Row => [entry.label, `${formatCurrency(entry.amount)} ${entry.periodicity}`]),
+    },
+    {
+      label: 'Assets',
+      rows: plan.assets
+        .filter((entry) => entry.owner === 'shared')
+        .map((entry): Row => [entry.label, formatCurrency(entry.amount)]),
+    },
+    {
+      label: 'Goals',
+      rows: plan.goals
+        .filter((entry) => entry.owner === 'shared')
+        .map((entry): Row => [entry.label, formatCurrency(entry.amount)]),
+    },
+  ]
+
+  for (const group of sharedCollections) {
+    if (group.rows.length === 0) continue
+    rows.push(section(group.label), ...group.rows)
+  }
+
+  return rows.length > 0 ? rows : [['Shared entries', 'None']]
+}
+
+function allocationAndSimulationRows(
+  data: Pick<ExcelExportData, 'allocation' | 'simulation' | 'withdrawal'>,
+): Row[] {
+  const { allocation, simulation, withdrawal } = data
+  const rows: Row[] = [
+    section('Allocation'),
+    ['Template', allocation.selectedTemplate],
+    ['Glide Path Enabled', allocation.glidePathConfig.enabled ? 'Yes' : 'No'],
+    section('Simulation'),
+    ['Method', simulation.mcMethod],
+    ['Simulations', simulation.nSimulations],
+    section('Withdrawal'),
+    ['Strategies', withdrawal.selectedStrategies.join(', ') || 'None'],
+  ]
+
+  if (allocation.glidePathConfig.enabled) {
+    rows.push(
+      ['Glide Path Method', allocation.glidePathConfig.method],
+      ['Glide Path Range', `${allocation.glidePathConfig.startAge}-${allocation.glidePathConfig.endAge}`],
+    )
+  }
+
+  return rows
+}
+
+function propertyRows(properties: PropertyPlan[]): Row[] {
+  const rows: Row[] = []
+
+  for (const property of properties) {
+    rows.push(
+      section(property.label),
+      ['Owner', ownerLabel(property.owner)],
+      ['Type', property.propertyType],
+      ['Owns Property', property.ownsProperty ? 'Yes' : 'No'],
+      ['Current Value', formatCurrency(property.existingPropertyValue)],
+      ['Mortgage Balance', formatCurrency(property.existingMortgageBalance)],
+      ['Monthly Payment', formatCurrency(property.existingMonthlyPayment)],
+      ['Ownership Share', formatPercent(property.ownershipPercent)],
+    )
+  }
+
+  return rows
+}
+
+export async function exportToExcel(data: ExcelExportData): Promise<void> {
+  const { default: ExcelJS } = await import('exceljs')
+  const wb = new ExcelJS.Workbook()
+  const legacySnapshot = toLegacyIndividual(data.householdPlan)
+
+  if (legacySnapshot) {
+    addLegacyWorkbook(wb, legacySnapshot, data)
+  } else {
+    const summarySheet = wb.addWorksheet('Household Summary')
+    addRows(summarySheet, householdSummaryRows(data.householdPlan))
+
+    data.householdPlan.adults.forEach((adult, index) => {
+      const fallbackName = `Adult ${index + 1}`
+      const name = adult.displayName.trim() || fallbackName
+      const adultSheet = wb.addWorksheet(worksheetName(`Adult - ${name}`))
+      addRows(adultSheet, adultSheetRows(adult))
+    })
+
+    const sharedSheet = wb.addWorksheet('Shared Household')
+    addRows(sharedSheet, sharedHouseholdRows(data.householdPlan))
+
+    const settingsSheet = wb.addWorksheet('Allocation & Simulation')
+    addRows(settingsSheet, allocationAndSimulationRows(data))
+
+    if (data.householdPlan.properties.some((property) => property.ownsProperty || property.propertyCount > 0)) {
+      const propertySheet = wb.addWorksheet('Property')
+      addRows(propertySheet, propertyRows(data.householdPlan.properties))
+    }
+  }
+
   for (const ws of wb.worksheets) {
     ws.getRow(1).font = { bold: true }
     ws.getColumn(1).width = 35
@@ -179,11 +399,4 @@ export async function exportToExcel(): Promise<void> {
   a.download = `fireplanner-export-${new Date().toISOString().slice(0, 10)}.xlsx`
   a.click()
   URL.revokeObjectURL(url)
-}
-
-function addRows(ws: { addRow: (values: (string | number)[]) => void }, rows: Row[]) {
-  ws.addRow(['Field', 'Value'])
-  for (const [field, value] of rows) {
-    ws.addRow([field, value])
-  }
 }

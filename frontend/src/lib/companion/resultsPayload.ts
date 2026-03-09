@@ -119,6 +119,7 @@ export interface BuildPayloadInput {
   currentAge: number
   annualIncome: number
   annualExpenses: number
+  computedAtUtc?: string
   expectedReturn: number
   inflation: number
   expenseRatio: number
@@ -139,6 +140,7 @@ export function buildPlannerResultsPayload(input: BuildPayloadInput): PlannerRes
     currentAge,
     annualIncome,
     annualExpenses,
+    computedAtUtc,
     expectedReturn,
     inflation,
     expenseRatio,
@@ -211,7 +213,7 @@ export function buildPlannerResultsPayload(input: BuildPayloadInput): PlannerRes
 
   return {
     schema_version: SCHEMA_VERSION as 2,
-    computed_at_utc: new Date().toISOString(),
+    computed_at_utc: computedAtUtc ?? new Date().toISOString(),
     input_signature: undefined,
     scenario_id: scenarioId,
     scenario_name: scenarioName,

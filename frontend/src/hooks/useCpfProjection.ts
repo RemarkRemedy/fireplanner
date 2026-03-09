@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useIncomeProjection } from '@/hooks/useIncomeProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
+import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { calculateBrsFrsErs } from '@/lib/calculations/cpf'
 import { RETIREMENT_SUM_BASE_YEAR, BRS_BASE, FRS_BASE, ERS_BASE } from '@/lib/data/cpfRates'
 import { formatCurrency } from '@/lib/utils'
@@ -35,11 +36,39 @@ export function useCpfProjection(): {
   hasErrors: boolean
 } {
   const { projection, hasErrors } = useIncomeProjection()
-  const cpfLifeStartAge = useProfileStore((s) => s.cpfLifeStartAge)
-  const cpfLifePlan = useProfileStore((s) => s.cpfLifePlan)
-  const currentAge = useProfileStore((s) => s.currentAge)
+  const normalized = useNormalizedLegacyAnalysisContext()
+  const { profile } = useHouseholdRuntimeInputs()
+  const cpfLifeStartAge = profile.cpfLifeStartAge
+  const cpfLifePlan = profile.cpfLifePlan
+  const currentAge = profile.currentAge
+  const normalizedSlot = normalized.entry.selectors.cpf?.cpfByAdultId[normalized.referenceAdultId]
 
   return useMemo(() => {
+    if (normalizedSlot?.rows.length) {
+      return {
+        rows: normalizedSlot.rows.map((row) => ({
+          age: row.age,
+          oaBalance: row.oaBalance,
+          saBalance: row.saBalance,
+          maBalance: row.maBalance,
+          raBalance: row.raBalance,
+          totalBalance: row.totalBalance,
+          annualContribution: row.annualContribution,
+          annualInterest: row.annualInterest,
+          cpfLifePayout: row.cpfLifePayout,
+          oaHousingDeduction: row.oaHousingDeduction,
+          oaShortfall: row.oaShortfall,
+          cpfisOA: row.cpfisOA,
+          cpfisSA: row.cpfisSA,
+          cpfisReturn: row.cpfisReturn,
+          bequest: row.bequest,
+          milestone: row.milestone,
+          milestoneFormula: row.milestoneFormula,
+        })),
+        hasErrors: false,
+      }
+    }
+
     if (hasErrors || !projection || projection.length === 0) {
       return { rows: null, hasErrors: true }
     }
@@ -159,5 +188,12 @@ export function useCpfProjection(): {
     })
 
     return { rows, hasErrors: false }
-  }, [projection, hasErrors, currentAge, cpfLifeStartAge, cpfLifePlan])
+  }, [
+    currentAge,
+    cpfLifePlan,
+    cpfLifeStartAge,
+    hasErrors,
+    normalizedSlot,
+    projection,
+  ])
 }

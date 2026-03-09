@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { EntryOwner, HouseholdPlan } from '@/lib/household/types'
 
 export const SCHEMA_VERSION = 2
 
@@ -43,12 +44,45 @@ export const PlannerSnapshotResponseSchema = z
     withdrawalProbabilitySuccess: z.number().optional(),
     withdrawalCriticalRate50: z.number().optional(),
     deterministicFireAge: z.number().optional(),
+    expenseImport: z.unknown().optional(),
   })
   .passthrough()
 
 export type PlannerSnapshotResponse = z.infer<typeof PlannerSnapshotResponseSchema>
 export type PlannerProfile = z.infer<typeof PlannerProfileSchema>
 export type SafeToSpend = z.infer<typeof SafeToSpendSchema>
+
+export type ImportedPlanMemberRole = 'self' | 'partner' | 'dependent'
+
+export interface ImportedPlanReviewProvenance {
+  source: 'expense-import'
+  importedAt: string
+  monthKey: string | null
+  schemaVersion: number
+  structuralMode: string | null
+}
+
+export interface ImportedPlanDetectedMember {
+  id: string
+  label: string
+  role: ImportedPlanMemberRole
+  owner: EntryOwner
+  age: number | null
+}
+
+export interface ImportedPlanReview {
+  provenance: ImportedPlanReviewProvenance
+  detectedMembers: ImportedPlanDetectedMember[]
+  sharedDataUsage: string[]
+  privateDataUsage: string[]
+  unsupportedFields: string[]
+  localEditabilityNote: string
+}
+
+export interface ImportedHouseholdPlan {
+  plan: HouseholdPlan
+  review: ImportedPlanReview
+}
 
 // --- Results (POST /api/planner/results) ---
 // v2 canonical field names per docs/sgfireplanner-results-payload-v2.md

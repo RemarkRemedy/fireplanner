@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useUIStore } from '@/stores/useUIStore'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useEffectiveMode, type ModeSectionId } from '@/hooks/useEffectiveMode'
 import { calculateProgressiveTax } from '@/lib/calculations/tax'
@@ -19,23 +18,23 @@ export interface SectionNudgeData {
 export function useSectionNudge(sectionId: ModeSectionId): SectionNudgeData | null {
   const mode = useEffectiveMode(sectionId)
   const dismissedNudges = useUIStore((s) => s.dismissedNudges)
+  const { profile, property } = useHouseholdRuntimeInputs()
 
-  const annualIncome = useProfileStore((s) => s.annualIncome)
-  const currentAge = useProfileStore((s) => s.currentAge)
-  const residencyStatus = useProfileStore((s) => s.residencyStatus)
-  const prMonths = useProfileStore((s) => s.prMonths)
-  const retirementAge = useProfileStore((s) => s.retirementAge)
-  const lifeExpectancy = useProfileStore((s) => s.lifeExpectancy)
-  const liquidNetWorth = useProfileStore((s) => s.liquidNetWorth)
-  const cpfOA = useProfileStore((s) => s.cpfOA)
-  const cpfSA = useProfileStore((s) => s.cpfSA)
-  const cpfMA = useProfileStore((s) => s.cpfMA)
-  const srsBalance = useProfileStore((s) => s.srsBalance)
-  const srsAnnualContribution = useProfileStore((s) => s.srsAnnualContribution)
-  const fireType = useProfileStore((s) => s.fireType)
+  const annualIncome = profile.annualIncome
+  const currentAge = profile.currentAge
+  const residencyStatus = profile.residencyStatus
+  const prMonths = profile.prMonths
+  const retirementAge = profile.retirementAge
+  const lifeExpectancy = profile.lifeExpectancy
+  const liquidNetWorth = profile.liquidNetWorth
+  const cpfOA = profile.cpfOA
+  const cpfSA = profile.cpfSA
+  const cpfMA = profile.cpfMA
+  const srsBalance = profile.srsBalance
+  const srsAnnualContribution = profile.srsAnnualContribution
 
-  const ownsProperty = usePropertyStore((s) => s.ownsProperty)
-  const propertyType = usePropertyStore((s) => s.propertyType)
+  const ownsProperty = property.ownsProperty
+  const propertyType = property.propertyType
 
   const lastMCSuccessRate = useSimulationStore((s) => s.lastMCSuccessRate)
 
@@ -171,7 +170,7 @@ export function useSectionNudge(sectionId: ModeSectionId): SectionNudgeData | nu
     mode, sectionId, dismissedNudges, annualIncome, currentAge,
     residencyStatus, prMonths,
     retirementAge, lifeExpectancy, liquidNetWorth, cpfOA, cpfSA, cpfMA,
-    srsBalance, srsAnnualContribution, fireType, ownsProperty, propertyType,
+    srsBalance, srsAnnualContribution, ownsProperty, propertyType,
     lastMCSuccessRate, cpfEnabled,
   ])
 }

@@ -1,15 +1,16 @@
 import { useMemo } from 'react'
+import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import type { ProjectionRow, ProjectionSummary } from '@/lib/types'
 import { generateProjection, type ProjectionParams } from '@/lib/calculations/projection'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { getPropertyRentalIncome, computeLbsProceeds } from '@/lib/calculations/hdb'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { getRetirementSumAmount } from '@/lib/calculations/cpf'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useIncomeProjection } from '@/hooks/useIncomeProjection'
 import { useFireCalculations } from '@/hooks/useFireCalculations'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 
 interface ProjectionResult {
   rows: ProjectionRow[] | null
@@ -27,11 +28,14 @@ interface ProjectionResult {
  * Returns null rows/summary when upstream validation fails.
  */
 export function useProjection(): ProjectionResult {
-  const profile = useProfileStore()
-  const income = useIncomeStore()
+  const plan = useHouseholdPlanStore((state) => state.plan)
   const allocation = useAllocationStore()
   const simulation = useSimulationStore()
-  const property = usePropertyStore()
+  const normalized = useNormalizedLegacyAnalysisContext()
+  const { profile, income, property } = useMemo(
+    () => buildHouseholdRuntimeLegacyInputs(plan, normalized.compiledPlan),
+    [normalized.compiledPlan, plan]
+  )
   const { projection: incomeProjection, hasErrors: incomeHasErrors, errors: incomeErrors } = useIncomeProjection()
   const { metrics: fireMetrics, hasErrors: fireHasErrors, errors: fireErrors } = useFireCalculations()
 
@@ -64,7 +68,7 @@ export function useProjection(): ProjectionResult {
           remainingLease: property.existingLeaseYears,
           retainedLease: property.hdbLbsRetainedLease,
           cpfRaBalance: profile.cpfRA,
-          retirementSum: 213000,
+          retirementSum: getRetirementSumAmount(profile.cpfRetirementSum, profile.currentAge),
         })
       : null
 
@@ -72,9 +76,9 @@ export function useProjection(): ProjectionResult {
 
     const projectionParams: ProjectionParams = {
       incomeProjection,
-      currentAge: profile.currentAge,
-      retirementAge: profile.retirementAge,
-      lifeExpectancy: profile.lifeExpectancy,
+      currentAge: normalized.currentAge,
+      retirementAge: normalized.retirementAge,
+      lifeExpectancy: normalized.lifeExpectancy,
       initialLiquidNW: profile.liquidNetWorth + (lbsResult?.cashProceeds ?? 0),
       swr: profile.swr,
       expectedReturn: effectiveReturn,
@@ -139,9 +143,6 @@ export function useProjection(): ProjectionResult {
     fireMetrics,
     fireHasErrors,
     fireErrors,
-    profile.currentAge,
-    profile.retirementAge,
-    profile.lifeExpectancy,
     profile.liquidNetWorth,
     profile.swr,
     profile.expectedReturn,
@@ -184,6 +185,8 @@ export function useProjection(): ProjectionResult {
     profile.financialGoals,
     profile.cpfLifeStartAge,
     profile.cpfLifePlan,
+    profile.cpfRetirementSum,
+    profile.currentAge,
     profile.expenseAdjustments,
     profile.cpfAutoFallback,
     profile.cpfAutoFallbackIncludeSA,
@@ -191,5 +194,8 @@ export function useProjection(): ProjectionResult {
     profile.cpfVirtualRebalancingMode,
     income.lifeEvents,
     income.lifeEventsEnabled,
+    normalized.currentAge,
+    normalized.lifeExpectancy,
+    normalized.retirementAge,
   ])
 }

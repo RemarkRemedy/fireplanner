@@ -2,30 +2,9 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Layers, Save, Trash2, Upload as LoadIcon, X } from 'lucide-react'
 import { listScenarios, saveScenario, loadScenario, deleteScenario } from '@/lib/scenarios'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
-import { useAllocationStore } from '@/stores/useAllocationStore'
-import { useSimulationStore } from '@/stores/useSimulationStore'
-import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 import type { ScenarioMetadata } from '@/lib/scenarios'
 import { trackEvent } from '@/lib/analytics'
-
-function rehydrateAllStores() {
-  // Zustand persist stores expose .persist.rehydrate() on the store object
-  const stores = [
-    useProfileStore,
-    useIncomeStore,
-    useAllocationStore,
-    useSimulationStore,
-    useWithdrawalStore,
-    usePropertyStore,
-  ] as Array<{ persist: { rehydrate: () => void } }>
-
-  for (const store of stores) {
-    store.persist.rehydrate()
-  }
-}
+import { Input } from '@/components/ui/input'
 
 export function ScenarioManager() {
   const [open, setOpen] = useState(false)
@@ -55,7 +34,7 @@ export function ScenarioManager() {
   }
 
   const handleLoad = (id: string, name: string) => {
-    loadScenario(id, rehydrateAllStores)
+    loadScenario(id)
     toast.success(`Loaded "${name}"`)
     trackEvent('scenario_loaded')
     setOpen(false)
@@ -96,13 +75,12 @@ export function ScenarioManager() {
 
       {/* Save new */}
       <div className="flex gap-1">
-        <input
-          type="text"
+        <Input
           value={saveName}
           onChange={(e) => setSaveName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSave()}
           placeholder="Scenario name..."
-          className="flex-1 min-w-0 px-2 py-1 text-xs border rounded bg-background"
+          className="flex-1 min-w-0 h-8 text-xs"
           maxLength={40}
         />
         <button

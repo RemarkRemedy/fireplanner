@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest'
+import { computeTotalReliefs } from '@/lib/data/taxBrackets'
+import { useProfileStore } from './useProfileStore'
 import { useIncomeStore, DEFAULT_CAREER_PHASES } from './useIncomeStore'
 
 beforeEach(() => {
+  useProfileStore.getState().reset()
   useIncomeStore.getState().reset()
 })
 
@@ -22,6 +25,7 @@ describe('useIncomeStore', () => {
       expect(state.lifeEventsEnabled).toBe(false)
       expect(state.personalReliefs).toBe(20000)
       expect(state.reliefBreakdown).toBeNull()
+      expect(state.reliefBasisAge).toBeNull()
     })
 
     it('has no validation errors with defaults', () => {
@@ -178,6 +182,39 @@ describe('useIncomeStore', () => {
     })
   })
 
+  describe('setReliefBreakdown', () => {
+    const detailedReliefs = {
+      earnedIncomeRelief: 0,
+      nsmanStatus: 'performedDuty' as const,
+      nsmanKAH: true,
+      spouseRelief: true,
+      nChildren: 1,
+      parentReliefType: 'liveWith' as const,
+      nParents: 1,
+      otherReliefs: 500,
+    }
+
+    it('captures the current age as the relief basis age when materializing detailed reliefs', () => {
+      useProfileStore.getState().setField('currentAge', 57)
+      useIncomeStore.getState().setReliefBreakdown(detailedReliefs)
+
+      const state = useIncomeStore.getState()
+      expect(state.reliefBreakdown).toEqual(detailedReliefs)
+      expect(state.reliefBasisAge).toBe(57)
+      expect(state.personalReliefs).toBe(computeTotalReliefs(detailedReliefs, 57))
+    })
+
+    it('clears the relief basis age when leaving detailed relief mode', () => {
+      useProfileStore.getState().setField('currentAge', 57)
+      useIncomeStore.getState().setReliefBreakdown(detailedReliefs)
+      useIncomeStore.getState().setReliefBreakdown(null)
+
+      const state = useIncomeStore.getState()
+      expect(state.reliefBreakdown).toBeNull()
+      expect(state.reliefBasisAge).toBeNull()
+    })
+  })
+
   describe('reset', () => {
     it('restores all defaults', () => {
       useIncomeStore.getState().setField('annualSalary', 200000)
@@ -187,6 +224,7 @@ describe('useIncomeStore', () => {
       expect(state.annualSalary).toBe(72000)
       expect(state.salaryModel).toBe('simple')
       expect(state.incomeStreams).toEqual([])
+      expect(state.reliefBasisAge).toBeNull()
     })
   })
 })

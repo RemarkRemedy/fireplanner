@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { useProfileStore } from '@/stores/useProfileStore'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { usePortfolioStats } from '@/hooks/usePortfolioStats'
 import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 import { cn } from '@/lib/utils'
@@ -34,7 +34,8 @@ const PREVIEW_ROWS = 5
 
 export function GlidePathSection() {
   const { glidePathConfig, setGlidePathConfig, validationErrors } = useAllocationStore()
-  const retirementAge = useProfileStore((s) => s.retirementAge)
+  const { normalized } = useHouseholdRuntimeInputs()
+  const retirementAge = normalized.retirementAge
   const { glidePathAllocations } = usePortfolioStats()
   const [tableExpanded, setTableExpanded] = useState(false)
 

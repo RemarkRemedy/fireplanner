@@ -21,8 +21,10 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useUIStore } from '@/stores/useUIStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import type { MonteCarloResult } from '@/lib/types'
 import type { ActionImpactRunnerOutput } from '@/lib/companion/actionImpacts'
+import * as incomeProjectionHooks from '@/hooks/useIncomeProjection'
 
 // ── Module mocks ─────────────────────────────────────────
 
@@ -113,15 +115,165 @@ function makeActionImpactOutput(
   }
 }
 
+function makeSingleActionImpactOutput(label: string, id: string): ActionImpactRunnerOutput {
+  return makeActionImpactOutput({
+    impacts: [{
+      lever: {
+        id,
+        label,
+        shortLabel: label,
+        description: label,
+        applicableTo: 'all',
+      },
+      metrics: { p_success: 0.95, fail_prob_0_5y: 0.001, fail_prob_6_10y: 0.002 },
+      delta_p_success: 0.04,
+      delta_fail_prob_0_5y: -0.002,
+      delta_fail_prob_6_10y: -0.001,
+      rationale: `${label} improves success by 4.0pp.`,
+    }],
+  })
+}
+
+function createMockNormalizedContext(overrides?: Partial<ReturnType<typeof incomeProjectionHooks.useNormalizedLegacyAnalysisContext>>) {
+  return {
+    cacheKey: 'legacy:1:1:1::00000000',
+    householdRevision: 'legacy:1:1:1',
+    scenarioOverrideHash: '00000000',
+    referenceAdultId: 'adult-self',
+    currentAge: 30,
+    retirementAge: 65,
+    lifeExpectancy: 90,
+    firstRetirementYearOffset: 35,
+    householdRetirementYearOffset: 35,
+    compiledPlan: {
+      assumptions: {
+        returns: {
+          inflation: 0.025,
+        },
+      },
+      rows: [{
+        yearOffset: 0,
+        agesByAdultId: { 'adult-self': 30 },
+        totalNetIncome: 100_000,
+        sharedIncome: 0,
+        propertyIncome: 0,
+        propertyExpense: 0,
+        healthcareCashOutlay: 0,
+        parentSupportExpense: 0,
+        dependentExpense: 0,
+        annualSavings: 50_000,
+        postRetirementIncome: 0,
+        retirementExpenseBase: 50_000,
+        householdWithdrawalNeed: 50_000,
+      }],
+    },
+    entry: {
+      selectors: {
+        deterministic: { rows: [], milestones: [] },
+        projection: {
+          annualSavingsByYear: [],
+          postRetirementIncomeByYear: [],
+          retirementExpenseBaseByYear: [],
+          householdWithdrawalNeedByYear: [],
+          portfolioAdjustments: [],
+        },
+        monteCarlo: {
+          annualSavingsByYear: [],
+          postRetirementIncomeByYear: [],
+          householdWithdrawalNeedByYear: [],
+          portfolioAdjustments: [],
+        },
+        backtest: {
+          postRetirementIncomeByYear: [],
+          retirementExpenseBaseByYear: [],
+          householdWithdrawalNeedByYear: [],
+          portfolioAdjustments: [],
+        },
+        cpf: { cpfByAdultId: {} },
+        healthcare: { healthcareByAdultId: {} },
+        companion: {
+          milestones: [],
+          annualSavingsByYear: [],
+          postRetirementIncomeByYear: [],
+          householdWithdrawalNeedByYear: [],
+        },
+      },
+    },
+    ...overrides,
+  } as ReturnType<typeof incomeProjectionHooks.useNormalizedLegacyAnalysisContext>
+}
+
 // ── Helpers ──────────────────────────────────────────────
 
 function resetAllStores() {
+  localStorage.removeItem('fireplanner-feature-householdPlannerV1')
   useProfileStore.getState().reset()
   useIncomeStore.getState().reset()
   useAllocationStore.getState().reset()
   useSimulationStore.getState().reset()
   usePropertyStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   useUIStore.setState({ mode: 'simple' })
+}
+
+function seedHouseholdPlan() {
+  const plan = structuredClone(useHouseholdPlanStore.getState().plan)
+  const self = structuredClone(plan.adults[0]!)
+  self.id = 'adult-self'
+  self.owner = 'self'
+  self.displayName = 'Taylor'
+  self.currentAge = 34
+  self.retirementAge = 60
+  self.lifeExpectancy = 90
+  self.annualIncome = 120_000
+  self.annualExpenses = 0
+  self.liquidNetWorth = 180_000
+  self.lifeEventsEnabled = false
+  self.lifeEvents = []
+
+  const partner = structuredClone(self)
+  partner.id = 'adult-partner'
+  partner.owner = 'partner'
+  partner.displayName = 'Jordan'
+  partner.currentAge = 33
+  partner.retirementAge = 58
+  partner.lifeExpectancy = 92
+  partner.annualIncome = 84_000
+  partner.liquidNetWorth = 95_000
+  partner.taxProfile = {
+    ...partner.taxProfile,
+    reliefBasisAge: 33,
+  }
+
+  plan.id = 'stress-household-plan'
+  plan.planType = 'couple'
+  plan.adults = [self, partner]
+  plan.dependents = [
+    {
+      id: 'dependent-maya',
+      owner: 'shared',
+      label: 'Maya',
+      relationship: 'child',
+      currentAge: 8,
+      timing: {
+        kind: 'age-range',
+        owner: 'self',
+        startAge: 34,
+        endAge: 52,
+      },
+      annualCost: 9_000,
+    },
+  ]
+  plan.income = []
+  plan.expenses = []
+  plan.assets = []
+  plan.goals = []
+  plan.properties = []
+
+  useHouseholdPlanStore.getState().setPlan(plan, {
+    source: 'manual',
+    initializedAt: '2026-03-07T00:00:00.000Z',
+  })
 }
 
 function renderPage() {
@@ -170,12 +322,67 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.restoreAllMocks()
 })
 
 // ── Tests ────────────────────────────────────────────────
 
 describe('StressTestPage companion orchestration', () => {
+  it('shows household presentation and household-level companion copy for couple plans', async () => {
+    localStorage.setItem('fireplanner-feature-householdPlannerV1', '1')
+    seedHouseholdPlan()
+
+    mockRunMC.mockResolvedValue(SAMPLE_MC_RESULT)
+    mockRunActionImpacts.mockResolvedValue(makeActionImpactOutput())
+
+    renderPage()
+
+    // Household presentation sections render before companion bootstrap overwrites the plan.
+    // The bootstrap's applySnapshotToStores calls fromExpenseImport which replaces the
+    // seeded couple plan with an individual plan from the snapshot, so the household
+    // sections disappear once the bootstrap useEffect resolves.
+    expect(screen.getByText('Who this analysis covers')).toBeInTheDocument()
+    expect(screen.getByText('Timeline highlights')).toBeInTheDocument()
+    expect(screen.getByText('Why this result looks the way it does')).toBeInTheDocument()
+
+    await waitForRunButton()
+    const user = userEvent.setup()
+    await user.click(getRunButton())
+
+    await waitFor(() => {
+      expect(mockRunMC).toHaveBeenCalled()
+    })
+  })
+
+  it('uses normalized retirement context when building companion action impact overrides', async () => {
+    const normalizedSpy = vi
+      .spyOn(incomeProjectionHooks, 'useNormalizedLegacyAnalysisContext')
+      .mockReturnValue(createMockNormalizedContext({
+        currentAge: 65,
+        retirementAge: 65,
+        firstRetirementYearOffset: 0,
+        householdRetirementYearOffset: 0,
+      }))
+
+    mockRunMC.mockResolvedValue(SAMPLE_MC_RESULT)
+    mockRunActionImpacts.mockResolvedValue(makeActionImpactOutput())
+
+    const user = userEvent.setup()
+    renderPage()
+
+    await waitForRunButton()
+    await user.click(getRunButton())
+
+    await waitFor(() => {
+      expect(mockRunActionImpacts).toHaveBeenCalled()
+    })
+
+    expect(mockRunActionImpacts.mock.calls[0]?.[0].profileOverrides?.retirementAge).toBe(66)
+
+    normalizedSpy.mockRestore()
+  })
+
   it('calls runActionImpactAnalysis after MC completes and shows results', async () => {
     // MC resolves immediately
     mockRunMC.mockResolvedValue(SAMPLE_MC_RESULT)
@@ -232,7 +439,11 @@ describe('StressTestPage companion orchestration', () => {
 
     await user.click(getRunButton())
 
-    // Wait for MC to complete and action impact to start
+    await act(async () => {
+      vi.advanceTimersByTime(0)
+      await Promise.resolve()
+    })
+
     await waitFor(() => {
       expect(mockRunActionImpacts).toHaveBeenCalled()
     })
@@ -240,11 +451,13 @@ describe('StressTestPage companion orchestration', () => {
     // Advance past the 15-second timeout
     await act(async () => {
       vi.advanceTimersByTime(16_000)
+      await Promise.resolve()
     })
 
     await waitFor(() => {
       expect(screen.getByText(/Analysis timed out\. Showing 1\/3 results\./)).toBeInTheDocument()
     })
+    expect(screen.getByText('Cut expenses by 10%')).toBeInTheDocument()
 
     vi.useRealTimers()
   })
@@ -277,12 +490,18 @@ describe('StressTestPage companion orchestration', () => {
 
     await user.click(getRunButton())
 
+    await act(async () => {
+      vi.advanceTimersByTime(0)
+      await Promise.resolve()
+    })
+
     await waitFor(() => {
       expect(mockRunActionImpacts).toHaveBeenCalled()
     })
 
     await act(async () => {
       vi.advanceTimersByTime(16_000)
+      await Promise.resolve()
     })
 
     await waitFor(() => {
@@ -334,6 +553,40 @@ describe('StressTestPage companion orchestration', () => {
 
     // Resolve the first to prevent hanging
     resolveFirst?.()
+  })
+
+  it('keeps action impact results scoped to the active companion scenario', async () => {
+    mockRunMC.mockImplementation(async () => structuredClone(SAMPLE_MC_RESULT))
+    mockRunActionImpacts
+      .mockResolvedValueOnce(makeSingleActionImpactOutput('Base action', 'base-action'))
+      .mockResolvedValueOnce(makeSingleActionImpactOutput('Cut scenario action', 'cut-action'))
+
+    const user = userEvent.setup()
+    renderPage()
+
+    await waitForRunButton()
+
+    await user.click(getRunButton())
+
+    await waitFor(() => {
+      expect(mockRunActionImpacts).toHaveBeenCalledTimes(1)
+      expect(screen.getByText('Base action')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Cut $300/mo' }))
+    await user.click(getRunButton())
+
+    await waitFor(() => {
+      expect(mockRunActionImpacts).toHaveBeenCalledTimes(2)
+      expect(screen.getByText('Cut scenario action')).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Base' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Base action')).toBeInTheDocument()
+    })
+    expect(screen.queryByText('Cut scenario action')).not.toBeInTheDocument()
   })
 
   it('shows error message when runActionImpactAnalysis rejects', async () => {

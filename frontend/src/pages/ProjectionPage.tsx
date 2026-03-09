@@ -8,7 +8,7 @@ import {
 } from '@tanstack/react-table'
 import type { WithdrawalStrategyType } from '@/lib/types'
 import { useProjection } from '@/hooks/useProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
+import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -56,15 +56,14 @@ const STRATEGY_SHORT_LABELS: Record<WithdrawalStrategyType, string> = {
 
 export function ProjectionPage() {
   usePageMeta({ title: 'Projection — SG FIRE Planner', description: 'Year-by-year financial projection with net worth trajectory, CPF balances, and retirement milestones.', path: '/projection' })
+  const normalized = useNormalizedLegacyAnalysisContext()
   const { rows, summary, hasErrors } = useProjection()
   const { isEligible } = useExpenseTracker()
   useExpenseTrackerDwell(Boolean(rows && rows.length > 0), 10)
-  const retirementAge = useProfileStore((s) => s.retirementAge)
-  const currentAge = useProfileStore((s) => s.currentAge)
-  const inflation = useProfileStore((s) => s.inflation)
-  const srsBalance = useProfileStore((s) => s.srsBalance)
-  const srsAnnualContribution = useProfileStore((s) => s.srsAnnualContribution)
-  const hasSrs = srsBalance > 0 || srsAnnualContribution > 0
+  const retirementAge = normalized.retirementAge
+  const currentAge = normalized.currentAge
+  const inflation = normalized.compiledPlan.assumptions.returns.inflation
+  const hasSrs = rows?.some((row) => row.srsBalance > 0 || row.srsContribution > 0 || row.srsWithdrawal > 0) ?? false
   const activeStrategy = useSimulationStore((s) => s.selectedStrategy)
   const setSimField = useSimulationStore((s) => s.setField)
 

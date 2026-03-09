@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useProfileStore } from '@/stores/useProfileStore'
+import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useProjection } from '@/hooks/useProjection'
@@ -26,8 +26,8 @@ interface ExplorePortfolioResult {
  */
 export function useExplorePortfolio(): ExplorePortfolioResult {
   const [balanceMode, setBalanceMode] = useState<ExploreBalanceMode>('myPlan')
-  const profile = useProfileStore()
   const allocation = useAllocationStore()
+  const normalized = useNormalizedLegacyAnalysisContext()
   const { metrics } = useFireCalculations()
   const { rows } = useProjection()
 
@@ -36,12 +36,12 @@ export function useExplorePortfolio(): ExplorePortfolioResult {
 
     if (balanceMode === 'fireTarget') {
       const fireNumber = metrics?.fireNumber ?? 0
-      const rawFireAge = metrics?.fireAge ?? profile.retirementAge
-      const fireAge = isFinite(rawFireAge)
-        ? Math.min(profile.lifeExpectancy, Math.max(profile.currentAge, Math.round(rawFireAge)))
-        : profile.retirementAge
+      const rawFireAge = metrics?.fireAge ?? normalized.retirementAge
+      const fireAge = Number.isFinite(rawFireAge)
+        ? Math.min(normalized.lifeExpectancy, Math.max(normalized.currentAge, Math.round(rawFireAge)))
+        : normalized.retirementAge
 
-      const dollarYear = currentYear + (fireAge - profile.currentAge)
+      const dollarYear = currentYear + (fireAge - normalized.currentAge)
       const weights = getWeightsAtStartAge(
         fireAge, allocation.glidePathConfig, allocation.currentWeights, allocation.targetWeights,
       )
@@ -57,11 +57,11 @@ export function useExplorePortfolio(): ExplorePortfolioResult {
     }
 
     // myPlan: projected NW at retirement age
-    const retirementRow = rows?.find(r => r.age === profile.retirementAge)
+    const retirementRow = rows?.find(r => r.age === normalized.retirementAge)
     const projectedNW = retirementRow?.liquidNW ?? 0
-    const dollarYear = currentYear + (profile.retirementAge - profile.currentAge)
+    const dollarYear = currentYear + (normalized.retirementAge - normalized.currentAge)
     const weights = getWeightsAtStartAge(
-      profile.retirementAge, allocation.glidePathConfig, allocation.currentWeights, allocation.targetWeights,
+      normalized.retirementAge, allocation.glidePathConfig, allocation.currentWeights, allocation.targetWeights,
     )
 
     return {
@@ -69,12 +69,13 @@ export function useExplorePortfolio(): ExplorePortfolioResult {
       setBalanceMode,
       initialPortfolio: projectedNW,
       allocationWeights: weights,
-      startAge: profile.retirementAge,
-      label: `My Plan: ${formatCurrency(projectedNW)} at age ${profile.retirementAge} (${dollarYear}$)`,
+      startAge: normalized.retirementAge,
+      label: `My Plan: ${formatCurrency(projectedNW)} at age ${normalized.retirementAge} (${dollarYear}$)`,
     }
   }, [
-    balanceMode, setBalanceMode, profile.retirementAge, profile.currentAge, profile.lifeExpectancy,
+    balanceMode,
     allocation.currentWeights, allocation.targetWeights, allocation.glidePathConfig, metrics, rows,
+    normalized.currentAge, normalized.lifeExpectancy, normalized.retirementAge,
   ])
 }
 

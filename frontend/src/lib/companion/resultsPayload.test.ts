@@ -193,6 +193,55 @@ describe('buildPlannerResultsPayload', () => {
     expect(payload.wr_safe_50_source).toBe('optimized_confidence_50')
   })
 
+  it('locks the canonical v2 payload regression exactly', () => {
+    const payload = buildPlannerResultsPayload({
+      ...BASE_INPUT,
+      computedAtUtc: '2026-03-07T00:00:00.000Z',
+    })
+
+    expect(payload).toEqual({
+      schema_version: 2,
+      computed_at_utc: '2026-03-07T00:00:00.000Z',
+      input_signature: undefined,
+      scenario_id: 'base',
+      scenario_name: 'Base Plan',
+      simulation_method: 'parametric',
+      n_simulations: 10_000,
+      computation_time_ms: 42,
+      cached: false,
+      horizon_years: 35,
+      target_fire_age: 55,
+      projected_fire_age_p50: 55,
+      annual_expenses_target_real: 50_000,
+      required_portfolio: 1_428_571,
+      required_portfolio_basis: 'wr_safe_90',
+      required_savings_rate: -0.319833,
+      p_success: 0.91,
+      wr_safe_95: 0.03,
+      wr_safe_90: 0.035,
+      wr_safe_85: 0.04,
+      wr_safe_50: 0.047,
+      wr_safe_50_source: 'optimized_confidence_50',
+      fail_prob_0_5y: 0.003,
+      fail_prob_6_10y: 0.007,
+      terminal_p5: 10_000,
+      terminal_p50: 100_000,
+      terminal_p95: 300_000,
+      portfolio_at_fire_p50: 100_000,
+      allocation_summary: 'Stocks 60 / Bonds 20 / Cash 20',
+      allocation_weights: {
+        usEquities: 0.3,
+        sgEquities: 0.1,
+        intlEquities: 0.1,
+        bonds: 0.2,
+        reits: 0.1,
+        gold: 0,
+        cash: 0.2,
+        cpf: 0,
+      },
+    })
+  })
+
   it('computes fail_prob_0_5y and fail_prob_6_10y from 5-year bins', () => {
     const payload = buildPlannerResultsPayload(BASE_INPUT)
     // counts_5y: [30, 70], n_simulations: 10_000
