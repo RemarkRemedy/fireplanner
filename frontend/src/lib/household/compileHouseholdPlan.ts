@@ -1,4 +1,3 @@
-import { calculateBrsFrsErs } from '@/lib/calculations/cpf'
 import {
   generateHealthcareProjection,
   projectMediSaveTimeline,
@@ -18,20 +17,12 @@ import {
   calculateSellAndRent,
   outstandingMortgageAtAge,
 } from '@/lib/calculations/property'
-import {
-  BRS_BASE,
-  BRS_GROWTH_RATE,
-  CPF_RETIREMENT_ACCOUNT_AGE,
-  ERS_BASE,
-  FRS_BASE,
-  RETIREMENT_SUM_BASE_YEAR,
-} from '@/lib/data/cpfRates'
 import { DEFAULT_DOWNSIZING_RENT_GROWTH_RATE } from '@/lib/data/propertyDefaults'
 import type {
   IncomeProjectionRow,
   IncomeStream,
 } from '@/lib/types'
-import { formatCurrency } from '@/lib/utils'
+import { buildCpfProjectionRows as buildSharedCpfProjectionRows } from './cpfProjectionRows'
 import {
   normalizeHouseholdPlan,
   type NormalizedHouseholdPlan,
@@ -502,116 +493,17 @@ function buildCpfProjectionRows(
   timing: AdultTimingOffsets,
   projection: IncomeProjectionRow[]
 ): HouseholdCpfProjectionRow[] {
-  const currentAge = adult.currentAge
-  const growthFactor = (1 + BRS_GROWTH_RATE).toFixed(3)
-  const cpfLifeStartAge = adult.cpf.lifeStartAge
-  const cpfLifePlan = adult.cpf.lifePlan
-  const brsFrsErs = calculateBrsFrsErs(currentAge)
-  let brsReached = false
-  let frsReached = false
-  let ersReached = false
-  let cpfLifeStarted = false
-  let annuityPremium = 0
-  let payoutsFromAnnuity = 0
-  let raFullyDepleted = false
-
-  return projection.map((row, index) => {
-    const prevRow = index > 0 ? projection[index - 1] : null
-    const prevTotal = prevRow
-      ? prevRow.cpfOA + prevRow.cpfSA + prevRow.cpfMA + prevRow.cpfRA
-      : 0
-    const totalBalance = row.cpfOA + row.cpfSA + row.cpfMA + row.cpfRA
-    const retirementBalance = row.cpfOA + row.cpfSA + row.cpfRA
-    const annualContribution = row.cpfEmployee + row.cpfEmployer
-    const annualInterest = index > 0
-      ? row.cpfAnnualInterest ?? (totalBalance - prevTotal - annualContribution + row.cpfOaHousingDeduction)
-      : 0
-
-    let milestone: HouseholdCpfProjectionRow['milestone'] = null
-
-    if (!brsReached && retirementBalance >= brsFrsErs.brs) {
-      milestone = 'brs'
-      brsReached = true
-    }
-    if (!frsReached && retirementBalance >= brsFrsErs.frs) {
-      milestone = 'frs'
-      frsReached = true
-    }
-    if (!ersReached && retirementBalance >= brsFrsErs.ers) {
-      milestone = 'ers'
-      ersReached = true
-    }
-    if (!cpfLifeStarted && row.age === cpfLifeStartAge) {
-      milestone = 'cpfLifeStart'
-      cpfLifeStarted = true
-    }
-    if (row.age === CPF_RETIREMENT_ACCOUNT_AGE && row.cpfRA > 0 && milestone === null) {
-      milestone = 'raCreated'
-    }
-
-    if (row.cpfLifeAnnuityPremium > 0) {
-      annuityPremium = row.cpfLifeAnnuityPremium
-    }
-
-    let bequest = 0
-    if (row.age >= cpfLifeStartAge && annuityPremium > 0) {
-      if (cpfLifePlan === 'basic') {
-        if (row.cpfRA > 0) {
-          bequest = row.cpfRA + annuityPremium
-        } else {
-          if (!raFullyDepleted) {
-            raFullyDepleted = true
-            payoutsFromAnnuity = 0
-          }
-          payoutsFromAnnuity += row.cpfLifePayout
-          bequest = Math.max(0, annuityPremium - payoutsFromAnnuity)
-        }
-      } else {
-        payoutsFromAnnuity += row.cpfLifePayout
-        bequest = Math.max(0, annuityPremium - payoutsFromAnnuity)
-      }
-    }
-
-    let milestoneFormula: string | null = null
-    if (milestone === 'frs') {
-      const years = Math.max(0, CPF_RETIREMENT_ACCOUNT_AGE - currentAge) + Math.max(0, new Date().getFullYear() - RETIREMENT_SUM_BASE_YEAR)
-      milestoneFormula = `FRS at ${CPF_RETIREMENT_ACCOUNT_AGE}: ${formatCurrency(FRS_BASE)} (${RETIREMENT_SUM_BASE_YEAR}) × ${growthFactor}^${years} = ${formatCurrency(brsFrsErs.frs)}`
-    } else if (milestone === 'brs') {
-      const years = Math.max(0, CPF_RETIREMENT_ACCOUNT_AGE - currentAge) + Math.max(0, new Date().getFullYear() - RETIREMENT_SUM_BASE_YEAR)
-      milestoneFormula = `BRS at ${CPF_RETIREMENT_ACCOUNT_AGE}: ${formatCurrency(BRS_BASE)} (${RETIREMENT_SUM_BASE_YEAR}) × ${growthFactor}^${years} = ${formatCurrency(brsFrsErs.brs)}`
-    } else if (milestone === 'ers') {
-      const years = Math.max(0, CPF_RETIREMENT_ACCOUNT_AGE - currentAge) + Math.max(0, new Date().getFullYear() - RETIREMENT_SUM_BASE_YEAR)
-      milestoneFormula = `ERS at ${CPF_RETIREMENT_ACCOUNT_AGE}: ${formatCurrency(ERS_BASE)} (${RETIREMENT_SUM_BASE_YEAR}) × ${growthFactor}^${years} = ${formatCurrency(brsFrsErs.ers)}`
-    } else if (milestone === 'raCreated') {
-      const prevSA = prevRow ? prevRow.cpfSA : 0
-      milestoneFormula = `SA (${formatCurrency(prevSA)}) → RA. Target: FRS = ${formatCurrency(brsFrsErs.frs)}`
-    } else if (milestone === 'cpfLifeStart') {
-      milestoneFormula = `RA at ${row.age}: ${formatCurrency(totalBalance)}. ${cpfLifePlan.charAt(0).toUpperCase() + cpfLifePlan.slice(1)} plan. Payout: ${formatCurrency(row.cpfLifePayout / 12)}/mo (${formatCurrency(row.cpfLifePayout)}/yr)`
-    }
-
-    return {
-      adultId: adult.id,
-      owner: adult.owner,
-      yearOffset: row.year,
-      age: row.age,
-      oaBalance: row.cpfOA,
-      saBalance: row.cpfSA,
-      maBalance: row.cpfMA,
-      raBalance: row.cpfRA,
-      totalBalance,
-      annualContribution,
-      annualInterest: Math.max(0, annualInterest),
-      cpfLifePayout: row.cpfLifePayout,
-      oaHousingDeduction: row.cpfOaHousingDeduction,
-      oaShortfall: row.cpfOaShortfall,
-      cpfisOA: row.cpfisOA,
-      cpfisSA: row.cpfisSA,
-      cpfisReturn: row.cpfisReturn,
-      bequest,
-      milestone,
-      milestoneFormula,
-    }
-  }).filter((row) => row.yearOffset <= timing.lifeExpectancyYearOffset)
+  return buildSharedCpfProjectionRows({
+    currentAge: adult.currentAge,
+    cpfLifePlan: adult.cpf.lifePlan,
+    cpfLifeStartAge: adult.cpf.lifeStartAge,
+    projection,
+  }).map((row, yearOffset) => ({
+    adultId: adult.id,
+    owner: adult.owner,
+    yearOffset,
+    ...row,
+  })).filter((row) => row.yearOffset <= timing.lifeExpectancyYearOffset)
 }
 
 function buildHealthcareSlot(

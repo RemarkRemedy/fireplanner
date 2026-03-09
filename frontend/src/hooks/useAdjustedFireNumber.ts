@@ -177,7 +177,7 @@ export function useAdjustedFireNumber(): AdjustedFireNumberResult {
  *  Unlike the projection path, the formula side applies FIRE_TYPE_MULTIPLIERS via
  *  computeMetrics, so the lean/fat labels here accurately reflect the amounts. */
 function buildFormulaSideWaterfall(
-  metrics: NonNullable<ReturnType<typeof useFireCalculations>['metrics']>,
+  metrics: NonNullable<ReturnType<typeof useProjection>['fireMetrics']>,
   fireType: FireType,
   basisFactor: number,
 ): WaterfallItem[] {

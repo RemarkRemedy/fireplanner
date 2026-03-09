@@ -84,6 +84,37 @@ describe('useAnalysisPortfolio', () => {
       expect(result.current.portfolioLabel).toContain('today')
     })
 
+    it('uses effective projected income when income streams differ from the profile summary', () => {
+      useProfileStore.setState({
+        ...useProfileStore.getState(),
+        currentAge: 30,
+        retirementAge: 55,
+        lifeExpectancy: 90,
+        annualIncome: 72_000,
+        annualExpenses: 48_000,
+        liquidNetWorth: 100_000,
+        expectedReturn: 0.07,
+        inflation: 0.025,
+        expenseRatio: 0.003,
+        validationErrors: {},
+      })
+      useIncomeStore.setState({
+        ...useIncomeStore.getState(),
+        annualSalary: 120_000,
+        salaryGrowthRate: 0.03,
+        validationErrors: {},
+      })
+
+      const { result: withProjection, unmount } = renderHook(() => useAnalysisPortfolio())
+      const projectedPortfolio = withProjection.current.retirementPortfolio
+      unmount()
+
+      useIncomeStore.getState().setField('annualSalary', -1)
+      const { result: fallback } = renderHook(() => useAnalysisPortfolio())
+
+      expect(projectedPortfolio).toBeGreaterThan(fallback.current.retirementPortfolio)
+    })
+
     it('does not return analysisMode or skipAccumulation fields', () => {
       const { result } = renderHook(() => useAnalysisPortfolio())
       expect(result.current).not.toHaveProperty('analysisMode')

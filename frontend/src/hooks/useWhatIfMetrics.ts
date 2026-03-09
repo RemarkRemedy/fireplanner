@@ -1,14 +1,22 @@
 import { useMemo } from 'react'
 import { calculateAllFireMetrics, projectPortfolioAtRetirement } from '@/lib/calculations/fire'
+import { computeCashReserveOffset } from '@/lib/calculations/cashReserve'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
+import type {
+  AllocationState,
+  FireMetrics,
+  IncomeProjectionRow,
+  IncomeState,
+  ProfileState,
+  PropertyState,
+} from '@/lib/types'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
 import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
-import type { IncomeState, ProfileState, PropertyState } from '@/lib/types'
 
 export interface WhatIfOverrides {
   annualExpenses?: number
@@ -43,34 +51,29 @@ export interface WhatIfMetricsResult {
   hasData: boolean
 }
 
-export function getBaseInputs(
+type TimingOverride = Pick<ProfileState, 'currentAge' | 'retirementAge' | 'lifeExpectancy'>
+
+export function resolveEffectiveIncome(
+  profile: Pick<ProfileState, 'annualIncome'>,
+  projection: IncomeProjectionRow[] | null | undefined,
+): number {
+  return projection && projection.length > 0
+    ? projection[0].totalGross
+    : profile.annualIncome
+}
+
+export function buildBaseInputsFromEffectiveIncome(
   profile: ProfileState,
-  income: IncomeState,
-  allocation: ReturnType<typeof useAllocationStore.getState>,
+  allocation: AllocationState,
   property: PropertyState,
-  timingOverride?: Pick<ProfileState, 'currentAge' | 'retirementAge' | 'lifeExpectancy'>,
+  effectiveIncome: number,
+  timingOverride?: TimingOverride,
 ) {
   const cpfTotal = profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
   const currentAge = timingOverride?.currentAge ?? profile.currentAge
   const retirementAge = timingOverride?.retirementAge ?? profile.retirementAge
   const lifeExpectancy = timingOverride?.lifeExpectancy ?? profile.lifeExpectancy
 
-  // Effective income from income projection
-  let effectiveIncome = profile.annualIncome
-  const projectionParams = buildProjectionParams({
-    ...profile,
-    currentAge,
-    retirementAge,
-    lifeExpectancy,
-  }, income, property)
-  if (projectionParams) {
-    const projection = generateIncomeProjection(projectionParams)
-    if (projection.length > 0) {
-      effectiveIncome = projection[0].totalGross
-    }
-  }
-
-  // Portfolio expected return
   let expectedReturn = profile.expectedReturn
   const allocationHasErrors = Object.keys(allocation.validationErrors).length > 0
   if (profile.usePortfolioReturn && !allocationHasErrors) {
@@ -81,6 +84,15 @@ export function getBaseInputs(
   const propertyEquity = property.ownsProperty
     ? Math.max(0, property.existingPropertyValue - property.existingMortgageBalance) * ownershipPct
     : 0
+
+  const cashReserveOffset = computeCashReserveOffset(
+    profile.liquidNetWorth,
+    profile.cashReserveEnabled,
+    profile.cashReserveMode,
+    profile.cashReserveFixedAmount,
+    profile.cashReserveMonths,
+    profile.annualExpenses,
+  )
 
   return {
     currentAge,
@@ -103,13 +115,48 @@ export function getBaseInputs(
     parentSupport: profile.parentSupport,
     parentSupportEnabled: profile.parentSupportEnabled,
     healthcareConfig: profile.healthcareConfig?.enabled ? profile.healthcareConfig : null,
+    cashReserveOffset,
+    lockedAssets: profile.lockedAssets,
   }
 }
 
-export type WhatIfBaseInputs = ReturnType<typeof getBaseInputs>
+export function getBaseInputs(
+  profile: ProfileState,
+  income: IncomeState,
+  allocation: AllocationState,
+  property: PropertyState,
+  timingOverride?: TimingOverride,
+) {
+  const currentAge = timingOverride?.currentAge ?? profile.currentAge
+  const retirementAge = timingOverride?.retirementAge ?? profile.retirementAge
+  const lifeExpectancy = timingOverride?.lifeExpectancy ?? profile.lifeExpectancy
 
-export function computeMetrics(inputs: WhatIfBaseInputs) {
-  const metrics = calculateAllFireMetrics(inputs)
+  const projectionParams = buildProjectionParams({
+    ...profile,
+    currentAge,
+    retirementAge,
+    lifeExpectancy,
+  }, income, property)
+  const projection = projectionParams
+    ? generateIncomeProjection(projectionParams)
+    : null
+
+  return buildBaseInputsFromEffectiveIncome(
+    profile,
+    allocation,
+    property,
+    resolveEffectiveIncome(profile, projection),
+    { currentAge, retirementAge, lifeExpectancy },
+  )
+}
+
+export type WhatIfBaseInputs = ReturnType<typeof buildBaseInputsFromEffectiveIncome>
+
+export function computeMetricSnapshot(inputs: WhatIfBaseInputs): {
+  fireMetrics: FireMetrics
+  portfolioAtRetirement: number
+} {
+  const fireMetrics = calculateAllFireMetrics(inputs)
   const netRealReturn = inputs.expectedReturn - inputs.inflation - inputs.expenseRatio
   const currentExpenses = getEffectiveExpenses(inputs.currentAge, inputs.annualExpenses, inputs.expenseAdjustments ?? [], inputs.lifeExpectancy)
   const annualSavings = inputs.annualIncome - currentExpenses
@@ -122,10 +169,16 @@ export function computeMetrics(inputs: WhatIfBaseInputs) {
     yearsToRetirement,
   })
 
+  return { fireMetrics, portfolioAtRetirement }
+}
+
+export function computeMetrics(inputs: WhatIfBaseInputs) {
+  const { fireMetrics, portfolioAtRetirement } = computeMetricSnapshot(inputs)
+
   return {
-    fireNumber: metrics.fireNumber,
-    yearsToFire: metrics.yearsToFire,
-    fireAge: metrics.fireAge,
+    fireNumber: fireMetrics.fireNumber,
+    yearsToFire: fireMetrics.yearsToFire,
+    fireAge: fireMetrics.fireAge,
     portfolioAtRetirement,
   }
 }

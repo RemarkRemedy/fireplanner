@@ -17,7 +17,7 @@ interface StatChip {
 }
 
 function formatRate(rate: number | null): string {
-  if (rate === null) return '—'
+  if (rate === null) return '\u2014'
   return `${(rate * 100).toFixed(1)}%`
 }
 
@@ -31,10 +31,10 @@ function useStatsData(): StatChip[] {
 
   if (!metrics) {
     return [
-      { label: 'FIRE Age', value: '—' },
-      { label: 'Years to FIRE', value: '—' },
-      { label: 'FIRE Number', value: '—' },
-      { label: 'Progress', value: '—' },
+      { label: 'FIRE Age', value: '\u2014' },
+      { label: 'Years to FIRE', value: '\u2014' },
+      { label: 'FIRE Number', value: '\u2014' },
+      { label: 'Progress', value: '\u2014' },
       { label: 'MC Success', value: formatRate(lastMCSuccessRate) },
       { label: 'Backtest', value: formatRate(lastBacktestSuccessRate) },
     ]
@@ -61,10 +61,10 @@ function useStatsData(): StatChip[] {
     {
       label: 'Years to FIRE',
       value: unreachable
-        ? '—'
+        ? '\u2014'
         : yearsToFire !== null
           ? yearsToFire === 0 ? 'Achieved!' : `${yearsToFire} yrs`
-          : '—',
+          : '\u2014',
     },
     {
       label: 'FIRE Number',

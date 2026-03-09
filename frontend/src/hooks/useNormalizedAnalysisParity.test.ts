@@ -5,16 +5,16 @@ import { useFireCalculations } from './useFireCalculations'
 import { useProjection } from './useProjection'
 import { buildSequenceRiskWorkerParams } from './useSequenceRiskQuery'
 import { useNormalizedLegacyAnalysisContext } from './useIncomeProjection'
+import { getBaseInputs } from './useWhatIfMetrics'
 import { flattenStrategyParams } from '@/lib/simulation/workerClient'
 import type { CrisisScenario } from '@/lib/types'
 import { LEGACY_PARITY_FIXTURES } from '@/lib/household/__tests__/legacyParityFixtures'
 import { generateIncomeProjection } from '@/lib/calculations/income'
+import { getRetirementSumAmount } from '@/lib/calculations/cpf'
 import { calculateAllFireMetrics, projectPortfolioAtRetirement } from '@/lib/calculations/fire'
-import { computeCashReserveOffset } from '@/lib/calculations/cashReserve'
 import { calculatePortfolioReturn, getEffectiveReturns, getEffectiveStdDevs, buildYearlyWeights } from '@/lib/calculations/portfolio'
 import { generateProjection } from '@/lib/calculations/projection'
 import { getEffectiveExpenses, getExpensesAtRetirement } from '@/lib/calculations/expenses'
-import { resolveDeterministicExpectedReturn } from '@/lib/analysis/deterministicAssumptions'
 import { getPropertyRentalIncome, computeLbsProceeds } from '@/lib/calculations/hdb'
 import { sumPostRetirementIncome, getLifeEventExpenseImpact } from '@/lib/calculations/income'
 import {
@@ -111,17 +111,17 @@ function seedStores(snapshot: (typeof LEGACY_PARITY_FIXTURES)[keyof typeof LEGAC
 }
 
 function buildLegacyAnalysisPortfolioSurface(input: FixtureState) {
-  const { profile, allocation } = input
+  const { profile, income, allocation, property } = input
   const totalNW = profile.liquidNetWorth + profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
-  const portfolioReturn = resolveDeterministicExpectedReturn(profile, allocation)
-  const netRealReturn = portfolioReturn - profile.inflation - profile.expenseRatio
+  const baseInputs = getBaseInputs(profile, income, allocation, property)
+  const netRealReturn = baseInputs.expectedReturn - baseInputs.inflation - baseInputs.expenseRatio
   const currentExpenses = getEffectiveExpenses(
-    profile.currentAge,
-    profile.annualExpenses,
-    profile.expenseAdjustments,
-    profile.lifeExpectancy,
+    baseInputs.currentAge,
+    baseInputs.annualExpenses,
+    baseInputs.expenseAdjustments ?? [],
+    baseInputs.lifeExpectancy,
   )
-  const annualSavings = profile.annualIncome - currentExpenses
+  const annualSavings = baseInputs.annualIncome - currentExpenses
 
   return {
     initialPortfolio: totalNW,
@@ -137,60 +137,7 @@ function buildLegacyAnalysisPortfolioSurface(input: FixtureState) {
 
 function buildLegacyFireSurface(input: FixtureState) {
   const { profile, income, allocation, property } = input
-
-  let effectiveIncome = profile.annualIncome
-  const projectionParams = buildProjectionParams(profile, income, property)
-  if (projectionParams) {
-    const projection = generateIncomeProjection(projectionParams)
-    if (projection.length > 0) {
-      effectiveIncome = projection[0].totalGross
-    }
-  }
-
-  let expectedReturn = profile.expectedReturn
-  const allocationHasErrors = Object.keys(allocation.validationErrors).length > 0
-  if (profile.usePortfolioReturn && !allocationHasErrors) {
-    expectedReturn = calculatePortfolioReturn(allocation.currentWeights, getEffectiveReturns(allocation.returnOverrides))
-  }
-
-  const ownershipPct = property.ownershipPercent ?? 1
-  const propertyEquity = property.ownsProperty
-    ? Math.max(0, property.existingPropertyValue - property.existingMortgageBalance) * ownershipPct
-    : 0
-
-  const cashReserveOffset = computeCashReserveOffset(
-    profile.liquidNetWorth,
-    profile.cashReserveEnabled,
-    profile.cashReserveMode,
-    profile.cashReserveFixedAmount,
-    profile.cashReserveMonths,
-    profile.annualExpenses,
-  )
-
-  const metrics = calculateAllFireMetrics({
-    currentAge: profile.currentAge,
-    retirementAge: profile.retirementAge,
-    annualIncome: effectiveIncome,
-    annualExpenses: profile.annualExpenses,
-    liquidNetWorth: profile.liquidNetWorth,
-    cpfTotal: profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA,
-    swr: profile.swr,
-    expectedReturn,
-    inflation: profile.inflation,
-    expenseRatio: profile.expenseRatio,
-    fireType: profile.fireType,
-    fireNumberBasis: profile.fireNumberBasis,
-    cpfLifeStartAge: profile.cpfLifeStartAge,
-    lifeExpectancy: profile.lifeExpectancy,
-    retirementSpendingAdjustment: profile.retirementSpendingAdjustment,
-    propertyEquity,
-    parentSupport: profile.parentSupport,
-    parentSupportEnabled: profile.parentSupportEnabled,
-    healthcareConfig: profile.healthcareConfig?.enabled ? profile.healthcareConfig : null,
-    cashReserveOffset,
-    lockedAssets: profile.lockedAssets,
-    expenseAdjustments: profile.expenseAdjustments,
-  })
+  const metrics = calculateAllFireMetrics(getBaseInputs(profile, income, allocation, property))
 
   return {
     fireNumber: metrics.fireNumber,
@@ -222,7 +169,7 @@ function buildLegacyProjectionSurface(input: FixtureState) {
         remainingLease: property.existingLeaseYears,
         retainedLease: property.hdbLbsRetainedLease,
         cpfRaBalance: profile.cpfRA,
-        retirementSum: 213000,
+        retirementSum: getRetirementSumAmount('frs', profile.currentAge),
       })
     : null
 
@@ -366,7 +313,7 @@ function buildLegacySequenceRiskSurface(input: FixtureState) {
     const projection = generateIncomeProjection(projectionParams)
     const annualRentalIncome = getPropertyRentalIncome(property)
     for (const row of projection) {
-      if (!row.isRetired) continue
+      if (row.age < profile.retirementAge) continue
 
       const isSold = dsSellAge !== null && row.age >= dsSellAge
       let rentalForYear: number

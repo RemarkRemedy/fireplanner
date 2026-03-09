@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useProjection } from './useProjection'
+import { getRetirementSumAmount } from '@/lib/calculations/cpf'
+import { computeLbsProceeds } from '@/lib/calculations/hdb'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
@@ -19,15 +21,18 @@ describe('useProjection', () => {
   it('produces non-null result with valid defaults', () => {
     const { result } = renderHook(() => useProjection())
     expect(result.current.hasErrors).toBe(false)
+    expect(result.current.fireMetrics).not.toBeNull()
     expect(result.current.rows).not.toBeNull()
     expect(result.current.summary).not.toBeNull()
     expect(result.current.params).not.toBeNull()
+    expect(result.current.params!.fireNumber).toBeCloseTo(result.current.fireMetrics!.fireNumber, 6)
   })
 
   it('returns null when income has validation errors', () => {
     useIncomeStore.getState().setField('annualSalary', -1)
     const { result } = renderHook(() => useProjection())
     expect(result.current.hasErrors).toBe(true)
+    expect(result.current.fireMetrics).toBeNull()
     expect(result.current.rows).toBeNull()
     expect(result.current.params).toBeNull()
   })
@@ -36,6 +41,7 @@ describe('useProjection', () => {
     useProfileStore.getState().setField('currentAge', 15)
     const { result } = renderHook(() => useProjection())
     expect(result.current.hasErrors).toBe(true)
+    expect(result.current.fireMetrics).toBeNull()
     expect(result.current.rows).toBeNull()
   })
 
@@ -175,7 +181,38 @@ describe('useProjection', () => {
     expect(p.annualRentalIncome).toBe(19200)
   })
 
-  it('LBS proceeds add to initialLiquidNW', () => {
+  it('LBS cash proceeds add to initialLiquidNW', () => {
+    usePropertyStore.setState({
+      ...usePropertyStore.getState(),
+      ownsProperty: true,
+      propertyType: 'hdb',
+      hdbMonetizationStrategy: 'lbs',
+      existingPropertyValue: 2500000,
+      existingLeaseYears: 70,
+      hdbLbsRetainedLease: 30,
+    })
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      currentAge: 35,
+      liquidNetWorth: 100000,
+      cpfRA: 50000,
+      validationErrors: {},
+    })
+    const { result } = renderHook(() => useProjection())
+    const p = result.current.params!
+    const expected = computeLbsProceeds({
+      flatValue: 2500000,
+      remainingLease: 70,
+      retainedLease: 30,
+      cpfRaBalance: 50000,
+      retirementSum: getRetirementSumAmount('frs', 35),
+    })
+
+    expect(expected.cashProceeds).toBeGreaterThan(0)
+    expect(p.initialLiquidNW).toBeCloseTo(100000 + expected.cashProceeds, 6)
+  })
+
+  it('uses the cohort FRS when computing LBS proceeds', () => {
     usePropertyStore.setState({
       ...usePropertyStore.getState(),
       ownsProperty: true,
@@ -187,6 +224,7 @@ describe('useProjection', () => {
     })
     useProfileStore.setState({
       ...useProfileStore.getState(),
+      currentAge: 35,
       liquidNetWorth: 100000,
       // Set cpfRA high enough that the RA shortfall is smaller than total LBS
       // proceeds, so some proceeds remain as cash. With FRS projected to ~$486K
@@ -195,10 +233,17 @@ describe('useProjection', () => {
       cpfRA: 450000,
       validationErrors: {},
     })
+
     const { result } = renderHook(() => useProjection())
-    const p = result.current.params!
-    // LBS proceeds should be added to base liquidNetWorth of 100000
-    expect(p.initialLiquidNW).toBeGreaterThan(100000)
+    const expected = computeLbsProceeds({
+      flatValue: 500000,
+      remainingLease: 60,
+      retainedLease: 30,
+      cpfRaBalance: 50000,
+      retirementSum: getRetirementSumAmount('frs', 35),
+    })
+
+    expect(result.current.params!.initialLiquidNW).toBeCloseTo(100000 + expected.cashProceeds, 6)
   })
 
   it('downsizing included when scenario is not none', () => {

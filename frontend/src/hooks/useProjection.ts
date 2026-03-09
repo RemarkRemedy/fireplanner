@@ -1,18 +1,23 @@
 import { useMemo } from 'react'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
-import type { ProjectionRow, ProjectionSummary } from '@/lib/types'
+import type { FireMetrics, ProjectionRow, ProjectionSummary } from '@/lib/types'
 import { generateProjection, type ProjectionParams } from '@/lib/calculations/projection'
+import { getRetirementSumAmount } from '@/lib/calculations/cpf'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { getPropertyRentalIncome, computeLbsProceeds } from '@/lib/calculations/hdb'
-import { getRetirementSumAmount } from '@/lib/calculations/cpf'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useIncomeProjection } from '@/hooks/useIncomeProjection'
-import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
+import {
+  buildBaseInputsFromEffectiveIncome,
+  computeMetricSnapshot,
+  resolveEffectiveIncome,
+} from '@/hooks/useWhatIfMetrics'
 
 interface ProjectionResult {
+  fireMetrics: FireMetrics | null
   rows: ProjectionRow[] | null
   summary: ProjectionSummary | null
   params: ProjectionParams | null
@@ -37,14 +42,10 @@ export function useProjection(): ProjectionResult {
     [normalized.compiledPlan, plan]
   )
   const { projection: incomeProjection, hasErrors: incomeHasErrors, errors: incomeErrors } = useIncomeProjection()
-  const { metrics: fireMetrics, hasErrors: fireHasErrors, errors: fireErrors } = useFireCalculations()
 
   return useMemo(() => {
-    // Collect all upstream errors
-    const allErrors = { ...incomeErrors, ...fireErrors }
-
-    if (incomeHasErrors || fireHasErrors || !incomeProjection || !fireMetrics) {
-      return { rows: null, summary: null, params: null, hasErrors: true, errors: allErrors }
+    if (incomeHasErrors || !incomeProjection) {
+      return { fireMetrics: null, rows: null, summary: null, params: null, hasErrors: true, errors: incomeErrors }
     }
 
     // Compute effective asset returns (with overrides applied)
@@ -68,11 +69,25 @@ export function useProjection(): ProjectionResult {
           remainingLease: property.existingLeaseYears,
           retainedLease: property.hdbLbsRetainedLease,
           cpfRaBalance: profile.cpfRA,
-          retirementSum: getRetirementSumAmount(profile.cpfRetirementSum, profile.currentAge),
+          retirementSum: getRetirementSumAmount(profile.cpfRetirementSum, normalized.currentAge),
         })
       : null
 
     const ownershipPct = property.ownershipPercent ?? 1
+    const effectiveIncome = resolveEffectiveIncome(profile, incomeProjection)
+    const { fireMetrics } = computeMetricSnapshot(
+      buildBaseInputsFromEffectiveIncome(
+        profile,
+        allocation,
+        property,
+        effectiveIncome,
+        {
+          currentAge: normalized.currentAge,
+          retirementAge: normalized.retirementAge,
+          lifeExpectancy: normalized.lifeExpectancy,
+        },
+      ),
+    )
 
     const projectionParams: ProjectionParams = {
       incomeProjection,
@@ -135,14 +150,11 @@ export function useProjection(): ProjectionResult {
 
     const { rows, summary } = generateProjection(projectionParams)
 
-    return { rows, summary, params: projectionParams, hasErrors: false, errors: {} }
+    return { fireMetrics, rows, summary, params: projectionParams, hasErrors: false, errors: {} }
   }, [
     incomeProjection,
     incomeHasErrors,
     incomeErrors,
-    fireMetrics,
-    fireHasErrors,
-    fireErrors,
     profile.liquidNetWorth,
     profile.swr,
     profile.expectedReturn,

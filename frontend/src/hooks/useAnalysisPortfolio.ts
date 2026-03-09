@@ -4,9 +4,9 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { projectPortfolioAtRetirement } from '@/lib/calculations/fire'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
-import { resolveDeterministicExpectedReturn } from '@/lib/analysis/deterministicAssumptions'
 import { formatCurrency } from '@/lib/utils'
 import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
+import { getBaseInputs } from '@/hooks/useWhatIfMetrics'
 
 interface AnalysisPortfolioResult {
   initialPortfolio: number
@@ -28,7 +28,7 @@ export function useAnalysisPortfolio(): AnalysisPortfolioResult {
   const plan = useHouseholdPlanStore((state) => state.plan)
   const allocation = useAllocationStore()
   const normalized = useNormalizedLegacyAnalysisContext()
-  const { profile } = useMemo(
+  const { profile, income, property } = useMemo(
     () => buildHouseholdRuntimeLegacyInputs(plan, normalized.compiledPlan),
     [normalized.compiledPlan, plan]
   )
@@ -37,16 +37,19 @@ export function useAnalysisPortfolio(): AnalysisPortfolioResult {
     const currentWeights = allocation.currentWeights
     const totalNW = profile.liquidNetWorth + profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
 
-    // Compute deterministic projection for BT/SR
-    const portfolioReturn = resolveDeterministicExpectedReturn(profile, allocation)
-    const netRealReturn = portfolioReturn - profile.inflation - profile.expenseRatio
+    const baseInputs = getBaseInputs(profile, income, allocation, property, {
+      currentAge: normalized.currentAge,
+      retirementAge: normalized.retirementAge,
+      lifeExpectancy: normalized.lifeExpectancy,
+    })
+    const netRealReturn = baseInputs.expectedReturn - baseInputs.inflation - baseInputs.expenseRatio
     const currentExpenses = getEffectiveExpenses(
-      normalized.currentAge,
-      profile.annualExpenses,
-      profile.expenseAdjustments,
-      normalized.lifeExpectancy,
+      baseInputs.currentAge,
+      baseInputs.annualExpenses,
+      baseInputs.expenseAdjustments ?? [],
+      baseInputs.lifeExpectancy,
     )
-    const annualSavings = profile.annualIncome - currentExpenses
+    const annualSavings = baseInputs.annualIncome - currentExpenses
 
     const projected = projectPortfolioAtRetirement({
       currentNW: totalNW,
@@ -67,18 +70,25 @@ export function useAnalysisPortfolio(): AnalysisPortfolioResult {
     profile.cpfSA,
     profile.cpfMA,
     profile.cpfRA,
-    profile.annualIncome,
     profile.annualExpenses,
     profile.expenseAdjustments,
+    profile.annualIncome,
     profile.expectedReturn,
     profile.usePortfolioReturn,
     profile.inflation,
     profile.expenseRatio,
+    profile.cashReserveEnabled,
+    profile.cashReserveMode,
+    profile.cashReserveFixedAmount,
+    profile.cashReserveMonths,
+    profile.lockedAssets,
     allocation.currentWeights,
     allocation.targetWeights,
     allocation.glidePathConfig,
     allocation.returnOverrides,
     allocation.validationErrors,
+    income,
+    property,
     normalized.currentAge,
     normalized.householdRetirementYearOffset,
     normalized.lifeExpectancy,
