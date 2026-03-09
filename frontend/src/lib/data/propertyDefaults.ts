@@ -22,3 +22,9 @@ export const DEFAULT_MORTGAGE_RATE = 0.03
 
 /** Default HDB room subletting rate (SGD/room/month). Mid-range estimate for 4-room flats. */
 export const DEFAULT_HDB_SUBLETTING_RATE = 900
+
+/**
+ * Default annual rent growth for sell-and-rent downsizing scenarios.
+ * This is a nominal rate applied directly to future rent cashflows.
+ */
+export const DEFAULT_DOWNSIZING_RENT_GROWTH_RATE = 0.03

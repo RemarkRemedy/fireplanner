@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { DEFAULT_DOWNSIZING_RENT_GROWTH_RATE } from '@/lib/data/propertyDefaults'
 import type { PropertyState, DownsizingConfig, ValidationErrors } from '@/lib/types'
 
 interface PropertyActions {
@@ -29,7 +30,7 @@ export const DEFAULT_DOWNSIZING: DownsizingConfig = {
   newMortgageTerm: 20,
   newLtv: 0.75,
   monthlyRent: 2500,
-  rentGrowthRate: 0.03,
+  rentGrowthRate: DEFAULT_DOWNSIZING_RENT_GROWTH_RATE,
 }
 
 export const PROPERTY_DATA_KEYS = [
