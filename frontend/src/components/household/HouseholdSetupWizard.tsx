@@ -821,7 +821,7 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
 
                 <p className="text-xs text-muted-foreground">
                   Quick estimate in today's dollars (3.6% Safe Withdrawal Rate, 7% return, 2.5% inflation).
-                  Each person's chart includes 50% of joint expenses. Your detailed plan will adjust for inflation, CPF, and portfolio allocation.
+                  Each person's chart includes 50% of joint expenses. Assumes joint costs split evenly; detailed plan will model survivor spending after one partner passes. Your detailed plan will adjust for inflation, CPF, and portfolio allocation.
                 </p>
               </CardContent>
             </Card>
