@@ -253,7 +253,7 @@ function TaxReliefEditor({ adult, onUpdate }: {
 }) {
   const breakdown = adult.taxProfile.reliefBreakdown
   const isDetailed = breakdown !== null
-  const basisAge = adult.taxProfile.reliefBasisAge
+  const basisAge = adult.currentAge
 
   const setBreakdown = (bd: ReliefBreakdown | null) => {
     if (bd === null) {
@@ -466,24 +466,6 @@ function TaxReliefEditor({ adult, onUpdate }: {
         <span className="font-semibold">{formatCurrency(totalDeductions)}</span>
       </div>
 
-      <NumberInput
-        label="Relief basis age"
-        integer
-        min={18}
-        max={120}
-        value={adult.taxProfile.reliefBasisAge}
-        onChange={(value) => {
-          const updates: Partial<PlanningAdult> = {
-            taxProfile: { ...adult.taxProfile, reliefBasisAge: value },
-          }
-          // If in detailed mode, recompute total with new age
-          if (adult.taxProfile.reliefBreakdown) {
-            const total = computeTotalReliefs(adult.taxProfile.reliefBreakdown, value)
-            updates.taxProfile = { ...updates.taxProfile!, personalReliefs: total }
-          }
-          onUpdate(updates)
-        }}
-      />
     </div>
   )
 }
@@ -1104,57 +1086,55 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">{selectedAdult.displayName}'s Tax & SRS Settings</CardTitle>
+          <CardTitle className="text-lg">{selectedAdult.displayName}'s SRS</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <TaxReliefEditor
-            adult={selectedAdult}
-            onUpdate={updateSelectedAdult}
-          />
-          <CurrencyInput
-            label="SRS balance"
-            value={selectedAdult.srs.balance}
-            onChange={(value) => updateSelectedAdult({
-              srs: {
-                ...selectedAdult.srs,
-                balance: value,
-              },
-            })}
-          />
-          <CurrencyInput
-            label="SRS annual contribution"
-            value={selectedAdult.srs.annualContribution}
-            onChange={(value) => updateSelectedAdult({
-              srs: {
-                ...selectedAdult.srs,
-                annualContribution: value,
-              },
-            })}
-          />
-          <PercentInput
-            label="SRS return"
-            value={selectedAdult.srs.investmentReturn}
-            onChange={(value) => updateSelectedAdult({
-              srs: {
-                ...selectedAdult.srs,
-                investmentReturn: value,
-              },
-            })}
-          />
-          <NumberInput
-            label="SRS drawdown start age"
-            integer
-            min={selectedAdult.currentAge}
-            max={selectedAdult.lifeExpectancy}
-            value={selectedAdult.srs.drawdownStartAge}
-            onChange={(value) => updateSelectedAdult({
-              srs: {
-                ...selectedAdult.srs,
-                drawdownStartAge: value,
-              },
-            })}
-          />
-          <div className="md:col-span-2 xl:col-span-4 flex items-center justify-between rounded-md border p-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <CurrencyInput
+              label="SRS balance"
+              value={selectedAdult.srs.balance}
+              onChange={(value) => updateSelectedAdult({
+                srs: {
+                  ...selectedAdult.srs,
+                  balance: value,
+                },
+              })}
+            />
+            <CurrencyInput
+              label="SRS annual contribution"
+              value={selectedAdult.srs.annualContribution}
+              onChange={(value) => updateSelectedAdult({
+                srs: {
+                  ...selectedAdult.srs,
+                  annualContribution: value,
+                },
+              })}
+            />
+            <PercentInput
+              label="SRS return"
+              value={selectedAdult.srs.investmentReturn}
+              onChange={(value) => updateSelectedAdult({
+                srs: {
+                  ...selectedAdult.srs,
+                  investmentReturn: value,
+                },
+              })}
+            />
+            <NumberInput
+              label="SRS drawdown start age"
+              integer
+              min={selectedAdult.currentAge}
+              max={selectedAdult.lifeExpectancy}
+              value={selectedAdult.srs.drawdownStartAge}
+              onChange={(value) => updateSelectedAdult({
+                srs: {
+                  ...selectedAdult.srs,
+                  drawdownStartAge: value,
+                },
+              })}
+            />
+          </div>
+          <div className="flex items-center justify-between rounded-md border p-3">
             <div>
               <div className="font-medium">Keep SRS contributions after FIRE</div>
               <div className="text-sm text-muted-foreground">Use this when you want post-FIRE earned income to continue funding the selected adult's SRS account.</div>
@@ -1169,6 +1149,18 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
               })}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">{selectedAdult.displayName}'s Tax Reliefs</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <TaxReliefEditor
+            adult={selectedAdult}
+            onUpdate={updateSelectedAdult}
+          />
         </CardContent>
       </Card>
 
