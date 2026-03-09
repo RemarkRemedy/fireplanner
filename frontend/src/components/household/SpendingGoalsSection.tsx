@@ -1,3 +1,15 @@
+import {
+  Baby,
+  Car,
+  GraduationCap,
+  Heart,
+  Home,
+  PaintBucket,
+  Plane,
+  Plus,
+  Target,
+  Trash2,
+} from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -9,6 +21,7 @@ import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { PercentInput } from '@/components/shared/PercentInput'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
+import { GOAL_TEMPLATES } from '@/lib/data/goalTemplates'
 import { createId } from '@/lib/household/ids'
 import {
   ensureAgeRangeTiming,
@@ -28,6 +41,24 @@ import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 
 const OWNER_OPTIONS: EntryOwner[] = ['self', 'partner', 'shared']
 const ADULT_OWNER_OPTIONS: AdultOwner[] = ['self', 'partner']
+
+const CATEGORY_ICONS: Record<GoalCategory, React.ReactNode> = {
+  wedding: <Heart className="h-4 w-4" />,
+  education: <GraduationCap className="h-4 w-4" />,
+  housing: <Home className="h-4 w-4" />,
+  vehicle: <Car className="h-4 w-4" />,
+  travel: <Plane className="h-4 w-4" />,
+  renovation: <PaintBucket className="h-4 w-4" />,
+  medical: <Plus className="h-4 w-4" />,
+  family: <Baby className="h-4 w-4" />,
+  other: <Target className="h-4 w-4" />,
+}
+
+const PRIORITY_COLORS: Record<string, string> = {
+  essential: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+  important: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
+  'nice-to-have': 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+}
 
 function createExpense(
   kind: ExpenseItem['kind'],
@@ -108,11 +139,16 @@ function createExpense(
   }
 }
 
-function createGoal(owner: EntryOwner, timingOwner: AdultOwner, startAge: number): GoalItem {
+function createGoal(
+  owner: EntryOwner,
+  timingOwner: AdultOwner,
+  startAge: number,
+  template?: { label: string; amount: number; duration: number; category: GoalCategory },
+): GoalItem {
   return {
     id: createId('goal'),
     owner,
-    label: 'Household goal',
+    label: template?.label ?? 'Household goal',
     kind: 'financial-goal',
     timing: {
       kind: 'age-range',
@@ -120,11 +156,11 @@ function createGoal(owner: EntryOwner, timingOwner: AdultOwner, startAge: number
       startAge: startAge + 5,
       endAge: startAge + 5,
     },
-    amount: 50_000,
-    durationYears: 1,
+    amount: template?.amount ?? 50_000,
+    durationYears: template?.duration ?? 1,
     priority: 'important',
     inflationAdjusted: true,
-    category: 'other',
+    category: template?.category ?? 'other',
   }
 }
 
@@ -653,46 +689,85 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
       <Card id="household-goals">
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
-            <CardTitle className="text-lg">Goals</CardTitle>
-            <Button type="button" variant="outline" size="sm" onClick={() => addGoal(createGoal('shared', selectedAdult.owner, selectedAdult.currentAge))}>
-              Add goal
-            </Button>
+            <CardTitle className="text-lg flex items-center gap-2">
+              Financial Goals
+              <InfoTooltip text="Plan for major life expenses like weddings, education, or home purchases. Pre-retirement goals reduce your annual savings. Post-retirement goals are deducted from your portfolio." />
+            </CardTitle>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {plan.goals.length === 0 ? (
-            <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-              Add ownership-scoped goals so the household plan can separate shared goals from member-specific milestones.
+          <div>
+            <p className="text-xs text-muted-foreground mb-2">Quick add from templates:</p>
+            <div className="flex flex-wrap gap-2">
+              {GOAL_TEMPLATES.map((template) => (
+                <button
+                  key={template.category}
+                  type="button"
+                  onClick={() => addGoal(createGoal(
+                    'shared',
+                    selectedAdult.owner,
+                    selectedAdult.currentAge,
+                    { label: template.label, amount: template.defaultAmount, duration: template.defaultDuration, category: template.category },
+                  ))}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-border hover:bg-muted transition-colors"
+                  title={template.description}
+                >
+                  {CATEGORY_ICONS[template.category]}
+                  {template.label}
+                </button>
+              ))}
             </div>
-          ) : (
-            plan.goals.map((goal) => {
-              const goalErrors = getEntityErrors(validationErrors, 'goal', goal.id)
-              const timing = ensureAgeRangeTiming(
-                goal.timing,
-                selectedAdult.owner,
-                selectedAdult.currentAge + 5,
-              )
-              const goalTimingAdult = getTimingAdult(timing.owner)
-              const timedGoal = syncTimingDuration(
-                timing,
-                { durationYears: goal.durationYears },
-                goalTimingAdult.lifeExpectancy,
-              )
+          </div>
 
-              return (
-                <div key={goal.id} className="rounded-lg border p-4 space-y-4">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <Input
+          {plan.goals.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No financial goals planned. Add milestone expenses that could impact your savings timeline.
+            </p>
+          )}
+
+          {plan.goals.map((goal) => {
+            const goalErrors = getEntityErrors(validationErrors, 'goal', goal.id)
+            const timing = ensureAgeRangeTiming(
+              goal.timing,
+              selectedAdult.owner,
+              selectedAdult.currentAge + 5,
+            )
+            const goalTimingAdult = getTimingAdult(timing.owner)
+            const timedGoal = syncTimingDuration(
+              timing,
+              { durationYears: goal.durationYears },
+              goalTimingAdult.lifeExpectancy,
+            )
+
+            return (
+              <div key={goal.id} className="rounded-lg border p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">
+                      {CATEGORY_ICONS[goal.category]}
+                    </span>
+                    <input
+                      type="text"
                       value={goal.label}
                       onChange={(event) => updateGoalList(goal.id, { label: event.target.value })}
-                      className="max-w-sm"
+                      className="text-sm font-medium bg-transparent border-none outline-none focus:ring-1 focus:ring-primary rounded px-1 -ml-1 w-48"
                     />
-                    <Button type="button" variant="ghost" onClick={() => removeGoal(goal.id)}>
-                      Remove
-                    </Button>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${PRIORITY_COLORS[goal.priority] ?? ''}`}>
+                      {goal.priority}
+                    </span>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => removeGoal(goal.id)}
+                    className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                    aria-label={`Remove ${goal.label}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
 
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  {adults.length > 1 && (
                     <div className="space-y-1">
                       <Label>Owner</Label>
                       <Select
@@ -711,6 +786,8 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                         </SelectContent>
                       </Select>
                     </div>
+                  )}
+                  {adults.length > 1 && (
                     <div className="space-y-1">
                       <Label>Age based on</Label>
                       <Select
@@ -731,93 +808,109 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                         </SelectContent>
                       </Select>
                     </div>
-                    <CurrencyInput
-                      label="Amount"
-                      value={goal.amount}
-                      onChange={(value) => updateGoalList(goal.id, { amount: value })}
-                      error={goalErrors.amount}
-                    />
-                    <NumberInput
-                      label="Target age"
-                      integer
-                      min={goalTimingAdult.currentAge + 1}
-                      max={goalTimingAdult.lifeExpectancy}
-                      value={timing.startAge}
-                      onChange={(value) => updateGoalList(
-                        goal.id,
-                        syncTimingDuration(
-                          timing,
-                          { startAge: value, durationYears: goal.durationYears },
-                          goalTimingAdult.lifeExpectancy,
-                        ),
-                      )}
-                    />
-                    <NumberInput
-                      label="Duration (years)"
-                      integer
-                      min={1}
-                      max={Math.max(1, goalTimingAdult.lifeExpectancy - timing.startAge + 1)}
-                      value={timedGoal.durationYears}
-                      onChange={(value) => updateGoalList(
-                        goal.id,
-                        syncTimingDuration(
-                          timing,
-                          { durationYears: value },
-                          goalTimingAdult.lifeExpectancy,
-                        ),
-                      )}
-                    />
-                    <div className="space-y-1">
-                      <Label>Priority</Label>
-                      <Select
-                        value={goal.priority}
-                        onValueChange={(value) => updateGoalList(goal.id, { priority: value as GoalItem['priority'] })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="essential">Essential</SelectItem>
-                          <SelectItem value="important">Important</SelectItem>
-                          <SelectItem value="nice-to-have">Nice-to-have</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label>Category</Label>
-                      <Select
-                        value={goal.category}
-                        onValueChange={(value) => updateGoalList(goal.id, { category: value as GoalCategory })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="wedding">Wedding</SelectItem>
-                          <SelectItem value="education">Education</SelectItem>
-                          <SelectItem value="housing">Housing</SelectItem>
-                          <SelectItem value="vehicle">Vehicle</SelectItem>
-                          <SelectItem value="travel">Travel</SelectItem>
-                          <SelectItem value="renovation">Renovation</SelectItem>
-                          <SelectItem value="medical">Medical</SelectItem>
-                          <SelectItem value="family">Family</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  )}
+                  <CurrencyInput
+                    label="Amount"
+                    value={goal.amount}
+                    onChange={(value) => updateGoalList(goal.id, { amount: value })}
+                    error={goalErrors.amount}
+                    tooltip="Total cost of this goal (in today's dollars if inflation-adjusted)"
+                  />
+                  <NumberInput
+                    label="Target age"
+                    integer
+                    min={goalTimingAdult.currentAge + 1}
+                    max={goalTimingAdult.lifeExpectancy}
+                    value={timing.startAge}
+                    onChange={(value) => updateGoalList(
+                      goal.id,
+                      syncTimingDuration(
+                        timing,
+                        { startAge: value, durationYears: goal.durationYears },
+                        goalTimingAdult.lifeExpectancy,
+                      ),
+                    )}
+                    tooltip="Your age when this expense occurs"
+                  />
+                  <NumberInput
+                    label="Duration (years)"
+                    integer
+                    min={1}
+                    max={Math.max(1, goalTimingAdult.lifeExpectancy - timing.startAge + 1)}
+                    value={timedGoal.durationYears}
+                    onChange={(value) => updateGoalList(
+                      goal.id,
+                      syncTimingDuration(
+                        timing,
+                        { durationYears: value },
+                        goalTimingAdult.lifeExpectancy,
+                      ),
+                    )}
+                    tooltip="Set to 1 for a one-time expense. Set to more for multi-year costs (e.g., 4 years of university tuition)."
+                  />
+                  <div className="space-y-1">
+                    <Label>Category</Label>
+                    <Select
+                      value={goal.category}
+                      onValueChange={(value) => updateGoalList(goal.id, { category: value as GoalCategory })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="wedding">Wedding</SelectItem>
+                        <SelectItem value="education">Education</SelectItem>
+                        <SelectItem value="housing">Housing</SelectItem>
+                        <SelectItem value="vehicle">Vehicle</SelectItem>
+                        <SelectItem value="travel">Travel</SelectItem>
+                        <SelectItem value="renovation">Renovation</SelectItem>
+                        <SelectItem value="medical">Medical</SelectItem>
+                        <SelectItem value="family">Family</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+                </div>
 
-                  <label className="flex items-center gap-2 text-sm">
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="space-y-1">
+                    <Label>Priority</Label>
+                    <Select
+                      value={goal.priority}
+                      onValueChange={(value) => updateGoalList(goal.id, { priority: value as GoalItem['priority'] })}
+                    >
+                      <SelectTrigger className="w-[160px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="essential">Essential</SelectItem>
+                        <SelectItem value="important">Important</SelectItem>
+                        <SelectItem value="nice-to-have">Nice-to-have</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <label className="flex items-center gap-2 text-sm pt-5">
                     <Checkbox
                       checked={goal.inflationAdjusted}
                       onCheckedChange={(checked) => updateGoalList(goal.id, { inflationAdjusted: checked === true })}
                     />
-                    Inflation-adjusted
+                    {goal.inflationAdjusted ? "Today's dollars" : 'Nominal (fixed)'}
                   </label>
                 </div>
-              )
-            })
-          )}
+              </div>
+            )
+          })}
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => addGoal(createGoal('shared', selectedAdult.owner, selectedAdult.currentAge))}
+            className="text-primary"
+          >
+            <Target className="h-4 w-4 mr-1.5" />
+            Add custom goal
+          </Button>
         </CardContent>
       </Card>
     </div>
