@@ -381,6 +381,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                     </div>
                   </div>
 
+                  {!property.ownsProperty && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium">Purchase & Return Assumptions</h3>
@@ -431,6 +432,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                       />
                     </div>
                   </div>
+                  )}
 
                   {property.ownsProperty && (
                   <div className="space-y-4">
