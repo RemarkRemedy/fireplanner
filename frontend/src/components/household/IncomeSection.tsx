@@ -14,7 +14,16 @@ import { PercentInput } from '@/components/shared/PercentInput'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { generateIncomeProjection, calculateIncomeSummary } from '@/lib/calculations/income'
 import { calculateDataDrivenSalary, calculateRealisticSalary, calculateSimpleSalary } from '@/lib/calculations/income'
+import { calculateCpfContribution } from '@/lib/calculations/cpf'
 import { buildProjectionParams } from '@/lib/calculations/projectionParams'
+import {
+  computeTotalReliefs,
+  earnedIncomeReliefForAge,
+  getDefaultBreakdown,
+  type NsmanStatus,
+  type ParentReliefType,
+  type ReliefBreakdown,
+} from '@/lib/data/taxBrackets'
 import { createId } from '@/lib/household/ids'
 import { ensureAgeRangeTiming, getSelectedAdult, ownerLabel } from '@/lib/household/editorUtils'
 import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
@@ -235,6 +244,248 @@ function getIncomeErrors(
   incomeId: string,
 ): Record<string, string> {
   return validationErrors[`income:${incomeId}`] ?? {}
+}
+
+/** Tax Relief Editor with Simple/Detailed toggle matching legacy UI */
+function TaxReliefEditor({ adult, onUpdate }: {
+  adult: PlanningAdult
+  onUpdate: (updates: Partial<PlanningAdult>) => void
+}) {
+  const breakdown = adult.taxProfile.reliefBreakdown
+  const isDetailed = breakdown !== null
+  const basisAge = adult.taxProfile.reliefBasisAge
+
+  const setBreakdown = (bd: ReliefBreakdown | null) => {
+    if (bd === null) {
+      onUpdate({ taxProfile: { ...adult.taxProfile, reliefBreakdown: null } })
+    } else {
+      const total = computeTotalReliefs(bd, basisAge)
+      onUpdate({ taxProfile: { ...adult.taxProfile, reliefBreakdown: bd, personalReliefs: total } })
+    }
+  }
+
+  const switchToDetailed = () => {
+    setBreakdown(getDefaultBreakdown(basisAge))
+  }
+
+  const switchToSimple = () => {
+    setBreakdown(null)
+  }
+
+  const updateBreakdownField = <K extends keyof ReliefBreakdown>(field: K, value: ReliefBreakdown[K]) => {
+    if (!breakdown) return
+    const updated = { ...breakdown, [field]: value }
+    setBreakdown(updated)
+  }
+
+  // Auto-calculated CPF employee deduction (from first year's projection)
+  const cpfEmployeeDeduction = useMemo(() => {
+    const cpf = calculateCpfContribution(adult.annualIncome / 12, adult.currentAge)
+    return cpf.employee * 12
+  }, [adult.annualIncome, adult.currentAge])
+
+  const totalDeductions = adult.taxProfile.personalReliefs + cpfEmployeeDeduction
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Label className="text-base font-medium">Personal Tax Reliefs</Label>
+          <InfoTooltip text="Tax reliefs reduce your chargeable income. Use Simple mode for a single total, or Detailed to break down individual relief categories." />
+        </div>
+        <Tabs value={isDetailed ? 'detailed' : 'simple'} onValueChange={(v) => v === 'detailed' ? switchToDetailed() : switchToSimple()}>
+          <TabsList className="h-8">
+            <TabsTrigger value="simple" className="text-xs px-3">Simple</TabsTrigger>
+            <TabsTrigger value="detailed" className="text-xs px-3">Detailed</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {isDetailed && breakdown ? (
+        <div className="space-y-4">
+          {/* Earned Income Relief — auto-computed from age */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <span className="text-sm">Earned Income Relief</span>
+              <InfoTooltip text="Automatically computed based on age. Under 55: $1,000. Age 55-59: $6,000. Age 60+: $8,000." />
+            </div>
+            <span className="text-sm font-medium">
+              {formatCurrency(earnedIncomeReliefForAge(basisAge))} <span className="text-xs text-muted-foreground">(age {basisAge < 55 ? '<55' : basisAge < 60 ? '55-59' : '60+'})</span>
+            </span>
+          </div>
+
+          {/* NSman Relief */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1">
+              <Label>National Service (NSman) Relief</Label>
+              <InfoTooltip text="NSman: $1,500 (no duty) or $3,000 (performed duty). Key Appointment Holders get +$2,000." />
+            </div>
+            <Select
+              value={breakdown.nsmanStatus}
+              onValueChange={(value) => updateBreakdownField('nsmanStatus', value as NsmanStatus)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Not applicable ($0)</SelectItem>
+                <SelectItem value="noDuty">NSman — no duty ($1,500)</SelectItem>
+                <SelectItem value="performedDuty">NSman — performed duty ($3,000)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Spouse Relief */}
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="spouse-relief"
+              checked={breakdown.spouseRelief}
+              onCheckedChange={(checked) => updateBreakdownField('spouseRelief', checked === true)}
+            />
+            <label htmlFor="spouse-relief" className="text-sm cursor-pointer">
+              Spouse Relief ($2,000)
+            </label>
+            <InfoTooltip text="Claimable if your spouse's income is below $4,000 in the preceding year." />
+          </div>
+
+          {/* QCR */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1">
+              <Label>Qualifying Child Relief (QCR)</Label>
+              <InfoTooltip text="$4,000 per qualifying child (unmarried, under 16, or full-time student). Capped at $4,000 per child." />
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => updateBreakdownField('nChildren', Math.max(0, breakdown.nChildren - 1))}
+              >
+                -
+              </Button>
+              <span className="text-sm font-medium w-20 text-center">{breakdown.nChildren} children</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => updateBreakdownField('nChildren', breakdown.nChildren + 1)}
+              >
+                +
+              </Button>
+            </div>
+          </div>
+
+          {/* Parent Relief */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1">
+              <Label>Parent Relief</Label>
+              <InfoTooltip text="Living with parent: $9,000 each. Not living with: $5,500 each. Parent must be ≥55 or disabled." />
+            </div>
+            <Select
+              value={breakdown.parentReliefType}
+              onValueChange={(value) => updateBreakdownField('parentReliefType', value as ParentReliefType)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Not applicable ($0)</SelectItem>
+                <SelectItem value="liveWith">Living with parent ($9,000 each)</SelectItem>
+                <SelectItem value="notLiveWith">Not living with ($5,500 each)</SelectItem>
+              </SelectContent>
+            </Select>
+            {breakdown.parentReliefType !== 'none' && (
+              <div className="flex items-center gap-3 mt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => updateBreakdownField('nParents', Math.max(1, breakdown.nParents - 1))}
+                >
+                  -
+                </Button>
+                <span className="text-sm font-medium w-20 text-center">{breakdown.nParents} parent{breakdown.nParents !== 1 ? 's' : ''}</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => updateBreakdownField('nParents', breakdown.nParents + 1)}
+                >
+                  +
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Other Reliefs */}
+          <CurrencyInput
+            label="Other Reliefs"
+            tooltip="Catch-all for WMCR, course fees, donations, life insurance, etc."
+            value={breakdown.otherReliefs}
+            onChange={(value) => updateBreakdownField('otherReliefs', value)}
+          />
+
+          {/* Total Personal Reliefs */}
+          <div className="flex items-center justify-between rounded-md border bg-muted/30 px-4 py-2">
+            <span className="text-sm text-muted-foreground">Total Personal Reliefs:</span>
+            <span className="font-medium">{formatCurrency(adult.taxProfile.personalReliefs)}</span>
+          </div>
+        </div>
+      ) : (
+        <CurrencyInput
+          label="Personal reliefs"
+          value={adult.taxProfile.personalReliefs}
+          onChange={(value) => onUpdate({
+            taxProfile: { ...adult.taxProfile, personalReliefs: value },
+          })}
+        />
+      )}
+
+      {/* Auto-calculated deductions */}
+      <div className="space-y-2">
+        <span className="text-xs font-semibold uppercase tracking-wider text-primary">Auto-calculated deductions</span>
+        <div className="flex items-center justify-between border-b border-dashed pb-1">
+          <div className="flex items-center gap-1">
+            <span className="text-sm">Central Provident Fund (CPF) Relief (Employee)</span>
+            <InfoTooltip text="Employee's CPF contribution is automatically deducted from chargeable income. Based on current salary and age bracket." />
+          </div>
+          <span className="text-sm font-medium text-green-600">{formatCurrency(cpfEmployeeDeduction)}</span>
+        </div>
+      </div>
+
+      {/* Total Tax Deductions */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          <span className="text-sm text-primary font-medium">Total Tax Deductions</span>
+          <InfoTooltip text="Personal reliefs + auto-calculated deductions (CPF, SRS). This total is subtracted from gross income to determine chargeable income." />
+        </div>
+        <span className="font-semibold">{formatCurrency(totalDeductions)}</span>
+      </div>
+
+      <NumberInput
+        label="Relief basis age"
+        integer
+        min={18}
+        max={120}
+        value={adult.taxProfile.reliefBasisAge}
+        onChange={(value) => {
+          const updates: Partial<PlanningAdult> = {
+            taxProfile: { ...adult.taxProfile, reliefBasisAge: value },
+          }
+          // If in detailed mode, recompute total with new age
+          if (adult.taxProfile.reliefBreakdown) {
+            const total = computeTotalReliefs(adult.taxProfile.reliefBreakdown, value)
+            updates.taxProfile = { ...updates.taxProfile!, personalReliefs: total }
+          }
+          onUpdate(updates)
+        }}
+      />
+    </div>
+  )
 }
 
 interface IncomeSectionProps {
@@ -855,29 +1106,10 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
         <CardHeader>
           <CardTitle className="text-lg">{selectedAdult.displayName}'s Tax & SRS Settings</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <CurrencyInput
-            label="Personal reliefs"
-            value={selectedAdult.taxProfile.personalReliefs}
-            onChange={(value) => updateSelectedAdult({
-              taxProfile: {
-                ...selectedAdult.taxProfile,
-                personalReliefs: value,
-              },
-            })}
-          />
-          <NumberInput
-            label="Relief basis age"
-            integer
-            min={18}
-            max={120}
-            value={selectedAdult.taxProfile.reliefBasisAge}
-            onChange={(value) => updateSelectedAdult({
-              taxProfile: {
-                ...selectedAdult.taxProfile,
-                reliefBasisAge: value,
-              },
-            })}
+        <CardContent className="space-y-4">
+          <TaxReliefEditor
+            adult={selectedAdult}
+            onUpdate={updateSelectedAdult}
           />
           <CurrencyInput
             label="SRS balance"

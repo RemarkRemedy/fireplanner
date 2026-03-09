@@ -648,9 +648,14 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                       <Label>Periodicity</Label>
                       <Select
                         value={expense.periodicity}
-                        onValueChange={(value) => updateExpenseList(expense.id, {
-                          periodicity: value as ExpenseItem['periodicity'],
-                        })}
+                        onValueChange={(value) => {
+                          const updates: Partial<ExpenseItem> = { periodicity: value as ExpenseItem['periodicity'] }
+                          if (value === 'one-off') {
+                            updates.timing = { ...timing, endAge: timing.startAge }
+                            updates.growthRate = 0
+                          }
+                          updateExpenseList(expense.id, updates)
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -668,31 +673,48 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                       onChange={(value) => updateExpenseList(expense.id, { amount: value })}
                       error={expenseErrors.amount}
                     />
-                    <PercentInput
-                      label="Growth rate"
-                      value={expense.growthRate ?? 0}
-                      onChange={(value) => updateExpenseList(expense.id, { growthRate: value })}
-                    />
-                    <NumberInput
-                      label="Start age"
-                      integer
-                      min={0}
-                      max={120}
-                      value={timing.startAge}
-                      onChange={(value) => updateExpenseList(expense.id, {
-                        timing: { ...timing, startAge: value },
-                      })}
-                    />
-                    <NumberInput
-                      label="End age"
-                      integer
-                      min={timing.startAge}
-                      max={120}
-                      value={timing.endAge ?? timing.startAge}
-                      onChange={(value) => updateExpenseList(expense.id, {
-                        timing: { ...timing, endAge: value },
-                      })}
-                    />
+                    {expense.periodicity !== 'one-off' && (
+                      <PercentInput
+                        label="Growth rate"
+                        value={expense.growthRate ?? 0}
+                        onChange={(value) => updateExpenseList(expense.id, { growthRate: value })}
+                      />
+                    )}
+                    {expense.periodicity === 'one-off' ? (
+                      <NumberInput
+                        label="At age"
+                        integer
+                        min={0}
+                        max={120}
+                        value={timing.startAge}
+                        onChange={(value) => updateExpenseList(expense.id, {
+                          timing: { ...timing, startAge: value, endAge: value },
+                        })}
+                      />
+                    ) : (
+                      <>
+                        <NumberInput
+                          label="Start age"
+                          integer
+                          min={0}
+                          max={120}
+                          value={timing.startAge}
+                          onChange={(value) => updateExpenseList(expense.id, {
+                            timing: { ...timing, startAge: value },
+                          })}
+                        />
+                        <NumberInput
+                          label="End age"
+                          integer
+                          min={timing.startAge}
+                          max={120}
+                          value={timing.endAge ?? timing.startAge}
+                          onChange={(value) => updateExpenseList(expense.id, {
+                            timing: { ...timing, endAge: value },
+                          })}
+                        />
+                      </>
+                    )}
                   </div>
                 </div>
               )
