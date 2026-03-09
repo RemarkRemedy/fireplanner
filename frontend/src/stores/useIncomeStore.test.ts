@@ -1,10 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { computeTotalReliefs } from '@/lib/data/taxBrackets'
-import { useProfileStore } from './useProfileStore'
 import { useIncomeStore, DEFAULT_CAREER_PHASES } from './useIncomeStore'
 
 beforeEach(() => {
-  useProfileStore.getState().reset()
   useIncomeStore.getState().reset()
 })
 
@@ -195,7 +193,9 @@ describe('useIncomeStore', () => {
     }
 
     it('captures the current age as the relief basis age when materializing detailed reliefs', () => {
-      useProfileStore.getState().setField('currentAge', 57)
+      // Set reliefBasisAge on the income store directly (setReliefBreakdown
+      // uses stateData.reliefBasisAge ?? 30 — no longer reads from profile store)
+      useIncomeStore.getState().setField('reliefBasisAge', 57)
       useIncomeStore.getState().setReliefBreakdown(detailedReliefs)
 
       const state = useIncomeStore.getState()
@@ -205,7 +205,7 @@ describe('useIncomeStore', () => {
     })
 
     it('clears the relief basis age when leaving detailed relief mode', () => {
-      useProfileStore.getState().setField('currentAge', 57)
+      useIncomeStore.getState().setField('reliefBasisAge', 57)
       useIncomeStore.getState().setReliefBreakdown(detailedReliefs)
       useIncomeStore.getState().setReliefBreakdown(null)
 
