@@ -250,22 +250,46 @@ function HealthcareDetails({ adult, onUpdate }: {
 
   return (
     <div className="space-y-4">
-      {/* MediShield Life & CareShield LIFE — mandatory schemes */}
-      <div className="flex flex-wrap gap-4">
-        <div className="flex items-center gap-2 rounded-md border bg-muted/30 p-3">
-          <span className="text-sm font-medium">MediShield Life</span>
-          <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">Included</span>
-          <InfoTooltip text="Mandatory national health insurance for all Singapore residents. Premiums are fully MediSave-deductible." />
-        </div>
-        <div className="flex items-center gap-2 rounded-md border bg-muted/30 p-3">
-          <span className="text-sm font-medium">CareShield LIFE</span>
-          <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">Included</span>
-          <InfoTooltip text="Mandatory long-term disability insurance. Premiums paid ages 30-67, fully MediSave-deductible." />
-        </div>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        Both schemes are mandatory for most Singapore residents. Those born before 1980 (CareShield LIFE) or with ElderShield coverage may be exempt.
-      </p>
+      {/* MediShield Life & CareShield LIFE */}
+      {(() => {
+        const birthYear = new Date().getFullYear() - adult.currentAge
+        const canOptOut = birthYear < 1980
+        return (
+          <>
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center gap-2 rounded-md border bg-muted/30 p-3">
+                <span className="text-sm font-medium">MediShield Life</span>
+                {canOptOut ? (
+                  <Switch
+                    checked={hc.mediShieldLifeEnabled}
+                    onCheckedChange={(checked) => onUpdate({ mediShieldLifeEnabled: checked })}
+                  />
+                ) : (
+                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">Included</span>
+                )}
+                <InfoTooltip text="Mandatory national health insurance for all Singapore residents. Premiums are fully MediSave-deductible." />
+              </div>
+              <div className="flex items-center gap-2 rounded-md border bg-muted/30 p-3">
+                <span className="text-sm font-medium">CareShield LIFE</span>
+                {canOptOut ? (
+                  <Switch
+                    checked={hc.careShieldLifeEnabled}
+                    onCheckedChange={(checked) => onUpdate({ careShieldLifeEnabled: checked })}
+                  />
+                ) : (
+                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">Included</span>
+                )}
+                <InfoTooltip text="Mandatory long-term disability insurance. Premiums paid ages 30-67, fully MediSave-deductible." />
+              </div>
+            </div>
+            {canOptOut && (
+              <p className="text-xs text-muted-foreground">
+                Born before 1980 — you may opt out of these schemes if you have ElderShield or are otherwise exempt.
+              </p>
+            )}
+          </>
+        )
+      })()}
 
       {/* ISP Tier — segmented buttons */}
       <div className="space-y-1">
