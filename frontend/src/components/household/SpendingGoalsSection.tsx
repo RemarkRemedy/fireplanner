@@ -577,6 +577,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                 selectedAdult.owner,
                 selectedAdult.currentAge,
               )
+              const isBaseLiving = expense.kind === 'base-living'
 
               return (
                 <div key={expense.id} className="rounded-lg border p-4 space-y-4">
@@ -649,6 +650,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                       <Label>Periodicity</Label>
                       <Select
                         value={expense.periodicity}
+                        disabled={isBaseLiving}
                         onValueChange={(value) => {
                           const updates: Partial<ExpenseItem> = { periodicity: value as ExpenseItem['periodicity'] }
                           if (value === 'one-off') {
@@ -711,6 +713,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                         min={0}
                         max={120}
                         value={timing.startAge}
+                        disabled={isBaseLiving}
                         onChange={(value) => updateExpenseList(expense.id, {
                           timing: { ...timing, startAge: value, endAge: value },
                         })}
@@ -723,6 +726,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                           min={0}
                           max={120}
                           value={timing.startAge}
+                          disabled={isBaseLiving}
                           onChange={(value) => updateExpenseList(expense.id, {
                             timing: { ...timing, startAge: value },
                           })}
@@ -733,6 +737,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                           min={timing.startAge}
                           max={120}
                           value={timing.endAge ?? timing.startAge}
+                          disabled={isBaseLiving}
                           onChange={(value) => updateExpenseList(expense.id, {
                             timing: { ...timing, endAge: value },
                           })}
@@ -740,6 +745,9 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                       </>
                     )}
                   </div>
+                  {isBaseLiving && (
+                    <p className="text-xs text-muted-foreground">Periodicity and age range are derived from the plan setup. Edit the person's age and life expectancy to change these.</p>
+                  )}
                 </div>
               )
             })
