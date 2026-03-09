@@ -18,14 +18,15 @@ import { FanChart } from '@/components/simulation/FanChart'
 import { FailureDistributionChart } from '@/components/simulation/FailureDistributionChart'
 import { SpendingMetricsPanel } from '@/components/simulation/SpendingMetricsPanel'
 import { InterpretationCallout } from '@/components/shared/InterpretationCallout'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useWithdrawalComparison } from '@/hooks/useWithdrawalComparison'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
-import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useEffectiveMode } from '@/hooks/useEffectiveMode'
 import { useUIStore } from '@/stores/useUIStore'
 import { useExplorePortfolio } from '@/hooks/useExplorePortfolio'
+import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { cn } from '@/lib/utils'
 import type { WithdrawalStrategyType, MonteCarloResult } from '@/lib/types'
 import type { MonteCarloEngineParams } from '@/lib/simulation/monteCarlo'
@@ -35,12 +36,50 @@ import { getEffectiveReturns, getEffectiveStdDevs } from '@/lib/calculations/por
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
 import { trackEvent } from '@/lib/analytics'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { stableRunOverrideHash } from '@/stores/useNormalizedAnalysisStore'
+
+const WITHDRAWAL_MC_SIGNATURE_VERSION = 'withdrawal-mc-v1'
+
+function buildWithdrawalMonteCarloRunSignature(input: {
+  allocationRevision: number
+  explore: {
+    allocationWeights: number[]
+    balanceMode: string
+    initialPortfolio: number
+    startAge: number
+  }
+  householdRevision: string
+  scenarioOverrideHash: string
+  simulationRevision: number
+}): string {
+  return [
+    WITHDRAWAL_MC_SIGNATURE_VERSION,
+    input.householdRevision,
+    input.scenarioOverrideHash,
+    `a${input.allocationRevision}`,
+    `s${input.simulationRevision}`,
+    stableRunOverrideHash(input.explore),
+  ].join(':')
+}
 
 export function WithdrawalPage() {
   usePageMeta({ title: 'Withdrawal Strategies — SG FIRE Planner', description: 'Compare 12 retirement withdrawal strategies including the 4% rule, VPW, guardrails, and CAPE-based approaches.', path: '/withdrawal' })
-  const profile = useProfileStore()
-  const allocation = useAllocationStore()
-  const simulation = useSimulationStore()
+  const { profile } = useHouseholdRuntimeInputs()
+  // Normalized context for household-aware ages and revision tracking
+  const normalized = useNormalizedLegacyAnalysisContext()
+  // Allocation selectors
+  const allocationValidationErrors = useAllocationStore((s) => s.validationErrors)
+  const allocationReturnOverrides = useAllocationStore((s) => s.returnOverrides)
+  const allocationStdDevOverrides = useAllocationStore((s) => s.stdDevOverrides)
+  const allocationRevision = useAllocationStore((s) => s.allocationRevision)
+  // Simulation selectors
+  const simulationValidationErrors = useSimulationStore((s) => s.validationErrors)
+  const simulationMcMethod = useSimulationStore((s) => s.mcMethod)
+  const simulationNSimulations = useSimulationStore((s) => s.nSimulations)
+  const simulationSelectedStrategy = useSimulationStore((s) => s.selectedStrategy)
+  const simulationStrategyParams = useSimulationStore((s) => s.strategyParams)
+  const simulationWithdrawalBasis = useSimulationStore((s) => s.withdrawalBasis)
+  const simulationRevision = useSimulationStore((s) => s.simulationRevision)
   const selectedStrategies = useWithdrawalStore((s) => s.selectedStrategies)
   const toggleStrategy = useWithdrawalStore((s) => s.toggleStrategy)
 
@@ -72,68 +111,62 @@ export function WithdrawalPage() {
 
   // Validation gating
   const profileErrors = profile.validationErrors
-  const allocationErrors = allocation.validationErrors
-  const simulationErrors = simulation.validationErrors
-  const mcValidationErrors = { ...profileErrors, ...allocationErrors, ...simulationErrors }
+  const mcValidationErrors = { ...profileErrors, ...allocationValidationErrors, ...simulationValidationErrors }
   const canRunExplore = explore.initialPortfolio > 0
-    && explore.startAge < profile.lifeExpectancy
-    && explore.startAge >= profile.currentAge
+    && explore.startAge < normalized.lifeExpectancy
+    && explore.startAge >= normalized.currentAge
     && Object.keys(mcValidationErrors).length === 0
 
   // Stale detection
   const [lastRunSig, setLastRunSig] = useState<string | null>(null)
-  const currentSig = useMemo(() => JSON.stringify({
-    initialPortfolio: explore.initialPortfolio,
-    startAge: explore.startAge,
-    allocationWeights: explore.allocationWeights,
-    lifeExpectancy: profile.lifeExpectancy,
-    mcMethod: simulation.mcMethod,
-    nSimulations: simulation.nSimulations,
-    selectedStrategy: simulation.selectedStrategy,
-    strategyParams: simulation.strategyParams,
-    expenseRatio: profile.expenseRatio,
-    inflation: profile.inflation,
-    annualExpenses: profile.annualExpenses,
-    returnOverrides: allocation.returnOverrides,
-    stdDevOverrides: allocation.stdDevOverrides,
-    withdrawalBasis: simulation.withdrawalBasis,
-    balanceMode: explore.balanceMode,
-    expenseAdjustments: profile.expenseAdjustments,
+  const currentSig = useMemo(() => buildWithdrawalMonteCarloRunSignature({
+    allocationRevision,
+    explore: {
+      allocationWeights: explore.allocationWeights,
+      balanceMode: explore.balanceMode,
+      initialPortfolio: explore.initialPortfolio,
+      startAge: explore.startAge,
+    },
+    householdRevision: normalized.householdRevision,
+    scenarioOverrideHash: normalized.scenarioOverrideHash,
+    simulationRevision,
   }), [
-    explore.initialPortfolio, explore.startAge, explore.allocationWeights,
-    explore.balanceMode, profile.lifeExpectancy, profile.expenseRatio,
-    profile.inflation, profile.annualExpenses, profile.expenseAdjustments,
-    simulation.mcMethod, simulation.nSimulations, simulation.selectedStrategy,
-    simulation.strategyParams, simulation.withdrawalBasis,
-    allocation.returnOverrides, allocation.stdDevOverrides,
+    allocationRevision,
+    explore.allocationWeights,
+    explore.balanceMode,
+    explore.initialPortfolio,
+    explore.startAge,
+    normalized.householdRevision,
+    normalized.scenarioOverrideHash,
+    simulationRevision,
   ])
 
   const buildMCParams = (): MonteCarloEngineParams => {
-    const nDecumYears = Math.max(0, profile.lifeExpectancy - explore.startAge)
-    const yearsFromCurrent = Math.max(0, explore.startAge - profile.currentAge)
+    const nDecumYears = Math.max(0, normalized.lifeExpectancy - explore.startAge)
+    const yearsFromCurrent = Math.max(0, explore.startAge - normalized.currentAge)
     const annualExpensesAtRetirement = getEffectiveExpenses(
-      explore.startAge, profile.annualExpenses, profile.expenseAdjustments, profile.lifeExpectancy,
+      explore.startAge, profile.annualExpenses, profile.expenseAdjustments, normalized.lifeExpectancy,
     ) * Math.pow(1 + profile.inflation, yearsFromCurrent)
 
     return {
       initialPortfolio: explore.initialPortfolio,
       allocationWeights: explore.allocationWeights,
-      expectedReturns: getEffectiveReturns(allocation.returnOverrides),
-      stdDevs: getEffectiveStdDevs(allocation.stdDevOverrides),
+      expectedReturns: getEffectiveReturns(allocationReturnOverrides),
+      stdDevs: getEffectiveStdDevs(allocationStdDevOverrides),
       correlationMatrix: CORRELATION_MATRIX,
       currentAge: explore.startAge,
       retirementAge: explore.startAge,       // forces pure decumulation (nYearsAccum = 0)
-      lifeExpectancy: profile.lifeExpectancy,
+      lifeExpectancy: normalized.lifeExpectancy,
       annualSavings: [],
       postRetirementIncome: Array(nDecumYears).fill(0),
-      method: simulation.mcMethod,
-      nSimulations: simulation.nSimulations,
-      withdrawalStrategy: simulation.selectedStrategy,
-      strategyParams: flattenStrategyParams(simulation.selectedStrategy, simulation.strategyParams),
+      method: simulationMcMethod,
+      nSimulations: simulationNSimulations,
+      withdrawalStrategy: simulationSelectedStrategy,
+      strategyParams: flattenStrategyParams(simulationSelectedStrategy, simulationStrategyParams),
       expenseRatio: profile.expenseRatio,
       inflation: profile.inflation,
       annualExpensesAtRetirement,
-      withdrawalBasis: simulation.withdrawalBasis,
+      withdrawalBasis: simulationWithdrawalBasis,
       extractPaths: true,
     }
   }
@@ -348,7 +381,7 @@ export function WithdrawalPage() {
                     <SpendingMetricsPanel
                       metrics={mcMutation.data.spending_metrics}
                       nSimulations={mcMutation.data.n_simulations}
-                      strategy={simulation.selectedStrategy}
+                      strategy={simulationSelectedStrategy}
                     />
                   )}
                   <FanChart bands={mcMutation.data.percentile_bands} retirementAge={explore.startAge} />
@@ -379,4 +412,3 @@ export function WithdrawalPage() {
     </>
   )
 }
-

@@ -1,23 +1,22 @@
 /**
  * Scenario comparison: save/load/compare up to 5 named planning scenarios.
- * Each scenario stores serialized state of all 6 Zustand stores.
- * Persisted in localStorage under 'fireplanner-scenarios' key.
+ *
+ * PR6 stores scenarios in the v2 portability shape while retaining a backward
+ * loader for legacy six-store snapshots.
  */
 
-import { migrateStoreData } from './storeRegistry'
+import {
+  applyResolvedPortabilityData,
+  buildPortabilityEnvelope,
+  coercePersistedStoreData,
+  resolvePortabilityData,
+  type MigratedStoreData,
+} from './storeRegistry'
 
 const STORAGE_KEY = 'fireplanner-scenarios'
+const SCENARIO_STORAGE_VERSION = 2
 const MAX_SCENARIOS = 5
 const MAX_SCENARIO_NAME_LENGTH = 80
-const STORE_KEYS = [
-  'fireplanner-profile',
-  'fireplanner-income',
-  'fireplanner-allocation',
-  'fireplanner-simulation',
-  'fireplanner-withdrawal',
-  'fireplanner-property',
-] as const
-const ALLOWED_STORE_KEYS = new Set<string>(STORE_KEYS)
 
 export interface ScenarioMetadata {
   id: string
@@ -26,6 +25,7 @@ export interface ScenarioMetadata {
 }
 
 interface ScenarioSnapshot {
+  version?: number
   metadata: ScenarioMetadata
   stores: Record<string, unknown>
 }
@@ -40,7 +40,7 @@ function generateId(): string {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === 'object'
+  return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 
 function isScenarioMetadata(value: unknown): value is ScenarioMetadata {
@@ -60,12 +60,8 @@ function sanitizeScenarioName(name: string): string {
   return cleaned.trim().slice(0, MAX_SCENARIO_NAME_LENGTH)
 }
 
-export function toStorePayload(rawValue: unknown): { state: Record<string, unknown>; version: number } | null {
-  if (!isRecord(rawValue)) return null
-  if (isRecord(rawValue.state) && typeof rawValue.version === 'number') {
-    return { state: rawValue.state, version: rawValue.version }
-  }
-  return { state: rawValue, version: 0 }
+export function toStorePayload(rawValue: unknown): MigratedStoreData | null {
+  return coercePersistedStoreData(rawValue)
 }
 
 function isScenarioSnapshot(value: unknown): value is ScenarioSnapshot {
@@ -122,28 +118,15 @@ export function saveScenario(name: string): string {
     throw new Error('Scenario name is required.')
   }
 
-  // Collect all persisted store data from localStorage
-  const stores: Record<string, unknown> = {}
-  for (const key of STORE_KEYS) {
-    const raw = localStorage.getItem(key)
-    if (raw) {
-      try {
-        const payload = toStorePayload(JSON.parse(raw))
-        if (payload) stores[key] = payload
-      } catch {
-        // skip corrupted store
-      }
-    }
-  }
-
   const id = generateId()
   const snapshot: ScenarioSnapshot = {
+    version: SCENARIO_STORAGE_VERSION,
     metadata: {
       id,
       name: cleanName,
       createdAt: new Date().toISOString(),
     },
-    stores,
+    stores: buildPortabilityEnvelope().stores,
   }
 
   scenarios.push(snapshot)
@@ -157,25 +140,19 @@ export function loadScenario(id: string, rehydrate?: () => void): boolean {
   const scenario = scenarios.find((s) => s.metadata.id === id)
   if (!scenario) return false
 
-  for (const [key, rawValue] of Object.entries(scenario.stores)) {
-    if (!ALLOWED_STORE_KEYS.has(key)) continue
-    const payload = toStorePayload(rawValue)
-    if (!payload) continue
+  const resolved = resolvePortabilityData(
+    {
+      version: scenario.version ?? 1,
+      stores: scenario.stores,
+    },
+    'scenario',
+  )
+  if (!resolved) return false
 
-    const migrated = migrateStoreData(key, payload)
-    const finalState = migrated ? migrated.state : payload.state
-    const finalVersion = migrated ? migrated.version : payload.version
+  applyResolvedPortabilityData(resolved, { rehydrate: !rehydrate })
 
-    try {
-      localStorage.setItem(key, JSON.stringify({ state: finalState, version: finalVersion }))
-    } catch { /* storage unavailable */ }
-  }
-
-  // Rehydrate stores if callback provided, otherwise fall back to reload
   if (rehydrate) {
     rehydrate()
-  } else {
-    window.location.reload()
   }
   return true
 }

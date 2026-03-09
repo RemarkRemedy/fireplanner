@@ -5,7 +5,9 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
+import { HOUSEHOLD_PLAN_STORAGE_KEY } from '@/stores/useHouseholdPlanStore'
 import { resolveDeterministicExpectedReturn } from '@/lib/analysis/deterministicAssumptions'
 import { buildPlannerResultsPayload } from '@/lib/companion/resultsPayload'
 import { useCompanionPlannerBridge } from './useCompanionPlannerBridge'
@@ -94,6 +96,9 @@ beforeEach(() => {
   useIncomeStore.getState().reset()
   useAllocationStore.getState().reset()
   useSimulationStore.getState().reset()
+  useHouseholdPlanStore.persist.clearStorage()
+  localStorage.removeItem(HOUSEHOLD_PLAN_STORAGE_KEY)
+  useHouseholdPlanStore.getState().reset()
   useUIStore.getState().setField('mode', 'simple')
 
   mockFetchPlannerSnapshot.mockReset()
@@ -129,6 +134,77 @@ describe('useCompanionPlannerBridge', () => {
     expect(useProfileStore.getState().annualExpenses).toBe(38_400)
     expect(useProfileStore.getState().liquidNetWorth).toBe(250_000)
     expect(useUIStore.getState().mode).toBe('advanced')
+  })
+
+  it('exposes imported household review metadata after bootstrap', async () => {
+    enableCompanionMode('import-review')
+    mockFetchPlannerSnapshot.mockResolvedValue({
+      schemaVersion: 1,
+      monthKey: '2026-03',
+      avgMonthlyIncome: 7_000,
+      avgMonthlyExpense: 4_500,
+      investableAssets: 220_000,
+      futureField: 'top-level-extra',
+      expenseImport: {
+        members: [
+          { role: 'self', name: 'Alex', currentAge: 41 },
+          { role: 'partner', name: 'Jamie', currentAge: 39 },
+          { role: 'dependent', name: 'Mia', age: 8, relationship: 'child', annualCost: 9_000 },
+        ],
+        unsupportedFields: ['debts.loan'],
+      },
+    })
+
+    const { result } = renderHook(() =>
+      useCompanionPlannerBridge({ result: undefined, isResultStale: false })
+    )
+
+    await waitFor(() => {
+      expect(result.current.bootstrapStatus).toBe('loaded')
+    })
+
+    expect(result.current.importedPlanReview?.detectedMembers.map((member) => member.label)).toEqual([
+      'Alex',
+      'Jamie',
+      'Mia',
+    ])
+    expect(result.current.importedPlanReview?.unsupportedFields).toEqual([
+      'debts.loan',
+      'snapshot.futureField',
+    ])
+    expect(result.current.importedPlanReview?.localEditabilityNote).toContain('local Fireplanner copies')
+    expect(useHouseholdPlanStore.getState().plan.planType).toBe('household')
+
+    const partnerId = useHouseholdPlanStore.getState().plan.adults.find((adult) => adult.owner === 'partner')?.id
+    expect(partnerId).toBeTruthy()
+    useHouseholdPlanStore.getState().updateAdult(partnerId!, { annualIncome: 42_000 })
+    expect(
+      useHouseholdPlanStore.getState().plan.adults.find((adult) => adult.owner === 'partner')?.annualIncome,
+    ).toBe(42_000)
+    await waitFor(() => {
+      expect(localStorage.getItem(HOUSEHOLD_PLAN_STORAGE_KEY)).not.toBeNull()
+    })
+  })
+
+  it('reacts when companion mode becomes enabled after the hook has already mounted', async () => {
+    mockFetchPlannerSnapshot.mockResolvedValue({ schemaVersion: 1 })
+
+    const { result, rerender } = renderHook(
+      ({ mc, stale }) => useCompanionPlannerBridge({ result: mc, isResultStale: stale }),
+      { initialProps: { mc: undefined as MonteCarloResult | undefined, stale: false } },
+    )
+
+    expect(result.current.isCompanionMode).toBe(false)
+
+    enableCompanionMode('flip001')
+    rerender({ mc: undefined, stale: false })
+
+    await waitFor(() => {
+      expect(result.current.isCompanionMode).toBe(true)
+      expect(result.current.bootstrapStatus).toBe('loaded')
+    })
+
+    expect(mockFetchPlannerSnapshot).toHaveBeenCalledWith('http://localhost:3000', 'flip001')
   })
 
   it('posts companion results with required payload keys after simulation completes', async () => {
@@ -180,6 +256,41 @@ describe('useCompanionPlannerBridge', () => {
     expect(payload).toHaveProperty('computed_at_utc')
     expect(payload).toHaveProperty('scenario_id')
     expect(payload).toHaveProperty('input_signature')
+
+    const profile = useProfileStore.getState()
+    const allocation = useAllocationStore.getState()
+    const simulation = useSimulationStore.getState()
+    const scenarioRetirementAge = result.current.activeScenarioRetirementAge ?? profile.retirementAge
+    const scenarioAnnualExpenses = result.current.activeScenarioAnnualExpenses ?? profile.annualExpenses
+    const initialPortfolio = profile.liquidNetWorth + profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
+    const expectedPayload = buildPlannerResultsPayload({
+      result: SAMPLE_RESULT,
+      initialPortfolio,
+      currentAge: profile.currentAge,
+      annualIncome: profile.annualIncome,
+      annualExpenses: scenarioAnnualExpenses,
+      computedAtUtc: payload?.computed_at_utc,
+      expectedReturn: resolveDeterministicExpectedReturn(profile, allocation, {
+        retirementAge: scenarioRetirementAge,
+      }),
+      inflation: profile.inflation,
+      expenseRatio: profile.expenseRatio,
+      lifeExpectancy: profile.lifeExpectancy,
+      retirementAge: scenarioRetirementAge,
+      allocationWeights: allocation.currentWeights,
+      selectedStrategy: simulation.selectedStrategy,
+      strategyParams: simulation.strategyParams,
+      mcMethod: simulation.mcMethod,
+      scenarioId: result.current.activeScenarioId ?? undefined,
+      scenarioName: result.current.activeScenario?.name,
+    })
+    expect(payload).toEqual({
+      ...expectedPayload,
+      input_signature: JSON.stringify({
+        annualExpenses: scenarioAnnualExpenses,
+        retirementAge: scenarioRetirementAge,
+      }),
+    })
 
     await waitFor(() => {
       expect(result.current.saveStatus).toBe('saved')
@@ -304,7 +415,14 @@ describe('useCompanionPlannerBridge', () => {
     const baseExpectedReturn = resolveDeterministicExpectedReturn(profile, allocation)
 
     expect(scenarioExpectedReturn).not.toBe(baseExpectedReturn)
+    // Linear glide 55→65 at age 60: progress=0.5, weights=[0.5,0,0,0.5,…]
+    // Expected return = 0.5*0.10 + 0.5*0.02 = 0.06
+    expect(scenarioExpectedReturn).toBeCloseTo(0.06)
+    // Base at age 65 >= endAge: all target weights (bonds), return = 0.02
+    expect(baseExpectedReturn).toBeCloseTo(0.02)
 
+    // Note: hook uses effectiveAnnualIncome from generateIncomeProjection,
+    // which equals annualIncome here (simple salary model, no career phases)
     const buildPayloadInput = {
       result: SAMPLE_RESULT,
       initialPortfolio,

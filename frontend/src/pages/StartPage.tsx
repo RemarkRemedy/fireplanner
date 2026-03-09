@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
+import {
+  HOUSEHOLD_PLAN_STORAGE_KEY,
+  useHouseholdPlanStore,
+} from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
 import { calculateFireNumber, calculateYearsToFire, projectNetWorthPath } from '@/lib/calculations/fire'
 import { Target, TrendingUp, CheckCircle, Clock, CalendarClock, Landmark, ArrowRight, Building, Heart, Info } from 'lucide-react'
@@ -15,10 +18,15 @@ import { Label } from '@/components/ui/label'
 import type { RetirementPhase } from '@/lib/types'
 import { trackEvent } from '@/lib/analytics'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { DEFAULT_PROFILE } from '@/stores/useProfileStore'
 import { LandingEmailSection } from '@/components/email/LandingEmailSection'
 import { grossUpFromTakeHome, netDownFromGross, getCpfEmployeeRateLabel, isAboveOwCeiling } from '@/lib/calculations/grossUp'
 import { Checkbox } from '@/components/ui/checkbox'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
+import type { HouseholdPlanType } from '@/lib/household/types'
+import { PlanTypeSelector } from '@/components/household/PlanTypeSelector'
+import { HouseholdSetupWizard } from '@/components/household/HouseholdSetupWizard'
+import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 
 type ActivePathway = 'goal-first' | 'story-first' | 'already-fire' | null
 
@@ -51,48 +59,48 @@ const PHASE_CARDS: { phase: RetirementPhase; label: string; description: string;
 
 export function StartPage() {
   usePageMeta({ title: 'SG FIRE Planner — Singapore Retirement Calculator', description: 'Free Singapore FIRE calculator with CPF, tax, Monte Carlo simulation, and 12 withdrawal strategies for retirement planning.', path: '/' })
-  const storedAge = useProfileStore((s) => s.currentAge)
-  const storedRetirementAge = useProfileStore((s) => s.retirementAge)
-  const storedAnnualIncome = useProfileStore((s) => s.annualIncome)
-  const storedAnnualExpenses = useProfileStore((s) => s.annualExpenses)
-  const storedLiquidNetWorth = useProfileStore((s) => s.liquidNetWorth)
-  const setProfileField = useProfileStore((s) => s.setField)
-  const setIncomeField = useIncomeStore((s) => s.setField)
+  const { profile } = useHouseholdRuntimeInputs()
   const setUIField = useUIStore((s) => s.setField)
   const cpfEnabled = useUIStore((s) => s.cpfEnabled)
   const propertyEnabled = useUIStore((s) => s.propertyEnabled)
   const healthcareEnabled = useUIStore((s) => s.healthcareEnabled)
   const navigate = useNavigate()
   const [activePathway, setActivePathway] = useState<ActivePathway>(null)
+  const [selectedPlanType, setSelectedPlanType] = useState<HouseholdPlanType>('individual')
+  const [householdPlannerEnabled] = useState(() => isHouseholdPlannerV1Enabled())
 
   // Check if returning user (has saved profile in localStorage)
   const [isReturningUser] = useState(() => {
-    try { return localStorage.getItem('fireplanner-profile') !== null } catch { return false }
+    try {
+      return localStorage.getItem(HOUSEHOLD_PLAN_STORAGE_KEY) !== null
+        || localStorage.getItem('fireplanner-profile') !== null
+    } catch {
+      return false
+    }
   })
 
   // Local draft state for inline forms
-  const [draftAge, setDraftAge] = useState(storedAge)
-  const [draftRetirementAge, setDraftRetirementAge] = useState(storedRetirementAge)
-  const [draftNetWorth, setDraftNetWorth] = useState(storedLiquidNetWorth)
+  const [draftAge, setDraftAge] = useState(profile.currentAge)
+  const [draftRetirementAge, setDraftRetirementAge] = useState(profile.retirementAge)
+  const [draftNetWorth, setDraftNetWorth] = useState(profile.liquidNetWorth)
 
   // Monthly income state
   const [incomeType, setIncomeType] = useState<'take-home' | 'gross'>('take-home')
   const [draftMonthlyIncome, setDraftMonthlyIncome] = useState(
-    () => Math.round(netDownFromGross(storedAnnualIncome / 12, storedAge))
+    () => Math.round(netDownFromGross(profile.annualIncome / 12, profile.currentAge))
   )
   const [hasBonusAws, setHasBonusAws] = useState(false)
   const [bonusMonths, setBonusMonths] = useState(1)
 
   // Monthly expenses state
   const [draftMonthlyExpenses, setDraftMonthlyExpenses] = useState(
-    () => Math.round(storedAnnualExpenses / 12)
+    () => Math.round(profile.annualExpenses / 12)
   )
 
   // Derived annual values — used by FIRE calcs and store writes
   const grossMonthly = incomeType === 'take-home'
     ? grossUpFromTakeHome(draftMonthlyIncome, draftAge)
     : draftMonthlyIncome
-  const draftBaseSalary = grossMonthly * 12
   const draftBonusMonths = hasBonusAws ? bonusMonths : 0
   const draftIncome = grossMonthly * (12 + draftBonusMonths)
   const draftExpenses = draftMonthlyExpenses * 12
@@ -109,15 +117,17 @@ export function StartPage() {
     }
     setIncomeType(newType)
   }
+  const activePlanType: HouseholdPlanType = selectedPlanType
 
-  // Compute preliminary FIRE metrics from draft values
-  const DEFAULT_SWR = 0.036
-  const DEFAULT_RETURN = 0.07
-  const DEFAULT_INFLATION = 0.025
-  const DEFAULT_EXPENSE_RATIO = 0.003
+  useEffect(() => {
+    if (activePlanType !== 'individual') {
+      setActivePathway(null)
+    }
+  }, [activePlanType])
 
-  const draftFireNumber = calculateFireNumber(draftExpenses, DEFAULT_SWR)
-  const draftNetRealReturn = DEFAULT_RETURN - DEFAULT_INFLATION - DEFAULT_EXPENSE_RATIO
+  // Compute preliminary FIRE metrics from draft values using canonical profile defaults
+  const draftFireNumber = calculateFireNumber(draftExpenses, DEFAULT_PROFILE.swr)
+  const draftNetRealReturn = DEFAULT_PROFILE.expectedReturn - DEFAULT_PROFILE.inflation - DEFAULT_PROFILE.expenseRatio
   const draftAnnualSavings = draftIncome - draftExpenses
   const draftYearsToFire = calculateYearsToFire(
     draftNetRealReturn,
@@ -163,53 +173,95 @@ export function StartPage() {
     setActivePathway(pathway)
     if (pathway) trackEvent('onboarding_pathway_selected', { pathway })
     // Reset drafts to current store values
-    setDraftAge(storedAge)
-    setDraftRetirementAge(storedRetirementAge)
-    setDraftNetWorth(storedLiquidNetWorth)
+    setDraftAge(profile.currentAge)
+    setDraftRetirementAge(profile.retirementAge)
+    setDraftNetWorth(profile.liquidNetWorth)
     setIncomeType('take-home')
-    setDraftMonthlyIncome(Math.round(netDownFromGross(storedAnnualIncome / 12, storedAge)))
-    setDraftMonthlyExpenses(Math.round(storedAnnualExpenses / 12))
+    setDraftMonthlyIncome(Math.round(netDownFromGross(profile.annualIncome / 12, profile.currentAge)))
+    setDraftMonthlyExpenses(Math.round(profile.annualExpenses / 12))
     setHasBonusAws(false)
     setBonusMonths(1)
   }
 
+  const applyIndividualDraft = (
+    nextRetirementAge: number,
+    lifeStage: 'pre-fire' | 'post-fire',
+    retirementPhase: RetirementPhase | null = null,
+  ) => {
+    const householdStore = useHouseholdPlanStore.getState()
+    householdStore.initializeManualPlan('individual')
+
+    const nextPlan = useHouseholdPlanStore.getState().plan
+    const selfAdult = nextPlan.adults.find((adult) => adult.owner === 'self')
+    if (!selfAdult) {
+      return
+    }
+
+    householdStore.updateAdult(selfAdult.id, {
+      currentAge: draftAge,
+      retirementAge: nextRetirementAge,
+      annualIncome: draftIncome,
+      annualExpenses: draftExpenses,
+      liquidNetWorth: draftNetWorth,
+      lifeStage,
+      cpf: {
+        ...selfAdult.cpf,
+        retirementPhase,
+      },
+    })
+
+    const refreshedPlan = useHouseholdPlanStore.getState().plan
+    const salaryModel = refreshedPlan.income.find((entry) => (
+      entry.kind === 'salary-model'
+      && entry.owner === 'self'
+      && entry.timing.owner === 'self'
+      && entry.timing.kind === 'age-range'
+    ))
+    if (salaryModel?.timing.kind === 'age-range') {
+      householdStore.updateIncome(salaryModel.id, {
+        annualAmount: draftIncome,
+        timing: {
+          ...salaryModel.timing,
+          startAge: draftAge,
+          endAge: nextRetirementAge,
+        },
+      })
+    }
+
+    const baseExpense = refreshedPlan.expenses.find((expense) => (
+      expense.kind === 'base-living'
+      && expense.owner === 'self'
+      && expense.timing.kind === 'age-range'
+      && expense.timing.owner === 'self'
+    ))
+    if (baseExpense?.timing.kind === 'age-range') {
+      householdStore.updateExpense(baseExpense.id, {
+        amount: draftExpenses,
+        timing: {
+          ...baseExpense.timing,
+          startAge: draftAge,
+          endAge: null,
+        },
+      })
+    }
+  }
+
   const handleGoalFirstContinue = () => {
-    setProfileField('currentAge', draftAge)
-    setProfileField('retirementAge', draftRetirementAge)
-    setProfileField('annualIncome', draftIncome)
-    setProfileField('annualExpenses', draftExpenses)
-    setProfileField('liquidNetWorth', draftNetWorth)
-    setProfileField('lifeStage', 'pre-fire')
-    setIncomeField('annualSalary', draftBaseSalary)
-    setIncomeField('bonusMonths', draftBonusMonths)
+    applyIndividualDraft(draftRetirementAge, 'pre-fire')
     setUIField('sectionOrder', 'goal-first')
     trackEvent('onboarding_continue', { pathway: 'goal-first' })
     navigate('/inputs')
   }
 
   const handleStoryFirstContinue = () => {
-    setProfileField('currentAge', draftAge)
-    setProfileField('annualIncome', draftIncome)
-    setProfileField('annualExpenses', draftExpenses)
-    setProfileField('liquidNetWorth', draftNetWorth)
-    setProfileField('lifeStage', 'pre-fire')
-    setIncomeField('annualSalary', draftBaseSalary)
-    setIncomeField('bonusMonths', draftBonusMonths)
+    applyIndividualDraft(profile.retirementAge, 'pre-fire')
     setUIField('sectionOrder', 'story-first')
     trackEvent('onboarding_continue', { pathway: 'story-first' })
     navigate('/inputs')
   }
 
   const handleAlreadyFirePhase = (phase: RetirementPhase) => {
-    setProfileField('currentAge', draftAge)
-    setProfileField('retirementAge', draftAge)
-    setProfileField('annualIncome', draftIncome)
-    setProfileField('annualExpenses', draftExpenses)
-    setProfileField('liquidNetWorth', draftNetWorth)
-    setProfileField('lifeStage', 'post-fire')
-    setProfileField('retirementPhase', phase)
-    setIncomeField('annualSalary', draftBaseSalary)
-    setIncomeField('bonusMonths', draftBonusMonths)
+    applyIndividualDraft(draftAge, 'post-fire', phase)
     setUIField('sectionOrder', 'already-fire')
     trackEvent('onboarding_continue', { pathway: 'already-fire', phase })
     navigate('/inputs')
@@ -317,42 +369,50 @@ export function StartPage() {
         </div>
       )}
 
-      {/* Pathway cards */}
-      <div className="grid grid-cols-1 @2xl:grid-cols-3 gap-4">
-        {pathwayCards.map(({ key, label, description, icon: Icon }, index) => (
-          <button
-            key={key}
-            onClick={() => handlePathwayClick(key as ActivePathway)}
-            className="text-left h-full opacity-0 animate-fade-in-up"
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
-            <Card className={`h-full transition-all duration-200 cursor-pointer ${
-              activePathway === key
-                ? 'bg-primary/5 ring-2 ring-primary/20 border-primary shadow-md'
-                : activePathway !== null
-                  ? 'opacity-75 hover:opacity-100 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5'
-                  : 'hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5'
-            }`}>
-              <CardContent className="py-6 md:py-6">
-                <div className="flex items-start gap-4">
-                  <div className="rounded-lg bg-primary/10 p-3">
-                    <Icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-lg">{label}</div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {description}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </button>
-        ))}
-      </div>
+      <PlanTypeSelector value={activePlanType} onChange={setSelectedPlanType} />
+
+      {activePlanType === 'individual' ? (
+        <>
+          {/* Pathway cards */}
+          <div className="grid grid-cols-1 @2xl:grid-cols-3 gap-4">
+            {pathwayCards.map(({ key, label, description, icon: Icon }, index) => (
+              <button
+                key={key}
+                onClick={() => handlePathwayClick(key as ActivePathway)}
+                className="text-left h-full opacity-0 animate-fade-in-up"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <Card className={`h-full transition-all duration-200 cursor-pointer ${
+                  activePathway === key
+                    ? 'bg-primary/5 ring-2 ring-primary/20 border-primary shadow-md'
+                    : activePathway !== null
+                      ? 'opacity-75 hover:opacity-100 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5'
+                      : 'hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5'
+                }`}>
+                  <CardContent className="py-6 md:py-6">
+                    <div className="flex items-start gap-4">
+                      <div className="rounded-lg bg-primary/10 p-3">
+                        <Icon className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-lg">{label}</div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {description}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </button>
+            ))}
+          </div>
+        </>
+      ) : householdPlannerEnabled ? (
+        <HouseholdSetupWizard planType={activePlanType} />
+      ) : null}
 
       {/* Goal-first inline form */}
-      {activePathway === 'goal-first' && (
+      {activePlanType === 'individual' && activePathway === 'goal-first' && (
         <Card className="bg-muted/30">
           <CardHeader>
             <CardTitle className="text-lg">{PATHWAY_TITLES['goal-first']}</CardTitle>
@@ -426,7 +486,7 @@ export function StartPage() {
       )}
 
       {/* Story-first inline form */}
-      {activePathway === 'story-first' && (
+      {activePlanType === 'individual' && activePathway === 'story-first' && (
         <Card className="bg-muted/30">
           <CardHeader>
             <CardTitle className="text-lg">{PATHWAY_TITLES['story-first']}</CardTitle>
@@ -486,7 +546,7 @@ export function StartPage() {
       )}
 
       {/* Already FIRE: age + net worth, then phase cards */}
-      {activePathway === 'already-fire' && (
+      {activePlanType === 'individual' && activePathway === 'already-fire' && (
         <div className="space-y-4">
           <Card className="bg-muted/30">
             <CardHeader>

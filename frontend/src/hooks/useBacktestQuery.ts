@@ -1,22 +1,14 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { runBacktestWorker, flattenStrategyParams } from '@/lib/simulation/workerClient'
-import { getEffectiveExpenses, getExpensesAtRetirement } from '@/lib/calculations/expenses'
+import { getExpensesAtRetirement } from '@/lib/calculations/expenses'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import type { BacktestSummary, PerYearResult, BacktestDataset, WithdrawalStrategyType, HeatmapConfig, HeatmapData } from '@/lib/types'
-import { sumPostRetirementIncome, getLifeEventExpenseImpact } from '@/lib/calculations/income'
-import { getPropertyRentalIncome } from '@/lib/calculations/hdb'
-import {
-  outstandingMortgageAtAge,
-  calculateSellAndDownsize,
-  calculateSellAndRent,
-} from '@/lib/calculations/property'
-import { buildProjectionParams } from '@/hooks/useIncomeProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
+import type { BacktestEngineParams } from '@/lib/simulation/backtest'
+import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
 import { buildYearlyWeights } from '@/lib/calculations/portfolio'
 import { trackEvent } from '@/lib/analytics'
@@ -68,14 +60,105 @@ const DEFAULT_CONFIG: BacktestConfig = {
 
 const DEBOUNCE_MS = 800
 
+const BACKTEST_RUN_SIGNATURE_VERSION = 'bt-v1'
+
+export function buildBacktestRunSignature(input: {
+  householdRevision: string
+  scenarioOverrideHash: string
+  allocationRevision: number
+  simulationRevision: number
+  withdrawalRevision: number
+  config: BacktestConfig
+}): string {
+  return [
+    BACKTEST_RUN_SIGNATURE_VERSION,
+    input.householdRevision,
+    input.scenarioOverrideHash,
+    `a${input.allocationRevision}`,
+    `s${input.simulationRevision}`,
+    `w${input.withdrawalRevision}`,
+    JSON.stringify(input.config),
+  ].join(':')
+}
+
+export function buildBacktestWorkerParams(input: {
+  analysisPortfolio: ReturnType<typeof useAnalysisPortfolio>
+  allocation: ReturnType<typeof useAllocationStore.getState>
+  config: BacktestConfig
+  normalized: ReturnType<typeof useNormalizedLegacyAnalysisContext>
+  profile: ReturnType<typeof useHouseholdRuntimeInputs>['profile']
+  simulation: ReturnType<typeof useSimulationStore.getState>
+  withdrawal: ReturnType<typeof useWithdrawalStore.getState>
+}): BacktestEngineParams {
+  const {
+    analysisPortfolio,
+    allocation,
+    config,
+    normalized,
+    profile,
+    simulation,
+    withdrawal,
+  } = input
+
+  const retirementOffset = normalized.householdRetirementYearOffset
+  const retirementDuration = config.retirementDuration
+  const postRetirementIncome = normalized.entry.selectors.backtest?.postRetirementIncomeByYear
+    .slice(retirementOffset + 1, retirementOffset + 1 + retirementDuration)
+    ?? []
+  // C9/W38: Include all portfolio adjustment kinds (goals, downsizing, life
+  // events, etc.), not just retirement-withdrawal. The backtest engine treats
+  // positive oneTimeWithdrawals.amount as additional withdrawal from portfolio.
+  // Compiled plan uses the opposite sign convention: negative = cost/withdrawal,
+  // positive = injection. So we negate: -adjustment.amount.
+  const oneTimeWithdrawals = (normalized.entry.selectors.backtest?.portfolioAdjustments ?? [])
+    .map((adjustment) => ({
+      year: adjustment.yearOffset - retirementOffset,
+      amount: -adjustment.amount,
+    }))
+    .filter((adjustment) => adjustment.year >= 0 && adjustment.year < retirementDuration)
+
+  return {
+    initialPortfolio: analysisPortfolio.retirementPortfolio,
+    allocationWeights: analysisPortfolio.allocationWeights,
+    swr: config.swr,
+    retirementDuration,
+    dataset: config.dataset,
+    blendRatio: config.blendRatio,
+    expenseRatio: profile.expenseRatio,
+    withdrawalStrategy: config.withdrawalStrategy,
+    strategyParams: flattenStrategyParams(config.withdrawalStrategy, withdrawal.strategyParams),
+    inflation: profile.inflation,
+    oneTimeWithdrawals: oneTimeWithdrawals.length > 0 ? oneTimeWithdrawals : undefined,
+    postRetirementIncome: postRetirementIncome.length > 0 ? postRetirementIncome : undefined,
+    retirementMitigation: profile.retirementMitigation,
+    annualExpensesAtRetirement: getExpensesAtRetirement(
+      normalized.retirementAge,
+      normalized.currentAge,
+      profile.annualExpenses,
+      profile.expenseAdjustments,
+      normalized.lifeExpectancy,
+      profile.inflation,
+    ),
+    withdrawalBasis: simulation.withdrawalBasis,
+    yearlyWeights: allocation.glidePathConfig.enabled
+      ? buildYearlyWeights(
+          retirementDuration,
+          normalized.retirementAge,
+          allocation.currentWeights,
+          allocation.targetWeights,
+          allocation.glidePathConfig,
+        )
+      : undefined,
+  }
+}
+
 export function useBacktestQuery(): UseBacktestQueryResult {
-  const profile = useProfileStore()
+  const { profile } = useHouseholdRuntimeInputs()
   const allocation = useAllocationStore()
   const withdrawal = useWithdrawalStore()
   const simulation = useSimulationStore()
-  const income = useIncomeStore()
-  const propertyStore = usePropertyStore()
   const analysisPortfolio = useAnalysisPortfolio()
+  const normalized = useNormalizedLegacyAnalysisContext()
   const [config, setConfigState] = useState<BacktestConfig>(DEFAULT_CONFIG)
 
   const profileErrors = profile.validationErrors
@@ -98,217 +181,42 @@ export function useBacktestQuery(): UseBacktestQueryResult {
   const [heatmapData, setHeatmapData] = useState<HeatmapData | null>(null)
   const [heatmapStale, setHeatmapStale] = useState(false)
 
-  const currentParamsSig = useMemo(() => JSON.stringify({
-    initialPortfolio: analysisPortfolio.retirementPortfolio,
-    allocationWeights: analysisPortfolio.allocationWeights,
-    swr: config.swr,
-    retirementDuration: config.retirementDuration,
-    dataset: config.dataset,
-    blendRatio: config.blendRatio,
-    expenseRatio: profile.expenseRatio,
-    strategy,
-    strategyParams: withdrawal.strategyParams,
-    inflation: profile.inflation,
-    retirementWithdrawals: profile.retirementWithdrawals,
-    annualExpenses: profile.annualExpenses,
-    expenseAdjustments: profile.expenseAdjustments,
-    withdrawalBasis: simulation.withdrawalBasis,
-    // Income/life events (affect postRetirementIncome computation)
-    lifeEvents: income.lifeEvents,
-    lifeEventsEnabled: income.lifeEventsEnabled,
-    parentSupportEnabled: profile.parentSupportEnabled,
-    parentSupport: profile.parentSupport,
-    healthcareConfig: profile.healthcareConfig,
-    financialGoals: profile.financialGoals,
-    // Property (affects mortgage, subletting, downsizing income)
-    ownsProperty: propertyStore.ownsProperty,
-    propertyType: propertyStore.propertyType,
-    hdbMonetizationStrategy: propertyStore.hdbMonetizationStrategy,
-    hdbSublettingRooms: propertyStore.hdbSublettingRooms,
-    hdbSublettingRate: propertyStore.hdbSublettingRate,
-    downsizing: propertyStore.downsizing,
-    existingMonthlyPayment: propertyStore.existingMonthlyPayment,
-    existingMortgageRemainingYears: propertyStore.existingMortgageRemainingYears,
-    existingMortgageBalance: propertyStore.existingMortgageBalance,
-    existingMortgageRate: propertyStore.existingMortgageRate,
-    mortgageCpfMonthly: propertyStore.mortgageCpfMonthly,
-    ownershipPercent: propertyStore.ownershipPercent,
-    existingPropertyValue: propertyStore.existingPropertyValue,
-    residencyForAbsd: propertyStore.residencyForAbsd,
-    glidePathConfig: allocation.glidePathConfig,
-    targetWeights: allocation.targetWeights,
-  }), [
-    analysisPortfolio.retirementPortfolio, analysisPortfolio.allocationWeights,
-    config.swr, config.retirementDuration, config.dataset, config.blendRatio,
-    profile.expenseRatio, strategy, withdrawal.strategyParams, profile.inflation,
-    profile.retirementWithdrawals, profile.annualExpenses, profile.expenseAdjustments,
-    simulation.withdrawalBasis,
-    allocation.glidePathConfig, allocation.targetWeights,
-    income.lifeEvents, income.lifeEventsEnabled,
-    profile.parentSupportEnabled, profile.parentSupport,
-    profile.healthcareConfig, profile.financialGoals,
-    propertyStore.ownsProperty, propertyStore.propertyType,
-    propertyStore.hdbMonetizationStrategy, propertyStore.hdbSublettingRooms,
-    propertyStore.hdbSublettingRate, propertyStore.downsizing,
-    propertyStore.existingMonthlyPayment, propertyStore.existingMortgageRemainingYears,
-    propertyStore.existingMortgageBalance, propertyStore.existingMortgageRate,
-    propertyStore.mortgageCpfMonthly, propertyStore.ownershipPercent,
-    propertyStore.existingPropertyValue, propertyStore.residencyForAbsd,
-  ])
-
-  const buildParams = useCallback(async () => {
-    // Convert retirement withdrawals to year-offset based one-time withdrawals
-    // Expand durationYears > 1 into multiple year entries
-    const oneTimeWithdrawals: { year: number; amount: number }[] = []
-    for (const rw of profile.retirementWithdrawals) {
-      for (let d = 0; d < (rw.durationYears ?? 1); d++) {
-        const yearOffset = (rw.age + d) - profile.retirementAge
-        if (yearOffset >= 0 && yearOffset < config.retirementDuration) {
-          oneTimeWithdrawals.push({ year: yearOffset, amount: rw.amount })
-        }
-      }
-    }
-
-    // Compute post-retirement income array (mirrors useSequenceRiskQuery.ts pattern)
-    const postRetirementIncome: number[] = []
-
-    // Property mortgage (cash portion only, mirrors projection.ts lines 98-99)
-    const ownershipPct = propertyStore.ownershipPercent ?? 1
-    const annualMortgagePayment = propertyStore.ownsProperty
-      ? (propertyStore.existingMonthlyPayment - propertyStore.mortgageCpfMonthly) * 12 * ownershipPct
-      : 0
-    const mortgageEndAge = propertyStore.ownsProperty
-      ? profile.currentAge + Math.ceil(propertyStore.existingMortgageRemainingYears)
-      : 0
-
-    // Downsizing setup
-    const ds = propertyStore.downsizing
-    const dsSellAge = ds?.scenario !== 'none' && propertyStore.ownsProperty
-      ? ds.sellAge : null
-
-    // Downsizing ongoing cashflow values
-    let dsNewMonthlyPayment = 0
-    let dsAnnualRent = 0
-
-    if (ds && ds.scenario !== 'none' && propertyStore.ownsProperty) {
-      const yearsToSell = ds.sellAge - profile.currentAge
-      const outstandingAtSell = outstandingMortgageAtAge(
-        propertyStore.existingMortgageBalance,
-        propertyStore.existingMonthlyPayment,
-        propertyStore.existingMortgageRate,
-        Math.max(0, yearsToSell),
-      )
-      if (ds.scenario === 'sell-and-downsize') {
-        const result = calculateSellAndDownsize({
-          salePrice: ds.expectedSalePrice,
-          outstandingMortgage: outstandingAtSell,
-          newPropertyCost: ds.newPropertyCost,
-          newLtv: ds.newLtv,
-          newMortgageRate: ds.newMortgageRate,
-          newMortgageTerm: ds.newMortgageTerm,
-          residency: propertyStore.residencyForAbsd,
-          propertyCount: 0,
-        })
-        dsNewMonthlyPayment = result.newMonthlyPayment
-      } else if (ds.scenario === 'sell-and-rent') {
-        const result = calculateSellAndRent({
-          salePrice: ds.expectedSalePrice,
-          outstandingMortgage: outstandingAtSell,
-          monthlyRent: ds.monthlyRent,
-        })
-        dsAnnualRent = result.annualRent
-      }
-    }
-
-    const projectionParams = buildProjectionParams(profile, income, propertyStore)
-    if (projectionParams) {
-      const { generateIncomeProjection } = await import('@/lib/calculations/income')
-      const projection = generateIncomeProjection(projectionParams)
-      const annualRentalIncome = getPropertyRentalIncome(propertyStore)
-      for (const row of projection) {
-        if (row.isRetired) {
-          const isSold = dsSellAge !== null && row.age >= dsSellAge
-
-          let rentalForYear: number
-          let mortgageForYear: number
-          let cpfOaShortfallForYear: number
-          let downsizingRentForYear = 0
-
-          if (isSold) {
-            rentalForYear = 0
-            cpfOaShortfallForYear = 0
-            if (ds?.scenario === 'sell-and-downsize') {
-              mortgageForYear = dsNewMonthlyPayment * 12
-            } else if (ds?.scenario === 'sell-and-rent') {
-              mortgageForYear = 0
-              const yearsSinceSell = row.age - dsSellAge!
-              downsizingRentForYear = dsAnnualRent * Math.pow(1 + (ds.rentGrowthRate ?? 0.03), yearsSinceSell)
-            } else {
-              mortgageForYear = 0
-            }
-          } else {
-            rentalForYear = annualRentalIncome
-            mortgageForYear = row.age >= mortgageEndAge ? 0 : annualMortgagePayment
-            cpfOaShortfallForYear = row.cpfOaShortfall
-          }
-
-          // Life event expense impacts during retirement — delta approach only
-          const retEffectiveBase = getEffectiveExpenses(
-            row.age, profile.annualExpenses, profile.expenseAdjustments ?? [], profile.lifeExpectancy
-          )
-          const { adjustedExpense: retLifeEventExpense } =
-            getLifeEventExpenseImpact(row.age, retEffectiveBase, income.lifeEvents, income.lifeEventsEnabled)
-          const retYear = row.age - profile.currentAge
-          const lifeEventExpenseDelta = (retLifeEventExpense - retEffectiveBase) * Math.pow(1 + profile.inflation, retYear)
-
-          const netIncome = sumPostRetirementIncome(row, rentalForYear)
-            - mortgageForYear - cpfOaShortfallForYear - downsizingRentForYear
-            - lifeEventExpenseDelta
-          postRetirementIncome.push(netIncome)
-        }
-      }
-    }
-
-    return {
-      initialPortfolio: analysisPortfolio.retirementPortfolio,
-      allocationWeights: analysisPortfolio.allocationWeights,
-      swr: config.swr,
-      retirementDuration: config.retirementDuration,
-      dataset: config.dataset,
-      blendRatio: config.blendRatio,
-      expenseRatio: profile.expenseRatio,
+  const currentParamsSig = useMemo(() => buildBacktestRunSignature({
+    householdRevision: normalized.householdRevision,
+    scenarioOverrideHash: normalized.scenarioOverrideHash,
+    allocationRevision: allocation.allocationRevision,
+    simulationRevision: simulation.simulationRevision,
+    withdrawalRevision: withdrawal.withdrawalRevision,
+    config: {
+      ...config,
       withdrawalStrategy: strategy,
-      strategyParams: flattenStrategyParams(strategy, withdrawal.strategyParams),
-      inflation: profile.inflation,
-      oneTimeWithdrawals: oneTimeWithdrawals.length > 0 ? oneTimeWithdrawals : undefined,
-      postRetirementIncome: postRetirementIncome.length > 0 ? postRetirementIncome : undefined,
-      retirementMitigation: profile.retirementMitigation,
-      annualExpensesAtRetirement: getExpensesAtRetirement(profile.retirementAge, profile.currentAge, profile.annualExpenses, profile.expenseAdjustments, profile.lifeExpectancy, profile.inflation),
-      withdrawalBasis: simulation.withdrawalBasis,
-      yearlyWeights: allocation.glidePathConfig.enabled
-        ? buildYearlyWeights(
-            config.retirementDuration,
-            profile.retirementAge,
-            allocation.currentWeights,
-            allocation.targetWeights,
-            allocation.glidePathConfig,
-          )
-        : undefined,
-    }
-  }, [
-    analysisPortfolio.retirementPortfolio, analysisPortfolio.allocationWeights,
-    config, strategy, withdrawal.strategyParams,
-    simulation.withdrawalBasis,
-    income, propertyStore, profile,
-    allocation.glidePathConfig, allocation.currentWeights, allocation.targetWeights,
+    },
+  }), [
+    allocation.allocationRevision,
+    config,
+    normalized.householdRevision,
+    normalized.scenarioOverrideHash,
+    simulation.simulationRevision,
+    strategy,
+    withdrawal.withdrawalRevision,
   ])
+
+  const buildParams = () => buildBacktestWorkerParams({
+    analysisPortfolio,
+    allocation,
+    config: {
+      ...config,
+      withdrawalStrategy: strategy,
+    },
+    normalized,
+    profile,
+    simulation,
+    withdrawal,
+  })
 
   // Base mutation (no heatmap — fast)
   const baseMutation = useMutation({
-    mutationFn: async () => {
-      const params = await buildParams()
-      return runBacktestWorker(params, false)
-    },
+    mutationFn: async () => runBacktestWorker(buildParams(), false),
     onError: (err) => { trackEvent('simulation_failed', { type: 'backtest', error: err.message }) },
     onSuccess: (result) => {
       trackEvent('simulation_completed', { type: 'backtest', success_rate: result.summary.success_rate })
@@ -323,10 +231,7 @@ export function useBacktestQuery(): UseBacktestQueryResult {
 
   // Heatmap mutation (slower, manual trigger)
   const heatmapMutation = useMutation({
-    mutationFn: async () => {
-      const params = await buildParams()
-      return runBacktestWorker(params, true, config.heatmapConfig)
-    },
+    mutationFn: async () => runBacktestWorker(buildParams(), true, config.heatmapConfig),
     onSuccess: (result) => {
       setBaseData({
         results: result.results,

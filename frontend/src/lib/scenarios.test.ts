@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { useProfileStore } from '@/stores/useProfileStore'
 import { listScenarios, saveScenario, loadScenario, deleteScenario } from './scenarios'
 import { STORE_REGISTRY } from './storeRegistry'
 
@@ -14,6 +15,17 @@ describe('listScenarios', () => {
 
   it('returns empty array when localStorage is corrupted', () => {
     localStorage.setItem('fireplanner-scenarios', 'not-valid-json')
+    expect(listScenarios()).toEqual([])
+  })
+
+  it('ignores malformed scenario snapshots where stores is an array', () => {
+    localStorage.setItem('fireplanner-scenarios', JSON.stringify([
+      {
+        metadata: { id: 'bad', name: 'Bad', createdAt: new Date().toISOString() },
+        stores: [],
+      },
+    ]))
+
     expect(listScenarios()).toEqual([])
   })
 
@@ -110,10 +122,11 @@ describe('loadScenario', () => {
     expect(stored.version).toBe(STORE_REGISTRY['fireplanner-profile'].currentVersion)
   })
 
-  it('calls window.location.reload when no rehydrate callback', () => {
+  it('rehydrates stores directly when no rehydrate callback is provided', () => {
     localStorage.setItem('fireplanner-profile', JSON.stringify({ currentAge: 35 }))
     const id = saveScenario('Plan')
 
+    const rehydrateSpy = vi.spyOn(useProfileStore.persist, 'rehydrate')
     const reloadMock = vi.fn()
     Object.defineProperty(window, 'location', {
       value: { ...window.location, reload: reloadMock },
@@ -122,7 +135,8 @@ describe('loadScenario', () => {
     })
 
     loadScenario(id)
-    expect(reloadMock).toHaveBeenCalled()
+    expect(rehydrateSpy).toHaveBeenCalled()
+    expect(reloadMock).not.toHaveBeenCalled()
   })
 })
 

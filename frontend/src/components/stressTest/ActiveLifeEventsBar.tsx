@@ -11,16 +11,17 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { AlertTriangle, ChevronUp, ExternalLink, Info, Plus, RotateCcw, X } from 'lucide-react'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
 import {
   useDisruptionImpact,
   DISRUPTION_TEMPLATES,
   MAX_LIFE_EVENTS,
   PERMANENT_DURATION_THRESHOLD,
 } from '@/hooks/useDisruptionImpact'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import type { CostTierKey } from '@/hooks/useDisruptionImpact'
+import type { HouseholdPlan, PlanningAdult } from '@/lib/household/types'
 import type { LifeEvent } from '@/lib/types'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { formatCurrency, cn } from '@/lib/utils'
 import { DeltaBadge } from '@/components/shared/DeltaBadge'
 
@@ -123,9 +124,17 @@ const CATEGORY_LABELS: Record<Category, string> = {
   family: 'Family',
 }
 
+function getActiveAdult(plan: HouseholdPlan, referenceAdultId: string): PlanningAdult | null {
+  return plan.adults.find((adult) => adult.id === referenceAdultId)
+    ?? plan.adults.find((adult) => adult.owner === 'self')
+    ?? plan.adults[0]
+    ?? null
+}
+
 function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
-  const profile = useProfileStore()
-  const income = useIncomeStore()
+  const { profile, normalized } = useHouseholdRuntimeInputs()
+  const plan = useHouseholdPlanStore((state) => state.plan)
+  const updateAdult = useHouseholdPlanStore((state) => state.updateAdult)
   const [costTier, setCostTier] = useState<CostTierKey>('subsidised')
   const [incomeOverride, setIncomeOverride] = useState<number | null>(null)
   const [expenseReductionOverride, setExpenseReductionOverride] = useState<number | null>(null)
@@ -151,6 +160,8 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
     lumpSumCost: lumpSumOverride ?? undefined,
   })
 
+  const activeAdult = getActiveAdult(plan, normalized.referenceAdultId)
+
   const resetAllOverrides = () => {
     setIncomeOverride(null)
     setExpenseReductionOverride(null)
@@ -173,11 +184,12 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
   }
 
   if (!baseMetrics) return null
+  if (!activeAdult) return null
 
   const currentAge = profile.currentAge
   const retirementAge = profile.retirementAge
   const lifeExpectancy = profile.lifeExpectancy
-  const lifeEventsCount = income.lifeEvents.length
+  const lifeEventsCount = activeAdult.lifeEvents.length
   const atEventLimit = lifeEventsCount >= MAX_LIFE_EVENTS
   const selectedTemplate = selectedIndex !== null ? DISRUPTION_TEMPLATES[selectedIndex] : null
 
@@ -194,23 +206,25 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
     const endAge = Math.min(lifeExpectancy, clampedStartAge + selectedTemplate.durationYears)
     const id = `event-${crypto.randomUUID()}`
 
-    income.addLifeEvent({
-      id,
-      name: selectedTemplate.event.name,
-      startAge: clampedStartAge,
-      endAge,
-      incomeImpact: effectiveIncome,
-      affectedStreamIds: [],
-      savingsPause: selectedTemplate.event.savingsPause,
-      cpfPause: selectedTemplate.event.cpfPause,
-      additionalAnnualExpense: effectiveAnnualExpense || undefined,
-      lumpSumCost: effectiveLumpSum || undefined,
-      expenseReductionPercent: effectiveExpenseReduction || undefined,
+    updateAdult(activeAdult.id, {
+      lifeEventsEnabled: true,
+      lifeEvents: [
+        ...activeAdult.lifeEvents,
+        {
+          id,
+          name: selectedTemplate.event.name,
+          startAge: clampedStartAge,
+          endAge,
+          incomeImpact: effectiveIncome,
+          affectedStreamIds: [],
+          savingsPause: selectedTemplate.event.savingsPause,
+          cpfPause: selectedTemplate.event.cpfPause,
+          additionalAnnualExpense: effectiveAnnualExpense || undefined,
+          lumpSumCost: effectiveLumpSum || undefined,
+          expenseReductionPercent: effectiveExpenseReduction || undefined,
+        },
+      ],
     })
-
-    if (!income.lifeEventsEnabled) {
-      income.setField('lifeEventsEnabled', true)
-    }
     handleSelectTemplate(null)
     onCollapse()
   }
@@ -492,8 +506,11 @@ function LifeEventConfigurator({ onCollapse }: { onCollapse: () => void }) {
 
 export function ActiveLifeEventsBar() {
   const [expanded, setExpanded] = useState(false)
-  const lifeEvents = useIncomeStore((s) => s.lifeEvents)
-  const removeLifeEvent = useIncomeStore((s) => s.removeLifeEvent)
+  const { normalized } = useHouseholdRuntimeInputs()
+  const plan = useHouseholdPlanStore((state) => state.plan)
+  const updateAdult = useHouseholdPlanStore((state) => state.updateAdult)
+  const activeAdult = getActiveAdult(plan, normalized.referenceAdultId)
+  const lifeEvents = activeAdult?.lifeEvents ?? []
 
   const eventCount = lifeEvents.length
   const atLimit = eventCount >= MAX_LIFE_EVENTS
@@ -513,7 +530,14 @@ export function ActiveLifeEventsBar() {
           <EventChip
             key={event.id}
             event={event}
-            onRemove={() => removeLifeEvent(event.id)}
+            onRemove={() => {
+              if (!activeAdult) return
+              const nextLifeEvents = activeAdult.lifeEvents.filter((entry) => entry.id !== event.id)
+              updateAdult(activeAdult.id, {
+                lifeEventsEnabled: nextLifeEvents.length > 0,
+                lifeEvents: nextLifeEvents,
+              })
+            }}
           />
         ))}
 

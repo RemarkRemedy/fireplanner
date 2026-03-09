@@ -1,7 +1,7 @@
 import { percentile } from '@/lib/math/stats'
 import { migrateStoreData } from '@/lib/storeRegistry'
 import { toStorePayload } from '@/lib/scenarios'
-import { buildProjectionParams } from '@/hooks/useIncomeProjection'
+import { buildProjectionParams } from '@/lib/calculations/projectionParams'
 import { FRS_BASE } from '@/lib/data/cpfRates'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import type { ProjectionParams } from '@/lib/calculations/projection'
@@ -30,6 +30,7 @@ import type {
 } from '@/lib/types'
 import { buildProofCyclesFromHistoricalBlended, buildProofCyclesFromMonteCarlo } from './proofData'
 import { buildMonteCarloEngineParams } from './monteCarloParams'
+import type { NormalizedAnalysisCacheOps } from '@/stores/useNormalizedAnalysisStore'
 
 interface ScenarioCoreStores {
   profile: ProfileState
@@ -338,6 +339,7 @@ export async function buildProofCyclesFromScenarioSnapshot(
   scenarioStores: Record<string, unknown>,
   source: ProofSource,
   blendRatio: number,
+  cacheOps: NormalizedAnalysisCacheOps,
 ): Promise<ProofCycle[]> {
   const core = extractScenarioCoreStores(scenarioStores)
   if (!core) {
@@ -380,6 +382,7 @@ export async function buildProofCyclesFromScenarioSnapshot(
     property: core.property,
     initialPortfolio: core.profile.liquidNetWorth + core.profile.cpfOA + core.profile.cpfSA + core.profile.cpfMA + core.profile.cpfRA,
     allocationWeights: core.allocation.currentWeights,
+    cacheOps,
   })
   const engineResult = await runMonteCarloWorker(mcParams)
 

@@ -19,6 +19,7 @@ import type {
   PropertyState,
 } from '@/lib/types'
 import { buildMonteCarloEngineParams } from '@/lib/simulation/monteCarloParams'
+import type { NormalizedAnalysisCacheOps } from '@/stores/useNormalizedAnalysisStore'
 import { runMonteCarloWorker } from '@/lib/simulation/workerClient'
 import type { MonteCarloEngineParams } from '@/lib/simulation/monteCarlo'
 import { clamp01 } from './utils'
@@ -318,6 +319,7 @@ export interface ActionImpactRunnerInput {
   annualIncome: number
   signal?: AbortSignal
   profileOverrides?: Partial<Pick<ProfileState, 'annualExpenses' | 'retirementAge'>>
+  cacheOps: NormalizedAnalysisCacheOps
   onProgress?: (completed: number, total: number, lever: ActionLever) => void
 }
 
@@ -335,7 +337,7 @@ export async function runActionImpactAnalysis(
     profile, income, allocation, simulation, property,
     initialPortfolio, allocationWeights,
     baseResult, isRetiree, annualIncome,
-    signal, profileOverrides,
+    signal, profileOverrides, cacheOps,
     onProgress,
   } = input
 
@@ -395,6 +397,7 @@ export async function runActionImpactAnalysis(
       profileOverrides: Object.keys(mergedProfileOverrides).length > 0
         ? mergedProfileOverrides
         : undefined,
+      cacheOps,
     })
 
     try {

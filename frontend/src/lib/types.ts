@@ -293,6 +293,7 @@ export interface IncomeState {
   lifeEventsEnabled: boolean
   personalReliefs: number
   reliefBreakdown: import('@/lib/data/taxBrackets').ReliefBreakdown | null   // null = Simple mode
+  reliefBasisAge: number | null
   validationErrors: ValidationErrors
 }
 

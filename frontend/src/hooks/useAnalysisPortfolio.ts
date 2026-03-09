@@ -1,10 +1,12 @@
 import { useMemo } from 'react'
-import { useProfileStore } from '@/stores/useProfileStore'
+import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useAllocationStore } from '@/stores/useAllocationStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { projectPortfolioAtRetirement } from '@/lib/calculations/fire'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
 import { resolveDeterministicExpectedReturn } from '@/lib/analysis/deterministicAssumptions'
 import { formatCurrency } from '@/lib/utils'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 
 interface AnalysisPortfolioResult {
   initialPortfolio: number
@@ -23,8 +25,13 @@ interface AnalysisPortfolioResult {
  * own useExplorePortfolio hook with local state.
  */
 export function useAnalysisPortfolio(): AnalysisPortfolioResult {
-  const profile = useProfileStore()
+  const plan = useHouseholdPlanStore((state) => state.plan)
   const allocation = useAllocationStore()
+  const normalized = useNormalizedLegacyAnalysisContext()
+  const { profile } = useMemo(
+    () => buildHouseholdRuntimeLegacyInputs(plan, normalized.compiledPlan),
+    [normalized.compiledPlan, plan]
+  )
 
   return useMemo(() => {
     const currentWeights = allocation.currentWeights
@@ -33,21 +40,26 @@ export function useAnalysisPortfolio(): AnalysisPortfolioResult {
     // Compute deterministic projection for BT/SR
     const portfolioReturn = resolveDeterministicExpectedReturn(profile, allocation)
     const netRealReturn = portfolioReturn - profile.inflation - profile.expenseRatio
-    const currentExpenses = getEffectiveExpenses(profile.currentAge, profile.annualExpenses, profile.expenseAdjustments, profile.lifeExpectancy)
+    const currentExpenses = getEffectiveExpenses(
+      normalized.currentAge,
+      profile.annualExpenses,
+      profile.expenseAdjustments,
+      normalized.lifeExpectancy,
+    )
     const annualSavings = profile.annualIncome - currentExpenses
 
     const projected = projectPortfolioAtRetirement({
       currentNW: totalNW,
       annualSavings,
       netRealReturn,
-      yearsToRetirement: profile.retirementAge - profile.currentAge,
+      yearsToRetirement: normalized.householdRetirementYearOffset,
     })
 
     return {
       initialPortfolio: totalNW,
       retirementPortfolio: projected,
       allocationWeights: currentWeights,
-      portfolioLabel: `${formatCurrency(totalNW)} today → ~${formatCurrency(projected)} at age ${profile.retirementAge}`,
+      portfolioLabel: `${formatCurrency(totalNW)} today → ~${formatCurrency(projected)} at age ${normalized.retirementAge}`,
     }
   }, [
     profile.liquidNetWorth,
@@ -55,12 +67,9 @@ export function useAnalysisPortfolio(): AnalysisPortfolioResult {
     profile.cpfSA,
     profile.cpfMA,
     profile.cpfRA,
-    profile.currentAge,
-    profile.retirementAge,
     profile.annualIncome,
     profile.annualExpenses,
     profile.expenseAdjustments,
-    profile.lifeExpectancy,
     profile.expectedReturn,
     profile.usePortfolioReturn,
     profile.inflation,
@@ -70,5 +79,9 @@ export function useAnalysisPortfolio(): AnalysisPortfolioResult {
     allocation.glidePathConfig,
     allocation.returnOverrides,
     allocation.validationErrors,
+    normalized.currentAge,
+    normalized.householdRetirementYearOffset,
+    normalized.lifeExpectancy,
+    normalized.retirementAge,
   ])
 }

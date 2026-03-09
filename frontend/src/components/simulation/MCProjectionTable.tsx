@@ -257,7 +257,7 @@ export function MCProjectionTable({ result, isStale }: MCProjectionTableProps) {
       {/* Header: percentile selector + retirement balance */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium whitespace-nowrap">Scenario:</span>
+          <span className="text-sm font-medium whitespace-nowrap">Representative path:</span>
           <Select
             value={resolvedPathId}
             onValueChange={setSelectedPathId}
@@ -277,7 +277,7 @@ export function MCProjectionTable({ result, isStale }: MCProjectionTableProps) {
 
         {selectedPath && (
           <div className="text-sm text-muted-foreground">
-            Retirement balance:{' '}
+            Balance at retirement:{' '}
             <span className="font-semibold text-foreground">
               {formatCurrency(selectedPath.retirementBalance)}
             </span>

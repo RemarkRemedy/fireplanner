@@ -2,12 +2,13 @@ import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { QuickProjectionChart } from '@/components/shared/QuickProjectionChart'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useProjection } from '@/hooks/useProjection'
 import { useFireCalculations } from '@/hooks/useFireCalculations'
-import { useProfileStore } from '@/stores/useProfileStore'
 
 export function TrajectoryPanel() {
-  const retirementAge = useProfileStore((s) => s.retirementAge)
+  const { normalized } = useHouseholdRuntimeInputs()
+  const retirementAge = normalized.retirementAge
   const { rows } = useProjection()
   const { metrics } = useFireCalculations()
 

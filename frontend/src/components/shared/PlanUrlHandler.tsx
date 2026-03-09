@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { getPlanFromUrl, decodeStoresFromUrl, applyStoreData, stripPlanFromUrl } from '@/lib/shareUrl'
 
-function getInitialPlanData(): Record<string, unknown> | null {
+function getInitialPlanData() {
   const compressed = getPlanFromUrl()
   if (!compressed) return null
   const data = decodeStoresFromUrl(compressed)

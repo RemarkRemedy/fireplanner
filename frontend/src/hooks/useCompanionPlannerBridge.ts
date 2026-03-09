@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MonteCarloResult } from '@/lib/types'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
-import { useProfileStore } from '@/stores/useProfileStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { resolveDeterministicExpectedReturn } from '@/lib/analysis/deterministicAssumptions'
-import { buildProjectionParams } from '@/hooks/useIncomeProjection'
+import { buildProjectionParams, useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
+import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
 import {
   createCompanionScenarios,
   resolveScenarioInputs,
@@ -16,7 +15,7 @@ import {
 import { buildPlannerResultsPayload } from '@/lib/companion/resultsPayload'
 import { fetchPlannerSnapshot, postPlannerResults } from '@/lib/companion/companionClient'
 import { applySnapshotToStores } from '@/lib/companion/companionBridge'
-import type { PlannerResultsPayload } from '@/lib/companion/types'
+import type { ImportedPlanReview, PlannerResultsPayload } from '@/lib/companion/types'
 import {
   getCompanionToken,
   getCompanionBaseUrl,
@@ -60,6 +59,7 @@ export interface CompanionPlannerBridgeState {
   isCompanionMode: boolean
   bootstrapStatus: CompanionBootstrapStatus
   bootstrapError: string | null
+  importedPlanReview: ImportedPlanReview | null
   saveStatus: CompanionSaveStatus
   saveError: string | null
   canSaveResults: boolean
@@ -108,29 +108,31 @@ export function useCompanionPlannerBridge({
   result,
   isResultStale,
 }: CompanionPlannerBridgeInput): CompanionPlannerBridgeState {
-  const companionMode = useMemo(() => isCompanionMode(), [])
-  const token = useMemo(() => companionMode ? getCompanionToken() : null, [companionMode])
-  const baseUrl = useMemo(() => companionMode ? getCompanionBaseUrl() : '', [companionMode])
+  const companionMode = isCompanionMode()
+  const token = companionMode ? getCompanionToken() : null
+  const baseUrl = companionMode ? getCompanionBaseUrl() : ''
 
+  const { income, profile, property } = useHouseholdRuntimeInputs()
+  const normalized = useNormalizedLegacyAnalysisContext()
+  const analysisPortfolio = useAnalysisPortfolio()
   const allocationWeights = useAllocationStore((s) => s.currentWeights)
   const allocationTargetWeights = useAllocationStore((s) => s.targetWeights)
   const allocationReturnOverrides = useAllocationStore((s) => s.returnOverrides)
   const allocationGlidePathConfig = useAllocationStore((s) => s.glidePathConfig)
   const allocationValidationErrors = useAllocationStore((s) => s.validationErrors)
-  const income = useIncomeStore()
-  const property = usePropertyStore()
   const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
   const strategyParams = useSimulationStore((s) => s.strategyParams)
   const mcMethod = useSimulationStore((s) => s.mcMethod)
-  const profile = useProfileStore()
-  const currentAge = profile.currentAge
   const annualIncome = profile.annualIncome
   const annualExpenses = profile.annualExpenses
   const inflation = profile.inflation
   const expenseRatio = profile.expenseRatio
-  const retirementAge = profile.retirementAge
-  const lifeExpectancy = profile.lifeExpectancy
-  const initialPortfolio = profile.liquidNetWorth + profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
+  const profileExpectedReturn = profile.expectedReturn
+  const usePortfolioReturn = profile.usePortfolioReturn
+  const currentAge = normalized.currentAge
+  const retirementAge = normalized.retirementAge
+  const lifeExpectancy = normalized.lifeExpectancy
+  const initialPortfolio = analysisPortfolio.initialPortfolio
 
   const deterministicAllocationInputs = useMemo(
     () => ({
@@ -155,12 +157,13 @@ export function useCompanionPlannerBridge({
 
     const projection = generateIncomeProjection(projectionParams)
     return projection[0]?.totalGross ?? annualIncome
-  }, [profile, income, property, annualIncome])
+  }, [annualIncome, income, profile, property])
 
   const [bootstrapStatus, setBootstrapStatus] = useState<CompanionBootstrapStatus>(() =>
     companionMode && !!token ? 'loading' : 'idle',
   )
   const [bootstrapError, setBootstrapError] = useState<string | null>(null)
+  const [importedPlanReview, setImportedPlanReview] = useState<ImportedPlanReview | null>(null)
   const [saveStatus, setSaveStatus] = useState<CompanionSaveStatus>('idle')
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -274,11 +277,13 @@ export function useCompanionPlannerBridge({
     if (!companionMode || !token) return
 
     let cancelled = false
+    setImportedPlanReview(null)
 
     fetchPlannerSnapshot(baseUrl, token)
       .then((snapshot) => {
         if (cancelled) return
-        applySnapshotToStores(snapshot)
+        const review = applySnapshotToStores(snapshot)
+        setImportedPlanReview(review)
         if (typeof snapshot.deterministicFireAge === 'number' && Number.isFinite(snapshot.deterministicFireAge)) {
           setDeterministicFireAge(Math.round(snapshot.deterministicFireAge))
         }
@@ -447,7 +452,7 @@ export function useCompanionPlannerBridge({
     mcResult: MonteCarloResult,
   ): PlannerResultsPayload => {
     const expectedReturn = resolveDeterministicExpectedReturn(
-      profile,
+      { expectedReturn: profileExpectedReturn, retirementAge, usePortfolioReturn },
       deterministicAllocationInputs,
       { retirementAge: runContext.retirementAge },
     )
@@ -475,7 +480,9 @@ export function useCompanionPlannerBridge({
     initialPortfolio,
     currentAge,
     effectiveAnnualIncome,
-    profile,
+    profileExpectedReturn,
+    retirementAge,
+    usePortfolioReturn,
     deterministicAllocationInputs,
     inflation,
     expenseRatio,
@@ -558,6 +565,7 @@ export function useCompanionPlannerBridge({
     isCompanionMode: companionMode,
     bootstrapStatus: missingTokenError ? 'error' : bootstrapStatus,
     bootstrapError: missingTokenError ?? bootstrapError,
+    importedPlanReview,
     saveStatus: isSaveBlocked ? 'idle' : saveStatus,
     saveError: isSaveBlocked ? null : saveError,
     canSaveResults: !isSaveBlocked && saveStatus !== 'saving',

@@ -5,12 +5,14 @@ import {
   type DeterministicComparisonResult,
 } from '@/lib/calculations/withdrawal'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
-import { useProfileStore } from '@/stores/useProfileStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { validateWithdrawalCrossStoreRules } from '@/lib/validation/rules'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
+import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 
 interface WithdrawalComparisonResult {
   results: DeterministicComparisonResult | null
@@ -27,25 +29,30 @@ interface WithdrawalComparisonResult {
  *   formula. Typically sourced from useProjection()'s liquidNW at retirement age.
  */
 export function useWithdrawalComparison(opts?: { initialPortfolioOverride?: number }): WithdrawalComparisonResult {
-  const profile = useProfileStore()
+  const plan = useHouseholdPlanStore((state) => state.plan)
+  const hasValidationErrors = useHouseholdPlanStore((state) => state.hasValidationErrors)
   const allocation = useAllocationStore()
   const withdrawal = useWithdrawalStore()
   const activeStrategy = useSimulationStore((s) => s.selectedStrategy)
+  const normalized = useNormalizedLegacyAnalysisContext()
+  const { profile } = useMemo(
+    () => buildHouseholdRuntimeLegacyInputs(plan, normalized.compiledPlan),
+    [normalized.compiledPlan, plan]
+  )
 
   return useMemo(() => {
-    const profileErrors = profile.validationErrors
     const withdrawalErrors = withdrawal.validationErrors
     const crossErrors = validateWithdrawalCrossStoreRules(
       {
         annualExpenses: profile.annualExpenses,
-        retirementAge: profile.retirementAge,
-        lifeExpectancy: profile.lifeExpectancy,
+        retirementAge: normalized.retirementAge,
+        lifeExpectancy: normalized.lifeExpectancy,
       },
       { strategyParams: withdrawal.strategyParams }
     )
-    const allErrors = { ...profileErrors, ...withdrawalErrors, ...crossErrors }
+    const allErrors = { ...withdrawalErrors, ...crossErrors }
 
-    if (Object.keys(allErrors).length > 0) {
+    if (hasValidationErrors || Object.keys(allErrors).length > 0) {
       return { results: null, hasErrors: true, errors: allErrors }
     }
 
@@ -58,14 +65,14 @@ export function useWithdrawalComparison(opts?: { initialPortfolioOverride?: numb
 
     // Project everything to retirement age (nominal/future dollars).
     // All columns in the preview table must use the same dollar basis.
-    const yearsToRetirement = Math.max(0, profile.retirementAge - profile.currentAge)
+    const yearsToRetirement = Math.max(0, normalized.retirementAge - normalized.currentAge)
     const netReturn = expectedReturn - profile.expenseRatio
 
     // Prefer the projection-derived override (full income engine) over the
     // simplified compound growth formula when provided (e.g. from Explore page).
     const initialPortfolio = opts?.initialPortfolioOverride ?? profile.liquidNetWorth * (1 + netReturn) ** yearsToRetirement
 
-    const effectiveRetirementBase = getEffectiveExpenses(profile.retirementAge, profile.annualExpenses, profile.expenseAdjustments, profile.lifeExpectancy)
+    const effectiveRetirementBase = getEffectiveExpenses(normalized.retirementAge, profile.annualExpenses, profile.expenseAdjustments, normalized.lifeExpectancy)
     const retirementExpenses = effectiveRetirementBase
       * (profile.retirementSpendingAdjustment ?? 1)
       * (1 + profile.inflation) ** yearsToRetirement
@@ -73,8 +80,8 @@ export function useWithdrawalComparison(opts?: { initialPortfolioOverride?: numb
     const results = runDeterministicComparison({
       initialPortfolio,
       annualExpenses: retirementExpenses,
-      retirementAge: profile.retirementAge,
-      lifeExpectancy: profile.lifeExpectancy,
+      retirementAge: normalized.retirementAge,
+      lifeExpectancy: normalized.lifeExpectancy,
       expectedReturn,
       inflation: profile.inflation,
       expenseRatio: profile.expenseRatio,
@@ -88,9 +95,6 @@ export function useWithdrawalComparison(opts?: { initialPortfolioOverride?: numb
     return { results, hasErrors: false, errors: {} }
   }, [
     profile.liquidNetWorth,
-    profile.currentAge,
-    profile.retirementAge,
-    profile.lifeExpectancy,
     profile.annualExpenses,
     profile.retirementSpendingAdjustment,
     profile.expectedReturn,
@@ -98,7 +102,6 @@ export function useWithdrawalComparison(opts?: { initialPortfolioOverride?: numb
     profile.inflation,
     profile.expenseRatio,
     profile.swr,
-    profile.validationErrors,
     allocation.currentWeights,
     allocation.returnOverrides,
     allocation.validationErrors,
@@ -106,6 +109,10 @@ export function useWithdrawalComparison(opts?: { initialPortfolioOverride?: numb
     withdrawal.strategyParams,
     withdrawal.validationErrors,
     activeStrategy,
+    hasValidationErrors,
+    normalized.currentAge,
+    normalized.retirementAge,
+    normalized.lifeExpectancy,
     opts?.initialPortfolioOverride,
     profile.expenseAdjustments,
   ])

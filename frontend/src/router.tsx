@@ -1,8 +1,12 @@
 /* eslint-disable react-refresh/only-export-components -- Router config, not a component file */
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { createBrowserRouter, Navigate, Link } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { isCompanionMode } from '@/lib/companion/isCompanionMode'
+import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
+import { deriveHouseholdSectionToggles } from '@/lib/household/sectionVisibility'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { useUIStore } from '@/stores/useUIStore'
 
 const StartPage = lazy(() => import('@/pages/StartPage').then(m => ({ default: m.StartPage })))
 const InputsPage = lazy(() => import('@/pages/InputsPage').then(m => ({ default: m.InputsPage })))
@@ -40,13 +44,43 @@ function NotFound() {
   )
 }
 
+function PlannerRouteShell() {
+  const planType = useHouseholdPlanStore((state) => state.plan.planType)
+  const provenanceSource = useHouseholdPlanStore((state) => state.provenance.source)
+  const requiredCpfEnabled = useHouseholdPlanStore((state) => deriveHouseholdSectionToggles(state.plan).cpfEnabled)
+  const requiredPropertyEnabled = useHouseholdPlanStore((state) => deriveHouseholdSectionToggles(state.plan).propertyEnabled)
+  const requiredHealthcareEnabled = useHouseholdPlanStore((state) => deriveHouseholdSectionToggles(state.plan).healthcareEnabled)
+  const ensureHouseholdDataVisible = useUIStore((state) => state.ensureHouseholdDataVisible)
+  const [householdPlannerEnabled] = useState(() => isHouseholdPlannerV1Enabled())
+
+  useEffect(() => {
+    if (provenanceSource !== 'manual' || (householdPlannerEnabled && planType !== 'individual')) {
+      ensureHouseholdDataVisible({
+        cpfEnabled: requiredCpfEnabled,
+        propertyEnabled: requiredPropertyEnabled,
+        healthcareEnabled: requiredHealthcareEnabled,
+      })
+    }
+  }, [
+    ensureHouseholdDataVisible,
+    householdPlannerEnabled,
+    planType,
+    provenanceSource,
+    requiredCpfEnabled,
+    requiredPropertyEnabled,
+    requiredHealthcareEnabled,
+  ])
+
+  return <AppLayout />
+}
+
 // In companion mode, the app is served under /planner/* by the NIO static handler.
 // The router basename must match so routes like /stress-test resolve to /planner/stress-test.
 const routerBasename = isCompanionMode() ? '/planner' : undefined
 
 export const router = createBrowserRouter([
   {
-    element: <AppLayout />,
+    element: <PlannerRouteShell />,
     children: [
       { path: '/', element: page(StartPage) },
       { path: '/inputs', element: page(InputsPage) },

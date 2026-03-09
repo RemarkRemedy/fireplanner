@@ -275,4 +275,24 @@ describe('useUIStore', () => {
       expect(migrated.quickModeActive).toBe(false)
     })
   })
+
+  describe('ensureHouseholdDataVisible', () => {
+    it('only forces toggles on when the derived household toggles require them', () => {
+      useUIStore.setState({
+        cpfEnabled: false,
+        propertyEnabled: false,
+        healthcareEnabled: false,
+      })
+
+      useUIStore.getState().ensureHouseholdDataVisible({
+        cpfEnabled: false,
+        propertyEnabled: true,
+        healthcareEnabled: false,
+      })
+
+      expect(useUIStore.getState().cpfEnabled).toBe(false)
+      expect(useUIStore.getState().propertyEnabled).toBe(true)
+      expect(useUIStore.getState().healthcareEnabled).toBe(false)
+    })
+  })
 })

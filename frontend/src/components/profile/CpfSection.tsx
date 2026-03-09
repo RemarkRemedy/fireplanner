@@ -9,38 +9,69 @@ import { Plus, Trash2 } from 'lucide-react'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { PercentInput } from '@/components/shared/PercentInput'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
-import { useIncomeProjection } from '@/hooks/useIncomeProjection'
 import { useEffectiveMode } from '@/hooks/useEffectiveMode'
 import { calculateCpfContribution, calculateBrsFrsErs, estimateCpfLifePayout, calculateCpfLifePayoutAtAge, getRetirementSumAmount, estimateCpfBalancesFromAge } from '@/lib/calculations/cpf'
 import type { CpfLifePlan, CpfRetirementSum } from '@/lib/types'
-import { getCpfRatesForAge, RETIREMENT_SUM_BASE_YEAR, BRS_BASE, FRS_BASE, ERS_BASE, SA_INTEREST_RATE, CPFIS_OA_RETENTION, CPFIS_SA_RETENTION } from '@/lib/data/cpfRates'
+import { getCpfRatesForAge, RETIREMENT_SUM_BASE_YEAR, BRS_BASE, FRS_BASE, ERS_BASE, SA_INTEREST_RATE, CPFIS_OA_RETENTION, CPFIS_SA_RETENTION, CPF_LIFE_BASIC_RATE, CPF_LIFE_STANDARD_RATE, CPF_LIFE_ESCALATING_RATE } from '@/lib/data/cpfRates'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { CpfProjectionTable } from '@/components/cpf/CpfProjectionTable'
 import { CpfAssumptionsPanel } from '@/components/cpf/CpfAssumptionsPanel'
+import type { CpfSectionModel } from '@/components/household/adapters/useHouseholdCpfAdapter'
 import { cn, formatCurrency, formatPercent } from '@/lib/utils'
 import { trackEvent } from '@/lib/analytics'
 
-export function CpfSection() {
-  const {
-    currentAge, annualIncome, cpfOA, cpfSA, cpfMA, cpfRA,
-    cpfLifeStartAge, cpfLifePlan, cpfRetirementSum,
-    lifeStage, retirementPhase, cpfLifeActualMonthlyPayout,
-    cpfisEnabled, cpfisOaReturn, cpfisSaReturn,
-    cpfOaWithdrawals,
-    addCpfOaWithdrawal, removeCpfOaWithdrawal, updateCpfOaWithdrawal,
-    cpfTopUpOA, cpfTopUpSA, cpfTopUpMA,
-    residencyStatus, prMonths,
-    validationErrors, setField,
-  } = useProfileStore()
-  const cpfAutoFallback = useProfileStore((s) => s.cpfAutoFallback)
-  const cpfVirtualRebalancing = useProfileStore((s) => s.cpfVirtualRebalancing)
-  const cpfVirtualRebalancingMode = useProfileStore((s) => s.cpfVirtualRebalancingMode)
-  const incomeStreams = useIncomeStore((s) => s.incomeStreams)
-  const mode = useEffectiveMode('section-cpf')
+interface CpfSectionProps {
+  model?: CpfSectionModel
+}
 
-  // Phase-aware rendering only applies to post-fire users
+interface CpfSectionBodyProps {
+  model: CpfSectionModel
+  mode: 'simple' | 'advanced'
+  showProjectionTools: boolean
+}
+export function CpfSection({ model }: CpfSectionProps) {
+  const mode = useEffectiveMode('section-cpf')
+  if (!model) {
+    return null
+  }
+  return <CpfSectionBody model={model} mode={mode} showProjectionTools={false} />
+}
+
+function CpfSectionBody({ model, mode, showProjectionTools }: CpfSectionBodyProps) {
+  const {
+    currentAge,
+    annualIncome,
+    cpfOA,
+    cpfSA,
+    cpfMA,
+    cpfRA,
+    cpfLifeStartAge,
+    cpfLifePlan,
+    cpfRetirementSum,
+    lifeStage,
+    retirementPhase,
+    cpfLifeActualMonthlyPayout,
+    cpfisEnabled,
+    cpfisOaReturn,
+    cpfisSaReturn,
+    cpfOaWithdrawals,
+    cpfTopUpOA,
+    cpfTopUpSA,
+    cpfTopUpMA,
+    residencyStatus,
+    prMonths,
+    validationErrors,
+    setField,
+    cpfAutoFallback,
+    cpfVirtualRebalancing,
+    cpfVirtualRebalancingMode,
+    incomeStreams,
+    projection,
+    addCpfOaWithdrawal,
+    removeCpfOaWithdrawal,
+    updateCpfOaWithdrawal,
+  } = model
+
   const isPostFire = lifeStage === 'post-fire'
   const effectivePhase = isPostFire ? retirementPhase : null
 
@@ -57,9 +88,9 @@ export function CpfSection() {
 
   // 3x3 payout grid: 3 plans x 3 retirement sums
   const plans: { key: CpfLifePlan; label: string; note: string }[] = [
-    { key: 'basic', label: 'Basic', note: '~5.4%' },
-    { key: 'standard', label: 'Standard', note: '~6.3%' },
-    { key: 'escalating', label: 'Escalating', note: '~4.8%, +2%/yr' },
+    { key: 'basic', label: 'Basic', note: `~${(CPF_LIFE_BASIC_RATE * 100).toFixed(1)}%` },
+    { key: 'standard', label: 'Standard', note: `~${(CPF_LIFE_STANDARD_RATE * 100).toFixed(1)}%` },
+    { key: 'escalating', label: 'Escalating', note: `~${(CPF_LIFE_ESCALATING_RATE * 100).toFixed(1)}%, +2%/yr` },
   ]
   const sums: { key: 'brs' | 'frs' | 'ers'; label: string; value: number; baseline: number }[] = [
     { key: 'brs', label: 'Basic (BRS)', value: brsFrsErs.brs, baseline: BRS_BASE },
@@ -68,9 +99,6 @@ export function CpfSection() {
   ]
 
   const totalCpf = cpfOA + cpfSA + cpfMA + cpfRA
-
-  // Project SA at 55 to check if user can reach selected retirement sum
-  const { projection } = useIncomeProjection()
 
   // RA earns 4% interest from age 55 until CPF LIFE starts — must compound to get realistic payout
   const raGrowthFactor = Math.pow(1 + SA_INTEREST_RATE, Math.max(0, cpfLifeStartAge - 55))
@@ -186,9 +214,9 @@ export function CpfSection() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="basic">Basic (~5.4%)</SelectItem>
-                  <SelectItem value="standard">Standard (~6.3%)</SelectItem>
-                  <SelectItem value="escalating">Escalating (~4.8%, +2%/yr)</SelectItem>
+                  <SelectItem value="basic">Basic (~{(CPF_LIFE_BASIC_RATE * 100).toFixed(1)}%)</SelectItem>
+                  <SelectItem value="standard">Standard (~{(CPF_LIFE_STANDARD_RATE * 100).toFixed(1)}%)</SelectItem>
+                  <SelectItem value="escalating">Escalating (~{(CPF_LIFE_ESCALATING_RATE * 100).toFixed(1)}%, +2%/yr)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -516,9 +544,9 @@ export function CpfSection() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="basic">Basic (~5.4%)</SelectItem>
-                  <SelectItem value="standard">Standard (~6.3%)</SelectItem>
-                  <SelectItem value="escalating">Escalating (~4.8%, +2%/yr)</SelectItem>
+                  <SelectItem value="basic">Basic (~{(CPF_LIFE_BASIC_RATE * 100).toFixed(1)}%)</SelectItem>
+                  <SelectItem value="standard">Standard (~{(CPF_LIFE_STANDARD_RATE * 100).toFixed(1)}%)</SelectItem>
+                  <SelectItem value="escalating">Escalating (~{(CPF_LIFE_ESCALATING_RATE * 100).toFixed(1)}%, +2%/yr)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -756,7 +784,7 @@ export function CpfSection() {
           </>
         )}
 
-        {mode === 'advanced' && (
+        {showProjectionTools && mode === 'advanced' && (
           <>
             <Separator />
 
@@ -766,7 +794,13 @@ export function CpfSection() {
                 Year-by-Year CPF Projection
                 <InfoTooltip text="Projected CPF balances based on your income model, contribution rates, and CPF LIFE configuration. Milestone rows are highlighted when balances cross BRS/FRS/ERS thresholds." />
               </h4>
-              <CpfAssumptionsPanel />
+              <CpfAssumptionsPanel
+                currentAge={currentAge}
+                residencyStatus={residencyStatus}
+                prMonths={prMonths}
+                cpfLifeStartAge={cpfLifeStartAge}
+                cpfLifePlan={cpfLifePlan}
+              />
               <CpfProjectionTable />
             </div>
           </>

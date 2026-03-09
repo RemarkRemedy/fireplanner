@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sgfireplanner-results-payload-v2",
+  "title": "SGFirePlanner Results Payload v2",
+  "description": "Canonical schema for the planner results payload sent from the web planner to the companion app.",
+  "type": "object",
+  "required": ["schema_version", "p_success", "wr_safe_50", "horizon_years", "allocation_summary"],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 2,
+      "description": "Schema version, always 2."
+    },
+    "computed_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp of when the result was computed."
+    },
+    "input_signature": {
+      "type": "string",
+      "description": "Optional hash of the input parameters used to produce this result."
+    },
+    "scenario_id": {
+      "type": "string",
+      "description": "Identifier of the companion scenario that produced this result."
+    },
+    "scenario_name": {
+      "type": "string",
+      "description": "Human-readable name of the companion scenario."
+    },
+    "simulation_method": {
+      "type": "string",
+      "enum": ["parametric", "bootstrap", "fat_tail"],
+      "description": "Monte Carlo simulation method used."
+    },
+    "n_simulations": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of Monte Carlo simulations run."
+    },
+    "computation_time_ms": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Wall-clock computation time in milliseconds."
+    },
+    "cached": {
+      "type": "boolean",
+      "description": "Whether the result was served from cache."
+    },
+    "horizon_years": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of years from retirement to life expectancy."
+    },
+    "target_fire_age": {
+      "type": "integer",
+      "description": "Target FIRE (retirement) age from the plan inputs."
+    },
+    "projected_fire_age_p50": {
+      "type": "integer",
+      "description": "Median projected age at which FIRE is achieved."
+    },
+    "annual_expenses_target_real": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Annual expenses target in today's dollars."
+    },
+    "required_portfolio": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Required portfolio size to sustain withdrawals."
+    },
+    "required_portfolio_basis": {
+      "type": "string",
+      "enum": ["wr_safe_95", "wr_safe_90", "wr_safe_85", "wr_safe_50", "explicit_amount"],
+      "description": "Which safe withdrawal rate confidence level was used to derive required_portfolio."
+    },
+    "required_savings_rate": {
+      "type": "number",
+      "description": "Fraction of income that must be saved annually to reach required_portfolio by target_fire_age. Can be negative if already on track."
+    },
+    "p_success": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability of plan success (portfolio lasting through retirement)."
+    },
+    "wr_safe_95": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Safe withdrawal rate at 95% confidence."
+    },
+    "wr_safe_90": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Safe withdrawal rate at 90% confidence."
+    },
+    "wr_safe_85": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Safe withdrawal rate at 85% confidence."
+    },
+    "wr_safe_50": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Safe withdrawal rate at 50% confidence (median)."
+    },
+    "wr_safe_50_source": {
+      "type": "string",
+      "enum": ["optimized_confidence_50", "strategy_proxy", "withdrawal_band_proxy"],
+      "description": "How wr_safe_50 was derived."
+    },
+    "fail_prob_0_5y": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability of plan failure in years 0-5 of retirement."
+    },
+    "fail_prob_6_10y": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability of plan failure in years 6-10 of retirement."
+    },
+    "terminal_p5": {
+      "type": "number",
+      "description": "5th percentile terminal portfolio value."
+    },
+    "terminal_p50": {
+      "type": "number",
+      "description": "50th percentile (median) terminal portfolio value."
+    },
+    "terminal_p95": {
+      "type": "number",
+      "description": "95th percentile terminal portfolio value."
+    },
+    "portfolio_at_fire_p50": {
+      "type": "number",
+      "description": "Median portfolio value at FIRE age."
+    },
+    "allocation_summary": {
+      "type": "string",
+      "description": "Human-readable allocation summary (e.g. 'Stocks 60 / Bonds 20 / Cash 20')."
+    },
+    "allocation_weights": {
+      "type": "object",
+      "description": "Breakdown of portfolio allocation weights by asset class.",
+      "required": ["usEquities", "sgEquities", "intlEquities", "bonds", "reits", "gold", "cash", "cpf"],
+      "properties": {
+        "usEquities": { "type": "number", "minimum": 0, "maximum": 1 },
+        "sgEquities": { "type": "number", "minimum": 0, "maximum": 1 },
+        "intlEquities": { "type": "number", "minimum": 0, "maximum": 1 },
+        "bonds": { "type": "number", "minimum": 0, "maximum": 1 },
+        "reits": { "type": "number", "minimum": 0, "maximum": 1 },
+        "gold": { "type": "number", "minimum": 0, "maximum": 1 },
+        "cash": { "type": "number", "minimum": 0, "maximum": 1 },
+        "cpf": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

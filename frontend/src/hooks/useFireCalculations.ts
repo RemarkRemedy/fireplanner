@@ -4,11 +4,11 @@ import { calculateAllFireMetrics } from '@/lib/calculations/fire'
 import { computeCashReserveOffset } from '@/lib/calculations/cashReserve'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { generateIncomeProjection } from '@/lib/calculations/income'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 
 interface FireCalculationsResult {
   metrics: FireMetrics | null
@@ -23,24 +23,33 @@ interface FireCalculationsResult {
  * When income projection is available, uses row 0's totalGross as effective income.
  */
 export function useFireCalculations(): FireCalculationsResult {
-  const profile = useProfileStore()
-  const income = useIncomeStore()
-  const allocation = useAllocationStore()
-  const property = usePropertyStore()
+  const plan = useHouseholdPlanStore((state) => state.plan)
+  const hasValidationErrors = useHouseholdPlanStore((state) => state.hasValidationErrors)
+  // Allocation: only 3 fields used — subscribe via selectors instead of full store
+  const allocationValidationErrors = useAllocationStore((s) => s.validationErrors)
+  const allocationCurrentWeights = useAllocationStore((s) => s.currentWeights)
+  const allocationReturnOverrides = useAllocationStore((s) => s.returnOverrides)
+  const normalized = useNormalizedLegacyAnalysisContext()
+  const { profile, income, property } = useMemo(
+    () => buildHouseholdRuntimeLegacyInputs(plan, normalized.compiledPlan),
+    [normalized.compiledPlan, plan]
+  )
 
   return useMemo(() => {
-    const profileErrors = profile.validationErrors
-
-    // If profile has validation errors, don't compute
-    if (Object.keys(profileErrors).length > 0) {
-      return { metrics: null, hasErrors: true, errors: profileErrors }
+    if (hasValidationErrors) {
+      return { metrics: null, hasErrors: true, errors: {} }
     }
 
     const cpfTotal = profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
 
     // Try to get effective income from income projection
     let effectiveIncome = profile.annualIncome
-    const projectionParams = buildProjectionParams(profile, income, property)
+    const projectionParams = buildProjectionParams({
+      ...profile,
+      currentAge: normalized.currentAge,
+      retirementAge: normalized.retirementAge,
+      lifeExpectancy: normalized.lifeExpectancy,
+    }, income, property)
     if (projectionParams) {
       const projection = generateIncomeProjection(projectionParams)
       if (projection.length > 0) {
@@ -50,11 +59,10 @@ export function useFireCalculations(): FireCalculationsResult {
 
     // Use portfolio expected return from allocation when user has opted in and allocation is valid
     let expectedReturn = profile.expectedReturn
-    const allocationErrors = allocation.validationErrors
-    const allocationHasErrors = Object.keys(allocationErrors).length > 0
+    const allocationHasErrors = Object.keys(allocationValidationErrors).length > 0
 
     if (profile.usePortfolioReturn && !allocationHasErrors) {
-      expectedReturn = calculatePortfolioReturn(allocation.currentWeights, getEffectiveReturns(allocation.returnOverrides))
+      expectedReturn = calculatePortfolioReturn(allocationCurrentWeights, getEffectiveReturns(allocationReturnOverrides))
     }
 
     // Compute property equity from existing property (scaled by ownership %)
@@ -73,8 +81,8 @@ export function useFireCalculations(): FireCalculationsResult {
     )
 
     const metrics = calculateAllFireMetrics({
-      currentAge: profile.currentAge,
-      retirementAge: profile.retirementAge,
+      currentAge: normalized.currentAge,
+      retirementAge: normalized.retirementAge,
       annualIncome: effectiveIncome,
       annualExpenses: profile.annualExpenses,
       liquidNetWorth: profile.liquidNetWorth,
@@ -86,7 +94,7 @@ export function useFireCalculations(): FireCalculationsResult {
       fireType: profile.fireType,
       fireNumberBasis: profile.fireNumberBasis,
       cpfLifeStartAge: profile.cpfLifeStartAge,
-      lifeExpectancy: profile.lifeExpectancy,
+      lifeExpectancy: normalized.lifeExpectancy,
       retirementSpendingAdjustment: profile.retirementSpendingAdjustment,
       propertyEquity,
       parentSupport: profile.parentSupport,
@@ -99,5 +107,5 @@ export function useFireCalculations(): FireCalculationsResult {
 
     return { metrics, hasErrors: false, errors: {} }
     // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/preserve-manual-memoization -- Uses buildProjectionParams which reads many store fields; whole refs avoid stale omissions
-  }, [profile, income, allocation, property])
+  }, [hasValidationErrors, income, normalized.currentAge, normalized.lifeExpectancy, normalized.retirementAge, profile, property, allocationValidationErrors, allocationCurrentWeights, allocationReturnOverrides])
 }

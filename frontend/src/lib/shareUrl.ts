@@ -1,46 +1,31 @@
 /**
- * Share Plan via URL — encodes all 6 store states into a compressed URL query parameter.
- * Reuses the same STORE_KEYS as exportImport.ts.
+ * Share Plan via URL.
+ *
+ * The compressed payload carries the v2 portability envelope, and the decoder
+ * resolves it once into runtime-ready store data for the current app.
  */
 
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
-
-const STORE_KEYS = [
-  'fireplanner-profile',
-  'fireplanner-income',
-  'fireplanner-allocation',
-  'fireplanner-simulation',
-  'fireplanner-withdrawal',
-  'fireplanner-property',
-]
+import {
+  applyResolvedPortabilityData,
+  buildPortabilityEnvelope,
+  resolvePortabilityData,
+  type ResolvedPortabilityData,
+} from './storeRegistry'
 
 const MAX_URL_LENGTH = 8000
 
 /** Read all store data from localStorage and compress to a URL-safe string. */
 export function encodeStoresForUrl(): string {
-  const stores: Record<string, unknown> = {}
-  for (const key of STORE_KEYS) {
-    const raw = localStorage.getItem(key)
-    if (raw) {
-      try {
-        stores[key] = JSON.parse(raw)
-      } catch {
-        // skip
-      }
-    }
-  }
-  return compressToEncodedURIComponent(JSON.stringify(stores))
+  return compressToEncodedURIComponent(JSON.stringify(buildPortabilityEnvelope()))
 }
 
-/** Decode a compressed string back to store data. Returns null on failure. */
-export function decodeStoresFromUrl(compressed: string): Record<string, unknown> | null {
+/** Decode a compressed string back to resolved portability data. Returns null on failure. */
+export function decodeStoresFromUrl(compressed: string): ResolvedPortabilityData | null {
   try {
     const json = decompressFromEncodedURIComponent(compressed)
     if (!json) return null
-    const data = JSON.parse(json) as Record<string, unknown>
-    // Basic validation: must be an object with at least one expected key
-    const hasValidKey = Object.keys(data).some((k) => STORE_KEYS.includes(k))
-    return hasValidKey ? data : null
+    return resolvePortabilityData(JSON.parse(json), 'share-url')
   } catch {
     return null
   }
@@ -55,11 +40,8 @@ export function generateShareUrl(): { url: string; tooLong: boolean } {
 }
 
 /** Write decoded store data to localStorage. Does NOT reload — caller handles that. */
-export function applyStoreData(stores: Record<string, unknown>): void {
-  for (const [key, value] of Object.entries(stores)) {
-    if (!STORE_KEYS.includes(key)) continue
-    try { localStorage.setItem(key, JSON.stringify(value)) } catch { /* storage unavailable */ }
-  }
+export function applyStoreData(resolved: ResolvedPortabilityData): void {
+  applyResolvedPortabilityData(resolved)
 }
 
 /** Check if the current URL has a ?plan= parameter.

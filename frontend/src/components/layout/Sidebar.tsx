@@ -3,9 +3,14 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/useUIStore'
+import { useAllocationStore } from '@/stores/useAllocationStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { useSimulationStore } from '@/stores/useSimulationStore'
+import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { useSectionCompletion, type SectionId } from '@/hooks/useSectionCompletion'
 import { useActiveSection } from '@/hooks/useActiveSection'
 import { exportToJson, importFromJson } from '@/lib/exportImport'
+import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 import { ShareButton } from '@/components/shared/ShareButton'
 import { ScenarioManager } from './ScenarioManager'
 import { ThemeToggle } from './ThemeToggle'
@@ -47,6 +52,8 @@ interface InputSectionItem {
   label: string
   sectionId: string
   icon: React.ReactNode
+  /** Sub-items render indented without status dots and are excluded from progress. */
+  isSubItem?: boolean
 }
 
 const GOAL_FIRST_SECTIONS: InputSectionItem[] = [
@@ -54,10 +61,10 @@ const GOAL_FIRST_SECTIONS: InputSectionItem[] = [
   { label: 'FIRE Settings', sectionId: 'section-fire-settings', icon: <Target className="h-4 w-4" /> },
   { label: 'Income', sectionId: 'section-income', icon: <DollarSign className="h-4 w-4" /> },
   { label: 'Expenses', sectionId: 'section-expenses', icon: <TrendingDown className="h-4 w-4" /> },
-  { label: 'Goals', sectionId: 'section-goals', icon: <Banknote className="h-4 w-4" /> },
+  { label: 'Goals', sectionId: 'section-goals', icon: <Banknote className="h-4 w-4" />, isSubItem: true },
+  { label: 'Healthcare', sectionId: 'section-healthcare', icon: <HeartPulse className="h-4 w-4" />, isSubItem: true },
   { label: 'Net Worth', sectionId: 'section-net-worth', icon: <Wallet className="h-4 w-4" /> },
   { label: 'CPF', sectionId: 'section-cpf', icon: <Landmark className="h-4 w-4" /> },
-  { label: 'Healthcare', sectionId: 'section-healthcare', icon: <HeartPulse className="h-4 w-4" /> },
   { label: 'Property', sectionId: 'section-property', icon: <Building className="h-4 w-4" /> },
   { label: 'Allocation', sectionId: 'section-allocation', icon: <PieChart className="h-4 w-4" /> },
 ]
@@ -66,10 +73,10 @@ const STORY_FIRST_SECTIONS: InputSectionItem[] = [
   { label: 'Personal', sectionId: 'section-personal', icon: <User className="h-4 w-4" /> },
   { label: 'Income', sectionId: 'section-income', icon: <DollarSign className="h-4 w-4" /> },
   { label: 'Expenses', sectionId: 'section-expenses', icon: <TrendingDown className="h-4 w-4" /> },
-  { label: 'Goals', sectionId: 'section-goals', icon: <Banknote className="h-4 w-4" /> },
+  { label: 'Goals', sectionId: 'section-goals', icon: <Banknote className="h-4 w-4" />, isSubItem: true },
+  { label: 'Healthcare', sectionId: 'section-healthcare', icon: <HeartPulse className="h-4 w-4" />, isSubItem: true },
   { label: 'Net Worth', sectionId: 'section-net-worth', icon: <Wallet className="h-4 w-4" /> },
   { label: 'CPF', sectionId: 'section-cpf', icon: <Landmark className="h-4 w-4" /> },
-  { label: 'Healthcare', sectionId: 'section-healthcare', icon: <HeartPulse className="h-4 w-4" /> },
   { label: 'Property', sectionId: 'section-property', icon: <Building className="h-4 w-4" /> },
   { label: 'Allocation', sectionId: 'section-allocation', icon: <PieChart className="h-4 w-4" /> },
   { label: 'FIRE Settings', sectionId: 'section-fire-settings', icon: <Target className="h-4 w-4" /> },
@@ -80,21 +87,12 @@ const ALREADY_FIRE_SECTIONS: InputSectionItem[] = [
   { label: 'Net Worth', sectionId: 'section-net-worth', icon: <Wallet className="h-4 w-4" /> },
   { label: 'Property', sectionId: 'section-property', icon: <Building className="h-4 w-4" /> },
   { label: 'Expenses', sectionId: 'section-expenses', icon: <TrendingDown className="h-4 w-4" /> },
-  { label: 'Goals', sectionId: 'section-goals', icon: <Banknote className="h-4 w-4" /> },
-  { label: 'Healthcare', sectionId: 'section-healthcare', icon: <HeartPulse className="h-4 w-4" /> },
+  { label: 'Goals', sectionId: 'section-goals', icon: <Banknote className="h-4 w-4" />, isSubItem: true },
+  { label: 'Healthcare', sectionId: 'section-healthcare', icon: <HeartPulse className="h-4 w-4" />, isSubItem: true },
   { label: 'Allocation', sectionId: 'section-allocation', icon: <PieChart className="h-4 w-4" /> },
   { label: 'FIRE Settings', sectionId: 'section-fire-settings', icon: <Target className="h-4 w-4" /> },
   { label: 'CPF', sectionId: 'section-cpf', icon: <Landmark className="h-4 w-4" /> },
   { label: 'Income', sectionId: 'section-income', icon: <DollarSign className="h-4 w-4" /> },
-]
-
-const NON_INPUT_GROUPS: { title: string; items: NavItem[] }[] = [
-  {
-    title: 'START',
-    items: [
-      { label: 'Start Here', path: '/', icon: <HomeIcon className="h-4 w-4" /> },
-    ],
-  },
 ]
 
 const AFTER_INPUTS_GROUPS: { title: string; items: NavItem[] }[] = [
@@ -148,6 +146,7 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const navigate = useNavigate()
   const companionMode = isCompanionMode()
+  const [householdPlannerEnabled] = useState(() => isHouseholdPlannerV1Enabled())
   const sectionOrder = useUIStore((s) => s.sectionOrder)
   const { activeSection, isInputsPage } = useActiveSection()
   const { sections } = useSectionCompletion()
@@ -168,13 +167,33 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
       : STORY_FIRST_SECTIONS
 
   const inputSections = allInputSections.filter((s) => !hiddenSectionIds.has(s.sectionId))
-  const startGroups = companionMode ? [] : NON_INPUT_GROUPS
+  const startGroups = companionMode
+    ? []
+    : [{
+        title: 'START',
+        items: [
+          {
+            label: householdPlannerEnabled ? 'Plan Setup' : 'Start Here',
+            path: '/',
+            icon: <HomeIcon className="h-4 w-4" />,
+          },
+        ],
+      }]
   const afterInputGroups = companionMode
     ? AFTER_INPUTS_GROUPS.filter((group) => group.title === 'PLAN' || group.title === 'ANALYSIS')
     : AFTER_INPUTS_GROUPS
 
+  const expandSection = useUIStore((s) => s.expandSection)
+
   const handleSectionClick = useCallback(
     (sectionId: string) => {
+      // Expand the target section if collapsed
+      expandSection(sectionId)
+      // For sub-items (Goals, Healthcare), also expand parent Expenses section
+      if (sectionId === 'section-goals' || sectionId === 'section-healthcare') {
+        expandSection('section-expenses')
+      }
+
       if (isInputsPage) {
         document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
       } else if (companionMode) {
@@ -185,7 +204,7 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
       }
       onNavigate?.()
     },
-    [isInputsPage, companionMode, navigate, onNavigate]
+    [isInputsPage, companionMode, navigate, onNavigate, expandSection]
   )
 
   return (
@@ -228,17 +247,18 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
               key={item.sectionId}
               onClick={() => handleSectionClick(item.sectionId)}
               className={cn(
-                'flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors text-left w-full',
+                'flex items-center gap-2 py-2 rounded-md text-sm transition-colors text-left w-full',
+                item.isSubItem ? 'pl-6 pr-2' : 'px-2',
                 isInputsPage && activeSection === item.sectionId
                   ? 'bg-primary text-primary-foreground'
-                  : isInputsPage
-                    ? 'hover:bg-accent'
-                    : 'hover:bg-accent'
+                  : 'hover:bg-accent'
               )}
             >
               {item.icon}
               {item.label}
-              <StatusDot sectionId={item.sectionId} sections={sections} />
+              {!item.isSubItem && (
+                <StatusDot sectionId={item.sectionId} sections={sections} />
+              )}
             </button>
           ))}
         </div>
@@ -286,7 +306,12 @@ function DataActions() {
   const handleExcelExport = async () => {
     try {
       const { exportToExcel } = await import('@/lib/exportExcel')
-      await exportToExcel()
+      await exportToExcel({
+        householdPlan: useHouseholdPlanStore.getState().plan,
+        allocation: useAllocationStore.getState(),
+        simulation: useSimulationStore.getState(),
+        withdrawal: useWithdrawalStore.getState(),
+      })
       toast.success('Excel exported')
       trackEvent('data_exported', { format: 'excel' })
     } catch {
@@ -299,17 +324,15 @@ function DataActions() {
     if (!file) return
     const result = await importFromJson(file)
     if (!result.success) {
-      toast.error(result.error ?? 'Failed to import — invalid file format')
-    } else {
-      const storeCount = result.storesImported.length
       const errorCount = Object.keys(result.validationErrors).length
       if (errorCount > 0) {
-        toast.warning(
-          `Imported ${storeCount} sections (${errorCount} had validation warnings — check your inputs)`
-        )
+        toast.warning(`Import blocked: ${errorCount} section${errorCount === 1 ? '' : 's'} failed validation`)
       } else {
-        toast.success(`Imported ${storeCount} sections successfully`)
+        toast.error(result.error ?? 'Failed to import — invalid file format')
       }
+    } else {
+      const storeCount = result.storesImported.length
+      toast.success(`Imported ${storeCount} sections successfully`)
       trackEvent('data_imported', { stores: storeCount })
     }
     // Reset so the same file can be re-selected
@@ -412,6 +435,8 @@ export function Sidebar() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const companionMode = isCompanionMode()
 
+  const expandSection = useUIStore((s) => s.expandSection)
+
   // Handle hash-based scroll on /inputs page load
   useEffect(() => {
     if (location.pathname !== '/inputs') return
@@ -430,12 +455,17 @@ export function Sidebar() {
     }
 
     if (sectionId) {
+      // Expand the target section (and parent for sub-items) before scrolling
+      expandSection(sectionId)
+      if (sectionId === 'section-goals' || sectionId === 'section-healthcare') {
+        expandSection('section-expenses')
+      }
       // Small delay to let the page render
       requestAnimationFrame(() => {
         document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
       })
     }
-  }, [location.pathname, location.hash])
+  }, [location.pathname, location.hash, expandSection])
 
   return (
     <>

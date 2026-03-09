@@ -1,9 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { ProfileState, ParentSupport, RetirementWithdrawal, CpfOaWithdrawal, FinancialGoal, LockedAsset, ExpenseAdjustment, HealthcareConfig, OopCurveVariant, ValidationErrors } from '@/lib/types'
+import type { ProfileState, ParentSupport, RetirementWithdrawal, CpfOaWithdrawal, FinancialGoal, LockedAsset, ExpenseAdjustment, OopCurveVariant, ValidationErrors } from '@/lib/types'
 import { validateProfileField } from '@/lib/validation/schemas'
 import { validateProfileConsistency } from '@/lib/validation/rules'
 import { interpolateOopMultiplier } from '@/lib/data/healthcareOop'
+import { DEFAULT_HEALTHCARE_CONFIG } from '@/lib/data/defaultHealthcareConfig'
 
 interface ProfileActions {
   setField: <K extends keyof Omit<ProfileState, 'validationErrors'>>(
@@ -32,7 +33,13 @@ interface ProfileActions {
   reset: () => void
 }
 
-const PROFILE_DATA_KEYS = [
+interface ProfileRevisionState {
+  profileRevision: number
+}
+
+type ProfileStoreState = ProfileState & ProfileRevisionState & ProfileActions
+
+export const PROFILE_DATA_KEYS = [
   'currentAge', 'retirementAge', 'lifeExpectancy', 'lifeStage', 'maritalStatus',
   'residencyStatus', 'prMonths', 'annualIncome', 'annualExpenses', 'liquidNetWorth',
   'cpfOA', 'cpfSA', 'cpfMA', 'cpfRA', 'srsBalance', 'srsAnnualContribution', 'srsInvestmentReturn', 'srsDrawdownStartAge', 'srsPostFireEnabled',
@@ -55,20 +62,7 @@ const PROFILE_DATA_KEYS = [
   'cashReserveMonths', 'cashReserveReturn', 'retirementMitigation',
 ] as const
 
-const DEFAULT_HEALTHCARE_CONFIG: HealthcareConfig = {
-  enabled: false,
-  mediShieldLifeEnabled: true,
-  ispTier: 'none',
-  careShieldLifeEnabled: true,
-  oopBaseAmount: 1200,
-  oopModel: 'age-curve',
-  oopInflationRate: 0.03,
-  oopReferenceAge: 30,
-  oopCurveVariant: 'study-backed',
-  mediSaveTopUpAnnual: 0,
-}
-
-const DEFAULT_PROFILE: Omit<ProfileState, 'validationErrors'> = {
+export const DEFAULT_PROFILE: Omit<ProfileState, 'validationErrors'> = {
   currentAge: 30,
   retirementAge: 65,
   lifeExpectancy: 90,
@@ -174,12 +168,16 @@ export const DEFAULT_CPF_FIELDS = pickDefaults([
 
 export const DEFAULT_HEALTHCARE_FIELDS = pickDefaults(['healthcareConfig'])
 
-function extractProfileData(state: ProfileState & ProfileActions): Omit<ProfileState, 'validationErrors'> {
+function extractProfileData(state: ProfileStoreState): Omit<ProfileState, 'validationErrors'> {
   const data: Record<string, unknown> = {}
   for (const key of PROFILE_DATA_KEYS) {
     data[key] = state[key]
   }
   return data as Omit<ProfileState, 'validationErrors'>
+}
+
+function bumpProfileRevision(revision: number): number {
+  return revision + 1
 }
 
 function computeValidationErrors(
@@ -198,10 +196,11 @@ function computeValidationErrors(
   return errors
 }
 
-export const useProfileStore = create<ProfileState & ProfileActions>()(
+export const useProfileStore = create<ProfileStoreState>()(
   persist(
     (set) => ({
       ...DEFAULT_PROFILE,
+      profileRevision: 0,
       validationErrors: computeValidationErrors(DEFAULT_PROFILE),
 
       setField: (field, value) =>
@@ -219,6 +218,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
 
           return {
             ...updated,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -229,6 +229,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           const updated = { ...stateData, parentSupport: [...stateData.parentSupport, entry] }
           return {
             parentSupport: updated.parentSupport,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -239,6 +240,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           const updated = { ...stateData, parentSupport: stateData.parentSupport.filter((e) => e.id !== id) }
           return {
             parentSupport: updated.parentSupport,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -254,6 +256,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           }
           return {
             parentSupport: updated.parentSupport,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -264,6 +267,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           const updated = { ...stateData, retirementWithdrawals: [...stateData.retirementWithdrawals, entry] }
           return {
             retirementWithdrawals: updated.retirementWithdrawals,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -274,6 +278,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           const updated = { ...stateData, retirementWithdrawals: stateData.retirementWithdrawals.filter((e) => e.id !== id) }
           return {
             retirementWithdrawals: updated.retirementWithdrawals,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -289,6 +294,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           }
           return {
             retirementWithdrawals: updated.retirementWithdrawals,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -299,6 +305,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           const updated = { ...stateData, cpfOaWithdrawals: [...stateData.cpfOaWithdrawals, entry] }
           return {
             cpfOaWithdrawals: updated.cpfOaWithdrawals,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -309,6 +316,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           const updated = { ...stateData, cpfOaWithdrawals: stateData.cpfOaWithdrawals.filter((e) => e.id !== id) }
           return {
             cpfOaWithdrawals: updated.cpfOaWithdrawals,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -324,6 +332,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           }
           return {
             cpfOaWithdrawals: updated.cpfOaWithdrawals,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -334,6 +343,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           const updated = { ...stateData, financialGoals: [...stateData.financialGoals, goal] }
           return {
             financialGoals: updated.financialGoals,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -344,6 +354,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           const updated = { ...stateData, financialGoals: stateData.financialGoals.filter((g) => g.id !== id) }
           return {
             financialGoals: updated.financialGoals,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -359,6 +370,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           }
           return {
             financialGoals: updated.financialGoals,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -369,6 +381,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           const updated = { ...stateData, financialGoals: [] }
           return {
             financialGoals: [],
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -379,6 +392,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           const updated = { ...stateData, expenseAdjustments: [...stateData.expenseAdjustments, adj] }
           return {
             expenseAdjustments: updated.expenseAdjustments,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -389,6 +403,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           const updated = { ...stateData, expenseAdjustments: stateData.expenseAdjustments.filter((a) => a.id !== id) }
           return {
             expenseAdjustments: updated.expenseAdjustments,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -404,6 +419,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           }
           return {
             expenseAdjustments: updated.expenseAdjustments,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -414,6 +430,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           const updated = { ...stateData, lockedAssets: [...stateData.lockedAssets, asset] }
           return {
             lockedAssets: updated.lockedAssets,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -424,6 +441,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           const updated = { ...stateData, lockedAssets: stateData.lockedAssets.filter((a) => a.id !== id) }
           return {
             lockedAssets: updated.lockedAssets,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
@@ -439,15 +457,17 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
           }
           return {
             lockedAssets: updated.lockedAssets,
+            profileRevision: bumpProfileRevision(state.profileRevision),
             validationErrors: computeValidationErrors(updated),
           }
         }),
 
       reset: () =>
-        set({
+        set((state) => ({
           ...DEFAULT_PROFILE,
+          profileRevision: bumpProfileRevision(state.profileRevision),
           validationErrors: computeValidationErrors(DEFAULT_PROFILE),
-        }),
+        })),
     }),
     {
       name: 'fireplanner-profile',
@@ -575,6 +595,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
         if (state) {
           const stateData = extractProfileData(state)
           state.validationErrors = computeValidationErrors(stateData)
+          state.profileRevision = bumpProfileRevision(state.profileRevision)
         }
       },
     }

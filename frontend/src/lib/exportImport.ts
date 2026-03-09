@@ -1,27 +1,18 @@
 /**
  * JSON export/import for cross-device portability.
- * Serializes all 6 Zustand store states to a downloadable JSON file.
  *
- * Import pipeline: parse -> detect format -> migrate -> validate -> write -> reload
+ * PR6 moves the durable contract to the v2 household envelope while keeping
+ * backward loaders for legacy v1 exports.
  */
 
-import { migrateStoreData } from './storeRegistry'
+import {
+  applyResolvedPortabilityData,
+  buildPortabilityEnvelope,
+  resolvePortabilityData,
+  type PortabilityEnvelopeV2,
+} from './storeRegistry'
+import { PORTABILITY_STORE_KEYS } from './storeKeys'
 import { validateStoreData } from './validation/schemas'
-
-const STORE_KEYS = [
-  'fireplanner-profile',
-  'fireplanner-income',
-  'fireplanner-allocation',
-  'fireplanner-simulation',
-  'fireplanner-withdrawal',
-  'fireplanner-property',
-]
-
-interface ExportData {
-  version: 1
-  exportedAt: string
-  stores: Record<string, unknown>
-}
 
 export interface ImportResult {
   success: boolean
@@ -33,23 +24,7 @@ export interface ImportResult {
 
 /** Export all store state as a downloadable JSON file. */
 export function exportToJson(): void {
-  const stores: Record<string, unknown> = {}
-  for (const key of STORE_KEYS) {
-    const raw = localStorage.getItem(key)
-    if (raw) {
-      try {
-        stores[key] = JSON.parse(raw)
-      } catch {
-        // skip
-      }
-    }
-  }
-
-  const data: ExportData = {
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    stores,
-  }
+  const data: PortabilityEnvelopeV2 = buildPortabilityEnvelope()
 
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -61,31 +36,14 @@ export function exportToJson(): void {
 }
 
 /**
- * Detect whether a store value uses the new Zustand persist format
- * `{ state: {...}, version: N }` or is a legacy raw state blob.
- */
-function isZustandPersistFormat(value: unknown): value is { state: Record<string, unknown>; version: number } {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'state' in value &&
-    'version' in value &&
-    typeof (value as Record<string, unknown>).state === 'object' &&
-    typeof (value as Record<string, unknown>).version === 'number'
-  )
-}
-
-/**
  * Import store state from a JSON file with migration and validation.
  *
- * Pipeline per store:
- * 1. Detect format (new `{ state, version }` vs legacy raw blob)
- * 2. Run migration chain via storeRegistry
- * 3. Validate migrated data via Zod schemas
- * 4. Write to localStorage in Zustand persist format
- *
- * Validation errors are reported but do NOT block the import —
- * partial/invalid data is still written so the user doesn't lose anything.
+ * Pipeline:
+ * 1. Parse the incoming file
+ * 2. Normalize v1 or v2 data into the v2 portability contract
+ * 3. Materialize mixed-mode runtime stores for the current app
+ * 4. Validate the runtime stores
+ * 5. Write to localStorage and reload when validation passes
  */
 export async function importFromJson(file: File): Promise<ImportResult> {
   const result: ImportResult = {
@@ -99,60 +57,37 @@ export async function importFromJson(file: File): Promise<ImportResult> {
     const text = await file.text()
     const data = JSON.parse(text) as Record<string, unknown>
 
-    // Envelope validation
-    if ((data as { version?: unknown }).version !== 1 || !data.stores) {
+    const resolved = resolvePortabilityData(data, 'json-import')
+    if (!resolved) {
       result.error = 'Invalid export file format'
       return result
     }
 
-    const stores = data.stores as Record<string, unknown>
+    result.warnings.push(...resolved.warnings)
 
-    // Process each store in the import file
-    for (const [key, rawValue] of Object.entries(stores)) {
-      // Skip unknown store keys
-      if (!STORE_KEYS.includes(key)) continue
-
-      // Step 1: Detect format — new wrapper vs legacy raw blob
-      let state: Record<string, unknown>
-      let version: number
-      if (isZustandPersistFormat(rawValue)) {
-        state = rawValue.state as Record<string, unknown>
-        version = rawValue.version
-      } else {
-        // Legacy format: raw state blob, assume version 0
-        state = rawValue as Record<string, unknown>
-        version = 0
-      }
-
-      // Step 2: Migrate through the store's migration chain
-      const migrated = migrateStoreData(key, { state, version })
-      if (migrated) {
-        state = migrated.state
-        version = migrated.version
-      }
-
-      // Step 3: Validate the migrated data
-      const validation = validateStoreData(key, state)
+    for (const [key, payload] of Object.entries(resolved.runtimeStores)) {
+      const validation = validateStoreData(key, payload.state)
       if (!validation.valid) {
         result.validationErrors[key] = validation.errors
       }
       if (validation.warnings.length > 0) {
         result.warnings.push(...validation.warnings)
       }
-
-      // Step 4: Write to localStorage in Zustand persist format
-      localStorage.setItem(key, JSON.stringify({ state, version }))
-      result.storesImported.push(key)
     }
 
-    // Warn about stores expected but not present in the import file
-    for (const key of STORE_KEYS) {
-      if (!result.storesImported.includes(key)) {
+    for (const key of PORTABILITY_STORE_KEYS) {
+      if (!(key in resolved.portableStores)) {
         result.warnings.push(`Store "${key}" not present in import file`)
       }
     }
 
+    if (Object.keys(result.validationErrors).length > 0) {
+      result.error = 'Import contains invalid data. Fix the reported sections and try again.'
+      return result
+    }
+
     result.success = true
+    result.storesImported = applyResolvedPortabilityData(resolved)
     window.location.reload()
     return result
   } catch (err) {

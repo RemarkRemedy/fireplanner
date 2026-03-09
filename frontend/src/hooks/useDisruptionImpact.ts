@@ -1,12 +1,11 @@
 import { useMemo, useState, useCallback } from 'react'
 import type { LifeEvent } from '@/lib/types'
 import { generateIncomeProjection } from '@/lib/calculations/income'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { getBaseInputs, computeMetrics } from '@/hooks/useWhatIfMetrics'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 
 // ============================================================
 // Disruption Template Types
@@ -191,13 +190,14 @@ export interface DisruptionImpactResult {
 // ============================================================
 
 export function useDisruptionImpact(costTier: CostTierKey = 'subsidised', overrides?: DisruptionOverrides): DisruptionImpactResult {
-  const profile = useProfileStore()
-  const income = useIncomeStore()
-  // Allocation and property are read inside useMemo via .getState() rather than
-  // subscribing at the hook level. This avoids re-running the expensive useMemo
-  // when unrelated allocation/property fields change. Safe because this hook is
-  // only mounted inside the life events Sheet, and allocation/property are edited
-  // on a different page — any navigation triggers a fresh mount.
+  const { profile, income, property, normalized } = useHouseholdRuntimeInputs()
+  const allocation = useAllocationStore()
+  const plan = useHouseholdPlanStore((state) => state.plan)
+  const selectedAdult = plan.adults.find((adult) => adult.id === normalized.referenceAdultId)
+    ?? plan.adults.find((adult) => adult.owner === 'self')
+    ?? plan.adults[0]
+    ?? null
+  const selectedAdultLifeEvents = selectedAdult?.lifeEvents ?? []
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [customStartAge, setCustomStartAge] = useState<number | null>(null)
@@ -232,9 +232,7 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised', overri
       }
     }
 
-    // Compute base metrics (read allocation/property at compute time, not via subscription)
-    const allocation = useAllocationStore.getState()
-    const property = usePropertyStore.getState()
+    // Compute base metrics from the household-backed runtime snapshot.
     const baseInputs = getBaseInputs(profile, income, allocation, property)
     const baseMetrics = computeMetrics(baseInputs)
 
@@ -270,11 +268,11 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised', overri
     let disruptedIncome = baseInputs.annualIncome
     const baseParams = buildProjectionParams(profile, income, property)
     if (baseParams) {
-      // Base projection (with store's existing life events)
+      // Base projection (with the selected adult's existing life events)
       const baseProjection = generateIncomeProjection(baseParams)
 
       // Disrupted projection (with disruption event appended, forced enabled)
-      const allEvents = [...income.lifeEvents, disruptionEvent]
+      const allEvents = [...selectedAdultLifeEvents, disruptionEvent]
       const disruptedProjection = generateIncomeProjection({
         ...baseParams,
         lifeEvents: allEvents,
@@ -374,7 +372,7 @@ export function useDisruptionImpact(costTier: CostTierKey = 'subsidised', overri
       hasData: true,
     }
   }, [
-    profile, income,
+    income, profile, allocation, property, selectedAdultLifeEvents,
     template, effectiveStartAge, costTier,
     overrides?.incomeImpact, overrides?.expenseReduction,
     overrides?.additionalAnnualExpense, overrides?.lumpSumCost,

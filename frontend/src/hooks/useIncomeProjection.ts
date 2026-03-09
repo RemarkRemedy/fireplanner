@@ -1,92 +1,206 @@
-import { useMemo } from 'react'
-import type { IncomeProjectionRow, IncomeSummaryStats, ProfileState, IncomeState, CpfHousingMode } from '@/lib/types'
-import type { IncomeProjectionParams } from '@/lib/calculations/income'
+import { useEffect, useMemo } from 'react'
+import type { IncomeProjectionRow, IncomeSummaryStats } from '@/lib/types'
 import { generateIncomeProjection, calculateIncomeSummary } from '@/lib/calculations/income'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
+export { buildProjectionParams, deriveCpfHousingFromProperty } from '@/lib/calculations/projectionParams'
+import { deriveCpfHousingFromProperty } from '@/lib/calculations/projectionParams'
+import {
+  compileHouseholdPlan,
+  type CompiledHouseholdPlan,
+} from '@/lib/household/compileHouseholdPlan'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import {
+  buildHouseholdPlanRevision,
+  buildNormalizedAnalysisCacheKey,
+  MONTE_CARLO_NORMALIZED_OWNER,
+  stableScenarioOverrideHash,
+  useNormalizedAnalysisStore,
+  type NormalizedAnalysisEntry,
+} from '@/stores/useNormalizedAnalysisStore'
+import {
+  applyHouseholdScenarioOverrides,
+  type HouseholdScenarioOverrides,
+} from '@/lib/household/scenarios'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 import { validateCrossStoreRules } from '@/lib/validation/rules'
 
-/** Derive CPF housing params from property store (single source of truth) */
-export function deriveCpfHousingFromProperty(property: { mortgageCpfMonthly: number; existingMortgageRemainingYears: number; ownershipPercent?: number }) {
-  const pct = property.ownershipPercent ?? 1
-  const scaledCpf = property.mortgageCpfMonthly * pct
+function createNormalizedAnalysisEntry(
+  compiledPlan: CompiledHouseholdPlan,
+  householdRevision: string,
+  scenarioOverrideHash: string,
+): NormalizedAnalysisEntry {
+  const cacheKey = buildNormalizedAnalysisCacheKey({
+    householdRevision,
+    scenarioOverrideHash,
+  })
+
   return {
-    cpfHousingMode: (scaledCpf > 0 ? 'simple' : 'none') as CpfHousingMode,
-    cpfHousingMonthly: scaledCpf,
-    cpfMortgageYearsLeft: property.existingMortgageRemainingYears,
+    cacheKey,
+    householdRevision,
+    scenarioOverrideHash,
+    compiledPlan,
+    selectors: {
+      deterministic: {
+        rows: compiledPlan.rows,
+        milestones: compiledPlan.milestones,
+      },
+      projection: {
+        annualSavingsByYear: compiledPlan.annualSavingsByYear,
+        postRetirementIncomeByYear: compiledPlan.postRetirementIncomeByYear,
+        retirementExpenseBaseByYear: compiledPlan.retirementExpenseBaseByYear,
+        householdWithdrawalNeedByYear: compiledPlan.householdWithdrawalNeedByYear,
+        portfolioAdjustments: compiledPlan.portfolioAdjustments,
+      },
+      monteCarlo: {
+        annualSavingsByYear: compiledPlan.annualSavingsByYear,
+        postRetirementIncomeByYear: compiledPlan.postRetirementIncomeByYear,
+        householdWithdrawalNeedByYear: compiledPlan.householdWithdrawalNeedByYear,
+        portfolioAdjustments: compiledPlan.portfolioAdjustments,
+      },
+      backtest: {
+        postRetirementIncomeByYear: compiledPlan.postRetirementIncomeByYear,
+        retirementExpenseBaseByYear: compiledPlan.retirementExpenseBaseByYear,
+        householdWithdrawalNeedByYear: compiledPlan.householdWithdrawalNeedByYear,
+        portfolioAdjustments: compiledPlan.portfolioAdjustments,
+      },
+      cpf: {
+        cpfByAdultId: compiledPlan.cpfByAdultId,
+      },
+      healthcare: {
+        healthcareByAdultId: compiledPlan.healthcareByAdultId,
+      },
+      companion: {
+        milestones: compiledPlan.milestones,
+        annualSavingsByYear: compiledPlan.annualSavingsByYear,
+        postRetirementIncomeByYear: compiledPlan.postRetirementIncomeByYear,
+        householdWithdrawalNeedByYear: compiledPlan.householdWithdrawalNeedByYear,
+      },
+    },
+    monteCarloOwner: MONTE_CARLO_NORMALIZED_OWNER,
   }
 }
 
-/**
- * Build projection params from store state (non-hook helper).
- * Returns null if either store has validation errors.
- *
- * Property state is passed explicitly (not via getState()) so callers
- * that use this inside React hooks get reactive updates when property changes.
- */
-export function buildProjectionParams(
-  profile: ProfileState,
-  income: IncomeState,
-  property: { mortgageCpfMonthly: number; existingMortgageRemainingYears: number; ownershipPercent?: number }
-): IncomeProjectionParams | null {
-  const profileErrors = profile.validationErrors
-  const incomeErrors = income.validationErrors
-  if (Object.keys(profileErrors).length > 0 || Object.keys(incomeErrors).length > 0) {
-    return null
+function getReferenceAdultId(compiledPlan: CompiledHouseholdPlan): string {
+  return compiledPlan.adultOrder.find(
+    (adultId) => compiledPlan.adultsById[adultId].owner === 'self'
+  ) ?? compiledPlan.adultOrder[0]
+}
+
+export interface NormalizedLegacyAnalysisContext {
+  cacheKey: string
+  householdRevision: string
+  scenarioOverrideHash: string
+  referenceAdultId: string
+  currentAge: number
+  retirementAge: number
+  lifeExpectancy: number
+  firstRetirementYearOffset: number
+  householdRetirementYearOffset: number
+  compiledPlan: CompiledHouseholdPlan
+  entry: NormalizedAnalysisEntry
+}
+
+export function useNormalizedLegacyAnalysisContext(
+  scenarioOverrides?: unknown
+): NormalizedLegacyAnalysisContext {
+  const plan = useHouseholdPlanStore((state) => state.plan)
+  const householdPlanRevision = useHouseholdPlanStore((state) => state.householdPlanRevision)
+  const scenarioOverrideHash = useMemo(
+    () => stableScenarioOverrideHash(scenarioOverrides ?? null),
+    [scenarioOverrides]
+  )
+  const householdRevision = useMemo(
+    () => buildHouseholdPlanRevision(householdPlanRevision),
+    [householdPlanRevision]
+  )
+  const cacheKey = useMemo(() => buildNormalizedAnalysisCacheKey({
+    householdRevision,
+    scenarioOverrideHash,
+  }), [householdRevision, scenarioOverrideHash])
+  const cachedEntry = useNormalizedAnalysisStore((state) => state.entries[
+    cacheKey
+  ])
+  const upsertEntry = useNormalizedAnalysisStore((state) => state.upsertEntry)
+  const setActiveCacheKey = useNormalizedAnalysisStore((state) => state.setActiveCacheKey)
+
+  const normalizedEntry = useMemo(() => {
+    if (cachedEntry?.compiledPlan) {
+      return cachedEntry
+    }
+
+    const scenarioPlan = scenarioOverrides
+      ? applyHouseholdScenarioOverrides(
+          plan,
+          scenarioOverrides as HouseholdScenarioOverrides,
+        )
+      : plan
+
+    return createNormalizedAnalysisEntry(
+      compileHouseholdPlan(scenarioPlan),
+      householdRevision,
+      scenarioOverrideHash,
+    )
+  }, [
+    cachedEntry,
+    householdRevision,
+    plan,
+    scenarioOverrideHash,
+    scenarioOverrides,
+  ])
+
+  useEffect(() => {
+    if (
+      !cachedEntry?.compiledPlan
+      || cachedEntry.householdRevision !== householdRevision
+      || cachedEntry.scenarioOverrideHash !== scenarioOverrideHash
+    ) {
+      upsertEntry(normalizedEntry)
+    }
+    setActiveCacheKey(cacheKey)
+  }, [
+    cacheKey,
+    cachedEntry,
+    householdRevision,
+    normalizedEntry,
+    scenarioOverrideHash,
+    setActiveCacheKey,
+    upsertEntry,
+  ])
+
+  const compiledPlan = normalizedEntry.compiledPlan
+  if (!compiledPlan) {
+    // This should never happen: createNormalizedAnalysisEntry always produces a
+    // compiled plan, and the cache lookup above falls back to a fresh compile.
+    // If it somehow does, log and re-throw so the nearest React Error Boundary
+    // can present a recovery UI rather than leaving the user with a blank screen.
+    const error = new Error('Normalized analysis entry missing compiled plan — this is a bug. Please refresh the page.')
+    console.error(error)
+    throw error
   }
-  const cpfHousing = deriveCpfHousingFromProperty(property)
-  return {
-    currentAge: profile.currentAge,
-    retirementAge: profile.retirementAge,
-    lifeExpectancy: profile.lifeExpectancy,
-    salaryModel: income.salaryModel,
-    annualSalary: income.annualSalary,
-    salaryGrowthRate: income.salaryGrowthRate,
-    bonusMonths: income.bonusMonths,
-    realisticPhases: income.realisticPhases,
-    promotionJumps: income.promotionJumps,
-    momEducation: income.momEducation,
-    momAdjustment: income.momAdjustment,
-    employerCpfEnabled: income.employerCpfEnabled,
-    incomeStreams: income.incomeStreams,
-    lifeEvents: income.lifeEvents,
-    lifeEventsEnabled: income.lifeEventsEnabled,
-    annualExpenses: profile.annualExpenses,
-    inflation: profile.inflation,
-    personalReliefs: income.personalReliefs,
-    srsAnnualContribution: profile.srsAnnualContribution,
-    srsPostFireEnabled: profile.srsPostFireEnabled,
-    initialCpfOA: profile.cpfOA,
-    initialCpfSA: profile.cpfSA,
-    initialCpfMA: profile.cpfMA,
-    initialCpfRA: profile.cpfRA,
-    cpfLifeStartAge: profile.cpfLifeStartAge,
-    cpfLifePlan: profile.cpfLifePlan,
-    cpfRetirementSum: profile.cpfRetirementSum,
-    cpfHousingMode: cpfHousing.cpfHousingMode,
-    cpfHousingMonthly: cpfHousing.cpfHousingMonthly,
-    cpfMortgageYearsLeft: cpfHousing.cpfMortgageYearsLeft,
-    cpfLifeActualMonthlyPayout: profile.cpfLifeActualMonthlyPayout,
-    residencyStatus: profile.residencyStatus,
-    prMonths: profile.prMonths,
-    srsBalance: profile.srsBalance,
-    srsInvestmentReturn: profile.srsInvestmentReturn,
-    srsDrawdownStartAge: profile.srsDrawdownStartAge,
-    cpfOaWithdrawals: profile.cpfOaWithdrawals,
-    cpfisEnabled: profile.cpfisEnabled,
-    cpfisOaReturn: profile.cpfisOaReturn,
-    cpfisSaReturn: profile.cpfisSaReturn,
-    cpfTopUpOA: profile.cpfTopUpOA,
-    cpfTopUpSA: profile.cpfTopUpSA,
-    cpfTopUpMA: profile.cpfTopUpMA,
-    lockedAssets: profile.lockedAssets,
-    expenseAdjustments: profile.expenseAdjustments,
-    cpfAutoFallback: profile.cpfAutoFallback,
-    cpfAutoFallbackIncludeSA: profile.cpfAutoFallbackIncludeSA,
-    cpfVirtualRebalancing: profile.cpfVirtualRebalancing,
-    cpfVirtualRebalancingMode: profile.cpfVirtualRebalancingMode,
-  }
+
+  const referenceAdultId = getReferenceAdultId(compiledPlan)
+  const referenceAdult = compiledPlan.adultsById[referenceAdultId]
+
+  return useMemo(() => ({
+    cacheKey,
+    householdRevision,
+    scenarioOverrideHash,
+    referenceAdultId,
+    currentAge: referenceAdult.currentAge,
+    retirementAge: referenceAdult.currentAge + compiledPlan.householdRetirementYearOffset,
+    lifeExpectancy: referenceAdult.currentAge + compiledPlan.yearCount - 1,
+    firstRetirementYearOffset: compiledPlan.firstRetirementYearOffset,
+    householdRetirementYearOffset: compiledPlan.householdRetirementYearOffset,
+    compiledPlan,
+    entry: normalizedEntry,
+  }), [
+    cacheKey,
+    compiledPlan,
+    householdRevision,
+    normalizedEntry,
+    referenceAdult.currentAge,
+    referenceAdultId,
+    scenarioOverrideHash,
+  ])
 }
 
 interface IncomeProjectionResult {
@@ -102,19 +216,25 @@ interface IncomeProjectionResult {
  * Returns null projection/summary when upstream validation fails.
  */
 export function useIncomeProjection(): IncomeProjectionResult {
-  const profile = useProfileStore()
-  const income = useIncomeStore()
-  const property = usePropertyStore()
-  const cpfHousing = deriveCpfHousingFromProperty(property)
+  const plan = useHouseholdPlanStore((state) => state.plan)
+  const hasValidationErrors = useHouseholdPlanStore((state) => state.hasValidationErrors)
+  const normalized = useNormalizedLegacyAnalysisContext()
+  const runtime = useMemo(
+    () => buildHouseholdRuntimeLegacyInputs(plan, normalized.compiledPlan),
+    [normalized.compiledPlan, plan]
+  )
+  const { profile, income, property } = runtime
+  const cpfHousing = useMemo(
+    () => deriveCpfHousingFromProperty(property),
+    [property]
+  )
 
   return useMemo(() => {
-    const profileErrors = profile.validationErrors
-    const incomeErrors = income.validationErrors
     const crossStoreErrors = validateCrossStoreRules(
       {
-        currentAge: profile.currentAge,
-        retirementAge: profile.retirementAge,
-        lifeExpectancy: profile.lifeExpectancy,
+        currentAge: normalized.currentAge,
+        retirementAge: normalized.retirementAge,
+        lifeExpectancy: normalized.lifeExpectancy,
       },
       {
         incomeStreams: income.incomeStreams,
@@ -123,16 +243,16 @@ export function useIncomeProjection(): IncomeProjectionResult {
         promotionJumps: income.promotionJumps,
       }
     )
-    const allErrors = { ...profileErrors, ...incomeErrors, ...crossStoreErrors }
+    const allErrors = { ...crossStoreErrors }
 
-    if (Object.keys(allErrors).length > 0) {
+    if (hasValidationErrors || Object.keys(allErrors).length > 0) {
       return { projection: null, summary: null, hasErrors: true, errors: allErrors }
     }
 
     const projection = generateIncomeProjection({
-      currentAge: profile.currentAge,
-      retirementAge: profile.retirementAge,
-      lifeExpectancy: profile.lifeExpectancy,
+      currentAge: normalized.currentAge,
+      retirementAge: normalized.retirementAge,
+      lifeExpectancy: normalized.lifeExpectancy,
       salaryModel: income.salaryModel,
       annualSalary: income.annualSalary,
       salaryGrowthRate: income.salaryGrowthRate,
@@ -184,12 +304,13 @@ export function useIncomeProjection(): IncomeProjectionResult {
 
     return { projection, summary, hasErrors: false, errors: {} }
   }, [
-    profile.currentAge,
-    profile.retirementAge,
-    profile.lifeExpectancy,
+    normalized.currentAge,
+    normalized.retirementAge,
+    normalized.lifeExpectancy,
     profile.annualExpenses,
     profile.inflation,
     profile.srsAnnualContribution,
+    profile.srsPostFireEnabled,
     profile.cpfOA,
     profile.cpfSA,
     profile.cpfMA,
@@ -218,7 +339,6 @@ export function useIncomeProjection(): IncomeProjectionResult {
     profile.cpfAutoFallbackIncludeSA,
     profile.cpfVirtualRebalancing,
     profile.cpfVirtualRebalancingMode,
-    profile.validationErrors,
     income.salaryModel,
     income.annualSalary,
     income.salaryGrowthRate,
@@ -232,6 +352,6 @@ export function useIncomeProjection(): IncomeProjectionResult {
     income.lifeEvents,
     income.lifeEventsEnabled,
     income.personalReliefs,
-    income.validationErrors,
+    hasValidationErrors,
   ])
 }

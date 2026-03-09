@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useProjection } from '@/hooks/useProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useAdjustedFireNumber } from '@/hooks/useAdjustedFireNumber'
 
 interface DashboardMetrics {
@@ -29,7 +29,7 @@ interface DashboardMetrics {
 export function useDashboardMetrics(): DashboardMetrics {
   const { metrics } = useFireCalculations()
   const { summary: projSummary } = useProjection()
-  const profile = useProfileStore()
+  const { profile } = useHouseholdRuntimeInputs()
   const adjusted = useAdjustedFireNumber()
 
   return useMemo(() => {
