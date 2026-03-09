@@ -183,8 +183,17 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
     ? AFTER_INPUTS_GROUPS.filter((group) => group.title === 'PLAN' || group.title === 'ANALYSIS')
     : AFTER_INPUTS_GROUPS
 
+  const expandSection = useUIStore((s) => s.expandSection)
+
   const handleSectionClick = useCallback(
     (sectionId: string) => {
+      // Expand the target section if collapsed
+      expandSection(sectionId)
+      // For sub-items (Goals, Healthcare), also expand parent Expenses section
+      if (sectionId === 'section-goals' || sectionId === 'section-healthcare') {
+        expandSection('section-expenses')
+      }
+
       if (isInputsPage) {
         document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
       } else if (companionMode) {
@@ -195,7 +204,7 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
       }
       onNavigate?.()
     },
-    [isInputsPage, companionMode, navigate, onNavigate]
+    [isInputsPage, companionMode, navigate, onNavigate, expandSection]
   )
 
   return (
@@ -426,6 +435,8 @@ export function Sidebar() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const companionMode = isCompanionMode()
 
+  const expandSection = useUIStore((s) => s.expandSection)
+
   // Handle hash-based scroll on /inputs page load
   useEffect(() => {
     if (location.pathname !== '/inputs') return
@@ -444,12 +455,17 @@ export function Sidebar() {
     }
 
     if (sectionId) {
+      // Expand the target section (and parent for sub-items) before scrolling
+      expandSection(sectionId)
+      if (sectionId === 'section-goals' || sectionId === 'section-healthcare') {
+        expandSection('section-expenses')
+      }
       // Small delay to let the page render
       requestAnimationFrame(() => {
         document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
       })
     }
-  }, [location.pathname, location.hash])
+  }, [location.pathname, location.hash, expandSection])
 
   return (
     <>

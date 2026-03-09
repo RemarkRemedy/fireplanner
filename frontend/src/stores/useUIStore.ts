@@ -2,14 +2,14 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { CHANGELOG, DATA_VINTAGE } from '@/lib/data/changelog'
 import type { HouseholdSectionToggles } from '@/lib/household/sectionVisibility'
+import type { SectionOrderKey } from '@/lib/household/sectionOrder'
 
-type SectionOrder = 'goal-first' | 'story-first' | 'already-fire'
 type StatsPosition = 'bottom' | 'top'
 
 type DollarBasis = 'real' | 'nominal'
 
 interface UIState {
-  sectionOrder: SectionOrder
+  sectionOrder: SectionOrderKey
   statsPosition: StatsPosition
   cpfEnabled: boolean
   propertyEnabled: boolean
@@ -38,6 +38,7 @@ interface UIActions {
   markChangelogSeen: () => void
   setShowNewPurchase: (value: boolean) => void
   toggleSection: (sectionId: string) => void
+  expandSection: (sectionId: string) => void
   setContextualNudgeActive: (active: boolean) => void
 }
 
@@ -125,6 +126,11 @@ export const useUIStore = create<UIState & UIActions>()(
           }
           return { collapsedSections: sections }
         }),
+
+      expandSection: (sectionId) =>
+        set((state) => ({
+          collapsedSections: state.collapsedSections.filter((id) => id !== sectionId),
+        })),
 
       setContextualNudgeActive: (active) => set({ contextualNudgeActive: active }),
     }),
