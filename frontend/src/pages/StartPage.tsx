@@ -462,12 +462,7 @@ export function StartPage() {
                 onMonthlyExpensesChange={setDraftMonthlyExpenses}
                 annualExpenses={draftExpenses}
               />
-              <CurrencyInput
-                label="Cash & Investments"
-                value={draftNetWorth}
-                onChange={setDraftNetWorth}
-                tooltip="Cash, savings, stocks, bonds, and other investments — excluding CPF and property"
-              />
+              <NetWorthInput value={draftNetWorth} onChange={setDraftNetWorth} />
             </div>
             {showResults && <QuickResults fireNumber={draftFireNumber} yearsToFire={draftYearsToFire} fireAge={draftFireAge} savingsRate={draftSavingsRate} progress={draftProgress} projection={draftProjection} desiredRetirementAge={draftRetirementAge} fireReachable={fireReachable} />}
             <div className="flex flex-col items-end gap-1">
@@ -522,12 +517,7 @@ export function StartPage() {
                 onMonthlyExpensesChange={setDraftMonthlyExpenses}
                 annualExpenses={draftExpenses}
               />
-              <CurrencyInput
-                label="Cash & Investments"
-                value={draftNetWorth}
-                onChange={setDraftNetWorth}
-                tooltip="Cash, savings, stocks, bonds, and other investments — excluding CPF and property"
-              />
+              <NetWorthInput value={draftNetWorth} onChange={setDraftNetWorth} />
             </div>
             {showResults && <QuickResults fireNumber={draftFireNumber} yearsToFire={draftYearsToFire} fireAge={draftFireAge} savingsRate={draftSavingsRate} progress={draftProgress} projection={draftProjection} desiredRetirementAge={draftFireAge > 65 ? 65 : undefined} fireReachable={fireReachable} />}
             <div className="flex flex-col items-end gap-1">
@@ -583,12 +573,7 @@ export function StartPage() {
                   onMonthlyExpensesChange={setDraftMonthlyExpenses}
                   annualExpenses={draftExpenses}
                 />
-                <CurrencyInput
-                  label="Cash & Investments"
-                  value={draftNetWorth}
-                  onChange={setDraftNetWorth}
-                  tooltip="Cash, savings, stocks, bonds, and other investments — excluding CPF and property"
-                />
+                <NetWorthInput value={draftNetWorth} onChange={setDraftNetWorth} />
               </div>
               {sectionToggles}
             </CardContent>
@@ -726,12 +711,13 @@ function MonthlyIncomeInput({
             Gross
           </button>
         </div>
+        <span className="absolute left-[7.4rem] top-1/2 -translate-y-1/2 text-muted-foreground text-sm z-10">$</span>
         <NumberInput
           value={monthlyIncome}
           onChange={onMonthlyIncomeChange}
           integer
           formatWithCommas
-          className="pl-[8rem] border-blue-300"
+          className="pl-[8.5rem] border-blue-300"
         />
       </div>
 
@@ -938,6 +924,28 @@ function QuickResults({
         Quick estimate in today's dollars (3.6% Safe Withdrawal Rate, 7% return, 2.5% inflation).
         Your detailed plan will adjust for inflation, CPF, and portfolio allocation.
       </p>
+    </div>
+  )
+}
+
+function NetWorthInput({
+  value,
+  onChange,
+}: {
+  value: number
+  onChange: (value: number) => void
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <CurrencyInput
+        label="Cash & Investments"
+        value={value}
+        onChange={onChange}
+        tooltip="Cash, savings, stocks, bonds, and other investments — excluding CPF and property"
+      />
+      <div className="text-xs text-muted-foreground">
+        Savings, stocks, bonds — not CPF or property
+      </div>
     </div>
   )
 }
