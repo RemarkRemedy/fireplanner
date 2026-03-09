@@ -7,11 +7,10 @@ export const DEFAULT_HEALTHCARE_CONFIG: HealthcareConfig = {
   careShieldLifeEnabled: true,
   /**
    * Out-of-pocket healthcare base amount (SGD/year) for a healthy 30-year-old.
-   * Source: MOH household health expenditure survey (2021/22) — median OOP
-   * spending for 25-34 age band ~$1,000-1,400/yr. We use $1,200 as a
-   * conservative mid-point. The age-curve model scales this up with age.
+   * Source: Bottom-Up Estimate — GP + dental + optical + medications.
+   * The age-curve model scales this up with age.
    */
-  oopBaseAmount: 1200,
+  oopBaseAmount: 1170,
   oopModel: 'age-curve',
   oopInflationRate: 0.03,
   oopReferenceAge: 30,
