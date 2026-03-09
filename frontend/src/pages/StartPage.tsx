@@ -684,34 +684,15 @@ function MonthlyIncomeInput({
     <div className="flex flex-col gap-1">
       <Label className="text-sm flex items-center gap-1">
         Monthly Income
-        <InfoTooltip text="Your monthly salary. Choose whether to enter take-home (after CPF) or gross (before CPF)." />
+        <button
+          type="button"
+          onClick={() => onIncomeTypeChange(incomeType === 'take-home' ? 'gross' : 'take-home')}
+          className="text-xs text-primary hover:text-primary/80 underline decoration-dotted underline-offset-2 cursor-pointer"
+        >
+          {incomeType === 'take-home' ? 'take-home' : 'gross'}
+        </button>
+        <InfoTooltip text="Your monthly salary. Click 'take-home'/'gross' to switch between after-CPF and before-CPF entry." />
       </Label>
-
-      {/* Take-home / Gross pill selector */}
-      <div className="flex gap-1 mb-1">
-        <button
-          type="button"
-          onClick={() => onIncomeTypeChange('take-home')}
-          className={`px-3 py-1 text-xs rounded-full border transition-colors ${
-            incomeType === 'take-home'
-              ? 'bg-primary text-primary-foreground border-primary'
-              : 'bg-muted text-muted-foreground border-border hover:border-primary/50'
-          }`}
-        >
-          Take-home
-        </button>
-        <button
-          type="button"
-          onClick={() => onIncomeTypeChange('gross')}
-          className={`px-3 py-1 text-xs rounded-full border transition-colors ${
-            incomeType === 'gross'
-              ? 'bg-primary text-primary-foreground border-primary'
-              : 'bg-muted text-muted-foreground border-border hover:border-primary/50'
-          }`}
-        >
-          Gross
-        </button>
-      </div>
 
       {/* Dollar input */}
       <div className="relative">
@@ -785,10 +766,10 @@ function MonthlyExpenseInput({
   return (
     <div className="flex flex-col gap-1">
       <CurrencyInput
-        label="Monthly Expenses (excluding healthcare & mortgage)"
+        label="Monthly Expenses"
         value={monthlyExpenses}
         onChange={onMonthlyExpensesChange}
-        tooltip="Healthcare insurance and mortgage payments are modelled separately in their own sections."
+        tooltip="Excludes healthcare insurance and mortgage — those are modelled separately in their own sections."
       />
       {monthlyExpenses > 0 && (
         <div className="text-xs text-muted-foreground">
