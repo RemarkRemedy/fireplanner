@@ -3,18 +3,15 @@ import { renderHook } from '@testing-library/react'
 import { useProjection } from './useProjection'
 import { getRetirementSumAmount } from '@/lib/calculations/cpf'
 import { computeLbsProceeds } from '@/lib/calculations/hdb'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { setupTestPlan } from '@/test-helpers/setupTestPlan'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 
 beforeEach(() => {
-  useProfileStore.getState().reset()
-  useIncomeStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   useAllocationStore.getState().reset()
   useSimulationStore.getState().reset()
-  usePropertyStore.getState().reset()
 })
 
 describe('useProjection', () => {
@@ -29,7 +26,10 @@ describe('useProjection', () => {
   })
 
   it('returns null when income has validation errors', () => {
-    useIncomeStore.getState().setField('annualSalary', -1)
+    // In the household plan, create a cross-field violation to trigger validation errors
+    setupTestPlan({
+      adult: { currentAge: 30, retirementAge: 25, lifeExpectancy: 20 },
+    })
     const { result } = renderHook(() => useProjection())
     expect(result.current.hasErrors).toBe(true)
     expect(result.current.fireMetrics).toBeNull()
@@ -38,7 +38,9 @@ describe('useProjection', () => {
   })
 
   it('returns null when profile has validation errors', () => {
-    useProfileStore.getState().setField('currentAge', 15)
+    setupTestPlan({
+      adult: { currentAge: 30, retirementAge: 25, lifeExpectancy: 20 },
+    })
     const { result } = renderHook(() => useProjection())
     expect(result.current.hasErrors).toBe(true)
     expect(result.current.fireMetrics).toBeNull()
@@ -46,20 +48,21 @@ describe('useProjection', () => {
   })
 
   it('params reflect profile store fields correctly', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 35,
-      retirementAge: 60,
-      lifeExpectancy: 85,
-      liquidNetWorth: 500000,
-      swr: 0.035,
-      inflation: 0.03,
-      expenseRatio: 0.005,
-      annualExpenses: 60000,
-      retirementSpendingAdjustment: 0.8,
-      usePortfolioReturn: false,
-      expectedReturn: 0.06,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 35,
+        retirementAge: 60,
+        lifeExpectancy: 85,
+      },
+      expenses: {
+        annualExpenses: 60000,
+        retirementSpendingAdjustment: 0.8,
+      },
+      assets: { liquidNetWorth: 500000 },
+      assumptions: {
+        fire: { swr: 0.035 },
+        returns: { usePortfolioReturn: false, expectedReturn: 0.06, inflation: 0.03, expenseRatio: 0.005 },
+      },
     })
     const { result } = renderHook(() => useProjection())
     const p = result.current.params!
@@ -75,11 +78,10 @@ describe('useProjection', () => {
   })
 
   it('uses portfolio return when usePortfolioReturn is true and allocation valid', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      usePortfolioReturn: true,
-      expectedReturn: 0.10,
-      validationErrors: {},
+    setupTestPlan({
+      assumptions: {
+        returns: { usePortfolioReturn: true, expectedReturn: 0.10 },
+      },
     })
     useAllocationStore.setState({
       ...useAllocationStore.getState(),
@@ -93,11 +95,10 @@ describe('useProjection', () => {
   })
 
   it('falls back to manual return when allocation has errors', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      usePortfolioReturn: true,
-      expectedReturn: 0.10,
-      validationErrors: {},
+    setupTestPlan({
+      assumptions: {
+        returns: { usePortfolioReturn: true, expectedReturn: 0.10 },
+      },
     })
     useAllocationStore.setState({
       ...useAllocationStore.getState(),
@@ -124,9 +125,8 @@ describe('useProjection', () => {
   })
 
   it('property fields are zero when ownsProperty is false', () => {
-    usePropertyStore.setState({
-      ...usePropertyStore.getState(),
-      ownsProperty: false,
+    setupTestPlan({
+      property: { ownsProperty: false },
     })
     const { result } = renderHook(() => useProjection())
     const p = result.current.params!
@@ -137,12 +137,13 @@ describe('useProjection', () => {
   })
 
   it('property equity computed correctly with ownership percent', () => {
-    usePropertyStore.setState({
-      ...usePropertyStore.getState(),
-      ownsProperty: true,
-      existingPropertyValue: 1000000,
-      existingMortgageBalance: 400000,
-      ownershipPercent: 0.5,
+    setupTestPlan({
+      property: {
+        ownsProperty: true,
+        existingPropertyValue: 1000000,
+        existingMortgageBalance: 400000,
+        ownershipPercent: 0.5,
+      },
     })
     const { result } = renderHook(() => useProjection())
     const p = result.current.params!
@@ -153,12 +154,13 @@ describe('useProjection', () => {
   })
 
   it('mortgage payment excludes CPF portion', () => {
-    usePropertyStore.setState({
-      ...usePropertyStore.getState(),
-      ownsProperty: true,
-      existingMonthlyPayment: 3000,
-      mortgageCpfMonthly: 1000,
-      ownershipPercent: 1,
+    setupTestPlan({
+      property: {
+        ownsProperty: true,
+        existingMonthlyPayment: 3000,
+        mortgageCpfMonthly: 1000,
+        ownershipPercent: 1,
+      },
     })
     const { result } = renderHook(() => useProjection())
     const p = result.current.params!
@@ -167,13 +169,14 @@ describe('useProjection', () => {
   })
 
   it('HDB subletting produces rental income', () => {
-    usePropertyStore.setState({
-      ...usePropertyStore.getState(),
-      ownsProperty: true,
-      propertyType: 'hdb',
-      hdbMonetizationStrategy: 'sublet',
-      hdbSublettingRooms: 2,
-      hdbSublettingRate: 800,
+    setupTestPlan({
+      property: {
+        ownsProperty: true,
+        propertyType: 'hdb',
+        hdbMonetizationStrategy: 'sublet',
+        hdbSublettingRooms: 2,
+        hdbSublettingRate: 800,
+      },
     })
     const { result } = renderHook(() => useProjection())
     const p = result.current.params!
@@ -182,21 +185,20 @@ describe('useProjection', () => {
   })
 
   it('LBS cash proceeds add to initialLiquidNW', () => {
-    usePropertyStore.setState({
-      ...usePropertyStore.getState(),
-      ownsProperty: true,
-      propertyType: 'hdb',
-      hdbMonetizationStrategy: 'lbs',
-      existingPropertyValue: 2500000,
-      existingLeaseYears: 70,
-      hdbLbsRetainedLease: 30,
-    })
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 35,
-      liquidNetWorth: 100000,
-      cpfRA: 50000,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 35,
+        cpfRA: 50000,
+      },
+      assets: { liquidNetWorth: 100000 },
+      property: {
+        ownsProperty: true,
+        propertyType: 'hdb',
+        hdbMonetizationStrategy: 'lbs',
+        existingPropertyValue: 2500000,
+        existingLeaseYears: 70,
+        hdbLbsRetainedLease: 30,
+      },
     })
     const { result } = renderHook(() => useProjection())
     const p = result.current.params!
@@ -213,25 +215,20 @@ describe('useProjection', () => {
   })
 
   it('uses the cohort FRS when computing LBS proceeds', () => {
-    usePropertyStore.setState({
-      ...usePropertyStore.getState(),
-      ownsProperty: true,
-      propertyType: 'hdb',
-      hdbMonetizationStrategy: 'lbs',
-      existingPropertyValue: 500000,
-      existingLeaseYears: 60,
-      hdbLbsRetainedLease: 30,
-    })
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 35,
-      liquidNetWorth: 100000,
-      // Set cpfRA high enough that the RA shortfall is smaller than total LBS
-      // proceeds, so some proceeds remain as cash. With FRS projected to ~$486K
-      // at age 30, setting cpfRA to $450K leaves only ~$36K shortfall, well
-      // below the ~$123K LBS proceeds.
-      cpfRA: 450000,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 35,
+        cpfRA: 450000,
+      },
+      assets: { liquidNetWorth: 100000 },
+      property: {
+        ownsProperty: true,
+        propertyType: 'hdb',
+        hdbMonetizationStrategy: 'lbs',
+        existingPropertyValue: 500000,
+        existingLeaseYears: 60,
+        hdbLbsRetainedLease: 30,
+      },
     })
 
     const { result } = renderHook(() => useProjection())
@@ -239,7 +236,7 @@ describe('useProjection', () => {
       flatValue: 500000,
       remainingLease: 60,
       retainedLease: 30,
-      cpfRaBalance: 50000,
+      cpfRaBalance: 450000,
       retirementSum: getRetirementSumAmount('frs', 35),
     })
 
@@ -247,19 +244,20 @@ describe('useProjection', () => {
   })
 
   it('downsizing included when scenario is not none', () => {
-    usePropertyStore.setState({
-      ...usePropertyStore.getState(),
-      ownsProperty: true,
-      downsizing: {
-        scenario: 'sell-and-downsize',
-        sellAge: 65,
-        expectedSalePrice: 1500000,
-        newPropertyCost: 800000,
-        newMortgageRate: 0.035,
-        newMortgageTerm: 20,
-        newLtv: 0.75,
-        monthlyRent: 2500,
-        rentGrowthRate: 0.03,
+    setupTestPlan({
+      property: {
+        ownsProperty: true,
+        downsizing: {
+          scenario: 'sell-and-downsize',
+          sellAge: 65,
+          expectedSalePrice: 1500000,
+          newPropertyCost: 800000,
+          newMortgageRate: 0.035,
+          newMortgageTerm: 20,
+          newLtv: 0.75,
+          monthlyRent: 2500,
+          rentGrowthRate: 0.03,
+        },
       },
     })
     const { result } = renderHook(() => useProjection())
@@ -269,19 +267,20 @@ describe('useProjection', () => {
   })
 
   it('downsizing is null when scenario is none', () => {
-    usePropertyStore.setState({
-      ...usePropertyStore.getState(),
-      ownsProperty: true,
-      downsizing: {
-        scenario: 'none',
-        sellAge: 65,
-        expectedSalePrice: 1500000,
-        newPropertyCost: 800000,
-        newMortgageRate: 0.035,
-        newMortgageTerm: 20,
-        newLtv: 0.75,
-        monthlyRent: 2500,
-        rentGrowthRate: 0.03,
+    setupTestPlan({
+      property: {
+        ownsProperty: true,
+        downsizing: {
+          scenario: 'none',
+          sellAge: 65,
+          expectedSalePrice: 1500000,
+          newPropertyCost: 800000,
+          newMortgageRate: 0.035,
+          newMortgageTerm: 20,
+          newLtv: 0.75,
+          monthlyRent: 2500,
+          rentGrowthRate: 0.03,
+        },
       },
     })
     const { result } = renderHook(() => useProjection())
@@ -290,21 +289,21 @@ describe('useProjection', () => {
   })
 
   it('healthcare config passed when enabled', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      healthcareConfig: {
-        enabled: true,
-        mediShieldLifeEnabled: true,
-        ispTier: 'none',
-        careShieldLifeEnabled: true,
-        oopBaseAmount: 1200,
-        oopModel: 'age-curve' as const,
-        oopInflationRate: 0.03,
-        oopReferenceAge: 30,
-        oopCurveVariant: 'study-backed' as const,
-        mediSaveTopUpAnnual: 0,
+    setupTestPlan({
+      adult: {
+        healthcareConfig: {
+          enabled: true,
+          mediShieldLifeEnabled: true,
+          ispTier: 'none',
+          careShieldLifeEnabled: true,
+          oopBaseAmount: 1200,
+          oopModel: 'age-curve' as const,
+          oopInflationRate: 0.03,
+          oopReferenceAge: 30,
+          oopCurveVariant: 'study-backed' as const,
+          mediSaveTopUpAnnual: 0,
+        },
       },
-      validationErrors: {},
     })
     const { result } = renderHook(() => useProjection())
     const p = result.current.params!
@@ -313,13 +312,20 @@ describe('useProjection', () => {
   })
 
   it('healthcare config is null when disabled', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      healthcareConfig: {
-        ...useProfileStore.getState().healthcareConfig,
-        enabled: false,
+    setupTestPlan({
+      adult: {
+        healthcareConfig: {
+          enabled: false,
+          mediShieldLifeEnabled: true,
+          ispTier: 'none',
+          careShieldLifeEnabled: true,
+          oopBaseAmount: 5000,
+          oopModel: 'age-curve' as const,
+          oopInflationRate: 0.05,
+          oopReferenceAge: 55,
+          mediSaveTopUpAnnual: 0,
+        },
       },
-      validationErrors: {},
     })
     const { result } = renderHook(() => useProjection())
     const p = result.current.params!
@@ -327,31 +333,31 @@ describe('useProjection', () => {
   })
 
   it('financial goals and retirement withdrawals passed through', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      financialGoals: [
+    setupTestPlan({
+      goals: [
         {
           id: 'g1',
           label: 'House',
           targetAge: 35,
           amount: 300000,
           durationYears: 1,
-          priority: 'essential',
+          priority: 'need',
           inflationAdjusted: true,
           category: 'housing',
         },
       ],
-      retirementWithdrawals: [
-        {
-          id: 'w1',
-          label: 'Reno',
-          amount: 50000,
-          age: 65,
-          durationYears: 1,
-          inflationAdjusted: false,
-        },
-      ],
-      validationErrors: {},
+      expenses: {
+        retirementWithdrawals: [
+          {
+            id: 'w1',
+            label: 'Reno',
+            amount: 50000,
+            age: 65,
+            durationYears: 1,
+            inflationAdjusted: false,
+          },
+        ],
+      },
     })
     const { result } = renderHook(() => useProjection())
     const p = result.current.params!
@@ -362,12 +368,12 @@ describe('useProjection', () => {
   })
 
   it('expense adjustments passed through', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      expenseAdjustments: [
-        { id: 'ea1', label: 'Kids school', amount: 20000, startAge: 35, endAge: 50 },
-      ],
-      validationErrors: {},
+    setupTestPlan({
+      expenses: {
+        expenseAdjustments: [
+          { id: 'ea1', label: 'Kids school', amount: 20000, startAge: 35, endAge: 50 },
+        ],
+      },
     })
     const { result } = renderHook(() => useProjection())
     const p = result.current.params!
@@ -386,12 +392,12 @@ describe('useProjection', () => {
   })
 
   it('generates correct number of rows (lifeExpectancy - currentAge)', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 30,
-      retirementAge: 65,
-      lifeExpectancy: 90,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 30,
+        retirementAge: 65,
+        lifeExpectancy: 90,
+      },
     })
     const { result } = renderHook(() => useProjection())
     // Rows include age 30 through 90 inclusive = lifeExpectancy - currentAge + 1

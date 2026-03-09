@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useRiskAssessment } from './useRiskAssessment'
-import { useProfileStore } from '@/stores/useProfileStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { setupTestPlan } from '@/test-helpers/setupTestPlan'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 
 beforeEach(() => {
-  useProfileStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   useAllocationStore.getState().reset()
 })
 
@@ -30,11 +31,11 @@ describe('useRiskAssessment', () => {
   })
 
   it('high longevity risk with 60-year retirement duration', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      retirementAge: 35,
-      lifeExpectancy: 95, // 60 year duration
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        retirementAge: 35,
+        lifeExpectancy: 95, // 60 year duration
+      },
     })
     const { result } = renderHook(() => useRiskAssessment())
     const longevity = result.current.find((d) => d.id === 'longevity')
@@ -42,14 +43,18 @@ describe('useRiskAssessment', () => {
   })
 
   it('low inflation risk with inflation < 2%', () => {
-    useProfileStore.getState().setField('inflation', 0.015)
+    setupTestPlan({
+      assumptions: { returns: { inflation: 0.015 } },
+    })
     const { result } = renderHook(() => useRiskAssessment())
     const inflation = result.current.find((d) => d.id === 'inflation')
     expect(inflation!.level).toBe('low')
   })
 
   it('high inflation risk with inflation >= 4%', () => {
-    useProfileStore.getState().setField('inflation', 0.05)
+    setupTestPlan({
+      assumptions: { returns: { inflation: 0.05 } },
+    })
     const { result } = renderHook(() => useRiskAssessment())
     const inflation = result.current.find((d) => d.id === 'inflation')
     expect(inflation!.level).toBe('high')
@@ -58,11 +63,11 @@ describe('useRiskAssessment', () => {
   it('high sequence risk with equity > 70% and duration > 25', () => {
     // Set aggressive allocation: 80% equity
     useAllocationStore.getState().setCurrentWeights([0.40, 0.20, 0.20, 0.10, 0.05, 0.05, 0, 0])
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      retirementAge: 55,
-      lifeExpectancy: 90, // 35 year duration
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        retirementAge: 55,
+        lifeExpectancy: 90, // 35 year duration
+      },
     })
     const { result } = renderHook(() => useRiskAssessment())
     const sequence = result.current.find((d) => d.id === 'sequence')
@@ -89,37 +94,41 @@ describe('useRiskAssessment', () => {
     // by the compiled healthcare slot's averageRetirementCashOutlay. When
     // healthcare is not explicitly enabled, the slot produces $0 cash outlay,
     // resulting in 'low' risk regardless of cpfMA balance.
-    useProfileStore.getState().setField('cpfMA', 20000)
+    setupTestPlan({
+      adult: { cpfMA: 20000 },
+    })
     const { result } = renderHook(() => useRiskAssessment())
     const healthcare = result.current.find((d) => d.id === 'healthcare')
     expect(healthcare!.level).toBe('low')
   })
 
   it('healthcare risk low when cpfMA >= $100K (no healthcare config)', () => {
-    useProfileStore.getState().setField('cpfMA', 150000)
+    setupTestPlan({
+      adult: { cpfMA: 150000 },
+    })
     const { result } = renderHook(() => useRiskAssessment())
     const healthcare = result.current.find((d) => d.id === 'healthcare')
     expect(healthcare!.level).toBe('low')
   })
 
   it('healthcare risk uses projection when healthcare config enabled', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 55,
-      retirementAge: 58,
-      lifeExpectancy: 90,
-      healthcareConfig: {
-        enabled: true,
-        mediShieldLifeEnabled: true,
-        ispTier: 'none',
-        careShieldLifeEnabled: true,
-        oopBaseAmount: 5000,
-        oopModel: 'age-curve',
-        oopInflationRate: 0.05,
-        oopReferenceAge: 55,
-        mediSaveTopUpAnnual: 0,
+    setupTestPlan({
+      adult: {
+        currentAge: 55,
+        retirementAge: 58,
+        lifeExpectancy: 90,
+        healthcareConfig: {
+          enabled: true,
+          mediShieldLifeEnabled: true,
+          ispTier: 'none',
+          careShieldLifeEnabled: true,
+          oopBaseAmount: 5000,
+          oopModel: 'age-curve',
+          oopInflationRate: 0.05,
+          oopReferenceAge: 55,
+          mediSaveTopUpAnnual: 0,
+        },
       },
-      validationErrors: {},
     })
     const { result } = renderHook(() => useRiskAssessment())
     const healthcare = result.current.find((d) => d.id === 'healthcare')
@@ -131,48 +140,48 @@ describe('useRiskAssessment', () => {
   })
 
   it('healthcare risk high with enabled config and high OOP base', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 55,
-      retirementAge: 58,
-      lifeExpectancy: 90,
-      healthcareConfig: {
-        enabled: true,
-        mediShieldLifeEnabled: true,
-        ispTier: 'none',
-        careShieldLifeEnabled: false,
-        oopBaseAmount: 15000,
-        oopModel: 'age-curve',
-        oopInflationRate: 0.05,
-        oopReferenceAge: 55,
-        mediSaveTopUpAnnual: 0,
+    setupTestPlan({
+      adult: {
+        currentAge: 55,
+        retirementAge: 58,
+        lifeExpectancy: 90,
+        healthcareConfig: {
+          enabled: true,
+          mediShieldLifeEnabled: true,
+          ispTier: 'none',
+          careShieldLifeEnabled: false,
+          oopBaseAmount: 15000,
+          oopModel: 'age-curve',
+          oopInflationRate: 0.05,
+          oopReferenceAge: 55,
+          mediSaveTopUpAnnual: 0,
+        },
       },
-      validationErrors: {},
     })
     const { result } = renderHook(() => useRiskAssessment())
     const healthcare = result.current.find((d) => d.id === 'healthcare')
-    // High OOP base ($15K) + medical inflation → high risk
+    // High OOP base ($15K) + medical inflation -> high risk
     expect(healthcare!.level).toBe('high')
   })
 
   it('healthcare risk medium with moderate OOP base (enabled config)', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 55,
-      retirementAge: 58,
-      lifeExpectancy: 90,
-      healthcareConfig: {
-        enabled: true,
-        mediShieldLifeEnabled: true,
-        ispTier: 'none',
-        careShieldLifeEnabled: false,
-        oopBaseAmount: 5000,
-        oopModel: 'flat' as 'age-curve',
-        oopInflationRate: 0.02,
-        oopReferenceAge: 55,
-        mediSaveTopUpAnnual: 0,
+    setupTestPlan({
+      adult: {
+        currentAge: 55,
+        retirementAge: 58,
+        lifeExpectancy: 90,
+        healthcareConfig: {
+          enabled: true,
+          mediShieldLifeEnabled: true,
+          ispTier: 'none',
+          careShieldLifeEnabled: false,
+          oopBaseAmount: 5000,
+          oopModel: 'flat' as 'age-curve',
+          oopInflationRate: 0.02,
+          oopReferenceAge: 55,
+          mediSaveTopUpAnnual: 0,
+        },
       },
-      validationErrors: {},
     })
     const { result } = renderHook(() => useRiskAssessment())
     const healthcare = result.current.find((d) => d.id === 'healthcare')
@@ -183,23 +192,23 @@ describe('useRiskAssessment', () => {
   })
 
   it('healthcare risk low with small OOP base and MediSave top-up (enabled config)', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 55,
-      retirementAge: 58,
-      lifeExpectancy: 90,
-      healthcareConfig: {
-        enabled: true,
-        mediShieldLifeEnabled: true,
-        ispTier: 'none',
-        careShieldLifeEnabled: false,
-        oopBaseAmount: 1000,
-        oopModel: 'flat' as 'age-curve',
-        oopInflationRate: 0.02,
-        oopReferenceAge: 55,
-        mediSaveTopUpAnnual: 500,
+    setupTestPlan({
+      adult: {
+        currentAge: 55,
+        retirementAge: 58,
+        lifeExpectancy: 90,
+        healthcareConfig: {
+          enabled: true,
+          mediShieldLifeEnabled: true,
+          ispTier: 'none',
+          careShieldLifeEnabled: false,
+          oopBaseAmount: 1000,
+          oopModel: 'flat' as 'age-curve',
+          oopInflationRate: 0.02,
+          oopReferenceAge: 55,
+          mediSaveTopUpAnnual: 500,
+        },
       },
-      validationErrors: {},
     })
     const { result } = renderHook(() => useRiskAssessment())
     const healthcare = result.current.find((d) => d.id === 'healthcare')
