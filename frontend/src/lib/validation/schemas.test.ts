@@ -65,14 +65,15 @@ describe('field schemas', () => {
   })
 
   describe('lifeExpectancySchema', () => {
-    it('accepts valid range (50-120)', () => {
+    it('accepts valid range (50-130)', () => {
       expect(lifeExpectancySchema.safeParse(50).success).toBe(true)
       expect(lifeExpectancySchema.safeParse(90).success).toBe(true)
-      expect(lifeExpectancySchema.safeParse(120).success).toBe(true)
+      expect(lifeExpectancySchema.safeParse(130).success).toBe(true)
     })
 
-    it('rejects below 50', () => {
+    it('rejects out-of-range values', () => {
       expect(lifeExpectancySchema.safeParse(49).success).toBe(false)
+      expect(lifeExpectancySchema.safeParse(131).success).toBe(false)
     })
   })
 
