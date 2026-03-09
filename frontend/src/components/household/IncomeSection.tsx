@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,6 +29,9 @@ import type {
   SalaryModel,
   TaxTreatment,
 } from '@/lib/types'
+import { SummaryPanel } from '@/components/income/SummaryPanel'
+import { ProjectionTable } from '@/components/income/ProjectionTable'
+import { useIncomeProjection } from '@/hooks/useIncomeProjection'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { formatCurrency } from '@/lib/utils'
 
@@ -221,6 +224,9 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
             salaryModel.growthRate,
             Math.max(0, selectedAdult.retirementAge - selectedAdult.currentAge),
           )
+
+  const { projection: incomeProjection, summary: incomeSummary } = useIncomeProjection()
+  const [projectionExpanded, setProjectionExpanded] = useState(false)
 
   return (
     <div className="space-y-6">
@@ -477,6 +483,30 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
           </div>
         </CardContent>
       </Card>
+
+      {incomeSummary && <SummaryPanel summary={incomeSummary} />}
+
+      {incomeProjection && incomeProjection.length > 0 && (
+        <Card>
+          <CardHeader>
+            <button
+              type="button"
+              className="flex items-center justify-between w-full text-left"
+              onClick={() => setProjectionExpanded(!projectionExpanded)}
+            >
+              <CardTitle className="text-lg">Income Projection</CardTitle>
+              <span className="text-sm text-primary hover:underline">
+                {projectionExpanded ? 'Hide table' : `Show ${incomeProjection.length} rows`}
+              </span>
+            </button>
+          </CardHeader>
+          {projectionExpanded && (
+            <CardContent>
+              <ProjectionTable data={incomeProjection} retirementAge={selectedAdult.retirementAge} />
+            </CardContent>
+          )}
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
