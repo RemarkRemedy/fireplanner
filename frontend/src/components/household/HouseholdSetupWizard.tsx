@@ -68,6 +68,77 @@ function createDefaultFinanceDraft(): PersonFinanceDraft {
   }
 }
 
+/** All wizard fields that can be hydrated from an existing plan */
+interface WizardSnapshot {
+  selfName: string
+  selfAge: number
+  selfRetirementAge: number
+  selfFinance: PersonFinanceDraft
+  partnerName: string
+  partnerAge: number
+  partnerRetirementAge: number
+  partnerFinance: PersonFinanceDraft
+  jointMonthlyExpenses: number
+  cpfEnabled: boolean
+  propertyEnabled: boolean
+  healthcareEnabled: boolean
+}
+
+/** Extract finance draft from a plan's income/expense/asset entries for a given owner */
+function extractFinanceDraft(
+  owner: 'self' | 'partner',
+  adult: PlanningAdult,
+  income: readonly { owner: string; kind: string; annualAmount: number; bonusMonths?: number }[],
+  expenses: readonly { owner: string; kind: string; amount: number }[],
+  assets: readonly { owner: string; kind: string; amount: number }[],
+): PersonFinanceDraft {
+  const salary = income.find((e) => e.kind === 'salary-model' && e.owner === owner)
+  const bonusMonths = salary?.bonusMonths ?? 0
+  const grossMonthly = salary ? Math.round(salary.annualAmount / (12 + bonusMonths)) : 0
+  const expense = expenses.find((e) => e.kind === 'base-living' && e.owner === owner)
+  const asset = assets.find((e) => e.kind === 'liquid-net-worth' && e.owner === owner)
+
+  return {
+    incomeType: 'gross',
+    monthlyIncome: grossMonthly,
+    hasBonusAws: bonusMonths > 0,
+    bonusMonths: bonusMonths > 0 ? bonusMonths : 1,
+    monthlyExpenses: expense ? Math.round(expense.amount / 12) : 0,
+    netWorth: asset?.amount ?? adult.liquidNetWorth,
+  }
+}
+
+/** Try to hydrate wizard state from an existing household plan. Returns null if no plan exists. */
+function hydrateFromPlan(): WizardSnapshot | null {
+  const { plan, provenance } = useHouseholdPlanStore.getState()
+  if (!provenance.initializedAt) return null
+
+  const self = plan.adults[0]
+  if (!self) return null
+  const partner = plan.adults[1]
+
+  const ui = useUIStore.getState()
+
+  const jointExpense = plan.expenses.find((e) => e.owner === 'shared' && e.kind === 'base-living')
+
+  return {
+    selfName: self.displayName,
+    selfAge: self.currentAge,
+    selfRetirementAge: self.retirementAge,
+    selfFinance: extractFinanceDraft('self', self, plan.income, plan.expenses, plan.assets),
+    partnerName: partner?.displayName ?? '',
+    partnerAge: partner?.currentAge ?? 30,
+    partnerRetirementAge: partner?.retirementAge ?? 65,
+    partnerFinance: partner
+      ? extractFinanceDraft('partner', partner, plan.income, plan.expenses, plan.assets)
+      : createDefaultFinanceDraft(),
+    jointMonthlyExpenses: jointExpense ? Math.round(jointExpense.amount / 12) : 4167,
+    cpfEnabled: ui.cpfEnabled,
+    propertyEnabled: ui.propertyEnabled,
+    healthcareEnabled: ui.healthcareEnabled,
+  }
+}
+
 function computeGrossMonthly(draft: PersonFinanceDraft, age: number): number {
   return draft.incomeType === 'take-home'
     ? grossUpFromTakeHome(draft.monthlyIncome, age)
@@ -264,29 +335,32 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
   const setUIField = useUIStore((state) => state.setField)
   const ensureHouseholdDataVisible = useUIStore((state) => state.ensureHouseholdDataVisible)
 
+  // Hydrate from existing plan if available (so navigating back preserves values)
+  const [snapshot] = useState(() => hydrateFromPlan())
+
   // Demographics
-  const [selfName, setSelfName] = useState('You')
-  const [selfAge, setSelfAge] = useState(30)
+  const [selfName, setSelfName] = useState(snapshot?.selfName ?? 'You')
+  const [selfAge, setSelfAge] = useState(snapshot?.selfAge ?? 30)
   const [partnerEnabled, setPartnerEnabled] = useState(planType === 'couple')
-  const [partnerName, setPartnerName] = useState('')
-  const [partnerAge, setPartnerAge] = useState(30)
+  const [partnerName, setPartnerName] = useState(snapshot?.partnerName ?? '')
+  const [partnerAge, setPartnerAge] = useState(snapshot?.partnerAge ?? 30)
   const [dependents, setDependents] = useState<SetupDependentDraft[]>([])
 
   // Per-person financials
-  const [selfFinance, setSelfFinance] = useState<PersonFinanceDraft>(createDefaultFinanceDraft)
-  const [partnerFinance, setPartnerFinance] = useState<PersonFinanceDraft>(createDefaultFinanceDraft)
+  const [selfFinance, setSelfFinance] = useState<PersonFinanceDraft>(snapshot?.selfFinance ?? createDefaultFinanceDraft)
+  const [partnerFinance, setPartnerFinance] = useState<PersonFinanceDraft>(snapshot?.partnerFinance ?? createDefaultFinanceDraft)
 
   // Retirement ages (goal-first pathway)
-  const [selfRetirementAge, setSelfRetirementAge] = useState(65)
-  const [partnerRetirementAge, setPartnerRetirementAge] = useState(65)
+  const [selfRetirementAge, setSelfRetirementAge] = useState(snapshot?.selfRetirementAge ?? 65)
+  const [partnerRetirementAge, setPartnerRetirementAge] = useState(snapshot?.partnerRetirementAge ?? 65)
 
   // Joint expenses
-  const [jointMonthlyExpenses, setJointMonthlyExpenses] = useState(4167)
+  const [jointMonthlyExpenses, setJointMonthlyExpenses] = useState(snapshot?.jointMonthlyExpenses ?? 4167)
 
   // Section toggles
-  const [cpfEnabled, setCpfEnabled] = useState(true)
-  const [propertyEnabled, setPropertyEnabled] = useState(false)
-  const [healthcareEnabled, setHealthcareEnabled] = useState(false)
+  const [cpfEnabled, setCpfEnabled] = useState(snapshot?.cpfEnabled ?? true)
+  const [propertyEnabled, setPropertyEnabled] = useState(snapshot?.propertyEnabled ?? false)
+  const [healthcareEnabled, setHealthcareEnabled] = useState(snapshot?.healthcareEnabled ?? false)
 
   const canCreatePlan = planType === 'couple' ? partnerName.trim().length > 0 : true
   const hasPartner = planType === 'couple' || partnerEnabled
