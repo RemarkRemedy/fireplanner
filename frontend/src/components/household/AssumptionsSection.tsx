@@ -80,7 +80,7 @@ function AllocationAssumptionsContent({
             <p className="text-sm text-muted-foreground">
               Age timeline follows {referenceAdult?.displayName ?? 'the first adult'}.
             </p>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-3 items-end">
               <div className="space-y-1">
                 <Label>Method</Label>
                 <Select
@@ -153,7 +153,7 @@ export function AssumptionsSection({ mode }: AssumptionsSectionProps) {
         <CardHeader>
           <CardTitle className="text-lg">Household FIRE Targets</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 items-end">
           <div className="space-y-1">
             <Label>FIRE type</Label>
             <Select
@@ -244,7 +244,7 @@ export function AssumptionsSection({ mode }: AssumptionsSectionProps) {
             </Button>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
             <PercentInput
               label="Expected nominal return"
               value={plan.assumptions.returns.expectedReturn}
@@ -348,7 +348,7 @@ export function AssumptionsSection({ mode }: AssumptionsSectionProps) {
                 </Button>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                 {plan.assumptions.cashReserve.mode === 'fixed' ? (
                   <CurrencyInput
                     label="Reserve target"
@@ -414,7 +414,7 @@ export function AssumptionsSection({ mode }: AssumptionsSectionProps) {
             </div>
 
             {retirementMitigation.type === 'cash_bucket' && (
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-2 items-end">
                 <NumberInput
                   label="Bucket size (months)"
                   value={retirementMitigation.targetMonths}

@@ -607,7 +607,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                     </Button>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                     <div className="space-y-1">
                       <Label>Kind</Label>
                       <Select
@@ -809,7 +809,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                     </Button>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                     {adults.length > 1 && (
                       <div className="space-y-1">
                         <Label>Owner</Label>
@@ -958,7 +958,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                     </Button>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                     {adults.length > 1 && (
                       <div className="space-y-1">
                         <Label>Owner</Label>
@@ -1110,7 +1110,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                   </button>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                   {adults.length > 1 && (
                     <div className="space-y-1">
                       <Label>Owner</Label>

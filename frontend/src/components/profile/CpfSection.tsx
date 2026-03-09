@@ -364,7 +364,7 @@ function CpfSectionBody({ model, mode, showProjectionTools }: CpfSectionBodyProp
         {/* CPF balance inputs */}
         <div>
           <h4 className="text-sm font-medium mb-2">Current CPF Balances</h4>
-          <div className={cn('grid gap-2 text-sm', currentAge >= 55 ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4')}>
+          <div className={cn('grid gap-2 text-sm items-end', currentAge >= 55 ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4')}>
             <CurrencyInput
               label="Ordinary (OA)"
               value={cpfOA}
