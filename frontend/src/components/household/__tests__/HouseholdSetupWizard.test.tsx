@@ -146,7 +146,8 @@ describe('Household setup flow', () => {
     const state = useHouseholdPlanStore.getState()
     expect(state.plan.planType).toBe('couple')
     expect(state.plan.adults).toHaveLength(2)
-    expect(state.plan.adults[1]?.annualIncome).toBe(0)
+    // Partner gets default $4,000/mo take-home → gross $5,000 at age 30 (20% CPF) → $60K/yr
+    expect(state.plan.adults[1]?.annualIncome).toBe(60000)
     expect(state.plan.dependents).toHaveLength(0)
     expect(state.provenance.source).toBe('manual')
     expect(useUIStore.getState().cpfEnabled).toBe(false)
