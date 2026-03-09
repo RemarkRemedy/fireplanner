@@ -12,7 +12,6 @@ import { Switch } from '@/components/ui/switch'
 import {
   createDefaultHouseholdAsset,
   createDefaultHouseholdProperty,
-  normalizeAssetKindChange,
 } from '@/lib/household/assetPropertyDefaults'
 import { entryOwnerLabel } from '@/lib/household/editorUtils'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
@@ -97,72 +96,75 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
   }
 
   if (mode === 'assets') {
+    const isMultiAdult = plan.adults.length > 1
+    const liquidAssets = plan.assets.filter((asset) => asset.kind === 'liquid-net-worth')
+    const lockedAssets = plan.assets.filter((asset) => asset.kind === 'locked-asset')
+
     return (
       <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              Liquid Net Worth
+              <InfoTooltip text="Cash, savings, and investments that can be drawn on immediately. Shared balances are split evenly across adults in the plan." />
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {liquidAssets.length === 0 ? (
+              <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                No liquid balances yet.
+              </div>
+            ) : (
+              <div className={`grid gap-4 ${isMultiAdult ? 'md:grid-cols-2' : ''}`}>
+                {liquidAssets.map((asset) => {
+                  const assetErrors = getEntityErrors(validationErrors, 'asset', asset.id)
+                  return (
+                    <CurrencyInput
+                      key={asset.id}
+                      label={isMultiAdult ? entryOwnerLabel(asset.owner, plan.adults) : 'Balance'}
+                      value={asset.amount}
+                      onChange={(value) => handleUpdateAsset(asset, { amount: value })}
+                      error={assetErrors.amount}
+                    />
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                Liquid & Locked Assets
-                <InfoTooltip text="Track liquid balances, shared cash pools, and assets that unlock at a specific age. Shared liquid rows split evenly across active adults when updating each adult's liquid net worth summary." />
+                Locked Assets
+                <InfoTooltip text="Endowments, bonds, or other assets that unlock at a specific age. They grow at the specified rate and convert to liquid assets when unlocked." />
               </CardTitle>
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => handleAddAsset('liquid-net-worth')}>
-                  Add liquid balance
-                </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => handleAddAsset('locked-asset')}>
-                  Add locked asset
-                </Button>
-              </div>
+              <Button type="button" variant="outline" size="sm" onClick={() => handleAddAsset('locked-asset')}>
+                Add locked asset
+              </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {plan.assets.length === 0 ? (
+          <CardContent className="space-y-3">
+            {lockedAssets.length === 0 ? (
               <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                No household assets added yet.
+                No locked assets. Add endowments, bonds, or other assets that mature at a future age.
               </div>
             ) : (
-              plan.assets.map((asset) => {
+              lockedAssets.map((asset) => {
                 const assetErrors = getEntityErrors(validationErrors, 'asset', asset.id)
-
                 return (
-                  <div key={asset.id} className="rounded-lg border p-4 space-y-4">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={asset.label}
-                          onChange={(event) => handleUpdateAsset(asset, { label: event.target.value })}
-                          className="max-w-sm"
-                        />
-                        <Badge variant="secondary">{entryOwnerLabel(asset.owner, plan.adults)}</Badge>
-                      </div>
-                      <Button type="button" variant="ghost" onClick={() => handleRemoveAsset(asset.id)}>
-                        Remove
-                      </Button>
+                  <div key={asset.id} className="flex flex-wrap items-end gap-3 rounded-md border p-3">
+                    <div className="min-w-[140px] flex-1">
+                      <Label className="text-xs text-muted-foreground">Name</Label>
+                      <Input
+                        value={asset.label}
+                        onChange={(event) => handleUpdateAsset(asset, { label: event.target.value })}
+                      />
                     </div>
-
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                      <div className="space-y-1">
-                        <Label>Kind</Label>
-                        <Select
-                          value={asset.kind}
-                          onValueChange={(value) => handleUpdateAsset(
-                            asset,
-                            normalizeAssetKindChange(asset, value as AssetItem['kind']),
-                          )}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="liquid-net-worth">Liquid balance</SelectItem>
-                            <SelectItem value="locked-asset">Locked asset</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1">
-                        <Label>Owner</Label>
+                    {isMultiAdult && (
+                      <div className="w-[130px]">
+                        <Label className="text-xs text-muted-foreground">Owner</Label>
                         <Select
                           value={asset.owner}
                           onValueChange={(value) => handleUpdateAsset(asset, { owner: value as EntryOwner })}
@@ -179,31 +181,36 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                           </SelectContent>
                         </Select>
                       </div>
+                    )}
+                    <div className="w-[140px]">
                       <CurrencyInput
                         label="Amount"
                         value={asset.amount}
                         onChange={(value) => handleUpdateAsset(asset, { amount: value })}
                         error={assetErrors.amount}
                       />
-                      {asset.kind === 'locked-asset' && (
-                        <>
-                          <NumberInput
-                            label="Unlock age"
-                            value={asset.unlockAge ?? 45}
-                            onChange={(value) => handleUpdateAsset(asset, { unlockAge: value })}
-                            integer
-                            min={0}
-                            max={120}
-                            error={assetErrors.unlockAge}
-                          />
-                          <PercentInput
-                            label="Growth rate"
-                            value={asset.growthRate ?? 0}
-                            onChange={(value) => handleUpdateAsset(asset, { growthRate: value })}
-                          />
-                        </>
-                      )}
                     </div>
+                    <div className="w-[90px]">
+                      <NumberInput
+                        label="Unlock age"
+                        value={asset.unlockAge ?? 45}
+                        onChange={(value) => handleUpdateAsset(asset, { unlockAge: value })}
+                        integer
+                        min={0}
+                        max={120}
+                        error={assetErrors.unlockAge}
+                      />
+                    </div>
+                    <div className="w-[90px]">
+                      <PercentInput
+                        label="Growth"
+                        value={asset.growthRate ?? 0}
+                        onChange={(value) => handleUpdateAsset(asset, { growthRate: value })}
+                      />
+                    </div>
+                    <Button type="button" variant="ghost" size="sm" className="text-muted-foreground" onClick={() => handleRemoveAsset(asset.id)}>
+                      Remove
+                    </Button>
                   </div>
                 )
               })
@@ -216,15 +223,6 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
 
   return (
     <div className="space-y-6">
-      <Card className="border-dashed">
-        <CardContent className="py-5 space-y-2 text-sm text-muted-foreground">
-          <p className="font-medium text-foreground">Property settings stay ownership-scoped.</p>
-          <p>
-            Use the owner selector plus household share to distinguish self, partner, and shared homes, then configure HDB monetization or downsizing without returning to the legacy property form.
-          </p>
-        </CardContent>
-      </Card>
-
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
