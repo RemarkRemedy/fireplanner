@@ -113,7 +113,14 @@ function cloneExpenseAdjustment(expense: ExpenseItem) {
   }
 }
 
-function cloneParentSupport(expense: ExpenseItem, fallbackEndAge: number) {
+function resolveGrowthRate(expense: ExpenseItem, inflation: number): number {
+  const model = expense.growthModel ?? 'fixed'
+  if (model === 'inflation-linked') return inflation
+  if (model === 'none') return 0
+  return expense.growthRate ?? 0
+}
+
+function cloneParentSupport(expense: ExpenseItem, fallbackEndAge: number, inflation: number) {
   const monthlyAmount =
     expense.periodicity === 'monthly'
       ? expense.amount
@@ -130,7 +137,7 @@ function cloneParentSupport(expense: ExpenseItem, fallbackEndAge: number) {
     monthlyAmount,
     startAge,
     endAge: endAge ?? fallbackEndAge,
-    growthRate: expense.growthRate ?? 0,
+    growthRate: resolveGrowthRate(expense, inflation),
   }
 }
 
@@ -299,7 +306,7 @@ export function toLegacyIndividual(plan: HouseholdPlan): LegacyIndividualSnapsho
 
   const parentSupport = plan.expenses
     .filter((entry) => entry.kind === 'parent-support')
-    .map((entry) => cloneParentSupport(entry, adult.lifeExpectancy))
+    .map((entry) => cloneParentSupport(entry, adult.lifeExpectancy, plan.assumptions.returns.inflation))
   if (parentSupport.some((entry) => entry === null)) return null
   snapshot.profile.parentSupport = parentSupport.filter((entry) => entry !== null)
   snapshot.profile.parentSupportEnabled = adult.parentSupportEnabled || snapshot.profile.parentSupport.length > 0

@@ -107,7 +107,7 @@ function createExpense(
         },
         amount: 6_000,
         periodicity: 'annual',
-        growthRate: 0,
+        growthModel: 'inflation-linked',
       }
     case 'parent-support':
       return {
@@ -123,6 +123,7 @@ function createExpense(
         },
         amount: 800,
         periodicity: 'monthly',
+        growthModel: 'fixed',
         growthRate: 0.03,
       }
     case 'retirement-withdrawal':
@@ -157,7 +158,7 @@ function createExpense(
         },
         amount: 3_000,
         periodicity: 'monthly',
-        growthRate: 0.02,
+        growthModel: 'inflation-linked',
       }
   }
 }
@@ -652,6 +653,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                           const updates: Partial<ExpenseItem> = { periodicity: value as ExpenseItem['periodicity'] }
                           if (value === 'one-off') {
                             updates.timing = { ...timing, endAge: timing.startAge }
+                            updates.growthModel = 'none'
                             updates.growthRate = 0
                           }
                           updateExpenseList(expense.id, updates)
@@ -674,6 +676,28 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                       error={expenseErrors.amount}
                     />
                     {expense.periodicity !== 'one-off' && (
+                      <div className="space-y-1">
+                        <Label>Growth</Label>
+                        <Select
+                          value={expense.growthModel ?? 'fixed'}
+                          onValueChange={(value) => {
+                            const updates: Partial<ExpenseItem> = { growthModel: value as ExpenseItem['growthModel'] }
+                            if (value === 'none') updates.growthRate = 0
+                            updateExpenseList(expense.id, updates)
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="inflation-linked">Inflation-linked</SelectItem>
+                            <SelectItem value="fixed">Fixed rate</SelectItem>
+                            <SelectItem value="none">No growth</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    {expense.periodicity !== 'one-off' && (expense.growthModel ?? 'fixed') === 'fixed' && (
                       <PercentInput
                         label="Growth rate"
                         value={expense.growthRate ?? 0}
@@ -782,11 +806,33 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                       value={expense.amount}
                       onChange={(value) => updateExpenseList(expense.id, { amount: value })}
                     />
-                    <PercentInput
-                      label="Growth rate"
-                      value={expense.growthRate ?? 0}
-                      onChange={(value) => updateExpenseList(expense.id, { growthRate: value })}
-                    />
+                    <div className="space-y-1">
+                      <Label>Growth</Label>
+                      <Select
+                        value={expense.growthModel ?? 'fixed'}
+                        onValueChange={(value) => {
+                          const updates: Partial<ExpenseItem> = { growthModel: value as ExpenseItem['growthModel'] }
+                          if (value === 'none') updates.growthRate = 0
+                          updateExpenseList(expense.id, updates)
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="inflation-linked">Inflation-linked</SelectItem>
+                          <SelectItem value="fixed">Fixed rate</SelectItem>
+                          <SelectItem value="none">No growth</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {(expense.growthModel ?? 'fixed') === 'fixed' && (
+                      <PercentInput
+                        label="Growth rate"
+                        value={expense.growthRate ?? 0}
+                        onChange={(value) => updateExpenseList(expense.id, { growthRate: value })}
+                      />
+                    )}
                     <NumberInput
                       label="Start age"
                       integer

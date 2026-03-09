@@ -151,6 +151,7 @@ export interface ExpenseItem {
   timing: TimingRule
   amount: number
   periodicity: 'annual' | 'monthly' | 'one-off'
+  growthModel?: GrowthModel
   growthRate?: number
   durationYears?: number
   inflationAdjusted?: boolean
