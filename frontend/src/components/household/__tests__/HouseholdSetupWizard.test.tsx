@@ -122,7 +122,7 @@ describe('Household setup flow', () => {
     expect(screen.queryByText('Start Here')).not.toBeInTheDocument()
   })
 
-  it('creates a couple plan with dependents from the setup wizard', async () => {
+  it('creates a couple plan from the setup wizard (no dependents section)', async () => {
     mockIsHouseholdPlannerV1Enabled.mockReturnValue(true)
     const user = userEvent.setup()
 
@@ -133,12 +133,12 @@ describe('Household setup flow', () => {
     await user.click(screen.getByText('I know when I want to retire'))
     expect(screen.getByText('Couple setup')).toBeInTheDocument()
 
+    // Couple mode should not show the dependents section
+    expect(screen.queryByText('Dependents')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Add dependent' })).not.toBeInTheDocument()
+
     // Fill in partner name (required for couple plan's Create plan button)
     await user.type(screen.getByLabelText('Partner name'), 'Pat')
-
-    await user.click(screen.getByRole('button', { name: 'Add dependent' }))
-    await user.clear(screen.getByLabelText('Name'))
-    await user.type(screen.getByLabelText('Name'), 'Avery')
     await user.click(screen.getAllByRole('switch')[0]!)
 
     await user.click(screen.getByRole('button', { name: 'Create plan' }))
@@ -147,9 +147,7 @@ describe('Household setup flow', () => {
     expect(state.plan.planType).toBe('couple')
     expect(state.plan.adults).toHaveLength(2)
     expect(state.plan.adults[1]?.annualIncome).toBe(0)
-    expect(state.plan.dependents).toHaveLength(1)
-    expect(state.plan.dependents[0]?.label).toBe('Avery')
-    expect(state.plan.dependents[0]?.currentAge).toBe(0)
+    expect(state.plan.dependents).toHaveLength(0)
     expect(state.provenance.source).toBe('manual')
     expect(useUIStore.getState().cpfEnabled).toBe(false)
   })

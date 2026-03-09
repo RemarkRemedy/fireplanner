@@ -120,79 +120,81 @@ export function PeopleRosterEditor({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="pt-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium">Dependents</div>
-              <div className="text-sm text-muted-foreground">
-                Add any children or supported family members you want to track from the start.
-              </div>
-            </div>
-            <Button type="button" variant="outline" onClick={onAddDependent}>
-              Add dependent
-            </Button>
-          </div>
-
-          {dependents.length === 0 ? (
-            <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-              No dependents added yet.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {dependents.map((dependent, index) => (
-                <div key={dependent.id} className="grid grid-cols-1 @lg:grid-cols-4 gap-3 rounded-md border p-4">
-                  <div className="space-y-1">
-                    <Label htmlFor={`dependent-name-${dependent.id}`}>Name</Label>
-                    <Input
-                      id={`dependent-name-${dependent.id}`}
-                      value={dependent.label}
-                      onChange={(event) => onUpdateDependent(dependent.id, { label: event.target.value })}
-                      placeholder={`Dependent ${index + 1}`}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Relationship</Label>
-                    <Select
-                      value={dependent.relationship}
-                      onValueChange={(value: DependentRelationship) => onUpdateDependent(dependent.id, { relationship: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="child">Child</SelectItem>
-                        <SelectItem value="parent">Parent</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Current age</Label>
-                    <NumberInput
-                      integer
-                      min={0}
-                      max={120}
-                      value={dependent.currentAge}
-                      onChange={(value) => onUpdateDependent(dependent.id, { currentAge: value })}
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="w-full"
-                      onClick={() => onRemoveDependent(dependent.id)}
-                    >
-                      Remove
-                    </Button>
-                  </div>
+      {planType === 'household' && (
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">Dependents</div>
+                <div className="text-sm text-muted-foreground">
+                  Add any children or supported family members you want to track from the start.
                 </div>
-              ))}
+              </div>
+              <Button type="button" variant="outline" onClick={onAddDependent}>
+                Add dependent
+              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            {dependents.length === 0 ? (
+              <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                No dependents added yet.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {dependents.map((dependent, index) => (
+                  <div key={dependent.id} className="grid grid-cols-1 @lg:grid-cols-4 gap-3 rounded-md border p-4">
+                    <div className="space-y-1">
+                      <Label htmlFor={`dependent-name-${dependent.id}`}>Name</Label>
+                      <Input
+                        id={`dependent-name-${dependent.id}`}
+                        value={dependent.label}
+                        onChange={(event) => onUpdateDependent(dependent.id, { label: event.target.value })}
+                        placeholder={`Dependent ${index + 1}`}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Relationship</Label>
+                      <Select
+                        value={dependent.relationship}
+                        onValueChange={(value: DependentRelationship) => onUpdateDependent(dependent.id, { relationship: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="child">Child</SelectItem>
+                          <SelectItem value="parent">Parent</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Current age</Label>
+                      <NumberInput
+                        integer
+                        min={0}
+                        max={120}
+                        value={dependent.currentAge}
+                        onChange={(value) => onUpdateDependent(dependent.id, { currentAge: value })}
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="w-full"
+                        onClick={() => onRemoveDependent(dependent.id)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

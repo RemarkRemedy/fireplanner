@@ -152,12 +152,14 @@ export function PeopleSection({
         onPartnerEnabledChange={(value) => {
           if (value && !partnerAdult) {
             addAdult(createPartnerAdult(selfAdult))
-            setPlanType('couple')
+            // Only promote to couple if currently individual — household stays household
+            if (plan.planType === 'individual') setPlanType('couple')
             return
           }
           if (!value && partnerAdult) {
             removeAdult(partnerAdult.id)
-            setPlanType('individual')
+            // Only demote to individual if currently couple — household stays household
+            if (plan.planType === 'couple') setPlanType('individual')
           }
         }}
         partnerName={partnerAdult?.displayName ?? ''}
