@@ -257,7 +257,6 @@ describe('Household CPF prototype', () => {
     )
 
     expect(screen.getByText('Couple Inputs')).toBeInTheDocument()
-    expect(screen.getByText('Household editor checkpoint')).toBeInTheDocument()
     expect(screen.getByText('People & Household')).toBeInTheDocument()
     expect(screen.getByText('Current CPF Status')).toBeInTheDocument()
     expect(screen.getByText('Spending, Healthcare & Goals')).toBeInTheDocument()

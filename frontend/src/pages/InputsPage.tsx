@@ -10,8 +10,6 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Progress } from '@/components/ui/progress'
 import {
   Select,
   SelectContent,
@@ -352,99 +350,13 @@ export function InputsPage() {
     .map((id) => sectionById.get(id))
     .filter((s): s is NonNullable<typeof s> => s != null && s.visible)
 
-  const completedCount = orderedSections.filter(
-    (s) => sectionCompletion[s.id].isComplete,
-  ).length
-  const totalSections = orderedSections.length
-  const progress = totalSections > 0 ? (completedCount / totalSections) * 100 : 0
   const planLabel = HOUSEHOLD_PLAN_LABELS[
     plan.planType as keyof typeof HOUSEHOLD_PLAN_LABELS
   ] ?? 'Household'
 
   return (
     <div className="space-y-10">
-      <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold">{planLabel} Inputs</h1>
-          <p className="text-sm text-muted-foreground">
-            The planner now writes all manual authoring changes to the household plan store,
-            including one-adult individual plans.
-          </p>
-        </div>
-
-        <Card className="border-blue-200 bg-blue-50/70 dark:border-blue-900 dark:bg-blue-950/20">
-          <CardContent className="py-4 space-y-4">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="space-y-1">
-                <p className="text-sm font-medium">Household editor checkpoint</p>
-                <p className="text-sm text-muted-foreground">
-                  People, income, spending, assets, property, and assumptions now write
-                  straight to the household plan store. CPF still uses the household-backed
-                  adapter while that editor stays on its own migration path.
-                </p>
-              </div>
-              {selectedAdult && adults.length > 1 && (
-                <div className="w-full md:w-72 space-y-1">
-                  <Label htmlFor="household-cpf-adult">Editing adult</Label>
-                  <Select value={selectedAdult.id} onValueChange={setSelectedAdultId}>
-                    <SelectTrigger id="household-cpf-adult">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {adults.map((adult) => (
-                        <SelectItem key={adult.id} value={adult.id}>
-                          {adult.displayName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              {adults.map((adult) => {
-                const isSelected = adult.id === selectedAdult?.id
-                return (
-                  <div
-                    key={adult.id}
-                    className={cn(
-                      'rounded-lg border bg-background px-4 py-3',
-                      isSelected ? 'border-blue-400 shadow-sm' : 'border-border/70',
-                    )}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-medium">{adult.displayName}</p>
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                          {adult.owner === 'self' ? 'You' : 'Partner'}
-                        </p>
-                      </div>
-                      <Badge variant={isSelected ? 'default' : 'secondary'}>
-                        {isSelected ? 'Selected' : 'Roster'}
-                      </Badge>
-                    </div>
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      Age {adult.currentAge}, retire at {adult.retirementAge}, life expectancy{' '}
-                      {adult.lifeExpectancy}.
-                    </p>
-                  </div>
-                )
-              })}
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>
-                  {completedCount} of {totalSections} sections meaningfully configured
-                </span>
-                <span>{Math.round(progress)}%</span>
-              </div>
-              <Progress value={progress} className="h-2" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <h1 className="text-2xl font-bold">{planLabel} Inputs</h1>
 
       {orderedSections.map((section) => (
         <Fragment key={section.id}>{section.element}</Fragment>
