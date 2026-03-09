@@ -2,12 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import type { MonteCarloResult } from '@/lib/types'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
-import { useProfileStore } from '@/stores/useProfileStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
 import { HOUSEHOLD_PLAN_STORAGE_KEY } from '@/stores/useHouseholdPlanStore'
+import { setupTestPlan } from '@/test-helpers/setupTestPlan'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 import { resolveDeterministicExpectedReturn } from '@/lib/analysis/deterministicAssumptions'
 import { buildPlannerResultsPayload } from '@/lib/companion/resultsPayload'
 import { useCompanionPlannerBridge } from './useCompanionPlannerBridge'
@@ -92,13 +92,11 @@ const SAMPLE_RESULT: MonteCarloResult = {
 }
 
 beforeEach(() => {
-  useProfileStore.getState().reset()
-  useIncomeStore.getState().reset()
-  useAllocationStore.getState().reset()
-  useSimulationStore.getState().reset()
   useHouseholdPlanStore.persist.clearStorage()
   localStorage.removeItem(HOUSEHOLD_PLAN_STORAGE_KEY)
   useHouseholdPlanStore.getState().reset()
+  useAllocationStore.getState().reset()
+  useSimulationStore.getState().reset()
   useUIStore.getState().setField('mode', 'simple')
 
   mockFetchPlannerSnapshot.mockReset()
@@ -129,10 +127,14 @@ describe('useCompanionPlannerBridge', () => {
     })
 
     expect(mockFetchPlannerSnapshot).toHaveBeenCalledWith('http://localhost:3000', 'abc123')
-    expect(useProfileStore.getState().annualIncome).toBe(60_000)
-    expect(useIncomeStore.getState().annualSalary).toBe(60_000)
-    expect(useProfileStore.getState().annualExpenses).toBe(38_400)
-    expect(useProfileStore.getState().liquidNetWorth).toBe(250_000)
+    const plan = useHouseholdPlanStore.getState().plan
+    const self = plan.adults.find((a) => a.owner === 'self')!
+    const salarySource = plan.income.find((i) => i.kind === 'salary-model' && i.owner === 'self')!
+    const baseLiving = plan.expenses.find((e) => e.kind === 'base-living')!
+    expect(self.annualIncome).toBe(60_000)
+    expect(salarySource.annualAmount).toBe(60_000)
+    expect(baseLiving.amount).toBe(38_400)
+    expect(self.liquidNetWorth).toBe(250_000)
     expect(useUIStore.getState().mode).toBe('advanced')
   })
 
@@ -257,7 +259,7 @@ describe('useCompanionPlannerBridge', () => {
     expect(payload).toHaveProperty('scenario_id')
     expect(payload).toHaveProperty('input_signature')
 
-    const profile = useProfileStore.getState()
+    const { profile } = buildHouseholdRuntimeLegacyInputs(useHouseholdPlanStore.getState().plan)
     const allocation = useAllocationStore.getState()
     const simulation = useSimulationStore.getState()
     const scenarioRetirementAge = result.current.activeScenarioRetirementAge ?? profile.retirementAge
@@ -352,17 +354,6 @@ describe('useCompanionPlannerBridge', () => {
     mockFetchPlannerSnapshot.mockResolvedValue({ schemaVersion: 1 })
     mockPostPlannerResults.mockResolvedValue()
 
-    useProfileStore.getState().setField('currentAge', 45)
-    useProfileStore.getState().setField('retirementAge', 65)
-    useProfileStore.getState().setField('lifeExpectancy', 90)
-    useProfileStore.getState().setField('annualIncome', 120_000)
-    useProfileStore.getState().setField('annualExpenses', 48_000)
-    useProfileStore.getState().setField('liquidNetWorth', 200_000)
-    useProfileStore.getState().setField('inflation', 0.02)
-    useProfileStore.getState().setField('expenseRatio', 0.001)
-    useProfileStore.getState().setField('usePortfolioReturn', true)
-    useIncomeStore.getState().setField('annualSalary', 120_000)
-
     useAllocationStore.getState().setCurrentWeights([1, 0, 0, 0, 0, 0, 0, 0])
     useAllocationStore.getState().setTargetWeights([0, 0, 0, 1, 0, 0, 0, 0])
     useAllocationStore.getState().setReturnOverride(0, 0.1)
@@ -381,6 +372,24 @@ describe('useCompanionPlannerBridge', () => {
 
     await waitFor(() => {
       expect(result.current.bootstrapStatus).toBe('loaded')
+    })
+
+    // Set up household plan data AFTER bootstrap completes,
+    // so applySnapshotToStores doesn't overwrite it
+    act(() => {
+      setupTestPlan({
+        adult: {
+          currentAge: 45,
+          retirementAge: 65,
+          lifeExpectancy: 90,
+        },
+        income: { annualSalary: 120_000 },
+        expenses: { annualExpenses: 48_000 },
+        assets: { liquidNetWorth: 200_000 },
+        assumptions: {
+          returns: { inflation: 0.02, expenseRatio: 0.001, usePortfolioReturn: true },
+        },
+      })
     })
 
     act(() => {
@@ -402,7 +411,7 @@ describe('useCompanionPlannerBridge', () => {
     })
 
     const payload = mockPostPlannerResults.mock.calls[0]?.[2]
-    const profile = useProfileStore.getState()
+    const { profile } = buildHouseholdRuntimeLegacyInputs(useHouseholdPlanStore.getState().plan)
     const allocation = useAllocationStore.getState()
     const simulation = useSimulationStore.getState()
     const scenarioRetirementAge = result.current.activeScenarioRetirementAge ?? profile.retirementAge
@@ -673,8 +682,7 @@ describe('useCompanionPlannerBridge', () => {
     expect(result.current.activeRunOverrides?.retirementAge).toBe(65)
 
     act(() => {
-      useProfileStore.getState().setField('annualExpenses', 40_000)
-      useProfileStore.getState().setField('retirementAge', 67)
+      setupTestPlan({ expenses: { annualExpenses: 40_000 }, adult: { retirementAge: 67 } })
     })
 
     await waitFor(() => {

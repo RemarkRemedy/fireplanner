@@ -1,12 +1,15 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { act, renderHook } from '@testing-library/react'
 import { useCpfProjection } from './useCpfProjection'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { setupTestPlan } from '@/test-helpers/setupTestPlan'
+
+function getSelfAdult() {
+  return useHouseholdPlanStore.getState().plan.adults.find((a) => a.owner === 'self')!
+}
 
 beforeEach(() => {
-  useProfileStore.getState().reset()
-  useIncomeStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
 })
 
 describe('useCpfProjection', () => {
@@ -20,9 +23,9 @@ describe('useCpfProjection', () => {
   it('rows span currentAge to lifeExpectancy', () => {
     const { result } = renderHook(() => useCpfProjection())
     const rows = result.current.rows!
-    const profile = useProfileStore.getState()
-    expect(rows[0].age).toBe(profile.currentAge)
-    expect(rows[rows.length - 1].age).toBe(profile.lifeExpectancy)
+    const self = getSelfAdult()
+    expect(rows[0].age).toBe(self.currentAge)
+    expect(rows[rows.length - 1].age).toBe(self.lifeExpectancy)
   })
 
   it('first row has annualInterest = 0', () => {
@@ -37,12 +40,12 @@ describe('useCpfProjection', () => {
   })
 
   it('raBalance appears after age 55 transfer', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 30,
-      retirementAge: 55,
-      lifeExpectancy: 90,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 30,
+        retirementAge: 55,
+        lifeExpectancy: 90,
+      },
     })
     const { result } = renderHook(() => useCpfProjection())
     const rows = result.current.rows!
@@ -56,12 +59,12 @@ describe('useCpfProjection', () => {
   })
 
   it('raCreated milestone at age 55', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 30,
-      retirementAge: 55,
-      lifeExpectancy: 90,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 30,
+        retirementAge: 55,
+        lifeExpectancy: 90,
+      },
     })
     const { result } = renderHook(() => useCpfProjection())
     const rows = result.current.rows!
@@ -84,9 +87,9 @@ describe('useCpfProjection', () => {
   it('annualContribution is zero post-retirement', () => {
     const { result } = renderHook(() => useCpfProjection())
     const rows = result.current.rows!
-    const profile = useProfileStore.getState()
+    const self = getSelfAdult()
     // Find a row well after retirement
-    const postRetRow = rows.find(r => r.age === profile.retirementAge + 5)
+    const postRetRow = rows.find(r => r.age === self.retirementAge + 5)
     if (postRetRow) {
       expect(postRetRow.annualContribution).toBe(0)
     }
@@ -95,8 +98,8 @@ describe('useCpfProjection', () => {
   it('CPF LIFE start milestone is flagged', () => {
     const { result } = renderHook(() => useCpfProjection())
     const rows = result.current.rows!
-    const profile = useProfileStore.getState()
-    const cpfLifeRow = rows.find(r => r.age === profile.cpfLifeStartAge)
+    const self = getSelfAdult()
+    const cpfLifeRow = rows.find(r => r.age === self.cpf.lifeStartAge)
     if (cpfLifeRow) {
       expect(cpfLifeRow.milestone).toBe('cpfLifeStart')
     }
@@ -105,8 +108,8 @@ describe('useCpfProjection', () => {
   it('cpfLifePayout is zero before CPF LIFE start age', () => {
     const { result } = renderHook(() => useCpfProjection())
     const rows = result.current.rows!
-    const profile = useProfileStore.getState()
-    const earlyRow = rows.find(r => r.age === profile.cpfLifeStartAge - 1)
+    const self = getSelfAdult()
+    const earlyRow = rows.find(r => r.age === self.cpf.lifeStartAge - 1)
     if (earlyRow) {
       expect(earlyRow.cpfLifePayout).toBe(0)
     }
@@ -116,7 +119,14 @@ describe('useCpfProjection', () => {
     // With the normalized household architecture, the compiled plan produces
     // CPF rows regardless of legacy store validation errors. The normalized
     // path takes precedence over the legacy income projection path.
-    useProfileStore.getState().setField('currentAge', 15)
+    // Setting an invalid plan: currentAge > retirementAge
+    setupTestPlan({
+      adult: {
+        currentAge: 15,
+        retirementAge: 55,
+        lifeExpectancy: 90,
+      },
+    })
     const { result } = renderHook(() => useCpfProjection())
     // The normalized path produces CPF rows from the compiled household plan,
     // so hasErrors is false and rows are present.
@@ -132,7 +142,14 @@ describe('useCpfProjection', () => {
     expect(result.current.rows).not.toBeNull()
 
     act(() => {
-      useProfileStore.getState().setField('currentAge', 15)
+      // Create an invalid household plan: currentAge > retirementAge > lifeExpectancy
+      setupTestPlan({
+        adult: {
+          currentAge: 30,
+          retirementAge: 25,
+          lifeExpectancy: 20,
+        },
+      })
     })
     rerender()
 
@@ -151,19 +168,15 @@ describe('useCpfProjection', () => {
   it('BRS/FRS/ERS milestones exclude MA from balance comparison', () => {
     // Set up a profile where MA is large enough that OA+SA+MA+RA > BRS
     // but OA+SA+RA alone is NOT > BRS. Milestones should not trigger prematurely.
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 30,
-      retirementAge: 65,
-      lifeExpectancy: 90,
-      validationErrors: {},
-    })
-    // Set high initial MA to inflate total balance
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      cpfOA: 10000,
-      cpfSA: 10000,
-      cpfMA: 100000,
+    setupTestPlan({
+      adult: {
+        currentAge: 30,
+        retirementAge: 65,
+        lifeExpectancy: 90,
+        cpfOA: 10000,
+        cpfSA: 10000,
+        cpfMA: 100000,
+      },
     })
 
     const { result } = renderHook(() => useCpfProjection())

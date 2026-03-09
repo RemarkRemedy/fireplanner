@@ -1,15 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useAnalysisPortfolio } from './useAnalysisPortfolio'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { setupTestPlan } from '@/test-helpers/setupTestPlan'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useUIStore } from '@/stores/useUIStore'
 
 beforeEach(() => {
-  useProfileStore.getState().reset()
-  useIncomeStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   useAllocationStore.getState().reset()
   useSimulationStore.getState().reset()
   useUIStore.setState({
@@ -25,27 +24,27 @@ beforeEach(() => {
 describe('useAnalysisPortfolio', () => {
   describe('My Plan mode (always)', () => {
     it('initialPortfolio = total NW (liquid + CPF)', () => {
-      useProfileStore.setState({
-        ...useProfileStore.getState(),
-        liquidNetWorth: 500000,
-        cpfOA: 100000,
-        cpfSA: 50000,
-        cpfMA: 30000,
-        validationErrors: {},
+      setupTestPlan({
+        assets: { liquidNetWorth: 500000 },
+        adult: {
+          cpfOA: 100000,
+          cpfSA: 50000,
+          cpfMA: 30000,
+        },
       })
       const { result } = renderHook(() => useAnalysisPortfolio())
       expect(result.current.initialPortfolio).toBe(680000)
     })
 
     it('initialPortfolio includes cpfRA', () => {
-      useProfileStore.setState({
-        ...useProfileStore.getState(),
-        liquidNetWorth: 500000,
-        cpfOA: 100000,
-        cpfSA: 0,
-        cpfMA: 30000,
-        cpfRA: 150000,
-        validationErrors: {},
+      setupTestPlan({
+        assets: { liquidNetWorth: 500000 },
+        adult: {
+          cpfOA: 100000,
+          cpfSA: 0,
+          cpfMA: 30000,
+          cpfRA: 150000,
+        },
       })
       const { result } = renderHook(() => useAnalysisPortfolio())
       // 500K + 100K + 0 + 30K + 150K = 780K
@@ -53,20 +52,20 @@ describe('useAnalysisPortfolio', () => {
     })
 
     it('retirementPortfolio is projected forward', () => {
-      useProfileStore.setState({
-        ...useProfileStore.getState(),
-        currentAge: 30,
-        retirementAge: 55,
-        liquidNetWorth: 100000,
-        cpfOA: 0,
-        cpfSA: 0,
-        cpfMA: 0,
-        annualIncome: 72000,
-        annualExpenses: 48000,
-        expectedReturn: 0.07,
-        inflation: 0.025,
-        expenseRatio: 0.003,
-        validationErrors: {},
+      setupTestPlan({
+        adult: {
+          currentAge: 30,
+          retirementAge: 55,
+          cpfOA: 0,
+          cpfSA: 0,
+          cpfMA: 0,
+        },
+        assets: { liquidNetWorth: 100000 },
+        income: { annualSalary: 72000 },
+        expenses: { annualExpenses: 48000 },
+        assumptions: {
+          returns: { expectedReturn: 0.07, inflation: 0.025, expenseRatio: 0.003 },
+        },
       })
       const { result } = renderHook(() => useAnalysisPortfolio())
       expect(result.current.retirementPortfolio).toBeGreaterThan(100000)
@@ -85,31 +84,37 @@ describe('useAnalysisPortfolio', () => {
     })
 
     it('uses effective projected income when income streams differ from the profile summary', () => {
-      useProfileStore.setState({
-        ...useProfileStore.getState(),
-        currentAge: 30,
-        retirementAge: 55,
-        lifeExpectancy: 90,
-        annualIncome: 72_000,
-        annualExpenses: 48_000,
-        liquidNetWorth: 100_000,
-        expectedReturn: 0.07,
-        inflation: 0.025,
-        expenseRatio: 0.003,
-        validationErrors: {},
-      })
-      useIncomeStore.setState({
-        ...useIncomeStore.getState(),
-        annualSalary: 120_000,
-        salaryGrowthRate: 0.03,
-        validationErrors: {},
+      setupTestPlan({
+        adult: {
+          currentAge: 30,
+          retirementAge: 55,
+          lifeExpectancy: 90,
+        },
+        income: { annualSalary: 120_000, salaryGrowthRate: 0.03 },
+        expenses: { annualExpenses: 48_000 },
+        assets: { liquidNetWorth: 100_000 },
+        assumptions: {
+          returns: { expectedReturn: 0.07, inflation: 0.025, expenseRatio: 0.003 },
+        },
       })
 
       const { result: withProjection, unmount } = renderHook(() => useAnalysisPortfolio())
       const projectedPortfolio = withProjection.current.retirementPortfolio
       unmount()
 
-      useIncomeStore.getState().setField('annualSalary', -1)
+      setupTestPlan({
+        adult: {
+          currentAge: 30,
+          retirementAge: 55,
+          lifeExpectancy: 90,
+        },
+        income: { annualSalary: -1 },
+        expenses: { annualExpenses: 48_000 },
+        assets: { liquidNetWorth: 100_000 },
+        assumptions: {
+          returns: { expectedReturn: 0.07, inflation: 0.025, expenseRatio: 0.003 },
+        },
+      })
       const { result: fallback } = renderHook(() => useAnalysisPortfolio())
 
       expect(projectedPortfolio).toBeGreaterThan(fallback.current.retirementPortfolio)
@@ -124,11 +129,10 @@ describe('useAnalysisPortfolio', () => {
 
   describe('portfolio return from allocation', () => {
     it('uses allocation return when usePortfolioReturn is true', () => {
-      useProfileStore.setState({
-        ...useProfileStore.getState(),
-        usePortfolioReturn: true,
-        expectedReturn: 0.05,
-        validationErrors: {},
+      setupTestPlan({
+        assumptions: {
+          returns: { usePortfolioReturn: true, expectedReturn: 0.05 },
+        },
       })
       useAllocationStore.getState().applyTemplate('aggressive')
       const { result } = renderHook(() => useAnalysisPortfolio())
@@ -137,11 +141,10 @@ describe('useAnalysisPortfolio', () => {
     })
 
     it('falls back to expectedReturn when allocation has errors', () => {
-      useProfileStore.setState({
-        ...useProfileStore.getState(),
-        usePortfolioReturn: true,
-        expectedReturn: 0.07,
-        validationErrors: {},
+      setupTestPlan({
+        assumptions: {
+          returns: { usePortfolioReturn: true, expectedReturn: 0.07 },
+        },
       })
       useAllocationStore.setState({
         ...useAllocationStore.getState(),
@@ -166,10 +169,8 @@ describe('useAnalysisPortfolio', () => {
           method: 'linear' as const,
         },
       })
-      useProfileStore.setState({
-        ...useProfileStore.getState(),
-        retirementAge: 65,
-        validationErrors: {},
+      setupTestPlan({
+        adult: { retirementAge: 65 },
       })
       const { result } = renderHook(() => useAnalysisPortfolio())
       // My Plan mode always returns current weights for allocationWeights

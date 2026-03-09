@@ -3,11 +3,10 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import { createElement, type ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useMonteCarloQuery } from './useMonteCarloQuery'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { setupTestPlan } from '@/test-helpers/setupTestPlan'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { useNormalizedAnalysisStore } from '@/stores/useNormalizedAnalysisStore'
 
@@ -57,11 +56,9 @@ beforeEach(() => {
   vi.clearAllMocks()
   localStorage.clear()
   useNormalizedAnalysisStore.getState().clearEntries()
-  useProfileStore.getState().reset()
-  useIncomeStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   useAllocationStore.getState().reset()
   useSimulationStore.getState().reset()
-  usePropertyStore.getState().reset()
   useWithdrawalStore.getState().reset()
 })
 
@@ -77,7 +74,7 @@ describe('useMonteCarloQuery stale detection', () => {
     expect(result.current.isStale).toBe(false)
 
     act(() => {
-      useProfileStore.getState().setField('annualExpenses', 60_000)
+      setupTestPlan({ expenses: { annualExpenses: 60_000 } })
     })
 
     await waitFor(() => expect(result.current.isStale).toBe(true))
