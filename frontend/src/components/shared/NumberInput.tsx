@@ -2,6 +2,7 @@ import { useState, useCallback, useId } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
+import { cn } from '@/lib/utils'
 
 interface NumberInputProps {
   value: number
@@ -131,7 +132,7 @@ export function NumberInput({
       min={formatWithCommas ? undefined : min}
       max={formatWithCommas ? undefined : max}
       step={formatWithCommas ? undefined : step}
-      className={className}
+      className={cn('border-blue-300', touched && error && 'border-destructive', className)}
       disabled={disabled}
       aria-describedby={touched && error ? errorId : undefined}
     />
