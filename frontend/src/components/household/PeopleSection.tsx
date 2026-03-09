@@ -376,26 +376,28 @@ export function PeopleSection({
                         <p className="text-xs text-destructive">{dependentErrors.owner}</p>
                       )}
                     </div>
-                    <div className="space-y-1">
-                      <Label>Age based on</Label>
-                      <Select
-                        value={timing.owner}
-                        onValueChange={(value) => updateDependent(dependent.id, {
-                          timing: { ...timing, owner: value as AdultOwner },
-                        })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ADULT_OWNER_OPTIONS.filter((option) => adults.some((adult) => adult.owner === option)).map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {ownerLabel(option, adults)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {adults.length > 1 && (
+                      <div className="space-y-1">
+                        <Label>Age based on</Label>
+                        <Select
+                          value={timing.owner}
+                          onValueChange={(value) => updateDependent(dependent.id, {
+                            timing: { ...timing, owner: value as AdultOwner },
+                          })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ADULT_OWNER_OPTIONS.filter((option) => adults.some((adult) => adult.owner === option)).map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {ownerLabel(option, adults)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <div className="space-y-1">
                       <Label>Support Start Age</Label>
                       <NumberInput

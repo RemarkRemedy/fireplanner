@@ -610,44 +610,48 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-1">
-                      <Label>Owner</Label>
-                      <Select
-                        value={expense.owner}
-                        onValueChange={(value) => updateExpenseList(expense.id, { owner: value as EntryOwner })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableOwnerOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option === 'shared' ? 'Shared' : ownerLabel(option, adults)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label>Age based on</Label>
-                      <Select
-                        value={timing.owner}
-                        onValueChange={(value) => updateExpenseList(expense.id, {
-                          timing: { ...timing, owner: value as AdultOwner },
-                        })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableAdultOwners.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {ownerLabel(option, adults)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {adults.length > 1 && (
+                      <div className="space-y-1">
+                        <Label>Owner</Label>
+                        <Select
+                          value={expense.owner}
+                          onValueChange={(value) => updateExpenseList(expense.id, { owner: value as EntryOwner })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableOwnerOptions.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {option === 'shared' ? 'Shared' : ownerLabel(option, adults)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    {adults.length > 1 && (
+                      <div className="space-y-1">
+                        <Label>Age based on</Label>
+                        <Select
+                          value={timing.owner}
+                          onValueChange={(value) => updateExpenseList(expense.id, {
+                            timing: { ...timing, owner: value as AdultOwner },
+                          })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableAdultOwners.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {ownerLabel(option, adults)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <div className="space-y-1">
                       <Label>Periodicity</Label>
                       <Select
@@ -793,24 +797,26 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <div className="space-y-1">
-                      <Label>Owner</Label>
-                      <Select
-                        value={expense.owner}
-                        onValueChange={(value) => updateExpenseList(expense.id, { owner: value as EntryOwner })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableOwnerOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option === 'shared' ? 'Shared' : ownerLabel(option, adults)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {adults.length > 1 && (
+                      <div className="space-y-1">
+                        <Label>Owner</Label>
+                        <Select
+                          value={expense.owner}
+                          onValueChange={(value) => updateExpenseList(expense.id, { owner: value as EntryOwner })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableOwnerOptions.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {option === 'shared' ? 'Shared' : ownerLabel(option, adults)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <CurrencyInput
                       label="Amount"
                       value={expense.amount}
@@ -940,24 +946,26 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <div className="space-y-1">
-                      <Label>Owner</Label>
-                      <Select
-                        value={expense.owner}
-                        onValueChange={(value) => updateExpenseList(expense.id, { owner: value as EntryOwner })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableOwnerOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option === 'shared' ? 'Shared' : ownerLabel(option, adults)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {adults.length > 1 && (
+                      <div className="space-y-1">
+                        <Label>Owner</Label>
+                        <Select
+                          value={expense.owner}
+                          onValueChange={(value) => updateExpenseList(expense.id, { owner: value as EntryOwner })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableOwnerOptions.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {option === 'shared' ? 'Shared' : ownerLabel(option, adults)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <CurrencyInput
                       label="Amount"
                       value={expense.amount}
