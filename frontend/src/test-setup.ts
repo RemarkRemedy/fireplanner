@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest'
-import { vi } from 'vitest'
+import { vi, afterAll } from 'vitest'
 
 // Mock ResizeObserver for jsdom (used by Recharts ResponsiveContainer)
 globalThis.ResizeObserver = class {
@@ -33,4 +33,12 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
+})
+
+// Prevent Zustand persist middleware from leaking state between test files.
+// The setup file runs once per worker thread, so the mocked localStorage Map
+// persists across files in the same thread. Without cleanup, stores using
+// zustand/persist rehydrate stale data from a previous file.
+afterAll(() => {
+  storage.clear()
 })
