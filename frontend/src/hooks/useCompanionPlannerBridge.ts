@@ -30,9 +30,15 @@ interface CompanionScenarioInputs {
   retirementAge: number
 }
 
+interface CompanionScenarioFreshnessContext {
+  allocationRevision: number
+  householdRevision: string
+  simulationRevision: number
+}
+
 interface ScenarioResultRecord {
   payload: PlannerResultsPayload
-  inputSignature: string
+  freshnessSignature: string
 }
 
 interface ScenarioRunContext {
@@ -40,6 +46,7 @@ interface ScenarioRunContext {
   annualExpenses: number
   retirementAge: number
   inputSignature: string
+  freshnessSignature: string
 }
 
 export interface CompanionScenarioComparison {
@@ -97,6 +104,19 @@ function buildInputSignature(inputs: CompanionScenarioInputs): string {
   })
 }
 
+function buildScenarioFreshnessSignature(
+  inputs: CompanionScenarioInputs,
+  context: CompanionScenarioFreshnessContext
+): string {
+  return JSON.stringify({
+    annualExpenses: Math.round(inputs.annualExpenses),
+    retirementAge: Math.round(inputs.retirementAge),
+    householdRevision: context.householdRevision,
+    allocationRevision: context.allocationRevision,
+    simulationRevision: context.simulationRevision,
+  })
+}
+
 function toRunOverrides(inputs: CompanionScenarioInputs): { annualExpenses: number; retirementAge: number } {
   return {
     annualExpenses: inputs.annualExpenses,
@@ -116,6 +136,7 @@ export function useCompanionPlannerBridge({
   const normalized = useNormalizedLegacyAnalysisContext()
   const analysisPortfolio = useAnalysisPortfolio()
   const allocationWeights = useAllocationStore((s) => s.currentWeights)
+  const allocationRevision = useAllocationStore((s) => s.allocationRevision)
   const allocationTargetWeights = useAllocationStore((s) => s.targetWeights)
   const allocationReturnOverrides = useAllocationStore((s) => s.returnOverrides)
   const allocationGlidePathConfig = useAllocationStore((s) => s.glidePathConfig)
@@ -123,6 +144,7 @@ export function useCompanionPlannerBridge({
   const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
   const strategyParams = useSimulationStore((s) => s.strategyParams)
   const mcMethod = useSimulationStore((s) => s.mcMethod)
+  const simulationRevision = useSimulationStore((s) => s.simulationRevision)
   const annualIncome = profile.annualIncome
   const annualExpenses = profile.annualExpenses
   const inflation = profile.inflation
@@ -133,6 +155,11 @@ export function useCompanionPlannerBridge({
   const retirementAge = normalized.retirementAge
   const lifeExpectancy = normalized.lifeExpectancy
   const initialPortfolio = analysisPortfolio.initialPortfolio
+  const scenarioFreshnessContext = useMemo<CompanionScenarioFreshnessContext>(() => ({
+    allocationRevision,
+    householdRevision: normalized.householdRevision,
+    simulationRevision,
+  }), [allocationRevision, normalized.householdRevision, simulationRevision])
 
   const deterministicAllocationInputs = useMemo(
     () => ({
@@ -222,9 +249,12 @@ export function useCompanionPlannerBridge({
         minRetirementAge,
         maxRetirementAge,
       })
-      const expectedSignature = buildInputSignature(currentInputs)
+      const expectedSignature = buildScenarioFreshnessSignature(
+        currentInputs,
+        scenarioFreshnessContext
+      )
       const record = scenarioResults[scenario.id]
-      const isFresh = record?.inputSignature === expectedSignature
+      const isFresh = record?.freshnessSignature === expectedSignature
 
       return {
         id: scenario.id,
@@ -239,7 +269,15 @@ export function useCompanionPlannerBridge({
         needsRerun: !isFresh,
       }
     })
-  }, [scenarios, scenarioResults, annualExpenses, retirementAge, minRetirementAge, maxRetirementAge])
+  }, [
+    scenarios,
+    scenarioResults,
+    annualExpenses,
+    retirementAge,
+    minRetirementAge,
+    maxRetirementAge,
+    scenarioFreshnessContext,
+  ])
 
   const activeScenarioNeedsRerun = useMemo(() => {
     if (!activeScenarioId) return false
@@ -248,15 +286,19 @@ export function useCompanionPlannerBridge({
   }, [activeScenarioId, scenarioComparisons])
 
   const activeScenarioSignature = useMemo(
-    () => (activeScenarioInputs ? buildInputSignature(activeScenarioInputs) : null),
-    [activeScenarioInputs],
+    () => (
+      activeScenarioInputs
+        ? buildScenarioFreshnessSignature(activeScenarioInputs, scenarioFreshnessContext)
+        : null
+    ),
+    [activeScenarioInputs, scenarioFreshnessContext],
   )
   const activeScenarioRecord = useMemo(
     () => (activeScenarioId ? scenarioResults[activeScenarioId] : undefined),
     [activeScenarioId, scenarioResults],
   )
   const activeScenarioPayload = useMemo(
-    () => (activeScenarioSignature && activeScenarioRecord?.inputSignature === activeScenarioSignature
+    () => (activeScenarioSignature && activeScenarioRecord?.freshnessSignature === activeScenarioSignature
       ? activeScenarioRecord.payload
       : null
     ),
@@ -419,13 +461,17 @@ export function useCompanionPlannerBridge({
       annualExpenses: activeScenarioInputs.annualExpenses,
       retirementAge: activeScenarioInputs.retirementAge,
       inputSignature: buildInputSignature(activeScenarioInputs),
+      freshnessSignature: buildScenarioFreshnessSignature(
+        activeScenarioInputs,
+        scenarioFreshnessContext
+      ),
     }
     lastPayloadRef.current = null
     setSaveStatus('idle')
     setSaveError(null)
 
     return toRunOverrides(activeScenarioInputs)
-  }, [activeScenario, activeScenarioInputs])
+  }, [activeScenario, activeScenarioInputs, scenarioFreshnessContext])
 
   const savePayload = useCallback(async (payload: PlannerResultsPayload | null, force: boolean) => {
     if (!companionMode || !token || !payload) return
@@ -519,6 +565,10 @@ export function useCompanionPlannerBridge({
             annualExpenses: fallbackInputs.annualExpenses,
             retirementAge: fallbackInputs.retirementAge,
             inputSignature: buildInputSignature(fallbackInputs),
+            freshnessSignature: buildScenarioFreshnessSignature(
+              fallbackInputs,
+              scenarioFreshnessContext
+            ),
           }
         : null
     )
@@ -533,7 +583,7 @@ export function useCompanionPlannerBridge({
       ...prev,
       [runContext.scenarioId]: {
         payload,
-        inputSignature: runContext.inputSignature,
+        freshnessSignature: runContext.freshnessSignature,
       },
     }))
 
@@ -552,6 +602,7 @@ export function useCompanionPlannerBridge({
     maxRetirementAge,
     token,
     buildPayloadForContext,
+    scenarioFreshnessContext,
     savePayload,
   ])
 

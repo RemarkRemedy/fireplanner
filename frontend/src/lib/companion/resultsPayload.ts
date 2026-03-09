@@ -180,7 +180,7 @@ export function buildPlannerResultsPayload(input: BuildPayloadInput): PlannerRes
   })
 
   // FIRE age: first age where median portfolio >= required
-  let fireAge = Math.round(retirementAge)
+  let fireAge: number | null = null
 
   const ages = result.percentile_bands.ages
   const medians = result.percentile_bands.p50
@@ -194,11 +194,12 @@ export function buildPlannerResultsPayload(input: BuildPayloadInput): PlannerRes
     }
   }
 
-  // Portfolio at retirement
-  const retirementIdx = ages.findIndex((age) => Math.round(age) >= Math.round(retirementAge))
-  const portfolioAtFire = retirementIdx >= 0 && retirementIdx < medians.length
-    ? roundMoney(medians[retirementIdx])
-    : roundMoney(result.terminal_stats.median)
+  const fireIdx = fireAge == null
+    ? -1
+    : ages.findIndex((age) => Math.round(age) >= fireAge)
+  const portfolioAtFire = fireIdx >= 0 && fireIdx < medians.length
+    ? roundMoney(medians[fireIdx])
+    : undefined
 
   const horizonYears = Math.max(1, Math.round(lifeExpectancy - retirementAge))
 
@@ -223,7 +224,7 @@ export function buildPlannerResultsPayload(input: BuildPayloadInput): PlannerRes
     cached: result.cached,
     horizon_years: horizonYears,
     target_fire_age: Math.round(retirementAge),
-    projected_fire_age_p50: fireAge,
+    projected_fire_age_p50: fireAge ?? undefined,
     annual_expenses_target_real: roundMoney(annualExpenses),
     required_portfolio: roundMoney(requiredPortfolio),
     required_portfolio_basis: 'wr_safe_90',
