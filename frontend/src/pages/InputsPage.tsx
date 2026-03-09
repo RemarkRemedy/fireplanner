@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { useSectionCompletion } from '@/hooks/useSectionCompletion'
@@ -55,8 +56,8 @@ interface HouseholdPrototypeSectionProps {
   children: React.ReactNode
 }
 
-/** Segmented toggle for switching between adults inline in section headers */
-function AdultTogglePill({ adults, selectedId, onSelect, suffix }: {
+/** Segmented control for switching between adults inline in section headers */
+function AdultSegmentedControl({ adults, selectedId, onSelect, suffix }: {
   adults: { id: string; name: string }[]
   selectedId: string
   onSelect: (id: string) => void
@@ -64,26 +65,21 @@ function AdultTogglePill({ adults, selectedId, onSelect, suffix }: {
 }) {
   return (
     <span
-      className="inline-flex items-center rounded-full border border-primary/30 text-[11px] font-medium overflow-hidden"
+      className="inline-flex items-center gap-1.5"
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation() }}
     >
-      {adults.map((adult) => (
-        <button
-          key={adult.id}
-          type="button"
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSelect(adult.id) }}
-          className={`px-2 py-0.5 transition-colors ${
-            adult.id === selectedId
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-primary/5 text-primary hover:bg-primary/15'
-          }`}
-        >
-          {adult.name}
-        </button>
-      ))}
+      <Tabs value={selectedId} onValueChange={onSelect}>
+        <TabsList className="h-7 p-0.5">
+          {adults.map((adult) => (
+            <TabsTrigger key={adult.id} value={adult.id} className="h-6 px-3 text-xs">
+              {adult.name}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
       {suffix && (
-        <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-l border-amber-300 dark:border-amber-700">
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-300 dark:border-amber-700">
           {suffix}
         </span>
       )}
@@ -131,7 +127,7 @@ function HouseholdPrototypeSection({
                       Household
                     </span>
                   ) : scopePill.adults.length > 1 ? (
-                    <AdultTogglePill
+                    <AdultSegmentedControl
                       adults={scopePill.adults}
                       selectedId={scopePill.selectedId}
                       onSelect={scopePill.onSelect}
