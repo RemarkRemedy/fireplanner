@@ -682,17 +682,19 @@ function MonthlyIncomeInput({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <Label className="text-sm flex items-center gap-1">
-        Monthly Income
+      <div className="flex items-center gap-1">
+        <Label className="text-sm flex items-center gap-1 shrink-0">
+          Monthly Income
+          <InfoTooltip text="Your monthly salary. Choose whether to enter take-home (after CPF) or gross (before CPF)." />
+        </Label>
         <button
           type="button"
           onClick={() => onIncomeTypeChange(incomeType === 'take-home' ? 'gross' : 'take-home')}
-          className="text-xs text-primary hover:text-primary/80 underline decoration-dotted underline-offset-2 cursor-pointer"
+          className="px-1.5 py-px text-[11px] leading-tight rounded-full border bg-primary text-primary-foreground border-primary transition-colors hover:bg-primary/90"
         >
-          {incomeType === 'take-home' ? 'take-home' : 'gross'}
+          {incomeType === 'take-home' ? 'Net' : 'Gross'}
         </button>
-        <InfoTooltip text="Your monthly salary. Click 'take-home'/'gross' to switch between after-CPF and before-CPF entry." />
-      </Label>
+      </div>
 
       {/* Dollar input */}
       <div className="relative">
