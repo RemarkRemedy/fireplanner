@@ -262,7 +262,8 @@ describe('Household CPF prototype', () => {
     expect(screen.getByText('Current CPF Status')).toBeInTheDocument()
     expect(screen.getByText('Spending, Healthcare & Goals')).toBeInTheDocument()
     expect(screen.getByText('Shared spending, private spending, healthcare, goals, and retirement draws.')).toBeInTheDocument()
-    expect(screen.getAllByText('Editing: Taylor').length).toBeGreaterThan(0)
+    // Per-person section pills show the selected adult's name
+    expect(screen.getAllByText('Taylor').length).toBeGreaterThan(0)
   })
 
   it('keeps household CPF callbacks stable across unrelated household rerenders', () => {
