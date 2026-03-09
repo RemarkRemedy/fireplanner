@@ -264,6 +264,31 @@ describe('PR6 portability', () => {
     expect(localStorage.getItem(HOUSEHOLD_PLAN_STORAGE_KEY)).toBeTruthy()
   })
 
+  it('bootstraps the household store in-memory state from legacy localStorage', () => {
+    // Simulate production: legacy data exists but no household plan in localStorage.
+    // Must remove the household key that beforeEach's initializeManualPlan() wrote.
+    localStorage.removeItem(HOUSEHOLD_PLAN_STORAGE_KEY)
+    seedLegacySnapshot()
+
+    bootstrapPortabilityStores()
+
+    const state = useHouseholdPlanStore.getState()
+    expect(state.plan.adults[0]?.currentAge).toBe(32)
+    expect(state.provenance.source).toBe('legacy-individual')
+  })
+
+  it('persist middleware does not write defaults to localStorage on initial hydration', () => {
+    // Clear everything — simulating a fresh store with no persisted state
+    localStorage.clear()
+    useHouseholdPlanStore.persist.clearStorage()
+
+    // Trigger rehydrate with no data in localStorage
+    useHouseholdPlanStore.persist.rehydrate()
+
+    // Persist should NOT have written defaults to localStorage
+    expect(localStorage.getItem(HOUSEHOLD_PLAN_STORAGE_KEY)).toBeNull()
+  })
+
   it('detects a household migration when migrationDetector is imported before the household key exists', async () => {
     seedLegacySnapshot()
     localStorage.removeItem(HOUSEHOLD_PLAN_STORAGE_KEY)
