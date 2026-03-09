@@ -263,9 +263,11 @@ describe('Household editors', () => {
     setNumericInput(getFieldInput(streamCard, 'Annual amount'), '24000')
     await chooseSelectOption(user, streamCard, 'Age based on', 'Taylor (You)')
 
-    const taxCard = getCardByText("Pat's Tax & SRS Settings")
+    const taxCard = getCardByText("Pat's Tax Reliefs")
     setNumericInput(getFieldInput(taxCard, 'Personal reliefs'), '12000')
-    setNumericInput(getFieldInput(taxCard, 'SRS balance'), '5000')
+
+    const srsCard = getCardByText("Pat's SRS")
+    setNumericInput(getFieldInput(srsCard, 'SRS balance'), '5000')
 
     const lifeEventsCard = getCardByText("Pat's Life Events")
     await user.click(within(lifeEventsCard).getByRole('switch'))
