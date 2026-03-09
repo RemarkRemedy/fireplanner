@@ -227,7 +227,7 @@ export function PeopleSection({
                   </Button>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                   <div className="space-y-1">
                     <Label>Retirement Age</Label>
                     <NumberInput
@@ -354,7 +354,7 @@ export function PeopleSection({
                     </Button>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                     <div className="space-y-1">
                       <Label>Cost Owner</Label>
                       <Select

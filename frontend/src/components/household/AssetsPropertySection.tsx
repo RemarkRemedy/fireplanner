@@ -258,7 +258,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                     </Button>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                     {isMultiAdult && (
                       <div className="space-y-1">
                         <Label>Owner</Label>
@@ -347,7 +347,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                       <h3 className="font-medium">Purchase & Return Assumptions</h3>
                       <InfoTooltip text="These assumptions drive purchase, rental, and appreciation modeling for the selected property row." />
                     </div>
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                       <CurrencyInput
                         label="Purchase price"
                         value={property.purchasePrice}
@@ -398,7 +398,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                       <h3 className="font-medium">Existing Home & Mortgage</h3>
                       <InfoTooltip text="Use these fields for the current owned property, including mortgage balance, payments, and lease decay assumptions." />
                     </div>
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                       <CurrencyInput
                         label="Existing property value"
                         value={property.existingPropertyValue}
@@ -469,7 +469,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                         <h3 className="font-medium">HDB Monetization</h3>
                         <InfoTooltip text="Model HDB-specific monetization paths like Lease Buyback Scheme or room subletting directly on the shared property row." />
                       </div>
-                      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                         <div className="space-y-1">
                           <Label>Flat type</Label>
                           <Select
@@ -545,7 +545,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                       <h3 className="font-medium">Downsizing Scenario</h3>
                       <InfoTooltip text="Plan for selling, downsizing, or moving to rent later without leaving the household property surface." />
                     </div>
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                       <div className="space-y-1">
                         <Label>Scenario</Label>
                         <Select

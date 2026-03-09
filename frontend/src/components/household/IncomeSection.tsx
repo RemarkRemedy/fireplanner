@@ -692,7 +692,7 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
             <div className="space-y-1">
               <Label>Model</Label>
               <Select
@@ -887,7 +887,7 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
           )}
 
           {(salaryModel.salaryModel ?? 'simple') === 'data-driven' && (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 rounded-lg border p-4">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end rounded-lg border p-4">
               <div className="space-y-1">
                 <Label>MOM education benchmark</Label>
                 <Select
@@ -976,7 +976,7 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
                     </Button>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                     {isMultiAdult && (
                       <div className="space-y-1">
                         <Label>Owner</Label>
@@ -1179,7 +1179,7 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
           <CardTitle className="text-lg">{selectedAdult.displayName}'s SRS</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
             <CurrencyInput
               label="SRS balance"
               value={selectedAdult.srs.balance}
@@ -1316,7 +1316,7 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
                     </Button>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                     <NumberInput
                       label="Start age"
                       integer
