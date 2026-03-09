@@ -198,7 +198,8 @@ describe('useHouseholdPlanStore', () => {
     const state = useHouseholdPlanStore.getState()
 
     expect(useHouseholdPlanStore.persist.getOptions().name).toBe(HOUSEHOLD_PLAN_STORAGE_KEY)
-    expect(state.plan.planType).toBe('couple')
+    // planType auto-derived: 2 adults + 1 dependent = household
+    expect(state.plan.planType).toBe('household')
     expect(state.plan.adults).toHaveLength(2)
     expect(state.plan.dependents).toHaveLength(1)
     expect(state.plan.income.some((entry) => entry.id === 'income-partner-rental')).toBe(true)

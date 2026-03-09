@@ -15,7 +15,7 @@ export interface SetupDependentDraft {
 }
 
 interface PeopleRosterEditorProps {
-  planType: Exclude<HouseholdPlanType, 'individual'>
+  planType: HouseholdPlanType
   /** When true, always show partner toggle and dependents regardless of planType. Defaults to false. */
   showAllControls?: boolean
   selfName: string

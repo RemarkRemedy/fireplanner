@@ -90,7 +90,6 @@ export function PeopleSection({
   const addAdult = useHouseholdPlanStore((state) => state.addAdult)
   const updateAdult = useHouseholdPlanStore((state) => state.updateAdult)
   const removeAdult = useHouseholdPlanStore((state) => state.removeAdult)
-  const setPlanType = useHouseholdPlanStore((state) => state.setPlanType)
   const addDependent = useHouseholdPlanStore((state) => state.addDependent)
   const updateDependent = useHouseholdPlanStore((state) => state.updateDependent)
   const removeDependent = useHouseholdPlanStore((state) => state.removeDependent)
@@ -143,7 +142,7 @@ export function PeopleSection({
   return (
     <div className="space-y-6">
       <PeopleRosterEditor
-        planType={plan.planType === 'couple' ? 'couple' : 'household'}
+        planType={plan.planType}
         showAllControls
         selfName={selfAdult.displayName}
         selfAge={selfAdult.currentAge}
@@ -153,14 +152,10 @@ export function PeopleSection({
         onPartnerEnabledChange={(value) => {
           if (value && !partnerAdult) {
             addAdult(createPartnerAdult(selfAdult))
-            // Only promote to couple if currently individual — household stays household
-            if (plan.planType === 'individual') setPlanType('couple')
             return
           }
           if (!value && partnerAdult) {
             removeAdult(partnerAdult.id)
-            // Only demote to individual if currently couple — household stays household
-            if (plan.planType === 'couple') setPlanType('individual')
           }
         }}
         partnerName={partnerAdult?.displayName ?? ''}
