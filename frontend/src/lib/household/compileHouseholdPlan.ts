@@ -585,10 +585,18 @@ function evaluateExpenseBaseToday(
   return annualAmount
 }
 
+function resolveExpenseGrowthRate(expense: ExpenseItem, inflation: number): number {
+  const model = expense.growthModel ?? 'fixed'
+  if (model === 'inflation-linked') return inflation
+  if (model === 'none') return 0
+  return expense.growthRate ?? 0
+}
+
 function evaluateParentSupportExpense(
   expense: ExpenseItem,
   window: ResolvedTimingWindow,
-  yearOffset: number
+  yearOffset: number,
+  inflation: number
 ): number {
   if (!isYearOffsetActive(yearOffset, window) || expense.kind !== 'parent-support') {
     return 0
@@ -596,7 +604,7 @@ function evaluateParentSupportExpense(
 
   const yearsActive = yearOffset - window.startYearOffset
   const annualAmount = annualizeAmount(expense.amount, expense.periodicity)
-  const growthRate = expense.growthRate ?? 0
+  const growthRate = resolveExpenseGrowthRate(expense, inflation)
   return annualAmount * Math.pow(1 + growthRate, Math.max(0, yearsActive))
 }
 
@@ -1068,7 +1076,8 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
         parentSupportExpenseByYear[yearOffset] += evaluateParentSupportExpense(
           expense,
           window,
-          yearOffset
+          yearOffset,
+          normalized.assumptions.returns.inflation
         )
       }
       continue

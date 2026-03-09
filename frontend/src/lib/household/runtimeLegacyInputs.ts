@@ -110,9 +110,17 @@ function sumAdultField(
   return adults.reduce((sum, adult) => sum + pick(adult), 0)
 }
 
+function resolveGrowthRate(expense: ExpenseItem, inflation: number): number {
+  const model = expense.growthModel ?? 'fixed'
+  if (model === 'inflation-linked') return inflation
+  if (model === 'none') return 0
+  return expense.growthRate ?? 0
+}
+
 function mapParentSupport(
   expenses: ExpenseItem[],
   referenceAdult: PlanningAdult,
+  inflation: number,
 ): ProfileState['parentSupport'] {
   return expenses
     .filter((expense) => expense.kind === 'parent-support')
@@ -134,7 +142,7 @@ function mapParentSupport(
         monthlyAmount,
         startAge: range.startAge,
         endAge: range.endAge ?? referenceAdult.lifeExpectancy,
-        growthRate: expense.growthRate ?? 0,
+        growthRate: resolveGrowthRate(expense, inflation),
       }
     })
 }
@@ -394,7 +402,7 @@ function buildAggregateRuntimeSnapshot(
   defaults.profile.cpfLifePlan = referenceAdult.cpf.lifePlan
   defaults.profile.cpfRetirementSum = referenceAdult.cpf.retirementSum
   defaults.profile.parentSupportEnabled = plan.expenses.some((expense) => expense.kind === 'parent-support')
-  defaults.profile.parentSupport = mapParentSupport(plan.expenses, referenceAdult)
+  defaults.profile.parentSupport = mapParentSupport(plan.expenses, referenceAdult, plan.assumptions.returns.inflation)
   defaults.profile.healthcareConfig = structuredClone(referenceAdult.healthcare)
   defaults.profile.cpfOaWithdrawals = plan.adults.flatMap((adult) => (
     adult.cpf.oaWithdrawals.map((withdrawal) => ({ ...withdrawal }))
