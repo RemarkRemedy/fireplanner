@@ -540,7 +540,19 @@ export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
       merge: (persistedState, currentState) => {
         if (!isPersistedState(persistedState)) return currentState
 
-        const plan = persistedState.plan ?? currentState.plan
+        const rawPlan = persistedState.plan ?? currentState.plan
+
+        // Deduplicate assets/goals/properties that may have been double-seeded
+        if (rawPlan.assets) {
+          const seenIds = new Set<string>()
+          rawPlan.assets = rawPlan.assets.filter((a: { id: string }) => {
+            if (seenIds.has(a.id)) return false
+            seenIds.add(a.id)
+            return true
+          })
+        }
+
+        const plan = rawPlan
         const provenance = persistedState.provenance ?? currentState.provenance
         const hydratedRevision =
           typeof persistedState.householdPlanRevision === 'number'

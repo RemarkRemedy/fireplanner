@@ -84,7 +84,8 @@ export function indexById<T extends { id: string }>(
 
   for (const item of items) {
     if (item.id in byId) {
-      throw new Error(`Duplicate ${collectionName} id "${item.id}" in household plan.`)
+      console.warn(`Duplicate ${collectionName} id "${item.id}" in household plan — keeping first, skipping duplicate.`)
+      continue
     }
     byId[item.id] = item
   }
