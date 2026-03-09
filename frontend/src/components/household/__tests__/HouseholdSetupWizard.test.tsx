@@ -129,7 +129,12 @@ describe('Household setup flow', () => {
     renderStartPage()
 
     await user.click(screen.getByRole('button', { name: /Couple/i }))
+    // Pathway cards now shown for all plan types — select one to reveal the wizard
+    await user.click(screen.getByText('I know when I want to retire'))
     expect(screen.getByText('Couple setup')).toBeInTheDocument()
+
+    // Fill in partner name (required for couple plan's Create plan button)
+    await user.type(screen.getByLabelText('Partner name'), 'Pat')
 
     await user.click(screen.getByRole('button', { name: 'Add dependent' }))
     await user.clear(screen.getByLabelText('Name'))
