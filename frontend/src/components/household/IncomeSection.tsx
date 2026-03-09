@@ -326,7 +326,6 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
           )
 
   const { projection: jointProjection, summary: jointSummary } = useIncomeProjection()
-  const [projectionExpanded, setProjectionExpanded] = useState(false)
   const incomeNudge = useSectionNudge('section-income')
 
   const isMultiAdult = adults.length > 1
@@ -631,22 +630,11 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
       {activeProjection && activeProjection.length > 0 && (
         <Card>
           <CardHeader>
-            <button
-              type="button"
-              className="flex items-center justify-between w-full text-left"
-              onClick={() => setProjectionExpanded(!projectionExpanded)}
-            >
-              <CardTitle className="text-lg">{projectionLabel}</CardTitle>
-              <span className="text-sm text-primary hover:underline">
-                {projectionExpanded ? 'Hide table' : `Show ${activeProjection.length} rows`}
-              </span>
-            </button>
+            <CardTitle className="text-lg">{projectionLabel}</CardTitle>
           </CardHeader>
-          {projectionExpanded && (
-            <CardContent>
-              <ProjectionTable data={activeProjection} retirementAge={projectionRetirementAge} />
-            </CardContent>
-          )}
+          <CardContent>
+            <ProjectionTable data={activeProjection} retirementAge={projectionRetirementAge} />
+          </CardContent>
         </Card>
       )}
 
