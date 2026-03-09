@@ -890,6 +890,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
         </CardContent>
       </Card>
 
+      <div id="section-healthcare" className="scroll-mt-16" />
       <Card id="household-healthcare">
         <CardHeader>
           <CardTitle className="text-lg">{selectedAdult.displayName}'s Healthcare</CardTitle>
@@ -1030,6 +1031,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
         </CardContent>
       </Card>
 
+      <div id="section-goals" className="scroll-mt-16" />
       <Card id="household-goals">
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
