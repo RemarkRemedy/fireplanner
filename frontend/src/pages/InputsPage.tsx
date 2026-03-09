@@ -41,21 +41,55 @@ const HOUSEHOLD_PLAN_LABELS = {
   household: 'Household',
 } as const
 
+type ScopePill =
+  | { kind: 'person' | 'shared'; adults: { id: string; name: string }[]; selectedId: string; onSelect: (id: string) => void }
+  | { kind: 'household' }
+
 interface HouseholdPrototypeSectionProps {
   sectionId: SectionId
   title: string
   description: string
   isComplete: boolean
   /** Scope pill shown in section header */
-  scopePill?: { label: string; kind: 'person' | 'shared' | 'household' }
+  scopePill?: ScopePill
   children: React.ReactNode
 }
 
-const SCOPE_PILL_STYLES = {
-  person: 'bg-primary/15 text-primary border-primary/30',
-  shared: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700',
-  household: 'bg-muted text-muted-foreground border-border',
-} as const
+/** Segmented toggle for switching between adults inline in section headers */
+function AdultTogglePill({ adults, selectedId, onSelect, suffix }: {
+  adults: { id: string; name: string }[]
+  selectedId: string
+  onSelect: (id: string) => void
+  suffix?: string
+}) {
+  return (
+    <span
+      className="inline-flex items-center rounded-full border border-primary/30 text-[11px] font-medium overflow-hidden"
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation() }}
+    >
+      {adults.map((adult) => (
+        <button
+          key={adult.id}
+          type="button"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSelect(adult.id) }}
+          className={`px-2 py-0.5 transition-colors ${
+            adult.id === selectedId
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-primary/5 text-primary hover:bg-primary/15'
+          }`}
+        >
+          {adult.name}
+        </button>
+      ))}
+      {suffix && (
+        <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-l border-amber-300 dark:border-amber-700">
+          {suffix}
+        </span>
+      )}
+    </span>
+  )
+}
 
 function HouseholdPrototypeSection({
   sectionId,
@@ -92,9 +126,23 @@ function HouseholdPrototypeSection({
                   {isComplete ? 'Configured' : 'Needs review'}
                 </Badge>
                 {scopePill && (
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${SCOPE_PILL_STYLES[scopePill.kind]}`}>
-                    {scopePill.label}
-                  </span>
+                  scopePill.kind === 'household' ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border bg-muted text-muted-foreground border-border">
+                      Household
+                    </span>
+                  ) : scopePill.adults.length > 1 ? (
+                    <AdultTogglePill
+                      adults={scopePill.adults}
+                      selectedId={scopePill.selectedId}
+                      onSelect={scopePill.onSelect}
+                      suffix={scopePill.kind === 'shared' ? '+ shared' : undefined}
+                    />
+                  ) : (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border bg-primary/15 text-primary border-primary/30">
+                      {scopePill.adults[0]?.name}
+                      {scopePill.kind === 'shared' ? ' + shared' : ''}
+                    </span>
+                  )
                 )}
               </div>
               <p className="text-sm text-muted-foreground">{description}</p>
@@ -185,7 +233,7 @@ export function InputsPage() {
           title="Income & Work"
           description="Per-adult salary models, streams, life events, and tax relief inputs."
           isComplete={sectionCompletion['section-income'].isComplete}
-          scopePill={selectedAdult ? { label: selectedAdult.displayName, kind: 'person' } : undefined}
+          scopePill={selectedAdult ? { kind: 'person', adults: adults.map(a => ({ id: a.id, name: a.displayName })), selectedId: selectedAdultId, onSelect: setSelectedAdultId } : undefined}
         >
           <IncomeSection selectedAdultId={selectedAdult?.id ?? null} />
         </HouseholdPrototypeSection>
@@ -201,7 +249,7 @@ export function InputsPage() {
             title="Spending, Healthcare & Goals"
             description="Shared spending, private spending, healthcare, goals, and retirement draws."
             isComplete={sectionCompletion['section-expenses'].isComplete}
-            scopePill={{ label: selectedAdult ? `${selectedAdult.displayName} + shared` : 'Shared', kind: 'shared' }}
+            scopePill={selectedAdult ? { kind: 'shared', adults: adults.map(a => ({ id: a.id, name: a.displayName })), selectedId: selectedAdultId, onSelect: setSelectedAdultId } : undefined}
           >
             <SpendingGoalsSection selectedAdultId={selectedAdult?.id ?? null} />
           </HouseholdPrototypeSection>
@@ -221,7 +269,7 @@ export function InputsPage() {
           title="Assets & Net Worth"
           description="Liquid assets, CPF balances, SRS, and household balance-sheet coverage."
           isComplete={sectionCompletion['section-net-worth'].isComplete}
-          scopePill={{ label: 'Household', kind: 'household' }}
+          scopePill={{ kind: 'household' }}
         >
           <AssetsPropertySection mode="assets" />
         </HouseholdPrototypeSection>
@@ -240,7 +288,7 @@ export function InputsPage() {
               : 'CPF settings and balances.'
           }
           isComplete={sectionCompletion['section-cpf'].isComplete}
-          scopePill={selectedAdult ? { label: selectedAdult.displayName, kind: 'person' } : undefined}
+          scopePill={selectedAdult ? { kind: 'person', adults: adults.map(a => ({ id: a.id, name: a.displayName })), selectedId: selectedAdultId, onSelect: setSelectedAdultId } : undefined}
         >
           {cpfModel ? (
             <CpfSection model={cpfModel} />
@@ -262,7 +310,7 @@ export function InputsPage() {
           title="Property"
           description="Ownership-scoped homes, mortgages, and housing decisions."
           isComplete={sectionCompletion['section-property'].isComplete}
-          scopePill={{ label: 'Household', kind: 'household' }}
+          scopePill={{ kind: 'household' }}
         >
           <AssetsPropertySection mode="property" />
         </HouseholdPrototypeSection>
@@ -277,7 +325,7 @@ export function InputsPage() {
           title="FIRE Settings"
           description="Household-level assumptions, return settings, and normalized analysis controls."
           isComplete={sectionCompletion['section-fire-settings'].isComplete}
-          scopePill={{ label: 'Household', kind: 'household' }}
+          scopePill={{ kind: 'household' }}
         >
           <HouseholdAssumptionsSection mode="assumptions" />
           <WithdrawalStrategyCard />
@@ -293,7 +341,7 @@ export function InputsPage() {
           title="Allocation"
           description="Portfolio templates, glide paths, and household-aware portfolio assumptions."
           isComplete={sectionCompletion['section-allocation'].isComplete}
-          scopePill={{ label: 'Household', kind: 'household' }}
+          scopePill={{ kind: 'household' }}
         >
           <HouseholdAssumptionsSection mode="allocation" />
         </HouseholdPrototypeSection>
