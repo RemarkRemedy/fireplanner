@@ -10,17 +10,8 @@ import { validateProfileConsistency } from '@/lib/validation/rules'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 
-export type SectionId =
-  | 'section-personal'
-  | 'section-fire-settings'
-  | 'section-income'
-  | 'section-expenses'
-  | 'section-goals'
-  | 'section-net-worth'
-  | 'section-cpf'
-  | 'section-healthcare'
-  | 'section-property'
-  | 'section-allocation'
+export type { SectionId } from '@/lib/household/sectionOrder'
+import type { SectionId } from '@/lib/household/sectionOrder'
 
 export type SectionStatus = 'default' | 'customized' | 'error'
 
