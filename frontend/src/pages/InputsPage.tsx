@@ -184,7 +184,7 @@ export function InputsPage() {
 
   const plan = useHouseholdPlanStore((state) => state.plan)
   const cpfEnabled = useUIStore((state) => state.cpfEnabled)
-  const healthcareEnabled = useUIStore((state) => state.healthcareEnabled)
+
   const propertyEnabled = useUIStore((state) => state.propertyEnabled)
   const sectionOrder = useUIStore((s) => s.sectionOrder)
   const { sections: sectionCompletion } = useSectionCompletion()
@@ -244,21 +244,15 @@ export function InputsPage() {
       id: 'section-expenses',
       visible: true,
       element: (
-        <Fragment>
-          <HouseholdPrototypeSection
-            sectionId="section-expenses"
-            title="Spending, Healthcare & Goals"
-            description="Shared spending, private spending, healthcare, goals, and retirement draws."
-            isComplete={sectionCompletion['section-expenses'].isComplete}
-            scopePill={selectedAdult ? { kind: 'shared', adults: adults.map(a => ({ id: a.id, name: a.displayName })), selectedId: selectedAdultId, onSelect: setSelectedAdultId } : undefined}
-          >
-            <SpendingGoalsSection selectedAdultId={selectedAdult?.id ?? null} />
-          </HouseholdPrototypeSection>
-          {/* Invisible scroll anchor — Goals editing lives inside SpendingGoalsSection */}
-          <div id="section-goals" className="scroll-mt-16" />
-          {/* Invisible scroll anchor — Healthcare editing lives inside SpendingGoalsSection */}
-          {healthcareEnabled && <div id="section-healthcare" className="scroll-mt-16" />}
-        </Fragment>
+        <HouseholdPrototypeSection
+          sectionId="section-expenses"
+          title="Spending, Healthcare & Goals"
+          description="Shared spending, private spending, healthcare, goals, and retirement draws."
+          isComplete={sectionCompletion['section-expenses'].isComplete}
+          scopePill={selectedAdult ? { kind: 'shared', adults: adults.map(a => ({ id: a.id, name: a.displayName })), selectedId: selectedAdultId, onSelect: setSelectedAdultId } : undefined}
+        >
+          <SpendingGoalsSection selectedAdultId={selectedAdult?.id ?? null} />
+        </HouseholdPrototypeSection>
       ),
     },
     {
