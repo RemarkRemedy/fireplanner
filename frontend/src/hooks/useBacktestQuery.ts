@@ -103,7 +103,7 @@ export function buildBacktestWorkerParams(input: {
   const retirementOffset = normalized.householdRetirementYearOffset
   const retirementDuration = config.retirementDuration
   const postRetirementIncome = normalized.entry.selectors.backtest?.postRetirementIncomeByYear
-    .slice(retirementOffset + 1, retirementOffset + 1 + retirementDuration)
+    ?.slice(retirementOffset, retirementOffset + retirementDuration)
     ?? []
   // C9/W38: Include all portfolio adjustment kinds (goals, downsizing, life
   // events, etc.), not just retirement-withdrawal. The backtest engine treats

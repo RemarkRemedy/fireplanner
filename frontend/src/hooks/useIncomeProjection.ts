@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import type { IncomeProjectionRow, IncomeSummaryStats } from '@/lib/types'
 import { generateIncomeProjection, calculateIncomeSummary } from '@/lib/calculations/income'
 export { buildProjectionParams, deriveCpfHousingFromProperty } from '@/lib/calculations/projectionParams'
-import { deriveCpfHousingFromProperty } from '@/lib/calculations/projectionParams'
+import { buildProjectionParams, deriveCpfHousingFromProperty } from '@/lib/calculations/projectionParams'
 import {
   compileHouseholdPlan,
   type CompiledHouseholdPlan,
@@ -249,61 +249,27 @@ export function useIncomeProjection(): IncomeProjectionResult {
       return { projection: null, summary: null, hasErrors: true, errors: allErrors }
     }
 
-    const projection = generateIncomeProjection({
-      currentAge: normalized.currentAge,
-      retirementAge: normalized.retirementAge,
-      lifeExpectancy: normalized.lifeExpectancy,
-      salaryModel: income.salaryModel,
-      annualSalary: income.annualSalary,
-      salaryGrowthRate: income.salaryGrowthRate,
-      bonusMonths: income.bonusMonths,
-      realisticPhases: income.realisticPhases,
-      promotionJumps: income.promotionJumps,
-      momEducation: income.momEducation,
-      momAdjustment: income.momAdjustment,
-      employerCpfEnabled: income.employerCpfEnabled,
-      incomeStreams: income.incomeStreams,
-      lifeEvents: income.lifeEvents,
-      lifeEventsEnabled: income.lifeEventsEnabled,
-      annualExpenses: profile.annualExpenses,
-      inflation: profile.inflation,
-      personalReliefs: income.personalReliefs,
-      srsAnnualContribution: profile.srsAnnualContribution,
-      srsPostFireEnabled: profile.srsPostFireEnabled,
-      initialCpfOA: profile.cpfOA,
-      initialCpfSA: profile.cpfSA,
-      initialCpfMA: profile.cpfMA,
-      initialCpfRA: profile.cpfRA,
-      cpfLifeStartAge: profile.cpfLifeStartAge,
-      cpfLifePlan: profile.cpfLifePlan,
-      cpfRetirementSum: profile.cpfRetirementSum,
-      cpfHousingMode: cpfHousing.cpfHousingMode,
-      cpfHousingMonthly: cpfHousing.cpfHousingMonthly,
-      cpfMortgageYearsLeft: cpfHousing.cpfMortgageYearsLeft,
-      cpfLifeActualMonthlyPayout: profile.cpfLifeActualMonthlyPayout,
-      residencyStatus: profile.residencyStatus,
-      srsBalance: profile.srsBalance,
-      srsInvestmentReturn: profile.srsInvestmentReturn,
-      srsDrawdownStartAge: profile.srsDrawdownStartAge,
-      cpfOaWithdrawals: profile.cpfOaWithdrawals,
-      cpfisEnabled: profile.cpfisEnabled,
-      cpfisOaReturn: profile.cpfisOaReturn,
-      cpfisSaReturn: profile.cpfisSaReturn,
-      cpfTopUpOA: profile.cpfTopUpOA,
-      cpfTopUpSA: profile.cpfTopUpSA,
-      cpfTopUpMA: profile.cpfTopUpMA,
-      lockedAssets: profile.lockedAssets,
-      expenseAdjustments: profile.expenseAdjustments,
-      cpfAutoFallback: profile.cpfAutoFallback,
-      cpfAutoFallbackIncludeSA: profile.cpfAutoFallbackIncludeSA,
-      cpfVirtualRebalancing: profile.cpfVirtualRebalancing,
-      cpfVirtualRebalancingMode: profile.cpfVirtualRebalancingMode,
-    })
+    const projectionParams = buildProjectionParams(
+      {
+        ...profile,
+        currentAge: normalized.currentAge,
+        retirementAge: normalized.retirementAge,
+        lifeExpectancy: normalized.lifeExpectancy,
+      },
+      income,
+      property,
+    )
+    if (!projectionParams) {
+      return { projection: null, summary: null, hasErrors: true, errors: allErrors }
+    }
+
+    const projection = generateIncomeProjection(projectionParams)
 
     const summary = calculateIncomeSummary(projection, profile.annualExpenses)
 
     return { projection, summary, hasErrors: false, errors: {} }
   }, [
+    income,
     normalized.currentAge,
     normalized.retirementAge,
     normalized.lifeExpectancy,

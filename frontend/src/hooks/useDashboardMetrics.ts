@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useProjection } from '@/hooks/useProjection'
 import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
+import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useAdjustedFireNumber } from '@/hooks/useAdjustedFireNumber'
 
 interface DashboardMetrics {

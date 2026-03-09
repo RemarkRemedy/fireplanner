@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { renderHook } from '@testing-library/react'
+import { act, renderHook } from '@testing-library/react'
 import { useCpfProjection } from './useCpfProjection'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
@@ -123,6 +123,21 @@ describe('useCpfProjection', () => {
     expect(result.current.hasErrors).toBe(false)
     expect(result.current.rows).not.toBeNull()
     expect(result.current.rows!.length).toBeGreaterThan(0)
+  })
+
+  it('drops cached normalized rows once upstream validation fails', () => {
+    const { result, rerender } = renderHook(() => useCpfProjection())
+
+    expect(result.current.hasErrors).toBe(false)
+    expect(result.current.rows).not.toBeNull()
+
+    act(() => {
+      useProfileStore.getState().setField('currentAge', 15)
+    })
+    rerender()
+
+    expect(result.current.hasErrors).toBe(true)
+    expect(result.current.rows).toBeNull()
   })
 
   it('annualInterest is always >= 0 (clamped)', () => {

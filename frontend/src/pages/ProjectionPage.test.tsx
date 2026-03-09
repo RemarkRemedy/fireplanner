@@ -171,6 +171,7 @@ beforeEach(() => {
   useUIStore.getState().setField('dollarBasis', 'nominal')
 
   mockUseProjection.mockReturnValue({
+    fireMetrics: null,
     rows: [ROW],
     summary: SUMMARY,
     params: null,
