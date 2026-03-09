@@ -21,9 +21,13 @@ interface QuickProjectionChartProps {
   data: ProjectionPoint[]
   fireNumber: number
   fireAge: number
+  /** X-axis label (default "Age") */
+  xLabel?: string
+  /** Tooltip label formatter (default: v => `Age ${v}`) */
+  tooltipLabelFormatter?: (value: number) => string
 }
 
-export function QuickProjectionChart({ data, fireNumber, fireAge }: QuickProjectionChartProps) {
+export function QuickProjectionChart({ data, fireNumber, fireAge, xLabel = 'Age', tooltipLabelFormatter }: QuickProjectionChartProps) {
   const colors = useChartColors()
   const isMobile = useIsMobile()
 
@@ -51,7 +55,7 @@ export function QuickProjectionChart({ data, fireNumber, fireAge }: QuickProject
             <XAxis
               dataKey="age"
               tick={{ fontSize: 11 }}
-              label={{ value: 'Age', position: 'insideBottom', offset: -3, fontSize: 11 }}
+              label={{ value: xLabel, position: 'insideBottom', offset: -3, fontSize: 11 }}
             />
             <YAxis
               tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
@@ -61,7 +65,7 @@ export function QuickProjectionChart({ data, fireNumber, fireAge }: QuickProject
             <Tooltip
               trigger={isMobile ? 'click' : undefined}
               formatter={(value: number) => formatCurrency(value)}
-              labelFormatter={(age: number) => `Age ${age}`}
+              labelFormatter={tooltipLabelFormatter ?? ((age: number) => `Age ${age}`)}
             />
             <Area
               type="monotone"

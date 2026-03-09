@@ -14,6 +14,9 @@ const ALLOWED_IMPORTERS = [
   // StartPage imports DEFAULT_PROFILE constant (not a store subscription) for
   // canonical default values used in the onboarding calculator.
   path.resolve(FRONTEND_ROOT, 'src/pages/StartPage.tsx'),
+  // HouseholdSetupWizard imports DEFAULT_PROFILE constant (not a store subscription)
+  // for FIRE preview calculations in the couple/household onboarding wizard.
+  path.resolve(FRONTEND_ROOT, 'src/components/household/HouseholdSetupWizard.tsx'),
 ].sort()
 const LEGACY_STORE_IMPORT_PATTERN = /from\s+['"][^'"]*use(Profile|Income|Property)Store['"]/m
 
