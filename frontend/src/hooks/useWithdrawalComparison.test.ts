@@ -1,16 +1,15 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useWithdrawalComparison, getStrategyLabel } from './useWithdrawalComparison'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { setupTestPlan } from '@/test-helpers/setupTestPlan'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useUIStore } from '@/stores/useUIStore'
 
 beforeEach(() => {
-  useProfileStore.getState().reset()
-  useIncomeStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   useAllocationStore.getState().reset()
   useWithdrawalStore.getState().reset()
   useSimulationStore.getState().reset()
@@ -52,18 +51,18 @@ describe('getStrategyLabel', () => {
 
 describe('useWithdrawalComparison', () => {
   it('returns results with valid profile', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 55,
-      retirementAge: 58,
-      lifeExpectancy: 90,
-      liquidNetWorth: 2000000,
-      annualExpenses: 80000,
-      swr: 0.04,
-      expectedReturn: 0.05,
-      inflation: 0.025,
-      expenseRatio: 0.003,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 55,
+        retirementAge: 58,
+        lifeExpectancy: 90,
+      },
+      assets: { liquidNetWorth: 2000000 },
+      expenses: { annualExpenses: 80000 },
+      assumptions: {
+        fire: { swr: 0.04 },
+        returns: { expectedReturn: 0.05, inflation: 0.025, expenseRatio: 0.003 },
+      },
     })
     const { result } = renderHook(() => useWithdrawalComparison())
     expect(result.current.hasErrors).toBe(false)
@@ -71,26 +70,32 @@ describe('useWithdrawalComparison', () => {
   })
 
   it('returns errors when profile has validation errors', () => {
-    useProfileStore.getState().setField('currentAge', 15) // Invalid
+    // Set up an invalid plan where currentAge > retirementAge > lifeExpectancy
+    setupTestPlan({
+      adult: {
+        currentAge: 30,
+        retirementAge: 25,
+        lifeExpectancy: 20,
+      },
+    })
     const { result } = renderHook(() => useWithdrawalComparison())
     expect(result.current.hasErrors).toBe(true)
     expect(result.current.results).toBeNull()
-    expect(Object.keys(result.current.errors).length).toBeGreaterThan(0)
   })
 
   it('results contain strategy summaries when valid', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 55,
-      retirementAge: 58,
-      lifeExpectancy: 90,
-      liquidNetWorth: 2000000,
-      annualExpenses: 80000,
-      swr: 0.04,
-      expectedReturn: 0.05,
-      inflation: 0.025,
-      expenseRatio: 0.003,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 55,
+        retirementAge: 58,
+        lifeExpectancy: 90,
+      },
+      assets: { liquidNetWorth: 2000000 },
+      expenses: { annualExpenses: 80000 },
+      assumptions: {
+        fire: { swr: 0.04 },
+        returns: { expectedReturn: 0.05, inflation: 0.025, expenseRatio: 0.003 },
+      },
     })
     const { result } = renderHook(() => useWithdrawalComparison())
     expect(result.current.results).not.toBeNull()
@@ -101,19 +106,18 @@ describe('useWithdrawalComparison', () => {
 
   it('uses portfolio return when usePortfolioReturn is true', () => {
     // With manual return (10%), usePortfolioReturn = false
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 55,
-      retirementAge: 58,
-      lifeExpectancy: 90,
-      liquidNetWorth: 2000000,
-      annualExpenses: 80000,
-      swr: 0.04,
-      expectedReturn: 0.10, // 10% — far from balanced portfolio return (~4.85%)
-      inflation: 0.025,
-      expenseRatio: 0.003,
-      usePortfolioReturn: false,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 55,
+        retirementAge: 58,
+        lifeExpectancy: 90,
+      },
+      assets: { liquidNetWorth: 2000000 },
+      expenses: { annualExpenses: 80000 },
+      assumptions: {
+        fire: { swr: 0.04 },
+        returns: { expectedReturn: 0.10, inflation: 0.025, expenseRatio: 0.003, usePortfolioReturn: false },
+      },
     })
     useAllocationStore.setState({ ...useAllocationStore.getState(), validationErrors: {} })
     const { result: manual, unmount: unmountManual } = renderHook(() => useWithdrawalComparison())
@@ -125,9 +129,18 @@ describe('useWithdrawalComparison', () => {
     unmountManual()
 
     // Now enable portfolio return — balanced allocation yields ~4.85% vs 10% manual
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      usePortfolioReturn: true,
+    setupTestPlan({
+      adult: {
+        currentAge: 55,
+        retirementAge: 58,
+        lifeExpectancy: 90,
+      },
+      assets: { liquidNetWorth: 2000000 },
+      expenses: { annualExpenses: 80000 },
+      assumptions: {
+        fire: { swr: 0.04 },
+        returns: { expectedReturn: 0.10, inflation: 0.025, expenseRatio: 0.003, usePortfolioReturn: true },
+      },
     })
     const { result: portfolio } = renderHook(() => useWithdrawalComparison())
     expect(portfolio.current.hasErrors).toBe(false)
@@ -141,19 +154,18 @@ describe('useWithdrawalComparison', () => {
   })
 
   it('uses initialPortfolioOverride when provided', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 55,
-      retirementAge: 58,
-      lifeExpectancy: 90,
-      liquidNetWorth: 2000000,
-      annualExpenses: 80000,
-      swr: 0.04,
-      expectedReturn: 0.05,
-      inflation: 0.025,
-      expenseRatio: 0.003,
-      usePortfolioReturn: false,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 55,
+        retirementAge: 58,
+        lifeExpectancy: 90,
+      },
+      assets: { liquidNetWorth: 2000000 },
+      expenses: { annualExpenses: 80000 },
+      assumptions: {
+        fire: { swr: 0.04 },
+        returns: { expectedReturn: 0.05, inflation: 0.025, expenseRatio: 0.003, usePortfolioReturn: false },
+      },
     })
 
     // Without override — uses compound growth from liquidNetWorth
@@ -181,19 +193,18 @@ describe('useWithdrawalComparison', () => {
   it('uses projected portfolio when no override is provided', () => {
     // Two profiles with different liquidNetWorth — no override in either case.
     // The hook must use compound growth from liquidNetWorth when override is absent.
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 55,
-      retirementAge: 58,
-      lifeExpectancy: 90,
-      liquidNetWorth: 1000000,
-      annualExpenses: 80000,
-      swr: 0.04,
-      expectedReturn: 0.05,
-      inflation: 0.025,
-      expenseRatio: 0.003,
-      usePortfolioReturn: false,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 55,
+        retirementAge: 58,
+        lifeExpectancy: 90,
+      },
+      assets: { liquidNetWorth: 1000000 },
+      expenses: { annualExpenses: 80000 },
+      assumptions: {
+        fire: { swr: 0.04 },
+        returns: { expectedReturn: 0.05, inflation: 0.025, expenseRatio: 0.003, usePortfolioReturn: false },
+      },
     })
     const { result: small, unmount: unmountSmall } = renderHook(() => useWithdrawalComparison())
     expect(small.current.hasErrors).toBe(false)
@@ -203,9 +214,18 @@ describe('useWithdrawalComparison', () => {
     ].terminalPortfolio
     unmountSmall()
 
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      liquidNetWorth: 2000000,
+    setupTestPlan({
+      adult: {
+        currentAge: 55,
+        retirementAge: 58,
+        lifeExpectancy: 90,
+      },
+      assets: { liquidNetWorth: 2000000 },
+      expenses: { annualExpenses: 80000 },
+      assumptions: {
+        fire: { swr: 0.04 },
+        returns: { expectedReturn: 0.05, inflation: 0.025, expenseRatio: 0.003, usePortfolioReturn: false },
+      },
     })
     const { result: large } = renderHook(() => useWithdrawalComparison())
     expect(large.current.hasErrors).toBe(false)

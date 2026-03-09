@@ -23,13 +23,16 @@ import {
   calculateSellAndRent,
 } from '@/lib/calculations/property'
 import { buildProjectionParams } from './useIncomeProjection'
-import { DEFAULT_PROFILE, useProfileStore } from '@/stores/useProfileStore'
-import { DEFAULT_INCOME, useIncomeStore } from '@/stores/useIncomeStore'
-import { DEFAULT_PROPERTY, usePropertyStore } from '@/stores/usePropertyStore'
+import { DEFAULT_PROFILE } from '@/stores/useProfileStore'
+import { DEFAULT_INCOME } from '@/stores/useIncomeStore'
+import { DEFAULT_PROPERTY } from '@/stores/usePropertyStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
 import { useNormalizedAnalysisStore } from '@/stores/useNormalizedAnalysisStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { fromLegacyIndividual } from '@/lib/household/fromLegacyIndividual'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 
 type FixtureProfileState = typeof DEFAULT_PROFILE & {
   validationErrors: Record<string, string>
@@ -103,9 +106,12 @@ function seedStores(snapshot: (typeof LEGACY_PARITY_FIXTURES)[keyof typeof LEGAC
   const state = buildFixtureState(snapshot)
   act(() => {
     useNormalizedAnalysisStore.getState().clearEntries()
-    useProfileStore.setState(state.profile)
-    useIncomeStore.setState(state.income)
-    usePropertyStore.setState(state.property)
+    // Seed household plan store so hooks that read from it get the right data
+    const plan = fromLegacyIndividual(snapshot)
+    useHouseholdPlanStore.getState().setPlan(plan, {
+      source: 'manual',
+      initializedAt: new Date().toISOString(),
+    })
   })
   return state
 }
@@ -514,9 +520,7 @@ beforeEach(() => {
   act(() => {
     localStorage.clear()
     useNormalizedAnalysisStore.getState().clearEntries()
-    useProfileStore.getState().reset()
-    useIncomeStore.getState().reset()
-    usePropertyStore.getState().reset()
+    useHouseholdPlanStore.getState().reset()
     useAllocationStore.getState().reset()
     useSimulationStore.getState().reset()
     useWithdrawalStore.getState().reset()
@@ -541,12 +545,14 @@ describe('normalized analysis parity snapshots', () => {
     expectParityClose(surface, legacySurface)
     expect(surface).toMatchSnapshot()
 
+    const householdPlan = useHouseholdPlanStore.getState().plan
+    const { profile: runtimeProfile } = buildHouseholdRuntimeLegacyInputs(householdPlan)
     const sequenceRiskSurface = buildSequenceRiskSurface(buildSequenceRiskWorkerParams({
       allocation: state.allocation,
       analysisPortfolio: analysisResult,
       crisis: CRISIS,
       normalized,
-      profile: useProfileStore.getState(),
+      profile: runtimeProfile,
       simulation: state.simulation,
       withdrawal: state.withdrawal,
     }))
