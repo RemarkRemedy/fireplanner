@@ -81,6 +81,7 @@ export function computeCashReservePlan(params: CashReservePlanParams): CashReser
 /**
  * Compute the initial cash reserve offset from liquid net worth.
  * Returns the amount carved out of liquidNetWorth to pre-fund the reserve.
+ * Reserve dollars are carved out first; only the remainder stays investable.
  */
 export function computeCashReserveOffset(
   liquidNetWorth: number,

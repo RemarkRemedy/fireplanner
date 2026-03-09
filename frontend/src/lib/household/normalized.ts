@@ -36,7 +36,7 @@ export interface NormalizedHouseholdPlan {
   propertiesById: Record<string, PropertyPlan>
 }
 
-function ownerRank(owner: EntryOwner): number {
+function entryOwnerRank(owner: string, path: string): number {
   switch (owner) {
     case 'self':
       return 0
@@ -44,6 +44,19 @@ function ownerRank(owner: EntryOwner): number {
       return 1
     case 'shared':
       return 2
+    default:
+      throw new Error(`Unknown owner "${owner}" at ${path}. Expected "self", "partner", or "shared".`)
+  }
+}
+
+function adultOwnerRank(owner: string, path: string): number {
+  switch (owner) {
+    case 'self':
+      return 0
+    case 'partner':
+      return 1
+    default:
+      throw new Error(`Unknown adult owner "${owner}" at ${path}. Expected "self" or "partner".`)
   }
 }
 
@@ -63,15 +76,27 @@ function timingSortKey(timing?: TimingRule): [number, number, number] {
   ]
 }
 
-export function indexById<T extends { id: string }>(items: readonly T[]): Record<string, T> {
-  return Object.fromEntries(items.map((item) => [item.id, item])) as Record<string, T>
+export function indexById<T extends { id: string }>(
+  items: readonly T[],
+  collectionName: string,
+): Record<string, T> {
+  const byId: Record<string, T> = {}
+
+  for (const item of items) {
+    if (item.id in byId) {
+      throw new Error(`Duplicate ${collectionName} id "${item.id}" in household plan.`)
+    }
+    byId[item.id] = item
+  }
+
+  return byId
 }
 
 export function sortByOwnerThenTiming<T extends { id: string; owner: EntryOwner; timing?: TimingRule }>(
   items: readonly T[]
 ): T[] {
   return [...items].sort((left, right) => {
-    const ownerDiff = ownerRank(left.owner) - ownerRank(right.owner)
+    const ownerDiff = entryOwnerRank(left.owner, `${left.id}.owner`) - entryOwnerRank(right.owner, `${right.id}.owner`)
     if (ownerDiff !== 0) return ownerDiff
 
     const [leftStart, leftEnd, leftKind] = timingSortKey(left.timing)
@@ -86,7 +111,7 @@ export function sortByOwnerThenTiming<T extends { id: string; owner: EntryOwner;
 
 function sortAdults(adults: readonly PlanningAdult[]): PlanningAdult[] {
   return [...adults].sort((left, right) => {
-    const ownerDiff = ownerRank(left.owner) - ownerRank(right.owner)
+    const ownerDiff = adultOwnerRank(left.owner, `adults.${left.id}.owner`) - adultOwnerRank(right.owner, `adults.${right.id}.owner`)
     if (ownerDiff !== 0) return ownerDiff
     if (left.currentAge !== right.currentAge) return left.currentAge - right.currentAge
     return left.id.localeCompare(right.id)
@@ -95,7 +120,7 @@ function sortAdults(adults: readonly PlanningAdult[]): PlanningAdult[] {
 
 function sortDependents(dependents: readonly Dependent[]): Dependent[] {
   return [...dependents].sort((left, right) => {
-    const ownerDiff = ownerRank(left.owner) - ownerRank(right.owner)
+    const ownerDiff = entryOwnerRank(left.owner, `dependents.${left.id}.owner`) - entryOwnerRank(right.owner, `dependents.${right.id}.owner`)
     if (ownerDiff !== 0) return ownerDiff
     const leftAge = left.currentAge ?? Number.MAX_SAFE_INTEGER
     const rightAge = right.currentAge ?? Number.MAX_SAFE_INTEGER
@@ -106,7 +131,7 @@ function sortDependents(dependents: readonly Dependent[]): Dependent[] {
 
 function sortProperties(properties: readonly PropertyPlan[]): PropertyPlan[] {
   return [...properties].sort((left, right) => {
-    const ownerDiff = ownerRank(left.owner) - ownerRank(right.owner)
+    const ownerDiff = entryOwnerRank(left.owner, `properties.${left.id}.owner`) - entryOwnerRank(right.owner, `properties.${right.id}.owner`)
     if (ownerDiff !== 0) return ownerDiff
     return left.id.localeCompare(right.id)
   })
@@ -129,18 +154,18 @@ export function normalizeHouseholdPlan(plan: HouseholdPlan): NormalizedHousehold
     assumptions: plan.assumptions,
     parityMeta: plan.parityMeta,
     adultOrder: adults.map((adult) => adult.id),
-    adultsById: indexById(adults),
+    adultsById: indexById(adults, 'adult'),
     dependentOrder: dependents.map((dependent) => dependent.id),
-    dependentsById: indexById(dependents),
+    dependentsById: indexById(dependents, 'dependent'),
     incomeOrder: income.map((item) => item.id),
-    incomeById: indexById(income),
+    incomeById: indexById(income, 'income'),
     expenseOrder: expenses.map((item) => item.id),
-    expensesById: indexById(expenses),
+    expensesById: indexById(expenses, 'expense'),
     assetOrder: assets.map((item) => item.id),
-    assetsById: indexById(assets),
+    assetsById: indexById(assets, 'asset'),
     goalOrder: goals.map((item) => item.id),
-    goalsById: indexById(goals),
+    goalsById: indexById(goals, 'goal'),
     propertyOrder: properties.map((item) => item.id),
-    propertiesById: indexById(properties),
+    propertiesById: indexById(properties, 'property'),
   }
 }

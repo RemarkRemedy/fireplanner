@@ -134,6 +134,7 @@ export const BRS_BASE = 110200
 export const FRS_BASE = 220400
 export const ERS_BASE = 440800
 export const BRS_GROWTH_RATE = 0.035 // 3.5% p.a.
+export const CPF_RETIREMENT_ACCOUNT_AGE = 55
 
 // CPF Annual Limit — total mandatory + voluntary contributions cap per calendar year
 // Source: https://www.cpf.gov.sg/member/growing-your-savings/saving-more-with-cpf/top-up-ordinary-special-and-medisave-savings

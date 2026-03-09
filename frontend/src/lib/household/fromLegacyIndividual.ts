@@ -53,6 +53,11 @@ function ageRange(startAge: number, endAge: number | null): TimingRule {
   }
 }
 
+function legacyExclusiveEndAge(startAge: number, endAge: number | null): number | null {
+  if (endAge === null) return null
+  return Math.max(startAge, endAge - 1)
+}
+
 function pickSnapshot<TState extends object, TKey extends keyof TState>(
   state: TState,
   keys: readonly TKey[]
@@ -213,7 +218,7 @@ function mapIncomeStreams(snapshot: LegacyIndividualSnapshot): IncomeSource[] {
     owner: PRIMARY_OWNER,
     label: stream.name,
     kind: 'income-stream',
-    timing: ageRange(stream.startAge, stream.endAge),
+    timing: ageRange(stream.startAge, legacyExclusiveEndAge(stream.startAge, stream.endAge)),
     annualAmount: stream.annualAmount,
     growthRate: stream.growthRate,
     growthModel: stream.growthModel,
@@ -245,7 +250,7 @@ function mapExpenseItems(snapshot: LegacyIndividualSnapshot): ExpenseItem[] {
     owner: PRIMARY_OWNER,
     label: entry.label,
     kind: 'parent-support',
-    timing: ageRange(entry.startAge, entry.endAge),
+    timing: ageRange(entry.startAge, legacyExclusiveEndAge(entry.startAge, entry.endAge)),
     amount: entry.monthlyAmount,
     periodicity: 'monthly',
     growthRate: entry.growthRate,
@@ -257,7 +262,7 @@ function mapExpenseItems(snapshot: LegacyIndividualSnapshot): ExpenseItem[] {
     owner: PRIMARY_OWNER,
     label: entry.label,
     kind: 'expense-adjustment',
-    timing: ageRange(entry.startAge, entry.endAge),
+    timing: ageRange(entry.startAge, legacyExclusiveEndAge(entry.startAge, entry.endAge)),
     amount: entry.amount,
     periodicity: 'annual',
     legacySourceId: `profile.expenseAdjustments.${entry.id}`,

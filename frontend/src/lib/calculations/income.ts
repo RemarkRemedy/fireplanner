@@ -672,6 +672,7 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
     // Extra interest: when CPFIS active, only retained portions qualify
     // (simplification: full balances qualify since CPFIS funds are still "in CPF")
     const extraInterest = calculateCpfExtraInterestWithAge(midOA, midSA, midMA, midRA, age)
+    const cpfAnnualInterest = oaInterest + saInterest + maInterest + raInterest + extraInterest
 
     cpfOA += oaInterest
     if (saClosed) {
@@ -795,6 +796,7 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
       cpfSA,
       cpfMA,
       cpfRA,
+      cpfAnnualInterest,
       isRetired,
       activeLifeEvents,
       cpfLifePayout,

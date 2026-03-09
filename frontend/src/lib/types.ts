@@ -316,6 +316,7 @@ export interface IncomeProjectionRow {
   cpfSA: number
   cpfMA: number
   cpfRA: number
+  cpfAnnualInterest?: number
   isRetired: boolean
   activeLifeEvents: string[]
   cpfLifePayout: number
@@ -849,6 +850,7 @@ export interface DownsizingConfig {
   newLtv: number
   // Sell-and-Rent
   monthlyRent: number
+  // Nominal annual growth applied directly to future rent cashflows after the sale year.
   rentGrowthRate: number
 }
 
@@ -878,7 +880,7 @@ export interface PropertyState {
   ownershipPercent: number  // 0.01–1.0, default 1.0 (100%). Scales all property values for co-ownership.
   existingAppreciationRate: number   // annual appreciation rate for existing property (separate from new purchase analysis)
   existingLeaseYears: number         // remaining lease years for existing property
-  existingApplyBalaDecay: boolean    // whether to apply Bala's Table depreciation to existing property in projection
+  existingApplyBalaDecay: boolean    // when true, Bala's Table lease decay multiplies the appreciated value each year rather than acting as a separate cashflow
   // Downsizing
   downsizing: DownsizingConfig
   // HDB monetization

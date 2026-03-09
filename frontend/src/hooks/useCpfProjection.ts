@@ -3,7 +3,14 @@ import { useIncomeProjection } from '@/hooks/useIncomeProjection'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { calculateBrsFrsErs } from '@/lib/calculations/cpf'
-import { RETIREMENT_SUM_BASE_YEAR, BRS_BASE, FRS_BASE, ERS_BASE } from '@/lib/data/cpfRates'
+import {
+  BRS_BASE,
+  BRS_GROWTH_RATE,
+  CPF_RETIREMENT_ACCOUNT_AGE,
+  ERS_BASE,
+  FRS_BASE,
+  RETIREMENT_SUM_BASE_YEAR,
+} from '@/lib/data/cpfRates'
 import { formatCurrency } from '@/lib/utils'
 
 export interface CpfProjectionRow {
@@ -74,6 +81,7 @@ export function useCpfProjection(): {
     }
 
     const brsFrsErs = calculateBrsFrsErs(currentAge)
+    const growthFactor = (1 + BRS_GROWTH_RATE).toFixed(3)
     let brsReached = false
     let frsReached = false
     let ersReached = false
@@ -116,7 +124,7 @@ export function useCpfProjection(): {
         milestone = 'cpfLifeStart'
         cpfLifeStarted = true
       }
-      if (row.age === 55 && row.cpfRA > 0 && milestone === null) {
+      if (row.age === CPF_RETIREMENT_ACCOUNT_AGE && row.cpfRA > 0 && milestone === null) {
         milestone = 'raCreated'
       }
 
@@ -151,14 +159,14 @@ export function useCpfProjection(): {
       // Build formula text for milestone rows
       let milestoneFormula: string | null = null
       if (milestone === 'frs') {
-        const years = Math.max(0, 55 - currentAge) + Math.max(0, new Date().getFullYear() - RETIREMENT_SUM_BASE_YEAR)
-        milestoneFormula = `FRS at 55: ${formatCurrency(FRS_BASE)} (${RETIREMENT_SUM_BASE_YEAR}) × 1.035^${years} = ${formatCurrency(brsFrsErs.frs)}`
+        const years = Math.max(0, CPF_RETIREMENT_ACCOUNT_AGE - currentAge) + Math.max(0, new Date().getFullYear() - RETIREMENT_SUM_BASE_YEAR)
+        milestoneFormula = `FRS at ${CPF_RETIREMENT_ACCOUNT_AGE}: ${formatCurrency(FRS_BASE)} (${RETIREMENT_SUM_BASE_YEAR}) × ${growthFactor}^${years} = ${formatCurrency(brsFrsErs.frs)}`
       } else if (milestone === 'brs') {
-        const years = Math.max(0, 55 - currentAge) + Math.max(0, new Date().getFullYear() - RETIREMENT_SUM_BASE_YEAR)
-        milestoneFormula = `BRS at 55: ${formatCurrency(BRS_BASE)} (${RETIREMENT_SUM_BASE_YEAR}) × 1.035^${years} = ${formatCurrency(brsFrsErs.brs)}`
+        const years = Math.max(0, CPF_RETIREMENT_ACCOUNT_AGE - currentAge) + Math.max(0, new Date().getFullYear() - RETIREMENT_SUM_BASE_YEAR)
+        milestoneFormula = `BRS at ${CPF_RETIREMENT_ACCOUNT_AGE}: ${formatCurrency(BRS_BASE)} (${RETIREMENT_SUM_BASE_YEAR}) × ${growthFactor}^${years} = ${formatCurrency(brsFrsErs.brs)}`
       } else if (milestone === 'ers') {
-        const years = Math.max(0, 55 - currentAge) + Math.max(0, new Date().getFullYear() - RETIREMENT_SUM_BASE_YEAR)
-        milestoneFormula = `ERS at 55: ${formatCurrency(ERS_BASE)} (${RETIREMENT_SUM_BASE_YEAR}) × 1.035^${years} = ${formatCurrency(brsFrsErs.ers)}`
+        const years = Math.max(0, CPF_RETIREMENT_ACCOUNT_AGE - currentAge) + Math.max(0, new Date().getFullYear() - RETIREMENT_SUM_BASE_YEAR)
+        milestoneFormula = `ERS at ${CPF_RETIREMENT_ACCOUNT_AGE}: ${formatCurrency(ERS_BASE)} (${RETIREMENT_SUM_BASE_YEAR}) × ${growthFactor}^${years} = ${formatCurrency(brsFrsErs.ers)}`
       } else if (milestone === 'raCreated') {
         const prevSA = prevRow ? prevRow.cpfSA : 0
         milestoneFormula = `SA (${formatCurrency(prevSA)}) → RA. Target: FRS = ${formatCurrency(brsFrsErs.frs)}`
