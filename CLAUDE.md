@@ -11,6 +11,7 @@ Singapore FIRE (Financial Independence, Retire Early) + Property + Investment Re
 **Remaining gaps:**
 - Property hybrid MC overlay (5 discrete weighted property scenarios per MC path)
 - Scenario side-by-side comparison view (save/load works, parallel compare panel does not exist)
+- Household survivor spending model: when one partner passes, joint expenses should adjust (survivor ratio ~70-80% of couple costs, or shift deceased's 50% share onto survivor's portfolio). Currently the quick estimate splits 50/50 and stops the deceased's share at death.
 
 **Deployment:** Cloudflare Pages via `wrangler pages deploy`. No server. Sentry and PostHog intentionally skipped (privacy-first, no-server-contact promise).
 
