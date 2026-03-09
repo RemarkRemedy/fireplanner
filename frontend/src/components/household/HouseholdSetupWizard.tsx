@@ -13,11 +13,13 @@ import type {
   HouseholdPlanType,
   PlanningAdult,
 } from '@/lib/household/types'
+import type { SectionOrderKey } from '@/lib/household/sectionOrder'
 import { trackEvent } from '@/lib/analytics'
 import { PeopleRosterEditor, type SetupDependentDraft } from './PeopleRosterEditor'
 
 interface HouseholdSetupWizardProps {
   planType: Exclude<HouseholdPlanType, 'individual'>
+  pathway: SectionOrderKey
 }
 
 function buildPartnerAdult(template: PlanningAdult, name: string, age: number): PlanningAdult {
@@ -52,7 +54,7 @@ function buildDependentDraft(index: number): SetupDependentDraft {
   }
 }
 
-export function HouseholdSetupWizard({ planType }: HouseholdSetupWizardProps) {
+export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizardProps) {
   const navigate = useNavigate()
   const setUIField = useUIStore((state) => state.setField)
   const ensureHouseholdDataVisible = useUIStore((state) => state.ensureHouseholdDataVisible)
@@ -137,6 +139,7 @@ export function HouseholdSetupWizard({ planType }: HouseholdSetupWizardProps) {
       useHouseholdPlanStore.getState().addDependent(entry)
     })
 
+    setUIField('sectionOrder', pathway)
     setUIField('cpfEnabled', cpfEnabled)
     setUIField('propertyEnabled', propertyEnabled)
     setUIField('healthcareEnabled', healthcareEnabled)
@@ -145,7 +148,8 @@ export function HouseholdSetupWizard({ planType }: HouseholdSetupWizardProps) {
     ensureHouseholdDataVisible(deriveHouseholdSectionToggles(plan))
 
     trackEvent('onboarding_continue', {
-      pathway: `${planType}-setup`,
+      pathway,
+      planType,
       partnerIncluded: planType === 'couple' || partnerEnabled,
       dependents: dependents.length,
     })
