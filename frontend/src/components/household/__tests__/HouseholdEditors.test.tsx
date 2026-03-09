@@ -304,7 +304,7 @@ describe('Household editors', () => {
     await user.click(screen.getByRole('button', { name: 'Add living cost' }))
     await user.click(screen.getByRole('button', { name: 'Add parent support' }))
     await user.click(screen.getByRole('button', { name: 'Add withdrawal' }))
-    await user.click(screen.getByRole('button', { name: 'Add goal' }))
+    await user.click(screen.getByRole('button', { name: 'Add custom goal' }))
 
     const livingCostCard = screen.getByDisplayValue('Shared living costs').closest('div.rounded-lg.border')
     if (!(livingCostCard instanceof HTMLElement)) {
