@@ -95,8 +95,9 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
     syncAdultLiquidNetWorths(updateAdult)
   }
 
+  const isMultiAdult = plan.adults.length > 1
+
   if (mode === 'assets') {
-    const isMultiAdult = plan.adults.length > 1
     const liquidAssets = plan.assets.filter((asset) => asset.kind === 'liquid-net-worth')
     const lockedAssets = plan.assets.filter((asset) => asset.kind === 'locked-asset')
 
