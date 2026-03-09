@@ -8,7 +8,7 @@ import { RSTU_TAX_RELIEF_CAP, CPF_ANNUAL_LIMIT } from '@/lib/data/cpfRates'
 
 export const ageSchema = z.number().int().min(18).max(100)
 export const retirementAgeSchema = z.number().int().min(30).max(100)
-export const lifeExpectancySchema = z.number().int().min(50).max(120)
+export const lifeExpectancySchema = z.number().int().min(50).max(130)
 export const swrSchema = z.number().min(0.01).max(0.10)
 export const expensesSchema = z.number().positive()
 export const inflationSchema = z.number().min(0).max(0.15)

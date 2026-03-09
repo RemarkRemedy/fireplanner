@@ -51,7 +51,7 @@ type HouseholdAssumptionUpdates = {
 
 interface HouseholdPlanActions {
   initializeManualPlan: (planType?: HouseholdPlanType) => void
-  initializeFromLegacy: (snapshot?: LegacyIndividualSnapshot) => void
+  initializeFromLegacy: (snapshot: LegacyIndividualSnapshot) => void
   setPlan: (plan: HouseholdPlan, provenance?: HouseholdPlanProvenance) => void
   setPlanType: (planType: HouseholdPlanType) => void
   updateAssumptions: (updates: HouseholdAssumptionUpdates) => void
@@ -115,7 +115,7 @@ function createManualHouseholdPlan(planType: HouseholdPlanType = 'individual'): 
   return template
 }
 
-function createLegacyHydratedHouseholdPlan(snapshot?: LegacyIndividualSnapshot): HouseholdPlan {
+function createLegacyHydratedHouseholdPlan(snapshot: LegacyIndividualSnapshot): HouseholdPlan {
   const plan = fromLegacyIndividual(snapshot)
   plan.id = createId('household')
   return plan
@@ -159,12 +159,35 @@ function isPersistedState(value: unknown): value is Partial<HouseholdPlanPersist
   return typeof value === 'object' && value !== null && ('plan' in value || 'provenance' in value)
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function mergeNestedValue<T>(current: T, updates: Partial<T>): T {
+  if (!isPlainObject(current) || !isPlainObject(updates)) {
+    return structuredClone(updates) as T
+  }
+
+  const merged: Record<string, unknown> = { ...current }
+
+  for (const [key, value] of Object.entries(updates)) {
+    const currentValue = merged[key]
+    if (isPlainObject(currentValue) && isPlainObject(value)) {
+      merged[key] = mergeNestedValue(currentValue, value)
+    } else {
+      merged[key] = structuredClone(value)
+    }
+  }
+
+  return merged as T
+}
+
 function replaceCollectionItem<T extends { id: string }>(
   items: T[],
   id: string,
   updates: Partial<T>,
 ): T[] {
-  return items.map((item) => (item.id === id ? { ...item, ...updates } : item))
+  return items.map((item) => (item.id === id ? mergeNestedValue(item, updates) : item))
 }
 
 function removeOwnerScopedEntries<T extends { owner: EntryOwner }>(
@@ -320,7 +343,7 @@ export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
         set((state) => {
           const nextPlan = clonePlan(state.plan)
           const targetAdult = nextPlan.adults.find((adult) => adult.id === id)
-          if (!targetAdult) return state
+          if (!targetAdult || targetAdult.owner === 'self') return state
 
           nextPlan.adults = nextPlan.adults.filter((adult) => adult.id !== id)
           const fallbackTimingOwner =
