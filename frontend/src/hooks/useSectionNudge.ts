@@ -47,6 +47,7 @@ export function useSectionNudge(sectionId: ModeSectionId): SectionNudgeData | nu
       case 'section-income': {
         const nudgeId = 'income-srs-tax'
         if (dismissedNudges.includes(nudgeId)) return null
+        if (annualIncome <= 120_000) return null
 
         const rates = getCpfRatesForAge(currentAge, residencyStatus, prMonths)
         const cpfEmployee = Math.min(annualIncome, OW_CEILING_ANNUAL) * rates.employeeRate
