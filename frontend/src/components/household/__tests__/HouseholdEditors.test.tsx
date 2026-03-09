@@ -322,7 +322,7 @@ describe('Household editors', () => {
 
     const healthcareCard = getCardByText("Pat's Healthcare")
     await user.click(within(healthcareCard).getByRole('switch'))
-    setNumericInput(getFieldInput(healthcareCard, 'OOP base amount'), '1500')
+    setNumericInput(getFieldInput(healthcareCard, 'Out-of-Pocket Base Amount (at age 30)'), '1500')
 
     const withdrawalCard = screen.getByDisplayValue('Retirement withdrawal').closest('div.rounded-lg.border')
     if (!(withdrawalCard instanceof HTMLElement)) {
