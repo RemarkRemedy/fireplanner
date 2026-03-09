@@ -64,7 +64,7 @@ export function buildCpfProjectionRows({
     const retirementBalance = row.cpfOA + row.cpfSA + row.cpfRA
     const annualContribution = row.cpfEmployee + row.cpfEmployer
     const annualInterest = index > 0
-      ? totalBalance - prevTotal - annualContribution + row.cpfOaHousingDeduction
+      ? totalBalance - prevTotal - annualContribution + row.cpfOaHousingDeduction + row.cpfOaWithdrawal
       : 0
 
     let milestone: CpfProjectionDisplayRow['milestone'] = null

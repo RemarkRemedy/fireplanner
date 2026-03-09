@@ -261,8 +261,8 @@ describe('Household CPF prototype', () => {
     expect(screen.getByText('People & Household')).toBeInTheDocument()
     expect(screen.getByText('Current CPF Status')).toBeInTheDocument()
     expect(screen.getByText('Spending, Healthcare & Goals')).toBeInTheDocument()
-    expect(screen.getByText('Goal authoring moved into Spending')).toBeInTheDocument()
-    expect(screen.getByText('Editing CPF for')).toBeInTheDocument()
+    expect(screen.getByText('Shared spending, private spending, healthcare, goals, and retirement draws.')).toBeInTheDocument()
+    expect(screen.getAllByText('Editing: Taylor').length).toBeGreaterThan(0)
   })
 
   it('keeps household CPF callbacks stable across unrelated household rerenders', () => {
