@@ -496,16 +496,7 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
         </CardContent>
       </Card>
 
-      {incomeSummary && (
-        <>
-          {adults.length > 1 && (
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Joint household projection
-            </p>
-          )}
-          <SummaryPanel summary={incomeSummary} />
-        </>
-      )}
+      {incomeSummary && <SummaryPanel summary={incomeSummary} />}
 
       {incomeProjection && incomeProjection.length > 0 && (
         <Card>
