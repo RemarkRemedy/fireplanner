@@ -44,6 +44,8 @@ import { useMemo } from 'react'
 import {
   Area,
   AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
   Line,
   ResponsiveContainer,
@@ -51,6 +53,16 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
+import { compileHouseholdPlan } from '@/lib/household/compileHouseholdPlan'
+import { generateProjection, type ProjectionParams } from '@/lib/calculations/projection'
+import { useProjection } from '@/hooks/useProjection'
+import type { ProjectionSummary } from '@/lib/types'
 
 const OWNER_OPTIONS: EntryOwner[] = ['self', 'partner', 'shared']
 const ADULT_OWNER_OPTIONS: AdultOwner[] = ['self', 'partner']
@@ -514,6 +526,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
   const plan = useHouseholdPlanStore((state) => state.plan)
   const validationErrors = useHouseholdPlanStore((state) => state.validationErrors)
   const updateAdult = useHouseholdPlanStore((state) => state.updateAdult)
+  const projection = useProjection()
   const addExpense = useHouseholdPlanStore((state) => state.addExpense)
   const removeExpense = useHouseholdPlanStore((state) => state.removeExpense)
   const addGoal = useHouseholdPlanStore((state) => state.addGoal)
@@ -1244,6 +1257,222 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
           </Button>
         </CardContent>
       </Card>
+
+      {plan.goals.length > 0 && <GoalImpactPanel plan={plan} projection={projection} />}
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Goal Impact & Timeline (collapsible)
+// ---------------------------------------------------------------------------
+
+const PRIORITY_CHART_COLORS: Record<string, string> = {
+  essential: '#3b82f6',   // blue
+  important: '#f59e0b',   // amber
+  'nice-to-have': '#9ca3af', // gray
+}
+
+interface GoalImpactPanelProps {
+  plan: Parameters<typeof compileHouseholdPlan>[0]
+  projection: {
+    summary: ProjectionSummary | null
+    params: ProjectionParams | null
+    hasErrors: boolean
+  }
+}
+
+function GoalImpactPanel({ plan, projection }: GoalImpactPanelProps) {
+  const compiled = useMemo(() => {
+    try {
+      return compileHouseholdPlan(plan)
+    } catch {
+      return null
+    }
+  }, [plan])
+
+  // Run counterfactual projection without goals
+  const noGoalsSummary = useMemo(() => {
+    if (!projection.params || projection.hasErrors) return null
+    try {
+      const noGoalsParams: ProjectionParams = {
+        ...projection.params,
+        financialGoals: [],
+      }
+      return generateProjection(noGoalsParams).summary
+    } catch {
+      return null
+    }
+  }, [projection.params, projection.hasErrors])
+
+  const analysis = useMemo(() => {
+    if (!compiled) return null
+
+    const goalAdjustments = compiled.portfolioAdjustments.filter((a) => a.kind === 'goal')
+    if (goalAdjustments.length === 0) return null
+
+    const totalCost = goalAdjustments.reduce((sum, a) => sum + Math.abs(a.amount), 0)
+    const referenceAdult = compiled.adultsById[compiled.adultOrder[0]]
+
+    // Build per-age data grouped by priority
+    const ageMap = new Map<number, { age: number; essential: number; important: number; 'nice-to-have': number }>()
+    for (const adj of goalAdjustments) {
+      const age = referenceAdult.currentAge + adj.yearOffset
+      if (!ageMap.has(age)) {
+        ageMap.set(age, { age, essential: 0, important: 0, 'nice-to-have': 0 })
+      }
+      const goal = compiled.goalsById[adj.sourceId]
+      const priority = goal?.priority ?? 'nice-to-have'
+      const entry = ageMap.get(age)!
+      entry[priority] += Math.abs(adj.amount)
+    }
+    const timelineData = [...ageMap.values()].sort((a, b) => a.age - b.age)
+
+    return {
+      totalCost,
+      timelineData,
+      referenceAdult,
+    }
+  }, [compiled])
+
+  if (!analysis) return null
+
+  const { totalCost, timelineData } = analysis
+
+  // Projection-based metrics (with goals vs without)
+  const withGoals = projection.summary
+  const withoutGoals = noGoalsSummary
+
+  // FIRE timeline comparison
+  const fireWithGoals = withGoals?.fireAchievedAge ?? null
+  const fireWithoutGoals = withoutGoals?.fireAchievedAge ?? null
+  const fireDelay = fireWithGoals != null && fireWithoutGoals != null
+    ? fireWithGoals - fireWithoutGoals
+    : null
+
+  // Final portfolio comparison
+  const terminalWithGoals = withGoals?.terminalTotalNW ?? null
+  const terminalWithoutGoals = withoutGoals?.terminalTotalNW ?? null
+  const portfolioDiff = terminalWithGoals != null && terminalWithoutGoals != null
+    ? terminalWithGoals - terminalWithoutGoals
+    : null
+
+  // Depletion comparison
+  const depletionWithGoals = withGoals?.portfolioDepletedAge ?? null
+  const depletionWithoutGoals = withoutGoals?.portfolioDepletedAge ?? null
+
+  // Shortfall from projection
+  const totalShortfall = withGoals?.totalGoalShortfall ?? 0
+
+  return (
+    <Card>
+      <Accordion type="single" collapsible>
+        <AccordionItem value="goal-impact" className="border-b-0">
+          <CardHeader className="pb-0">
+            <AccordionTrigger className="py-0 hover:no-underline">
+              <CardTitle className="text-lg">Goal Impact</CardTitle>
+            </AccordionTrigger>
+          </CardHeader>
+          <AccordionContent>
+            <CardContent className="pt-4 space-y-6">
+              {/* Summary stats */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-lg border p-3">
+                  <div className="text-sm text-muted-foreground">Total Goal Cost</div>
+                  <div className="text-2xl font-bold">{formatCurrency(totalCost)}</div>
+                  <div className="text-xs text-muted-foreground">
+                    across {plan.goals.length} goal{plan.goals.length === 1 ? '' : 's'}
+                  </div>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <div className="text-sm text-muted-foreground">FIRE Timeline</div>
+                  {fireDelay != null && fireDelay !== 0 ? (
+                    <div className={`text-lg font-semibold ${fireDelay > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                      FIRE {fireDelay > 0 ? 'delayed' : 'accelerated'} from age {fireWithoutGoals} to {fireWithGoals} ({fireDelay > 0 ? '+' : ''}{fireDelay} year{Math.abs(fireDelay) === 1 ? '' : 's'})
+                    </div>
+                  ) : fireWithGoals != null ? (
+                    <div className="text-lg font-semibold">FIRE at age {fireWithGoals} (no change)</div>
+                  ) : (
+                    <div className="text-lg font-semibold text-muted-foreground">FIRE not achieved in either scenario</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Final portfolio impact */}
+              {portfolioDiff != null && (
+                <div className="rounded-lg border p-3">
+                  <div className="text-sm text-muted-foreground">Final Cash & Investments Impact</div>
+                  <div className="text-lg">
+                    <span className="font-bold">{formatCurrency(terminalWithGoals!)}</span>
+                    {' vs '}
+                    <span className="font-bold">{formatCurrency(terminalWithoutGoals!)}</span>
+                    {' without goals '}
+                    <span className={portfolioDiff < 0 ? 'text-red-600' : 'text-green-600'}>
+                      ({portfolioDiff < 0 ? '' : '+'}{formatCurrency(portfolioDiff)})
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Warnings */}
+              {totalShortfall > 0 && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950">
+                  <div className="font-medium text-red-700 dark:text-red-400">
+                    Goal costs exceed available funds
+                  </div>
+                  <div className="text-sm text-red-600 dark:text-red-400">
+                    Your portfolio cannot fully fund all goals. The shortfall
+                    of {formatCurrency(totalShortfall)} is not financed. Consider reducing goal
+                    amounts or pushing target ages later.
+                  </div>
+                </div>
+              )}
+
+              {depletionWithGoals != null && depletionWithoutGoals == null && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950">
+                  <div className="font-medium text-red-700 dark:text-red-400">
+                    Goals cause portfolio depletion at age {depletionWithGoals}
+                  </div>
+                  <div className="text-sm text-red-600 dark:text-red-400">
+                    Without goals, your portfolio survives to life expectancy. With goals, it runs
+                    out at age {depletionWithGoals}. Consider reducing or deferring some goals.
+                  </div>
+                </div>
+              )}
+
+              {depletionWithGoals != null && depletionWithoutGoals != null && depletionWithGoals < depletionWithoutGoals && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950">
+                  <div className="font-medium text-amber-700 dark:text-amber-400">
+                    Goals accelerate portfolio depletion by {depletionWithoutGoals - depletionWithGoals} year{depletionWithoutGoals - depletionWithGoals === 1 ? '' : 's'}
+                  </div>
+                  <div className="text-sm text-amber-600 dark:text-amber-400">
+                    Portfolio depletes at age {depletionWithGoals} vs {depletionWithoutGoals} without goals.
+                  </div>
+                </div>
+              )}
+
+              {/* Goal Timeline chart */}
+              <div>
+                <h4 className="text-sm font-medium mb-3">Goal Timeline</h4>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={timelineData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="age" label={{ value: 'Age', position: 'insideBottom', offset: -2 }} />
+                    <YAxis tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} width={55} />
+                    <Tooltip
+                      formatter={(value: number, name: string) => [formatCurrency(value), name]}
+                      labelFormatter={(label: number) => `Age ${label}`}
+                    />
+                    <Bar dataKey="essential" stackId="goals" fill={PRIORITY_CHART_COLORS.essential} name="Essential" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="important" stackId="goals" fill={PRIORITY_CHART_COLORS.important} name="Important" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="nice-to-have" stackId="goals" fill={PRIORITY_CHART_COLORS['nice-to-have']} name="Nice-to-have" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </Card>
   )
 }
