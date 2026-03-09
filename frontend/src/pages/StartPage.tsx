@@ -682,31 +682,56 @@ function MonthlyIncomeInput({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-1">
-        <Label className="text-sm flex items-center gap-1 shrink-0">
-          Monthly Income
-          <InfoTooltip text="Your monthly salary. Choose whether to enter take-home (after CPF) or gross (before CPF)." />
-        </Label>
-        <button
-          type="button"
-          onClick={() => onIncomeTypeChange(incomeType === 'take-home' ? 'gross' : 'take-home')}
-          className="px-1.5 py-px text-[11px] leading-tight rounded-full border bg-primary text-primary-foreground border-primary transition-colors hover:bg-primary/90"
-        >
-          {incomeType === 'take-home' ? 'Net' : 'Gross'}
-        </button>
-      </div>
+      <Label className="text-sm flex items-center gap-1">
+        Monthly Income
+        <InfoTooltip text="Your monthly salary. Toggle between take-home (after employee CPF) and gross (before employee CPF, excludes employer's CPF) inside the input." />
+      </Label>
 
-      {/* Dollar input */}
+      {/* Dollar input with sliding take-home/gross toggle as prefix */}
       <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-          $
-        </span>
+        <div className="absolute left-1.5 top-1/2 -translate-y-1/2 z-10 flex rounded-full bg-muted border border-border/50 p-px text-[10px] leading-tight">
+          <div
+            className="absolute top-px bottom-px rounded-full bg-primary transition-all duration-200 ease-in-out"
+            style={{
+              left: incomeType === 'take-home' ? '1px' : 'var(--slider-left)',
+              width: incomeType === 'take-home' ? 'var(--take-home-w)' : 'var(--gross-w)',
+            }}
+          />
+          <button
+            type="button"
+            ref={(el) => {
+              if (el) el.parentElement?.style.setProperty('--take-home-w', `${el.offsetWidth}px`)
+            }}
+            onClick={() => onIncomeTypeChange('take-home')}
+            className={`relative z-10 px-1.5 py-0.5 rounded-full whitespace-nowrap transition-colors duration-200 ${
+              incomeType === 'take-home' ? 'text-primary-foreground' : 'text-muted-foreground'
+            }`}
+          >
+            Take-home
+          </button>
+          <button
+            type="button"
+            ref={(el) => {
+              if (el) {
+                const parent = el.parentElement!
+                parent.style.setProperty('--gross-w', `${el.offsetWidth}px`)
+                parent.style.setProperty('--slider-left', `${el.offsetLeft}px`)
+              }
+            }}
+            onClick={() => onIncomeTypeChange('gross')}
+            className={`relative z-10 px-1.5 py-0.5 rounded-full whitespace-nowrap transition-colors duration-200 ${
+              incomeType === 'gross' ? 'text-primary-foreground' : 'text-muted-foreground'
+            }`}
+          >
+            Gross
+          </button>
+        </div>
         <NumberInput
           value={monthlyIncome}
           onChange={onMonthlyIncomeChange}
           integer
           formatWithCommas
-          className="pl-7 border-blue-300"
+          className="pl-[8rem] border-blue-300"
         />
       </div>
 
@@ -725,9 +750,9 @@ function MonthlyIncomeInput({
             <NumberInput
               value={bonusMonths}
               onChange={onBonusMonthsChange}
-              integer
               min={0}
               max={6}
+              step={0.1}
               className="w-14 h-7 text-xs border-blue-300"
             />
             <span className="text-xs text-muted-foreground">extra month(s)</span>
