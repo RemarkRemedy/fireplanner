@@ -7,25 +7,29 @@ import type {
   HouseholdPortfolioAdjustment,
   HouseholdYearRow,
 } from '@/lib/household/compileHouseholdPlan'
-
-export type HouseholdRevision = string
-
-export interface LegacyAuthoringRevisions {
-  profileRevision: number
-  incomeRevision: number
-  propertyRevision: number
-}
-
-export interface GlobalPlannerInputRevisions {
-  allocationRevision: number
-  simulationRevision: number
-  withdrawalRevision: number
-}
-
-export interface NormalizedAnalysisCacheKeyParts {
-  householdRevision: HouseholdRevision
-  scenarioOverrideHash: string
-}
+import {
+  buildLegacyHouseholdRevision,
+  buildHouseholdPlanRevision,
+  buildMonteCarloRunSignature,
+  buildNormalizedAnalysisCacheKey,
+  MONTE_CARLO_NORMALIZED_OWNER,
+  MONTE_CARLO_RUN_SIGNATURE_VERSION,
+  stableRunOverrideHash,
+  stableScenarioOverrideHash,
+  type HouseholdRevision,
+  type LegacyAuthoringRevisions,
+  type GlobalPlannerInputRevisions,
+  type MonteCarloRunSignatureInput,
+  type NormalizedAnalysisCacheKeyParts,
+} from '@/lib/household/normalizedAnalysisCache'
+import {
+  buildLegacyNormalizedAnalysisIdentity,
+  buildMonteCarloAnalysisInputsFromEntry,
+  createLegacyNormalizedAnalysisEntry,
+  type LegacyNormalizedAnalysisEntry,
+  type LegacyNormalizedEntryInput,
+  type NormalizedMonteCarloAnalysisInputs,
+} from '@/lib/household/toAnalysisInputs'
 
 export interface NormalizedDeterministicSelectors {
   rows: HouseholdYearRow[]
@@ -79,9 +83,6 @@ export interface NormalizedAnalysisSelectors {
   companion: NormalizedCompanionSelectors
 }
 
-export const MONTE_CARLO_NORMALIZED_OWNER = 'PR4B' as const
-export const MONTE_CARLO_RUN_SIGNATURE_VERSION = 'mc-v1'
-
 export interface NormalizedAnalysisEntry {
   cacheKey: string
   householdRevision: HouseholdRevision
@@ -105,98 +106,10 @@ interface NormalizedAnalysisState {
   clearEntries: () => void
 }
 
-export function buildLegacyHouseholdRevision(
-  revisions: LegacyAuthoringRevisions
-): HouseholdRevision {
-  return `legacy:${revisions.profileRevision}:${revisions.incomeRevision}:${revisions.propertyRevision}`
-}
-
-export function buildHouseholdPlanRevision(
-  householdPlanRevision: number
-): HouseholdRevision {
-  return `household:${householdPlanRevision}`
-}
-
-function canonicalizeForHash(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map((entry) => canonicalizeForHash(entry))
-  }
-
-  if (value && typeof value === 'object') {
-    return Object.keys(value as Record<string, unknown>)
-      .sort()
-      .reduce<Record<string, unknown>>((result, key) => {
-        result[key] = canonicalizeForHash((value as Record<string, unknown>)[key])
-        return result
-      }, {})
-  }
-
-  return value
-}
-
-function fnv1aHash(input: string): string {
-  let hash = 0x811c9dc5
-
-  for (let index = 0; index < input.length; index += 1) {
-    hash ^= input.charCodeAt(index)
-    hash = Math.imul(hash, 0x01000193)
-  }
-
-  return (hash >>> 0).toString(16).padStart(8, '0')
-}
-
-function hashCanonicalValue(value: unknown): string {
-  return fnv1aHash(JSON.stringify(canonicalizeForHash(value)))
-}
-
-export function stableScenarioOverrideHash(overrides: unknown): string {
-  return hashCanonicalValue(overrides ?? null)
-}
-
-export function stableRunOverrideHash(overrides: unknown): string {
-  return hashCanonicalValue(overrides ?? null)
-}
-
-export function buildNormalizedAnalysisCacheKey(
-  parts: NormalizedAnalysisCacheKeyParts
-): string {
-  return `${parts.householdRevision}::${parts.scenarioOverrideHash}`
-}
-
-export interface MonteCarloRunSignatureInput
-  extends GlobalPlannerInputRevisions,
-    NormalizedAnalysisCacheKeyParts {
-  runOverrideHash: string
-}
-
-export function buildMonteCarloRunSignature(
-  input: MonteCarloRunSignatureInput
-): string {
-  return [
-    MONTE_CARLO_RUN_SIGNATURE_VERSION,
-    input.householdRevision,
-    input.scenarioOverrideHash,
-    `a${input.allocationRevision}`,
-    `s${input.simulationRevision}`,
-    `w${input.withdrawalRevision}`,
-    input.runOverrideHash,
-  ].join(':')
-}
-
 export interface NormalizedAnalysisCacheOps {
   getEntry: (cacheKey: string) => NormalizedAnalysisEntry | undefined
   upsertEntry: (entry: NormalizedAnalysisEntry) => void
   setActiveCacheKey: (cacheKey: string) => void
-}
-
-/** Build cache operations from the store's current state. Use this at
- *  call sites in hooks/components to pass into pure lib/ functions. */
-export function buildCacheOpsFromStore(): NormalizedAnalysisCacheOps {
-  return {
-    getEntry: (cacheKey) => useNormalizedAnalysisStore.getState().entries[cacheKey],
-    upsertEntry: (entry) => useNormalizedAnalysisStore.getState().upsertEntry(entry),
-    setActiveCacheKey: (cacheKey) => useNormalizedAnalysisStore.getState().setActiveCacheKey(cacheKey),
-  }
 }
 
 // Gate A locks the cache shape and key builders; PR4A wires compilation and selectors into it.
@@ -237,3 +150,63 @@ export const useNormalizedAnalysisStore = create<NormalizedAnalysisState>()(
     }),
   })
 )
+
+/** Build cache operations from the store's current state. Use this at
+ *  call sites in hooks/components to pass into pure lib/ functions. */
+export function buildCacheOpsFromStore(): NormalizedAnalysisCacheOps {
+  return {
+    getEntry: (cacheKey) => useNormalizedAnalysisStore.getState().entries[cacheKey],
+    upsertEntry: (entry) => useNormalizedAnalysisStore.getState().upsertEntry(entry),
+    setActiveCacheKey: (cacheKey) => useNormalizedAnalysisStore.getState().setActiveCacheKey(cacheKey),
+  }
+}
+
+export function getOrCreateLegacyNormalizedAnalysisEntry(
+  input: LegacyNormalizedEntryInput,
+  cacheOps?: NormalizedAnalysisCacheOps
+): NormalizedAnalysisEntry {
+  const ops = cacheOps ?? buildCacheOpsFromStore()
+  const identity = buildLegacyNormalizedAnalysisIdentity(input)
+  const existingEntry = ops.getEntry(identity.cacheKey)
+
+  if (existingEntry?.compiledPlan) {
+    ops.setActiveCacheKey(identity.cacheKey)
+    return existingEntry
+  }
+
+  const entry = createLegacyNormalizedAnalysisEntry(input)
+  ops.upsertEntry(entry as NormalizedAnalysisEntry)
+  ops.setActiveCacheKey(entry.cacheKey)
+
+  return entry as NormalizedAnalysisEntry
+}
+
+export function toMonteCarloAnalysisInputs(
+  input: LegacyNormalizedEntryInput,
+  cacheOps?: NormalizedAnalysisCacheOps
+): NormalizedMonteCarloAnalysisInputs {
+  const entry = getOrCreateLegacyNormalizedAnalysisEntry(input, cacheOps)
+  return buildMonteCarloAnalysisInputsFromEntry(
+    input,
+    entry as LegacyNormalizedAnalysisEntry
+  )
+}
+
+export {
+  buildLegacyHouseholdRevision,
+  buildHouseholdPlanRevision,
+  buildMonteCarloRunSignature,
+  buildNormalizedAnalysisCacheKey,
+  MONTE_CARLO_NORMALIZED_OWNER,
+  MONTE_CARLO_RUN_SIGNATURE_VERSION,
+  stableRunOverrideHash,
+  stableScenarioOverrideHash,
+}
+
+export type {
+  GlobalPlannerInputRevisions,
+  HouseholdRevision,
+  LegacyAuthoringRevisions,
+  MonteCarloRunSignatureInput,
+  NormalizedAnalysisCacheKeyParts,
+}

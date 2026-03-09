@@ -16,18 +16,15 @@ import {
   buildLegacyHouseholdRevision,
   buildNormalizedAnalysisCacheKey,
   MONTE_CARLO_NORMALIZED_OWNER,
+  stableRevisionHash,
   stableScenarioOverrideHash,
-  type NormalizedAnalysisCacheOps,
-  type NormalizedAnalysisEntry,
-} from '@/stores/useNormalizedAnalysisStore'
-
-export type { NormalizedAnalysisCacheOps }
+} from '@/lib/household/normalizedAnalysisCache'
 
 type RevisionedProfileState = ProfileState & { profileRevision?: number }
 type RevisionedIncomeState = IncomeState & { incomeRevision?: number }
 type RevisionedPropertyState = PropertyState & { propertyRevision?: number }
 
-interface LegacyNormalizedEntryInput {
+export interface LegacyNormalizedEntryInput {
   profile: RevisionedProfileState
   income: RevisionedIncomeState
   property: RevisionedPropertyState
@@ -48,6 +45,57 @@ export interface NormalizedMonteCarloAnalysisInputs {
   portfolioAdjustments: { year: number; amount: number }[]
 }
 
+export interface LegacyNormalizedAnalysisIdentity {
+  cacheKey: string
+  householdRevision: string
+  scenarioOverrideHash: string
+}
+
+export interface LegacyNormalizedAnalysisEntry {
+  cacheKey: string
+  householdRevision: string
+  scenarioOverrideHash: string
+  compiledPlan: CompiledHouseholdPlan
+  selectors: {
+    deterministic: {
+      rows: CompiledHouseholdPlan['rows']
+      milestones: CompiledHouseholdPlan['milestones']
+    }
+    projection: {
+      annualSavingsByYear: CompiledHouseholdPlan['annualSavingsByYear']
+      postRetirementIncomeByYear: CompiledHouseholdPlan['postRetirementIncomeByYear']
+      retirementExpenseBaseByYear: CompiledHouseholdPlan['retirementExpenseBaseByYear']
+      householdWithdrawalNeedByYear: CompiledHouseholdPlan['householdWithdrawalNeedByYear']
+      portfolioAdjustments: CompiledHouseholdPlan['portfolioAdjustments']
+    }
+    monteCarlo: {
+      annualSavingsByYear: CompiledHouseholdPlan['annualSavingsByYear']
+      postRetirementIncomeByYear: CompiledHouseholdPlan['postRetirementIncomeByYear']
+      householdWithdrawalNeedByYear: CompiledHouseholdPlan['householdWithdrawalNeedByYear']
+      portfolioAdjustments: CompiledHouseholdPlan['portfolioAdjustments']
+    }
+    backtest: {
+      postRetirementIncomeByYear: CompiledHouseholdPlan['postRetirementIncomeByYear']
+      retirementExpenseBaseByYear: CompiledHouseholdPlan['retirementExpenseBaseByYear']
+      householdWithdrawalNeedByYear: CompiledHouseholdPlan['householdWithdrawalNeedByYear']
+      portfolioAdjustments: CompiledHouseholdPlan['portfolioAdjustments']
+    }
+    cpf: {
+      cpfByAdultId: CompiledHouseholdPlan['cpfByAdultId']
+    }
+    healthcare: {
+      healthcareByAdultId: CompiledHouseholdPlan['healthcareByAdultId']
+    }
+    companion: {
+      milestones: CompiledHouseholdPlan['milestones']
+      annualSavingsByYear: CompiledHouseholdPlan['annualSavingsByYear']
+      postRetirementIncomeByYear: CompiledHouseholdPlan['postRetirementIncomeByYear']
+      householdWithdrawalNeedByYear: CompiledHouseholdPlan['householdWithdrawalNeedByYear']
+    }
+  }
+  monteCarloOwner: typeof MONTE_CARLO_NORMALIZED_OWNER
+}
+
 function createLegacySnapshot(
   input: LegacyNormalizedEntryInput
 ): LegacyIndividualSnapshot {
@@ -61,11 +109,39 @@ function createLegacySnapshot(
   }
 }
 
+function createLegacyHouseholdPlan(input: LegacyNormalizedEntryInput) {
+  return fromLegacyIndividual(createLegacySnapshot(input))
+}
+
+function buildLegacyCompiledPlanRevision(
+  householdPlan: ReturnType<typeof createLegacyHouseholdPlan>
+): string {
+  return buildLegacyHouseholdRevision({
+    profileRevision: stableRevisionHash({
+      schemaVersion: householdPlan.schemaVersion,
+      householdId: householdPlan.id,
+      planType: householdPlan.planType,
+      adults: householdPlan.adults,
+      dependents: householdPlan.dependents,
+      expenses: householdPlan.expenses,
+      assets: householdPlan.assets,
+      goals: householdPlan.goals,
+      inflation: householdPlan.assumptions.returns.inflation,
+    }),
+    incomeRevision: stableRevisionHash({
+      income: householdPlan.income,
+    }),
+    propertyRevision: stableRevisionHash({
+      properties: householdPlan.properties,
+    }),
+  })
+}
+
 function createNormalizedAnalysisEntry(
   compiledPlan: CompiledHouseholdPlan,
   householdRevision: string,
   scenarioOverrideHash: string
-): NormalizedAnalysisEntry {
+): LegacyNormalizedAnalysisEntry {
   const cacheKey = buildNormalizedAnalysisCacheKey({
     householdRevision,
     scenarioOverrideHash,
@@ -181,55 +257,46 @@ function resolveLegacyPortfolioAdjustmentAmount(
   return adjustment.amount
 }
 
-export function getOrCreateLegacyNormalizedAnalysisEntry(
-  input: LegacyNormalizedEntryInput,
-  cacheOps: NormalizedAnalysisCacheOps
-): NormalizedAnalysisEntry {
-  const householdRevision = buildLegacyHouseholdRevision({
-    profileRevision: input.profile.profileRevision ?? 0,
-    incomeRevision: input.income.incomeRevision ?? 0,
-    propertyRevision: input.property.propertyRevision ?? 0,
-  })
-  const scenarioOverrideHash = stableScenarioOverrideHash({
-    profileOverrides: input.profileOverrides ?? null,
-    scenarioOverrides: input.scenarioOverrides ?? null,
-  })
-  const cacheKey = buildNormalizedAnalysisCacheKey({
+export function buildLegacyNormalizedAnalysisIdentity(
+  input: LegacyNormalizedEntryInput
+): LegacyNormalizedAnalysisIdentity {
+  const householdPlan = createLegacyHouseholdPlan(input)
+  const householdRevision = buildLegacyCompiledPlanRevision(householdPlan)
+  const scenarioOverrideHash = stableScenarioOverrideHash(
+    input.scenarioOverrides ?? input.profileOverrides ?? null
+  )
+
+  return {
+    cacheKey: buildNormalizedAnalysisCacheKey({
+      householdRevision,
+      scenarioOverrideHash,
+    }),
     householdRevision,
     scenarioOverrideHash,
-  })
-
-  const existingEntry = cacheOps.getEntry(cacheKey)
-  if (existingEntry?.compiledPlan) {
-    cacheOps.setActiveCacheKey(cacheKey)
-    return existingEntry
   }
+}
 
-  const compiledPlan = compileHouseholdPlan(
-    fromLegacyIndividual(createLegacySnapshot(input))
+export function createLegacyNormalizedAnalysisEntry(
+  input: LegacyNormalizedEntryInput
+): LegacyNormalizedAnalysisEntry {
+  const householdPlan = createLegacyHouseholdPlan(input)
+  const householdRevision = buildLegacyCompiledPlanRevision(householdPlan)
+  const scenarioOverrideHash = stableScenarioOverrideHash(
+    input.scenarioOverrides ?? input.profileOverrides ?? null
   )
-  const entry = createNormalizedAnalysisEntry(
+  const compiledPlan = compileHouseholdPlan(householdPlan)
+  return createNormalizedAnalysisEntry(
     compiledPlan,
     householdRevision,
     scenarioOverrideHash
   )
-
-  cacheOps.upsertEntry(entry)
-  cacheOps.setActiveCacheKey(cacheKey)
-
-  return entry
 }
 
-export function toMonteCarloAnalysisInputs(
+export function buildMonteCarloAnalysisInputsFromEntry(
   input: LegacyNormalizedEntryInput,
-  cacheOps: NormalizedAnalysisCacheOps
+  entry: LegacyNormalizedAnalysisEntry
 ): NormalizedMonteCarloAnalysisInputs {
-  const entry = getOrCreateLegacyNormalizedAnalysisEntry(input, cacheOps)
   const compiledPlan = entry.compiledPlan
-
-  if (!compiledPlan) {
-    throw new Error('Normalized analysis entry is missing a compiled household plan.')
-  }
 
   const referenceAdult = getReferenceAdult(compiledPlan)
   const currentAge = referenceAdult.currentAge

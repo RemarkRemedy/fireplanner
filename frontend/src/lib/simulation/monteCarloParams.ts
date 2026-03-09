@@ -6,7 +6,8 @@ import type {
   SimulationState,
 } from '@/lib/types'
 import type { MonteCarloEngineParams } from '@/lib/simulation/monteCarlo'
-import { toMonteCarloAnalysisInputs, type NormalizedAnalysisCacheOps } from '@/lib/household/toAnalysisInputs'
+import type { NormalizedMonteCarloAnalysisInputs } from '@/lib/household/toAnalysisInputs'
+import { toMonteCarloAnalysisInputs, type NormalizedAnalysisCacheOps } from '@/stores/useNormalizedAnalysisStore'
 import { buildProjectionParams } from '@/lib/calculations/projectionParams'
 import { generateIncomeProjection, sumPostRetirementIncome, getLifeEventExpenseImpact } from '@/lib/calculations/income'
 import { getEffectiveExpenses, getExpensesAtRetirement } from '@/lib/calculations/expenses'
@@ -34,6 +35,7 @@ interface BuildMonteCarloEngineParamsInput {
   allocationWeights?: number[]
   profileOverrides?: Partial<Pick<ProfileState, 'annualExpenses' | 'retirementAge'>>
   cacheOps?: NormalizedAnalysisCacheOps
+  normalizedAnalysisInputs?: NormalizedMonteCarloAnalysisInputs
 }
 
 export function buildLegacyMonteCarloEngineParams({
@@ -329,38 +331,52 @@ export function buildLegacyMonteCarloEngineParams({
 export function buildMonteCarloEngineParams(
   input: BuildMonteCarloEngineParamsInput
 ): MonteCarloEngineParams {
-  if (!input.cacheOps) {
-    throw new Error(
-      'buildMonteCarloEngineParams requires cacheOps. ' +
-      'Use buildCacheOpsFromStore() at the call site to construct it.'
-    )
-  }
-
   const legacyParams = buildLegacyMonteCarloEngineParams(input)
-  const normalizedInputs = toMonteCarloAnalysisInputs({
-    profile: input.profile,
-    income: input.income,
-    property: input.property,
-    profileOverrides: input.profileOverrides,
-    scenarioOverrides: null,
-  }, input.cacheOps)
 
-  // C2 fix: Override annualSavings and postRetirementIncome from the
-  // normalized path too, not just ages and adjustments. Using legacy
-  // annualSavings with normalized retirementAge would cause an array
-  // length mismatch (annualSavings.length !== retirementAge - currentAge).
-  // W36: Both pre- and post-retirement expense calculations now come from
-  // the same normalized source. The legacy path's expense calculations
-  // (which used inline projection + manual property/goal/healthcare
-  // adjustments) are fully superseded.
-  return {
-    ...legacyParams,
-    currentAge: normalizedInputs.currentAge,
-    retirementAge: normalizedInputs.retirementAge,
-    lifeExpectancy: normalizedInputs.lifeExpectancy,
-    annualSavings: normalizedInputs.annualSavings,
-    postRetirementIncome: normalizedInputs.postRetirementIncome,
-    annualExpensesAtRetirement: normalizedInputs.annualExpensesAtRetirement,
-    portfolioAdjustments: normalizedInputs.portfolioAdjustments,
+  // If pre-computed normalized inputs are provided (PR-4a pattern), use them directly
+  if (input.normalizedAnalysisInputs) {
+    return {
+      ...legacyParams,
+      currentAge: input.normalizedAnalysisInputs.currentAge,
+      retirementAge: input.normalizedAnalysisInputs.retirementAge,
+      lifeExpectancy: input.normalizedAnalysisInputs.lifeExpectancy,
+      annualSavings: input.normalizedAnalysisInputs.annualSavings,
+      postRetirementIncome: input.normalizedAnalysisInputs.postRetirementIncome,
+      annualExpensesAtRetirement: input.normalizedAnalysisInputs.annualExpensesAtRetirement,
+      portfolioAdjustments: input.normalizedAnalysisInputs.portfolioAdjustments,
+    }
   }
+
+  // If cacheOps are provided (HEAD pattern), compute normalized inputs via the store
+  if (input.cacheOps) {
+    const normalizedInputs = toMonteCarloAnalysisInputs({
+      profile: input.profile,
+      income: input.income,
+      property: input.property,
+      profileOverrides: input.profileOverrides,
+      scenarioOverrides: null,
+    }, input.cacheOps)
+
+    // C2 fix: Override annualSavings and postRetirementIncome from the
+    // normalized path too, not just ages and adjustments. Using legacy
+    // annualSavings with normalized retirementAge would cause an array
+    // length mismatch (annualSavings.length !== retirementAge - currentAge).
+    // W36: Both pre- and post-retirement expense calculations now come from
+    // the same normalized source. The legacy path's expense calculations
+    // (which used inline projection + manual property/goal/healthcare
+    // adjustments) are fully superseded.
+    return {
+      ...legacyParams,
+      currentAge: normalizedInputs.currentAge,
+      retirementAge: normalizedInputs.retirementAge,
+      lifeExpectancy: normalizedInputs.lifeExpectancy,
+      annualSavings: normalizedInputs.annualSavings,
+      postRetirementIncome: normalizedInputs.postRetirementIncome,
+      annualExpensesAtRetirement: normalizedInputs.annualExpensesAtRetirement,
+      portfolioAdjustments: normalizedInputs.portfolioAdjustments,
+    }
+  }
+
+  // No normalized inputs — return legacy params as-is
+  return legacyParams
 }
