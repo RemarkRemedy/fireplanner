@@ -98,6 +98,8 @@ function HouseholdPrototypeSection({
 
   const isCollapsed = collapsedSections.includes(sectionId)
 
+  const hasSwitcher = scopePill && scopePill.kind !== 'household' && scopePill.adults.length > 1
+
   return (
     <section id={sectionId} className="scroll-mt-16">
       <Accordion
@@ -119,18 +121,11 @@ function HouseholdPrototypeSection({
                 <Badge variant={isComplete ? 'default' : 'secondary'}>
                   {isComplete ? 'Configured' : 'Needs review'}
                 </Badge>
-                {scopePill && (
+                {scopePill && !hasSwitcher && (
                   scopePill.kind === 'household' ? (
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border bg-muted text-muted-foreground border-border">
                       Household
                     </span>
-                  ) : scopePill.adults.length > 1 ? (
-                    <AdultSegmentedControl
-                      adults={scopePill.adults}
-                      selectedId={scopePill.selectedId}
-                      onSelect={scopePill.onSelect}
-                      suffix={scopePill.kind === 'shared' ? '+ shared' : undefined}
-                    />
                   ) : (
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border bg-primary/15 text-primary border-primary/30">
                       {scopePill.adults[0]?.name}
@@ -142,6 +137,16 @@ function HouseholdPrototypeSection({
               <p className="text-sm text-muted-foreground">{description}</p>
             </div>
           </AccordionTrigger>
+          {!isCollapsed && hasSwitcher && (
+            <div className="sticky top-3 md:top-0 z-40 bg-background/95 backdrop-blur-sm py-1.5 md:py-2 -mx-1 px-1 ml-14 md:ml-0">
+              <AdultSegmentedControl
+                adults={scopePill.adults}
+                selectedId={scopePill.selectedId}
+                onSelect={scopePill.onSelect}
+                suffix={scopePill.kind === 'shared' ? '+ shared' : undefined}
+              />
+            </div>
+          )}
           <AccordionContent className="text-base pt-4 pb-0">
             {children}
           </AccordionContent>
