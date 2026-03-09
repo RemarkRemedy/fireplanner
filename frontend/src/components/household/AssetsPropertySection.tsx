@@ -99,15 +99,6 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
   if (mode === 'assets') {
     return (
       <div className="space-y-6">
-        <Card className="border-dashed">
-          <CardContent className="py-5 space-y-2 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">Balance sheet ownership stays explicit here.</p>
-            <p>
-              Use private owners for member-specific liquid balances and locked assets, or use shared when the holding belongs to the household pool.
-              Detailed CPF editing stays in the CPF section below.
-            </p>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>
