@@ -278,7 +278,6 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                         </Select>
                       </div>
                     )}
-                    </div>
                     <NumberInput
                       label="Household share (%)"
                       value={Math.round(property.ownershipPercent * 100)}
