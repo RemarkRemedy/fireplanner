@@ -182,8 +182,6 @@ describe('buildPlannerResultsPayload', () => {
     expect(payload.scenario_name).toBe('Base Plan')
     expect(payload.simulation_method).toBe('parametric')
     expect(payload.n_simulations).toBe(10_000)
-    expect(payload.projected_fire_age_p50).toBeDefined()
-    expect(payload.portfolio_at_fire_p50).toBeDefined()
     expect(payload.required_portfolio).toBe(1_428_571)
     expect(payload.required_portfolio_basis).toBe('wr_safe_90')
     expect(payload.required_savings_rate).toBeDefined()
@@ -211,7 +209,6 @@ describe('buildPlannerResultsPayload', () => {
       cached: false,
       horizon_years: 35,
       target_fire_age: 55,
-      projected_fire_age_p50: 55,
       annual_expenses_target_real: 50_000,
       required_portfolio: 1_428_571,
       required_portfolio_basis: 'wr_safe_90',
@@ -227,7 +224,6 @@ describe('buildPlannerResultsPayload', () => {
       terminal_p5: 10_000,
       terminal_p50: 100_000,
       terminal_p95: 300_000,
-      portfolio_at_fire_p50: 100_000,
       allocation_summary: 'Stocks 60 / Bonds 20 / Cash 20',
       allocation_weights: {
         usEquities: 0.3,
@@ -275,6 +271,23 @@ describe('buildPlannerResultsPayload', () => {
     expect(payload.projected_fire_age_p50).toBeDefined()
     expect(Number.isFinite(payload.p_success)).toBe(true)
     expect(payload.required_savings_rate).toBe(0)
+  })
+
+  it('omits FIRE fields when the portfolio never reaches the required target', () => {
+    const payload = buildPlannerResultsPayload(BASE_INPUT)
+
+    expect(payload.projected_fire_age_p50).toBeUndefined()
+    expect(payload.portfolio_at_fire_p50).toBeUndefined()
+  })
+
+  it('emits FIRE fields once the median path reaches the required portfolio', () => {
+    const payload = buildPlannerResultsPayload({
+      ...BASE_INPUT,
+      annualExpenses: 1_000,
+    })
+
+    expect(payload.projected_fire_age_p50).toBe(30)
+    expect(payload.portfolio_at_fire_p50).toBe(100_000)
   })
 
   it('clamps NaN success_rate to 0', () => {

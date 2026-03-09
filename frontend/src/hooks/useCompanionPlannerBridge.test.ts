@@ -494,6 +494,41 @@ describe('useCompanionPlannerBridge', () => {
     expect(mockPostPlannerResults).toHaveBeenCalledTimes(1)
   })
 
+  it('marks saved scenario results stale when allocation revisions change', async () => {
+    enableCompanionMode('stale-revisions')
+    mockFetchPlannerSnapshot.mockResolvedValue({ schemaVersion: 1 })
+    mockPostPlannerResults.mockResolvedValue()
+
+    const { result, rerender } = renderHook(
+      ({ mc, stale }) => useCompanionPlannerBridge({ result: mc, isResultStale: stale }),
+      { initialProps: { mc: undefined as MonteCarloResult | undefined, stale: false } }
+    )
+
+    await waitFor(() => {
+      expect(result.current.bootstrapStatus).toBe('loaded')
+    })
+
+    act(() => {
+      result.current.prepareSimulationRun()
+    })
+    rerender({ mc: SAMPLE_RESULT, stale: false })
+
+    await waitFor(() => {
+      expect(mockPostPlannerResults).toHaveBeenCalledTimes(1)
+      expect(result.current.activeScenarioNeedsRerun).toBe(false)
+      expect(result.current.canSaveResults).toBe(true)
+    })
+
+    act(() => {
+      useAllocationStore.getState().setCurrentWeights([0.2, 0.2, 0.1, 0.2, 0.1, 0, 0.2, 0])
+    })
+
+    await waitFor(() => {
+      expect(result.current.activeScenarioNeedsRerun).toBe(true)
+      expect(result.current.canSaveResults).toBe(false)
+    })
+  })
+
   it('creates companion presets and supports duplicate + knob edits', async () => {
     enableCompanionMode('scn001')
     mockFetchPlannerSnapshot.mockResolvedValue({
