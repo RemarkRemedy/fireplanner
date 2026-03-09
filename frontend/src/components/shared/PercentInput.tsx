@@ -93,7 +93,7 @@ export function PercentInput({
           {tooltip && <InfoTooltip text={tooltip} />}
         </Label>
       )}
-      <div className="relative mt-auto">
+      <div className="relative">
         <Input
           id={inputId}
           type="number"

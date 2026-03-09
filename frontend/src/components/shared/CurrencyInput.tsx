@@ -32,7 +32,7 @@ export function CurrencyInput({
         {label}
         {tooltip && <InfoTooltip text={tooltip} />}
       </Label>
-      <div className="relative mt-auto" onBlur={() => setTouched(true)}>
+      <div className="relative" onBlur={() => setTouched(true)}>
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
           $
         </span>

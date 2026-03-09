@@ -145,7 +145,7 @@ export function NumberInput({
         {label}
         {tooltip && <InfoTooltip text={tooltip} />}
       </Label>
-      <div className="mt-auto">{input}</div>
+      <div>{input}</div>
       {touched && error && <p id={errorId} className="text-xs text-destructive">{error}</p>}
     </div>
   )
