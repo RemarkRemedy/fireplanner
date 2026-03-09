@@ -433,44 +433,6 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
             </div>
           )}
 
-          {(salaryModel.salaryModel ?? 'simple') === 'data-driven' && (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 rounded-lg border p-4">
-              <div className="space-y-1">
-                <Label>MOM education benchmark</Label>
-                <Select
-                  value={selectedAdult.taxProfile.momEducation}
-                  onValueChange={(value) => updateSelectedAdult({
-                    taxProfile: {
-                      ...selectedAdult.taxProfile,
-                      momEducation: value as EducationLevel,
-                    },
-                  })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EDUCATION_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <PercentInput
-                label="Adjustment multiplier"
-                value={selectedAdult.taxProfile.momAdjustment}
-                onChange={(value) => updateSelectedAdult({
-                  taxProfile: {
-                    ...selectedAdult.taxProfile,
-                    momAdjustment: value,
-                  },
-                })}
-              />
-            </div>
-          )}
-
           <div className="rounded-md bg-muted/50 px-4 py-3 text-sm">
             <span className="text-muted-foreground">Projected salary at retirement: </span>
             <span className="font-semibold text-green-600">{formatCurrency(projectedSalary)}</span>
