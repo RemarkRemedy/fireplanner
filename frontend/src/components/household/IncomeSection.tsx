@@ -239,6 +239,88 @@ function createLifeEvent(adult: PlanningAdult): LifeEvent {
   }
 }
 
+interface LifeEventTemplate {
+  label: string
+  ageOffset: number
+  durationYears: number
+  event: Partial<LifeEvent>
+}
+
+const LIFE_EVENT_TEMPLATES: LifeEventTemplate[] = [
+  {
+    label: 'Career Break at 35',
+    ageOffset: 5,
+    durationYears: 1,
+    event: { name: 'Career Break', incomeImpact: 0, savingsPause: true, cpfPause: true },
+  },
+  {
+    label: 'Part-time 40-45',
+    ageOffset: 10,
+    durationYears: 5,
+    event: { name: 'Part-time Work', incomeImpact: 0.5, savingsPause: false, cpfPause: false },
+  },
+  {
+    label: 'Retrenchment at 50',
+    ageOffset: 20,
+    durationYears: 1,
+    event: { name: 'Retrenchment', incomeImpact: 0, savingsPause: true, cpfPause: true, expenseReductionPercent: 0.2 },
+  },
+  {
+    label: 'Childcare Leave',
+    ageOffset: 3,
+    durationYears: 2,
+    event: { name: 'Childcare Leave', incomeImpact: 0.3, savingsPause: true, cpfPause: false },
+  },
+  {
+    label: 'Job Loss (6 months)',
+    ageOffset: 2,
+    durationYears: 1,
+    event: { name: 'Job Loss (6 months)', incomeImpact: 0, savingsPause: true, cpfPause: true, expenseReductionPercent: 0.2 },
+  },
+  {
+    label: 'Job Loss (12 months)',
+    ageOffset: 2,
+    durationYears: 2,
+    event: { name: 'Job Loss (12 months)', incomeImpact: 0, savingsPause: true, cpfPause: true, expenseReductionPercent: 0.2 },
+  },
+  {
+    label: 'Partial Disability (3yr)',
+    ageOffset: 5,
+    durationYears: 3,
+    event: { name: 'Partial Disability', incomeImpact: 0.5, savingsPause: false, cpfPause: false, additionalAnnualExpense: 12000, lumpSumCost: 3000 },
+  },
+  {
+    label: 'Parent Care (5yr)',
+    ageOffset: 10,
+    durationYears: 5,
+    event: { name: 'Parent Care', incomeImpact: 0.8, savingsPause: false, cpfPause: false, additionalAnnualExpense: 16000, lumpSumCost: 3000 },
+  },
+  {
+    label: 'Recession Pay Cut (2yr)',
+    ageOffset: 3,
+    durationYears: 2,
+    event: { name: 'Recession Pay Cut', incomeImpact: 0.8, savingsPause: false, cpfPause: false, expenseReductionPercent: 0.1 },
+  },
+]
+
+function createLifeEventFromTemplate(template: LifeEventTemplate, adult: PlanningAdult): LifeEvent {
+  const startAge = Math.min(adult.currentAge + template.ageOffset, adult.lifeExpectancy - 1)
+  const endAge = Math.min(startAge + template.durationYears, adult.lifeExpectancy)
+  return {
+    id: createId('life-event'),
+    name: template.event.name ?? 'Life event',
+    startAge,
+    endAge,
+    incomeImpact: template.event.incomeImpact ?? 0.25,
+    affectedStreamIds: [],
+    savingsPause: template.event.savingsPause ?? false,
+    cpfPause: template.event.cpfPause ?? false,
+    additionalAnnualExpense: template.event.additionalAnnualExpense,
+    lumpSumCost: template.event.lumpSumCost,
+    expenseReductionPercent: template.event.expenseReductionPercent,
+  }
+}
+
 function getIncomeErrors(
   validationErrors: Record<string, Record<string, string>>,
   incomeId: string,
@@ -265,7 +347,11 @@ function TaxReliefEditor({ adult, onUpdate }: {
   }
 
   const switchToDetailed = () => {
-    setBreakdown(getDefaultBreakdown(basisAge))
+    const defaults = getDefaultBreakdown(basisAge)
+    // Preserve the existing personalReliefs total: put the residual into otherReliefs
+    const defaultTotal = computeTotalReliefs(defaults, basisAge)
+    const residual = Math.max(0, adult.taxProfile.personalReliefs - defaultTotal)
+    setBreakdown({ ...defaults, otherReliefs: residual })
   }
 
   const switchToSimple = () => {
@@ -280,8 +366,8 @@ function TaxReliefEditor({ adult, onUpdate }: {
 
   // Auto-calculated CPF employee deduction (from first year's projection)
   const cpfEmployeeDeduction = useMemo(() => {
-    const cpf = calculateCpfContribution(adult.annualIncome / 12, adult.currentAge)
-    return cpf.employee * 12
+    const cpf = calculateCpfContribution(adult.annualIncome, adult.currentAge)
+    return cpf.employee
   }, [adult.annualIncome, adult.currentAge])
 
   const totalDeductions = adult.taxProfile.personalReliefs + cpfEmployeeDeduction
@@ -1188,6 +1274,25 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
             </div>
           ) : (
             <>
+              <div className="space-y-2">
+                <span className="text-sm text-muted-foreground">Templates:</span>
+                <div className="flex flex-wrap gap-2">
+                  {LIFE_EVENT_TEMPLATES.map((template) => (
+                    <Button
+                      key={template.label}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateSelectedAdult({
+                        lifeEvents: [...selectedAdult.lifeEvents, createLifeEventFromTemplate(template, selectedAdult)],
+                      })}
+                    >
+                      {template.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
               {selectedAdult.lifeEvents.map((event) => (
                 <div key={event.id} className="rounded-lg border p-4 space-y-4">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
