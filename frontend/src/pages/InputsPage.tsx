@@ -1,6 +1,12 @@
 import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -17,7 +23,7 @@ import { cn } from '@/lib/utils'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { useSectionCompletion } from '@/hooks/useSectionCompletion'
 import type { SectionId } from '@/lib/household/sectionOrder'
-import { SECTION_ORDERINGS, type SectionOrderKey } from '@/lib/household/sectionOrder'
+import { SECTION_ORDERINGS } from '@/lib/household/sectionOrder'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
 import { useHouseholdCpfAdapter } from '@/components/household/adapters/useHouseholdCpfAdapter'
@@ -53,21 +59,44 @@ function HouseholdPrototypeSection({
   scopeLabel,
   children,
 }: HouseholdPrototypeSectionProps) {
+  const collapsedSections = useUIStore((s) => s.collapsedSections)
+  const toggleSection = useUIStore((s) => s.toggleSection)
+
+  const isCollapsed = collapsedSections.includes(sectionId)
+
   return (
-    <section id={sectionId} className="space-y-4 scroll-mt-16">
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <h2 className="text-2xl font-bold">{title}</h2>
-          <Badge variant={isComplete ? 'default' : 'secondary'}>
-            {isComplete ? 'Configured' : 'Needs review'}
-          </Badge>
-          {scopeLabel && (
-            <span className="text-xs text-muted-foreground">{scopeLabel}</span>
-          )}
-        </div>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
-      {children}
+    <section id={sectionId} className="scroll-mt-16">
+      <Accordion
+        type="single"
+        collapsible
+        value={isCollapsed ? '' : sectionId}
+        onValueChange={(value) => {
+          const shouldBeCollapsed = value === ''
+          if (shouldBeCollapsed !== isCollapsed) {
+            toggleSection(sectionId)
+          }
+        }}
+      >
+        <AccordionItem value={sectionId} className="border-none">
+          <AccordionTrigger className="py-0 hover:no-underline">
+            <div className="space-y-1 text-left">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold">{title}</span>
+                <Badge variant={isComplete ? 'default' : 'secondary'}>
+                  {isComplete ? 'Configured' : 'Needs review'}
+                </Badge>
+                {scopeLabel && (
+                  <span className="text-xs text-muted-foreground">{scopeLabel}</span>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">{description}</p>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="text-base pt-4 pb-0">
+            {children}
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </section>
   )
 }
@@ -100,7 +129,7 @@ export function InputsPage() {
   const cpfEnabled = useUIStore((state) => state.cpfEnabled)
   const healthcareEnabled = useUIStore((state) => state.healthcareEnabled)
   const propertyEnabled = useUIStore((state) => state.propertyEnabled)
-  const sectionOrder = useUIStore((s) => s.sectionOrder) as SectionOrderKey
+  const sectionOrder = useUIStore((s) => s.sectionOrder)
   const { sections: sectionCompletion } = useSectionCompletion()
 
   const adults = plan.adults
