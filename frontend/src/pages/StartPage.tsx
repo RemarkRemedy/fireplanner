@@ -666,104 +666,104 @@ function MonthlyIncomeInput({
   age: number
 }) {
   return (
-    <>
-      {/* Grid cell: just the label + input */}
-      <div className="flex flex-col gap-1">
-        <Label className="text-sm flex items-center gap-1">
-          Monthly Income
-          <InfoTooltip text="Your monthly salary. Toggle between take-home (after employee CPF) and gross (before employee CPF, excludes employer's CPF) inside the input." />
-        </Label>
+    <div className="flex flex-col gap-1">
+      <Label className="text-sm flex items-center gap-1">
+        Monthly Income
+        <InfoTooltip text="Your monthly salary. Toggle between take-home (after employee CPF) and gross (before employee CPF, excludes employer's CPF) inside the input." />
+      </Label>
 
-        {/* Dollar input with sliding take-home/gross toggle as prefix */}
-        <div className="relative">
-          <div className="absolute left-1.5 top-1/2 -translate-y-1/2 z-10 flex rounded-full bg-muted border border-border/50 p-px text-[10px] leading-tight">
-            <div
-              className="absolute top-px bottom-px rounded-full bg-primary transition-all duration-200 ease-in-out"
-              style={{
-                left: incomeType === 'take-home' ? '1px' : 'var(--slider-left)',
-                width: incomeType === 'take-home' ? 'var(--take-home-w)' : 'var(--gross-w)',
-              }}
-            />
-            <button
-              type="button"
-              ref={(el) => {
-                if (el) el.parentElement?.style.setProperty('--take-home-w', `${el.offsetWidth}px`)
-              }}
-              onClick={() => onIncomeTypeChange('take-home')}
-              className={`relative z-10 px-1.5 py-0.5 rounded-full whitespace-nowrap transition-colors duration-200 ${
-                incomeType === 'take-home' ? 'text-primary-foreground' : 'text-muted-foreground'
-              }`}
-            >
-              Take-home
-            </button>
-            <button
-              type="button"
-              ref={(el) => {
-                if (el) {
-                  const parent = el.parentElement!
-                  parent.style.setProperty('--gross-w', `${el.offsetWidth}px`)
-                  parent.style.setProperty('--slider-left', `${el.offsetLeft}px`)
-                }
-              }}
-              onClick={() => onIncomeTypeChange('gross')}
-              className={`relative z-10 px-1.5 py-0.5 rounded-full whitespace-nowrap transition-colors duration-200 ${
-                incomeType === 'gross' ? 'text-primary-foreground' : 'text-muted-foreground'
-              }`}
-            >
-              Gross
-            </button>
-          </div>
-          <span className="absolute left-[7.4rem] top-1/2 -translate-y-1/2 text-muted-foreground text-sm z-10">$</span>
-          <NumberInput
-            value={monthlyIncome}
-            onChange={onMonthlyIncomeChange}
-            integer
-            formatWithCommas
-            className="pl-[8.5rem] border-blue-300"
+      {/* Dollar input with sliding take-home/gross toggle as prefix */}
+      <div className="relative">
+        <div className="absolute left-1.5 top-1/2 -translate-y-1/2 z-10 flex rounded-full bg-muted border border-border/50 p-px text-[10px] leading-tight">
+          <div
+            className="absolute top-px bottom-px rounded-full bg-primary transition-all duration-200 ease-in-out"
+            style={{
+              left: incomeType === 'take-home' ? '1px' : 'var(--slider-left)',
+              width: incomeType === 'take-home' ? 'var(--take-home-w)' : 'var(--gross-w)',
+            }}
           />
+          <button
+            type="button"
+            ref={(el) => {
+              if (el) el.parentElement?.style.setProperty('--take-home-w', `${el.offsetWidth}px`)
+            }}
+            onClick={() => onIncomeTypeChange('take-home')}
+            className={`relative z-10 px-1.5 py-0.5 rounded-full whitespace-nowrap transition-colors duration-200 ${
+              incomeType === 'take-home' ? 'text-primary-foreground' : 'text-muted-foreground'
+            }`}
+          >
+            Take-home
+          </button>
+          <button
+            type="button"
+            ref={(el) => {
+              if (el) {
+                const parent = el.parentElement!
+                parent.style.setProperty('--gross-w', `${el.offsetWidth}px`)
+                parent.style.setProperty('--slider-left', `${el.offsetLeft}px`)
+              }
+            }}
+            onClick={() => onIncomeTypeChange('gross')}
+            className={`relative z-10 px-1.5 py-0.5 rounded-full whitespace-nowrap transition-colors duration-200 ${
+              incomeType === 'gross' ? 'text-primary-foreground' : 'text-muted-foreground'
+            }`}
+          >
+            Gross
+          </button>
         </div>
+        <span className="absolute left-[7.4rem] top-1/2 -translate-y-1/2 text-muted-foreground text-sm z-10">$</span>
+        <NumberInput
+          value={monthlyIncome}
+          onChange={onMonthlyIncomeChange}
+          integer
+          formatWithCommas
+          className="pl-[8.5rem] border-blue-300"
+        />
       </div>
 
-      {/* Income details row: bonus + transparency — full-width below grid on desktop, right after income on mobile */}
-      <div className="col-span-full @md:order-last space-y-1">
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="bonus-aws"
-            checked={hasBonusAws}
-            onCheckedChange={(checked) => onHasBonusAwsChange(checked === true)}
-          />
-          <label htmlFor="bonus-aws" className="text-xs text-muted-foreground cursor-pointer">
-            I receive bonus / AWS
-          </label>
-          {hasBonusAws && (
-            <div className="flex items-center gap-1">
-              <NumberInput
-                value={bonusMonths}
-                onChange={onBonusMonthsChange}
-                min={0}
-                max={6}
-                step={0.1}
-                className="w-14 h-7 text-xs border-blue-300"
-              />
-              <span className="text-xs text-muted-foreground">extra month(s)</span>
-            </div>
-          )}
-        </div>
+      {/* Bonus / AWS checkbox */}
+      <div className="flex items-center gap-2 mt-1">
+        <Checkbox
+          id="bonus-aws"
+          checked={hasBonusAws}
+          onCheckedChange={(checked) => onHasBonusAwsChange(checked === true)}
+        />
+        <label htmlFor="bonus-aws" className="text-xs text-muted-foreground cursor-pointer">
+          I receive bonus / AWS
+        </label>
+        {hasBonusAws && (
+          <div className="flex items-center gap-1">
+            <NumberInput
+              value={bonusMonths}
+              onChange={onBonusMonthsChange}
+              min={0}
+              max={6}
+              step={0.1}
+              className="w-14 h-7 text-xs border-blue-300"
+            />
+            <span className="text-xs text-muted-foreground">extra month(s)</span>
+          </div>
+        )}
+      </div>
 
-        <div className="text-xs text-muted-foreground">
-          {incomeType === 'take-home' && monthlyIncome > 0 ? (
-            <>
+      {/* Transparency line */}
+      <div className="text-xs text-muted-foreground mt-1">
+        {incomeType === 'take-home' && monthlyIncome > 0 ? (
+          <>
+            <div>
               Estimated gross: ~${grossMonthly.toLocaleString('en-SG', { maximumFractionDigits: 0 })}/mo
               {' '}(~${annualIncome.toLocaleString('en-SG', { maximumFractionDigits: 0 })}/year)
-              {' · '}{getCpfEmployeeRateLabel(age)} employee CPF
+            </div>
+            <div className="text-muted-foreground/70">
+              Based on {getCpfEmployeeRateLabel(age)} employee CPF
               {isAboveOwCeiling(monthlyIncome, age) ? ' (capped at $8,000/mo ceiling)' : ''}
-            </>
-          ) : monthlyIncome > 0 ? (
-            <>(~${annualIncome.toLocaleString('en-SG', { maximumFractionDigits: 0 })}/year)</>
-          ) : null}
-        </div>
+            </div>
+          </>
+        ) : monthlyIncome > 0 ? (
+          <div>(~${annualIncome.toLocaleString('en-SG', { maximumFractionDigits: 0 })}/year)</div>
+        ) : null}
       </div>
-    </>
+    </div>
   )
 }
 
