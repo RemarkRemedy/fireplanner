@@ -19,7 +19,7 @@ interface ProjectionTableProps {
 export function ProjectionTable({ data, retirementAge }: ProjectionTableProps) {
   const [expanded, setExpanded] = useState(false)
   const displayData = useMemo(
-    () => expanded ? data : data.slice(0, 5),
+    () => expanded ? data : data.slice(0, 2),
     [expanded, data]
   )
 
@@ -186,7 +186,7 @@ export function ProjectionTable({ data, retirementAge }: ProjectionTableProps) {
           </tbody>
         </table>
       </div>
-      {data.length > 5 && (
+      {data.length > 2 && (
         <button
           onClick={() => setExpanded(!expanded)}
           className="mt-2 text-sm text-primary hover:underline"
