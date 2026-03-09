@@ -31,7 +31,9 @@ import type {
 } from '@/lib/types'
 import { SummaryPanel } from '@/components/income/SummaryPanel'
 import { ProjectionTable } from '@/components/income/ProjectionTable'
+import { SectionNudge } from '@/components/shared/SectionNudge'
 import { useIncomeProjection } from '@/hooks/useIncomeProjection'
+import { useSectionNudge } from '@/hooks/useSectionNudge'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { formatCurrency } from '@/lib/utils'
 
@@ -227,9 +229,19 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
 
   const { projection: incomeProjection, summary: incomeSummary } = useIncomeProjection()
   const [projectionExpanded, setProjectionExpanded] = useState(false)
+  const incomeNudge = useSectionNudge('section-income')
 
   return (
     <div className="space-y-6">
+      {incomeNudge && (
+        <SectionNudge
+          nudgeId={incomeNudge.id}
+          sectionId={incomeNudge.sectionId}
+          message={incomeNudge.message}
+          actionLabel={incomeNudge.actionLabel}
+        />
+      )}
+
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
