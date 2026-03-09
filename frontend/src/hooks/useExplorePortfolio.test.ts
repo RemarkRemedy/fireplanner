@@ -1,19 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useExplorePortfolio } from './useExplorePortfolio'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { setupTestPlan } from '@/test-helpers/setupTestPlan'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useUIStore } from '@/stores/useUIStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 
 beforeEach(() => {
-  useProfileStore.getState().reset()
-  useIncomeStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   useAllocationStore.getState().reset()
   useSimulationStore.getState().reset()
-  usePropertyStore.getState().reset()
   useUIStore.setState({
     sectionOrder: 'goal-first',
     cpfEnabled: true,
@@ -32,10 +29,8 @@ describe('useExplorePortfolio', () => {
     })
 
     it('startAge equals retirementAge in myPlan mode', () => {
-      useProfileStore.setState({
-        ...useProfileStore.getState(),
-        retirementAge: 55,
-        validationErrors: {},
+      setupTestPlan({
+        adult: { retirementAge: 55 },
       })
       const { result } = renderHook(() => useExplorePortfolio())
       expect(result.current.startAge).toBe(55)
@@ -73,11 +68,9 @@ describe('useExplorePortfolio', () => {
     })
 
     it('uses FIRE number as initialPortfolio in fireTarget mode', () => {
-      useProfileStore.setState({
-        ...useProfileStore.getState(),
-        annualExpenses: 48000,
-        swr: 0.04,
-        validationErrors: {},
+      setupTestPlan({
+        expenses: { annualExpenses: 48000 },
+        assumptions: { fire: { swr: 0.04 } },
       })
       const { result } = renderHook(() => useExplorePortfolio())
       act(() => {
@@ -101,11 +94,8 @@ describe('useExplorePortfolio', () => {
 
   describe('glide path interpolation', () => {
     it('uses target weights when startAge is past glide path end', () => {
-      useProfileStore.setState({
-        ...useProfileStore.getState(),
-        retirementAge: 65,
-        currentAge: 30,
-        validationErrors: {},
+      setupTestPlan({
+        adult: { retirementAge: 65, currentAge: 30 },
       })
       // aggressive currentWeights: US equities = 0.50
       useAllocationStore.getState().applyTemplate('aggressive')
@@ -140,19 +130,11 @@ describe('useExplorePortfolio', () => {
   describe('fireAge guards', () => {
     it('falls back to retirementAge when fireAge is Infinity', () => {
       // With 0 income and 0 NW, fireAge could be Infinity
-      // Must also zero out income store's salary so the income projection
-      // doesn't override profile.annualIncome
-      useProfileStore.setState({
-        ...useProfileStore.getState(),
-        annualIncome: 0,
-        liquidNetWorth: 0,
-        annualExpenses: 48000,
-        retirementAge: 65,
-        validationErrors: {},
-      })
-      useIncomeStore.setState({
-        ...useIncomeStore.getState(),
-        annualSalary: 0,
+      setupTestPlan({
+        income: { annualSalary: 0 },
+        assets: { liquidNetWorth: 0 },
+        expenses: { annualExpenses: 48000 },
+        adult: { retirementAge: 65 },
       })
       const { result } = renderHook(() => useExplorePortfolio())
       act(() => {
@@ -164,12 +146,8 @@ describe('useExplorePortfolio', () => {
     })
 
     it('clamps fireAge to [currentAge, lifeExpectancy]', () => {
-      useProfileStore.setState({
-        ...useProfileStore.getState(),
-        currentAge: 30,
-        retirementAge: 65,
-        lifeExpectancy: 90,
-        validationErrors: {},
+      setupTestPlan({
+        adult: { currentAge: 30, retirementAge: 65, lifeExpectancy: 90 },
       })
       const { result } = renderHook(() => useExplorePortfolio())
       act(() => {
