@@ -319,7 +319,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                       </div>
                     )}
                     <NumberInput
-                      label="Household share (%)"
+                      label="Share (%)"
                       value={Math.round(property.ownershipPercent * 100)}
                       onChange={(value) => updateProperty(property.id, { ownershipPercent: value / 100 })}
                       integer
@@ -432,6 +432,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                     </div>
                   </div>
 
+                  {property.ownsProperty && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium">Existing Home & Mortgage</h3>
@@ -501,6 +502,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                       </div>
                     </div>
                   </div>
+                  )}
 
                   {property.propertyType === 'hdb' && (
                     <div className="rounded-lg border p-4 space-y-4">
@@ -606,29 +608,33 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                           </SelectContent>
                         </Select>
                       </div>
-                      <NumberInput
-                        label="Sell at age"
-                        value={property.downsizing.sellAge}
-                        onChange={(value) => updateProperty(property.id, {
-                          downsizing: {
-                            ...property.downsizing,
-                            sellAge: value,
-                          },
-                        })}
-                        integer
-                        min={18}
-                        max={100}
-                      />
-                      <CurrencyInput
-                        label="Expected sale price"
-                        value={property.downsizing.expectedSalePrice}
-                        onChange={(value) => updateProperty(property.id, {
-                          downsizing: {
-                            ...property.downsizing,
-                            expectedSalePrice: value,
-                          },
-                        })}
-                      />
+                      {property.downsizing.scenario !== 'none' && (
+                        <>
+                          <NumberInput
+                            label="Sell at age"
+                            value={property.downsizing.sellAge}
+                            onChange={(value) => updateProperty(property.id, {
+                              downsizing: {
+                                ...property.downsizing,
+                                sellAge: value,
+                              },
+                            })}
+                            integer
+                            min={18}
+                            max={100}
+                          />
+                          <CurrencyInput
+                            label="Expected sale price"
+                            value={property.downsizing.expectedSalePrice}
+                            onChange={(value) => updateProperty(property.id, {
+                              downsizing: {
+                                ...property.downsizing,
+                                expectedSalePrice: value,
+                              },
+                            })}
+                          />
+                        </>
+                      )}
                       {property.downsizing.scenario === 'sell-and-downsize' && (
                         <>
                           <CurrencyInput
