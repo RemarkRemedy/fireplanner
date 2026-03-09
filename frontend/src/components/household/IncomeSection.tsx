@@ -7,16 +7,21 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { PercentInput } from '@/components/shared/PercentInput'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
+import { generateIncomeProjection, calculateIncomeSummary } from '@/lib/calculations/income'
 import { calculateDataDrivenSalary, calculateRealisticSalary, calculateSimpleSalary } from '@/lib/calculations/income'
+import { buildProjectionParams } from '@/lib/calculations/projectionParams'
 import { createId } from '@/lib/household/ids'
 import { ensureAgeRangeTiming, getSelectedAdult, ownerLabel } from '@/lib/household/editorUtils'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 import type {
   AdultOwner,
   EntryOwner,
+  HouseholdPlan,
   IncomeSource,
   PlanningAdult,
 } from '@/lib/household/types'
@@ -24,7 +29,9 @@ import type {
   CareerPhase,
   EducationLevel,
   GrowthModel,
+  IncomeProjectionRow,
   IncomeStreamType,
+  IncomeSummaryStats,
   LifeEvent,
   SalaryModel,
   TaxTreatment,
@@ -46,6 +53,97 @@ const EDUCATION_OPTIONS: Array<{ value: EducationLevel; label: string }> = [
   { value: 'diploma', label: 'Diploma' },
   { value: 'degree', label: 'Degree' },
 ]
+
+/**
+ * Creates a single-adult plan slice by extracting one adult's data from a
+ * multi-adult household plan. The slice remaps all owners to 'self' so that
+ * `toLegacyIndividual` (inside `buildHouseholdRuntimeLegacyInputs`) accepts it
+ * and produces a per-adult legacy snapshot without needing a compiled plan.
+ */
+function buildSingleAdultPlanSlice(plan: HouseholdPlan, adultId: string): HouseholdPlan | null {
+  const targetAdult = plan.adults.find((a) => a.id === adultId)
+  if (!targetAdult) return null
+
+  const remappedAdult: PlanningAdult = {
+    ...structuredClone(targetAdult),
+    owner: 'self',
+  }
+
+  const isOwnedByTarget = (owner: EntryOwner) =>
+    owner === targetAdult.owner
+
+  const remapOwner = <T extends { owner: EntryOwner }>(entry: T): T => ({
+    ...entry,
+    owner: 'self' as EntryOwner,
+  })
+
+  const remapTiming = <T extends { timing: { owner: AdultOwner; [k: string]: unknown } }>(entry: T): T => ({
+    ...entry,
+    timing: { ...entry.timing, owner: 'self' as AdultOwner },
+  })
+
+  const adultIncome = plan.income
+    .filter((entry) => isOwnedByTarget(entry.owner))
+    .map((entry) => remapTiming(remapOwner(structuredClone(entry))))
+
+  const adultExpenses = plan.expenses
+    .filter((entry) => isOwnedByTarget(entry.owner) || entry.owner === 'shared')
+    .map((entry) => {
+      const cloned = structuredClone(entry)
+      const remapped = remapOwner(cloned)
+      return remapped.timing?.owner ? remapTiming(remapped as typeof entry & { timing: { owner: AdultOwner } }) : remapped
+    })
+
+  const adultGoals = plan.goals
+    .filter((entry) => isOwnedByTarget(entry.owner) || entry.owner === 'shared')
+    .map((entry) => remapTiming(remapOwner(structuredClone(entry))))
+
+  const adultAssets = plan.assets
+    .filter((entry) => isOwnedByTarget(entry.owner) || entry.owner === 'shared')
+    .map((entry) => remapOwner(structuredClone(entry)))
+
+  return {
+    ...structuredClone(plan),
+    planType: 'individual',
+    adults: [remappedAdult],
+    dependents: [],
+    income: adultIncome,
+    expenses: adultExpenses,
+    goals: adultGoals,
+    assets: adultAssets,
+  }
+}
+
+function computePerAdultProjection(
+  plan: HouseholdPlan,
+  adultId: string,
+): { projection: IncomeProjectionRow[] | null; summary: IncomeSummaryStats | null } {
+  const slice = buildSingleAdultPlanSlice(plan, adultId)
+  if (!slice) return { projection: null, summary: null }
+
+  const adult = slice.adults[0]
+  if (!adult) return { projection: null, summary: null }
+
+  const runtime = buildHouseholdRuntimeLegacyInputs(slice)
+  const { profile, income, property } = runtime
+
+  const projectionParams = buildProjectionParams(
+    {
+      ...profile,
+      currentAge: adult.currentAge,
+      retirementAge: adult.retirementAge,
+      lifeExpectancy: adult.lifeExpectancy,
+    },
+    income,
+    property,
+  )
+  if (!projectionParams) return { projection: null, summary: null }
+
+  const projection = generateIncomeProjection(projectionParams)
+  const summary = calculateIncomeSummary(projection, profile.annualExpenses)
+
+  return { projection, summary }
+}
 
 function createDefaultRealisticPhases(currentAge: number): CareerPhase[] {
   return [
@@ -227,9 +325,23 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
             Math.max(0, selectedAdult.retirementAge - selectedAdult.currentAge),
           )
 
-  const { projection: incomeProjection, summary: incomeSummary } = useIncomeProjection()
+  const { projection: jointProjection, summary: jointSummary } = useIncomeProjection()
   const [projectionExpanded, setProjectionExpanded] = useState(false)
   const incomeNudge = useSectionNudge('section-income')
+
+  const isMultiAdult = adults.length > 1
+  const [projectionView, setProjectionView] = useState<'joint' | string>('joint')
+
+  const perAdultResult = useMemo(() => {
+    if (!isMultiAdult || projectionView === 'joint') return null
+    return computePerAdultProjection(plan, projectionView)
+  }, [isMultiAdult, plan, projectionView])
+
+  const activeProjection = projectionView === 'joint' ? jointProjection : perAdultResult?.projection ?? null
+  const activeSummary = projectionView === 'joint' ? jointSummary : perAdultResult?.summary ?? null
+  const projectionRetirementAge = projectionView === 'joint'
+    ? selectedAdult.retirementAge
+    : (adults.find((a) => a.id === projectionView)?.retirementAge ?? selectedAdult.retirementAge)
 
   return (
     <div className="space-y-6">
@@ -496,9 +608,22 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
         </CardContent>
       </Card>
 
-      {incomeSummary && <SummaryPanel summary={incomeSummary} />}
+      {isMultiAdult && (
+        <Tabs value={projectionView} onValueChange={setProjectionView}>
+          <TabsList>
+            {adults.map((adult) => (
+              <TabsTrigger key={adult.id} value={adult.id}>
+                {adult.displayName}
+              </TabsTrigger>
+            ))}
+            <TabsTrigger value="joint">Joint</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
 
-      {incomeProjection && incomeProjection.length > 0 && (
+      {activeSummary && <SummaryPanel summary={activeSummary} />}
+
+      {activeProjection && activeProjection.length > 0 && (
         <Card>
           <CardHeader>
             <button
@@ -508,13 +633,13 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
             >
               <CardTitle className="text-lg">Income Projection</CardTitle>
               <span className="text-sm text-primary hover:underline">
-                {projectionExpanded ? 'Hide table' : `Show ${incomeProjection.length} rows`}
+                {projectionExpanded ? 'Hide table' : `Show ${activeProjection.length} rows`}
               </span>
             </button>
           </CardHeader>
           {projectionExpanded && (
             <CardContent>
-              <ProjectionTable data={incomeProjection} retirementAge={selectedAdult.retirementAge} />
+              <ProjectionTable data={activeProjection} retirementAge={projectionRetirementAge} />
             </CardContent>
           )}
         </Card>
