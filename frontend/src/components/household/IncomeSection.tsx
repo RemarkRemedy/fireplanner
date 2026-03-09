@@ -891,47 +891,51 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <div className="space-y-1">
-                      <Label>Owner</Label>
-                      <Select
-                        value={stream.owner}
-                        onValueChange={(value) => updateIncome(stream.id, { owner: value as EntryOwner })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {visibleIncomeOwnerOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option === 'shared' ? 'Shared' : ownerLabel(option, adults)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {streamErrors.owner && (
-                        <p className="text-xs text-destructive">{streamErrors.owner}</p>
-                      )}
-                    </div>
-                    <div className="space-y-1">
-                      <Label>Age based on</Label>
-                      <Select
-                        value={timing.owner}
-                        onValueChange={(value) => updateIncome(stream.id, {
-                          timing: { ...timing, owner: value as AdultOwner },
-                        })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {visibleAdultOwnerOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {ownerLabel(option, adults)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {isMultiAdult && (
+                      <div className="space-y-1">
+                        <Label>Owner</Label>
+                        <Select
+                          value={stream.owner}
+                          onValueChange={(value) => updateIncome(stream.id, { owner: value as EntryOwner })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {visibleIncomeOwnerOptions.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {option === 'shared' ? 'Shared' : ownerLabel(option, adults)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {streamErrors.owner && (
+                          <p className="text-xs text-destructive">{streamErrors.owner}</p>
+                        )}
+                      </div>
+                    )}
+                    {isMultiAdult && (
+                      <div className="space-y-1">
+                        <Label>Age based on</Label>
+                        <Select
+                          value={timing.owner}
+                          onValueChange={(value) => updateIncome(stream.id, {
+                            timing: { ...timing, owner: value as AdultOwner },
+                          })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {visibleAdultOwnerOptions.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {ownerLabel(option, adults)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <CurrencyInput
                       label="Annual amount"
                       value={stream.annualAmount}

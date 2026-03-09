@@ -250,7 +250,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                         onChange={(event) => updateProperty(property.id, { label: event.target.value })}
                         className="max-w-sm"
                       />
-                      <Badge variant="secondary">{entryOwnerLabel(property.owner, plan.adults)}</Badge>
+                      {isMultiAdult && <Badge variant="secondary">{entryOwnerLabel(property.owner, plan.adults)}</Badge>}
                     </div>
                     <Button type="button" variant="ghost" onClick={() => removeProperty(property.id)}>
                       Remove
@@ -258,23 +258,26 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <div className="space-y-1">
-                      <Label>Owner</Label>
-                      <Select
-                        value={property.owner}
-                        onValueChange={(value) => updateProperty(property.id, { owner: value as EntryOwner })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ownerOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {entryOwnerLabel(option, plan.adults)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    {isMultiAdult && (
+                      <div className="space-y-1">
+                        <Label>Owner</Label>
+                        <Select
+                          value={property.owner}
+                          onValueChange={(value) => updateProperty(property.id, { owner: value as EntryOwner })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ownerOptions.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {entryOwnerLabel(option, plan.adults)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     </div>
                     <NumberInput
                       label="Household share (%)"
