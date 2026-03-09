@@ -209,6 +209,7 @@ Snapshot date: `2026-03-07`
 - [WelcomeBanner.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/components/shared/WelcomeBanner.tsx)
 - [InputsPage.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/pages/InputsPage.tsx)
 - [StartPage.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/pages/StartPage.tsx)
+- [HouseholdSetupWizard.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/components/household/HouseholdSetupWizard.tsx)
 
 ### Analysis / Derived Hooks
 

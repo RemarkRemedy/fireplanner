@@ -3,12 +3,16 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowRight, HeartPulse, Landmark, Building } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
+import { DEFAULT_PROFILE } from '@/stores/useProfileStore'
 import { createId } from '@/lib/household/ids'
 import { deriveHouseholdSectionToggles } from '@/lib/household/sectionVisibility'
 import { grossUpFromTakeHome, netDownFromGross } from '@/lib/calculations/grossUp'
+import { calculateFireNumber, calculateYearsToFire, projectNetWorthPath } from '@/lib/calculations/fire'
+import { formatCurrency } from '@/lib/utils'
 import type {
   Dependent,
   HouseholdPlanType,
@@ -18,6 +22,8 @@ import type { SectionOrderKey } from '@/lib/household/sectionOrder'
 import { trackEvent } from '@/lib/analytics'
 import { MonthlyIncomeInput, MonthlyExpenseInput, NetWorthInput } from '@/components/shared/FinancialInputCards'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
+import { NumberInput } from '@/components/shared/NumberInput'
+import { QuickProjectionChart } from '@/components/shared/QuickProjectionChart'
 import { PeopleRosterEditor, type SetupDependentDraft } from './PeopleRosterEditor'
 
 interface HouseholdSetupWizardProps {
@@ -34,6 +40,22 @@ interface PersonFinanceDraft {
   monthlyExpenses: number
   netWorth: number
 }
+
+/** Computed FIRE metrics for one person */
+interface PersonFireMetrics {
+  totalExpenses: number
+  annualSavings: number
+  fireNumber: number
+  yearsToFire: number
+  fireYear: number
+  savingsRate: number
+  progress: number
+  projection: { age: number; balance: number; phase: 'accumulation' | 'decumulation' }[]
+  fireReachable: boolean
+}
+
+// Real return used for quick estimates (same as StartPage)
+const NET_REAL_RETURN = DEFAULT_PROFILE.expectedReturn - DEFAULT_PROFILE.inflation - DEFAULT_PROFILE.expenseRatio
 
 function createDefaultFinanceDraft(): PersonFinanceDraft {
   return {
@@ -58,14 +80,91 @@ function computeAnnualIncome(draft: PersonFinanceDraft, age: number): number {
   return gross * (12 + bonusMonths)
 }
 
-function buildPartnerAdult(template: PlanningAdult, name: string, age: number, annualIncome: number, annualExpenses: number, liquidNetWorth: number): PlanningAdult {
+/** Compute FIRE preview metrics for one person, including their share of joint expenses */
+function computePersonFireMetrics(
+  draft: PersonFinanceDraft,
+  age: number,
+  retirementAge: number | undefined,
+  halfJointAnnualExpenses: number,
+  pathway: SectionOrderKey,
+): PersonFireMetrics {
+  const annualIncome = computeAnnualIncome(draft, age)
+  const totalExpenses = draft.monthlyExpenses * 12 + halfJointAnnualExpenses
+  const annualSavings = annualIncome - totalExpenses
+  const fireNumber = calculateFireNumber(totalExpenses, DEFAULT_PROFILE.swr)
+  const yearsToFire = calculateYearsToFire(NET_REAL_RETURN, annualSavings, draft.netWorth, fireNumber)
+  const fireYear = Math.ceil(yearsToFire)
+  const savingsRate = annualIncome > 0 ? annualSavings / annualIncome : 0
+  const progress = fireNumber > 0 ? Math.min(1, draft.netWorth / fireNumber) : 0
+
+  // Goal-first: use user's target. Story-first: cap at 65 if FIRE > 65 (same as StartPage)
+  const computedFireAge = age + fireYear
+  const effectiveRetirementAge =
+    pathway === 'goal-first'
+      ? retirementAge
+      : computedFireAge > 65
+        ? 65
+        : undefined
+
+  const rawProjection = projectNetWorthPath({
+    currentAge: age,
+    annualSavings,
+    currentNW: draft.netWorth,
+    realReturn: NET_REAL_RETURN,
+    annualExpenses: totalExpenses,
+    fireNumber,
+    retirementAge: effectiveRetirementAge,
+  })
+
+  // Convert x-axis from age to years-from-now
+  const projection = rawProjection.map((p) => ({ ...p, age: p.age - age }))
+
+  const fireReachable = annualSavings > 0 && isFinite(yearsToFire) && yearsToFire >= 0
+
+  return { totalExpenses, annualSavings, fireNumber, yearsToFire, fireYear, savingsRate, progress, projection, fireReachable }
+}
+
+/** Build the combined household projection by summing both adults' balances at each year */
+function buildCombinedProjection(
+  selfMetrics: PersonFireMetrics,
+  partnerMetrics: PersonFireMetrics,
+  combinedFireNumber: number,
+): PersonFireMetrics['projection'] {
+  const maxYear = Math.max(selfMetrics.projection.length, partnerMetrics.projection.length)
+  const combined: PersonFireMetrics['projection'] = []
+  let switched = false
+
+  for (let year = 0; year < maxYear; year++) {
+    const selfBal = selfMetrics.projection[year]?.balance ?? 0
+    const partnerBal = partnerMetrics.projection[year]?.balance ?? 0
+    const total = selfBal + partnerBal
+    if (!switched && total >= combinedFireNumber) switched = true
+    combined.push({
+      age: year, // years-from-now
+      balance: total,
+      phase: switched ? 'decumulation' : 'accumulation',
+    })
+  }
+
+  return combined
+}
+
+function buildPartnerAdult(
+  template: PlanningAdult,
+  name: string,
+  age: number,
+  retirementAge: number,
+  annualIncome: number,
+  annualExpenses: number,
+  liquidNetWorth: number,
+): PlanningAdult {
   return {
     ...structuredClone(template),
     id: createId('adult-partner'),
     owner: 'partner',
     displayName: name || 'Partner',
     currentAge: age,
-    retirementAge: Math.max(age + 1, template.retirementAge),
+    retirementAge,
     annualIncome,
     annualExpenses,
     liquidNetWorth,
@@ -90,6 +189,76 @@ function buildDependentDraft(index: number): SetupDependentDraft {
   }
 }
 
+/** Compact FIRE preview metrics row */
+function MetricsRow({ fireNumber, savingsRate, progress }: {
+  fireNumber: number
+  savingsRate: number
+  progress: number
+}) {
+  const pct = (progress * 100).toFixed(1)
+  return (
+    <>
+      <div className="grid grid-cols-3 gap-2 text-sm text-center">
+        <div>
+          <span className="text-muted-foreground text-xs">FIRE Number</span>
+          <div className="font-semibold">{formatCurrency(fireNumber)}</div>
+        </div>
+        <div>
+          <span className="text-muted-foreground text-xs">Savings Rate</span>
+          <div className="font-semibold">{(savingsRate * 100).toFixed(1)}%</div>
+        </div>
+        <div>
+          <span className="text-muted-foreground text-xs">Progress</span>
+          <div className="font-semibold">{pct}%</div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="h-2 rounded-full bg-muted overflow-hidden flex-1">
+          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress * 100}%` }} />
+        </div>
+        <span className="text-xs text-muted-foreground whitespace-nowrap">{pct}%</span>
+      </div>
+    </>
+  )
+}
+
+/** Per-person FIRE preview card with metrics + chart */
+function PersonPreview({ label, metrics, desiredRetirementAge }: {
+  label: string
+  metrics: PersonFireMetrics
+  desiredRetirementAge?: number
+}) {
+  const alreadyFire = metrics.yearsToFire === 0
+  const hasShortfall = desiredRetirementAge != null && (metrics.fireYear + (desiredRetirementAge - desiredRetirementAge)) > 0 && !metrics.fireReachable
+
+  return (
+    <div className="space-y-2">
+      <div className="text-center space-y-0.5">
+        <div className="text-sm font-medium">{label}</div>
+        {!metrics.fireReachable ? (
+          <div className="text-sm text-amber-600 dark:text-amber-400">Spending exceeds income</div>
+        ) : alreadyFire ? (
+          <div className="text-sm font-semibold">Already FI!</div>
+        ) : (
+          <div className="text-sm">
+            FIRE in <span className="font-semibold">{metrics.fireYear} years</span>
+          </div>
+        )}
+      </div>
+      <MetricsRow fireNumber={metrics.fireNumber} savingsRate={metrics.savingsRate} progress={metrics.progress} />
+      {metrics.fireReachable && (
+        <QuickProjectionChart
+          data={metrics.projection}
+          fireNumber={metrics.fireNumber}
+          fireAge={metrics.fireYear}
+          xLabel="Years from now"
+          tooltipLabelFormatter={(v) => `Year ${v}`}
+        />
+      )}
+    </div>
+  )
+}
+
 export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizardProps) {
   const navigate = useNavigate()
   const setUIField = useUIStore((state) => state.setField)
@@ -107,6 +276,10 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
   const [selfFinance, setSelfFinance] = useState<PersonFinanceDraft>(createDefaultFinanceDraft)
   const [partnerFinance, setPartnerFinance] = useState<PersonFinanceDraft>(createDefaultFinanceDraft)
 
+  // Retirement ages (goal-first pathway)
+  const [selfRetirementAge, setSelfRetirementAge] = useState(65)
+  const [partnerRetirementAge, setPartnerRetirementAge] = useState(65)
+
   // Joint expenses
   const [jointMonthlyExpenses, setJointMonthlyExpenses] = useState(4167)
 
@@ -116,6 +289,7 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
   const [healthcareEnabled, setHealthcareEnabled] = useState(false)
 
   const canCreatePlan = planType === 'couple' ? partnerName.trim().length > 0 : true
+  const hasPartner = planType === 'couple' || partnerEnabled
 
   // Derived annual values
   const selfGrossMonthly = computeGrossMonthly(selfFinance, selfAge)
@@ -127,6 +301,41 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
   const partnerAnnualExpenses = partnerFinance.monthlyExpenses * 12
 
   const jointAnnualExpenses = jointMonthlyExpenses * 12
+
+  // FIRE preview metrics (each person gets 50% of joint expenses)
+  const halfJointAnnual = jointAnnualExpenses / 2
+
+  const selfEffectiveRetirement = pathway === 'goal-first'
+    ? Math.max(selfAge + 1, selfRetirementAge)
+    : undefined
+  const partnerEffectiveRetirement = pathway === 'goal-first'
+    ? Math.max(partnerAge + 1, partnerRetirementAge)
+    : undefined
+
+  const selfMetrics = computePersonFireMetrics(
+    selfFinance, selfAge, selfEffectiveRetirement, halfJointAnnual, pathway,
+  )
+  const partnerMetrics = hasPartner
+    ? computePersonFireMetrics(partnerFinance, partnerAge, partnerEffectiveRetirement, halfJointAnnual, pathway)
+    : null
+
+  // Combined household metrics: sum both adults' expenses + full joint, sum both net worths
+  const combinedTotalExpenses = selfMetrics.totalExpenses + (partnerMetrics?.totalExpenses ?? 0)
+  const combinedFireNumber = calculateFireNumber(combinedTotalExpenses, DEFAULT_PROFILE.swr)
+  const combinedSavings = selfMetrics.annualSavings + (partnerMetrics?.annualSavings ?? 0)
+  const combinedIncome = selfAnnualIncome + (hasPartner ? partnerAnnualIncome : 0)
+  const combinedNW = selfFinance.netWorth + (hasPartner ? partnerFinance.netWorth : 0)
+  const combinedSavingsRate = combinedIncome > 0 ? combinedSavings / combinedIncome : 0
+  const combinedProgress = combinedFireNumber > 0 ? Math.min(1, combinedNW / combinedFireNumber) : 0
+  const combinedYearsToFire = calculateYearsToFire(NET_REAL_RETURN, combinedSavings, combinedNW, combinedFireNumber)
+  const combinedFireYear = Math.ceil(combinedYearsToFire)
+  const combinedFireReachable = combinedSavings > 0 && isFinite(combinedYearsToFire) && combinedYearsToFire >= 0
+
+  const combinedProjection = hasPartner && partnerMetrics
+    ? buildCombinedProjection(selfMetrics, partnerMetrics, combinedFireNumber)
+    : selfMetrics.projection // Single-adult household: combined = self
+
+  const showCharts = selfAnnualIncome > 0
 
   const handleSelfIncomeTypeChange = (newType: 'take-home' | 'gross') => {
     if (newType === selfFinance.incomeType) return
@@ -151,13 +360,13 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
     const selfAdult = useHouseholdPlanStore.getState().plan.adults[0]
     if (!selfAdult) return
 
-    const effectiveRetirementAge = Math.max(selfAge + 1, selfAdult.retirementAge)
+    const effectiveSelfRetirement = Math.max(selfAge + 1, selfRetirementAge)
 
     // Update self adult with demographics + financials
     useHouseholdPlanStore.getState().updateAdult(selfAdult.id, {
       displayName: selfName.trim() || 'You',
       currentAge: selfAge,
-      retirementAge: effectiveRetirementAge,
+      retirementAge: effectiveSelfRetirement,
       annualIncome: selfAnnualIncome,
       annualExpenses: selfAnnualExpenses,
       liquidNetWorth: selfFinance.netWorth,
@@ -183,7 +392,7 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
         timing: {
           ...selfSalary.timing,
           startAge: selfAge,
-          endAge: effectiveRetirementAge,
+          endAge: effectiveSelfRetirement,
         },
       })
     }
@@ -214,13 +423,14 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
     }
 
     // Add partner if enabled
-    if (planType === 'couple' || partnerEnabled) {
+    if (hasPartner) {
+      const effectivePartnerRetirement = Math.max(partnerAge + 1, partnerRetirementAge)
+
       useHouseholdPlanStore.getState().addAdult(
-        buildPartnerAdult(selfAdult, partnerName.trim(), partnerAge, partnerAnnualIncome, partnerAnnualExpenses, partnerFinance.netWorth),
+        buildPartnerAdult(selfAdult, partnerName.trim(), partnerAge, effectivePartnerRetirement, partnerAnnualIncome, partnerAnnualExpenses, partnerFinance.netWorth),
       )
 
       // Add partner salary-model income entry
-      const partnerRetirementAge = Math.max(partnerAge + 1, selfAdult.retirementAge)
       useHouseholdPlanStore.getState().addIncome({
         id: createId('income-salary-partner'),
         owner: 'partner',
@@ -230,7 +440,7 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
           kind: 'age-range',
           owner: 'partner',
           startAge: partnerAge,
-          endAge: partnerRetirementAge,
+          endAge: effectivePartnerRetirement,
         },
         annualAmount: partnerAnnualIncome,
         growthRate: 0.03,
@@ -271,11 +481,10 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
 
     // Add shared joint expenses entry
     if (jointAnnualExpenses > 0) {
-      // Use self's timing as the anchor for shared expenses
       useHouseholdPlanStore.getState().addExpense({
         id: createId('expense-joint-living'),
         owner: 'shared',
-        label: 'Joint expenses',
+        label: 'Additional joint expenses',
         kind: 'base-living',
         timing: {
           kind: 'age-range',
@@ -313,13 +522,12 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
     trackEvent('onboarding_continue', {
       pathway,
       planType,
-      partnerIncluded: planType === 'couple' || partnerEnabled,
+      partnerIncluded: hasPartner,
       dependents: dependents.length,
     })
     navigate('/inputs')
   }
 
-  const hasPartner = planType === 'couple' || partnerEnabled
   const selfLabel = hasPartner ? (selfName.trim() || 'You') : 'Your'
 
   return (
@@ -362,6 +570,22 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="grid grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 gap-4">
+                {pathway === 'goal-first' && (
+                  <div className="flex flex-col gap-1">
+                    <Label className="text-sm">Desired Retirement Age</Label>
+                    <NumberInput
+                      integer
+                      min={selfAge + 1}
+                      max={100}
+                      value={selfRetirementAge}
+                      onChange={setSelfRetirementAge}
+                      className="border-blue-300"
+                    />
+                    {selfRetirementAge <= selfAge && (
+                      <p className="text-xs text-destructive">Must be after current age</p>
+                    )}
+                  </div>
+                )}
                 <MonthlyIncomeInput
                   incomeType={selfFinance.incomeType}
                   onIncomeTypeChange={handleSelfIncomeTypeChange}
@@ -399,6 +623,22 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="grid grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 gap-4">
+                  {pathway === 'goal-first' && (
+                    <div className="flex flex-col gap-1">
+                      <Label className="text-sm">Desired Retirement Age</Label>
+                      <NumberInput
+                        integer
+                        min={partnerAge + 1}
+                        max={100}
+                        value={partnerRetirementAge}
+                        onChange={setPartnerRetirementAge}
+                        className="border-blue-300"
+                      />
+                      {partnerRetirementAge <= partnerAge && (
+                        <p className="text-xs text-destructive">Must be after current age</p>
+                      )}
+                    </div>
+                  )}
                   <MonthlyIncomeInput
                     incomeType={partnerFinance.incomeType}
                     onIncomeTypeChange={handlePartnerIncomeTypeChange}
@@ -429,10 +669,10 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
             </Card>
           )}
 
-          {/* Joint expenses */}
+          {/* Additional joint expenses */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Joint expenses</CardTitle>
+              <CardTitle className="text-base">Additional joint expenses</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="max-w-xs">
@@ -440,7 +680,7 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
                   label="Monthly Joint Expenses"
                   value={jointMonthlyExpenses}
                   onChange={setJointMonthlyExpenses}
-                  tooltip="Shared household costs: rent/mortgage, utilities, groceries, transport, insurance. Excludes healthcare and each person's personal spending above."
+                  tooltip="Shared household costs on top of each person's personal expenses: rent/mortgage, utilities, groceries, transport, insurance. Excludes healthcare."
                 />
                 {jointMonthlyExpenses > 0 && (
                   <div className="text-xs text-muted-foreground mt-1">
@@ -450,6 +690,63 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
               </div>
             </CardContent>
           </Card>
+
+          {/* FIRE preview charts */}
+          {showCharts && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Quick FIRE estimate</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Per-person previews */}
+                <div className={hasPartner ? 'grid grid-cols-1 md:grid-cols-2 gap-6' : ''}>
+                  <PersonPreview
+                    label={hasPartner ? (selfName.trim() || 'You') : 'Your projection'}
+                    metrics={selfMetrics}
+                    desiredRetirementAge={pathway === 'goal-first' ? selfRetirementAge : undefined}
+                  />
+                  {hasPartner && partnerMetrics && (
+                    <PersonPreview
+                      label={partnerName.trim() || 'Partner'}
+                      metrics={partnerMetrics}
+                      desiredRetirementAge={pathway === 'goal-first' ? partnerRetirementAge : undefined}
+                    />
+                  )}
+                </div>
+
+                {/* Combined household chart */}
+                {hasPartner && (
+                  <div className="border-t pt-4 space-y-2">
+                    <div className="text-center space-y-0.5">
+                      <div className="text-sm font-medium">Combined household</div>
+                      {!combinedFireReachable ? (
+                        <div className="text-sm text-amber-600 dark:text-amber-400">Household spending exceeds income</div>
+                      ) : (
+                        <div className="text-sm">
+                          Household FIRE in <span className="font-semibold">{combinedFireYear} years</span>
+                        </div>
+                      )}
+                    </div>
+                    <MetricsRow fireNumber={combinedFireNumber} savingsRate={combinedSavingsRate} progress={combinedProgress} />
+                    {combinedFireReachable && (
+                      <QuickProjectionChart
+                        data={combinedProjection}
+                        fireNumber={combinedFireNumber}
+                        fireAge={combinedFireYear}
+                        xLabel="Years from now"
+                        tooltipLabelFormatter={(v) => `Year ${v}`}
+                      />
+                    )}
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground">
+                  Quick estimate in today's dollars (3.6% Safe Withdrawal Rate, 7% return, 2.5% inflation).
+                  Each person's chart includes 50% of joint expenses. Your detailed plan will adjust for inflation, CPF, and portfolio allocation.
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Section toggles */}
           <Card>
