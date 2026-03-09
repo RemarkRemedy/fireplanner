@@ -148,7 +148,9 @@ function HouseholdPrototypeSection({
             </div>
           )}
           <AccordionContent className="text-base pt-4 pb-0">
-            {children}
+            <div className="space-y-6">
+              {children}
+            </div>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
