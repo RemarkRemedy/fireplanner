@@ -578,6 +578,8 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                 selectedAdult.currentAge,
               )
               const isBaseLiving = expense.kind === 'base-living'
+              const timingAdult = getTimingAdult(timing.owner)
+              const displayEndAge = timing.endAge ?? timingAdult.lifeExpectancy
 
               return (
                 <div key={expense.id} className="rounded-lg border p-4 space-y-4">
@@ -736,7 +738,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                           integer
                           min={timing.startAge}
                           max={120}
-                          value={timing.endAge ?? timing.startAge}
+                          value={displayEndAge}
                           disabled={isBaseLiving}
                           onChange={(value) => updateExpenseList(expense.id, {
                             timing: { ...timing, endAge: value },
