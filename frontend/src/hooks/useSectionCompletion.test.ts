@@ -1,19 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useSectionCompletion } from './useSectionCompletion'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
-import { useAllocationStore } from '@/stores/useAllocationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { setupTestPlan } from '@/test-helpers/setupTestPlan'
+import { useAllocationStore } from '@/stores/useAllocationStore'
 
 beforeEach(() => {
-  localStorage.removeItem('fireplanner-feature-householdPlannerV1')
-  useProfileStore.getState().reset()
-  useIncomeStore.getState().reset()
-  useAllocationStore.getState().reset()
-  usePropertyStore.getState().reset()
   useHouseholdPlanStore.getState().reset()
+  useAllocationStore.getState().reset()
 })
 
 describe('useSectionCompletion', () => {
@@ -23,36 +17,47 @@ describe('useSectionCompletion', () => {
     expect(Object.keys(result.current.sections)).toHaveLength(10)
   })
 
-  it('default state: sections at "default" status (not customized)', () => {
+  it('default state: personal and fire-settings at "default" status', () => {
     const { result } = renderHook(() => useSectionCompletion())
     const { sections } = result.current
-    // Default profile: age 30, retirement 65, life 90 — all defaults
+    // Default plan: age 30, retirement 65, life 90 — all defaults
     expect(sections['section-personal'].status).toBe('default')
     expect(sections['section-fire-settings'].status).toBe('default')
-    expect(sections['section-income'].status).toBe('default')
+    // Income is 'customized' because the default household plan includes
+    // an active salary-model income source (72K), satisfying hasIncomeCoverage
+    expect(sections['section-income'].status).toBe('customized')
   })
 
   it('changing age from default marks personal as customized', () => {
-    useProfileStore.getState().setField('currentAge', 35)
+    setupTestPlan({
+      adult: { currentAge: 35 },
+    })
     const { result } = renderHook(() => useSectionCompletion())
     expect(result.current.sections['section-personal'].status).toBe('customized')
     expect(result.current.sections['section-personal'].isComplete).toBe(true)
   })
 
   it('changing SWR marks FIRE settings as customized', () => {
-    useProfileStore.getState().setField('swr', 0.035)
+    setupTestPlan({
+      assumptions: { fire: { swr: 0.035 } },
+    })
     const { result } = renderHook(() => useSectionCompletion())
     expect(result.current.sections['section-fire-settings'].status).toBe('customized')
   })
 
   it('setting net worth marks net-worth as customized', () => {
-    useProfileStore.getState().setField('liquidNetWorth', 500000)
+    setupTestPlan({
+      assets: { liquidNetWorth: 500000 },
+    })
     const { result } = renderHook(() => useSectionCompletion())
     expect(result.current.sections['section-net-worth'].status).toBe('customized')
   })
 
   it('validation errors mark section as error', () => {
-    useProfileStore.getState().setField('currentAge', 15) // Invalid, too young
+    // Set cross-field violations: retirementAge <= currentAge triggers household validation errors
+    setupTestPlan({
+      adult: { currentAge: 30, retirementAge: 25, lifeExpectancy: 20 },
+    })
     const { result } = renderHook(() => useSectionCompletion())
     expect(result.current.sections['section-personal'].status).toBe('error')
     expect(result.current.sections['section-personal'].errorCount).toBeGreaterThan(0)
@@ -63,9 +68,11 @@ describe('useSectionCompletion', () => {
     const { result: r1 } = renderHook(() => useSectionCompletion())
     const initialCount = r1.current.completedCount
 
-    useProfileStore.getState().setField('currentAge', 40) // Personal
-    useProfileStore.getState().setField('swr', 0.035)     // FIRE settings
-    useProfileStore.getState().setField('liquidNetWorth', 100000) // NW
+    setupTestPlan({
+      adult: { currentAge: 40 },         // Personal
+      assumptions: { fire: { swr: 0.035 } },  // FIRE settings
+      assets: { liquidNetWorth: 100000 }, // NW
+    })
 
     const { result: r2 } = renderHook(() => useSectionCompletion())
     expect(r2.current.completedCount).toBeGreaterThan(initialCount)
@@ -79,9 +86,8 @@ describe('useSectionCompletion', () => {
   })
 
   it('property section reflects owning property', () => {
-    usePropertyStore.setState({
-      ...usePropertyStore.getState(),
-      ownsProperty: true,
+    setupTestPlan({
+      property: { ownsProperty: true },
     })
     const { result } = renderHook(() => useSectionCompletion())
     expect(result.current.sections['section-property'].status).toBe('customized')

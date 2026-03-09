@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { usePortfolioStats } from './usePortfolioStats'
-import { useProfileStore } from '@/stores/useProfileStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { setupTestPlan } from '@/test-helpers/setupTestPlan'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 
 beforeEach(() => {
-  useProfileStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   useAllocationStore.getState().reset()
 })
 
@@ -42,8 +43,20 @@ describe('usePortfolioStats', () => {
     expect(aggressiveStdDev).toBeGreaterThan(conservativeStdDev)
   })
 
-  it('returns null stats when profile has errors', () => {
-    useProfileStore.getState().setField('currentAge', 15)
+  it('returns null stats when there are validation errors', () => {
+    // usePortfolioStats checks profile.validationErrors (always empty from
+    // runtimeLegacyInputs), allocation.validationErrors, and cross-store rules.
+    // Trigger errors via allocation cross-store validation (glide path with
+    // startAge >= endAge).
+    useAllocationStore.setState({
+      ...useAllocationStore.getState(),
+      glidePathConfig: {
+        enabled: true,
+        method: 'linear',
+        startAge: 60,
+        endAge: 50, // startAge >= endAge triggers cross-store error
+      },
+    })
     const { result } = renderHook(() => usePortfolioStats())
     expect(result.current.hasErrors).toBe(true)
     expect(result.current.currentStats).toBeNull()

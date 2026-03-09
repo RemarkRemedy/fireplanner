@@ -1,14 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { usePassiveIncomeSummary } from './usePassiveIncomeSummary'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { setupTestPlan } from '@/test-helpers/setupTestPlan'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useUIStore } from '@/stores/useUIStore'
 
 beforeEach(() => {
-  useProfileStore.getState().reset()
-  useIncomeStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   useAllocationStore.getState().reset()
   useUIStore.setState({
     sectionOrder: 'goal-first',
@@ -22,31 +21,28 @@ beforeEach(() => {
 
 describe('usePassiveIncomeSummary', () => {
   it('returns null when profile has validation errors', () => {
-    useProfileStore.getState().setField('currentAge', 15) // Invalid
+    setupTestPlan({
+      adult: { currentAge: 30, retirementAge: 25, lifeExpectancy: 20 },
+    })
     const { result } = renderHook(() => usePassiveIncomeSummary())
     expect(result.current).toBeNull()
   })
 
   it('returns summary for valid retired profile', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 55,
-      retirementAge: 58,
-      lifeExpectancy: 90,
-      annualIncome: 0,
-      annualExpenses: 80000,
-      liquidNetWorth: 2000000,
-      swr: 0.04,
-      expectedReturn: 0.05,
-      inflation: 0.025,
-      expenseRatio: 0.003,
-      lifeStage: 'post-fire',
-      validationErrors: {},
-    })
-    useIncomeStore.setState({
-      ...useIncomeStore.getState(),
-      annualSalary: 0,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 55,
+        retirementAge: 58,
+        lifeExpectancy: 90,
+        lifeStage: 'post-fire',
+      },
+      income: { annualSalary: 0 },
+      expenses: { annualExpenses: 80000 },
+      assets: { liquidNetWorth: 2000000 },
+      assumptions: {
+        fire: { swr: 0.04 },
+        returns: { expectedReturn: 0.05, inflation: 0.025, expenseRatio: 0.003 },
+      },
     })
     const { result } = renderHook(() => usePassiveIncomeSummary())
     // A post-fire user with no income streams will have projection rows.
@@ -60,13 +56,13 @@ describe('usePassiveIncomeSummary', () => {
   it('returns null for working-age profile with no retired rows', () => {
     // Default profile: age 30, retirement 65 — all rows before 65 are working
     // But projection includes rows past retirement too, so it should have retired rows
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 30,
-      retirementAge: 65,
-      lifeExpectancy: 90,
-      annualExpenses: 48000,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 30,
+        retirementAge: 65,
+        lifeExpectancy: 90,
+      },
+      expenses: { annualExpenses: 48000 },
     })
     const { result } = renderHook(() => usePassiveIncomeSummary())
     // Should have retired rows from 65-90, so not null
@@ -76,39 +72,36 @@ describe('usePassiveIncomeSummary', () => {
   })
 
   it('includes income streams in passive income sources', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 55,
-      retirementAge: 58,
-      lifeExpectancy: 90,
-      annualIncome: 0,
-      annualExpenses: 80000,
-      liquidNetWorth: 2000000,
-      swr: 0.04,
-      expectedReturn: 0.05,
-      inflation: 0.025,
-      expenseRatio: 0.003,
-      validationErrors: {},
-    })
-    useIncomeStore.setState({
-      ...useIncomeStore.getState(),
-      annualSalary: 0,
-      incomeStreams: [
-        {
-          id: 'rental1',
-          name: 'Rental',
-          type: 'rental',
-          annualAmount: 24000,
-          startAge: 55,
-          endAge: 90,
-          growthRate: 0.02,
-          growthModel: 'fixed' as const,
-          taxTreatment: 'taxable' as const,
-          isCpfApplicable: false,
-          isActive: true,
-        },
-      ],
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 55,
+        retirementAge: 58,
+        lifeExpectancy: 90,
+      },
+      income: {
+        annualSalary: 0,
+        incomeStreams: [
+          {
+            id: 'rental1',
+            name: 'Rental',
+            type: 'rental',
+            annualAmount: 24000,
+            startAge: 55,
+            endAge: 90,
+            growthRate: 0.02,
+            growthModel: 'fixed',
+            taxTreatment: 'taxable',
+            isCpfApplicable: false,
+            isActive: true,
+          },
+        ],
+      },
+      expenses: { annualExpenses: 80000 },
+      assets: { liquidNetWorth: 2000000 },
+      assumptions: {
+        fire: { swr: 0.04 },
+        returns: { expectedReturn: 0.05, inflation: 0.025, expenseRatio: 0.003 },
+      },
     })
     const { result } = renderHook(() => usePassiveIncomeSummary())
     if (result.current !== null) {
