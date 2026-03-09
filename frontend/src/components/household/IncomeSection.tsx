@@ -693,39 +693,6 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
           <CardTitle className="text-lg">{selectedAdult.displayName}'s Tax & SRS Settings</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="space-y-1">
-            <Label>MOM education basis</Label>
-            <Select
-              value={selectedAdult.taxProfile.momEducation}
-              onValueChange={(value) => updateSelectedAdult({
-                taxProfile: {
-                  ...selectedAdult.taxProfile,
-                  momEducation: value as EducationLevel,
-                },
-              })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {EDUCATION_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <PercentInput
-            label="MOM adjustment"
-            value={selectedAdult.taxProfile.momAdjustment}
-            onChange={(value) => updateSelectedAdult({
-              taxProfile: {
-                ...selectedAdult.taxProfile,
-                momAdjustment: value,
-              },
-            })}
-          />
           <CurrencyInput
             label="Personal reliefs"
             value={selectedAdult.taxProfile.personalReliefs}
