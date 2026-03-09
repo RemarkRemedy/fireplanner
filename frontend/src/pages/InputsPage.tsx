@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -15,10 +15,9 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { usePageMeta } from '@/hooks/usePageMeta'
-import {
-  useSectionCompletion,
-  type SectionId,
-} from '@/hooks/useSectionCompletion'
+import { useSectionCompletion } from '@/hooks/useSectionCompletion'
+import type { SectionId } from '@/lib/household/sectionOrder'
+import { SECTION_ORDERINGS, type SectionOrderKey } from '@/lib/household/sectionOrder'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
 import { useHouseholdCpfAdapter } from '@/components/household/adapters/useHouseholdCpfAdapter'
@@ -28,6 +27,7 @@ import { SpendingGoalsSection } from '@/components/household/SpendingGoalsSectio
 import { AssetsPropertySection } from '@/components/household/AssetsPropertySection'
 import { AssumptionsSection as HouseholdAssumptionsSection } from '@/components/household/AssumptionsSection'
 import { CpfSection } from '@/components/profile/CpfSection'
+import { WithdrawalStrategyCard } from '@/components/household/WithdrawalStrategyCard'
 
 const HOUSEHOLD_PLAN_LABELS = {
   individual: 'Individual',
@@ -100,6 +100,7 @@ export function InputsPage() {
   const cpfEnabled = useUIStore((state) => state.cpfEnabled)
   const healthcareEnabled = useUIStore((state) => state.healthcareEnabled)
   const propertyEnabled = useUIStore((state) => state.propertyEnabled)
+  const sectionOrder = useUIStore((s) => s.sectionOrder) as SectionOrderKey
   const { sections: sectionCompletion } = useSectionCompletion()
 
   const adults = plan.adults
@@ -118,25 +119,162 @@ export function InputsPage() {
   const selectedAdult = adults.find((adult) => adult.id === selectedAdultId) ?? adults[0] ?? null
   const cpfModel = useHouseholdCpfAdapter(selectedAdult?.id)
 
-  // Goals and Healthcare are sub-sections of Spending — excluded from progress bar
-  const sectionOrder: SectionId[] = [
-    'section-personal',
-    'section-income',
-    'section-expenses',
-    'section-net-worth',
+  // Build section definitions — each entry has id, visibility, and the JSX element.
+  // Goals and Healthcare are scroll anchors inside the Expenses section (not standalone sections).
+  const sectionDefs: { id: SectionId; visible: boolean; element: React.ReactNode }[] = [
+    {
+      id: 'section-personal',
+      visible: true,
+      element: (
+        <HouseholdPrototypeSection
+          sectionId="section-personal"
+          title="People & Household"
+          description="Roster setup, member naming, and who this plan covers."
+          isComplete={sectionCompletion['section-personal'].isComplete}
+        >
+          <PeopleSection
+            selectedAdultId={selectedAdult?.id ?? null}
+            onSelectedAdultIdChange={setSelectedAdultId}
+          />
+        </HouseholdPrototypeSection>
+      ),
+    },
+    {
+      id: 'section-income',
+      visible: true,
+      element: (
+        <HouseholdPrototypeSection
+          sectionId="section-income"
+          title="Income & Work"
+          description="Per-adult salary models, streams, life events, and tax relief inputs."
+          isComplete={sectionCompletion['section-income'].isComplete}
+          scopeLabel={selectedAdult ? `Editing: ${selectedAdult.displayName}` : undefined}
+        >
+          <IncomeSection selectedAdultId={selectedAdult?.id ?? null} />
+        </HouseholdPrototypeSection>
+      ),
+    },
+    {
+      id: 'section-expenses',
+      visible: true,
+      element: (
+        <Fragment>
+          <HouseholdPrototypeSection
+            sectionId="section-expenses"
+            title="Spending, Healthcare & Goals"
+            description="Shared spending, private spending, healthcare, goals, and retirement draws."
+            isComplete={sectionCompletion['section-expenses'].isComplete}
+            scopeLabel="Scope: shared & per-adult"
+          >
+            <SpendingGoalsSection selectedAdultId={selectedAdult?.id ?? null} />
+          </HouseholdPrototypeSection>
+          {/* Invisible scroll anchor — Goals editing lives inside SpendingGoalsSection */}
+          <div id="section-goals" className="scroll-mt-16" />
+          {/* Invisible scroll anchor — Healthcare editing lives inside SpendingGoalsSection */}
+          {healthcareEnabled && <div id="section-healthcare" className="scroll-mt-16" />}
+        </Fragment>
+      ),
+    },
+    {
+      id: 'section-net-worth',
+      visible: true,
+      element: (
+        <HouseholdPrototypeSection
+          sectionId="section-net-worth"
+          title="Assets & Net Worth"
+          description="Liquid assets, CPF balances, SRS, and household balance-sheet coverage."
+          isComplete={sectionCompletion['section-net-worth'].isComplete}
+          scopeLabel="Scope: household"
+        >
+          <AssetsPropertySection mode="assets" />
+        </HouseholdPrototypeSection>
+      ),
+    },
+    {
+      id: 'section-cpf',
+      visible: cpfEnabled,
+      element: (
+        <HouseholdPrototypeSection
+          sectionId="section-cpf"
+          title="CPF"
+          description={
+            selectedAdult
+              ? `${selectedAdult.displayName}'s CPF settings, balances, fallback rules, and projection helpers.`
+              : 'CPF settings and balances.'
+          }
+          isComplete={sectionCompletion['section-cpf'].isComplete}
+          scopeLabel={selectedAdult ? `Editing: ${selectedAdult.displayName}` : undefined}
+        >
+          {cpfModel ? (
+            <CpfSection model={cpfModel} />
+          ) : (
+            <HouseholdPlaceholderCard
+              title="No adult selected"
+              body="Select a planning adult to edit CPF settings."
+            />
+          )}
+        </HouseholdPrototypeSection>
+      ),
+    },
+    {
+      id: 'section-property',
+      visible: propertyEnabled,
+      element: (
+        <HouseholdPrototypeSection
+          sectionId="section-property"
+          title="Property"
+          description="Ownership-scoped homes, mortgages, and housing decisions."
+          isComplete={sectionCompletion['section-property'].isComplete}
+          scopeLabel="Scope: household"
+        >
+          <AssetsPropertySection mode="property" />
+        </HouseholdPrototypeSection>
+      ),
+    },
+    {
+      id: 'section-fire-settings',
+      visible: true,
+      element: (
+        <HouseholdPrototypeSection
+          sectionId="section-fire-settings"
+          title="FIRE Settings"
+          description="Household-level assumptions, return settings, and normalized analysis controls."
+          isComplete={sectionCompletion['section-fire-settings'].isComplete}
+          scopeLabel="Scope: household"
+        >
+          <HouseholdAssumptionsSection mode="assumptions" />
+          <WithdrawalStrategyCard />
+        </HouseholdPrototypeSection>
+      ),
+    },
+    {
+      id: 'section-allocation',
+      visible: true,
+      element: (
+        <HouseholdPrototypeSection
+          sectionId="section-allocation"
+          title="Allocation"
+          description="Portfolio templates, glide paths, and household-aware portfolio assumptions."
+          isComplete={sectionCompletion['section-allocation'].isComplete}
+          scopeLabel="Scope: household"
+        >
+          <HouseholdAssumptionsSection mode="allocation" />
+        </HouseholdPrototypeSection>
+      ),
+    },
   ]
-  if (cpfEnabled) {
-    sectionOrder.push('section-cpf')
-  }
-  if (propertyEnabled) {
-    sectionOrder.push('section-property')
-  }
-  sectionOrder.push('section-fire-settings', 'section-allocation')
 
-  const completedCount = sectionOrder.filter(
-    (sectionId) => sectionCompletion[sectionId].isComplete,
+  // Order sections by the user's pathway choice, filtering out invisible ones
+  const sectionById = new Map(sectionDefs.map((s) => [s.id, s]))
+  const ordering = SECTION_ORDERINGS[sectionOrder] ?? SECTION_ORDERINGS['goal-first']
+  const orderedSections = ordering
+    .map((id) => sectionById.get(id))
+    .filter((s): s is NonNullable<typeof s> => s != null && s.visible)
+
+  const completedCount = orderedSections.filter(
+    (s) => sectionCompletion[s.id].isComplete,
   ).length
-  const totalSections = sectionOrder.length
+  const totalSections = orderedSections.length
   const progress = totalSections > 0 ? (completedCount / totalSections) * 100 : 0
   const planLabel = HOUSEHOLD_PLAN_LABELS[
     plan.planType as keyof typeof HOUSEHOLD_PLAN_LABELS
@@ -227,108 +365,9 @@ export function InputsPage() {
         </Card>
       </div>
 
-      <HouseholdPrototypeSection
-        sectionId="section-personal"
-        title="People & Household"
-        description="Roster setup, member naming, and who this plan covers."
-        isComplete={sectionCompletion['section-personal'].isComplete}
-      >
-        <PeopleSection
-          selectedAdultId={selectedAdult?.id ?? null}
-          onSelectedAdultIdChange={setSelectedAdultId}
-        />
-      </HouseholdPrototypeSection>
-
-      <HouseholdPrototypeSection
-        sectionId="section-income"
-        title="Income & Work"
-        description="Per-adult salary models, streams, life events, and tax relief inputs."
-        isComplete={sectionCompletion['section-income'].isComplete}
-        scopeLabel={selectedAdult ? `Editing: ${selectedAdult.displayName}` : undefined}
-      >
-        <IncomeSection selectedAdultId={selectedAdult?.id ?? null} />
-      </HouseholdPrototypeSection>
-
-      <HouseholdPrototypeSection
-        sectionId="section-expenses"
-        title="Spending, Healthcare & Goals"
-        description="Shared spending, private spending, healthcare, goals, and retirement draws."
-        isComplete={sectionCompletion['section-expenses'].isComplete}
-        scopeLabel="Scope: shared & per-adult"
-      >
-        <SpendingGoalsSection selectedAdultId={selectedAdult?.id ?? null} />
-      </HouseholdPrototypeSection>
-
-      {/* Invisible scroll anchor — Goals editing lives inside SpendingGoalsSection */}
-      <div id="section-goals" className="scroll-mt-16" />
-
-      <HouseholdPrototypeSection
-        sectionId="section-net-worth"
-        title="Assets & Net Worth"
-        description="Liquid assets, CPF balances, SRS, and household balance-sheet coverage."
-        isComplete={sectionCompletion['section-net-worth'].isComplete}
-        scopeLabel="Scope: household"
-      >
-        <AssetsPropertySection mode="assets" />
-      </HouseholdPrototypeSection>
-
-      {cpfEnabled && (
-        <HouseholdPrototypeSection
-          sectionId="section-cpf"
-          title="CPF"
-          description={
-            selectedAdult
-              ? `${selectedAdult.displayName}'s CPF settings, balances, fallback rules, and projection helpers.`
-              : 'CPF settings and balances.'
-          }
-          isComplete={sectionCompletion['section-cpf'].isComplete}
-          scopeLabel={selectedAdult ? `Editing: ${selectedAdult.displayName}` : undefined}
-        >
-          {cpfModel ? (
-            <CpfSection model={cpfModel} />
-          ) : (
-            <HouseholdPlaceholderCard
-              title="No adult selected"
-              body="Select a planning adult to edit CPF settings."
-            />
-          )}
-        </HouseholdPrototypeSection>
-      )}
-
-      {/* Invisible scroll anchor — Healthcare editing lives inside SpendingGoalsSection */}
-      {healthcareEnabled && <div id="section-healthcare" className="scroll-mt-16" />}
-
-      {propertyEnabled && (
-        <HouseholdPrototypeSection
-          sectionId="section-property"
-          title="Property"
-          description="Ownership-scoped homes, mortgages, and housing decisions."
-          isComplete={sectionCompletion['section-property'].isComplete}
-          scopeLabel="Scope: household"
-        >
-          <AssetsPropertySection mode="property" />
-        </HouseholdPrototypeSection>
-      )}
-
-      <HouseholdPrototypeSection
-        sectionId="section-fire-settings"
-        title="FIRE Settings"
-        description="Household-level assumptions, return settings, and normalized analysis controls."
-        isComplete={sectionCompletion['section-fire-settings'].isComplete}
-        scopeLabel="Scope: household"
-      >
-        <HouseholdAssumptionsSection mode="assumptions" />
-      </HouseholdPrototypeSection>
-
-      <HouseholdPrototypeSection
-        sectionId="section-allocation"
-        title="Allocation"
-        description="Portfolio templates, glide paths, and household-aware portfolio assumptions."
-        isComplete={sectionCompletion['section-allocation'].isComplete}
-        scopeLabel="Scope: household"
-      >
-        <HouseholdAssumptionsSection mode="allocation" />
-      </HouseholdPrototypeSection>
+      {orderedSections.map((section) => (
+        <Fragment key={section.id}>{section.element}</Fragment>
+      ))}
 
       <Card className="bg-primary/5 border-primary/20">
         <CardContent className="py-6 md:py-6">
