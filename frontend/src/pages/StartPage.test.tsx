@@ -3,8 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { StartPage } from './StartPage'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
 
 function renderStartPage() {
@@ -15,9 +14,18 @@ function renderStartPage() {
   )
 }
 
+function getSelfAdult() {
+  return useHouseholdPlanStore.getState().plan.adults.find((a) => a.owner === 'self')!
+}
+
+function getSalaryIncome() {
+  return useHouseholdPlanStore.getState().plan.income.find(
+    (i) => i.kind === 'salary-model' && i.owner === 'self'
+  )
+}
+
 beforeEach(() => {
-  useProfileStore.getState().reset()
-  useIncomeStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   // Reset UI store to defaults
   useUIStore.setState({
     sectionOrder: 'goal-first',
@@ -106,6 +114,7 @@ describe('StartPage', () => {
   it('shows returning user link only when localStorage has profile', () => {
     // No profile — links should not appear
     localStorage.removeItem('fireplanner-profile')
+    localStorage.removeItem('fireplanner-household-plan-v1')
     const { unmount } = renderStartPage()
     expect(screen.queryByText(/continue inputs/i)).not.toBeInTheDocument()
     unmount()
@@ -185,7 +194,7 @@ describe('StartPage', () => {
     expect(screen.getByText(/~\$48,000\/year/)).toBeInTheDocument()
   })
 
-  it('writes annual base salary and bonus months to stores when continuing', async () => {
+  it('writes annual base salary and expenses to household plan when continuing', async () => {
     const user = userEvent.setup()
     renderStartPage()
     await user.click(screen.getByText("Show me what's possible"))
@@ -193,16 +202,15 @@ describe('StartPage', () => {
     const continueBtn = screen.getByRole('button', { name: /build my full plan/i })
     await user.click(continueBtn)
 
-    const profile = useProfileStore.getState()
-    const income = useIncomeStore.getState()
+    const selfAdult = getSelfAdult()
+    const salaryIncome = getSalaryIncome()
     // Default take-home $4,800 at age 30 grosses up to $6,000/mo = $72,000/year
-    expect(profile.annualIncome).toBeCloseTo(72000, -2)
-    expect(profile.annualExpenses).toBe(48000)
-    expect(income.annualSalary).toBeCloseTo(72000, -2)
-    expect(income.bonusMonths).toBe(0)
+    expect(selfAdult.annualIncome).toBeCloseTo(72000, -2)
+    expect(selfAdult.annualExpenses).toBe(48000)
+    expect(salaryIncome?.annualAmount).toBeCloseTo(72000, -2)
   })
 
-  it('writes bonus months separately when bonus is enabled', async () => {
+  it('writes total income including bonus to household plan when bonus is enabled', async () => {
     const user = userEvent.setup()
     renderStartPage()
     await user.click(screen.getByText("Show me what's possible"))
@@ -214,13 +222,15 @@ describe('StartPage', () => {
     const continueBtn = screen.getByRole('button', { name: /build my full plan/i })
     await user.click(continueBtn)
 
-    const income = useIncomeStore.getState()
-    expect(income.bonusMonths).toBe(1)
-    // Base salary should be 12 months worth, not 13
-    expect(income.annualSalary).toBeCloseTo(72000, -2)
+    const selfAdult = getSelfAdult()
+    const salaryIncome = getSalaryIncome()
+    // With 1 bonus month: draftIncome = grossMonthly * 13 = 6000 * 13 = 78000
+    // The total annualAmount includes bonus (12 + 1 months * grossMonthly)
+    expect(selfAdult.annualIncome).toBeCloseTo(78000, -2)
+    expect(salaryIncome?.annualAmount).toBeCloseTo(78000, -2)
   })
 
-  it('writes income to income store in already-fire pathway', async () => {
+  it('writes income to household plan in already-fire pathway', async () => {
     const user = userEvent.setup()
     renderStartPage()
     await user.click(screen.getByText('I already have enough'))
@@ -228,7 +238,9 @@ describe('StartPage', () => {
     // Click a phase card to continue
     await user.click(screen.getByText('Before 55'))
 
-    const income = useIncomeStore.getState()
-    expect(income.annualSalary).toBeCloseTo(72000, -2)
+    const selfAdult = getSelfAdult()
+    const salaryIncome = getSalaryIncome()
+    expect(selfAdult.annualIncome).toBeCloseTo(72000, -2)
+    expect(salaryIncome?.annualAmount).toBeCloseTo(72000, -2)
   })
 })

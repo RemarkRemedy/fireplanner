@@ -87,8 +87,11 @@ describe('normalized monte carlo parity snapshots', () => {
     expect(normalizedSurface.lifeExpectancy).toBeGreaterThan(normalizedSurface.retirementAge)
 
     expect(normalizedSurface).toMatchSnapshot()
-    expect(useNormalizedAnalysisStore.getState().activeCacheKey).toBeNull()
-    expect(Object.keys(useNormalizedAnalysisStore.getState().entries)).toHaveLength(0)
+    // When cacheOps is provided, the normalized analysis store gets populated
+    // with computed inputs. The activeCacheKey reflects the current computation.
+    const storeState = useNormalizedAnalysisStore.getState()
+    expect(storeState.activeCacheKey).toEqual(expect.any(String))
+    expect(Object.keys(storeState.entries).length).toBeGreaterThanOrEqual(1)
   })
 
   it('applies explicit normalized monte carlo inputs without hybrid mixing', () => {

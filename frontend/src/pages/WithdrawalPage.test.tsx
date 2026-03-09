@@ -3,7 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useProfileStore } from '@/stores/useProfileStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { setupTestPlan } from '@/test-helpers/setupTestPlan'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useWithdrawalStore } from '@/stores/useWithdrawalStore'
@@ -172,16 +173,26 @@ function renderPage() {
 }
 
 beforeEach(() => {
-  useProfileStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   useAllocationStore.getState().reset()
   useSimulationStore.getState().reset()
   useWithdrawalStore.getState().reset()
 
-  useProfileStore.getState().setField('currentAge', 40)
-  useProfileStore.getState().setField('lifeExpectancy', 80)
-  useProfileStore.getState().setField('annualExpenses', 48_000)
-  useProfileStore.getState().setField('inflation', 0.02)
-  useProfileStore.getState().setField('expenseRatio', 0.003)
+  setupTestPlan({
+    adult: {
+      currentAge: 40,
+      lifeExpectancy: 80,
+    },
+    expenses: {
+      annualExpenses: 48_000,
+    },
+    assumptions: {
+      returns: {
+        inflation: 0.02,
+        expenseRatio: 0.003,
+      },
+    },
+  })
 
   mockRunMonteCarloWorker.mockReset()
   mockUseExplorePortfolio.mockReturnValue({

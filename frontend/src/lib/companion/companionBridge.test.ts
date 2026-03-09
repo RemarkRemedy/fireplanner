@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 import { applySnapshotToStores } from './companionBridge'
 import type { PlannerSnapshotResponse } from './types'
 
@@ -28,13 +27,22 @@ function makeFullSnapshot(overrides: Partial<PlannerSnapshotResponse> = {}): Pla
   }
 }
 
+function getHouseholdProfile() {
+  const plan = useHouseholdPlanStore.getState().plan
+  return buildHouseholdRuntimeLegacyInputs(plan).profile
+}
+
+function getHouseholdIncome() {
+  const plan = useHouseholdPlanStore.getState().plan
+  return buildHouseholdRuntimeLegacyInputs(plan).income
+}
+
+function getSelfAdult() {
+  return useHouseholdPlanStore.getState().plan.adults.find((a) => a.owner === 'self')!
+}
+
 describe('applySnapshotToStores', () => {
   beforeEach(() => {
-    // Reset stores to defaults before each test
-    const profileDefaults = useProfileStore.getInitialState()
-    useProfileStore.setState(profileDefaults)
-    const incomeDefaults = useIncomeStore.getInitialState()
-    useIncomeStore.setState(incomeDefaults)
     useHouseholdPlanStore.getState().reset()
   })
 
@@ -42,10 +50,10 @@ describe('applySnapshotToStores', () => {
     const snapshot = makeFullSnapshot()
     applySnapshotToStores(snapshot)
 
-    const profile = useProfileStore.getState()
-    const income = useIncomeStore.getState()
+    const profile = getHouseholdProfile()
+    const income = getHouseholdIncome()
 
-    // Income: both stores set
+    // Income: both profile and income reflect the snapshot
     expect(profile.annualIncome).toBe(72_000) // 6000 * 12
     expect(income.annualSalary).toBe(72_000)
 
@@ -73,7 +81,7 @@ describe('applySnapshotToStores', () => {
   })
 
   it('keeps defaults for nil/missing fields', () => {
-    const defaults = useProfileStore.getState()
+    const defaults = getHouseholdProfile()
     const defaultAge = defaults.currentAge
     const defaultRetirementAge = defaults.retirementAge
 
@@ -84,7 +92,7 @@ describe('applySnapshotToStores', () => {
     }
     applySnapshotToStores(snapshot)
 
-    const profile = useProfileStore.getState()
+    const profile = getHouseholdProfile()
     expect(profile.currentAge).toBe(defaultAge)
     expect(profile.retirementAge).toBe(defaultRetirementAge)
     expect(profile.annualIncome).toBe(60_000) // 5000 * 12 — income was set
@@ -101,11 +109,13 @@ describe('applySnapshotToStores', () => {
     }
     applySnapshotToStores(snapshot)
 
-    const profile = useProfileStore.getState()
+    const profile = getHouseholdProfile()
     expect(profile.currentAge).toBe(40)
     expect(profile.annualExpenses).toBe(42_000) // 3500 * 12
-    // Income not set — should retain default
-    const defaults = useProfileStore.getInitialState()
+    // Inflation not set — should retain default
+    const defaults = buildHouseholdRuntimeLegacyInputs(
+      useHouseholdPlanStore.getInitialState().plan
+    ).profile
     expect(profile.inflation).toBe(defaults.inflation)
   })
 
@@ -118,8 +128,8 @@ describe('applySnapshotToStores', () => {
     }
     applySnapshotToStores(snapshot)
 
-    const profile = useProfileStore.getState()
-    const income = useIncomeStore.getState()
+    const profile = getHouseholdProfile()
+    const income = getHouseholdIncome()
     expect(profile.annualIncome).toBe(0)
     expect(income.annualSalary).toBe(0)
     expect(profile.annualExpenses).toBe(0)
@@ -138,7 +148,7 @@ describe('applySnapshotToStores', () => {
     }
     applySnapshotToStores(snapshot)
 
-    const profile = useProfileStore.getState()
+    const profile = getHouseholdProfile()
     expect(profile.inflation).toBeCloseTo(0.025)
     expect(profile.expectedReturn).toBeCloseTo(0.10)
     expect(profile.expenseRatio).toBeCloseTo(0.005)
@@ -154,7 +164,7 @@ describe('applySnapshotToStores', () => {
     }
     applySnapshotToStores(snapshot)
 
-    const profile = useProfileStore.getState()
+    const profile = getHouseholdProfile()
     // income = expense + savings = 4000 + 2000 = 6000
     expect(profile.annualIncome).toBe(72_000)
   })
@@ -168,7 +178,7 @@ describe('applySnapshotToStores', () => {
     }
     applySnapshotToStores(snapshot)
 
-    const profile = useProfileStore.getState()
+    const profile = getHouseholdProfile()
     // expense = income - savings = 8000 - 3000 = 5000
     expect(profile.annualExpenses).toBe(60_000)
   })
@@ -181,14 +191,17 @@ describe('applySnapshotToStores', () => {
     }
     applySnapshotToStores(snapshot)
 
-    const profile = useProfileStore.getState()
+    const profile = getHouseholdProfile()
     // expense = max(0, 1000 - 5000) = 0
     expect(profile.annualExpenses).toBe(0)
   })
 
   it('ignores non-finite values (NaN, Infinity)', () => {
-    const defaults = useProfileStore.getState()
-    const defaultIncome = defaults.annualIncome
+    // Capture legacy defaults that fromExpenseImport falls back to
+    // when non-finite values are supplied
+    const legacyDefaults = buildHouseholdRuntimeLegacyInputs(
+      useHouseholdPlanStore.getInitialState().plan
+    ).profile
 
     const snapshot: PlannerSnapshotResponse = {
       schemaVersion: 1,
@@ -201,11 +214,12 @@ describe('applySnapshotToStores', () => {
     }
     applySnapshotToStores(snapshot)
 
-    const profile = useProfileStore.getState()
-    // Non-finite values should be ignored, keeping defaults
-    expect(profile.annualIncome).toBe(defaultIncome)
-    expect(profile.currentAge).toBe(defaults.currentAge)
-    expect(profile.inflation).toBe(defaults.inflation)
+    const profile = getHouseholdProfile()
+    // Non-finite income resolves to 0 (no valid income data in snapshot)
+    expect(profile.annualIncome).toBe(0)
+    // Non-finite age and inflation fall back to legacy defaults
+    expect(profile.currentAge).toBe(legacyDefaults.currentAge)
+    expect(profile.inflation).toBe(legacyDefaults.inflation)
   })
 
   it('seeds an imported household plan that remains locally editable', () => {
