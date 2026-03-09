@@ -2,21 +2,20 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useWhatIfMetrics } from './useWhatIfMetrics'
 import { useFireCalculations } from './useFireCalculations'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { setupTestPlan } from '@/test-helpers/setupTestPlan'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 
 beforeEach(() => {
-  useProfileStore.getState().reset()
-  useIncomeStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   useAllocationStore.getState().reset()
-  usePropertyStore.getState().reset()
 })
 
 describe('useWhatIfMetrics', () => {
   it('returns hasData: false when profile has errors', () => {
-    useProfileStore.getState().setField('currentAge', 15)
+    setupTestPlan({
+      adult: { currentAge: 30, retirementAge: 25, lifeExpectancy: 20 },
+    })
     const { result } = renderHook(() => useWhatIfMetrics({}))
     expect(result.current.hasData).toBe(false)
     expect(result.current.baseMetrics).toBeNull()
@@ -83,11 +82,12 @@ describe('useWhatIfMetrics', () => {
     // but the 4 metrics extracted by computeMetrics (fireNumber, yearsToFire,
     // fireAge, portfolioAtRetirement) do not depend on property equity.
     // This test verifies the branch is exercised without error.
-    usePropertyStore.setState({
-      ...usePropertyStore.getState(),
-      ownsProperty: true,
-      existingPropertyValue: 1500000,
-      existingMortgageBalance: 800000,
+    setupTestPlan({
+      property: {
+        ownsProperty: true,
+        existingPropertyValue: 1500000,
+        existingMortgageBalance: 800000,
+      },
     })
     const { result } = renderHook(() => useWhatIfMetrics({}))
     expect(result.current.hasData).toBe(true)
@@ -96,29 +96,23 @@ describe('useWhatIfMetrics', () => {
   })
 
   it('matches useFireCalculations for base FIRE metrics with cash reserve and locked assets enabled', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      annualIncome: 72_000,
-      annualExpenses: 48_000,
-      cashReserveEnabled: true,
-      cashReserveMode: 'months',
-      cashReserveMonths: 6,
-      cashReserveFixedAmount: 0,
-      lockedAssets: [
-        {
-          id: 'bond-ladder',
-          name: 'Bond Ladder',
-          amount: 80_000,
-          unlockAge: 60,
-          growthRate: 0.02,
-        },
-      ],
-      validationErrors: {},
-    })
-    useIncomeStore.setState({
-      ...useIncomeStore.getState(),
-      annualSalary: 96_000,
-      validationErrors: {},
+    setupTestPlan({
+      income: { annualSalary: 96000 },
+      expenses: { annualExpenses: 48000 },
+      assumptions: {
+        cashReserve: { enabled: true, mode: 'months', months: 6 },
+      },
+      assets: {
+        lockedAssets: [
+          {
+            id: 'bond-ladder',
+            name: 'Bond Ladder',
+            amount: 80000,
+            unlockAge: 60,
+            growthRate: 0.02,
+          },
+        ],
+      },
     })
 
     const { result: fire } = renderHook(() => useFireCalculations())
@@ -133,11 +127,10 @@ describe('useWhatIfMetrics', () => {
 
   it('usePortfolioReturn changes base metrics via expected return', () => {
     // Manual return of 10%
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      usePortfolioReturn: false,
-      expectedReturn: 0.10,
-      validationErrors: {},
+    setupTestPlan({
+      assumptions: {
+        returns: { usePortfolioReturn: false, expectedReturn: 0.10 },
+      },
     })
     useAllocationStore.setState({ ...useAllocationStore.getState(), validationErrors: {} })
     const { result: manual, unmount } = renderHook(() => useWhatIfMetrics({}))
@@ -146,7 +139,11 @@ describe('useWhatIfMetrics', () => {
     unmount()
 
     // Portfolio return (~4.85% from balanced allocation) instead of 10%
-    useProfileStore.setState({ ...useProfileStore.getState(), usePortfolioReturn: true })
+    setupTestPlan({
+      assumptions: {
+        returns: { usePortfolioReturn: true, expectedReturn: 0.10 },
+      },
+    })
     const { result: portfolio } = renderHook(() => useWhatIfMetrics({}))
     expect(portfolio.current.hasData).toBe(true)
     const portfolioYears = portfolio.current.baseMetrics!.yearsToFire
@@ -157,21 +154,19 @@ describe('useWhatIfMetrics', () => {
 
   it('NaN delta when base yearsToFire is Infinity (unreachable FIRE)', () => {
     // Set expenses much higher than income so FIRE is unreachable
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 30,
-      retirementAge: 55,
-      lifeExpectancy: 90,
-      annualIncome: 30000,
-      annualExpenses: 80000, // Expenses > income, can never save enough
-      liquidNetWorth: 0,
-      swr: 0.04,
-      fireNumberBasis: 'today',
-      usePortfolioReturn: false,
-      expectedReturn: 0.07,
-      inflation: 0.025,
-      expenseRatio: 0.003,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 30,
+        retirementAge: 55,
+        lifeExpectancy: 90,
+      },
+      income: { annualSalary: 30000 },
+      expenses: { annualExpenses: 80000 },
+      assets: { liquidNetWorth: 0 },
+      assumptions: {
+        fire: { swr: 0.04, fireNumberBasis: 'today' },
+        returns: { usePortfolioReturn: false, expectedReturn: 0.07, inflation: 0.025, expenseRatio: 0.003 },
+      },
     })
 
     // Override to a slightly different expense to trigger delta computation
@@ -187,21 +182,19 @@ describe('useWhatIfMetrics', () => {
 
   it('NaN fireAge delta when base fireAge is Infinity', () => {
     // Same setup: unreachable FIRE
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 30,
-      retirementAge: 55,
-      lifeExpectancy: 90,
-      annualIncome: 30000,
-      annualExpenses: 80000,
-      liquidNetWorth: 0,
-      swr: 0.04,
-      fireNumberBasis: 'today',
-      usePortfolioReturn: false,
-      expectedReturn: 0.07,
-      inflation: 0.025,
-      expenseRatio: 0.003,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 30,
+        retirementAge: 55,
+        lifeExpectancy: 90,
+      },
+      income: { annualSalary: 30000 },
+      expenses: { annualExpenses: 80000 },
+      assets: { liquidNetWorth: 0 },
+      assumptions: {
+        fire: { swr: 0.04, fireNumberBasis: 'today' },
+        returns: { usePortfolioReturn: false, expectedReturn: 0.07, inflation: 0.025, expenseRatio: 0.003 },
+      },
     })
 
     const { result } = renderHook(() => useWhatIfMetrics({ annualExpenses: 90000 }))

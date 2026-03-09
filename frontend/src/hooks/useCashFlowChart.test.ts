@@ -1,24 +1,23 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useCashFlowChart } from './useCashFlowChart'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { setupTestPlan } from '@/test-helpers/setupTestPlan'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 
 beforeEach(() => {
-  useProfileStore.getState().reset()
-  useIncomeStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   useAllocationStore.getState().reset()
   useSimulationStore.getState().reset()
-  usePropertyStore.getState().reset()
 })
 
 describe('useCashFlowChart', () => {
   it('returns null when there are no projection rows', () => {
     // Create validation errors to prevent projection computation
-    useProfileStore.getState().setField('currentAge', 15)
+    setupTestPlan({
+      adult: { currentAge: 30, retirementAge: 25, lifeExpectancy: 20 },
+    })
     const { result } = renderHook(() => useCashFlowChart('all'))
     expect(result.current).toBeNull()
   })
@@ -118,16 +117,16 @@ describe('useCashFlowChart', () => {
 
   it('srsWithdrawal flows through from ProjectionRow when SRS is configured', () => {
     // Configure SRS so drawdown generates non-zero srsWithdrawal rows
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 30,
-      retirementAge: 60,
-      lifeExpectancy: 80,
-      srsAnnualContribution: 15300,
-      srsBalance: 0,
-      srsInvestmentReturn: 0.04,
-      srsDrawdownStartAge: 63,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 30,
+        retirementAge: 60,
+        lifeExpectancy: 80,
+        srsBalance: 0,
+        srsAnnualContribution: 15300,
+        srsInvestmentReturn: 0.04,
+        srsDrawdownStartAge: 63,
+      },
     })
 
     const { result } = renderHook(() => useCashFlowChart('all'))

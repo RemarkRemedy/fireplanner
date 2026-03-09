@@ -1,16 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useDashboardMetrics } from './useDashboardMetrics'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { setupTestPlan } from '@/test-helpers/setupTestPlan'
 import { useAllocationStore } from '@/stores/useAllocationStore'
-import { usePropertyStore } from '@/stores/usePropertyStore'
 
 beforeEach(() => {
-  useProfileStore.getState().reset()
-  useIncomeStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   useAllocationStore.getState().reset()
-  usePropertyStore.getState().reset()
 })
 
 describe('useDashboardMetrics', () => {
@@ -21,7 +18,9 @@ describe('useDashboardMetrics', () => {
   })
 
   it('returns all null when profile has errors', () => {
-    useProfileStore.getState().setField('currentAge', 15)
+    setupTestPlan({
+      adult: { currentAge: 30, retirementAge: 25, lifeExpectancy: 20 },
+    })
     const { result } = renderHook(() => useDashboardMetrics())
     expect(result.current.fireNumber).toBeNull()
     expect(result.current.progress).toBeNull()
@@ -29,21 +28,25 @@ describe('useDashboardMetrics', () => {
   })
 
   it('progress percentage matches NW / FIRE number', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      liquidNetWorth: 500000,
-      cpfOA: 200000,
-      cpfSA: 100000,
-      cpfMA: 50000,
-      annualExpenses: 48000,
-      swr: 0.04,
-      fireNumberBasis: 'today',
-      retirementSpendingAdjustment: 1.0,
-      usePortfolioReturn: false,
-      parentSupportEnabled: false,
-      parentSupport: [],
-      healthcareConfig: { ...useProfileStore.getState().healthcareConfig, enabled: false },
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        cpfOA: 200000,
+        cpfSA: 100000,
+        cpfMA: 50000,
+        parentSupportEnabled: false,
+        healthcareConfig: { enabled: false, ispTier: 'none', mediSaveTopUpAnnual: 0, lifeExpectancy: 90 },
+      },
+      expenses: {
+        annualExpenses: 48000,
+        retirementSpendingAdjustment: 1.0,
+        parentSupportEnabled: false,
+        parentSupport: [],
+      },
+      assumptions: {
+        fire: { swr: 0.04, fireNumberBasis: 'today' },
+        returns: { usePortfolioReturn: false },
+      },
+      assets: { liquidNetWorth: 500000 },
     })
     const { result } = renderHook(() => useDashboardMetrics())
     expect(result.current.progress).not.toBeNull()
@@ -52,27 +55,27 @@ describe('useDashboardMetrics', () => {
   })
 
   it('totalNetWorth includes liquid + CPF balances', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      liquidNetWorth: 500000,
-      cpfOA: 100000,
-      cpfSA: 50000,
-      cpfMA: 30000,
-      validationErrors: {},
+    setupTestPlan({
+      assets: { liquidNetWorth: 500000 },
+      adult: {
+        cpfOA: 100000,
+        cpfSA: 50000,
+        cpfMA: 30000,
+      },
     })
     const { result } = renderHook(() => useDashboardMetrics())
     expect(result.current.totalNetWorth).toBe(680000)
   })
 
   it('totalNetWorth includes cpfRA', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      liquidNetWorth: 500000,
-      cpfOA: 100000,
-      cpfSA: 0,
-      cpfMA: 30000,
-      cpfRA: 200000,
-      validationErrors: {},
+    setupTestPlan({
+      assets: { liquidNetWorth: 500000 },
+      adult: {
+        cpfOA: 100000,
+        cpfSA: 0,
+        cpfMA: 30000,
+        cpfRA: 200000,
+      },
     })
     const { result } = renderHook(() => useDashboardMetrics())
     // 500K + 100K + 0 + 30K + 200K = 830K

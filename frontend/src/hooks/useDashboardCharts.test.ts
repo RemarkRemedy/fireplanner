@@ -1,14 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useDashboardCharts } from './useDashboardCharts'
-import { useProfileStore } from '@/stores/useProfileStore'
-import { useIncomeStore } from '@/stores/useIncomeStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { setupTestPlan } from '@/test-helpers/setupTestPlan'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useUIStore } from '@/stores/useUIStore'
 
 beforeEach(() => {
-  useProfileStore.getState().reset()
-  useIncomeStore.getState().reset()
+  useHouseholdPlanStore.getState().reset()
   useAllocationStore.getState().reset()
   useUIStore.setState({
     sectionOrder: 'goal-first',
@@ -22,18 +21,18 @@ beforeEach(() => {
 
 describe('useDashboardCharts', () => {
   it('returns accumulation data from current age to life expectancy', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 30,
-      retirementAge: 55,
-      lifeExpectancy: 90,
-      liquidNetWorth: 100000,
-      annualExpenses: 48000,
-      annualIncome: 72000,
-      expectedReturn: 0.07,
-      inflation: 0.025,
-      expenseRatio: 0.003,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 30,
+        retirementAge: 55,
+        lifeExpectancy: 90,
+      },
+      assets: { liquidNetWorth: 100000 },
+      expenses: { annualExpenses: 48000 },
+      income: { annualSalary: 72000 },
+      assumptions: {
+        returns: { expectedReturn: 0.07, inflation: 0.025, expenseRatio: 0.003 },
+      },
     })
     const { result } = renderHook(() => useDashboardCharts())
     expect(result.current.accumulationData.length).toBe(61) // 30 to 90 inclusive
@@ -42,16 +41,17 @@ describe('useDashboardCharts', () => {
   })
 
   it('returns fire number line matching FIRE number', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 30,
-      retirementAge: 55,
-      lifeExpectancy: 90,
-      annualIncome: 72000,
-      annualExpenses: 48000,
-      swr: 0.04,
-      fireNumberBasis: 'today',
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 30,
+        retirementAge: 55,
+        lifeExpectancy: 90,
+      },
+      income: { annualSalary: 72000 },
+      expenses: { annualExpenses: 48000 },
+      assumptions: {
+        fire: { swr: 0.04, fireNumberBasis: 'today' },
+      },
     })
     const { result } = renderHook(() => useDashboardCharts())
     // FIRE number = annualExpenses / swr = 48000 / 0.04 = 1,200,000
@@ -59,23 +59,25 @@ describe('useDashboardCharts', () => {
   })
 
   it('returns empty data when profile has validation errors', () => {
-    useProfileStore.getState().setField('currentAge', 15) // invalid
+    setupTestPlan({
+      adult: { currentAge: 30, retirementAge: 25, lifeExpectancy: 20 },
+    })
     const { result } = renderHook(() => useDashboardCharts())
     expect(result.current.accumulationData).toEqual([])
     expect(result.current.fireNumberLine).toBeNull()
   })
 
   it('accumulation data starts with current NW including CPF', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 30,
-      retirementAge: 55,
-      lifeExpectancy: 90,
-      liquidNetWorth: 100000,
-      cpfOA: 50000,
-      cpfSA: 30000,
-      cpfMA: 20000,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 30,
+        retirementAge: 55,
+        lifeExpectancy: 90,
+        cpfOA: 50000,
+        cpfSA: 30000,
+        cpfMA: 20000,
+      },
+      assets: { liquidNetWorth: 100000 },
     })
     const { result } = renderHook(() => useDashboardCharts())
     // First data point should be liquidNW + cpfOA + cpfSA + cpfMA + cpfRA = 200000
@@ -83,17 +85,17 @@ describe('useDashboardCharts', () => {
   })
 
   it('accumulation data includes cpfRA in starting NW', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 56,
-      retirementAge: 58,
-      lifeExpectancy: 90,
-      liquidNetWorth: 100000,
-      cpfOA: 50000,
-      cpfSA: 0,
-      cpfMA: 20000,
-      cpfRA: 200000,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 56,
+        retirementAge: 58,
+        lifeExpectancy: 90,
+        cpfOA: 50000,
+        cpfSA: 0,
+        cpfMA: 20000,
+        cpfRA: 200000,
+      },
+      assets: { liquidNetWorth: 100000 },
     })
     const { result } = renderHook(() => useDashboardCharts())
     // First data point: 100K + 50K + 0 + 20K + 200K = 370K
@@ -101,18 +103,18 @@ describe('useDashboardCharts', () => {
   })
 
   it('values grow during accumulation phase', () => {
-    useProfileStore.setState({
-      ...useProfileStore.getState(),
-      currentAge: 30,
-      retirementAge: 55,
-      lifeExpectancy: 90,
-      liquidNetWorth: 100000,
-      annualIncome: 72000,
-      annualExpenses: 48000,
-      expectedReturn: 0.07,
-      inflation: 0.025,
-      expenseRatio: 0.003,
-      validationErrors: {},
+    setupTestPlan({
+      adult: {
+        currentAge: 30,
+        retirementAge: 55,
+        lifeExpectancy: 90,
+      },
+      assets: { liquidNetWorth: 100000 },
+      income: { annualSalary: 72000 },
+      expenses: { annualExpenses: 48000 },
+      assumptions: {
+        returns: { expectedReturn: 0.07, inflation: 0.025, expenseRatio: 0.003 },
+      },
     })
     const { result } = renderHook(() => useDashboardCharts())
     const data = result.current.accumulationData
