@@ -205,9 +205,14 @@ function buildCombinedProjection(
   const combined: PersonFireMetrics['projection'] = []
   let switched = false
 
+  // Track last known balance so when one projection ends (death at life expectancy),
+  // the surviving spouse inherits instead of the balance dropping to zero.
+  const selfLastBal = selfMetrics.projection[selfMetrics.projection.length - 1]?.balance ?? 0
+  const partnerLastBal = partnerMetrics.projection[partnerMetrics.projection.length - 1]?.balance ?? 0
+
   for (let year = 0; year < maxYear; year++) {
-    const selfBal = selfMetrics.projection[year]?.balance ?? 0
-    const partnerBal = partnerMetrics.projection[year]?.balance ?? 0
+    const selfBal = selfMetrics.projection[year]?.balance ?? selfLastBal
+    const partnerBal = partnerMetrics.projection[year]?.balance ?? partnerLastBal
     const total = selfBal + partnerBal
     if (!switched && total >= combinedFireNumber) switched = true
     combined.push({
