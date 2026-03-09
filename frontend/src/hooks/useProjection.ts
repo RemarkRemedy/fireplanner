@@ -2,19 +2,12 @@ import { useMemo } from 'react'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import type { FireMetrics, ProjectionRow, ProjectionSummary } from '@/lib/types'
 import { generateProjection, type ProjectionParams } from '@/lib/calculations/projection'
-import { getRetirementSumAmount } from '@/lib/calculations/cpf'
-import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
-import { getPropertyRentalIncome, computeLbsProceeds } from '@/lib/calculations/hdb'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useIncomeProjection } from '@/hooks/useIncomeProjection'
 import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
-import {
-  buildBaseInputsFromEffectiveIncome,
-  computeMetricSnapshot,
-  resolveEffectiveIncome,
-} from '@/hooks/useWhatIfMetrics'
+import { buildFullProjectionParams } from '@/lib/calculations/projectionParams'
 
 interface ProjectionResult {
   fireMetrics: FireMetrics | null
@@ -48,121 +41,30 @@ export function useProjection(): ProjectionResult {
       return { fireMetrics: null, rows: null, summary: null, params: null, hasErrors: true, errors: incomeErrors }
     }
 
-    // Compute effective asset returns (with overrides applied)
-    const assetReturns = getEffectiveReturns(allocation.returnOverrides)
-
-    // Determine effective expected return
-    const allocationErrors = allocation.validationErrors
-    const allocationHasErrors = Object.keys(allocationErrors).length > 0
-    let effectiveReturn = profile.expectedReturn
-    if (profile.usePortfolioReturn && !allocationHasErrors) {
-      effectiveReturn = calculatePortfolioReturn(allocation.currentWeights, assetReturns)
-    }
-
-    // LBS: add cash proceeds to portfolio, RA top-up enhances CPF LIFE
-    const isLbs = property.ownsProperty
-      && property.propertyType === 'hdb'
-      && property.hdbMonetizationStrategy === 'lbs'
-    const lbsResult = isLbs
-      ? computeLbsProceeds({
-          flatValue: property.existingPropertyValue,
-          remainingLease: property.existingLeaseYears,
-          retainedLease: property.hdbLbsRetainedLease,
-          cpfRaBalance: profile.cpfRA,
-          retirementSum: getRetirementSumAmount(profile.cpfRetirementSum, normalized.currentAge),
-        })
-      : null
-
-    const ownershipPct = property.ownershipPercent ?? 1
-    const effectiveIncome = resolveEffectiveIncome(profile, incomeProjection)
-    const { fireMetrics } = computeMetricSnapshot(
-      buildBaseInputsFromEffectiveIncome(
-        profile,
-        allocation,
-        property,
-        effectiveIncome,
-        {
-          currentAge: normalized.currentAge,
-          retirementAge: normalized.retirementAge,
-          lifeExpectancy: normalized.lifeExpectancy,
-        },
-      ),
-    )
-
-    const projectionParams: ProjectionParams = {
+    const { params, fireMetrics } = buildFullProjectionParams({
+      profile,
+      income,
+      property,
+      allocation,
+      simulation,
+      ages: {
+        currentAge: normalized.currentAge,
+        retirementAge: normalized.retirementAge,
+        lifeExpectancy: normalized.lifeExpectancy,
+      },
       incomeProjection,
-      currentAge: normalized.currentAge,
-      retirementAge: normalized.retirementAge,
-      lifeExpectancy: normalized.lifeExpectancy,
-      initialLiquidNW: profile.liquidNetWorth + (lbsResult?.cashProceeds ?? 0),
-      swr: profile.swr,
-      expectedReturn: effectiveReturn,
-      usePortfolioReturn: profile.usePortfolioReturn && !allocationHasErrors,
-      inflation: profile.inflation,
-      expenseRatio: profile.expenseRatio,
-      annualExpenses: profile.annualExpenses,
-      retirementSpendingAdjustment: profile.retirementSpendingAdjustment,
-      fireNumber: fireMetrics.fireNumber,
-      currentWeights: allocation.currentWeights,
-      targetWeights: allocation.targetWeights,
-      assetReturns,
-      glidePathConfig: allocation.glidePathConfig,
-      withdrawalStrategy: simulation.selectedStrategy,
-      strategyParams: simulation.strategyParams,
-      withdrawalBasis: simulation.withdrawalBasis,
-      propertyEquity: property.ownsProperty
-        ? Math.max(0, property.existingPropertyValue - property.existingMortgageBalance) * ownershipPct
-        : 0,
-      // Cash portion only — CPF portion is handled by income.ts OA deduction
-      annualMortgagePayment: property.ownsProperty
-        ? (property.existingMonthlyPayment - property.mortgageCpfMonthly) * 12 * ownershipPct
-        : 0,
-      annualRentalIncome: getPropertyRentalIncome(property),
-      existingPropertyValue: property.ownsProperty
-        ? property.existingPropertyValue * ownershipPct
-        : 0,
-      propertyAppreciationRate: property.existingAppreciationRate,
-      propertyLeaseYears: property.existingLeaseYears,
-      applyBalaDecay: property.existingApplyBalaDecay,
-      downsizing: property.ownsProperty && property.downsizing.scenario !== 'none'
-        ? property.downsizing
-        : null,
-      existingMortgageBalance: property.existingMortgageBalance * ownershipPct,
-      existingMortgageRate: property.existingMortgageRate,
-      existingMonthlyPayment: property.existingMonthlyPayment * ownershipPct,
-      existingMortgageRemainingYears: property.existingMortgageRemainingYears,
-      residencyForAbsd: property.residencyForAbsd,
-      parentSupport: profile.parentSupport,
-      parentSupportEnabled: profile.parentSupportEnabled,
-      healthcareConfig: profile.healthcareConfig?.enabled ? profile.healthcareConfig : null,
-      retirementWithdrawals: profile.retirementWithdrawals,
-      financialGoals: profile.financialGoals,
-      cpfLifeStartAge: profile.cpfLifeStartAge,
-      cpfLifePlan: profile.cpfLifePlan,
-      expenseAdjustments: profile.expenseAdjustments,
-      lifeEvents: income.lifeEvents,
-      lifeEventsEnabled: income.lifeEventsEnabled,
-      cpfAutoFallback: profile.cpfAutoFallback,
-      cpfAutoFallbackIncludeSA: profile.cpfAutoFallbackIncludeSA,
-      cpfVirtualRebalancing: profile.cpfVirtualRebalancing,
-      cpfVirtualRebalancingMode: profile.cpfVirtualRebalancingMode,
-    }
+    })
 
-    const { rows, summary } = generateProjection(projectionParams)
+    const { rows, summary } = generateProjection(params)
 
-    return { fireMetrics, rows, summary, params: projectionParams, hasErrors: false, errors: {} }
+    return { fireMetrics, rows, summary, params, hasErrors: false, errors: {} }
   }, [
     incomeProjection,
     incomeHasErrors,
     incomeErrors,
-    profile.liquidNetWorth,
-    profile.swr,
-    profile.expectedReturn,
-    profile.usePortfolioReturn,
-    profile.inflation,
-    profile.expenseRatio,
-    profile.annualExpenses,
-    profile.retirementSpendingAdjustment,
+    profile,
+    income,
+    property,
     allocation.currentWeights,
     allocation.targetWeights,
     allocation.returnOverrides,
@@ -171,41 +73,6 @@ export function useProjection(): ProjectionResult {
     simulation.selectedStrategy,
     simulation.strategyParams,
     simulation.withdrawalBasis,
-    property.ownsProperty,
-    property.existingPropertyValue,
-    property.existingMortgageBalance,
-    property.existingMonthlyPayment,
-    property.ownershipPercent,
-    property.mortgageCpfMonthly,
-    property.existingMortgageRate,
-    property.existingMortgageRemainingYears,
-    property.downsizing,
-    property.residencyForAbsd,
-    property.propertyType,
-    property.hdbMonetizationStrategy,
-    property.hdbSublettingRooms,
-    property.hdbSublettingRate,
-    property.hdbLbsRetainedLease,
-    property.existingLeaseYears,
-    property.existingAppreciationRate,
-    property.existingApplyBalaDecay,
-    profile.cpfRA,
-    profile.parentSupportEnabled,
-    profile.parentSupport,
-    profile.healthcareConfig,
-    profile.retirementWithdrawals,
-    profile.financialGoals,
-    profile.cpfLifeStartAge,
-    profile.cpfLifePlan,
-    profile.cpfRetirementSum,
-    profile.currentAge,
-    profile.expenseAdjustments,
-    profile.cpfAutoFallback,
-    profile.cpfAutoFallbackIncludeSA,
-    profile.cpfVirtualRebalancing,
-    profile.cpfVirtualRebalancingMode,
-    income.lifeEvents,
-    income.lifeEventsEnabled,
     normalized.currentAge,
     normalized.lifeExpectancy,
     normalized.retirementAge,

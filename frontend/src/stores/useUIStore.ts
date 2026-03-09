@@ -24,6 +24,8 @@ interface UIState {
   showNewPurchase: boolean
   collapsedSections: string[]
   quickModeActive: boolean
+  // Per-adult projection view: 'joint' or an adultId string
+  projectionView: 'joint' | string
   // Transient (not persisted): true when a contextual engagement nudge is visible
   contextualNudgeActive: boolean
 }
@@ -58,6 +60,7 @@ const DEFAULT_UI: UIState = {
   showNewPurchase: false,
   collapsedSections: [],
   quickModeActive: false,
+  projectionView: 'joint',
   contextualNudgeActive: false,
 }
 

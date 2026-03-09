@@ -6,12 +6,15 @@ import {
   flexRender,
   type VisibilityState,
 } from '@tanstack/react-table'
-import type { WithdrawalStrategyType } from '@/lib/types'
+import type { ProjectionRow, ProjectionSummary, WithdrawalStrategyType } from '@/lib/types'
 import { useProjection } from '@/hooks/useProjection'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useSimulationStore } from '@/stores/useSimulationStore'
+import { useAllocationStore } from '@/stores/useAllocationStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -38,6 +41,11 @@ import {
   DEFAULT_COLUMN_IDS,
 } from '@/components/shared/projectionColumns'
 import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
+import { buildSplitAdultPlanSlice } from '@/lib/household/planSlice'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
+import { buildProjectionParams, buildFullProjectionParams } from '@/lib/calculations/projectionParams'
+import { generateIncomeProjection } from '@/lib/calculations/income'
+import { generateProjection } from '@/lib/calculations/projection'
 
 const STRATEGY_SHORT_LABELS: Record<WithdrawalStrategyType, string> = {
   constant_dollar: '4% Rule',
@@ -57,18 +65,72 @@ const STRATEGY_SHORT_LABELS: Record<WithdrawalStrategyType, string> = {
 export function ProjectionPage() {
   usePageMeta({ title: 'Projection — SG FIRE Planner', description: 'Year-by-year financial projection with net worth trajectory, CPF balances, and retirement milestones.', path: '/projection' })
   const normalized = useNormalizedLegacyAnalysisContext()
-  const { rows, summary, hasErrors } = useProjection()
+  const { rows: jointRows, summary: jointSummary, hasErrors } = useProjection()
   const { isEligible } = useExpenseTracker()
-  useExpenseTrackerDwell(Boolean(rows && rows.length > 0), 10)
-  const retirementAge = normalized.retirementAge
-  const currentAge = normalized.currentAge
-  const inflation = normalized.compiledPlan.assumptions.returns.inflation
-  const hasSrs = rows?.some((row) => row.srsBalance > 0 || row.srsContribution > 0 || row.srsWithdrawal > 0) ?? false
+  useExpenseTrackerDwell(Boolean(jointRows && jointRows.length > 0), 10)
+  const plan = useHouseholdPlanStore((s) => s.plan)
+  const adults = plan.adults
+  const isMultiAdult = adults.length > 1
+  const allocation = useAllocationStore()
+  const simulation = useSimulationStore()
   const activeStrategy = useSimulationStore((s) => s.selectedStrategy)
   const setSimField = useSimulationStore((s) => s.setField)
 
   const dollarBasis = useUIStore((s) => s.dollarBasis)
+  const projectionView = useUIStore((s) => s.projectionView)
   const setUIField = useUIStore((s) => s.setField)
+
+  const isPerAdult = isMultiAdult && projectionView !== 'joint'
+
+  // ---------------------------------------------------------------------------
+  // Per-adult projection (memoized, only computed when toggled)
+  // ---------------------------------------------------------------------------
+  const perAdultResult = useMemo(() => {
+    if (!isPerAdult) return null
+
+    const sliceResult = buildSplitAdultPlanSlice(plan, projectionView, 0.5)
+    if (!sliceResult) return null
+
+    const { slice, adultAges } = sliceResult
+    const runtime = buildHouseholdRuntimeLegacyInputs(slice)
+    const { profile, income, property } = runtime
+
+    // Build income projection for this adult
+    const incomeParams = buildProjectionParams(
+      { ...profile, ...adultAges },
+      income,
+      property,
+    )
+    if (!incomeParams) return null
+    const incomeProjection = generateIncomeProjection(incomeParams)
+
+    // Build full projection using the canonical builder
+    const { params, fireMetrics } = buildFullProjectionParams({
+      profile,
+      income,
+      property,
+      allocation,
+      simulation,
+      ages: adultAges,
+      incomeProjection,
+    })
+
+    const { rows, summary } = generateProjection(params)
+    return { rows, summary, fireMetrics, adultAges }
+  }, [isPerAdult, plan, projectionView, allocation, simulation])
+
+  // Active data: joint or per-adult
+  const rows = isPerAdult ? (perAdultResult?.rows ?? null) : jointRows
+  const summary = isPerAdult ? (perAdultResult?.summary ?? null) : jointSummary
+  const activeCurrentAge = isPerAdult
+    ? (perAdultResult?.adultAges.currentAge ?? normalized.currentAge)
+    : normalized.currentAge
+  const activeRetirementAge = isPerAdult
+    ? (perAdultResult?.adultAges.retirementAge ?? normalized.retirementAge)
+    : normalized.retirementAge
+  const inflation = normalized.compiledPlan.assumptions.returns.inflation
+
+  const hasSrs = rows?.some((row) => row.srsBalance > 0 || row.srsContribution > 0 || row.srsWithdrawal > 0) ?? false
 
   // Detect which CPF detail columns have data (hide empty ones to reduce clutter)
   const hasOaHousing = rows?.some((r) => r.cpfOaHousingDeduction > 0) ?? false
@@ -104,6 +166,7 @@ export function ProjectionPage() {
   const setSectionMode = useUIStore((s) => s.setSectionMode)
 
   // Deflate a nominal value to today's dollars: value / (1 + inflation)^year
+  // Uses per-adult currentAge when in per-adult view for correct year offset
   const deflate = useCallback(
     (value: number, year: number) =>
       dollarBasis === 'real' ? value / Math.pow(1 + inflation, year) : value,
@@ -177,14 +240,14 @@ export function ProjectionPage() {
 
   const displaySummary = useMemo(() => {
     if (!summary || dollarBasis === 'nominal') return summary
-    const yearOf = (age: number) => age - currentAge
+    const yearOf = (age: number) => age - activeCurrentAge
     return {
       ...summary,
       peakTotalNW: deflate(summary.peakTotalNW, yearOf(summary.peakTotalNWAge)),
       terminalLiquidNW: deflate(summary.terminalLiquidNW, rows ? rows.length - 1 : 0),
       terminalTotalNW: deflate(summary.terminalTotalNW, rows ? rows.length - 1 : 0),
     }
-  }, [summary, dollarBasis, deflate, currentAge, rows])
+  }, [summary, dollarBasis, deflate, activeCurrentAge, rows])
 
   // Compute goal shortfall stats from (already-deflated) display rows
   const goalShortfallInfo = useMemo(() => {
@@ -318,8 +381,8 @@ export function ProjectionPage() {
   }, [columnVisibility])
 
   const columns = useMemo(
-    () => buildProjectionColumns(retirementAge, hasMortgageCash),
-    [retirementAge, hasMortgageCash],
+    () => buildProjectionColumns(activeRetirementAge, hasMortgageCash),
+    [activeRetirementAge, hasMortgageCash],
   )
 
   const table = useReactTable({
@@ -373,7 +436,7 @@ export function ProjectionPage() {
         <tbody>
           {table.getRowModel().rows.map((row) => {
             const original = row.original
-            const isRetirementRow = original.age === retirementAge
+            const isRetirementRow = original.age === activeRetirementAge
             const isFireRow = original.age === fireAchievedAge
             const isDepleted = original.liquidNW <= 0
 
@@ -453,6 +516,27 @@ export function ProjectionPage() {
             </button>
           </div>
         </div>
+
+        {isMultiAdult && (
+          <div className="mt-3 space-y-1">
+            <Tabs value={projectionView} onValueChange={(v) => { setUIField('projectionView', v); trackEvent('projection_view_changed', { view: v }) }}>
+              <TabsList>
+                {adults.map((adult) => (
+                  <TabsTrigger key={adult.id} value={adult.id}>
+                    {adult.displayName}
+                  </TabsTrigger>
+                ))}
+                <TabsTrigger value="joint">Joint</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <p className="text-xs text-muted-foreground">
+              {isPerAdult
+                ? 'Per-adult view: shared items split 50/50. Strategy parameters reflect household settings.'
+                : 'Switches the projection view only.'}
+            </p>
+          </div>
+        )}
+
         <div className="mt-3 flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-sm font-medium whitespace-nowrap">Withdrawal Strategy:</span>
@@ -606,7 +690,7 @@ export function ProjectionPage() {
 
       {displayRows && displayRows.length > 0 && (
         <>
-          <NWChartView rows={displayRows} retirementAge={retirementAge} />
+          <NWChartView rows={displayRows} retirementAge={activeRetirementAge} />
 
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">

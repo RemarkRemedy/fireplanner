@@ -27,6 +27,7 @@ import {
 import { createId } from '@/lib/household/ids'
 import { ensureAgeRangeTiming, getSelectedAdult, ownerLabel } from '@/lib/household/editorUtils'
 import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
+import { buildSingleAdultPlanSlice } from '@/lib/household/planSlice'
 import type {
   AdultOwner,
   EntryOwner,
@@ -63,85 +64,23 @@ const EDUCATION_OPTIONS: Array<{ value: EducationLevel; label: string }> = [
   { value: 'degree', label: 'Degree' },
 ]
 
-/**
- * Creates a single-adult plan slice by extracting one adult's data from a
- * multi-adult household plan. The slice remaps all owners to 'self' so that
- * `toLegacyIndividual` (inside `buildHouseholdRuntimeLegacyInputs`) accepts it
- * and produces a per-adult legacy snapshot without needing a compiled plan.
- */
-function buildSingleAdultPlanSlice(plan: HouseholdPlan, adultId: string): HouseholdPlan | null {
-  const targetAdult = plan.adults.find((a) => a.id === adultId)
-  if (!targetAdult) return null
-
-  const remappedAdult: PlanningAdult = {
-    ...structuredClone(targetAdult),
-    owner: 'self',
-  }
-
-  const isOwnedByTarget = (owner: EntryOwner) =>
-    owner === targetAdult.owner
-
-  const remapOwner = <T extends { owner: EntryOwner }>(entry: T): T => ({
-    ...entry,
-    owner: 'self' as EntryOwner,
-  })
-
-  const remapTiming = <T extends { timing: { owner: AdultOwner; [k: string]: unknown } }>(entry: T): T => ({
-    ...entry,
-    timing: { ...entry.timing, owner: 'self' as AdultOwner },
-  })
-
-  const adultIncome = plan.income
-    .filter((entry) => isOwnedByTarget(entry.owner))
-    .map((entry) => remapTiming(remapOwner(structuredClone(entry))))
-
-  const adultExpenses = plan.expenses
-    .filter((entry) => isOwnedByTarget(entry.owner) || entry.owner === 'shared')
-    .map((entry) => {
-      const cloned = structuredClone(entry)
-      const remapped = remapOwner(cloned)
-      return remapped.timing?.owner ? remapTiming(remapped as typeof entry & { timing: { owner: AdultOwner } }) : remapped
-    })
-
-  const adultGoals = plan.goals
-    .filter((entry) => isOwnedByTarget(entry.owner) || entry.owner === 'shared')
-    .map((entry) => remapTiming(remapOwner(structuredClone(entry))))
-
-  const adultAssets = plan.assets
-    .filter((entry) => isOwnedByTarget(entry.owner) || entry.owner === 'shared')
-    .map((entry) => remapOwner(structuredClone(entry)))
-
-  return {
-    ...structuredClone(plan),
-    planType: 'individual',
-    adults: [remappedAdult],
-    dependents: [],
-    income: adultIncome,
-    expenses: adultExpenses,
-    goals: adultGoals,
-    assets: adultAssets,
-  }
-}
-
 function computePerAdultProjection(
   plan: HouseholdPlan,
   adultId: string,
 ): { projection: IncomeProjectionRow[] | null; summary: IncomeSummaryStats | null } {
-  const slice = buildSingleAdultPlanSlice(plan, adultId)
-  if (!slice) return { projection: null, summary: null }
+  const result = buildSingleAdultPlanSlice(plan, adultId)
+  if (!result) return { projection: null, summary: null }
 
-  const adult = slice.adults[0]
-  if (!adult) return { projection: null, summary: null }
-
+  const { slice, adultAges } = result
   const runtime = buildHouseholdRuntimeLegacyInputs(slice)
   const { profile, income, property } = runtime
 
   const projectionParams = buildProjectionParams(
     {
       ...profile,
-      currentAge: adult.currentAge,
-      retirementAge: adult.retirementAge,
-      lifeExpectancy: adult.lifeExpectancy,
+      currentAge: adultAges.currentAge,
+      retirementAge: adultAges.retirementAge,
+      lifeExpectancy: adultAges.lifeExpectancy,
     },
     income,
     property,
