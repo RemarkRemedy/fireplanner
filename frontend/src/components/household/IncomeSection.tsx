@@ -342,6 +342,11 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
   const projectionRetirementAge = projectionView === 'joint'
     ? selectedAdult.retirementAge
     : (adults.find((a) => a.id === projectionView)?.retirementAge ?? selectedAdult.retirementAge)
+  const projectionLabel = isMultiAdult
+    ? projectionView === 'joint'
+      ? 'Joint Income Projection'
+      : `${adults.find((a) => a.id === projectionView)?.displayName ?? ''}'s Income Projection`
+    : 'Income Projection'
 
   return (
     <div className="space-y-6">
@@ -631,7 +636,7 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
               className="flex items-center justify-between w-full text-left"
               onClick={() => setProjectionExpanded(!projectionExpanded)}
             >
-              <CardTitle className="text-lg">Income Projection</CardTitle>
+              <CardTitle className="text-lg">{projectionLabel}</CardTitle>
               <span className="text-sm text-primary hover:underline">
                 {projectionExpanded ? 'Hide table' : `Show ${activeProjection.length} rows`}
               </span>
