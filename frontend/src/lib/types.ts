@@ -63,6 +63,7 @@ export interface HealthcareConfig {
   mediSaveTopUpAnnual: number
   ispDowngradeTier?: IspTierOption   // tier to switch to (must be lower than ispTier)
   ispDowngradeAge?: number           // age at which to switch
+  premiumInflationRate?: number       // annual rate at which premium schedules increase (default 0.03)
 }
 
 // ============================================================

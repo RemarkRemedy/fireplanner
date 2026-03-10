@@ -8,8 +8,8 @@ import {
   resolveIspTierAtAge,
   calculateHealthcareLAE,
   ISP_TIER_ORDER,
-  type HealthcareConfig,
 } from './healthcare'
+import type { HealthcareConfig } from '@/lib/types'
 
 const DEFAULT_CONFIG: HealthcareConfig = {
   enabled: true,
@@ -18,6 +18,8 @@ const DEFAULT_CONFIG: HealthcareConfig = {
   careShieldLifeEnabled: true,
   oopBaseAmount: 1200,
   oopModel: 'age-curve',
+  oopInflationRate: 0,
+  oopReferenceAge: 30,
   mediSaveTopUpAnnual: 0,
 }
 
