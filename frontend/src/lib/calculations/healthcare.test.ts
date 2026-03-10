@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   calculateHealthcareCostAtAge,
+  inflateHealthcareCost,
   calculateMediSaveDeduction,
   projectMediSaveTimeline,
   generateHealthcareProjection,
@@ -91,9 +92,9 @@ describe('calculateHealthcareCostAtAge', () => {
     expect(result80.oopExpense).toBe(2000)
   })
 
-  it('applies medical inflation with age-curve model', () => {
-    // User age 30 (reference), OOP at age 50, 3% inflation
-    // multiplier at 50 = 1.6, inflation = 1.03^20
+  it('does not apply OOP inflation (today-dollar values only)', () => {
+    // calculateHealthcareCostAtAge returns today's dollars — no inflation
+    // Inflation is applied by inflateHealthcareCost() for nominal callers
     const config: HealthcareConfig = {
       ...DEFAULT_CONFIG,
       oopBaseAmount: 1200,
@@ -101,7 +102,8 @@ describe('calculateHealthcareCostAtAge', () => {
       oopReferenceAge: 30,
     }
     const result = calculateHealthcareCostAtAge(config, 50)
-    const expected = 1200 * 1.6 * Math.pow(1.03, 20) // ≈ 3,467
+    // multiplier at 50 = 1.6, but NO inflation factor
+    const expected = 1200 * 1.6
     expect(result.oopExpense).toBeCloseTo(expected, 0)
   })
 
@@ -134,19 +136,19 @@ describe('calculateHealthcareCostAtAge', () => {
     expect(result.oopExpense).toBeCloseTo(1200, 0)
   })
 
-  it('applies inflation from reference age 45 to age 65', () => {
+  it('age-curve uses reference age for multiplier ratio without inflation', () => {
     const config: HealthcareConfig = {
       ...DEFAULT_CONFIG,
       oopInflationRate: 0.03,
       oopReferenceAge: 45,
     }
     const result = calculateHealthcareCostAtAge(config, 65)
-    // multiplier(65)/multiplier(45) = 3.2/1.4 ≈ 2.286, inflation = 1.03^20
-    const expected = 1200 * (3.2 / 1.4) * Math.pow(1.03, 20) // ≈ 4,954
+    // multiplier(65)/multiplier(45) = 3.2/1.4 ≈ 2.286, NO inflation
+    const expected = 1200 * (3.2 / 1.4)
     expect(result.oopExpense).toBeCloseTo(expected, 0)
   })
 
-  it('applies inflation to fixed OOP model', () => {
+  it('fixed OOP model returns base amount without inflation', () => {
     const config: HealthcareConfig = {
       ...DEFAULT_CONFIG,
       oopModel: 'fixed',
@@ -155,8 +157,8 @@ describe('calculateHealthcareCostAtAge', () => {
       oopReferenceAge: 30,
     }
     const result = calculateHealthcareCostAtAge(config, 50)
-    const expected = 2000 * Math.pow(1.03, 20)
-    expect(result.oopExpense).toBeCloseTo(expected, 0)
+    // No inflation applied — today's dollars
+    expect(result.oopExpense).toBe(2000)
   })
 
   it('computes totalCost as sum of all components', () => {
@@ -405,6 +407,48 @@ describe('calculateHealthcareCostAtAge with ISP downgrade', () => {
     const at70 = calculateHealthcareCostAtAge(config, 70)
     const basicOnly = calculateHealthcareCostAtAge({ ...DEFAULT_CONFIG, ispTier: 'basic' }, 70)
     expect(at70.ispAdditionalPremium).toBe(basicOnly.ispAdditionalPremium)
+  })
+})
+
+describe('inflateHealthcareCost', () => {
+  it('returns unchanged cost when age equals currentAge', () => {
+    const config: HealthcareConfig = { ...DEFAULT_CONFIG, premiumInflationRate: 0.05, oopInflationRate: 0.03 }
+    const base = calculateHealthcareCostAtAge(config, 50)
+    const inflated = inflateHealthcareCost(base, config, 50)
+    expect(inflated).toEqual(base)
+  })
+
+  it('inflates premiums by premiumInflationRate', () => {
+    const config: HealthcareConfig = {
+      ...DEFAULT_CONFIG,
+      premiumInflationRate: 0.05,
+      oopInflationRate: 0,
+      oopModel: 'fixed',
+      oopBaseAmount: 0,
+    }
+    const base = calculateHealthcareCostAtAge(config, 50)
+    const inflated = inflateHealthcareCost(base, config, 40)
+    // 10 years at 5%
+    const expectedFactor = Math.pow(1.05, 10)
+    expect(inflated.mediShieldLifePremium).toBeCloseTo(base.mediShieldLifePremium * expectedFactor, 2)
+    expect(inflated.careShieldLifePremium).toBeCloseTo(base.careShieldLifePremium * expectedFactor, 2)
+  })
+
+  it('inflates OOP by oopInflationRate separately from premiums', () => {
+    const config: HealthcareConfig = {
+      ...DEFAULT_CONFIG,
+      premiumInflationRate: 0,
+      oopInflationRate: 0.04,
+      oopModel: 'fixed',
+      oopBaseAmount: 1000,
+    }
+    const base = calculateHealthcareCostAtAge(config, 60)
+    const inflated = inflateHealthcareCost(base, config, 50)
+    // 10 years at 4%
+    const expectedFactor = Math.pow(1.04, 10)
+    expect(inflated.oopExpense).toBeCloseTo(base.oopExpense * expectedFactor, 2)
+    // Premiums should be unchanged (0% inflation)
+    expect(inflated.mediShieldLifePremium).toBe(base.mediShieldLifePremium)
   })
 })
 
