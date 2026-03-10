@@ -431,7 +431,6 @@ function buildAggregateRuntimeSnapshot(
   defaults.profile.financialGoals = mapGoals(plan.goals, referenceAdult)
   defaults.profile.lockedAssets = mapLockedAssets(plan)
 
-  defaults.income.cpfAdultCount = plan.adults.length
   defaults.income.salaryModel = salaryModel
   defaults.income.annualSalary = activeSalaryModels.reduce((sum, income) => sum + income.annualAmount, 0)
   defaults.income.salaryGrowthRate = salaryGrowthRate

@@ -112,7 +112,7 @@ export function ProjectionTable({ data, retirementAge, jointAdults }: Projection
         header: 'CPF SA',
         cell: (info) => formatCurrency(info.getValue()),
       }),
-    ]
+    )
 
     if (hasCpfis) {
       cols.push(

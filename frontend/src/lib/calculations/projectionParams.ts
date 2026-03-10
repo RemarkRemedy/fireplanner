@@ -98,7 +98,6 @@ export function buildProjectionParams(
     cpfAutoFallbackIncludeSA: profile.cpfAutoFallbackIncludeSA,
     cpfVirtualRebalancing: profile.cpfVirtualRebalancing,
     cpfVirtualRebalancingMode: profile.cpfVirtualRebalancingMode,
-    cpfAdultCount: income.cpfAdultCount,
   }
 }
 
