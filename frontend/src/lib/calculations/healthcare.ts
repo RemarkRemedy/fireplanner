@@ -17,6 +17,7 @@ import {
   ISP_ADDITIONAL_PREMIUMS,
   CARESHIELD_LIFE_PREMIUMS,
   MEDISAVE_AWL,
+  ISP_OOP_FACTORS,
   lookupByAge,
 } from '@/lib/data/healthcarePremiums'
 import { interpolateOopMultiplier } from '@/lib/data/healthcareOop'
@@ -141,6 +142,10 @@ export function calculateHealthcareCostAtAge(
   } else {
     oopExpense = config.oopBaseAmount * inflationFactor
   }
+
+  // Apply ISP coverage discount — higher ISP tier reduces OOP exposure
+  const effectiveOopFactor = ISP_OOP_FACTORS[effectiveTier] ?? 1.0
+  oopExpense *= effectiveOopFactor
 
   const totalCost = mediShieldLifePremium + ispAdditionalPremium + careShieldLifePremium + oopExpense
   const mediSaveDeductible = calculateMediSaveDeduction(

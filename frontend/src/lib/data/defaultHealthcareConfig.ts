@@ -15,5 +15,6 @@ export const DEFAULT_HEALTHCARE_CONFIG: HealthcareConfig = {
   oopInflationRate: 0.03,
   oopReferenceAge: 30,
   oopCurveVariant: 'study-backed',
+  premiumInflationRate: 0.03,
   mediSaveTopUpAnnual: 0,
 }

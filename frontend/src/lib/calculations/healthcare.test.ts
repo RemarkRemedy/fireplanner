@@ -479,6 +479,47 @@ describe('calculateHealthcareLAE', () => {
   })
 })
 
+describe('ISP OOP factor', () => {
+  it('applies no OOP reduction when ISP tier is none', () => {
+    const config: HealthcareConfig = { ...DEFAULT_CONFIG, ispTier: 'none', oopModel: 'fixed', oopBaseAmount: 1000 }
+    const result = calculateHealthcareCostAtAge(config, 50)
+    expect(result.oopExpense).toBe(1000)
+  })
+
+  it('reduces OOP by 0.6x for basic ISP tier', () => {
+    const config: HealthcareConfig = { ...DEFAULT_CONFIG, ispTier: 'basic', oopModel: 'fixed', oopBaseAmount: 1000 }
+    const result = calculateHealthcareCostAtAge(config, 50)
+    expect(result.oopExpense).toBe(600)
+  })
+
+  it('reduces OOP by 0.35x for standard ISP tier', () => {
+    const config: HealthcareConfig = { ...DEFAULT_CONFIG, ispTier: 'standard', oopModel: 'fixed', oopBaseAmount: 1000 }
+    const result = calculateHealthcareCostAtAge(config, 50)
+    expect(result.oopExpense).toBe(350)
+  })
+
+  it('reduces OOP by 0.15x for enhanced ISP tier', () => {
+    const config: HealthcareConfig = { ...DEFAULT_CONFIG, ispTier: 'enhanced', oopModel: 'fixed', oopBaseAmount: 1000 }
+    const result = calculateHealthcareCostAtAge(config, 50)
+    expect(result.oopExpense).toBe(150)
+  })
+
+  it('uses downgraded tier OOP factor after downgrade age', () => {
+    const config: HealthcareConfig = {
+      ...DEFAULT_CONFIG,
+      ispTier: 'enhanced',
+      ispDowngradeTier: 'basic',
+      ispDowngradeAge: 65,
+      oopModel: 'fixed',
+      oopBaseAmount: 1000,
+    }
+    const before = calculateHealthcareCostAtAge(config, 64)
+    const after = calculateHealthcareCostAtAge(config, 65)
+    expect(before.oopExpense).toBe(150)  // enhanced: 0.15
+    expect(after.oopExpense).toBe(600)   // basic: 0.60
+  })
+})
+
 describe('invariants', () => {
   const AGES = [30, 40, 50, 60, 70, 80, 90]
   const CONFIGS: HealthcareConfig[] = [
