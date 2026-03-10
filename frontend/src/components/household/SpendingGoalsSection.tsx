@@ -37,7 +37,8 @@ import type {
   PlanningAdult,
 } from '@/lib/household/types'
 import type { GoalCategory, HealthcareConfig, IspTierOption, OopCurveVariant, OopModel } from '@/lib/types'
-import { calculateHealthcareCostAtAge, generateHealthcareProjection } from '@/lib/calculations/healthcare'
+import { calculateHealthcareCostAtAge, generateHealthcareProjection, inflateHealthcareCost } from '@/lib/calculations/healthcare'
+import { ISP_OOP_FACTORS } from '@/lib/data/healthcarePremiums'
 import { formatCurrency } from '@/lib/utils'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useMemo } from 'react'
@@ -244,20 +245,26 @@ function HealthcareDetails({ adult, onUpdate }: {
   onUpdate: (updates: Partial<HealthcareConfig>) => void
 }) {
   const hc = adult.healthcare
-  const inflationRate = hc.oopInflationRate ?? 0.03
 
   // Cost preview at sample ages
   const previewRows = useMemo(() =>
     PREVIEW_AGES.map((age) => {
-      const cost = calculateHealthcareCostAtAge(hc, age)
-      const premiums = cost.mediShieldLifePremium + cost.ispAdditionalPremium + cost.careShieldLifePremium
-      // Today's dollars: deflate by medical inflation from reference age
-      const refAge = hc.oopReferenceAge ?? 30
-      const deflator = Math.pow(1 + inflationRate, Math.max(0, age - refAge))
-      const todaysDollars = deflator > 0 ? cost.cashOutlay / deflator : cost.cashOutlay
-      return { age, premiums, oop: cost.oopExpense, total: cost.totalCost, cashOutlay: cost.cashOutlay, todaysDollars }
+      const baseCost = calculateHealthcareCostAtAge(hc, age)
+      const nominalCost = inflateHealthcareCost(baseCost, hc, adult.currentAge)
+      const premiums = nominalCost.mediShieldLifePremium + nominalCost.ispAdditionalPremium + nominalCost.careShieldLifePremium
+      // Today's dollars = base cost (no inflation applied) minus MediSave deductible
+      const todaysPremiums = baseCost.mediShieldLifePremium + baseCost.ispAdditionalPremium + baseCost.careShieldLifePremium
+      const todaysDollars = Math.max(0, (todaysPremiums + baseCost.oopExpense) - baseCost.mediSaveDeductible)
+      return {
+        age,
+        premiums,
+        oop: nominalCost.oopExpense,
+        total: nominalCost.totalCost,
+        cashOutlay: nominalCost.cashOutlay,
+        todaysDollars,
+      }
     }),
-    [hc, inflationRate],
+    [hc, adult.currentAge],
   )
 
   // Retirement summary
@@ -349,6 +356,11 @@ function HealthcareDetails({ adult, onUpdate }: {
             )
           })}
         </div>
+        {hc.ispTier !== 'none' && (
+          <p className="text-xs text-muted-foreground">
+            OOP reduction: {((1 - (ISP_OOP_FACTORS[hc.ispTier] ?? 1)) * 100).toFixed(0)}% due to {hc.ispTier} ISP coverage
+          </p>
+        )}
       </div>
 
       {/* Out-of-Pocket Model */}
@@ -435,8 +447,14 @@ function HealthcareDetails({ adult, onUpdate }: {
         </div>
       )}
 
-      {/* OOP Base Amount + Medical Inflation */}
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* OOP Base Amount + Inflation Rates */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <PercentInput
+          label="Premium Inflation Rate"
+          tooltip="Annual rate at which insurance premium schedules increase due to medical cost inflation. Singapore averages 3-5%, above general CPI."
+          value={hc.premiumInflationRate ?? 0.03}
+          onChange={(value) => onUpdate({ premiumInflationRate: value })}
+        />
         <CurrencyInput
           label="Out-of-Pocket Base Amount (at age 30)"
           tooltip="Annual out-of-pocket healthcare spending at age 30 in today's dollars. The age curve multiplies this by an age factor."
@@ -477,7 +495,7 @@ function HealthcareDetails({ adult, onUpdate }: {
                 <th className="px-3 py-2 text-right font-medium text-primary">Cash Outlay</th>
                 <th className="px-3 py-2 text-right font-medium">
                   Today's dollars
-                  <InfoTooltip text={`Removes ${(inflationRate * 100).toFixed(1)}% medical inflation from out-of-pocket costs to show costs in current purchasing power.`} />
+                  <InfoTooltip text="Shows costs in today's purchasing power, removing both premium inflation and out-of-pocket medical inflation." />
                 </th>
               </tr>
             </thead>
@@ -496,7 +514,7 @@ function HealthcareDetails({ adult, onUpdate }: {
           </table>
         </div>
         <p className="text-xs text-muted-foreground">
-          Cash outlay = total cost minus MediSave-deductible portion. Premiums are from CPF Board / MOH data (2025). Today's dollars removes {(inflationRate * 100).toFixed(1)}% medical inflation from out-of-pocket costs to show costs in current purchasing power.
+          Cash outlay = total cost minus MediSave-deductible portion. Premiums are from CPF Board / MOH data (2025). Today's dollars removes both premium inflation and out-of-pocket medical inflation to show costs in current purchasing power.
         </p>
       </div>
 
