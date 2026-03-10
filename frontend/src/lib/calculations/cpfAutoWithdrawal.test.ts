@@ -86,4 +86,41 @@ describe('computeCpfAutoFallback', () => {
     const result = computeCpfAutoFallback({ ...baseInput, age: 50 })
     expect(result.totalWithdrawal).toBe(0)
   })
+
+  it('skips FRS reservation when CPF LIFE has started', () => {
+    // Scenario: age 79, year 2073 — FRS has grown to >$1M.
+    // RA is near 0 (consumed by CPF LIFE annuity).
+    // Without cpfLifeStarted, raGapToFRS ≈ $1M blocks most of OA.
+    const withoutLifeStarted = computeCpfAutoFallback({
+      shortfall: 400000,
+      cpfOA: 1000000,
+      cpfSA: 0,
+      cpfRA: 0, // RA consumed by CPF LIFE
+      cpfisOA: 0,
+      cpfisSA: 0,
+      age: 79,
+      currentYear: 2073,
+      includeSA: false,
+    })
+
+    const withLifeStarted = computeCpfAutoFallback({
+      shortfall: 400000,
+      cpfOA: 1000000,
+      cpfSA: 0,
+      cpfRA: 0,
+      cpfisOA: 0,
+      cpfisSA: 0,
+      age: 79,
+      currentYear: 2073,
+      includeSA: false,
+      cpfLifeStarted: true,
+    })
+
+    // Without CPF LIFE flag: FRS reservation blocks most of OA
+    expect(withoutLifeStarted.oaWithdrawal).toBeLessThan(100000)
+
+    // With CPF LIFE flag: full OA is withdrawable
+    expect(withLifeStarted.oaWithdrawal).toBe(400000)
+    expect(withLifeStarted.totalWithdrawal).toBe(400000)
+  })
 })
