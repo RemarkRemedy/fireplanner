@@ -388,6 +388,14 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                       <InfoTooltip text="These assumptions drive purchase, rental, and appreciation modeling for the selected property row." />
                     </div>
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
+                      <NumberInput
+                        label="Years from now"
+                        tooltip="How many years from now you plan to purchase this property."
+                        value={property.purchaseYearsFromNow}
+                        onChange={(value) => updateProperty(property.id, { purchaseYearsFromNow: value })}
+                        min={0}
+                        max={50}
+                      />
                       <CurrencyInput
                         label="Purchase price"
                         value={property.purchasePrice}
