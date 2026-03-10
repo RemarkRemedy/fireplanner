@@ -142,6 +142,18 @@ export const MEDISAVE_AWL: { minAge: number; maxAge: number; annual: number }[] 
 ]
 
 /**
+ * OOP expense reduction factor by ISP coverage tier.
+ * Higher ISP coverage reduces out-of-pocket exposure.
+ * These are approximate factors — actual copay/deductible structures vary by insurer.
+ */
+export const ISP_OOP_FACTORS: Record<import('@/lib/types').IspTierOption, number> = {
+  none: 1.0,       // MediShield Life only — B2/C ward, full OOP exposure
+  basic: 0.6,      // B1 ward coverage, moderate copay reduction
+  standard: 0.35,  // A ward, rider reduces copay significantly
+  enhanced: 0.15,  // Private hospital, full rider, minimal copay
+}
+
+/**
  * Look up a value from an age-bracket table.
  */
 export function lookupByAge(
