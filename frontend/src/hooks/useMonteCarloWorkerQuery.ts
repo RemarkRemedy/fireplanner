@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import {
   runMonteCarloWorker,
@@ -73,6 +73,8 @@ export function buildCurrentMonteCarloRunSignature(input: {
   allocationRevision: number
   householdRevision: string
   overrides?: MonteCarloRunOverrides | null
+  /** Which adult view was active ('joint' or an adultId) — prevents stale detection gaps across view switches */
+  perAdultKey?: string | null
   scenarioOverrideHash: string
   simulationRevision: number
   withdrawalRevision: number
@@ -83,7 +85,7 @@ export function buildCurrentMonteCarloRunSignature(input: {
     allocationRevision: input.allocationRevision,
     simulationRevision: input.simulationRevision,
     withdrawalRevision: input.withdrawalRevision,
-    runOverrideHash: stableRunOverrideHash(input.overrides ?? null),
+    runOverrideHash: stableRunOverrideHash(input.overrides ?? null) + ':' + (input.perAdultKey ?? 'joint'),
   })
 }
 
@@ -119,11 +121,15 @@ export function useMonteCarloWorkerQuery(
   const activeAbortControllerRef = useRef<AbortController | null>(null)
   const activeRunIdRef = useRef(0)
 
+  // Derive a stable key for per-adult vs joint to include in stale detection
+  const perAdultKey = perAdultInputs ? 'adult' : 'joint'
+
   const currentRunSig = useMemo(
     () => buildCurrentMonteCarloRunSignature({
       allocationRevision: allocation.allocationRevision,
       householdRevision: normalized.householdRevision,
       overrides: lastRunOverrides,
+      perAdultKey,
       scenarioOverrideHash: normalized.scenarioOverrideHash,
       simulationRevision: simulation.simulationRevision,
       withdrawalRevision: withdrawal.withdrawalRevision,
@@ -133,6 +139,7 @@ export function useMonteCarloWorkerQuery(
       lastRunOverrides,
       normalized.householdRevision,
       normalized.scenarioOverrideHash,
+      perAdultKey,
       simulation.simulationRevision,
       withdrawal.withdrawalRevision,
     ]
@@ -170,6 +177,7 @@ export function useMonteCarloWorkerQuery(
         allocationRevision: allocation.allocationRevision,
         householdRevision: normalized.householdRevision,
         overrides: normalizedOverrides,
+        perAdultKey,
         scenarioOverrideHash: normalized.scenarioOverrideHash,
         simulationRevision: simulation.simulationRevision,
         withdrawalRevision: withdrawal.withdrawalRevision,
@@ -231,15 +239,20 @@ export function useMonteCarloWorkerQuery(
 
   const isStale = mutation.data !== undefined && lastRunParams !== currentRunSig
 
+  const reset = useCallback(() => {
+    // Abort any in-flight Web Worker before clearing state
+    activeAbortControllerRef.current?.abort()
+    activeAbortControllerRef.current = null
+    mutation.reset()
+    setProgress(null)
+  }, [mutation.reset])
+
   return {
     mutate: (overrides) => mutation.mutate(overrides),
     data: mutation.data,
     isPending: mutation.isPending,
     error: mutation.error,
-    reset: () => {
-      mutation.reset()
-      setProgress(null)
-    },
+    reset,
     canRun,
     validationErrors: allErrors,
     isStale,

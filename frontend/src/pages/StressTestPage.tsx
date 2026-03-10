@@ -649,14 +649,17 @@ export function StressTestPage() {
     if (!sliceResult) return null
     const { slice, adultAges } = sliceResult
     const runtime = buildHouseholdRuntimeLegacyInputs(slice)
+    const p = runtime.profile
     return {
-      profile: { ...runtime.profile, ...adultAges },
+      profile: { ...p, ...adultAges },
       income: runtime.income,
       property: runtime.property,
-      initialPortfolio: runtime.profile.liquidNetWorth,
+      // Match joint path (useAnalysisPortfolio): include CPF balances in starting portfolio
+      initialPortfolio: p.liquidNetWorth + p.cpfOA + p.cpfSA + p.cpfMA + p.cpfRA,
     }
   }, [isPerAdultSim, householdPlan, simulationView])
 
+  const perAdultSliceFailed = isPerAdultSim && perAdultMCInputs === null
   const mc = useMonteCarloQuery(isPerAdultSim ? perAdultMCInputs : undefined)
   const { isEligible } = useExpenseTracker()
   useExpenseTrackerDwell(Boolean(mc.data), 10)
@@ -675,6 +678,7 @@ export function StressTestPage() {
     ?? householdPlan.adults[0]
     ?? null
   const lifeEventCount = activeAdult?.lifeEvents.length ?? 0
+  const [activeSimTab, setActiveSimTab] = useState('monte-carlo')
   const [selectedStressScenarioIds, setSelectedStressScenarioIds] = useState<StressScenarioId[]>(['base'])
   const [stressScenarioComparisonError, setStressScenarioComparisonError] = useState<string | null>(null)
   const [isStressScenarioComparisonPending, setIsStressScenarioComparisonPending] = useState(false)
@@ -693,8 +697,10 @@ export function StressTestPage() {
   useEffect(() => {
     if (prevSimulationViewRef.current !== simulationView) {
       prevSimulationViewRef.current = simulationView
-      // Clear MC mutation state (data, error, progress)
+      // Clear MC mutation state (data, error, progress) and abort in-flight worker
       mc.reset()
+      // Reset to MC tab (backtest/SR tabs may be hidden in per-adult mode)
+      setActiveSimTab('monte-carlo')
       // Abort in-flight stress scenario batch
       scenarioBatchAbortRef.current?.abort()
       scenarioBatchAbortRef.current = null
@@ -990,8 +996,11 @@ export function StressTestPage() {
     }
 
     mc.mutate(overrides)
-    void runSelectedStressScenarios(selectedStressScenarioIds, overrides)
-  }, [companion, mc, normalized.retirementAge, runSelectedStressScenarios, selectedStressScenarioIds])
+    // Skip stress scenario batch in per-adult mode (uses joint params, would be misleading)
+    if (!isPerAdultSim) {
+      void runSelectedStressScenarios(selectedStressScenarioIds, overrides)
+    }
+  }, [companion, isPerAdultSim, mc, normalized.retirementAge, runSelectedStressScenarios, selectedStressScenarioIds])
 
   useEffect(() => {
     if (!mc.data || !selectedStressScenarioIds.includes('base')) return
@@ -1152,10 +1161,18 @@ export function StressTestPage() {
               ? 'Hypothetical: "What if this person were single?" Shared items split 50/50.'
               : 'Joint household simulation.'}
           </p>
+          {perAdultSliceFailed && (
+            <Alert variant="destructive" className="mt-2">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Could not build per-adult plan slice. The simulation will use joint household data.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
       )}
 
-      <Tabs defaultValue="monte-carlo" onValueChange={(tab) => trackEvent('stress_test_tab_changed', { tab })}>
+      <Tabs value={activeSimTab} onValueChange={(tab) => { setActiveSimTab(tab); trackEvent('stress_test_tab_changed', { tab }) }}>
         {(() => {
           // Static Tailwind class mapping — dynamic template literals get purged
           const hasResults = !!mc.data
