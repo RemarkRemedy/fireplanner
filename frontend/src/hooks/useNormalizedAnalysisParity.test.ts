@@ -15,7 +15,7 @@ import { calculateAllFireMetrics, projectPortfolioAtRetirement } from '@/lib/cal
 import { calculatePortfolioReturn, getEffectiveReturns, getEffectiveStdDevs, buildYearlyWeights } from '@/lib/calculations/portfolio'
 import { generateProjection } from '@/lib/calculations/projection'
 import { getEffectiveExpenses, getExpensesAtRetirement } from '@/lib/calculations/expenses'
-import { getPropertyRentalIncome, computeLbsProceeds } from '@/lib/calculations/hdb'
+import { getPropertyRentalIncome, computeLbsProceeds, computeHdbCpfRefund } from '@/lib/calculations/hdb'
 import { sumPostRetirementIncome, getLifeEventExpenseImpact } from '@/lib/calculations/income'
 import {
   outstandingMortgageAtAge,
@@ -218,6 +218,8 @@ function buildLegacyProjectionSurface(input: FixtureState) {
     existingMonthlyPayment: property.existingMonthlyPayment * ownershipPct,
     existingMortgageRemainingYears: property.existingMortgageRemainingYears,
     residencyForAbsd: property.residencyForAbsd,
+    propertyCount: property.propertyCount,
+    hdbCpfUsedForHousing: property.hdbCpfUsedForHousing,
     parentSupport: profile.parentSupport,
     parentSupportEnabled: profile.parentSupportEnabled,
     healthcareConfig: profile.healthcareConfig?.enabled ? profile.healthcareConfig : null,
@@ -308,7 +310,17 @@ function buildLegacySequenceRiskSurface(input: FixtureState) {
         dsAnnualRent = result.annualRent
       }
 
-      const netAdjustment = netEquity - shortfall
+      // CPF housing refund: deducted from cash proceeds, credited to CPF OA
+      let cpfRefundAmount = 0
+      if (property.hdbCpfUsedForHousing > 0) {
+        const refund = computeHdbCpfRefund({
+          cpfUsedForHousing: property.hdbCpfUsedForHousing,
+          yearsOfMortgage: Math.max(0, yearsToSell),
+        })
+        cpfRefundAmount = refund.totalRefund
+      }
+
+      const netAdjustment = netEquity - shortfall - cpfRefundAmount
       if (netAdjustment !== 0) {
         portfolioInjections.push({ year: yearOffset, amount: netAdjustment })
       }

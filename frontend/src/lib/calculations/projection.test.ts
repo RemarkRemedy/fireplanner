@@ -162,6 +162,8 @@ function makeParams(overrides: Partial<ProjectionParams> = {}): ProjectionParams
     existingMonthlyPayment: 0,
     existingMortgageRemainingYears: 25,
     residencyForAbsd: 'citizen',
+    propertyCount: 0,
+    hdbCpfUsedForHousing: 0,
     parentSupport: [],
     parentSupportEnabled: false,
     healthcareConfig: null,
