@@ -403,7 +403,7 @@ function buildAdultIncomeProjection(
 ): IncomeProjectionRow[] {
   const ownerIncome = normalized.incomeOrder
     .map((incomeId) => normalized.incomeById[incomeId])
-    .filter((source) => source.owner === adult.owner && source.isActive)
+    .filter((source) => source.owner === adult.owner && source.isActive !== false)
 
   let primarySalary: IncomeSource | null = null
   const incomeStreams: IncomeStream[] = []
@@ -615,7 +615,7 @@ function evaluateSharedIncomeSource(
   yearOffset: number,
   inflation: number
 ): number {
-  if (!isYearOffsetActive(yearOffset, window) || !source.isActive) {
+  if (!isYearOffsetActive(yearOffset, window) || source.isActive === false) {
     return 0
   }
 
@@ -835,7 +835,7 @@ function addIncomeOverlapWarnings(
 ) {
   const ownerSpecificSources = normalized.incomeOrder
     .map((incomeId) => normalized.incomeById[incomeId])
-    .filter((source) => source.owner !== 'shared' && source.isActive)
+    .filter((source) => source.owner !== 'shared' && source.isActive !== false)
 
   for (let index = 0; index < ownerSpecificSources.length; index += 1) {
     const current = ownerSpecificSources[index]
