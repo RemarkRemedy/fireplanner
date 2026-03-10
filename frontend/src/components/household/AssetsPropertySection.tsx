@@ -333,6 +333,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                     )}
                     <NumberInput
                       label="Share (%)"
+                      tooltip="The percentage of this property owned by the household. For example, if two owners share equally, each sets 50%. If the household jointly owns 70% of the property, set 70%."
                       value={Math.round(property.ownershipPercent * 100)}
                       onChange={(value) => updateProperty(property.id, { ownershipPercent: value / 100 })}
                       integer
