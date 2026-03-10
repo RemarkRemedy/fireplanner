@@ -364,7 +364,7 @@ export function calculateAllFireMetrics(params: {
   // all escalating healthcare costs from retirement to life expectancy, given portfolio growth.
   // This replaces the point-in-time snapshot which underestimates the FIRE target.
   const healthcareCashOutlay = healthcareConfig?.enabled
-    ? calculateHealthcareLAE(healthcareConfig, retirementAge, lifeExpectancy, netRealReturn, inflation, currentAge)
+    ? calculateHealthcareLAE(healthcareConfig, retirementAge, lifeExpectancy, netRealReturn, inflation)
     : 0
   effectiveExpenses += healthcareCashOutlay
 

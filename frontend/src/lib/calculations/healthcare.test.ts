@@ -509,6 +509,37 @@ describe('calculateHealthcareLAE', () => {
     expect(laeHigh).toBeLessThan(laeLow)
   })
 
+  it('excess inflation with generalInflation reduces LAE vs raw inflation', () => {
+    // With premiumInflationRate=0.05 and generalInflation=0.03, excess is 0.02
+    // This should produce a lower LAE than premiumInflationRate=0.05 with generalInflation=0
+    // Use ISP enhanced so premiums affect cash outlay (beyond MediSave deductible)
+    const config: HealthcareConfig = { ...DEFAULT_CONFIG, ispTier: 'enhanced', premiumInflationRate: 0.05, oopInflationRate: 0.05 }
+    const laeRaw = calculateHealthcareLAE(config, 60, 85, 0.04, 0)
+    const laeExcess = calculateHealthcareLAE(config, 60, 85, 0.04, 0.03)
+    expect(laeExcess).toBeLessThan(laeRaw)
+  })
+
+  it('generalInflation equal to premiumInflation produces LAE close to no-inflation case', () => {
+    // When excess inflation is 0, LAE should be similar to no-inflation (just age bracket steps)
+    const config: HealthcareConfig = { ...DEFAULT_CONFIG, premiumInflationRate: 0.03, oopInflationRate: 0.03 }
+    const laeWithExcess = calculateHealthcareLAE(config, 60, 85, 0.04, 0.03)
+    const configNoInflation: HealthcareConfig = { ...DEFAULT_CONFIG, premiumInflationRate: 0, oopInflationRate: 0 }
+    const laeNoInflation = calculateHealthcareLAE(configNoInflation, 60, 85, 0.04, 0)
+    // Should be very close (both have 0% excess inflation)
+    expect(Math.abs(laeWithExcess - laeNoInflation)).toBeLessThan(1)
+  })
+
+  it('excess inflation compounds from retirement age, not current age', () => {
+    // LAE should be the same regardless of generalInflation value when excess is the same
+    // Config A: premiumInflation=0.05, generalInflation=0.03 → excess=0.02
+    // Config B: premiumInflation=0.02, generalInflation=0 → excess=0.02
+    const configA: HealthcareConfig = { ...DEFAULT_CONFIG, premiumInflationRate: 0.05, oopInflationRate: 0.03 }
+    const configB: HealthcareConfig = { ...DEFAULT_CONFIG, premiumInflationRate: 0.02, oopInflationRate: 0 }
+    const laeA = calculateHealthcareLAE(configA, 60, 85, 0.04, 0.03)
+    const laeB = calculateHealthcareLAE(configB, 60, 85, 0.04, 0)
+    expect(laeA).toBeCloseTo(laeB, 2)
+  })
+
   it('ISP downgrade reduces LAE vs no downgrade', () => {
     const noDowngrade: HealthcareConfig = { ...DEFAULT_CONFIG, ispTier: 'enhanced' }
     const withDowngrade: HealthcareConfig = {

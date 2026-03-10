@@ -351,7 +351,6 @@ export function generateHealthcareProjection(
  * @param lifeExpectancy Age through which costs must be covered
  * @param netRealReturn Net real portfolio return (nominal - inflation - fees)
  * @param generalInflation General inflation rate (for computing excess healthcare inflation)
- * @param currentAge Person's current age (inflation anchor for excess growth)
  */
 export function calculateHealthcareLAE(
   config: HealthcareConfig,
@@ -359,7 +358,6 @@ export function calculateHealthcareLAE(
   lifeExpectancy: number,
   netRealReturn: number,
   generalInflation: number = 0,
-  currentAge: number = retirementAge,
 ): number {
   if (!config.enabled) return 0
 
@@ -382,10 +380,10 @@ export function calculateHealthcareLAE(
     const age = retirementAge + t
     const cost = calculateHealthcareCostAtAge(config, age)
 
-    // Apply excess inflation (real growth above CPI) from current age
-    const yearsFromNow = Math.max(0, age - currentAge)
-    const premiumGrowth = Math.pow(1 + excessPremiumInflation, yearsFromNow)
-    const oopGrowth = Math.pow(1 + excessOopInflation, yearsFromNow)
+    // Apply excess inflation (real growth above CPI) from retirement age
+    const yearsFromRetirement = t
+    const premiumGrowth = Math.pow(1 + excessPremiumInflation, yearsFromRetirement)
+    const oopGrowth = Math.pow(1 + excessOopInflation, yearsFromRetirement)
 
     const inflatedPremiums = {
       mediShield: cost.mediShieldLifePremium * premiumGrowth,
