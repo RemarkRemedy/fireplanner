@@ -93,9 +93,11 @@ export function useMonteCarloWorkerQuery(
   perAdultInputs?: PerAdultMonteCarloInputs | null,
 ): UseMonteCarloWorkerQueryResult {
   const jointInputs = useHouseholdRuntimeInputs()
-  const allocation = useAllocationStore()
-  const simulation = useSimulationStore()
-  const withdrawal = useWithdrawalStore()
+  const allocationRevision = useAllocationStore((s) => s.allocationRevision)
+  const allocationValidationErrors = useAllocationStore((s) => s.validationErrors)
+  const simulationRevision = useSimulationStore((s) => s.simulationRevision)
+  const simulationValidationErrors = useSimulationStore((s) => s.validationErrors)
+  const withdrawalRevision = useWithdrawalStore((s) => s.withdrawalRevision)
   const analysisPortfolio = useAnalysisPortfolio()
   const normalized = useNormalizedLegacyAnalysisContext()
 
@@ -108,8 +110,8 @@ export function useMonteCarloWorkerQuery(
 
   // Gate on upstream validation
   const profileErrors = profile.validationErrors
-  const allocationErrors = allocation.validationErrors
-  const simulationErrors = simulation.validationErrors
+  const allocationErrors = allocationValidationErrors
+  const simulationErrors = simulationValidationErrors
   const allErrors = { ...profileErrors, ...allocationErrors, ...simulationErrors }
   const canRun = Object.keys(allErrors).length === 0
 
@@ -126,22 +128,22 @@ export function useMonteCarloWorkerQuery(
 
   const currentRunSig = useMemo(
     () => buildCurrentMonteCarloRunSignature({
-      allocationRevision: allocation.allocationRevision,
+      allocationRevision: allocationRevision,
       householdRevision: normalized.householdRevision,
       overrides: lastRunOverrides,
       perAdultKey,
       scenarioOverrideHash: normalized.scenarioOverrideHash,
-      simulationRevision: simulation.simulationRevision,
-      withdrawalRevision: withdrawal.withdrawalRevision,
+      simulationRevision: simulationRevision,
+      withdrawalRevision: withdrawalRevision,
     }),
     [
-      allocation.allocationRevision,
+      allocationRevision,
       lastRunOverrides,
       normalized.householdRevision,
       normalized.scenarioOverrideHash,
       perAdultKey,
-      simulation.simulationRevision,
-      withdrawal.withdrawalRevision,
+      simulationRevision,
+      withdrawalRevision,
     ]
   )
 
@@ -174,13 +176,13 @@ export function useMonteCarloWorkerQuery(
 
       setLastRunOverrides(normalizedOverrides)
       setLastRunParams(buildCurrentMonteCarloRunSignature({
-        allocationRevision: allocation.allocationRevision,
+        allocationRevision: allocationRevision,
         householdRevision: normalized.householdRevision,
         overrides: normalizedOverrides,
         perAdultKey,
         scenarioOverrideHash: normalized.scenarioOverrideHash,
-        simulationRevision: simulation.simulationRevision,
-        withdrawalRevision: withdrawal.withdrawalRevision,
+        simulationRevision: simulationRevision,
+        withdrawalRevision: withdrawalRevision,
       }))
       setProgress({ stage: 'queued', progress: 0.02, message: 'Queued simulation in worker' })
 
@@ -205,8 +207,8 @@ export function useMonteCarloWorkerQuery(
       const params = buildMonteCarloEngineParams({
         profile,
         income,
-        allocation,
-        simulation,
+        allocation: useAllocationStore.getState(),
+        simulation: useSimulationStore.getState(),
         property,
         initialPortfolio,
         allocationWeights,
