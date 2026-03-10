@@ -27,7 +27,7 @@ import { sumPostRetirementIncome, getLifeEventExpenseImpact } from './income'
 import { getEffectiveExpenses } from './expenses'
 import { calculateParentSupportAtAge } from './fire'
 import { calculateBrsFrsErs } from './cpf'
-import { calculateHealthcareCostAtAge, projectMediSaveTimeline } from './healthcare'
+import { calculateHealthcareCostAtAge, inflateHealthcareCost, projectMediSaveTimeline } from './healthcare'
 import {
   outstandingMortgageAtAge,
   calculateSellAndDownsize,
@@ -402,8 +402,11 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       const estParentSupport = parentSupportEnabled
         ? calculateParentSupportAtAge(parentSupport, age)
         : 0
-      const estHealthCare = healthcareConfig?.enabled
-        ? (calculateHealthcareCostAtAge(healthcareConfig, age)?.cashOutlay ?? 0)
+      const estHealthCareBase = healthcareConfig?.enabled
+        ? calculateHealthcareCostAtAge(healthcareConfig, age)
+        : null
+      const estHealthCare = estHealthCareBase && healthcareConfig
+        ? (inflateHealthcareCost(estHealthCareBase, healthcareConfig, currentAge).cashOutlay ?? 0)
         : 0
       let estDsRent = 0
       if (soldProperty && downsizing?.scenario === 'sell-and-rent') {
@@ -498,10 +501,13 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       ? calculateParentSupportAtAge(parentSupport, age)
       : 0
 
-    // Healthcare cash outlay at this age (age-dependent, not inflation-adjusted — premiums are already age-based)
-    const healthcareCost = healthcareConfig?.enabled
+    // Healthcare cash outlay at this age (nominal — base cost inflated to future dollars)
+    const healthcareCostBase = healthcareConfig?.enabled
       ? calculateHealthcareCostAtAge(healthcareConfig, age)
       : null
+    const healthcareCost = healthcareCostBase && healthcareConfig
+      ? inflateHealthcareCost(healthcareCostBase, healthcareConfig, currentAge)
+      : healthcareCostBase
     const healthcareCashOutlay = healthcareCost?.cashOutlay ?? 0
 
     // Override cpfMA with MediSave-adjusted balance (healthcare premiums deducted)

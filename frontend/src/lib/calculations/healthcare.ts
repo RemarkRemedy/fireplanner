@@ -276,8 +276,9 @@ export function projectMediSaveTimeline(
     // We use our running balance which accounts for healthcare deductions
     const startBalance = runningBalance
 
-    // Calculate healthcare costs deductible from MediSave
-    const cost = calculateHealthcareCostAtAge(config, age)
+    // Calculate healthcare costs deductible from MediSave (nominal — inflated to future dollars)
+    const baseCost = calculateHealthcareCostAtAge(config, age)
+    const cost = inflateHealthcareCost(baseCost, config, startAge)
     const healthcareDeduction = Math.min(cost.mediSaveDeductible, Math.max(0, startBalance))
 
     // Top-up (capped — MediSave BHS is ~$71K in 2025, but we don't model the cap here
@@ -325,7 +326,8 @@ export function generateHealthcareProjection(
   let lifetimeMediSaveUsed = 0
 
   for (let age = startAge; age <= endAge; age++) {
-    const row = calculateHealthcareCostAtAge(config, age)
+    const baseRow = calculateHealthcareCostAtAge(config, age)
+    const row = inflateHealthcareCost(baseRow, config, startAge)
     rows.push(row)
     lifetimeTotalCost += row.totalCost
     lifetimeCashOutlay += row.cashOutlay
