@@ -28,7 +28,7 @@ import type {
   TimingRule,
 } from '@/lib/household/types'
 export { HOUSEHOLD_PLAN_STORAGE_KEY } from '@/lib/storeKeys'
-export const HOUSEHOLD_PLAN_STORAGE_VERSION = 1
+export const HOUSEHOLD_PLAN_STORAGE_VERSION = 2
 
 export type HouseholdPlanProvenanceSource =
   | 'manual'
@@ -536,7 +536,20 @@ export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
     {
       name: HOUSEHOLD_PLAN_STORAGE_KEY,
       version: HOUSEHOLD_PLAN_STORAGE_VERSION,
-      migrate: (persistedState, _version) => persistedState,
+      migrate: (persistedState: unknown, version: number) => {
+        const state = persistedState as Record<string, unknown>
+        if (version < 2) {
+          const plan = state.plan as { properties?: Array<Record<string, unknown>> }
+          if (plan?.properties) {
+            for (const property of plan.properties) {
+              if (property.purchaseYearsFromNow == null) {
+                property.purchaseYearsFromNow = 0
+              }
+            }
+          }
+        }
+        return state
+      },
       merge: (persistedState, currentState) => {
         if (!isPersistedState(persistedState)) return currentState
 

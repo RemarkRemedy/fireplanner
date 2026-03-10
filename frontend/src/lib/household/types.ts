@@ -197,6 +197,7 @@ export interface PropertyPlan {
   mortgageRate: number
   mortgageTerm: number
   ltv: number
+  purchaseYearsFromNow: number
   residencyForAbsd: ResidencyStatus
   propertyCount: number
   ownsProperty: boolean

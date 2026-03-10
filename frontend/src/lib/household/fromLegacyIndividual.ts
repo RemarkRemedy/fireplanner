@@ -347,6 +347,7 @@ function mapPropertyPlan(snapshot: LegacyIndividualSnapshot): PropertyPlan[] {
     mortgageRate: property.mortgageRate,
     mortgageTerm: property.mortgageTerm,
     ltv: property.ltv,
+    purchaseYearsFromNow: ((property as Record<string, unknown>).purchaseYearsFromNow as number | undefined) ?? 0,
     residencyForAbsd: property.residencyForAbsd,
     propertyCount: property.propertyCount,
     ownsProperty: property.ownsProperty,
