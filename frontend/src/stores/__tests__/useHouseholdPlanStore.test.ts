@@ -170,6 +170,7 @@ function makeProperty(): PropertyPlan {
     hdbSublettingRooms: 0,
     hdbSublettingRate: 0,
     hdbCpfUsedForHousing: 0,
+    purchaseYearsFromNow: 0,
   }
 }
 

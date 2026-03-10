@@ -202,6 +202,8 @@ export function buildFullProjectionParams(
     existingMonthlyPayment: property.existingMonthlyPayment * ownershipPct,
     existingMortgageRemainingYears: property.existingMortgageRemainingYears,
     residencyForAbsd: property.residencyForAbsd,
+    propertyCount: property.propertyCount,
+    hdbCpfUsedForHousing: property.hdbCpfUsedForHousing,
     parentSupport: profile.parentSupport,
     parentSupportEnabled: profile.parentSupportEnabled,
     healthcareConfig: profile.healthcareConfig?.enabled ? profile.healthcareConfig : null,

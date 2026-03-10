@@ -347,6 +347,7 @@ function mapPropertyPlan(snapshot: LegacyIndividualSnapshot): PropertyPlan[] {
     mortgageRate: property.mortgageRate,
     mortgageTerm: property.mortgageTerm,
     ltv: property.ltv,
+    purchaseYearsFromNow: ((property as Record<string, unknown>).purchaseYearsFromNow as number | undefined) ?? 0,
     residencyForAbsd: property.residencyForAbsd,
     propertyCount: property.propertyCount,
     ownsProperty: property.ownsProperty,
@@ -379,6 +380,7 @@ export function fromLegacyIndividual(
     schemaVersion: 1,
     id: 'legacy-individual-household',
     planType: 'individual',
+    planYear: new Date().getFullYear(),
     adults: [adult],
     dependents: [],
     income: [

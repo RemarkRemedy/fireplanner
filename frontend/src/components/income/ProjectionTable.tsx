@@ -11,12 +11,19 @@ import { cn } from '@/lib/utils'
 
 const columnHelper = createColumnHelper<IncomeProjectionRow>()
 
+interface JointAdultInfo {
+  name: string
+  currentAge: number
+}
+
 interface ProjectionTableProps {
   data: IncomeProjectionRow[]
   retirementAge: number
+  /** When set, shows Year/Adult1 Age/Adult2 Age columns instead of single Age column */
+  jointAdults?: JointAdultInfo[]
 }
 
-export function ProjectionTable({ data, retirementAge }: ProjectionTableProps) {
+export function ProjectionTable({ data, retirementAge, jointAdults }: ProjectionTableProps) {
   const [expanded, setExpanded] = useState(false)
   const displayData = useMemo(
     () => expanded ? data : data.slice(0, 2),
@@ -26,12 +33,35 @@ export function ProjectionTable({ data, retirementAge }: ProjectionTableProps) {
   const hasRA = data.some((r) => r.cpfRA > 0)
   const hasCpfis = data.some((r) => r.cpfisOA > 0 || r.cpfisSA > 0)
 
+  const isJoint = jointAdults && jointAdults.length >= 2
+  const referenceAge = data[0]?.age ?? 0
+
   const columns = useMemo(() => {
-    const cols = [
-      columnHelper.accessor('age', {
-        header: 'Age',
-        cell: (info) => info.getValue(),
-      }),
+    const cols = isJoint
+      ? [
+          columnHelper.accessor('year', {
+            header: 'Year',
+            cell: (info) => info.row.index,
+          }),
+          columnHelper.display({
+            id: 'adult1Age',
+            header: jointAdults[0].name,
+            cell: (info) => jointAdults[0].currentAge + info.row.index,
+          }),
+          columnHelper.display({
+            id: 'adult2Age',
+            header: jointAdults[1].name,
+            cell: (info) => jointAdults[1].currentAge + info.row.index,
+          }),
+        ]
+      : [
+          columnHelper.accessor('age', {
+            header: 'Age',
+            cell: (info) => info.getValue(),
+          }),
+        ]
+
+    cols.push(
       columnHelper.accessor('salary', {
         header: 'Salary',
         cell: (info) => formatCurrency(info.getValue()),
@@ -82,7 +112,7 @@ export function ProjectionTable({ data, retirementAge }: ProjectionTableProps) {
         header: 'CPF SA',
         cell: (info) => formatCurrency(info.getValue()),
       }),
-    ]
+    )
 
     if (hasCpfis) {
       cols.push(
@@ -127,7 +157,7 @@ export function ProjectionTable({ data, retirementAge }: ProjectionTableProps) {
     )
 
     return cols
-  }, [hasRA, hasCpfis])
+  }, [hasRA, hasCpfis, isJoint, jointAdults])
 
   const table = useReactTable({
     data: displayData,
@@ -145,7 +175,7 @@ export function ProjectionTable({ data, retirementAge }: ProjectionTableProps) {
                 {headerGroup.headers.map((header) => (
                   <th key={header.id} className={cn(
                     "px-2 py-2 text-left font-medium text-muted-foreground whitespace-nowrap",
-                    header.column.id === 'age' && "sticky left-0 z-30 bg-background border-r border-border"
+                    (header.column.id === 'age' || header.column.id === 'year') && "sticky left-0 z-30 bg-background border-r border-border"
                   )}>
                     {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </th>
@@ -170,7 +200,7 @@ export function ProjectionTable({ data, retirementAge }: ProjectionTableProps) {
                   title={hasEvents ? `Active: ${row.original.activeLifeEvents.join(', ')}` : undefined}
                 >
                   {row.getVisibleCells().map((cell) => {
-                    const isAgeCol = cell.column.id === 'age'
+                    const isAgeCol = cell.column.id === 'age' || cell.column.id === 'year'
                     return (
                       <td key={cell.id} className={cn(
                         "px-2 py-1.5 whitespace-nowrap tabular-nums",

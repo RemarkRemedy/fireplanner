@@ -1,10 +1,10 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import {
   runMonteCarloWorker,
   type MonteCarloWorkerProgress,
 } from '@/lib/simulation/workerClient'
-import type { MonteCarloResult } from '@/lib/types'
+import type { MonteCarloResult, ProfileState, IncomeState, PropertyState } from '@/lib/types'
 import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useAllocationStore } from '@/stores/useAllocationStore'
@@ -22,6 +22,13 @@ import { buildMonteCarloEngineParams } from '@/lib/simulation/monteCarloParams'
 export interface MonteCarloRunOverrides {
   annualExpenses?: number
   retirementAge?: number
+}
+
+export interface PerAdultMonteCarloInputs {
+  profile: ProfileState
+  income: IncomeState
+  property: PropertyState
+  initialPortfolio: number
 }
 
 export interface MonteCarloProgressState {
@@ -66,6 +73,8 @@ export function buildCurrentMonteCarloRunSignature(input: {
   allocationRevision: number
   householdRevision: string
   overrides?: MonteCarloRunOverrides | null
+  /** Which adult view was active ('joint' or an adultId) — prevents stale detection gaps across view switches */
+  perAdultKey?: string | null
   scenarioOverrideHash: string
   simulationRevision: number
   withdrawalRevision: number
@@ -76,22 +85,33 @@ export function buildCurrentMonteCarloRunSignature(input: {
     allocationRevision: input.allocationRevision,
     simulationRevision: input.simulationRevision,
     withdrawalRevision: input.withdrawalRevision,
-    runOverrideHash: stableRunOverrideHash(input.overrides ?? null),
+    runOverrideHash: stableRunOverrideHash(input.overrides ?? null) + ':' + (input.perAdultKey ?? 'joint'),
   })
 }
 
-export function useMonteCarloWorkerQuery(): UseMonteCarloWorkerQueryResult {
-  const { profile, income, property } = useHouseholdRuntimeInputs()
-  const allocation = useAllocationStore()
-  const simulation = useSimulationStore()
-  const withdrawal = useWithdrawalStore()
+export function useMonteCarloWorkerQuery(
+  perAdultInputs?: PerAdultMonteCarloInputs | null,
+): UseMonteCarloWorkerQueryResult {
+  const jointInputs = useHouseholdRuntimeInputs()
+  const allocationRevision = useAllocationStore((s) => s.allocationRevision)
+  const allocationValidationErrors = useAllocationStore((s) => s.validationErrors)
+  const simulationRevision = useSimulationStore((s) => s.simulationRevision)
+  const simulationValidationErrors = useSimulationStore((s) => s.validationErrors)
+  const withdrawalRevision = useWithdrawalStore((s) => s.withdrawalRevision)
   const analysisPortfolio = useAnalysisPortfolio()
   const normalized = useNormalizedLegacyAnalysisContext()
 
+  // Per-adult overrides: fully replace profile/income/property/portfolio
+  const profile = perAdultInputs?.profile ?? jointInputs.profile
+  const income = perAdultInputs?.income ?? jointInputs.income
+  const property = perAdultInputs?.property ?? jointInputs.property
+  const initialPortfolio = perAdultInputs?.initialPortfolio ?? analysisPortfolio.initialPortfolio
+  const allocationWeights = analysisPortfolio.allocationWeights
+
   // Gate on upstream validation
   const profileErrors = profile.validationErrors
-  const allocationErrors = allocation.validationErrors
-  const simulationErrors = simulation.validationErrors
+  const allocationErrors = allocationValidationErrors
+  const simulationErrors = simulationValidationErrors
   const allErrors = { ...profileErrors, ...allocationErrors, ...simulationErrors }
   const canRun = Object.keys(allErrors).length === 0
 
@@ -103,22 +123,27 @@ export function useMonteCarloWorkerQuery(): UseMonteCarloWorkerQueryResult {
   const activeAbortControllerRef = useRef<AbortController | null>(null)
   const activeRunIdRef = useRef(0)
 
+  // Derive a stable key for per-adult vs joint to include in stale detection
+  const perAdultKey = perAdultInputs ? 'adult' : 'joint'
+
   const currentRunSig = useMemo(
     () => buildCurrentMonteCarloRunSignature({
-      allocationRevision: allocation.allocationRevision,
+      allocationRevision: allocationRevision,
       householdRevision: normalized.householdRevision,
       overrides: lastRunOverrides,
+      perAdultKey,
       scenarioOverrideHash: normalized.scenarioOverrideHash,
-      simulationRevision: simulation.simulationRevision,
-      withdrawalRevision: withdrawal.withdrawalRevision,
+      simulationRevision: simulationRevision,
+      withdrawalRevision: withdrawalRevision,
     }),
     [
-      allocation.allocationRevision,
+      allocationRevision,
       lastRunOverrides,
       normalized.householdRevision,
       normalized.scenarioOverrideHash,
-      simulation.simulationRevision,
-      withdrawal.withdrawalRevision,
+      perAdultKey,
+      simulationRevision,
+      withdrawalRevision,
     ]
   )
 
@@ -151,12 +176,13 @@ export function useMonteCarloWorkerQuery(): UseMonteCarloWorkerQueryResult {
 
       setLastRunOverrides(normalizedOverrides)
       setLastRunParams(buildCurrentMonteCarloRunSignature({
-        allocationRevision: allocation.allocationRevision,
+        allocationRevision: allocationRevision,
         householdRevision: normalized.householdRevision,
         overrides: normalizedOverrides,
+        perAdultKey,
         scenarioOverrideHash: normalized.scenarioOverrideHash,
-        simulationRevision: simulation.simulationRevision,
-        withdrawalRevision: withdrawal.withdrawalRevision,
+        simulationRevision: simulationRevision,
+        withdrawalRevision: withdrawalRevision,
       }))
       setProgress({ stage: 'queued', progress: 0.02, message: 'Queued simulation in worker' })
 
@@ -181,11 +207,11 @@ export function useMonteCarloWorkerQuery(): UseMonteCarloWorkerQueryResult {
       const params = buildMonteCarloEngineParams({
         profile,
         income,
-        allocation,
-        simulation,
+        allocation: useAllocationStore.getState(),
+        simulation: useSimulationStore.getState(),
         property,
-        initialPortfolio: analysisPortfolio.initialPortfolio,
-        allocationWeights: analysisPortfolio.allocationWeights,
+        initialPortfolio,
+        allocationWeights,
         profileOverrides,
         cacheOps: buildCacheOpsFromStore(),
       })
@@ -215,15 +241,20 @@ export function useMonteCarloWorkerQuery(): UseMonteCarloWorkerQueryResult {
 
   const isStale = mutation.data !== undefined && lastRunParams !== currentRunSig
 
+  const reset = useCallback(() => {
+    // Abort any in-flight Web Worker before clearing state
+    activeAbortControllerRef.current?.abort()
+    activeAbortControllerRef.current = null
+    mutation.reset()
+    setProgress(null)
+  }, [mutation.reset])
+
   return {
     mutate: (overrides) => mutation.mutate(overrides),
     data: mutation.data,
     isPending: mutation.isPending,
     error: mutation.error,
-    reset: () => {
-      mutation.reset()
-      setProgress(null)
-    },
+    reset,
     canRun,
     validationErrors: allErrors,
     isStale,

@@ -3,6 +3,7 @@ import type {
   EntryOwner,
   HouseholdPlan,
   PlanningAdult,
+  PropertyPlan,
   TimingRule,
 } from '@/lib/household/types'
 
@@ -102,4 +103,17 @@ export function syncTimingDuration(
     },
     durationYears: Math.max(1, endAge - startAge + 1),
   }
+}
+
+/**
+ * Resolve the primary adult whose ages drive a property's projection.
+ * Shared properties use the 'self' adult's timeline (matching compileHouseholdPlan behavior).
+ * Returns null if no matching adult is found.
+ */
+export function resolvePropertyAdult(
+  property: Pick<PropertyPlan, 'owner'>,
+  adults: ReadonlyArray<PlanningAdult>,
+): PlanningAdult | null {
+  const targetOwner = property.owner === 'shared' ? 'self' : property.owner
+  return adults.find(a => a.owner === targetOwner) ?? null
 }

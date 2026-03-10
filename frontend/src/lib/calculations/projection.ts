@@ -33,6 +33,7 @@ import {
   calculateSellAndDownsize,
   calculateSellAndRent,
 } from './property'
+import { computeHdbCpfRefund } from './hdb'
 import { calculatePortfolioReturn, interpolateGlidePath } from './portfolio'
 import {
   constantDollar,
@@ -44,6 +45,10 @@ import {
 } from './withdrawal'
 import { computeCpfAutoFallback } from './cpfAutoWithdrawal'
 import { computeVirtualRebalancing } from './cpfVirtualRebalancing'
+import {
+  OA_INTEREST_RATE,
+  SA_INTEREST_RATE,
+} from '@/lib/data/cpfRates'
 
 // TODO: [Deferred] Approach C — Unified Two-Bucket Engine
 // Replace the current single-portfolio simulation model with explicit liquid + CPF bucket
@@ -89,6 +94,10 @@ export interface ProjectionParams {
   existingMonthlyPayment: number
   existingMortgageRemainingYears: number
   residencyForAbsd: 'citizen' | 'pr' | 'foreigner'
+  /** Pre-sale property count. Used with Math.max(0, count - 1) for post-sale ABSD. */
+  propertyCount: number
+  /** Cumulative CPF principal used for HDB housing. Refunded to OA on sale (+ 2.5% accrued interest). */
+  hdbCpfUsedForHousing: number
   // Parent support
   parentSupport: ParentSupport[]
   parentSupportEnabled: boolean
@@ -269,6 +278,8 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     existingMortgageRate,
     existingMonthlyPayment,
     residencyForAbsd,
+    propertyCount,
+    hdbCpfUsedForHousing,
     parentSupport,
     parentSupportEnabled,
     healthcareConfig,
@@ -309,6 +320,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
   let dsShortfall = 0
   let dsNewMonthlyPayment = 0
   let dsAnnualRent = 0
+  let dsCpfRefundToOa = 0
 
   if (dsActive && downsizing) {
     const yearsToSell = dsSellAge - currentAge
@@ -319,6 +331,15 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       Math.max(0, yearsToSell),
     )
 
+    // CPF housing refund: principal + 2.5% accrued interest returned to CPF OA on sale
+    if (hdbCpfUsedForHousing > 0) {
+      const refund = computeHdbCpfRefund({
+        cpfUsedForHousing: hdbCpfUsedForHousing,
+        yearsOfMortgage: Math.max(0, yearsToSell),
+      })
+      dsCpfRefundToOa = refund.totalRefund
+    }
+
     if (downsizing.scenario === 'sell-and-downsize') {
       const result = calculateSellAndDownsize({
         salePrice: downsizing.expectedSalePrice,
@@ -328,7 +349,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
         newMortgageRate: downsizing.newMortgageRate,
         newMortgageTerm: downsizing.newMortgageTerm,
         residency: residencyForAbsd,
-        propertyCount: 0, // selling existing, buying replacement = still 1st property
+        propertyCount: Math.max(0, propertyCount - 1),
       })
       dsNetEquity = result.netEquityToPortfolio
       dsShortfall = result.shortfall
@@ -360,12 +381,29 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
 
   const totalYears = lifeExpectancy - currentAge
 
+  // Track cumulative CPF auto-fallback withdrawals across years.
+  // The income projection pre-computes CPF balances without knowing about auto-fallback,
+  // so we must subtract cumulative withdrawals (compounded at CPF interest rates) from
+  // each year's cloned income row to reflect the true remaining CPF balances.
+  let cpfOaAutoAdjustment = 0
+  let cpfSaAutoAdjustment = 0
+
   for (let i = 0; i <= totalYears; i++) {
     const age = currentAge + i
     const year = i
     const isRetired = age > retirementAge
-    const incomeRow = incomeProjection[i]
-    if (!incomeRow) break
+    const rawIncomeRow = incomeProjection[i]
+    if (!rawIncomeRow) break
+    // Shallow-clone to avoid mutating the caller's array (cpfOA, cpfSA are modified in-place below)
+    const incomeRow = { ...rawIncomeRow }
+
+    // Apply cumulative CPF auto-fallback adjustments from prior years.
+    // Previous withdrawals compound at CPF interest rates since the withdrawn
+    // money would have earned interest if it had stayed in the account.
+    cpfOaAutoAdjustment *= (1 + OA_INTEREST_RATE)
+    cpfSaAutoAdjustment *= (1 + SA_INTEREST_RATE)
+    incomeRow.cpfOA = Math.max(0, incomeRow.cpfOA - cpfOaAutoAdjustment)
+    incomeRow.cpfSA = Math.max(0, incomeRow.cpfSA - cpfSaAutoAdjustment)
 
     // Track retirement year (0-indexed from first retired year)
     if (isRetired) retirementYearCounter++
@@ -429,6 +467,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
           age,
           currentYear: new Date().getFullYear() + i,
           includeSA: params.cpfAutoFallbackIncludeSA ?? false,
+          cpfLifeStarted,
         })
         if (prefund.totalWithdrawal > 0) {
           liquidNW += prefund.totalWithdrawal
@@ -436,6 +475,8 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
           cpfAutoSaWithdrawalAmount = prefund.saWithdrawal
           incomeRow.cpfOA -= prefund.oaWithdrawal
           incomeRow.cpfSA -= prefund.saWithdrawal
+          cpfOaAutoAdjustment += prefund.oaWithdrawal
+          cpfSaAutoAdjustment += prefund.saWithdrawal
         }
       }
     }
@@ -443,6 +484,11 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     // Downsizing: inject equity or deduct shortfall at sell age (before capturing startLiquidNW)
     if (dsActive && age === dsSellAge) {
       liquidNW += dsNetEquity - dsShortfall
+      // CPF housing refund: deducted from cash proceeds, credited back to CPF OA
+      if (dsCpfRefundToOa > 0) {
+        liquidNW -= dsCpfRefundToOa
+        incomeRow.cpfOA += dsCpfRefundToOa
+      }
     }
 
     // CPF OA withdrawal → liquid portfolio
@@ -462,6 +508,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     let goalShortfallAmount = 0
     let retirementWithdrawalTotal = 0
     let retirementWithdrawalShortfallAmount = 0
+    let hasUnfundedShortfall = false
 
     // Virtual rebalancing: count uninvested CPF as bond allocation
     // Placed after startLiquidNW so pre-funded CPF money is visible.
@@ -615,6 +662,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       goalShortfallAmount = rawLiquidNW < 0 && goalDeduction > 0
         ? Math.min(goalDeduction, -rawLiquidNW)
         : 0
+      hasUnfundedShortfall = rawLiquidNW < 0
       liquidNW = Math.max(0, rawLiquidNW)
       savingsOrWithdrawal = adjustedSavings
       totalIncome = incomeRow.totalNet + effectiveRentalIncome
@@ -712,6 +760,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       const unfundedShortfall = Math.max(0, uncappedDraw - actualDraw)
       const totalShortfall = Math.max(0, -rawPostRetLiquidNW) + unfundedShortfall
       let adjustedLiquidNW = rawPostRetLiquidNW
+      let fallbackCovered = 0
 
       if (params.cpfAutoFallback && totalShortfall > 0 && age >= 55) {
         const fallback = computeCpfAutoFallback({
@@ -724,6 +773,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
           age,
           currentYear: new Date().getFullYear() + i,
           includeSA: params.cpfAutoFallbackIncludeSA ?? false,
+          cpfLifeStarted,
         })
         cpfAutoOaWithdrawalAmount += fallback.oaWithdrawal
         cpfAutoSaWithdrawalAmount += fallback.saWithdrawal
@@ -735,6 +785,9 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
         // Deduct from CPF balances in the income row (mutates for downstream tracking)
         incomeRow.cpfOA -= fallback.oaWithdrawal
         incomeRow.cpfSA -= fallback.saWithdrawal
+        cpfOaAutoAdjustment += fallback.oaWithdrawal
+        cpfSaAutoAdjustment += fallback.saWithdrawal
+        fallbackCovered = fallback.totalWithdrawal
       }
 
       // Proportionally attribute deficit to goals and retirement withdrawals
@@ -751,6 +804,8 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
             : 0
         }
       }
+      // Unfunded shortfall: expenses exceed income + portfolio + CPF auto-fallback
+      hasUnfundedShortfall = adjustedLiquidNW < 0 || (totalShortfall > fallbackCovered + 0.01)
       liquidNW = Math.max(0, adjustedLiquidNW)
 
       // Feed uncapped strategy amount back for strategy continuity
@@ -782,8 +837,10 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       peakTotalNWAge = age
     }
 
-    // Track depletion (pre-retirement depletion from large goals is also tracked)
-    if (liquidNW <= 0 && portfolioDepletedAge === null) {
+    // Track depletion: portfolio is depleted when expenses can no longer be
+    // fully funded. This means liquidNW is 0 AND auto-fallback (if any) couldn't
+    // cover the shortfall. Residual non-withdrawable CPF (MA) doesn't prevent depletion.
+    if (liquidNW <= 0 && hasUnfundedShortfall && portfolioDepletedAge === null) {
       portfolioDepletedAge = age
     }
 

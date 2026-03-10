@@ -81,6 +81,7 @@ export function createDefaultHouseholdProperty(owner: EntryOwner): PropertyPlan 
     mortgageRate: DEFAULT_MORTGAGE_RATE,
     mortgageTerm: 25,
     ltv: DEFAULT_LTV,
+    purchaseYearsFromNow: 3,
     residencyForAbsd: 'citizen',
     propertyCount: 1,
     ownsProperty: true,

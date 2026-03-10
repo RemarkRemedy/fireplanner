@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import type { IncomeProjectionRow, IncomeSummaryStats } from '@/lib/types'
-import { generateIncomeProjection, calculateIncomeSummary } from '@/lib/calculations/income'
+import { generateIncomeProjection, calculateIncomeSummary, mergePerAdultProjections } from '@/lib/calculations/income'
 export { buildProjectionParams, deriveCpfHousingFromProperty } from '@/lib/calculations/projectionParams'
 import { buildProjectionParams, deriveCpfHousingFromProperty } from '@/lib/calculations/projectionParams'
 import {
@@ -229,6 +229,9 @@ export function useIncomeProjection(): IncomeProjectionResult {
     [property]
   )
 
+  const isMultiAdult = plan.adults.length > 1
+  const compiledPlan = normalized.compiledPlan
+
   return useMemo(() => {
     const crossStoreErrors = validateCrossStoreRules(
       {
@@ -249,32 +252,58 @@ export function useIncomeProjection(): IncomeProjectionResult {
       return { projection: null, summary: null, hasErrors: true, errors: allErrors }
     }
 
-    const projectionParams = buildProjectionParams(
-      {
-        ...profile,
-        currentAge: normalized.currentAge,
-        retirementAge: normalized.retirementAge,
-        lifeExpectancy: normalized.lifeExpectancy,
-      },
-      income,
-      property,
-    )
-    if (!projectionParams) {
-      return { projection: null, summary: null, hasErrors: true, errors: allErrors }
-    }
+    let projection: IncomeProjectionRow[]
 
-    const projection = generateIncomeProjection(projectionParams)
+    if (isMultiAdult && compiledPlan.incomeByAdultId) {
+      // Multi-adult: merge per-adult projections (each computed with correct
+      // per-person CPF ceilings, SRS caps, tax brackets, BHS limits, etc.)
+      projection = mergePerAdultProjections({
+        perAdultProjections: compiledPlan.incomeByAdultId,
+        adultOrder: compiledPlan.adultOrder,
+        referenceCurrentAge: normalized.currentAge,
+        referenceRetirementYearOffset: normalized.householdRetirementYearOffset,
+        cpfHousingMonthly: cpfHousing.cpfHousingMonthly,
+        cpfMortgageYearsLeft: cpfHousing.cpfMortgageYearsLeft,
+        annualExpenses: profile.annualExpenses,
+        inflation: profile.inflation,
+        lockedAssets: profile.lockedAssets,
+        expenseAdjustments: profile.expenseAdjustments,
+      })
+    } else {
+      // Single adult: use the existing single-pass projection engine
+      const projectionParams = buildProjectionParams(
+        {
+          ...profile,
+          currentAge: normalized.currentAge,
+          retirementAge: normalized.retirementAge,
+          lifeExpectancy: normalized.lifeExpectancy,
+        },
+        income,
+        property,
+      )
+      if (!projectionParams) {
+        return { projection: null, summary: null, hasErrors: true, errors: allErrors }
+      }
+      projection = generateIncomeProjection(projectionParams)
+    }
 
     const summary = calculateIncomeSummary(projection, profile.annualExpenses)
 
     return { projection, summary, hasErrors: false, errors: {} }
   }, [
+    isMultiAdult,
+    compiledPlan,
     income,
     normalized.currentAge,
     normalized.retirementAge,
     normalized.lifeExpectancy,
+    normalized.householdRetirementYearOffset,
     profile.annualExpenses,
     profile.inflation,
+    profile.lockedAssets,
+    profile.expenseAdjustments,
+    cpfHousing.cpfHousingMonthly,
+    cpfHousing.cpfMortgageYearsLeft,
     profile.srsAnnualContribution,
     profile.srsPostFireEnabled,
     profile.cpfOA,
@@ -285,8 +314,6 @@ export function useIncomeProjection(): IncomeProjectionResult {
     profile.cpfLifePlan,
     profile.cpfRetirementSum,
     cpfHousing.cpfHousingMode,
-    cpfHousing.cpfHousingMonthly,
-    cpfHousing.cpfMortgageYearsLeft,
     profile.cpfLifeActualMonthlyPayout,
     profile.residencyStatus,
     profile.srsBalance,
@@ -299,8 +326,6 @@ export function useIncomeProjection(): IncomeProjectionResult {
     profile.cpfTopUpOA,
     profile.cpfTopUpSA,
     profile.cpfTopUpMA,
-    profile.lockedAssets,
-    profile.expenseAdjustments,
     profile.cpfAutoFallback,
     profile.cpfAutoFallbackIncludeSA,
     profile.cpfVirtualRebalancing,
