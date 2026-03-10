@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
@@ -382,356 +383,375 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                     </div>
                   </div>
 
-                  {!property.ownsProperty && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium">Purchase & Return Assumptions</h3>
-                      <InfoTooltip text="These assumptions drive purchase, rental, and appreciation modeling for the selected property row." />
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
-                      <NumberInput
-                        label="Years from now"
-                        tooltip="How many years from now you plan to purchase this property."
-                        value={property.purchaseYearsFromNow}
-                        onChange={(value) => updateProperty(property.id, { purchaseYearsFromNow: value })}
-                        min={0}
-                        max={50}
-                      />
-                      <CurrencyInput
-                        label="Purchase price"
-                        value={property.purchasePrice}
-                        onChange={(value) => updateProperty(property.id, { purchasePrice: value })}
-                        error={propertyErrors.purchasePrice}
-                      />
-                      <NumberInput
-                        label="Lease years"
-                        value={property.leaseYears}
-                        onChange={(value) => updateProperty(property.id, { leaseYears: value })}
-                        integer
-                        min={0}
-                        max={999}
-                      />
-                      <PercentInput
-                        label="Appreciation rate"
-                        value={property.appreciationRate}
-                        onChange={(value) => updateProperty(property.id, { appreciationRate: value })}
-                      />
-                      <PercentInput
-                        label="Rental yield"
-                        value={property.rentalYield}
-                        onChange={(value) => updateProperty(property.id, { rentalYield: value })}
-                      />
-                      <PercentInput
-                        label="Mortgage rate"
-                        value={property.mortgageRate}
-                        onChange={(value) => updateProperty(property.id, { mortgageRate: value })}
-                      />
-                      <NumberInput
-                        label="Mortgage term (years)"
-                        value={property.mortgageTerm}
-                        onChange={(value) => updateProperty(property.id, { mortgageTerm: value })}
-                        integer
-                        min={1}
-                        max={40}
-                      />
-                      <PercentInput
-                        label="Loan-to-value"
-                        value={property.ltv}
-                        onChange={(value) => updateProperty(property.id, { ltv: value })}
-                      />
-                      <div className="flex items-center justify-between rounded-md border p-3 md:col-span-2 xl:col-span-4">
-                        <div>
-                          <div className="font-medium">Apply Bala lease decay</div>
-                          <div className="text-sm text-muted-foreground">
-                            Use this for leasehold assets when you want the model to degrade resale value as the remaining lease shortens.
-                          </div>
+                  <Accordion type="multiple" defaultValue={['purchase-assumptions', 'existing-home', 'hdb-monetization', 'downsizing', 'projection']}>
+                    {!property.ownsProperty && (
+                    <AccordionItem value="purchase-assumptions" className="border rounded-lg px-4">
+                      <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          Purchase & Return Assumptions
+                          <InfoTooltip text="These assumptions drive purchase, rental, and appreciation modeling for the selected property row." />
                         </div>
-                        <Switch
-                          checked={property.existingApplyBalaDecay}
-                          onCheckedChange={(checked) => updateProperty(property.id, { existingApplyBalaDecay: checked })}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  )}
-
-                  {property.ownsProperty && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium">Existing Home & Mortgage</h3>
-                      <InfoTooltip text="Use these fields for the current owned property, including mortgage balance, payments, and lease decay assumptions." />
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
-                      <CurrencyInput
-                        label="Existing property value"
-                        value={property.existingPropertyValue}
-                        onChange={(value) => updateProperty(property.id, { existingPropertyValue: value })}
-                        error={propertyErrors.existingPropertyValue}
-                      />
-                      <CurrencyInput
-                        label="Mortgage balance"
-                        value={property.existingMortgageBalance}
-                        onChange={(value) => updateProperty(property.id, { existingMortgageBalance: value })}
-                        error={propertyErrors.existingMortgageBalance}
-                      />
-                      <CurrencyInput
-                        label="Monthly payment"
-                        value={property.existingMonthlyPayment}
-                        onChange={(value) => updateProperty(property.id, { existingMonthlyPayment: value })}
-                        error={propertyErrors.existingMonthlyPayment}
-                      />
-                      <PercentInput
-                        label="Existing mortgage rate"
-                        value={property.existingMortgageRate}
-                        onChange={(value) => updateProperty(property.id, { existingMortgageRate: value })}
-                      />
-                      <NumberInput
-                        label="Mortgage years left"
-                        value={property.existingMortgageRemainingYears}
-                        onChange={(value) => updateProperty(property.id, { existingMortgageRemainingYears: value })}
-                        integer
-                        min={0}
-                        max={40}
-                      />
-                      <CurrencyInput
-                        label="CPF monthly for housing"
-                        value={property.mortgageCpfMonthly}
-                        onChange={(value) => updateProperty(property.id, { mortgageCpfMonthly: value })}
-                      />
-                      <NumberInput
-                        label="Existing lease years"
-                        value={property.existingLeaseYears}
-                        onChange={(value) => updateProperty(property.id, { existingLeaseYears: value })}
-                        integer
-                        min={0}
-                        max={999}
-                      />
-                      <PercentInput
-                        label="Existing appreciation rate"
-                        value={property.existingAppreciationRate}
-                        onChange={(value) => updateProperty(property.id, { existingAppreciationRate: value })}
-                      />
-                      <div className="flex items-center justify-between rounded-md border p-3 md:col-span-2 xl:col-span-4">
-                        <div>
-                          <div className="font-medium">Apply Bala lease decay</div>
-                          <div className="text-sm text-muted-foreground">
-                            Use this for leasehold assets when you want the model to degrade resale value as the remaining lease shortens.
-                          </div>
-                        </div>
-                        <Switch
-                          checked={property.existingApplyBalaDecay}
-                          onCheckedChange={(checked) => updateProperty(property.id, { existingApplyBalaDecay: checked })}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  )}
-
-                  {property.propertyType === 'hdb' && (
-                    <div className="rounded-lg border p-4 space-y-4">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium">HDB Monetization</h3>
-                        <InfoTooltip text="Model HDB-specific monetization paths like Lease Buyback Scheme or room subletting directly on the shared property row." />
-                      </div>
-                      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
-                        <div className="space-y-1">
-                          <Label>Flat type</Label>
-                          <Select
-                            value={property.hdbFlatType}
-                            onValueChange={(value) => updateProperty(property.id, { hdbFlatType: value as HdbFlatType })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="2-room">2-room</SelectItem>
-                              <SelectItem value="3-room">3-room</SelectItem>
-                              <SelectItem value="4-room">4-room</SelectItem>
-                              <SelectItem value="5-room">5-room</SelectItem>
-                              <SelectItem value="executive">Executive</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1">
-                          <Label>Monetization strategy</Label>
-                          <Select
-                            value={property.hdbMonetizationStrategy}
-                            onValueChange={(value) => updateProperty(property.id, { hdbMonetizationStrategy: value as HdbMonetizationStrategy })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">None</SelectItem>
-                              <SelectItem value="sublet">Sublet room(s)</SelectItem>
-                              <SelectItem value="lbs">Lease Buyback Scheme</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <CurrencyInput
-                          label="CPF used for housing"
-                          value={property.hdbCpfUsedForHousing}
-                          onChange={(value) => updateProperty(property.id, { hdbCpfUsedForHousing: value })}
-                        />
-                        {property.hdbMonetizationStrategy === 'sublet' && (
-                          <>
-                            <NumberInput
-                              label="Rooms to sublet"
-                              value={property.hdbSublettingRooms}
-                              onChange={(value) => updateProperty(property.id, { hdbSublettingRooms: value })}
-                              integer
-                              min={1}
-                              max={3}
-                            />
-                            <CurrencyInput
-                              label="Monthly rate per room"
-                              value={property.hdbSublettingRate}
-                              onChange={(value) => updateProperty(property.id, { hdbSublettingRate: value })}
-                            />
-                          </>
-                        )}
-                        {property.hdbMonetizationStrategy === 'lbs' && (
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                           <NumberInput
-                            label="Retained lease (years)"
-                            value={property.hdbLbsRetainedLease}
-                            onChange={(value) => updateProperty(property.id, { hdbLbsRetainedLease: value })}
-                            integer
-                            min={20}
-                            max={35}
-                          />
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="rounded-lg border p-4 space-y-4">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium">Downsizing Scenario</h3>
-                      <InfoTooltip text="Plan for selling, downsizing, or moving to rent later without leaving the household property surface." />
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
-                      <div className="space-y-1">
-                        <Label>Scenario</Label>
-                        <Select
-                          value={property.downsizing.scenario}
-                          onValueChange={(value) => updateProperty(property.id, {
-                            downsizing: {
-                              ...property.downsizing,
-                              scenario: value as DownsizingScenario,
-                            },
-                          })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">None</SelectItem>
-                            <SelectItem value="sell-and-downsize">Sell & downsize</SelectItem>
-                            <SelectItem value="sell-and-rent">Sell & rent</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      {property.downsizing.scenario !== 'none' && (
-                        <>
-                          <NumberInput
-                            label="Sell at age"
-                            value={property.downsizing.sellAge}
-                            onChange={(value) => updateProperty(property.id, {
-                              downsizing: {
-                                ...property.downsizing,
-                                sellAge: value,
-                              },
-                            })}
-                            integer
-                            min={18}
-                            max={100}
+                            label="Years from now"
+                            tooltip="How many years from now you plan to purchase this property."
+                            value={property.purchaseYearsFromNow}
+                            onChange={(value) => updateProperty(property.id, { purchaseYearsFromNow: value })}
+                            min={0}
+                            max={50}
                           />
                           <CurrencyInput
-                            label="Expected sale price"
-                            value={property.downsizing.expectedSalePrice}
-                            onChange={(value) => updateProperty(property.id, {
-                              downsizing: {
-                                ...property.downsizing,
-                                expectedSalePrice: value,
-                              },
-                            })}
+                            label="Purchase price"
+                            value={property.purchasePrice}
+                            onChange={(value) => updateProperty(property.id, { purchasePrice: value })}
+                            error={propertyErrors.purchasePrice}
                           />
-                        </>
-                      )}
-                      {property.downsizing.scenario === 'sell-and-downsize' && (
-                        <>
-                          <CurrencyInput
-                            label="New property cost"
-                            value={property.downsizing.newPropertyCost}
-                            onChange={(value) => updateProperty(property.id, {
-                              downsizing: {
-                                ...property.downsizing,
-                                newPropertyCost: value,
-                              },
-                            })}
+                          <NumberInput
+                            label="Lease years"
+                            value={property.leaseYears}
+                            onChange={(value) => updateProperty(property.id, { leaseYears: value })}
+                            integer
+                            min={0}
+                            max={999}
                           />
                           <PercentInput
-                            label="New mortgage rate"
-                            value={property.downsizing.newMortgageRate}
-                            onChange={(value) => updateProperty(property.id, {
-                              downsizing: {
-                                ...property.downsizing,
-                                newMortgageRate: value,
-                              },
-                            })}
+                            label="Appreciation rate"
+                            value={property.appreciationRate}
+                            onChange={(value) => updateProperty(property.id, { appreciationRate: value })}
+                          />
+                          <PercentInput
+                            label="Rental yield"
+                            value={property.rentalYield}
+                            onChange={(value) => updateProperty(property.id, { rentalYield: value })}
+                          />
+                          <PercentInput
+                            label="Mortgage rate"
+                            value={property.mortgageRate}
+                            onChange={(value) => updateProperty(property.id, { mortgageRate: value })}
                           />
                           <NumberInput
-                            label="New mortgage term"
-                            value={property.downsizing.newMortgageTerm}
-                            onChange={(value) => updateProperty(property.id, {
-                              downsizing: {
-                                ...property.downsizing,
-                                newMortgageTerm: value,
-                              },
-                            })}
+                            label="Mortgage term (years)"
+                            value={property.mortgageTerm}
+                            onChange={(value) => updateProperty(property.id, { mortgageTerm: value })}
                             integer
                             min={1}
                             max={40}
                           />
                           <PercentInput
-                            label="New loan-to-value"
-                            value={property.downsizing.newLtv}
-                            onChange={(value) => updateProperty(property.id, {
-                              downsizing: {
-                                ...property.downsizing,
-                                newLtv: value,
-                              },
-                            })}
+                            label="Loan-to-value"
+                            value={property.ltv}
+                            onChange={(value) => updateProperty(property.id, { ltv: value })}
                           />
-                        </>
-                      )}
-                      {property.downsizing.scenario === 'sell-and-rent' && (
-                        <>
+                          <div className="flex items-center justify-between rounded-md border p-3 md:col-span-2 xl:col-span-4">
+                            <div>
+                              <div className="font-medium">Apply Bala lease decay</div>
+                              <div className="text-sm text-muted-foreground">
+                                Use this for leasehold assets when you want the model to degrade resale value as the remaining lease shortens.
+                              </div>
+                            </div>
+                            <Switch
+                              checked={property.existingApplyBalaDecay}
+                              onCheckedChange={(checked) => updateProperty(property.id, { existingApplyBalaDecay: checked })}
+                            />
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                    )}
+
+                    {property.ownsProperty && (
+                    <AccordionItem value="existing-home" className="border rounded-lg px-4">
+                      <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          Existing Home & Mortgage
+                          <InfoTooltip text="Use these fields for the current owned property, including mortgage balance, payments, and lease decay assumptions." />
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                           <CurrencyInput
-                            label="Monthly rent"
-                            value={property.downsizing.monthlyRent}
-                            onChange={(value) => updateProperty(property.id, {
-                              downsizing: {
-                                ...property.downsizing,
-                                monthlyRent: value,
-                              },
-                            })}
+                            label="Existing property value"
+                            value={property.existingPropertyValue}
+                            onChange={(value) => updateProperty(property.id, { existingPropertyValue: value })}
+                            error={propertyErrors.existingPropertyValue}
+                          />
+                          <CurrencyInput
+                            label="Mortgage balance"
+                            value={property.existingMortgageBalance}
+                            onChange={(value) => updateProperty(property.id, { existingMortgageBalance: value })}
+                            error={propertyErrors.existingMortgageBalance}
+                          />
+                          <CurrencyInput
+                            label="Monthly payment"
+                            value={property.existingMonthlyPayment}
+                            onChange={(value) => updateProperty(property.id, { existingMonthlyPayment: value })}
+                            error={propertyErrors.existingMonthlyPayment}
                           />
                           <PercentInput
-                            label="Annual rent growth"
-                            value={property.downsizing.rentGrowthRate}
-                            onChange={(value) => updateProperty(property.id, {
-                              downsizing: {
-                                ...property.downsizing,
-                                rentGrowthRate: value,
-                              },
-                            })}
+                            label="Existing mortgage rate"
+                            value={property.existingMortgageRate}
+                            onChange={(value) => updateProperty(property.id, { existingMortgageRate: value })}
                           />
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  {/* Property Projection Preview */}
+                          <NumberInput
+                            label="Mortgage years left"
+                            value={property.existingMortgageRemainingYears}
+                            onChange={(value) => updateProperty(property.id, { existingMortgageRemainingYears: value })}
+                            integer
+                            min={0}
+                            max={40}
+                          />
+                          <CurrencyInput
+                            label="CPF monthly for housing"
+                            value={property.mortgageCpfMonthly}
+                            onChange={(value) => updateProperty(property.id, { mortgageCpfMonthly: value })}
+                          />
+                          <NumberInput
+                            label="Existing lease years"
+                            value={property.existingLeaseYears}
+                            onChange={(value) => updateProperty(property.id, { existingLeaseYears: value })}
+                            integer
+                            min={0}
+                            max={999}
+                          />
+                          <PercentInput
+                            label="Existing appreciation rate"
+                            value={property.existingAppreciationRate}
+                            onChange={(value) => updateProperty(property.id, { existingAppreciationRate: value })}
+                          />
+                          <div className="flex items-center justify-between rounded-md border p-3 md:col-span-2 xl:col-span-4">
+                            <div>
+                              <div className="font-medium">Apply Bala lease decay</div>
+                              <div className="text-sm text-muted-foreground">
+                                Use this for leasehold assets when you want the model to degrade resale value as the remaining lease shortens.
+                              </div>
+                            </div>
+                            <Switch
+                              checked={property.existingApplyBalaDecay}
+                              onCheckedChange={(checked) => updateProperty(property.id, { existingApplyBalaDecay: checked })}
+                            />
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                    )}
+
+                    {property.propertyType === 'hdb' && (
+                    <AccordionItem value="hdb-monetization" className="border rounded-lg px-4">
+                      <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          HDB Monetization
+                          <InfoTooltip text="Model HDB-specific monetization paths like Lease Buyback Scheme or room subletting directly on the shared property row." />
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
+                          <div className="space-y-1">
+                            <Label>Flat type</Label>
+                            <Select
+                              value={property.hdbFlatType}
+                              onValueChange={(value) => updateProperty(property.id, { hdbFlatType: value as HdbFlatType })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="2-room">2-room</SelectItem>
+                                <SelectItem value="3-room">3-room</SelectItem>
+                                <SelectItem value="4-room">4-room</SelectItem>
+                                <SelectItem value="5-room">5-room</SelectItem>
+                                <SelectItem value="executive">Executive</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label>Monetization strategy</Label>
+                            <Select
+                              value={property.hdbMonetizationStrategy}
+                              onValueChange={(value) => updateProperty(property.id, { hdbMonetizationStrategy: value as HdbMonetizationStrategy })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">None</SelectItem>
+                                <SelectItem value="sublet">Sublet room(s)</SelectItem>
+                                <SelectItem value="lbs">Lease Buyback Scheme</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <CurrencyInput
+                            label="CPF used for housing"
+                            value={property.hdbCpfUsedForHousing}
+                            onChange={(value) => updateProperty(property.id, { hdbCpfUsedForHousing: value })}
+                          />
+                          {property.hdbMonetizationStrategy === 'sublet' && (
+                            <>
+                              <NumberInput
+                                label="Rooms to sublet"
+                                value={property.hdbSublettingRooms}
+                                onChange={(value) => updateProperty(property.id, { hdbSublettingRooms: value })}
+                                integer
+                                min={1}
+                                max={3}
+                              />
+                              <CurrencyInput
+                                label="Monthly rate per room"
+                                value={property.hdbSublettingRate}
+                                onChange={(value) => updateProperty(property.id, { hdbSublettingRate: value })}
+                              />
+                            </>
+                          )}
+                          {property.hdbMonetizationStrategy === 'lbs' && (
+                            <NumberInput
+                              label="Retained lease (years)"
+                              value={property.hdbLbsRetainedLease}
+                              onChange={(value) => updateProperty(property.id, { hdbLbsRetainedLease: value })}
+                              integer
+                              min={20}
+                              max={35}
+                            />
+                          )}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                    )}
+
+                    <AccordionItem value="downsizing" className="border rounded-lg px-4">
+                      <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          Downsizing Scenario
+                          <InfoTooltip text="Plan for selling, downsizing, or moving to rent later without leaving the household property surface." />
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
+                          <div className="space-y-1">
+                            <Label>Scenario</Label>
+                            <Select
+                              value={property.downsizing.scenario}
+                              onValueChange={(value) => updateProperty(property.id, {
+                                downsizing: {
+                                  ...property.downsizing,
+                                  scenario: value as DownsizingScenario,
+                                },
+                              })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">None</SelectItem>
+                                <SelectItem value="sell-and-downsize">Sell & downsize</SelectItem>
+                                <SelectItem value="sell-and-rent">Sell & rent</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          {property.downsizing.scenario !== 'none' && (
+                            <>
+                              <NumberInput
+                                label="Sell at age"
+                                value={property.downsizing.sellAge}
+                                onChange={(value) => updateProperty(property.id, {
+                                  downsizing: {
+                                    ...property.downsizing,
+                                    sellAge: value,
+                                  },
+                                })}
+                                integer
+                                min={18}
+                                max={100}
+                              />
+                              <CurrencyInput
+                                label="Expected sale price"
+                                value={property.downsizing.expectedSalePrice}
+                                onChange={(value) => updateProperty(property.id, {
+                                  downsizing: {
+                                    ...property.downsizing,
+                                    expectedSalePrice: value,
+                                  },
+                                })}
+                              />
+                            </>
+                          )}
+                          {property.downsizing.scenario === 'sell-and-downsize' && (
+                            <>
+                              <CurrencyInput
+                                label="New property cost"
+                                value={property.downsizing.newPropertyCost}
+                                onChange={(value) => updateProperty(property.id, {
+                                  downsizing: {
+                                    ...property.downsizing,
+                                    newPropertyCost: value,
+                                  },
+                                })}
+                              />
+                              <PercentInput
+                                label="New mortgage rate"
+                                value={property.downsizing.newMortgageRate}
+                                onChange={(value) => updateProperty(property.id, {
+                                  downsizing: {
+                                    ...property.downsizing,
+                                    newMortgageRate: value,
+                                  },
+                                })}
+                              />
+                              <NumberInput
+                                label="New mortgage term"
+                                value={property.downsizing.newMortgageTerm}
+                                onChange={(value) => updateProperty(property.id, {
+                                  downsizing: {
+                                    ...property.downsizing,
+                                    newMortgageTerm: value,
+                                  },
+                                })}
+                                integer
+                                min={1}
+                                max={40}
+                              />
+                              <PercentInput
+                                label="New loan-to-value"
+                                value={property.downsizing.newLtv}
+                                onChange={(value) => updateProperty(property.id, {
+                                  downsizing: {
+                                    ...property.downsizing,
+                                    newLtv: value,
+                                  },
+                                })}
+                              />
+                            </>
+                          )}
+                          {property.downsizing.scenario === 'sell-and-rent' && (
+                            <>
+                              <CurrencyInput
+                                label="Monthly rent"
+                                value={property.downsizing.monthlyRent}
+                                onChange={(value) => updateProperty(property.id, {
+                                  downsizing: {
+                                    ...property.downsizing,
+                                    monthlyRent: value,
+                                  },
+                                })}
+                              />
+                              <PercentInput
+                                label="Annual rent growth"
+                                value={property.downsizing.rentGrowthRate}
+                                onChange={(value) => updateProperty(property.id, {
+                                  downsizing: {
+                                    ...property.downsizing,
+                                    rentGrowthRate: value,
+                                  },
+                                })}
+                              />
+                            </>
+                          )}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                  </Accordion>
+                  {/* Property Projection Preview — has its own expand/collapse */}
                   {(() => {
                     const adult = resolvePropertyAdult(property, plan.adults)
                     return adult ? <PropertyProjectionPreview property={property} adult={adult} /> : null
