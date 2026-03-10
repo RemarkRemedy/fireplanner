@@ -17,6 +17,20 @@ interface PropertyProjectionPreviewProps {
 export function PropertyProjectionPreview({ property, adult }: PropertyProjectionPreviewProps) {
   const [expanded, setExpanded] = useState(false)
 
+  // Stable serialization key — recompute only when actual values change,
+  // not when parent re-renders with a new object reference.
+  const stableKey = useMemo(() => JSON.stringify([
+    property.ownsProperty, property.existingPropertyValue, property.existingMortgageBalance,
+    property.existingMonthlyPayment, property.existingMortgageRate, property.existingMortgageRemainingYears,
+    property.mortgageCpfMonthly, property.existingAppreciationRate, property.existingLeaseYears,
+    property.existingApplyBalaDecay, property.ownershipPercent, property.purchasePrice,
+    property.leaseYears, property.appreciationRate, property.mortgageRate, property.mortgageTerm,
+    property.ltv, property.purchaseYearsFromNow, property.hdbMonetizationStrategy,
+    property.hdbSublettingRooms, property.hdbSublettingRate, property.hdbCpfUsedForHousing,
+    property.downsizing, property.residencyForAbsd, property.propertyCount,
+    adult.currentAge, adult.retirementAge, adult.lifeExpectancy,
+  ]), [property, adult])
+
   const params: PropertyProjectionParams = useMemo(() => ({
     ownsProperty: property.ownsProperty,
     existingPropertyValue: property.existingPropertyValue,
@@ -46,7 +60,8 @@ export function PropertyProjectionPreview({ property, adult }: PropertyProjectio
     currentAge: adult.currentAge,
     retirementAge: adult.retirementAge,
     lifeExpectancy: adult.lifeExpectancy,
-  }), [property, adult])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [stableKey])
 
   const allRows = useMemo(() => generatePropertyProjection(params), [params])
   const milestoneRows = useMemo(() => allRows.filter(r => !r.isExpanded), [allRows])
