@@ -28,6 +28,8 @@ interface UIState {
   projectionView: 'joint' | string
   // Transient (not persisted): true when a contextual engagement nudge is visible
   contextualNudgeActive: boolean
+  /** Transient (not persisted): per-adult simulation view — 'joint' or an adultId string */
+  simulationView: 'joint' | string
 }
 
 interface UIActions {
@@ -62,6 +64,7 @@ const DEFAULT_UI: UIState = {
   quickModeActive: false,
   projectionView: 'joint',
   contextualNudgeActive: false,
+  simulationView: 'joint',
 }
 
 export const useUIStore = create<UIState & UIActions>()(
@@ -143,7 +146,7 @@ export const useUIStore = create<UIState & UIActions>()(
       partialize: (state) => {
         // Exclude transient fields from persistence
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { contextualNudgeActive, quickModeActive, ...persisted } = state
+        const { contextualNudgeActive, quickModeActive, simulationView, ...persisted } = state
         return persisted
       },
       migrate: (persisted, version) => {
