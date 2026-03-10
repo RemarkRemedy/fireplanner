@@ -33,6 +33,7 @@ import {
   calculateSellAndDownsize,
   calculateSellAndRent,
 } from './property'
+import { computeHdbCpfRefund } from './hdb'
 import { calculatePortfolioReturn, interpolateGlidePath } from './portfolio'
 import {
   constantDollar,
@@ -91,6 +92,8 @@ export interface ProjectionParams {
   residencyForAbsd: 'citizen' | 'pr' | 'foreigner'
   /** Pre-sale property count. Used with Math.max(0, count - 1) for post-sale ABSD. */
   propertyCount: number
+  /** Cumulative CPF principal used for HDB housing. Refunded to OA on sale (+ 2.5% accrued interest). */
+  hdbCpfUsedForHousing: number
   // Parent support
   parentSupport: ParentSupport[]
   parentSupportEnabled: boolean
@@ -272,6 +275,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     existingMonthlyPayment,
     residencyForAbsd,
     propertyCount,
+    hdbCpfUsedForHousing,
     parentSupport,
     parentSupportEnabled,
     healthcareConfig,
@@ -312,6 +316,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
   let dsShortfall = 0
   let dsNewMonthlyPayment = 0
   let dsAnnualRent = 0
+  let dsCpfRefundToOa = 0
 
   if (dsActive && downsizing) {
     const yearsToSell = dsSellAge - currentAge
@@ -321,6 +326,15 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       existingMortgageRate,
       Math.max(0, yearsToSell),
     )
+
+    // CPF housing refund: principal + 2.5% accrued interest returned to CPF OA on sale
+    if (hdbCpfUsedForHousing > 0) {
+      const refund = computeHdbCpfRefund({
+        cpfUsedForHousing: hdbCpfUsedForHousing,
+        yearsOfMortgage: Math.max(0, yearsToSell),
+      })
+      dsCpfRefundToOa = refund.totalRefund
+    }
 
     if (downsizing.scenario === 'sell-and-downsize') {
       const result = calculateSellAndDownsize({
@@ -367,8 +381,10 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     const age = currentAge + i
     const year = i
     const isRetired = age > retirementAge
-    const incomeRow = incomeProjection[i]
-    if (!incomeRow) break
+    const rawIncomeRow = incomeProjection[i]
+    if (!rawIncomeRow) break
+    // Shallow-clone to avoid mutating the caller's array (cpfOA, cpfSA are modified in-place below)
+    const incomeRow = { ...rawIncomeRow }
 
     // Track retirement year (0-indexed from first retired year)
     if (isRetired) retirementYearCounter++
@@ -446,6 +462,11 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     // Downsizing: inject equity or deduct shortfall at sell age (before capturing startLiquidNW)
     if (dsActive && age === dsSellAge) {
       liquidNW += dsNetEquity - dsShortfall
+      // CPF housing refund: deducted from cash proceeds, credited back to CPF OA
+      if (dsCpfRefundToOa > 0) {
+        liquidNW -= dsCpfRefundToOa
+        incomeRow.cpfOA += dsCpfRefundToOa
+      }
     }
 
     // CPF OA withdrawal → liquid portfolio
