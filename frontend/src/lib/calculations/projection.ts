@@ -89,6 +89,8 @@ export interface ProjectionParams {
   existingMonthlyPayment: number
   existingMortgageRemainingYears: number
   residencyForAbsd: 'citizen' | 'pr' | 'foreigner'
+  /** Pre-sale property count. Used with Math.max(0, count - 1) for post-sale ABSD. */
+  propertyCount: number
   // Parent support
   parentSupport: ParentSupport[]
   parentSupportEnabled: boolean
@@ -269,6 +271,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     existingMortgageRate,
     existingMonthlyPayment,
     residencyForAbsd,
+    propertyCount,
     parentSupport,
     parentSupportEnabled,
     healthcareConfig,
@@ -328,7 +331,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
         newMortgageRate: downsizing.newMortgageRate,
         newMortgageTerm: downsizing.newMortgageTerm,
         residency: residencyForAbsd,
-        propertyCount: 0, // selling existing, buying replacement = still 1st property
+        propertyCount: Math.max(0, propertyCount - 1),
       })
       dsNetEquity = result.netEquityToPortfolio
       dsShortfall = result.shortfall

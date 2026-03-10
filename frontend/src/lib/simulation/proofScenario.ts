@@ -316,6 +316,7 @@ function buildScenarioProjectionParams(core: ScenarioCoreStores): ProjectionPara
     existingMonthlyPayment: property.existingMonthlyPayment * ownershipPct,
     existingMortgageRemainingYears: property.existingMortgageRemainingYears,
     residencyForAbsd: property.residencyForAbsd,
+    propertyCount: property.propertyCount,
     parentSupport: profile.parentSupport,
     parentSupportEnabled: profile.parentSupportEnabled,
     healthcareConfig: profile.healthcareConfig?.enabled ? profile.healthcareConfig : null,
