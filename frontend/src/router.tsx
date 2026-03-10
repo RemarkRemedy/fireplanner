@@ -17,6 +17,8 @@ const ReferencePage = lazy(() => import('@/pages/ReferencePage').then(m => ({ de
 const StressTestPage = lazy(() => import('@/pages/StressTestPage').then(m => ({ default: m.StressTestPage })))
 const ChecklistPage = lazy(() => import('@/pages/ChecklistPage').then(m => ({ default: m.ChecklistPage })))
 const PrivacyPage = lazy(() => import('@/pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })))
+const RetirementPlannerPage = lazy(() => import('@/pages/RetirementPlannerPage').then(m => ({ default: m.RetirementPlannerPage })))
+const RetirementCalculatorPage = lazy(() => import('@/pages/RetirementCalculatorPage').then(m => ({ default: m.RetirementCalculatorPage })))
 
 function PageLoader() {
   return (
@@ -91,6 +93,8 @@ export const router = createBrowserRouter([
       { path: '/reference', element: page(ReferencePage) },
       { path: '/checklist', element: page(ChecklistPage) },
       { path: '/privacy', element: page(PrivacyPage) },
+      { path: '/retirement-planner', element: page(RetirementPlannerPage) },
+      { path: '/retirement-calculator', element: page(RetirementCalculatorPage) },
       // Redirects: old input pages → /inputs with section anchors
       { path: '/profile', element: <Navigate to="/inputs#section-personal" replace /> },
       { path: '/income', element: <Navigate to="/inputs#section-income" replace /> },

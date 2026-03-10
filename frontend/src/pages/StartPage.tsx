@@ -348,6 +348,19 @@ export function StartPage() {
         <p className="text-muted-foreground mt-2 text-base">
           Plan your path to Financial Independence with Singapore-specific calculations.
         </p>
+        {!isReturningUser && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Also available as a{' '}
+            <Link to="/retirement-planner" className="font-medium text-foreground underline decoration-primary/50 underline-offset-4 hover:decoration-primary">
+              Singapore retirement planner
+            </Link>{' '}
+            and{' '}
+            <Link to="/retirement-calculator" className="font-medium text-foreground underline decoration-primary/50 underline-offset-4 hover:decoration-primary">
+              retirement calculator
+            </Link>
+            {' '}with feature overviews and guides.
+          </p>
+        )}
       </div>
 
       {/* Returning user guidance */}
@@ -773,4 +786,3 @@ function QuickResults({
     </div>
   )
 }
-
