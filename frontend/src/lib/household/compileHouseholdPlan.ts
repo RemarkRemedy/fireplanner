@@ -69,6 +69,7 @@ export interface HouseholdPortfolioAdjustment {
   sourceId: string
   kind:
     | 'asset-unlock'
+    | 'cpf-bequest'
     | 'cpf-oa-withdrawal'
     | 'downsizing'
     | 'goal'
@@ -80,6 +81,7 @@ export interface HouseholdMilestoneRow {
   yearOffset: number
   label: string
   kind:
+    | 'adult-death'
     | 'adult-retirement'
     | 'asset-unlock'
     | 'cpf-life-start'
@@ -979,6 +981,31 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
           amount: row.cpfOaWithdrawal,
           sourceId: `${adultId}:cpf-oa-withdrawal:${row.age}`,
           kind: 'cpf-oa-withdrawal',
+        })
+      }
+    }
+
+    // CPF bequest: when an adult dies before the household timeline ends,
+    // their remaining CPF balances are paid out as cash to the surviving
+    // spouse's portfolio (Singapore CPF nomination rules).
+    if (timing.lifeExpectancyYearOffset < yearCount - 1 && projection.length > 0) {
+      const finalRow = projection[projection.length - 1]
+      const bequestAmount = finalRow.cpfOA + finalRow.cpfSA + finalRow.cpfMA + finalRow.cpfRA
+      if (bequestAmount > 0) {
+        const deathYearOffset = timing.lifeExpectancyYearOffset + 1
+        portfolioAdjustments.push({
+          yearOffset: deathYearOffset,
+          amount: bequestAmount,
+          sourceId: `${adultId}:cpf-bequest`,
+          kind: 'cpf-bequest',
+        })
+        milestones.push({
+          yearOffset: deathYearOffset,
+          label: `${adult.displayName} CPF bequest ($${Math.round(bequestAmount).toLocaleString()})`,
+          kind: 'adult-death',
+          adultId,
+          owner: adult.owner,
+          sourceId: adultId,
         })
       }
     }
