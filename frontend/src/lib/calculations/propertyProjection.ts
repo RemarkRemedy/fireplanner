@@ -13,6 +13,7 @@ import {
   calculateSellAndRent,
 } from '@/lib/calculations/property'
 import { computeHdbCpfRefund } from '@/lib/calculations/hdb'
+import { formatCurrency } from '@/lib/utils'
 
 export interface PropertyProjectionParams {
   ownsProperty: boolean
@@ -199,7 +200,7 @@ export function generatePropertyProjection(
           propertyCount: postSalePropertyCount,
         })
         netEquity = result.netEquityToPortfolio * ownershipPercent
-        note = `Sell & downsize — net $${Math.round(netEquity).toLocaleString()} to portfolio`
+        note = `Sell & downsize — net ${formatCurrency(netEquity)} to portfolio`
       } else if (downsizing.scenario === 'sell-and-rent') {
         const result = calculateSellAndRent({
           salePrice: downsizing.expectedSalePrice,
@@ -207,7 +208,7 @@ export function generatePropertyProjection(
           monthlyRent: downsizing.monthlyRent,
         })
         netEquity = result.netProceedsToPortfolio * ownershipPercent
-        note = `Sell & rent — net $${Math.round(netEquity).toLocaleString()} to portfolio`
+        note = `Sell & rent — net ${formatCurrency(netEquity)} to portfolio`
       }
     } else if (age === mortgagePayoffAge && initialMortgageBalance > 0) {
       note = 'Mortgage paid off'
