@@ -308,7 +308,7 @@ describe('Household editors', () => {
     await user.click(screen.getByRole('button', { name: 'Add withdrawal' }))
     await user.click(screen.getByRole('button', { name: 'Add custom goal' }))
 
-    const livingCostCard = screen.getByDisplayValue('Shared living costs').closest('div.rounded-lg.border')
+    const livingCostCard = screen.getByDisplayValue('Additional shared costs').closest('div.rounded-lg.border')
     if (!(livingCostCard instanceof HTMLElement)) {
       throw new Error('Could not find living cost card')
     }
@@ -343,17 +343,17 @@ describe('Household editors', () => {
 
     const state = useHouseholdPlanStore.getState()
     const partnerAdult = state.plan.adults.find((adult) => adult.id === 'adult-partner')
-    const baseLivingExpense = state.plan.expenses.find((expense) => expense.kind === 'base-living')
+    const additionalLivingExpense = state.plan.expenses.find((expense) => expense.kind === 'additional-living')
     const parentSupportExpense = state.plan.expenses.find((expense) => expense.kind === 'parent-support')
     const withdrawalExpense = state.plan.expenses.find((expense) => expense.kind === 'retirement-withdrawal')
     const goal = state.plan.goals[0]
 
-    expect(baseLivingExpense?.owner).toBe('partner')
-    expect(baseLivingExpense?.timing.owner).toBe('self')
-    expect(baseLivingExpense?.amount).toBe(3_600)
-    expect(baseLivingExpense?.timing.kind).toBe('age-range')
-    if (baseLivingExpense?.timing.kind === 'age-range') {
-      expect(baseLivingExpense.timing.endAge).toBe(92)
+    expect(additionalLivingExpense?.owner).toBe('partner')
+    expect(additionalLivingExpense?.timing.owner).toBe('self')
+    expect(additionalLivingExpense?.amount).toBe(3_600)
+    expect(additionalLivingExpense?.timing.kind).toBe('age-range')
+    if (additionalLivingExpense?.timing.kind === 'age-range') {
+      expect(additionalLivingExpense.timing.endAge).toBe(92)
     }
     expect(parentSupportExpense?.amount).toBe(900)
     expect(withdrawalExpense?.amount).toBe(45_000)

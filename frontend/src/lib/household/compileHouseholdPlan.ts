@@ -569,13 +569,13 @@ function evaluateExpenseBaseToday(
     return 0
   }
 
-  if (expense.kind !== 'base-living' && expense.kind !== 'expense-adjustment') {
+  if (expense.kind !== 'base-living' && expense.kind !== 'additional-living' && expense.kind !== 'expense-adjustment') {
     return 0
   }
 
   let annualAmount = annualizeAmount(expense.amount, expense.periodicity)
 
-  if (expense.kind === 'base-living' && expense.retirementSpendingAdjustment != null) {
+  if ((expense.kind === 'base-living' || expense.kind === 'additional-living') && expense.retirementSpendingAdjustment != null) {
     const ownerTiming = adultTimingById[window.adultId]
     if (ownerTiming && yearOffset >= ownerTiming.retirementYearOffset) {
       annualAmount *= expense.retirementSpendingAdjustment

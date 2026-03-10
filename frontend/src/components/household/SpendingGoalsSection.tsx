@@ -155,6 +155,22 @@ function createExpense(
         durationYears: 1,
         inflationAdjusted: true,
       }
+    case 'additional-living':
+      return {
+        id: createId('expense-additional-living'),
+        owner,
+        label: owner === 'shared' ? 'Additional shared costs' : `${ownerLabel(timingOwner, adults)} additional costs`,
+        kind: 'additional-living',
+        timing: {
+          kind: 'age-range',
+          owner: timingOwner,
+          startAge,
+          endAge: lifeExpectancy,
+        },
+        amount: 500,
+        periodicity: 'monthly',
+        growthModel: 'inflation-linked',
+      }
     case 'base-living':
     default:
       return {
@@ -545,7 +561,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
   const getTimingAdult = (timingOwner: AdultOwner) =>
     adults.find((adult) => adult.owner === timingOwner) ?? selectedAdult
 
-  const baseExpenses = plan.expenses.filter((expense) => expense.kind === 'base-living' || expense.kind === 'expense-adjustment')
+  const baseExpenses = plan.expenses.filter((expense) => expense.kind === 'base-living' || expense.kind === 'additional-living' || expense.kind === 'expense-adjustment')
   const parentSupportExpenses = plan.expenses.filter((expense) => expense.kind === 'parent-support')
   const retirementWithdrawals = plan.expenses.filter((expense) => expense.kind === 'retirement-withdrawal')
 
@@ -568,7 +584,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
               <InfoTooltip text="Explicit owner plus age basis keeps household cashflow compilation deterministic. Use shared for household-wide costs and self or partner for private costs." />
             </CardTitle>
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('base-living', 'shared', selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge, selectedAdult.lifeExpectancy, adults))}>
+              <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('additional-living', 'shared', selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge, selectedAdult.lifeExpectancy, adults))}>
                 Add living cost
               </Button>
               <Button type="button" variant="outline" size="sm" onClick={() => addExpense(createExpense('expense-adjustment', selectedAdult.owner, selectedAdult.owner, selectedAdult.currentAge, selectedAdult.retirementAge, selectedAdult.lifeExpectancy, adults))}>
@@ -618,7 +634,8 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="base-living">Base living</SelectItem>
+                          {isBaseLiving && <SelectItem value="base-living">Base living</SelectItem>}
+                          <SelectItem value="additional-living">Additional living</SelectItem>
                           <SelectItem value="expense-adjustment">Expense adjustment</SelectItem>
                         </SelectContent>
                       </Select>

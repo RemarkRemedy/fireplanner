@@ -311,7 +311,7 @@ function buildAggregateRuntimeSnapshot(
     && isActiveAtCurrentYear(income.id, compiledPlan.resolvedTiming.incomeById)
   ))
   const activeBaseLivingExpenses = plan.expenses.filter((expense) => (
-    expense.kind === 'base-living'
+    (expense.kind === 'base-living' || expense.kind === 'additional-living')
     && isActiveAtCurrentYear(expense.id, compiledPlan.resolvedTiming.expenseById)
   ))
   const currentRecurringBaseExpense = activeBaseLivingExpenses.reduce((sum, expense) => {

@@ -41,6 +41,7 @@ export type DependentRelationship = 'child' | 'parent' | 'other'
 export type IncomeSourceKind = 'salary-model' | 'income-stream'
 export type ExpenseItemKind =
   | 'base-living'
+  | 'additional-living'
   | 'parent-support'
   | 'expense-adjustment'
   | 'retirement-withdrawal'
