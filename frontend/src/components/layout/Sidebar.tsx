@@ -27,6 +27,7 @@ import {
   BookOpen,
   Landmark,
   Building,
+  Shield,
   ShieldAlert,
   Menu,
   X,
@@ -63,6 +64,7 @@ const GOAL_FIRST_SECTIONS: InputSectionItem[] = [
   { label: 'Expenses', sectionId: 'section-expenses', icon: <TrendingDown className="h-4 w-4" /> },
   { label: 'Healthcare', sectionId: 'section-healthcare', icon: <HeartPulse className="h-4 w-4" />, isSubItem: true },
   { label: 'Goals', sectionId: 'section-goals', icon: <Banknote className="h-4 w-4" />, isSubItem: true },
+  { label: 'Protection', sectionId: 'section-protection', icon: <Shield className="h-4 w-4" />, isSubItem: true },
   { label: 'Net Worth', sectionId: 'section-net-worth', icon: <Wallet className="h-4 w-4" /> },
   { label: 'CPF', sectionId: 'section-cpf', icon: <Landmark className="h-4 w-4" /> },
   { label: 'Property', sectionId: 'section-property', icon: <Building className="h-4 w-4" /> },
@@ -75,6 +77,7 @@ const STORY_FIRST_SECTIONS: InputSectionItem[] = [
   { label: 'Expenses', sectionId: 'section-expenses', icon: <TrendingDown className="h-4 w-4" /> },
   { label: 'Healthcare', sectionId: 'section-healthcare', icon: <HeartPulse className="h-4 w-4" />, isSubItem: true },
   { label: 'Goals', sectionId: 'section-goals', icon: <Banknote className="h-4 w-4" />, isSubItem: true },
+  { label: 'Protection', sectionId: 'section-protection', icon: <Shield className="h-4 w-4" />, isSubItem: true },
   { label: 'Net Worth', sectionId: 'section-net-worth', icon: <Wallet className="h-4 w-4" /> },
   { label: 'CPF', sectionId: 'section-cpf', icon: <Landmark className="h-4 w-4" /> },
   { label: 'Property', sectionId: 'section-property', icon: <Building className="h-4 w-4" /> },
@@ -89,6 +92,7 @@ const ALREADY_FIRE_SECTIONS: InputSectionItem[] = [
   { label: 'Expenses', sectionId: 'section-expenses', icon: <TrendingDown className="h-4 w-4" /> },
   { label: 'Healthcare', sectionId: 'section-healthcare', icon: <HeartPulse className="h-4 w-4" />, isSubItem: true },
   { label: 'Goals', sectionId: 'section-goals', icon: <Banknote className="h-4 w-4" />, isSubItem: true },
+  { label: 'Protection', sectionId: 'section-protection', icon: <Shield className="h-4 w-4" />, isSubItem: true },
   { label: 'Allocation', sectionId: 'section-allocation', icon: <PieChart className="h-4 w-4" /> },
   { label: 'FIRE Settings', sectionId: 'section-fire-settings', icon: <Target className="h-4 w-4" /> },
   { label: 'CPF', sectionId: 'section-cpf', icon: <Landmark className="h-4 w-4" /> },
@@ -154,11 +158,13 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
   const cpfEnabled = useUIStore((s) => s.cpfEnabled)
   const healthcareEnabled = useUIStore((s) => s.healthcareEnabled)
   const propertyEnabled = useUIStore((s) => s.propertyEnabled)
+  const protectionEnabled = useUIStore((s) => s.protectionEnabled)
 
   const hiddenSectionIds = new Set<string>()
   if (!cpfEnabled) hiddenSectionIds.add('section-cpf')
   if (!healthcareEnabled) hiddenSectionIds.add('section-healthcare')
   if (!propertyEnabled) hiddenSectionIds.add('section-property')
+  if (!protectionEnabled) hiddenSectionIds.add('section-protection')
 
   const allInputSections = sectionOrder === 'goal-first'
     ? GOAL_FIRST_SECTIONS
@@ -179,9 +185,19 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
           },
         ],
       }]
-  const afterInputGroups = companionMode
+  const afterInputGroups = (companionMode
     ? AFTER_INPUTS_GROUPS.filter((group) => group.title === 'PLAN' || group.title === 'ANALYSIS')
     : AFTER_INPUTS_GROUPS
+  ).map((group) => {
+    if (group.title !== 'ANALYSIS' || !protectionEnabled) return group
+    return {
+      ...group,
+      items: [
+        ...group.items,
+        { label: 'Health Check', path: '/health-check', icon: <HeartPulse className="h-4 w-4" /> },
+      ],
+    }
+  })
 
   const expandSection = useUIStore((s) => s.expandSection)
 
@@ -189,8 +205,8 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
     (sectionId: string) => {
       // Expand the target section if collapsed
       expandSection(sectionId)
-      // For sub-items (Goals, Healthcare), also expand parent Expenses section
-      if (sectionId === 'section-goals' || sectionId === 'section-healthcare') {
+      // For sub-items (Goals, Healthcare, Protection), also expand parent Expenses section
+      if (sectionId === 'section-goals' || sectionId === 'section-healthcare' || sectionId === 'section-protection') {
         expandSection('section-expenses')
       }
 
@@ -457,7 +473,7 @@ export function Sidebar() {
     if (sectionId) {
       // Expand the target section (and parent for sub-items) before scrolling
       expandSection(sectionId)
-      if (sectionId === 'section-goals' || sectionId === 'section-healthcare') {
+      if (sectionId === 'section-goals' || sectionId === 'section-healthcare' || sectionId === 'section-protection') {
         expandSection('section-expenses')
       }
       // Small delay to let the page render

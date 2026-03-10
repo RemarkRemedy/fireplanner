@@ -1418,6 +1418,62 @@ export const HELP_FAQ: Record<string, HelpFaqItem[]> = {
     },
   ],
 
+  '/health-check': [
+    {
+      question: 'What is the Financial Health Check?',
+      answer: (
+        <>
+          <p>
+            The Health Check evaluates <strong>8 financial health ratios</strong> and estimates
+            insurance coverage gaps. It gives you a quick snapshot of how well your finances
+            are balanced across savings, debt, liquidity, and protection.
+          </p>
+          <p className={tip}>
+            Emergency fund should cover 3-6 months of expenses in accessible cash.
+          </p>
+        </>
+      ),
+    },
+    {
+      question: 'What are the TDSR thresholds?',
+      answer: (
+        <>
+          <p>
+            The tool uses two debt-service thresholds: <strong>35%</strong> (healthy) and{' '}
+            <strong>50%</strong> (caution) of gross income. These are personal finance targets,
+            not the MAS regulatory limit of 60%.
+          </p>
+          <ul className={ul}>
+            <li><strong>Below 35%:</strong> healthy debt load</li>
+            <li><strong>35-50%:</strong> manageable but watch for increases</li>
+            <li><strong>Above 50%:</strong> high risk, consider reducing debt</li>
+          </ul>
+        </>
+      ),
+    },
+    {
+      question: 'How are insurance needs estimated?',
+      answer: (
+        <>
+          <p>Two methods are provided:</p>
+          <ul className={ul}>
+            <li>
+              <strong>MoneySense multiples:</strong> quick estimate using 9x annual income for death
+              coverage and 4x for critical illness
+            </li>
+            <li>
+              <strong>Capital Needs Analysis:</strong> detailed breakdown based on income replacement,
+              outstanding debts, dependants, and existing coverage
+            </li>
+          </ul>
+          <p className={tip}>
+            Insurance gaps show the difference between your current coverage and estimated needs.
+          </p>
+        </>
+      ),
+    },
+  ],
+
   '/reference': [],
   '/checklist': [],
 }
