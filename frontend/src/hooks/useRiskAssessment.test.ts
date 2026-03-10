@@ -175,7 +175,7 @@ describe('useRiskAssessment', () => {
           mediShieldLifeEnabled: true,
           ispTier: 'none',
           careShieldLifeEnabled: false,
-          oopBaseAmount: 5000,
+          oopBaseAmount: 7000,
           oopModel: 'flat' as 'age-curve',
           oopInflationRate: 0.02,
           oopReferenceAge: 55,
@@ -185,7 +185,7 @@ describe('useRiskAssessment', () => {
     })
     const { result } = renderHook(() => useRiskAssessment())
     const healthcare = result.current.find((d) => d.id === 'healthcare')
-    // Moderate OOP base ($5K) with low inflation should produce medium risk
+    // Moderate OOP base ($7K) in today's dollars should produce medium risk
     // (avgAnnualCash between $5K and $10K)
     expect(healthcare!.level).toBe('medium')
     expect(healthcare!.recommendation).toMatch(/moderate/i)

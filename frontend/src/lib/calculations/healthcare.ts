@@ -129,18 +129,16 @@ export function calculateHealthcareCostAtAge(
     ? lookupByAge(CARESHIELD_LIFE_PREMIUMS, age)
     : 0
 
-  // 4. Out-of-pocket (with medical inflation compounding from reference age)
-  const refAge = config.oopReferenceAge ?? 30    // default: curve anchor at age 30
-  const inflationRate = config.oopInflationRate ?? 0
-  const inflationFactor = Math.pow(1 + inflationRate, Math.max(0, age - refAge))
-
+  // 4. Out-of-pocket — today's dollars (age-curve or fixed, no inflation)
+  // Inflation is applied by nominal-context callers via inflateHealthcareCost()
   let oopExpense: number
   if (config.oopModel === 'age-curve') {
+    const refAge = config.oopReferenceAge ?? 30
     const curveVariant = config.oopCurveVariant ?? 'study-backed'
     const refMultiplier = interpolateOopMultiplier(refAge, curveVariant)
-    oopExpense = config.oopBaseAmount * (interpolateOopMultiplier(age, curveVariant) / refMultiplier) * inflationFactor
+    oopExpense = config.oopBaseAmount * (interpolateOopMultiplier(age, curveVariant) / refMultiplier)
   } else {
-    oopExpense = config.oopBaseAmount * inflationFactor
+    oopExpense = config.oopBaseAmount
   }
 
   // Apply ISP coverage discount — higher ISP tier reduces OOP exposure
@@ -158,6 +156,53 @@ export function calculateHealthcareCostAtAge(
 
   return {
     age,
+    mediShieldLifePremium,
+    ispAdditionalPremium,
+    careShieldLifePremium,
+    oopExpense,
+    totalCost,
+    mediSaveDeductible,
+    cashOutlay,
+  }
+}
+
+/**
+ * Apply inflation to a healthcare cost breakdown to get nominal future values.
+ * Used by nominal-context callers (projection.ts, monteCarloParams.ts, preview table).
+ *
+ * Premiums are inflated by premiumInflationRate, OOP by oopInflationRate.
+ * Both compound from currentAge (years into the future).
+ *
+ * @param cost Today's-dollar cost from calculateHealthcareCostAtAge
+ * @param config Healthcare config with inflation rates
+ * @param currentAge The person's current age (inflation anchor)
+ */
+export function inflateHealthcareCost(
+  cost: HealthcareCostAtAge,
+  config: HealthcareConfig,
+  currentAge: number,
+): HealthcareCostAtAge {
+  const yearsFromNow = Math.max(0, cost.age - currentAge)
+  if (yearsFromNow === 0) return cost
+
+  const premiumInflation = config.premiumInflationRate ?? 0.03
+  const oopInflation = config.oopInflationRate ?? 0
+  const premiumFactor = Math.pow(1 + premiumInflation, yearsFromNow)
+  const oopFactor = Math.pow(1 + oopInflation, yearsFromNow)
+
+  const mediShieldLifePremium = cost.mediShieldLifePremium * premiumFactor
+  const ispAdditionalPremium = cost.ispAdditionalPremium * premiumFactor
+  const careShieldLifePremium = cost.careShieldLifePremium * premiumFactor
+  const oopExpense = cost.oopExpense * oopFactor
+
+  const totalCost = mediShieldLifePremium + ispAdditionalPremium + careShieldLifePremium + oopExpense
+  const mediSaveDeductible = calculateMediSaveDeduction(
+    mediShieldLifePremium, ispAdditionalPremium, careShieldLifePremium, cost.age,
+  )
+  const cashOutlay = Math.max(0, totalCost - mediSaveDeductible)
+
+  return {
+    age: cost.age,
     mediShieldLifePremium,
     ispAdditionalPremium,
     careShieldLifePremium,
@@ -295,40 +340,66 @@ export function generateHealthcareProjection(
  *
  * The LAE is the constant annual withdrawal from a growing portfolio that would
  * exactly cover all escalating healthcare cash outlays from retirement to life
- * expectancy. It replaces the point-in-time snapshot (cost at retirement age)
- * which underestimates the FIRE target for young retirees with escalating premiums.
+ * expectancy.
  *
- * Formula:
- *   PV  = Sum_{t=0}^{T} cashOutlay(retAge + t) / (1 + r)^t
- *   AF  = Sum_{t=0}^{T} 1 / (1 + r)^t
- *   LAE = PV / AF
+ * Healthcare costs grow above general CPI due to medical inflation. This function
+ * applies the EXCESS of healthcare inflation over general inflation as real growth,
+ * then discounts at netRealReturn. This avoids mixing nominal and real dollar bases.
  *
  * @param config Healthcare configuration
- * @param retirementAge Age at which retirement (and healthcare withdrawals) begin
- * @param lifeExpectancy Age through which healthcare costs must be covered
- * @param netRealReturn Net real portfolio return (nominal − inflation − expense ratio)
- * @returns The level annual healthcare cost to use in FIRE number calculation
+ * @param retirementAge Age at which retirement begins
+ * @param lifeExpectancy Age through which costs must be covered
+ * @param netRealReturn Net real portfolio return (nominal - inflation - fees)
+ * @param generalInflation General inflation rate (for computing excess healthcare inflation)
+ * @param currentAge Person's current age (inflation anchor for excess growth)
  */
 export function calculateHealthcareLAE(
   config: HealthcareConfig,
   retirementAge: number,
   lifeExpectancy: number,
   netRealReturn: number,
+  generalInflation: number = 0,
+  currentAge: number = retirementAge,
 ): number {
   if (!config.enabled) return 0
 
   const T = lifeExpectancy - retirementAge
   if (T <= 0) {
-    // Retirement at or past life expectancy — just use point-in-time
     return calculateHealthcareCostAtAge(config, retirementAge).cashOutlay
   }
+
+  const premiumInflation = config.premiumInflationRate ?? 0.03
+  const oopInflation = config.oopInflationRate ?? 0
+
+  // Excess inflation over general CPI — the real growth rate of healthcare costs
+  const excessPremiumInflation = Math.max(0, premiumInflation - generalInflation)
+  const excessOopInflation = Math.max(0, oopInflation - generalInflation)
 
   let pv = 0
   let annuityFactor = 0
 
   for (let t = 0; t <= T; t++) {
     const age = retirementAge + t
-    const cashOutlay = calculateHealthcareCostAtAge(config, age).cashOutlay
+    const cost = calculateHealthcareCostAtAge(config, age)
+
+    // Apply excess inflation (real growth above CPI) from current age
+    const yearsFromNow = Math.max(0, age - currentAge)
+    const premiumGrowth = Math.pow(1 + excessPremiumInflation, yearsFromNow)
+    const oopGrowth = Math.pow(1 + excessOopInflation, yearsFromNow)
+
+    const inflatedPremiums = {
+      mediShield: cost.mediShieldLifePremium * premiumGrowth,
+      isp: cost.ispAdditionalPremium * premiumGrowth,
+      careShield: cost.careShieldLifePremium * premiumGrowth,
+    }
+    const inflatedOop = cost.oopExpense * oopGrowth
+
+    const totalInflated = inflatedPremiums.mediShield + inflatedPremiums.isp + inflatedPremiums.careShield + inflatedOop
+    const mediSaveDed = calculateMediSaveDeduction(
+      inflatedPremiums.mediShield, inflatedPremiums.isp, inflatedPremiums.careShield, age,
+    )
+    const cashOutlay = Math.max(0, totalInflated - mediSaveDed)
+
     const discountFactor = Math.abs(netRealReturn) < 1e-10
       ? 1
       : 1 / Math.pow(1 + netRealReturn, t)
