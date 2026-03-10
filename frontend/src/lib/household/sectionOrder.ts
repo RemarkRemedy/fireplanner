@@ -11,6 +11,7 @@ export type SectionId =
   | 'section-net-worth'
   | 'section-cpf'
   | 'section-healthcare'
+  | 'section-protection'
   | 'section-property'
   | 'section-allocation'
 
@@ -31,6 +32,7 @@ export const SECTION_ORDERINGS: Record<SectionOrderKey, readonly SectionId[]> = 
     'section-expenses',
     'section-net-worth',
     'section-cpf',
+    'section-protection',
     'section-property',
     'section-allocation',
   ],
@@ -40,6 +42,7 @@ export const SECTION_ORDERINGS: Record<SectionOrderKey, readonly SectionId[]> = 
     'section-expenses',
     'section-net-worth',
     'section-cpf',
+    'section-protection',
     'section-property',
     'section-allocation',
     'section-fire-settings',
@@ -52,6 +55,7 @@ export const SECTION_ORDERINGS: Record<SectionOrderKey, readonly SectionId[]> = 
     'section-allocation',
     'section-fire-settings',
     'section-cpf',
+    'section-protection',
     'section-income',
   ],
 } as const
