@@ -467,6 +467,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
           age,
           currentYear: new Date().getFullYear() + i,
           includeSA: params.cpfAutoFallbackIncludeSA ?? false,
+          cpfLifeStarted,
         })
         if (prefund.totalWithdrawal > 0) {
           liquidNW += prefund.totalWithdrawal
@@ -769,6 +770,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
           age,
           currentYear: new Date().getFullYear() + i,
           includeSA: params.cpfAutoFallbackIncludeSA ?? false,
+          cpfLifeStarted,
         })
         cpfAutoOaWithdrawalAmount += fallback.oaWithdrawal
         cpfAutoSaWithdrawalAmount += fallback.saWithdrawal
