@@ -717,7 +717,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                       <div className="space-y-1">
                         <Label>Growth</Label>
                         <Select
-                          value={expense.growthModel ?? 'fixed'}
+                          value={expense.growthModel ?? (expense.kind === 'base-living' || expense.kind === 'additional-living' ? 'inflation-linked' : 'fixed')}
                           onValueChange={(value) => {
                             const updates: Partial<ExpenseItem> = { growthModel: value as ExpenseItem['growthModel'] }
                             if (value === 'none') updates.growthRate = 0
@@ -735,7 +735,7 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                         </Select>
                       </div>
                     )}
-                    {expense.periodicity !== 'one-off' && (expense.growthModel ?? 'fixed') === 'fixed' && (
+                    {expense.periodicity !== 'one-off' && (expense.growthModel ?? (expense.kind === 'base-living' || expense.kind === 'additional-living' ? 'inflation-linked' : 'fixed')) === 'fixed' && (
                       <PercentInput
                         label="Growth rate"
                         value={expense.growthRate ?? 0}

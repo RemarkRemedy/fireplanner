@@ -241,6 +241,7 @@ function mapExpenseItems(snapshot: LegacyIndividualSnapshot): ExpenseItem[] {
     timing: ageRange(profile.currentAge, profile.lifeExpectancy),
     amount: profile.annualExpenses,
     periodicity: 'annual',
+    growthModel: 'inflation-linked',
     retirementSpendingAdjustment: profile.retirementSpendingAdjustment,
     legacySourceId: 'profile.annualExpenses',
   }
