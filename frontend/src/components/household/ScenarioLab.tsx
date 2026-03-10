@@ -242,7 +242,7 @@ export function ScenarioLab({ plan: providedPlan }: ScenarioLabProps) {
                 <SelectContent>
                   <SelectItem value="none">None</SelectItem>
                   {plan.income
-                    .filter((income) => income.isActive)
+                    .filter((income) => income.isActive !== false)
                     .map((income) => (
                       <SelectItem key={income.id} value={income.id}>
                         {income.label}

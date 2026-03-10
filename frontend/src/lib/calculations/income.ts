@@ -168,7 +168,7 @@ export function getStreamAmountAtAge(
   age: number,
   inflationRate: number
 ): number {
-  if (!stream.isActive) return 0
+  if (stream.isActive === false) return 0
   if (age < stream.startAge || age >= stream.endAge) return 0
 
   const yearsActive = age - stream.startAge
@@ -388,7 +388,7 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
 
   // Check if user has a manual CPF LIFE government income stream
   const hasManualCpfLife = params.incomeStreams.some(
-    (s) => s.type === 'government' && s.isActive && s.name.toLowerCase().includes('cpf life')
+    (s) => s.type === 'government' && s.isActive !== false && s.name.toLowerCase().includes('cpf life')
   )
 
   // Retirement sum target for RA transfer and post-55 contribution routing

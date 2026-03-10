@@ -76,7 +76,7 @@ function countHouseholdHealthcareErrors(
 
 function hasIncomeCoverage(plan: HouseholdPlan, owner: AdultOwner): boolean {
   return plan.income.some((entry) => (
-    entry.isActive
+    entry.isActive !== false
     && entry.timing.owner === owner
     && (entry.owner === owner || entry.owner === 'shared')
   ))
@@ -105,7 +105,7 @@ function getAdultAnnualIncome(plan: HouseholdPlan, owner: AdultOwner, fallbackIn
     entry.kind === 'salary-model'
     && entry.owner === owner
     && entry.timing.owner === owner
-    && entry.isActive
+    && entry.isActive !== false
   ))
 
   return salaryModel?.annualAmount ?? fallbackIncome
