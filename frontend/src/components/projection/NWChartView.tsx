@@ -12,25 +12,36 @@ import type { ProjectionRow } from '@/lib/types'
 import { formatCurrency } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/useIsMobile'
 
+interface JointAdultInfo {
+  name: string
+  currentAge: number
+}
+
 interface NWChartViewProps {
   rows: ProjectionRow[]
   retirementAge: number
+  /** When set, x-axis shows years from now and tooltip shows per-adult ages */
+  jointAdults?: JointAdultInfo[]
 }
 
 interface ChartDataPoint {
   age: number
+  year: number
   liquidNW: number
   cpfTotal: number
   cpfBequest: number
   propertyEquity: number
 }
 
-export function NWChartView({ rows, retirementAge }: NWChartViewProps) {
+export function NWChartView({ rows, retirementAge, jointAdults }: NWChartViewProps) {
   const isMobile = useIsMobile()
   const curveType = rows.length <= 40 ? 'monotone' : 'linear'
+  const isJoint = jointAdults && jointAdults.length >= 2
+  const startAge = rows[0]?.age ?? 0
 
   const data: ChartDataPoint[] = rows.map((row) => ({
     age: row.age,
+    year: row.age - startAge,
     liquidNW: Math.max(0, row.liquidNW),
     cpfTotal: Math.max(0, row.cpfTotal),
     cpfBequest: Math.max(0, row.cpfBequest),
@@ -43,9 +54,9 @@ export function NWChartView({ rows, retirementAge }: NWChartViewProps) {
         <AreaChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
           <XAxis
-            dataKey="age"
+            dataKey={isJoint ? 'year' : 'age'}
             tick={{ fontSize: 12 }}
-            label={{ value: 'Age', position: 'insideBottom', offset: -5, fontSize: 12 }}
+            label={{ value: isJoint ? 'Year' : 'Age', position: 'insideBottom', offset: -5, fontSize: 12 }}
           />
           <YAxis
             tickFormatter={(v: number) =>
@@ -68,10 +79,17 @@ export function NWChartView({ rows, retirementAge }: NWChartViewProps) {
                     ? 'CPF LIFE Bequest'
                     : 'Property Equity',
             ]}
-            labelFormatter={(age: number) => `Age ${age}`}
+            labelFormatter={(value: number) => {
+              if (isJoint) {
+                const year = value
+                return `Year ${year}\n${jointAdults[0].name}: Age ${jointAdults[0].currentAge + year}\n${jointAdults[1].name}: Age ${jointAdults[1].currentAge + year}`
+              }
+              return `Age ${value}`
+            }}
+            labelStyle={isJoint ? { whiteSpace: 'pre-line' } : undefined}
           />
           <ReferenceLine
-            x={retirementAge}
+            x={isJoint ? retirementAge - startAge : retirementAge}
             stroke="hsl(var(--destructive))"
             strokeDasharray="4 4"
             label={{ value: 'Retire', position: 'top', fontSize: 11 }}

@@ -690,7 +690,11 @@ export function ProjectionPage() {
 
       {displayRows && displayRows.length > 0 && (
         <>
-          <NWChartView rows={displayRows} retirementAge={activeRetirementAge} />
+          <NWChartView
+            rows={displayRows}
+            retirementAge={activeRetirementAge}
+            jointAdults={isMultiAdult && projectionView === 'joint' ? adults.map((a) => ({ name: a.displayName, currentAge: a.currentAge })) : undefined}
+          />
 
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
