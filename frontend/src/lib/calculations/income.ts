@@ -354,6 +354,8 @@ export interface IncomeProjectionParams {
   cpfAutoFallbackIncludeSA?: boolean
   cpfVirtualRebalancing?: boolean
   cpfVirtualRebalancingMode?: 'from55' | 'always'
+  /** Number of CPF-contributing adults (multiplies OW/AW ceilings for joint households) */
+  cpfAdultCount?: number
 }
 
 /**
@@ -559,7 +561,7 @@ export function generateIncomeProjection(params: IncomeProjectionParams): Income
       const effectivePrMonths = params.residencyStatus === 'pr' && params.prMonths !== undefined
         ? params.prMonths + ((age - params.currentAge) * 12)
         : undefined
-      const cpf = calculateCpfContribution(cpfApplicableSalary, age, annualBonus, params.residencyStatus, effectivePrMonths)
+      const cpf = calculateCpfContribution(cpfApplicableSalary, age, annualBonus, params.residencyStatus, effectivePrMonths, params.cpfAdultCount ?? 1)
       cpfEmployee = cpf.employee
       cpfEmployer = cpf.employer
 
