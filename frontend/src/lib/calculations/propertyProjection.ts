@@ -39,6 +39,9 @@ export interface PropertyProjectionParams {
   hdbSublettingRooms: number
   hdbSublettingRate: number
   hdbCpfUsedForHousing: number
+  /** Years the user has already been paying the mortgage before projection start.
+   *  Used to compute more accurate CPF refund accrued interest. Defaults to 0. */
+  priorMortgageYears?: number
   downsizing: {
     scenario: 'none' | 'sell-and-downsize' | 'sell-and-rent'
     sellAge: number
@@ -144,7 +147,7 @@ export function generatePropertyProjection(
   milestoneAges.add(endAge)
 
   const rentalIncome = params.hdbMonetizationStrategy === 'sublet'
-    ? params.hdbSublettingRooms * params.hdbSublettingRate * 12
+    ? params.hdbSublettingRooms * params.hdbSublettingRate * 12 * ownershipPercent
     : undefined
 
   const startBalaFactor = applyBalaDecay ? getBalaFactor(leaseYears) : 1
@@ -170,8 +173,8 @@ export function generatePropertyProjection(
     }
 
     const hasMortgage = age < mortgagePayoffAge && balance > 0
-    const annualPaymentCpf = hasMortgage ? cpfMonthly * 12 : 0
-    const annualPaymentCash = hasMortgage ? Math.max(0, (monthlyPayment * 12) - annualPaymentCpf) : 0
+    const annualPaymentCpf = hasMortgage ? cpfMonthly * 12 * ownershipPercent : 0
+    const annualPaymentCash = hasMortgage ? Math.max(0, (monthlyPayment * 12) - (cpfMonthly * 12)) * ownershipPercent : 0
 
     const effectiveValue = leaseAdjValue ?? rawValue
     let netEquity = (effectiveValue - balance) * ownershipPercent
@@ -183,9 +186,10 @@ export function generatePropertyProjection(
       const mortgageAtSell = outstandingMortgageAtAge(initialMortgageBalance, monthlyPayment, mortgageRate, sellAge - startAge)
 
       if (params.hdbCpfUsedForHousing > 0) {
+        const totalMortgageYears = (sellAge - startAge) + (params.priorMortgageYears ?? 0)
         const refund = computeHdbCpfRefund({
           cpfUsedForHousing: params.hdbCpfUsedForHousing,
-          yearsOfMortgage: sellAge - startAge,
+          yearsOfMortgage: totalMortgageYears,
         })
         cpfHousingRefund = refund.totalRefund
       }
@@ -203,16 +207,26 @@ export function generatePropertyProjection(
           residency: params.residencyForAbsd,
           propertyCount: postSalePropertyCount,
         })
-        netEquity = result.netEquityToPortfolio * ownershipPercent
-        note = `Sell & downsize — net ${formatCurrency(netEquity)} to portfolio`
+        if (result.shortfall > 0) {
+          netEquity = -result.shortfall * ownershipPercent
+          note = `Sell & downsize — shortfall ${formatCurrency(result.shortfall * ownershipPercent)}`
+        } else {
+          netEquity = result.netEquityToPortfolio * ownershipPercent
+          note = `Sell & downsize — net ${formatCurrency(netEquity)} to portfolio`
+        }
       } else if (downsizing.scenario === 'sell-and-rent') {
         const result = calculateSellAndRent({
           salePrice: downsizing.expectedSalePrice,
           outstandingMortgage: mortgageAtSell,
           monthlyRent: downsizing.monthlyRent,
         })
-        netEquity = result.netProceedsToPortfolio * ownershipPercent
-        note = `Sell & rent — net ${formatCurrency(netEquity)} to portfolio`
+        if (result.shortfall > 0) {
+          netEquity = -result.shortfall * ownershipPercent
+          note = `Sell & rent — shortfall ${formatCurrency(result.shortfall * ownershipPercent)}`
+        } else {
+          netEquity = result.netProceedsToPortfolio * ownershipPercent
+          note = `Sell & rent — net ${formatCurrency(netEquity)} to portfolio`
+        }
       }
     } else if (age === mortgagePayoffAge && initialMortgageBalance > 0) {
       note = 'Mortgage paid off'

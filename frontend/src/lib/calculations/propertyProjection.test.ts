@@ -306,6 +306,105 @@ describe('generatePropertyProjection — HDB subletting', () => {
   })
 })
 
+describe('generatePropertyProjection — ownership scaling', () => {
+  it('scales payments and rental income by ownershipPercent', () => {
+    const fullOwner: PropertyProjectionParams = {
+      ownsProperty: true,
+      existingPropertyValue: 500_000,
+      existingMortgageBalance: 200_000,
+      existingMonthlyPayment: 1_200,
+      existingMortgageRate: 0.03,
+      existingMortgageRemainingYears: 15,
+      mortgageCpfMonthly: 400,
+      existingAppreciationRate: 0.02,
+      existingLeaseYears: 90,
+      existingApplyBalaDecay: false,
+      ownershipPercent: 1,
+      hdbMonetizationStrategy: 'sublet' as const,
+      hdbSublettingRooms: 2,
+      hdbSublettingRate: 800,
+      hdbCpfUsedForHousing: 0,
+      downsizing: { scenario: 'none' as const, sellAge: 65, expectedSalePrice: 0, newPropertyCost: 0, newMortgageRate: 0, newMortgageTerm: 0, newLtv: 0, monthlyRent: 0, rentGrowthRate: 0 },
+      residencyForAbsd: 'citizen' as const,
+      propertyCount: 1,
+      purchasePrice: 0,
+      leaseYears: 99,
+      appreciationRate: 0,
+      mortgageRate: 0,
+      mortgageTerm: 0,
+      ltv: 0,
+      purchaseYearsFromNow: 0,
+      currentAge: 40,
+      retirementAge: 60,
+      lifeExpectancy: 85,
+    }
+    const halfOwner = { ...fullOwner, ownershipPercent: 0.5 }
+
+    const fullRows = generatePropertyProjection(fullOwner)
+    const halfRows = generatePropertyProjection(halfOwner)
+
+    const fullFirst = fullRows[0]
+    const halfFirst = halfRows[0]
+
+    // Payments should be halved
+    expect(halfFirst.annualPaymentCash).toBeCloseTo(fullFirst.annualPaymentCash / 2, -2)
+    expect(halfFirst.annualPaymentCpf).toBeCloseTo(fullFirst.annualPaymentCpf / 2, -2)
+    // Rental income should be halved
+    expect(halfFirst.rentalIncome).toBeCloseTo(fullFirst.rentalIncome! / 2, -2)
+    // Net equity should be halved
+    expect(halfFirst.netEquity).toBeCloseTo(fullFirst.netEquity / 2, -2)
+  })
+})
+
+describe('generatePropertyProjection — underwater downsizing', () => {
+  it('shows negative equity when shortfall exists on sell-and-downsize', () => {
+    const params: PropertyProjectionParams = {
+      ownsProperty: true,
+      existingPropertyValue: 500_000,
+      existingMortgageBalance: 400_000,
+      existingMonthlyPayment: 2_500,
+      existingMortgageRate: 0.04,
+      existingMortgageRemainingYears: 25,
+      mortgageCpfMonthly: 0,
+      existingAppreciationRate: 0.01,
+      existingLeaseYears: 90,
+      existingApplyBalaDecay: false,
+      ownershipPercent: 1,
+      hdbMonetizationStrategy: 'none' as const,
+      hdbSublettingRooms: 0,
+      hdbSublettingRate: 0,
+      hdbCpfUsedForHousing: 0,
+      downsizing: {
+        scenario: 'sell-and-downsize' as const,
+        sellAge: 40,
+        expectedSalePrice: 400_000,
+        newPropertyCost: 800_000,
+        newMortgageRate: 0.04,
+        newMortgageTerm: 25,
+        newLtv: 0.75,
+        monthlyRent: 0,
+        rentGrowthRate: 0,
+      },
+      residencyForAbsd: 'citizen' as const,
+      propertyCount: 1,
+      purchasePrice: 0,
+      leaseYears: 99,
+      appreciationRate: 0,
+      mortgageRate: 0,
+      mortgageTerm: 0,
+      ltv: 0,
+      purchaseYearsFromNow: 0,
+      currentAge: 35,
+      retirementAge: 55,
+      lifeExpectancy: 90,
+    }
+    const rows = generatePropertyProjection(params)
+    const sellRow = rows.find(r => r.age === 40)!
+    expect(sellRow.netEquity).toBeLessThan(0)
+    expect(sellRow.note).toContain('shortfall')
+  })
+})
+
 describe('generatePropertyProjection — freehold property', () => {
   it('skips Bala decay for 999-year lease even if toggle is on', () => {
     const params: PropertyProjectionParams = {
