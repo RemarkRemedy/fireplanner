@@ -45,6 +45,10 @@ import {
 } from './withdrawal'
 import { computeCpfAutoFallback } from './cpfAutoWithdrawal'
 import { computeVirtualRebalancing } from './cpfVirtualRebalancing'
+import {
+  OA_INTEREST_RATE,
+  SA_INTEREST_RATE,
+} from '@/lib/data/cpfRates'
 
 // TODO: [Deferred] Approach C — Unified Two-Bucket Engine
 // Replace the current single-portfolio simulation model with explicit liquid + CPF bucket
@@ -377,6 +381,13 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
 
   const totalYears = lifeExpectancy - currentAge
 
+  // Track cumulative CPF auto-fallback withdrawals across years.
+  // The income projection pre-computes CPF balances without knowing about auto-fallback,
+  // so we must subtract cumulative withdrawals (compounded at CPF interest rates) from
+  // each year's cloned income row to reflect the true remaining CPF balances.
+  let cpfOaAutoAdjustment = 0
+  let cpfSaAutoAdjustment = 0
+
   for (let i = 0; i <= totalYears; i++) {
     const age = currentAge + i
     const year = i
@@ -385,6 +396,14 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     if (!rawIncomeRow) break
     // Shallow-clone to avoid mutating the caller's array (cpfOA, cpfSA are modified in-place below)
     const incomeRow = { ...rawIncomeRow }
+
+    // Apply cumulative CPF auto-fallback adjustments from prior years.
+    // Previous withdrawals compound at CPF interest rates since the withdrawn
+    // money would have earned interest if it had stayed in the account.
+    cpfOaAutoAdjustment *= (1 + OA_INTEREST_RATE)
+    cpfSaAutoAdjustment *= (1 + SA_INTEREST_RATE)
+    incomeRow.cpfOA = Math.max(0, incomeRow.cpfOA - cpfOaAutoAdjustment)
+    incomeRow.cpfSA = Math.max(0, incomeRow.cpfSA - cpfSaAutoAdjustment)
 
     // Track retirement year (0-indexed from first retired year)
     if (isRetired) retirementYearCounter++
@@ -455,6 +474,8 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
           cpfAutoSaWithdrawalAmount = prefund.saWithdrawal
           incomeRow.cpfOA -= prefund.oaWithdrawal
           incomeRow.cpfSA -= prefund.saWithdrawal
+          cpfOaAutoAdjustment += prefund.oaWithdrawal
+          cpfSaAutoAdjustment += prefund.saWithdrawal
         }
       }
     }
@@ -759,6 +780,8 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
         // Deduct from CPF balances in the income row (mutates for downstream tracking)
         incomeRow.cpfOA -= fallback.oaWithdrawal
         incomeRow.cpfSA -= fallback.saWithdrawal
+        cpfOaAutoAdjustment += fallback.oaWithdrawal
+        cpfSaAutoAdjustment += fallback.saWithdrawal
       }
 
       // Proportionally attribute deficit to goals and retirement withdrawals
