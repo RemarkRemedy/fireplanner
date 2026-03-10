@@ -116,6 +116,7 @@ interface MonteCarloTabProps {
   validationErrors: Record<string, string>
   isStale: boolean
   progress: { progress: number; message: string } | null
+  jointAdults?: { name: string; currentAge: number }[]
 }
 
 function MonteCarloTab({
@@ -135,6 +136,7 @@ function MonteCarloTab({
   validationErrors,
   isStale,
   progress,
+  jointAdults,
 }: MonteCarloTabProps) {
   const progressPercent = Math.round((progress?.progress ?? 0.1) * 100)
 
@@ -208,7 +210,7 @@ function MonteCarloTab({
           {data.spending_metrics && (
             <SpendingMetricsPanel metrics={data.spending_metrics} nSimulations={data.n_simulations} strategy={selectedStrategy} />
           )}
-          <FanChart bands={data.percentile_bands} retirementAge={retirementAge} />
+          <FanChart bands={data.percentile_bands} retirementAge={retirementAge} jointAdults={jointAdults} />
           {isAdvanced && data.histogram_snapshots && data.histogram_snapshots.length > 0 && (
             <PortfolioHistogram snapshots={data.histogram_snapshots} />
           )}
@@ -1127,6 +1129,7 @@ export function StressTestPage() {
             validationErrors={mc.validationErrors}
             isStale={isCompanionResultStale}
             progress={mc.progress}
+            jointAdults={householdPlan.adults.length >= 2 ? householdPlan.adults.map((a) => ({ name: a.displayName, currentAge: a.currentAge })) : undefined}
           />
         </TabsContent>
 
