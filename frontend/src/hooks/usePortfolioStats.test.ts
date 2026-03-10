@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { usePortfolioStats } from './usePortfolioStats'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
-import { setupTestPlan } from '@/test-helpers/setupTestPlan'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 
 beforeEach(() => {

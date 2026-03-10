@@ -37,10 +37,6 @@ function getHouseholdIncome() {
   return buildHouseholdRuntimeLegacyInputs(plan).income
 }
 
-function getSelfAdult() {
-  return useHouseholdPlanStore.getState().plan.adults.find((a) => a.owner === 'self')!
-}
-
 describe('applySnapshotToStores', () => {
   beforeEach(() => {
     useHouseholdPlanStore.getState().reset()

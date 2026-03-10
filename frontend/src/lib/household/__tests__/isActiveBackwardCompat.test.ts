@@ -81,7 +81,7 @@ function makeCouplePlanWithStalePartnerIncome(): HouseholdPlan {
   ]
 
   // Strip isActive to simulate stale data
-  delete (plan.income[1] as Record<string, unknown>).isActive
+  delete (plan.income[1] as unknown as Record<string, unknown>).isActive
 
   plan.expenses = [
     {
@@ -104,7 +104,7 @@ describe('isActive backward compatibility', () => {
   it('confirms partner income has undefined isActive (test setup check)', () => {
     const partnerIncome = plan.income.find((i) => i.id === 'income-salary-partner')
     expect(partnerIncome).toBeDefined()
-    expect((partnerIncome as Record<string, unknown>).isActive).toBeUndefined()
+    expect((partnerIncome as unknown as Record<string, unknown>).isActive).toBeUndefined()
   })
 
   describe('buildHouseholdRuntimeLegacyInputs', () => {

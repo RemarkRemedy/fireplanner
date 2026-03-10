@@ -10,15 +10,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { cn } from '@/lib/utils'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { useSectionCompletion } from '@/hooks/useSectionCompletion'
 import type { SectionId } from '@/lib/household/sectionOrder'

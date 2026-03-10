@@ -337,7 +337,7 @@ export function setupTestPlan(overrides?: TestPlanOverrides): void {
 
     // Replace life events
     if (lifeEvents !== undefined) {
-      self.lifeEvents = structuredClone(lifeEvents) as typeof self.lifeEvents
+      self.lifeEvents = structuredClone(lifeEvents) as unknown as typeof self.lifeEvents
     }
     if (lifeEventsEnabled !== undefined) {
       self.lifeEventsEnabled = lifeEventsEnabled

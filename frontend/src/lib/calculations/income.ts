@@ -991,7 +991,6 @@ export function mergePerAdultProjections(
     let srsWithdrawal = 0
     let srsTaxableWithdrawal = 0
     const allActiveLifeEvents: string[] = []
-    let allRetired = true
 
     // CPF bequest: when an adult dies (projection ends), their final CPF
     // balances are paid out as cash to the surviving spouse's portfolio.
@@ -1042,7 +1041,6 @@ export function mergePerAdultProjections(
           allActiveLifeEvents.push(event)
         }
       }
-      if (!row.isRetired) allRetired = false
     }
 
     // Compound the OA adjustment from previous years (interest overcounting)

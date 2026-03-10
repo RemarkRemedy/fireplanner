@@ -152,7 +152,6 @@ describe('Household assets, property, and assumptions editors', () => {
   })
 
   it('edits per-adult liquid balances and syncs liquidNetWorth on adults', async () => {
-    const user = userEvent.setup()
     setHouseholdPlan()
 
     render(<AssetsPropertySection mode="assets" />)

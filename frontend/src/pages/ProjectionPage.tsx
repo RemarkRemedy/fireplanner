@@ -6,7 +6,7 @@ import {
   flexRender,
   type VisibilityState,
 } from '@tanstack/react-table'
-import type { ProjectionRow, ProjectionSummary, WithdrawalStrategyType } from '@/lib/types'
+import type { WithdrawalStrategyType } from '@/lib/types'
 import { useProjection } from '@/hooks/useProjection'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useSimulationStore } from '@/stores/useSimulationStore'

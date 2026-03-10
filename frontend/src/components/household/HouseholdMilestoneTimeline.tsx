@@ -45,6 +45,8 @@ function milestoneKindLabel(kind: HouseholdMilestoneRow['kind']): string {
       return 'Property'
     case 'retirement-withdrawal':
       return 'Withdrawal'
+    default:
+      return kind
   }
 }
 

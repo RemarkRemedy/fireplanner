@@ -34,7 +34,6 @@ export function ProjectionTable({ data, retirementAge, jointAdults }: Projection
   const hasCpfis = data.some((r) => r.cpfisOA > 0 || r.cpfisSA > 0)
 
   const isJoint = jointAdults && jointAdults.length >= 2
-  const referenceAge = data[0]?.age ?? 0
 
   const columns = useMemo(() => {
     const cols = isJoint

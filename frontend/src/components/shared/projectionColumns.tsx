@@ -116,7 +116,7 @@ export function buildProjectionColumns(
           header: 'Year',
           meta: { retirementAge },
           cell: (info) => info.row.index,
-        }),
+        }) as ColumnDef<ProjectionRow, number | string>,
         columnHelper.display({
           id: 'adult1Age',
           header: jointAdults[0].name,
@@ -133,7 +133,7 @@ export function buildProjectionColumns(
           header: 'Age',
           meta: { retirementAge },
           cell: (info) => info.getValue(),
-        }),
+        }) as ColumnDef<ProjectionRow, number | string>,
       ]
 
   return [
