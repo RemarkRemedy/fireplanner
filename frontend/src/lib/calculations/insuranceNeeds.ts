@@ -99,7 +99,7 @@ export function pvAnnuityDue(
   rate: number
 ): number {
   if (years <= 0 || annualPayment === 0) return 0
-  if (rate === 0) return annualPayment * years
+  if (Math.abs(rate) < 1e-10) return annualPayment * years
   const factor = (1 - Math.pow(1 + rate, -years)) / rate
   return annualPayment * factor * (1 + rate)
 }
@@ -148,7 +148,9 @@ export function computeMoneySenseNeeds(inputs: InsuranceNeedsInputs): MoneySense
 // ─── Capital Needs Detailed Method ───────────────────────────────────────────
 
 export function computeCapitalNeeds(inputs: InsuranceNeedsInputs): CapitalNeedsResult {
-  const netRate = inputs.discountRate - inputs.inflationRate
+  // discountRate is already a real rate (expectedReturn - inflation - expenseRatio),
+  // computed in useHealthCheckInputs. Do NOT subtract inflation again.
+  const netRate = inputs.discountRate
 
   // ── Death/TPD Obligations ──
 
@@ -173,11 +175,15 @@ export function computeCapitalNeeds(inputs: InsuranceNeedsInputs): CapitalNeedsR
       0,
       inputs.partnerRetirementAge - inputs.partnerCurrentAge
     )
+    // TODO(v2/W5): Use full partner income trajectory instead of year[0] only.
+    // Currently uses first-year income as a flat estimate; ignores salary growth and career breaks.
     const partnerAnnualIncome =
       inputs.partnerProjectedAnnualIncome != null && inputs.partnerProjectedAnnualIncome.length > 0
         ? inputs.partnerProjectedAnnualIncome[0]
         : 0
     const annualShortfall = Math.max(0, inputs.annualExpenses - partnerAnnualIncome)
+    // TODO(v2/W6): Extend horizon beyond partner retirement to cover post-retirement life expectancy.
+    // Currently stops at partner retirement, ignoring 20-30 years of unfunded post-retirement expenses.
     householdExpenses = pvAnnuityDue(annualShortfall, partnerYearsToRetirement, netRate)
   }
 

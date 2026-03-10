@@ -163,8 +163,8 @@ describe('computeCapitalNeeds', () => {
   it('married: household expenses account for partner income shortfall', () => {
     // annualExpenses=72k, partnerIncome=60k => shortfall=12k/yr over 15 years (until partner retirement at 55)
     const result = computeCapitalNeeds(marriedWithKids)
-    // PV of 12k/yr for 15 years at net rate (discount - inflation = 0.005)
-    const netRate = 0.03 - 0.025 // 0.005
+    // PV of 12k/yr for 15 years at discountRate (already a real rate, no double inflation subtraction)
+    const netRate = 0.03 // discountRate is already real
     const expectedPV = pvAnnuityDue(12_000, 15, netRate)
     expect(result.deathTpd.householdExpenses).toBeCloseTo(expectedPV, -1)
   })

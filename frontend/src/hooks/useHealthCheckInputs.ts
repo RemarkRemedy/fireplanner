@@ -41,6 +41,8 @@ export function useHealthCheckInputs(adultId?: string): HealthCheckInputsResult 
     const row0: IncomeProjectionRow | undefined = adultProjection?.[0]
 
     const grossMonthlyIncome = row0 ? row0.totalGross / 12 : adult.annualIncome / 12
+    // Fallback: 80% of gross approximates net when projection unavailable (no CPF/tax data).
+    // TODO(v2): derive net from tax+CPF calculation when projection is unavailable.
     const netMonthlyIncome = row0 ? row0.totalNet / 12 : adult.annualIncome * 0.8 / 12
     const monthlyExpenses = adult.annualExpenses / 12
 
@@ -51,24 +53,26 @@ export function useHealthCheckInputs(adultId?: string): HealthCheckInputsResult 
 
     const propertyValue = relevantProperties.reduce(
       (sum, p) => {
-        const fraction = isMultiAdult ? p.ownershipPercent : 1.0
+        const fraction = isMultiAdult ? (p.ownershipPercent ?? 1) : 1.0
         return sum + (p.existingPropertyValue ?? 0) * fraction
       }, 0
     )
     const mortgageFraction = relevantProperties.reduce(
       (sum, p) => {
-        const fraction = isMultiAdult ? p.ownershipPercent : 1.0
+        const fraction = isMultiAdult ? (p.ownershipPercent ?? 1) : 1.0
         return sum + (p.existingMortgageBalance ?? 0) * fraction
       }, 0
     )
     const mortgagePaymentFraction = relevantProperties.reduce(
       (sum, p) => {
-        const fraction = isMultiAdult ? p.ownershipPercent : 1.0
+        const fraction = isMultiAdult ? (p.ownershipPercent ?? 1) : 1.0
         return sum + (p.existingMonthlyPayment ?? 0) * fraction
       }, 0
     )
 
     // Assets
+    // TODO(v2/W7): Exclude CPF MA from totalResources in TPD/death scenarios —
+    // MA is restricted to medical/insurance use and not withdrawable for living expenses.
     const cpfTotal = adult.cpf.balances.oa + adult.cpf.balances.sa + adult.cpf.balances.ma + adult.cpf.balances.ra
     const liquidNW = adult.liquidNetWorth
     const investedAssets = Math.max(0, liquidNW - adult.cashSavings)
