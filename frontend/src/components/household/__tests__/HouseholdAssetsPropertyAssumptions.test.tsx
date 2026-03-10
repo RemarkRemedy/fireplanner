@@ -120,21 +120,18 @@ beforeEach(() => {
 })
 
 describe('Household assets, property, and assumptions editors', () => {
-  it('edits ownership-scoped liquid and locked household assets', async () => {
+  it('edits auto-seeded liquid balances and locked household assets', async () => {
     const user = userEvent.setup()
     setHouseholdPlan()
 
     render(<AssetsPropertySection mode="assets" />)
 
-    await user.click(screen.getByRole('button', { name: 'Add liquid balance' }))
-    await user.click(screen.getByRole('button', { name: 'Add locked asset' }))
+    // Liquid balances are auto-seeded per adult — no "Add" button needed
+    // Find Taylor's liquid balance input (auto-seeded for each adult)
+    const taylorInput = screen.getByLabelText('Taylor (You)')
+    setNumericInput(taylorInput as HTMLInputElement, '150000')
 
-    const liquidCard = screen.getByDisplayValue('Shared liquid balance').closest('div.rounded-lg.border')
-    if (!(liquidCard instanceof HTMLElement)) {
-      throw new Error('Could not find liquid asset card')
-    }
-    await chooseSelectOption(user, liquidCard, 'Owner', 'Taylor (You)')
-    setNumericInput(getFieldInput(liquidCard, 'Amount'), '150000')
+    await user.click(screen.getByRole('button', { name: 'Add locked asset' }))
 
     const lockedCard = screen.getByDisplayValue('Locked asset').closest('div.rounded-lg.border')
     if (!(lockedCard instanceof HTMLElement)) {
@@ -144,47 +141,35 @@ describe('Household assets, property, and assumptions editors', () => {
     setNumericInput(getFieldInput(lockedCard, 'Unlock age'), '46')
 
     const state = useHouseholdPlanStore.getState()
-    const liquidAsset = state.plan.assets.find((asset) => asset.kind === 'liquid-net-worth')
+    const selfLiquid = state.plan.assets.find((asset) => asset.kind === 'liquid-net-worth' && asset.owner === 'self')
     const lockedAsset = state.plan.assets.find((asset) => asset.kind === 'locked-asset')
     const selfAdult = state.plan.adults.find((adult) => adult.owner === 'self')
 
-    expect(liquidAsset?.owner).toBe('self')
-    expect(liquidAsset?.amount).toBe(150_000)
+    expect(selfLiquid?.amount).toBe(150_000)
     expect(lockedAsset?.owner).toBe('shared')
     expect(lockedAsset?.unlockAge).toBe(46)
     expect(selfAdult?.liquidNetWorth).toBe(150_000)
   })
 
-  it('splits shared liquid balances across each adult summary and seeds locked-asset defaults on kind changes', async () => {
+  it('edits per-adult liquid balances and syncs liquidNetWorth on adults', async () => {
     const user = userEvent.setup()
     setHouseholdPlan()
 
     render(<AssetsPropertySection mode="assets" />)
 
-    await user.click(screen.getByRole('button', { name: 'Add liquid balance' }))
+    // Auto-seeded liquid balances: one per adult
+    const taylorInput = screen.getByLabelText('Taylor (You)')
+    const patInput = screen.getByLabelText('Pat')
 
-    const assetCard = screen.getByDisplayValue('Shared liquid balance').closest('div.rounded-lg.border')
-    if (!(assetCard instanceof HTMLElement)) {
-      throw new Error('Could not find shared liquid asset card')
-    }
+    setNumericInput(taylorInput as HTMLInputElement, '80000')
+    setNumericInput(patInput as HTMLInputElement, '40000')
 
-    setNumericInput(getFieldInput(assetCard, 'Amount'), '120000')
+    const state = useHouseholdPlanStore.getState()
+    const selfAdult = state.plan.adults.find((adult) => adult.owner === 'self')
+    const partnerAdult = state.plan.adults.find((adult) => adult.owner === 'partner')
 
-    let state = useHouseholdPlanStore.getState()
-    let selfAdult = state.plan.adults.find((adult) => adult.owner === 'self')
-    let partnerAdult = state.plan.adults.find((adult) => adult.owner === 'partner')
-
-    expect(selfAdult?.liquidNetWorth).toBe(60_000)
-    expect(partnerAdult?.liquidNetWorth).toBe(60_000)
-
-    await chooseSelectOption(user, assetCard, 'Kind', 'Locked asset')
-
-    state = useHouseholdPlanStore.getState()
-    const lockedAsset = state.plan.assets[0]
-
-    expect(lockedAsset?.kind).toBe('locked-asset')
-    expect(lockedAsset?.unlockAge).toBe(45)
-    expect(lockedAsset?.growthRate).toBe(0.04)
+    expect(selfAdult?.liquidNetWorth).toBe(80_000)
+    expect(partnerAdult?.liquidNetWorth).toBe(40_000)
   })
 
   it('edits shared property ownership, HDB monetization, and downsizing fields', async () => {
@@ -201,7 +186,7 @@ describe('Household assets, property, and assumptions editors', () => {
     }
 
     await chooseSelectOption(user, propertyCard, 'Owner', 'Shared')
-    const shareInput = getFieldInput(propertyCard, 'Household share (%)')
+    const shareInput = getFieldInput(propertyCard, 'Share (%)')
     expect(shareInput.value).toBe('50')
     setNumericInput(shareInput, '75')
     await chooseSelectOption(user, propertyCard, 'Monetization strategy', 'Sublet room(s)')
