@@ -348,7 +348,18 @@ function HealthcareDetails({ adult, onUpdate }: {
                 key={tier}
                 type="button"
                 className={`rounded-md border p-2 text-left text-sm transition-colors ${isSelected ? 'border-primary bg-primary/10 font-medium' : 'hover:bg-muted'}`}
-                onClick={() => onUpdate({ ispTier: tier as IspTierOption })}
+                onClick={() => {
+                  const updates: Partial<HealthcareConfig> = { ispTier: tier as IspTierOption }
+                  // Clear downgrade if new tier is at or below the current downgrade tier
+                  if (hc.ispDowngradeTier !== undefined) {
+                    const tierOrder: Record<string, number> = { none: 0, basic: 1, standard: 2, enhanced: 3 }
+                    if (tierOrder[tier] <= tierOrder[hc.ispDowngradeTier]) {
+                      updates.ispDowngradeTier = undefined
+                      updates.ispDowngradeAge = undefined
+                    }
+                  }
+                  onUpdate(updates)
+                }}
               >
                 <div>{label}</div>
                 <div className="text-xs text-muted-foreground">{desc}</div>
@@ -362,6 +373,73 @@ function HealthcareDetails({ adult, onUpdate }: {
           </p>
         )}
       </div>
+
+      {/* ISP Downgrade — only shown when ISP tier is above 'none' */}
+      {hc.ispTier !== 'none' && (
+        <div className="space-y-2 rounded-md border border-dashed border-muted-foreground/30 p-3">
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={hc.ispDowngradeTier !== undefined && hc.ispDowngradeAge !== undefined}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  // Default downgrade: one tier below current, at age 65
+                  const tierOrder: IspTierOption[] = ['none', 'basic', 'standard', 'enhanced']
+                  const currentIdx = tierOrder.indexOf(hc.ispTier)
+                  const downgradeTier = tierOrder[Math.max(0, currentIdx - 1)]
+                  onUpdate({ ispDowngradeTier: downgradeTier, ispDowngradeAge: 65 })
+                } else {
+                  onUpdate({ ispDowngradeTier: undefined, ispDowngradeAge: undefined })
+                }
+              }}
+            />
+            <Label className="mb-0">Downgrade ISP in later years</Label>
+            <InfoTooltip text="Plan to switch to a lower ISP tier at a specific age to reduce premiums. Common strategy: Enhanced coverage during working years, downgrade to Basic or None after retirement." />
+          </div>
+          {hc.ispDowngradeTier !== undefined && hc.ispDowngradeAge !== undefined && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label className="text-xs">Downgrade to</Label>
+                <Select
+                  value={hc.ispDowngradeTier}
+                  onValueChange={(value) => onUpdate({ ispDowngradeTier: value as IspTierOption })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(['none', 'basic', 'standard', 'enhanced'] as const)
+                      .filter((tier) => {
+                        const tierOrder: Record<string, number> = { none: 0, basic: 1, standard: 2, enhanced: 3 }
+                        return tierOrder[tier] < tierOrder[hc.ispTier]
+                      })
+                      .map((tier) => {
+                        const tierLabels: Record<string, string> = {
+                          none: 'None (MediShield Life only)',
+                          basic: 'Basic',
+                          standard: 'Standard',
+                          enhanced: 'Enhanced',
+                        }
+                        return (
+                          <SelectItem key={tier} value={tier}>
+                            {tierLabels[tier]}
+                          </SelectItem>
+                        )
+                      })}
+                  </SelectContent>
+                </Select>
+              </div>
+              <NumberInput
+                label="At age"
+                tooltip="The age at which you plan to downgrade your ISP tier."
+                value={hc.ispDowngradeAge}
+                onChange={(value) => onUpdate({ ispDowngradeAge: value })}
+                min={adult.currentAge}
+                max={adult.lifeExpectancy}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Out-of-Pocket Model */}
       <div className="space-y-1">
