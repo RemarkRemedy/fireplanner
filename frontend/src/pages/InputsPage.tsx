@@ -25,6 +25,7 @@ import { AssetsPropertySection } from '@/components/household/AssetsPropertySect
 import { AssumptionsSection as HouseholdAssumptionsSection } from '@/components/household/AssumptionsSection'
 import { CpfSection } from '@/components/profile/CpfSection'
 import { WithdrawalStrategyCard } from '@/components/household/WithdrawalStrategyCard'
+import { ProtectionSection } from '@/components/household/ProtectionSection'
 
 const HOUSEHOLD_PLAN_LABELS = {
   individual: 'Individual',
@@ -178,6 +179,7 @@ export function InputsPage() {
   const cpfEnabled = useUIStore((state) => state.cpfEnabled)
 
   const propertyEnabled = useUIStore((state) => state.propertyEnabled)
+  const protectionEnabled = useUIStore((state) => state.protectionEnabled)
   const sectionOrder = useUIStore((s) => s.sectionOrder)
   const { sections: sectionCompletion } = useSectionCompletion()
 
@@ -285,6 +287,21 @@ export function InputsPage() {
               body="Select a planning adult to edit CPF settings."
             />
           )}
+        </HouseholdPrototypeSection>
+      ),
+    },
+    {
+      id: 'section-protection',
+      visible: protectionEnabled,
+      element: (
+        <HouseholdPrototypeSection
+          sectionId="section-protection"
+          title="Protection"
+          description="Cash reserves, outstanding debts, and existing insurance coverage for gap analysis."
+          isComplete={sectionCompletion['section-protection'].isComplete}
+          scopePill={selectedAdult ? { kind: 'person', adults: adults.map(a => ({ id: a.id, name: a.displayName })), selectedId: selectedAdultId, onSelect: setSelectedAdultId } : undefined}
+        >
+          <ProtectionSection />
         </HouseholdPrototypeSection>
       ),
     },
