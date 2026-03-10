@@ -76,6 +76,13 @@ export const DEFAULT_COLUMN_IDS = [
   'cpfTotal', 'totalNW', 'fireProgress',
 ]
 
+/** Default column IDs when in joint mode (Year + two adult age columns replace Age) */
+export const DEFAULT_JOINT_COLUMN_IDS = [
+  'year', 'adult1Age', 'adult2Age', 'totalIncome', 'annualExpenses', 'mortgageCashPayment',
+  'savingsOrWithdrawal', 'portfolioReturnDollar', 'liquidNW',
+  'cpfTotal', 'totalNW', 'fireProgress',
+]
+
 // ── Formatting helpers ───────────────────────────────────────────────
 export function currencyCell(value: number): string {
   return formatCurrency(value)
@@ -93,18 +100,45 @@ export function optionalCurrencyCell(value: number): string {
  *   renderers can highlight the retirement boundary without prop drilling.
  * @param hasMortgage    - Attached as `meta` on the mortgage(cash) column
  *   so consumers can pre-hide it without needing separate visibility logic.
+ * @param jointAdults    - When provided, replaces the Age column with
+ *   Year / Adult1 Age / Adult2 Age columns for joint household view.
  */
 export function buildProjectionColumns(
   retirementAge: number,
   hasMortgage: boolean,
+  jointAdults?: { name: string; currentAge: number }[],
 ): ColumnDef<ProjectionRow, number | string>[] {
+  const isJoint = jointAdults && jointAdults.length >= 2
+
+  const leadColumns: ColumnDef<ProjectionRow, number | string>[] = isJoint
+    ? [
+        columnHelper.accessor('year', {
+          header: 'Year',
+          meta: { retirementAge },
+          cell: (info) => info.row.index,
+        }),
+        columnHelper.display({
+          id: 'adult1Age',
+          header: jointAdults[0].name,
+          cell: (info) => jointAdults[0].currentAge + info.row.index,
+        }) as ColumnDef<ProjectionRow, number | string>,
+        columnHelper.display({
+          id: 'adult2Age',
+          header: jointAdults[1].name,
+          cell: (info) => jointAdults[1].currentAge + info.row.index,
+        }) as ColumnDef<ProjectionRow, number | string>,
+      ]
+    : [
+        columnHelper.accessor('age', {
+          header: 'Age',
+          meta: { retirementAge },
+          cell: (info) => info.getValue(),
+        }),
+      ]
+
   return [
     // ── Default columns (always visible) ─────────────────────────────
-    columnHelper.accessor('age', {
-      header: 'Age',
-      meta: { retirementAge },
-      cell: (info) => info.getValue(),
-    }),
+    ...leadColumns,
     columnHelper.accessor('totalIncome', {
       header: 'Net Income',
       cell: (info) => currencyCell(info.getValue()),

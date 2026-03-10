@@ -10,6 +10,8 @@ export interface CpfAutoFallbackInput {
   age: number
   currentYear: number
   includeSA: boolean
+  /** When true, RA has been converted to CPF LIFE annuity — skip FRS reservation */
+  cpfLifeStarted?: boolean
 }
 
 export interface CpfAutoFallbackResult {
@@ -30,8 +32,12 @@ export function computeCpfAutoFallback(input: CpfAutoFallbackInput): CpfAutoFall
 
   if (input.age < 55 || input.shortfall <= 0) return zero
 
-  const frs = getFrsForAgeAndYear(input.age, input.currentYear)
-  const raGapToFRS = Math.max(0, frs - input.cpfRA)
+  // Once CPF LIFE has started, RA was converted to an annuity — no FRS top-up needed.
+  // Without this, FRS grows to >$1M at 3.5% compound over decades, reserving almost
+  // all of OA and blocking withdrawals even when the portfolio is depleted.
+  const raGapToFRS = input.cpfLifeStarted
+    ? 0
+    : Math.max(0, getFrsForAgeAndYear(input.age, input.currentYear) - input.cpfRA)
 
   const uninvestedOA = Math.max(0, input.cpfOA - input.cpfisOA)
   const uninvestedSA = Math.max(0, input.cpfSA - input.cpfisSA)

@@ -4,15 +4,25 @@ import type { PercentileBands } from '@/lib/types'
 import { formatCurrency } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/useIsMobile'
 
+interface JointAdultInfo {
+  name: string
+  currentAge: number
+}
+
 interface FanChartProps {
   bands: PercentileBands
   retirementAge: number
+  /** When set, x-axis shows years and tooltip shows per-adult ages */
+  jointAdults?: JointAdultInfo[]
 }
 
-export function FanChart({ bands, retirementAge }: FanChartProps) {
+export function FanChart({ bands, retirementAge, jointAdults }: FanChartProps) {
   const isMobile = useIsMobile()
+  const isJoint = jointAdults && jointAdults.length >= 2
+  const startAge = bands.ages[0] ?? 0
   const data = bands.years.map((_, i) => ({
     age: bands.ages[i],
+    year: bands.ages[i] - startAge,
     p5: bands.p5[i],
     p10: bands.p10[i],
     p25: bands.p25[i],
@@ -43,8 +53,8 @@ export function FanChart({ bands, retirementAge }: FanChartProps) {
           <AreaChart data={sampled} margin={{ top: 10, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
             <XAxis
-              dataKey="age"
-              label={{ value: 'Age', position: 'insideBottom', offset: -5 }}
+              dataKey={isJoint ? 'year' : 'age'}
+              label={{ value: isJoint ? 'Year' : 'Age', position: 'insideBottom', offset: -5 }}
             />
             <YAxis
               tickFormatter={(v: number) => formatCurrency(v)}
@@ -66,10 +76,13 @@ export function FanChart({ bands, retirementAge }: FanChartProps) {
                   { key: 'p10', label: 'Poor outcome (10th)' },
                   { key: 'p5', label: 'Worst case (5th)' },
                 ]
+                const headerLabel = isJoint
+                  ? `Year ${age}\n${jointAdults[0].name}: Age ${jointAdults[0].currentAge + age}\n${jointAdults[1].name}: Age ${jointAdults[1].currentAge + age}`
+                  : `Age ${age}${age === retirementAge ? ' (Retirement)' : ''}`
                 return (
                   <div className="rounded-lg border bg-background p-2 shadow-md text-xs">
-                    <p className="font-medium mb-1">
-                      Age {age}{age === retirementAge ? ' (Retirement)' : ''}
+                    <p className="font-medium mb-1 whitespace-pre-line">
+                      {headerLabel}
                     </p>
                     {percentiles.map(({ key, label: pLabel }) => (
                       <div key={key} className="flex justify-between gap-4">

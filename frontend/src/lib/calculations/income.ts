@@ -889,3 +889,246 @@ export function calculateIncomeSummary(
     incomeReplacementRatio,
   }
 }
+
+// ---------------------------------------------------------------------------
+// Per-adult merge: sum individually-computed projections into one household row
+// ---------------------------------------------------------------------------
+
+export interface MergePerAdultProjectionsParams {
+  /** Per-adult projections keyed by adult ID (computed with cpfHousingMode:'none', annualExpenses:0) */
+  perAdultProjections: Record<string, IncomeProjectionRow[]>
+  /** Adult IDs in canonical order */
+  adultOrder: string[]
+  /** Reference adult's current age (used for the merged row's `age` field) */
+  referenceCurrentAge: number
+  /** Year offset at which the reference adult retires */
+  referenceRetirementYearOffset: number
+  /** CPF housing monthly deduction (already scaled by ownership percent) */
+  cpfHousingMonthly: number
+  /** Years remaining on mortgage */
+  cpfMortgageYearsLeft: number
+  /** Household annual base expenses (today's dollars) */
+  annualExpenses: number
+  /** Annual inflation rate */
+  inflation: number
+  /** Household locked assets (per-adult projections use lockedAssets:[]) */
+  lockedAssets?: LockedAsset[]
+  /** Expense adjustments (per-adult projections have none) */
+  expenseAdjustments?: ExpenseAdjustment[]
+}
+
+/**
+ * Merge per-adult income projections into a single household projection.
+ *
+ * Each adult's projection was computed independently with correct per-person
+ * CPF ceilings, SRS caps, tax brackets, and BHS limits. This function sums
+ * them year-by-year, then applies household-level concerns:
+ *   1. CPF OA housing deduction (shared mortgage)
+ *   2. Annual savings (totalNet - inflated household expenses)
+ *   3. Locked asset unlocks
+ *   4. Expense adjustments
+ *
+ * The OA interest correction tracks a running adjustment to account for the
+ * fact that per-adult OA balances were computed without housing deductions
+ * (so they earned interest on the full balance). The adjustment compounds
+ * at 2.5% (OA base rate) each year.
+ */
+export function mergePerAdultProjections(
+  params: MergePerAdultProjectionsParams,
+): IncomeProjectionRow[] {
+  const {
+    perAdultProjections,
+    adultOrder,
+    referenceCurrentAge,
+    referenceRetirementYearOffset,
+    cpfHousingMonthly,
+    cpfMortgageYearsLeft,
+    annualExpenses,
+    inflation,
+    lockedAssets = [],
+    expenseAdjustments = [],
+  } = params
+
+  const projections = adultOrder.map((id) => perAdultProjections[id] ?? [])
+  const maxLength = Math.max(...projections.map((p) => p.length))
+  if (maxLength === 0) return []
+
+  const cpfHousingEndYearOffset = Math.ceil(cpfMortgageYearsLeft)
+  const annualHousingDeduction = cpfHousingMonthly * 12
+  let oaAdjustment = 0 // running correction for OA interest overcounting
+  let cumulativeSavings = 0
+
+  const rows: IncomeProjectionRow[] = []
+
+  for (let yearOffset = 0; yearOffset < maxLength; yearOffset++) {
+    const age = referenceCurrentAge + yearOffset
+    const year = yearOffset
+
+    // Sum all numeric fields from per-adult rows at this year offset
+    let salary = 0
+    let rentalIncome = 0
+    let investmentIncome = 0
+    let businessIncome = 0
+    let governmentIncome = 0
+    let totalGross = 0
+    let sgTax = 0
+    let cpfEmployee = 0
+    let cpfEmployer = 0
+    let totalNet = 0
+    let cpfOA = 0
+    let cpfSA = 0
+    let cpfMA = 0
+    let cpfRA = 0
+    let cpfAnnualInterest = 0
+    let cpfLifePayout = 0
+    let cpfLifeAnnuityPremium = 0
+    let cpfOaWithdrawal = 0
+    let cpfisOA = 0
+    let cpfisSA = 0
+    let cpfisReturn = 0
+    let srsBalance = 0
+    let srsContribution = 0
+    let srsWithdrawal = 0
+    let srsTaxableWithdrawal = 0
+    const allActiveLifeEvents: string[] = []
+    let allRetired = true
+
+    // CPF bequest: when an adult dies (projection ends), their final CPF
+    // balances are paid out as cash to the surviving spouse's portfolio.
+    let cpfBequest = 0
+
+    for (let adultIdx = 0; adultIdx < projections.length; adultIdx++) {
+      const adultProjection = projections[adultIdx]
+
+      // Detect death: this adult's projection ended last year
+      if (yearOffset === adultProjection.length && adultProjection.length > 0) {
+        const finalRow = adultProjection[adultProjection.length - 1]
+        cpfBequest += finalRow.cpfOA + finalRow.cpfSA + finalRow.cpfMA + finalRow.cpfRA
+        // Also include SRS balance — paid out to nominees on death
+        cpfBequest += finalRow.srsBalance
+      }
+
+      if (yearOffset >= adultProjection.length) continue
+      const row = adultProjection[yearOffset]
+
+      salary += row.salary
+      rentalIncome += row.rentalIncome
+      investmentIncome += row.investmentIncome
+      businessIncome += row.businessIncome
+      governmentIncome += row.governmentIncome
+      totalGross += row.totalGross
+      sgTax += row.sgTax
+      cpfEmployee += row.cpfEmployee
+      cpfEmployer += row.cpfEmployer
+      totalNet += row.totalNet
+      cpfOA += row.cpfOA
+      cpfSA += row.cpfSA
+      cpfMA += row.cpfMA
+      cpfRA += row.cpfRA
+      cpfAnnualInterest += (row.cpfAnnualInterest ?? 0)
+      cpfLifePayout += row.cpfLifePayout
+      cpfLifeAnnuityPremium += row.cpfLifeAnnuityPremium
+      cpfOaWithdrawal += row.cpfOaWithdrawal
+      cpfisOA += row.cpfisOA
+      cpfisSA += row.cpfisSA
+      cpfisReturn += row.cpfisReturn
+      srsBalance += row.srsBalance
+      srsContribution += row.srsContribution
+      srsWithdrawal += row.srsWithdrawal
+      srsTaxableWithdrawal += row.srsTaxableWithdrawal
+
+      for (const event of row.activeLifeEvents) {
+        if (!allActiveLifeEvents.includes(event)) {
+          allActiveLifeEvents.push(event)
+        }
+      }
+      if (!row.isRetired) allRetired = false
+    }
+
+    // Compound the OA adjustment from previous years (interest overcounting)
+    // Per-adult projections earned OA_INTEREST_RATE on the full balance including
+    // amounts that should have been deducted for housing. This correction grows
+    // at the OA interest rate each year.
+    oaAdjustment *= (1 + OA_INTEREST_RATE)
+
+    // Apply CPF housing deduction to merged OA
+    let cpfOaHousingDeduction = 0
+    let cpfOaShortfall = 0
+    if (annualHousingDeduction > 0 && yearOffset < cpfHousingEndYearOffset) {
+      const availableOA = Math.max(0, cpfOA - oaAdjustment)
+      cpfOaHousingDeduction = Math.min(annualHousingDeduction, availableOA)
+      cpfOaShortfall = Math.max(0, annualHousingDeduction - availableOA)
+      oaAdjustment += cpfOaHousingDeduction
+    }
+
+    // Final merged OA balance = raw sum minus cumulative adjustment
+    cpfOA = Math.max(0, cpfOA - oaAdjustment)
+
+    // Use reference adult's retirement status for the merged row
+    const isRetired = yearOffset >= referenceRetirementYearOffset
+
+    // Locked asset unlocks (not in per-adult projections)
+    let lockedAssetUnlock = cpfBequest // Include CPF/SRS bequest from deceased adults
+    for (const asset of lockedAssets) {
+      if (age === asset.unlockAge) {
+        const yearsGrown = asset.unlockAge - referenceCurrentAge
+        lockedAssetUnlock += asset.amount * Math.pow(1 + asset.growthRate, yearsGrown)
+      }
+    }
+
+    // Expense adjustments (not in per-adult projections)
+    let expenseAdjustment = 0
+    for (const adj of expenseAdjustments) {
+      if (age >= adj.startAge && (adj.endAge == null || age <= adj.endAge)) {
+        expenseAdjustment += adj.amount
+      }
+    }
+
+    // Recalculate annual savings (per-adult projections used annualExpenses=0)
+    const inflatedExpenses = (annualExpenses + expenseAdjustment) * Math.pow(1 + inflation, yearOffset)
+    const annualSavings = totalNet - inflatedExpenses + lockedAssetUnlock
+    cumulativeSavings += annualSavings
+
+    rows.push({
+      year,
+      age,
+      salary,
+      rentalIncome,
+      investmentIncome,
+      businessIncome,
+      governmentIncome,
+      totalGross,
+      sgTax,
+      cpfEmployee,
+      cpfEmployer,
+      totalNet,
+      annualSavings,
+      cumulativeSavings,
+      cpfOA,
+      cpfSA,
+      cpfMA,
+      cpfRA,
+      cpfAnnualInterest,
+      isRetired,
+      activeLifeEvents: allActiveLifeEvents,
+      cpfLifePayout,
+      cpfOaHousingDeduction,
+      cpfOaShortfall,
+      cpfLifeAnnuityPremium,
+      cpfOaWithdrawal,
+      cpfisOA,
+      cpfisSA,
+      cpfisReturn,
+      srsBalance,
+      srsContribution,
+      srsWithdrawal,
+      srsTaxableWithdrawal,
+      lockedAssetUnlock,
+      cashReserveTarget: 0,
+      cashReserveBalance: 0,
+      investedSavings: annualSavings,
+    })
+  }
+
+  return rows
+}

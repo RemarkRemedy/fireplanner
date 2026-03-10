@@ -38,6 +38,8 @@ import { StressScenarioComparisonTable } from '@/components/simulation/StressSce
 // import { ProofWorkspace } from '@/components/proof/ProofWorkspace'
 import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
 import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
+import { buildSplitAdultPlanSlice } from '@/lib/household/planSlice'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { buildMonteCarloEngineParams } from '@/lib/simulation/monteCarloParams'
@@ -116,6 +118,7 @@ interface MonteCarloTabProps {
   validationErrors: Record<string, string>
   isStale: boolean
   progress: { progress: number; message: string } | null
+  jointAdults?: { name: string; currentAge: number }[]
 }
 
 function MonteCarloTab({
@@ -135,6 +138,7 @@ function MonteCarloTab({
   validationErrors,
   isStale,
   progress,
+  jointAdults,
 }: MonteCarloTabProps) {
   const progressPercent = Math.round((progress?.progress ?? 0.1) * 100)
 
@@ -208,7 +212,7 @@ function MonteCarloTab({
           {data.spending_metrics && (
             <SpendingMetricsPanel metrics={data.spending_metrics} nSimulations={data.n_simulations} strategy={selectedStrategy} />
           )}
-          <FanChart bands={data.percentile_bands} retirementAge={retirementAge} />
+          <FanChart bands={data.percentile_bands} retirementAge={retirementAge} jointAdults={jointAdults} />
           {isAdvanced && data.histogram_snapshots && data.histogram_snapshots.length > 0 && (
             <PortfolioHistogram snapshots={data.histogram_snapshots} />
           )}
@@ -633,7 +637,30 @@ export function StressTestPage() {
   const householdPlan = useHouseholdPlanStore((state) => state.plan)
   const householdPlanRevision = useHouseholdPlanStore((state) => state.householdPlanRevision)
   const analysisPortfolio = useAnalysisPortfolio()
-  const mc = useMonteCarloQuery()
+  const simulationView = useUIStore((s) => s.simulationView)
+  const setUIField = useUIStore((s) => s.setField)
+  const isMultiAdult = householdPlan.adults.length >= 2
+  const isPerAdultSim = isMultiAdult && simulationView !== 'joint'
+
+  // Per-adult MC inputs: slice the household plan for the selected adult
+  const perAdultMCInputs = useMemo(() => {
+    if (!isPerAdultSim) return null
+    const sliceResult = buildSplitAdultPlanSlice(householdPlan, simulationView, 0.5)
+    if (!sliceResult) return null
+    const { slice, adultAges } = sliceResult
+    const runtime = buildHouseholdRuntimeLegacyInputs(slice)
+    const p = runtime.profile
+    return {
+      profile: { ...p, ...adultAges },
+      income: runtime.income,
+      property: runtime.property,
+      // Match joint path (useAnalysisPortfolio): include CPF balances in starting portfolio
+      initialPortfolio: p.liquidNetWorth + p.cpfOA + p.cpfSA + p.cpfMA + p.cpfRA,
+    }
+  }, [isPerAdultSim, householdPlan, simulationView])
+
+  const perAdultSliceFailed = isPerAdultSim && perAdultMCInputs === null
+  const mc = useMonteCarloQuery(isPerAdultSim ? perAdultMCInputs : undefined)
   const { isEligible } = useExpenseTracker()
   useExpenseTrackerDwell(Boolean(mc.data), 10)
   const companion = useCompanionPlannerBridge({ result: mc.data, isResultStale: mc.isStale })
@@ -651,6 +678,7 @@ export function StressTestPage() {
     ?? householdPlan.adults[0]
     ?? null
   const lifeEventCount = activeAdult?.lifeEvents.length ?? 0
+  const [activeSimTab, setActiveSimTab] = useState('monte-carlo')
   const [selectedStressScenarioIds, setSelectedStressScenarioIds] = useState<StressScenarioId[]>(['base'])
   const [stressScenarioComparisonError, setStressScenarioComparisonError] = useState<string | null>(null)
   const [isStressScenarioComparisonPending, setIsStressScenarioComparisonPending] = useState(false)
@@ -663,6 +691,33 @@ export function StressTestPage() {
   const lastBaseRetirementAgeRef = useRef(currentRetirementAge)
   const [actionImpactStates, setActionImpactStates] = useState<Record<string, ScenarioActionImpactState>>({})
   const actionImpactTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Reset all simulation state when switching between joint/per-adult views
+  const prevSimulationViewRef = useRef(simulationView)
+  useEffect(() => {
+    if (prevSimulationViewRef.current !== simulationView) {
+      prevSimulationViewRef.current = simulationView
+      // Clear MC mutation state (data, error, progress) and abort in-flight worker
+      mc.reset()
+      // Reset to MC tab (backtest/SR tabs may be hidden in per-adult mode)
+      setActiveSimTab('monte-carlo')
+      // Abort in-flight stress scenario batch
+      scenarioBatchAbortRef.current?.abort()
+      scenarioBatchAbortRef.current = null
+      setStressScenarioResults({})
+      setStressScenarioComparisonError(null)
+      setIsStressScenarioComparisonPending(false)
+      // Abort in-flight action impact analysis
+      actionImpactAbortRef.current?.abort()
+      actionImpactAbortRef.current = null
+      if (actionImpactTimeoutRef.current) {
+        clearTimeout(actionImpactTimeoutRef.current)
+        actionImpactTimeoutRef.current = null
+      }
+      setActionImpactStates({})
+    }
+  }, [simulationView, mc.reset])
+
   const householdPresentationPlan = useMemo(() => {
     if (!householdPlannerEnabled || householdPlan.planType === 'individual') {
       return null
@@ -941,8 +996,11 @@ export function StressTestPage() {
     }
 
     mc.mutate(overrides)
-    void runSelectedStressScenarios(selectedStressScenarioIds, overrides)
-  }, [companion, mc, normalized.retirementAge, runSelectedStressScenarios, selectedStressScenarioIds])
+    // Skip stress scenario batch in per-adult mode (uses joint params, would be misleading)
+    if (!isPerAdultSim) {
+      void runSelectedStressScenarios(selectedStressScenarioIds, overrides)
+    }
+  }, [companion, isPerAdultSim, mc, normalized.retirementAge, runSelectedStressScenarios, selectedStressScenarioIds])
 
   useEffect(() => {
     if (!mc.data || !selectedStressScenarioIds.includes('base')) return
@@ -1054,7 +1112,7 @@ export function StressTestPage() {
         </div>
       )}
 
-      {companion.isCompanionMode && (
+      {companion.isCompanionMode && !isPerAdultSim && (
         <>
           <CompanionScenarioSwitcher
             companion={companion}
@@ -1086,11 +1144,40 @@ export function StressTestPage() {
         </p>
       ) : null}
 
-      <Tabs defaultValue="monte-carlo" onValueChange={(tab) => trackEvent('stress_test_tab_changed', { tab })}>
+      {isMultiAdult && (
+        <div className="mb-4 space-y-1">
+          <Tabs value={simulationView} onValueChange={(v) => { setUIField('simulationView', v); trackEvent('stress_test_view_changed', { view: v }) }}>
+            <TabsList>
+              {householdPlan.adults.map((adult) => (
+                <TabsTrigger key={adult.id} value={adult.id}>
+                  {adult.displayName}
+                </TabsTrigger>
+              ))}
+              <TabsTrigger value="joint">Joint</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <p className="text-xs text-muted-foreground">
+            {isPerAdultSim
+              ? 'Hypothetical: "What if this person were single?" Shared items split 50/50.'
+              : 'Joint household simulation.'}
+          </p>
+          {perAdultSliceFailed && (
+            <Alert variant="destructive" className="mt-2">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Could not build per-adult plan slice. The simulation will use joint household data.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+      )}
+
+      <Tabs value={activeSimTab} onValueChange={(tab) => { setActiveSimTab(tab); trackEvent('stress_test_tab_changed', { tab }) }}>
         {(() => {
           // Static Tailwind class mapping — dynamic template literals get purged
           const hasResults = !!mc.data
-          const tabCount = 1 + (hasResults ? 1 : 0) + (isStressAdvanced ? 2 : 0)
+          const showAdvancedTabs = isStressAdvanced && !isPerAdultSim
+          const tabCount = 1 + (hasResults ? 1 : 0) + (showAdvancedTabs ? 2 : 0)
           const gridColsClass: Record<number, string> = {
             1: 'grid-cols-1',
             2: 'grid-cols-2',
@@ -1103,36 +1190,43 @@ export function StressTestPage() {
               <TabsTrigger value="monte-carlo">Monte Carlo</TabsTrigger>
               {hasResults && <TabsTrigger value="mc-projection">Projection Table</TabsTrigger>}
               {/* Proof tab hidden for now */}
-              {isStressAdvanced && <TabsTrigger value="backtest">Historical Backtest</TabsTrigger>}
-              {isStressAdvanced && <TabsTrigger value="sequence-risk">Sequence Risk</TabsTrigger>}
+              {showAdvancedTabs && <TabsTrigger value="backtest">Historical Backtest</TabsTrigger>}
+              {showAdvancedTabs && <TabsTrigger value="sequence-risk">Sequence Risk</TabsTrigger>}
             </TabsList>
           )
         })()}
 
         <TabsContent value="monte-carlo">
           <MonteCarloTab
-            currentAge={normalized.currentAge}
+            currentAge={isPerAdultSim
+              ? (perAdultMCInputs?.profile.currentAge ?? normalized.currentAge)
+              : normalized.currentAge}
             inflation={normalized.compiledPlan.assumptions.returns.inflation}
-            isAdvanced={isStressAdvanced}
-            retirementAge={normalized.retirementAge}
+            isAdvanced={isStressAdvanced && !isPerAdultSim}
+            retirementAge={isPerAdultSim
+              ? (perAdultMCInputs?.profile.retirementAge ?? normalized.retirementAge)
+              : normalized.retirementAge}
             selectedStrategy={selectedStrategy}
-            stressScenarioComparisonRows={stressScenarioComparisonRows}
-            stressScenarioComparisonPending={isStressScenarioComparisonPending}
-            stressScenarioComparisonError={stressScenarioComparisonError}
+            stressScenarioComparisonRows={isPerAdultSim ? [] : stressScenarioComparisonRows}
+            stressScenarioComparisonPending={isPerAdultSim ? false : isStressScenarioComparisonPending}
+            stressScenarioComparisonError={isPerAdultSim ? null : stressScenarioComparisonError}
             mutate={runMonteCarlo}
             data={mc.data}
             isPending={mc.isPending}
             error={mc.error}
             canRun={mc.canRun}
             validationErrors={mc.validationErrors}
-            isStale={isCompanionResultStale}
+            isStale={isPerAdultSim ? mc.isStale : isCompanionResultStale}
             progress={mc.progress}
+            jointAdults={!isPerAdultSim && householdPlan.adults.length >= 2
+              ? householdPlan.adults.map((a) => ({ name: a.displayName, currentAge: a.currentAge }))
+              : undefined}
           />
         </TabsContent>
 
         {mc.data && (
           <TabsContent value="mc-projection">
-            <MCProjectionTable result={mc.data!} isStale={isCompanionResultStale} />
+            <MCProjectionTable result={mc.data!} isStale={isPerAdultSim ? mc.isStale : isCompanionResultStale} />
           </TabsContent>
         )}
 
@@ -1144,13 +1238,13 @@ export function StressTestPage() {
         )}
         */}
 
-        {isStressAdvanced && (
+        {isStressAdvanced && !isPerAdultSim && (
           <TabsContent value="backtest">
             <BacktestTab />
           </TabsContent>
         )}
 
-        {isStressAdvanced && (
+        {isStressAdvanced && !isPerAdultSim && (
           <TabsContent value="sequence-risk">
             <SequenceRiskTab />
           </TabsContent>

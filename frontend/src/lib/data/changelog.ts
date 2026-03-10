@@ -12,6 +12,158 @@ export interface ChangelogEntry {
 /** Newest first. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-03-10',
+    category: 'feature',
+    title: 'Per-adult Monte Carlo analysis for couples',
+    description:
+      'The Stress Test page now shows Adult 1 / Adult 2 / Joint tabs for households with two adults. Selecting an individual adult runs a hypothetical "what if this person were single?" Monte Carlo simulation using their share of the household plan (income, expenses, and assets split 50/50 for shared items). Joint mode continues to simulate the full household as before.',
+    affectedSections: ['section-stress-test'],
+    insight:
+      'Per-adult MC results are NOT additive: Adult 1 + Adult 2 does not equal Joint. Each per-adult simulation is a standalone "what if single?" scenario with correlated returns and non-linear percentile aggregation. Use it to understand each partner\'s individual financial resilience, not to decompose the joint result.',
+  },
+  {
+    date: '2026-03-10',
+    category: 'feature',
+    title: 'Joint projection charts and tables show both adults\' ages',
+    description:
+      'Net worth charts, Monte Carlo fan charts, and projection tables now use "Years from now" as the x-axis in joint household view, with both adults\' ages shown in tooltips and column headers. This replaces the single-age display that only showed the reference adult\'s age.',
+    affectedSections: ['section-projection', 'section-stress-test'],
+  },
+  {
+    date: '2026-03-10',
+    category: 'feature',
+    title: 'Household planner enabled by default',
+    description:
+      'The single/couple/household plan type selector on the Start page is now always visible. CPF, property, and healthcare sections are also enabled by default for new users.',
+    affectedSections: ['section-personal'],
+  },
+  {
+    date: '2026-03-10',
+    category: 'feature',
+    title: 'Healthcare inflation modeling with ISP tier discounts',
+    description:
+      'Healthcare costs now model premium inflation separately from general inflation, with a configurable premium inflation rate. Integrated Shield Plan (ISP) tier selection applies an out-of-pocket discount factor based on your coverage level. MediShield Life and CareShield Life are marked as mandatory for adults born 1980 or later, with opt-out available only for older cohorts.',
+    affectedSections: ['section-healthcare'],
+    insight:
+      'Healthcare inflation in Singapore has historically outpaced general CPI. Separating premium inflation from general inflation lets the model capture this divergence. The ISP OOP factor reflects that higher-tier plans (e.g., Private Hospital) cover more costs but charge higher premiums, creating a trade-off visible in the healthcare cost preview table.',
+  },
+  {
+    date: '2026-03-10',
+    category: 'feature',
+    title: 'Property projection preview with CPF housing refund',
+    description:
+      'Each property card now shows a projection preview: estimated equity at sale, Bala\'s Table leasehold decay, stamp duty costs, and net proceeds after ABSD. When a property is sold, the projection engine now injects a CPF housing refund (principal + accrued interest) back into OA, matching CPF Board rules for property disposal.',
+    affectedSections: ['section-property'],
+    insight:
+      'When you sell a property purchased with CPF funds, the principal withdrawn plus accrued interest at 2.5% must be refunded to your OA before you can use the sale proceeds. This refund can be substantial for long-held properties and significantly affects retirement planning.',
+  },
+  {
+    date: '2026-03-10',
+    category: 'fix',
+    title: 'CPF bequest injection and auto-fallback improvements',
+    description:
+      'When one partner in a couple plan passes away, their CPF and SRS balances are now injected as a bequest into the surviving partner\'s portfolio in the deterministic projection. CPF auto-fallback withdrawals now correctly track cumulative amounts across projection years and skip FRS reservation once CPF LIFE payouts have started. Portfolio depletion detection now considers total net worth (liquid + CPF + SRS), not just liquid assets.',
+    affectedSections: ['section-cpf', 'section-projection'],
+    insight:
+      'Previously, a deceased partner\'s CPF balances simply vanished from the projection, understating the survivor\'s financial position. The bequest injection ensures these assets continue to support retirement, while the FRS reservation fix prevents the engine from locking up CPF funds that CPF LIFE has already converted into annuity payouts.',
+  },
+  {
+    date: '2026-03-10',
+    category: 'feature',
+    title: 'PR residency split into new and established categories',
+    description:
+      'Permanent Resident status now distinguishes between new PRs (under 24 months) who receive graduated CPF contribution rates, and established PRs (24+ months) who receive full citizen rates. This provides more accurate CPF projections for recent PRs.',
+    affectedSections: ['section-cpf', 'section-personal'],
+  },
+  {
+    date: '2026-03-10',
+    category: 'feature',
+    title: 'Per-adult income and Year-by-Year projection views',
+    description:
+      'The Income section and Year-by-Year Projection page now include an Adult 1 / Adult 2 / Joint toggle for multi-adult plans. Selecting an individual adult shows their standalone income projection, CPF contributions, and tax calculations. The projection table shifts timing ages correctly when viewing a non-reference adult.',
+    affectedSections: ['section-income', 'section-projection'],
+  },
+  {
+    date: '2026-03-09',
+    category: 'feature',
+    title: 'Couple and household onboarding wizard',
+    description:
+      'The Start page wizard now supports couple and household plan types with full financial inputs for each adult: monthly income (take-home or gross), bonus months, monthly expenses, net worth, retirement age, and life expectancy. A FIRE preview chart shows each adult\'s projected portfolio growth. Revisiting the wizard hydrates from the existing plan so returning users can adjust without re-entering data.',
+    affectedSections: ['section-personal'],
+    insight:
+      'The wizard captures enough information to compute a meaningful FIRE estimate before the user reaches the detailed inputs page. This lets couples see an immediate projection of both partners\' financial trajectories and identify who needs to save more.',
+  },
+  {
+    date: '2026-03-09',
+    category: 'feature',
+    title: 'Household UX improvements: collapsible sections, adult switcher, and section ordering',
+    description:
+      'Input sections are now collapsible with auto-expand on navigation. A sticky segmented control at the top of long household sections lets users switch between adults without scrolling. Sections follow a pathway-aware ordering (goal-first or story-first). Scope indicators show which sections are per-adult vs shared. The sidebar reorders Healthcare before Goals for logical flow.',
+    affectedSections: ['section-personal', 'section-income', 'section-cpf', 'section-healthcare'],
+  },
+  {
+    date: '2026-03-09',
+    category: 'feature',
+    title: 'Goal impact panel and life event templates',
+    description:
+      'A new Goal Impact panel shows how spending goals affect your FIRE timeline with a projection analysis chart. Life events now include pre-built templates for common Singapore milestones. Tax relief calculations have been corrected for CPF top-up and SRS deductions.',
+    affectedSections: ['section-goals'],
+  },
+  {
+    date: '2026-03-09',
+    category: 'feature',
+    title: 'Redesigned assets and expense sections',
+    description:
+      'The assets section has been redesigned with a compact layout separating liquid and locked (CPF/SRS) assets. Expenses now support inflation-linked growth models and an additional living expense category with full editability. Base living expenses are frozen to the full planning horizon. Property sections conditionally show Purchase vs Existing fields based on ownership status.',
+    affectedSections: ['section-personal', 'section-property'],
+  },
+  {
+    date: '2026-03-08',
+    category: 'feature',
+    title: 'Household planner: multi-adult financial planning',
+    description:
+      'The household planner enables couples and multi-adult households to plan retirement together. Each adult has their own income, CPF, tax, and healthcare profile. Shared items (expenses, property, goals) are allocated by ownership scope. The system includes a household compiler that normalizes inputs, an analysis store with per-adult and joint views, scenario overrides for what-if analysis, and full import/export with backward-compatible portability. Over 95 code review findings were addressed across the implementation.',
+    affectedSections: ['section-personal', 'section-income', 'section-cpf', 'section-property', 'section-healthcare'],
+    insight:
+      'The household planner does not simply duplicate the individual planner. It introduces a normalized domain model (HouseholdPlan) that the compiler transforms into legacy-compatible inputs for the existing simulation engines. This means all 12 withdrawal strategies, Monte Carlo, backtest, and sequence risk engines work with household data without modification.',
+  },
+  {
+    date: '2026-03-08',
+    category: 'feature',
+    title: 'Start page monthly income with take-home/gross toggle',
+    description:
+      'The Start page now accepts monthly income instead of annual, with a toggle to switch between take-home and gross salary. Bonus months (13th month, AWS) can be specified as decimals. The conversion between take-home and gross uses the full Singapore tax engine so the displayed annual income is accurate.',
+    affectedSections: ['section-personal'],
+    insight:
+      'Most Singaporeans think about their salary in monthly take-home terms, not annual gross. Converting from take-home to gross requires reverse-engineering CPF contributions and income tax, which is why the toggle uses the actual tax engine rather than a simple multiplier.',
+  },
+  {
+    date: '2026-03-07',
+    category: 'feature',
+    title: 'Companion mode: required portfolio and savings rate calculations',
+    description:
+      'Companion mode now computes and returns the required portfolio size and savings rate to the host Expense app. These calculations use the deterministic assumptions helper, which correctly applies the scenario retirement age override when present.',
+    affectedSections: ['section-stress-test'],
+  },
+  {
+    date: '2026-03-06',
+    category: 'fix',
+    title: 'Language clarity improvements across 25+ components',
+    description:
+      'Replaced jargon and technical terminology with plain language across the entire application. Changes include expanding acronyms on first use, replacing "decumulation" with "withdrawal phase", clarifying validation error messages, and improving tooltip descriptions. Affected pages: Start, Inputs, Dashboard, Projection, Withdrawal, Stress Test, and Reference.',
+    affectedSections: ['section-personal', 'section-income', 'section-allocation', 'section-projection', 'section-stress-test'],
+    insight:
+      'Financial planning tools often alienate users with unnecessary jargon. Terms like "decumulation phase", "SWR", and "VPW" are meaningful to FIRE enthusiasts but confusing for newcomers. The clarity pass keeps technical precision in tooltips and reference docs while using everyday language in labels and descriptions.',
+  },
+  {
+    date: '2026-03-06',
+    category: 'feature',
+    title: 'Expense tracker early access signup',
+    description:
+      'Added an expense tracker interest capture system with modal signup forms, exit-intent triggers, and a Telegram community CTA on successful signup. The data layer stores signups in Cloudflare D1 with rate limiting. No financial data is collected — only email and device preference.',
+    affectedSections: [],
+  },
+  {
     date: '2026-03-06',
     category: 'feature',
     title: 'Companion mode integration tests for cross-module boundaries',
@@ -826,4 +978,4 @@ export const CHANGELOG: ChangelogEntry[] = [
 ]
 
 /** Bump this string whenever any data file is updated. Triggers the banner for returning users. */
-export const DATA_VINTAGE = '2026-03-02'
+export const DATA_VINTAGE = '2026-03-10'
