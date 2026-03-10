@@ -4,7 +4,7 @@ import {
   runMonteCarloWorker,
   type MonteCarloWorkerProgress,
 } from '@/lib/simulation/workerClient'
-import type { MonteCarloResult } from '@/lib/types'
+import type { MonteCarloResult, ProfileState, IncomeState, PropertyState } from '@/lib/types'
 import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useAllocationStore } from '@/stores/useAllocationStore'
@@ -22,6 +22,13 @@ import { buildMonteCarloEngineParams } from '@/lib/simulation/monteCarloParams'
 export interface MonteCarloRunOverrides {
   annualExpenses?: number
   retirementAge?: number
+}
+
+export interface PerAdultMonteCarloInputs {
+  profile: ProfileState
+  income: IncomeState
+  property: PropertyState
+  initialPortfolio: number
 }
 
 export interface MonteCarloProgressState {
@@ -80,13 +87,22 @@ export function buildCurrentMonteCarloRunSignature(input: {
   })
 }
 
-export function useMonteCarloWorkerQuery(): UseMonteCarloWorkerQueryResult {
-  const { profile, income, property } = useHouseholdRuntimeInputs()
+export function useMonteCarloWorkerQuery(
+  perAdultInputs?: PerAdultMonteCarloInputs | null,
+): UseMonteCarloWorkerQueryResult {
+  const jointInputs = useHouseholdRuntimeInputs()
   const allocation = useAllocationStore()
   const simulation = useSimulationStore()
   const withdrawal = useWithdrawalStore()
   const analysisPortfolio = useAnalysisPortfolio()
   const normalized = useNormalizedLegacyAnalysisContext()
+
+  // Per-adult overrides: fully replace profile/income/property/portfolio
+  const profile = perAdultInputs?.profile ?? jointInputs.profile
+  const income = perAdultInputs?.income ?? jointInputs.income
+  const property = perAdultInputs?.property ?? jointInputs.property
+  const initialPortfolio = perAdultInputs?.initialPortfolio ?? analysisPortfolio.initialPortfolio
+  const allocationWeights = analysisPortfolio.allocationWeights
 
   // Gate on upstream validation
   const profileErrors = profile.validationErrors
@@ -184,8 +200,8 @@ export function useMonteCarloWorkerQuery(): UseMonteCarloWorkerQueryResult {
         allocation,
         simulation,
         property,
-        initialPortfolio: analysisPortfolio.initialPortfolio,
-        allocationWeights: analysisPortfolio.allocationWeights,
+        initialPortfolio,
+        allocationWeights,
         profileOverrides,
         cacheOps: buildCacheOpsFromStore(),
       })
