@@ -292,7 +292,7 @@ export function toLegacyIndividual(plan: HouseholdPlan): LegacyIndividualSnapsho
     .filter((entry) => entry.kind === 'income-stream')
     .map((entry) => cloneIncomeSource(entry))
 
-  const baseExpenses = plan.expenses.filter((entry) => entry.kind === 'base-living')
+  const baseExpenses = plan.expenses.filter((entry) => entry.kind === 'base-living' || entry.kind === 'additional-living')
   if (baseExpenses.length > 1) return null
   const baseExpense = baseExpenses[0]
   if (baseExpense) {
