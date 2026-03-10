@@ -295,6 +295,8 @@ export interface IncomeState {
   personalReliefs: number
   reliefBreakdown: import('@/lib/data/taxBrackets').ReliefBreakdown | null   // null = Simple mode
   reliefBasisAge: number | null
+  /** Number of CPF-contributing adults in household (multiplies OW/AW ceilings). Derived, not user input. */
+  cpfAdultCount?: number
   validationErrors: ValidationErrors
 }
 

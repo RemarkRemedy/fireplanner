@@ -170,6 +170,7 @@ export interface CompiledHouseholdPlan extends NormalizedHouseholdPlan {
   retirementExpenseBaseByYear: number[]
   householdWithdrawalNeedByYear: number[]
   portfolioAdjustments: HouseholdPortfolioAdjustment[]
+  incomeByAdultId: Record<string, IncomeProjectionRow[]>
   cpfByAdultId: Record<string, CompiledCpfProjectionSlot>
   healthcareByAdultId: Record<string, CompiledHealthcareSlot>
   rows: HouseholdYearRow[]
@@ -1268,6 +1269,7 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
     retirementExpenseBaseByYear,
     householdWithdrawalNeedByYear,
     portfolioAdjustments: sortAdjustments(portfolioAdjustments),
+    incomeByAdultId: adultProjectionsById,
     cpfByAdultId,
     healthcareByAdultId,
     rows,
