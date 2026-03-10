@@ -13,7 +13,7 @@ import { generateIncomeProjection, sumPostRetirementIncome, getLifeEventExpenseI
 import { getEffectiveExpenses, getExpensesAtRetirement } from '@/lib/calculations/expenses'
 import { getPropertyRentalIncome } from '@/lib/calculations/hdb'
 import { calculateParentSupportAtAge } from '@/lib/calculations/fire'
-import { calculateHealthcareCostAtAge } from '@/lib/calculations/healthcare'
+import { calculateHealthcareCostAtAge, inflateHealthcareCost } from '@/lib/calculations/healthcare'
 import {
   outstandingMortgageAtAge,
   calculateSellAndDownsize,
@@ -162,8 +162,10 @@ export function buildLegacyMonteCarloEngineParams({
 
         const parentSupportExpense = profile.parentSupportEnabled
           ? calculateParentSupportAtAge(profile.parentSupport, row.age) : 0
-        const healthcareCashOutlay = profile.healthcareConfig?.enabled
-          ? (calculateHealthcareCostAtAge(profile.healthcareConfig, row.age)?.cashOutlay ?? 0) : 0
+        const healthcareCostBase = profile.healthcareConfig?.enabled
+          ? calculateHealthcareCostAtAge(profile.healthcareConfig, row.age) : null
+        const healthcareCashOutlay = healthcareCostBase && profile.healthcareConfig
+          ? (inflateHealthcareCost(healthcareCostBase, profile.healthcareConfig, profile.currentAge).cashOutlay ?? 0) : 0
         const extraExpenses = parentSupportExpense + healthcareCashOutlay + downsizingRentForYear
 
         const effectiveBase = getEffectiveExpenses(
