@@ -2699,6 +2699,44 @@ describe('generateProjection', () => {
       expect(autoWithdrawals.length).toBe(0)
     })
 
+    it('cumulative withdrawals reduce CPF over multiple years of depletion', () => {
+      // Scenario: portfolio depleted at age 56, CPF auto-fallback covers expenses
+      // for 5+ years. CPF total should decrease each year (withdrawals > interest).
+      const incomeRows = generateMockIncomeProjection({
+        currentAge: 55,
+        retirementAge: 54,
+        lifeExpectancy: 65,
+        annualSavings: 0,
+        salary: 0,
+        cpfOA: 500000,
+      })
+      const result = generateProjection(makeParams({
+        currentAge: 55,
+        retirementAge: 54,
+        lifeExpectancy: 65,
+        initialLiquidNW: 10000, // tiny portfolio, depletes quickly
+        annualExpenses: 60000,  // $60K expenses, no income → needs CPF
+        expectedReturn: 0,
+        inflation: 0,
+        incomeProjection: incomeRows,
+        cpfAutoFallback: true,
+        cpfAutoFallbackIncludeSA: false,
+      }))
+
+      // After the portfolio depletes, CPF should decrease in subsequent years
+      const depletedRows = result.rows.filter(r => r.age >= 57 && r.age <= 63)
+      expect(depletedRows.length).toBeGreaterThan(3)
+
+      for (let i = 1; i < depletedRows.length; i++) {
+        // CPF total must decrease year over year when funding expenses
+        expect(depletedRows[i].cpfTotal).toBeLessThan(depletedRows[i - 1].cpfTotal)
+      }
+
+      // CPF OA at last depleted row should be significantly less than initial $500K
+      const lastRow = depletedRows[depletedRows.length - 1]
+      expect(lastRow.cpfOA).toBeLessThan(300000)
+    })
+
     it('does not withdraw before age 55', () => {
       const incomeRows = generateMockIncomeProjection({
         currentAge: 50,
