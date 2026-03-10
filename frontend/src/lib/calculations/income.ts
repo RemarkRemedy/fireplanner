@@ -993,7 +993,21 @@ export function mergePerAdultProjections(
     const allActiveLifeEvents: string[] = []
     let allRetired = true
 
-    for (const adultProjection of projections) {
+    // CPF bequest: when an adult dies (projection ends), their final CPF
+    // balances are paid out as cash to the surviving spouse's portfolio.
+    let cpfBequest = 0
+
+    for (let adultIdx = 0; adultIdx < projections.length; adultIdx++) {
+      const adultProjection = projections[adultIdx]
+
+      // Detect death: this adult's projection ended last year
+      if (yearOffset === adultProjection.length && adultProjection.length > 0) {
+        const finalRow = adultProjection[adultProjection.length - 1]
+        cpfBequest += finalRow.cpfOA + finalRow.cpfSA + finalRow.cpfMA + finalRow.cpfRA
+        // Also include SRS balance — paid out to nominees on death
+        cpfBequest += finalRow.srsBalance
+      }
+
       if (yearOffset >= adultProjection.length) continue
       const row = adultProjection[yearOffset]
 
@@ -1054,7 +1068,7 @@ export function mergePerAdultProjections(
     const isRetired = yearOffset >= referenceRetirementYearOffset
 
     // Locked asset unlocks (not in per-adult projections)
-    let lockedAssetUnlock = 0
+    let lockedAssetUnlock = cpfBequest // Include CPF/SRS bequest from deceased adults
     for (const asset of lockedAssets) {
       if (age === asset.unlockAge) {
         const yearsGrown = asset.unlockAge - referenceCurrentAge
