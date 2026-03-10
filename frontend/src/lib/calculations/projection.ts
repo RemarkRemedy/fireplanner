@@ -831,8 +831,10 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       peakTotalNWAge = age
     }
 
-    // Track depletion (pre-retirement depletion from large goals is also tracked)
-    if (liquidNW <= 0 && portfolioDepletedAge === null) {
+    // Track depletion: portfolio is depleted when total withdrawable assets
+    // (liquid NW + CPF) can no longer cover expenses. Just liquidNW reaching 0
+    // is not depletion if CPF auto-fallback is still funding expenses.
+    if (totalNW <= 0 && portfolioDepletedAge === null) {
       portfolioDepletedAge = age
     }
 
