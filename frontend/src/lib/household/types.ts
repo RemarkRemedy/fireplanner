@@ -68,6 +68,15 @@ export interface PlanningAdult {
   srs: HouseholdSrsConfig
   taxProfile: HouseholdTaxProfile
   lifeEvents: LifeEvent[]
+  // Financial health & insurance
+  cashSavings: number
+  nonMortgageDebtTotal: number
+  nonMortgageDebtMonthlyPayment: number
+  insuranceDeathCoverage: number
+  insuranceCICoverage: number
+  insuranceDisabilityMonthly: number
+  funeralCosts: number
+  ciRecoveryYears: number
 }
 
 export interface HouseholdCpfConfig {
