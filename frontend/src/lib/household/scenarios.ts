@@ -146,7 +146,7 @@ function buildRetirementIncomeOverrides(
   const overrides = Object.fromEntries(
     plan.income.flatMap((income) => {
       if (
-        !income.isActive
+        income.isActive === false
         || income.owner !== adult.owner
         || income.timing.kind !== 'age-range'
         || income.timing.owner !== adult.owner
@@ -307,7 +307,7 @@ export function buildBuiltInHouseholdScenarios(plan: HouseholdPlan): HouseholdSc
   /** W49: Only target income that is both active AND currently earning (timing check). */
   const activeIncome = [...plan.income]
     .filter((income) => {
-      if (!income.isActive) return false
+      if (income.isActive === false) return false
       if (income.timing.kind === 'age-range') {
         const ownerAdult = findAdult(plan, income.timing.owner)
         if (ownerAdult) {

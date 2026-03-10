@@ -101,7 +101,7 @@ function getSelectedAdultAnnualIncome(plan: HouseholdPlan, adult: PlanningAdult)
     entry.kind === 'salary-model'
     && entry.owner === adult.owner
     && entry.timing.owner === adult.owner
-    && entry.isActive
+    && entry.isActive !== false
   ))
 
   return salaryModel?.annualAmount ?? adult.annualIncome

@@ -81,7 +81,7 @@ function CpfSectionBody({ model, mode, showProjectionTools }: CpfSectionBodyProp
 
   // Check for manual CPF LIFE stream
   const hasManualCpfLife = incomeStreams.some(
-    (s) => s.type === 'government' && s.isActive && s.name.toLowerCase().includes('cpf life')
+    (s) => s.type === 'government' && s.isActive !== false && s.name.toLowerCase().includes('cpf life')
   )
 
   const retirementSumAmount = getRetirementSumAmount(cpfRetirementSum, currentAge)
