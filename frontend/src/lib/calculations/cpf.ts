@@ -39,7 +39,6 @@ export function calculateCpfContribution(
   annualBonus: number = 0,
   residencyStatus?: ResidencyStatus,
   prMonths?: number,
-  numAdults: number = 1,
 ): CpfContribution {
   if (annualSalary <= 0 && annualBonus <= 0) {
     return { employee: 0, employer: 0, total: 0, oaAllocation: 0, saAllocation: 0, maAllocation: 0 }
@@ -47,14 +46,11 @@ export function calculateCpfContribution(
 
   const rates = getCpfRatesForAge(age, residencyStatus, prMonths)
 
-  // OW (Ordinary Wages) — capped at OW_CEILING_ANNUAL per adult (currently $96,000/year each)
-  // For joint households, each adult has their own ceiling, so multiply by numAdults
-  const effectiveOwCeiling = OW_CEILING_ANNUAL * numAdults
-  const owSubjectToCpf = Math.min(annualSalary, effectiveOwCeiling)
+  // OW (Ordinary Wages) — capped at OW_CEILING_ANNUAL (currently $96,000/year)
+  const owSubjectToCpf = Math.min(annualSalary, OW_CEILING_ANNUAL)
 
-  // AW (Additional Wages, e.g. bonus) — capped at ($102,000 * numAdults) - total OW subject to CPF
-  const effectiveAwTotal = AW_CEILING_TOTAL * numAdults
-  const awCeiling = Math.max(0, effectiveAwTotal - owSubjectToCpf)
+  // AW (Additional Wages, e.g. bonus) — capped at $102,000 - total OW subject to CPF
+  const awCeiling = Math.max(0, AW_CEILING_TOTAL - owSubjectToCpf)
   const awSubjectToCpf = Math.min(annualBonus, awCeiling)
 
   const totalWagesSubjectToCpf = owSubjectToCpf + awSubjectToCpf
