@@ -28,7 +28,7 @@ const routes = [
       <p>Build a Singapore retirement plan that covers CPF, CPF LIFE, SRS, spending, portfolio withdrawals, and downside scenarios.</p>
       <p>Use the planner to answer when you can retire, how much CPF supports your retirement income, and how resilient your drawdown plan is.</p>
       <ul>
-        <li><a href="/inputs">Start planning</a></li>
+        <li><a href="/">Start planning</a></li>
         <li><a href="/retirement-calculator">Singapore retirement calculator</a></li>
         <li><a href="/stress-test">Monte Carlo stress testing</a></li>
       </ul>
@@ -43,7 +43,7 @@ const routes = [
       <p>Estimate how much you may need for retirement in Singapore, then validate the result with CPF timing, withdrawal assumptions, and market stress tests.</p>
       <p>This calculator is designed to turn a quick estimate into a full plan instead of stopping at a single portfolio target.</p>
       <ul>
-        <li><a href="/inputs">Start calculating</a></li>
+        <li><a href="/">Start calculating</a></li>
         <li><a href="/retirement-planner">Singapore retirement planner</a></li>
         <li><a href="/reference">Retirement planning reference guide</a></li>
       </ul>

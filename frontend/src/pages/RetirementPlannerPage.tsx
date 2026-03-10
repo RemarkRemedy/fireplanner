@@ -76,7 +76,7 @@ export function RetirementPlannerPage() {
           </p>
           <div className="flex flex-wrap gap-3">
             <Button asChild size="lg">
-              <Link to="/inputs">
+              <Link to="/">
                 Start planning
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
