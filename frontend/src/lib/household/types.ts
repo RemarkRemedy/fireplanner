@@ -268,6 +268,9 @@ export interface HouseholdPlan {
   schemaVersion: 1
   id: string
   planType: HouseholdPlanType
+  /** Calendar year when the plan was last saved or created.
+   *  Used to detect year drift on import/rehydrate and adjust ages accordingly. */
+  planYear: number
   adults: PlanningAdult[]
   dependents: Dependent[]
   income: IncomeSource[]

@@ -380,6 +380,7 @@ export function fromLegacyIndividual(
     schemaVersion: 1,
     id: 'legacy-individual-household',
     planType: 'individual',
+    planYear: new Date().getFullYear(),
     adults: [adult],
     dependents: [],
     income: [
