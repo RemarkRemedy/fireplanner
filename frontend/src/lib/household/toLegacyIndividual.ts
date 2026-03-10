@@ -173,6 +173,7 @@ function cloneProperty(property: PropertyPlan) {
     mortgageRate: property.mortgageRate,
     mortgageTerm: property.mortgageTerm,
     ltv: property.ltv,
+    purchaseYearsFromNow: property.purchaseYearsFromNow,
     residencyForAbsd: property.residencyForAbsd,
     propertyCount: property.propertyCount,
     ownsProperty: property.ownsProperty,
