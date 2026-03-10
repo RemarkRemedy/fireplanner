@@ -307,7 +307,7 @@ function buildAggregateRuntimeSnapshot(
     kind: 'salary-model'
   } => (
     income.kind === 'salary-model'
-    && income.isActive
+    && income.isActive !== false
     && isActiveAtCurrentYear(income.id, compiledPlan.resolvedTiming.incomeById)
   ))
   const activeBaseLivingExpenses = plan.expenses.filter((expense) => (
@@ -328,7 +328,7 @@ function buildAggregateRuntimeSnapshot(
     1,
   )
   const aggregateAnnualIncome = plan.income.reduce((sum, income) => (
-    income.isActive && isActiveAtCurrentYear(income.id, compiledPlan.resolvedTiming.incomeById)
+    income.isActive !== false && isActiveAtCurrentYear(income.id, compiledPlan.resolvedTiming.incomeById)
       ? sum + income.annualAmount
       : sum
   ), 0)
