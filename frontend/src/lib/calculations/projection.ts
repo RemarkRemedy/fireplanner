@@ -508,6 +508,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     let goalShortfallAmount = 0
     let retirementWithdrawalTotal = 0
     let retirementWithdrawalShortfallAmount = 0
+    let hasUnfundedShortfall = false
 
     // Virtual rebalancing: count uninvested CPF as bond allocation
     // Placed after startLiquidNW so pre-funded CPF money is visible.
@@ -661,6 +662,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       goalShortfallAmount = rawLiquidNW < 0 && goalDeduction > 0
         ? Math.min(goalDeduction, -rawLiquidNW)
         : 0
+      hasUnfundedShortfall = rawLiquidNW < 0
       liquidNW = Math.max(0, rawLiquidNW)
       savingsOrWithdrawal = adjustedSavings
       totalIncome = incomeRow.totalNet + effectiveRentalIncome
@@ -758,6 +760,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       const unfundedShortfall = Math.max(0, uncappedDraw - actualDraw)
       const totalShortfall = Math.max(0, -rawPostRetLiquidNW) + unfundedShortfall
       let adjustedLiquidNW = rawPostRetLiquidNW
+      let fallbackCovered = 0
 
       if (params.cpfAutoFallback && totalShortfall > 0 && age >= 55) {
         const fallback = computeCpfAutoFallback({
@@ -784,6 +787,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
         incomeRow.cpfSA -= fallback.saWithdrawal
         cpfOaAutoAdjustment += fallback.oaWithdrawal
         cpfSaAutoAdjustment += fallback.saWithdrawal
+        fallbackCovered = fallback.totalWithdrawal
       }
 
       // Proportionally attribute deficit to goals and retirement withdrawals
@@ -800,6 +804,8 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
             : 0
         }
       }
+      // Unfunded shortfall: expenses exceed income + portfolio + CPF auto-fallback
+      hasUnfundedShortfall = adjustedLiquidNW < 0 || (totalShortfall > fallbackCovered + 0.01)
       liquidNW = Math.max(0, adjustedLiquidNW)
 
       // Feed uncapped strategy amount back for strategy continuity
@@ -831,10 +837,10 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       peakTotalNWAge = age
     }
 
-    // Track depletion: portfolio is depleted when total withdrawable assets
-    // (liquid NW + CPF) can no longer cover expenses. Just liquidNW reaching 0
-    // is not depletion if CPF auto-fallback is still funding expenses.
-    if (totalNW <= 0 && portfolioDepletedAge === null) {
+    // Track depletion: portfolio is depleted when expenses can no longer be
+    // fully funded. This means liquidNW is 0 AND auto-fallback (if any) couldn't
+    // cover the shortfall. Residual non-withdrawable CPF (MA) doesn't prevent depletion.
+    if (liquidNW <= 0 && hasUnfundedShortfall && portfolioDepletedAge === null) {
       portfolioDepletedAge = age
     }
 
