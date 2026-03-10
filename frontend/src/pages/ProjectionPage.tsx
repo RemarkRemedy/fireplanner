@@ -39,6 +39,7 @@ import {
   COLUMN_GROUPS,
   GROUP_COLUMNS,
   DEFAULT_COLUMN_IDS,
+  DEFAULT_JOINT_COLUMN_IDS,
 } from '@/components/shared/projectionColumns'
 import { ASSET_CLASSES } from '@/lib/data/historicalReturns'
 import { buildSplitAdultPlanSlice } from '@/lib/household/planSlice'
@@ -129,6 +130,9 @@ export function ProjectionPage() {
     ? (perAdultResult?.adultAges.retirementAge ?? normalized.retirementAge)
     : normalized.retirementAge
   const inflation = normalized.compiledPlan.assumptions.returns.inflation
+  const activeJointAdults = isMultiAdult && projectionView === 'joint'
+    ? adults.map((a) => ({ name: a.displayName, currentAge: a.currentAge }))
+    : undefined
 
   const hasSrs = rows?.some((row) => row.srsBalance > 0 || row.srsContribution > 0 || row.srsWithdrawal > 0) ?? false
 
@@ -367,9 +371,10 @@ export function ProjectionPage() {
     return s
   }, [activeGroups, columnVisibility])
 
+  const activeDefaultIds = activeJointAdults ? DEFAULT_JOINT_COLUMN_IDS : DEFAULT_COLUMN_IDS
   const defaultVisibleCount = useMemo(() => {
-    return DEFAULT_COLUMN_IDS.filter(id => columnVisibility[id] !== false).length
-  }, [columnVisibility])
+    return activeDefaultIds.filter(id => columnVisibility[id] !== false).length
+  }, [activeDefaultIds, columnVisibility])
 
   // Visible column count per group — accounts for individually hidden columns (e.g. SRS)
   const groupVisibleCount = useMemo(() => {
@@ -381,8 +386,8 @@ export function ProjectionPage() {
   }, [columnVisibility])
 
   const columns = useMemo(
-    () => buildProjectionColumns(activeRetirementAge, hasMortgageCash),
-    [activeRetirementAge, hasMortgageCash],
+    () => buildProjectionColumns(activeRetirementAge, hasMortgageCash, activeJointAdults),
+    [activeRetirementAge, hasMortgageCash, activeJointAdults],
   )
 
   const table = useReactTable({
@@ -422,7 +427,7 @@ export function ProjectionPage() {
                   className={cn(
                     'px-2 py-2 text-left font-medium text-muted-foreground whitespace-nowrap',
                     groupStartColumns.has(header.id) && 'border-l-2 border-l-border',
-                    header.column.id === 'age' && 'sticky left-0 z-30 bg-background border-r border-border',
+                    (header.column.id === 'age' || header.column.id === 'year') && 'sticky left-0 z-30 bg-background border-r border-border',
                   )}
                 >
                   {header.isPlaceholder
@@ -451,7 +456,7 @@ export function ProjectionPage() {
                 )}
               >
                 {row.getVisibleCells().map((cell) => {
-                  const isAgeCol = cell.column.id === 'age'
+                  const isAgeCol = cell.column.id === 'age' || cell.column.id === 'year'
                   return (
                     <td
                       key={cell.id}
@@ -693,7 +698,7 @@ export function ProjectionPage() {
           <NWChartView
             rows={displayRows}
             retirementAge={activeRetirementAge}
-            jointAdults={isMultiAdult && projectionView === 'joint' ? adults.map((a) => ({ name: a.displayName, currentAge: a.currentAge })) : undefined}
+            jointAdults={activeJointAdults}
           />
 
           <div className="flex flex-wrap items-center gap-2">
