@@ -68,7 +68,7 @@ export function PropertyProjectionPreview({ property, adult }: PropertyProjectio
       </div>
       <div className="overflow-auto rounded-md border" style={{ maxHeight: expanded ? '400px' : undefined }}>
         <table className="w-full text-sm">
-          <thead className="border-b bg-muted/50 sticky top-0">
+          <thead className="border-b bg-muted sticky top-0">
             <tr>
               <th className="px-3 py-2 text-left font-medium">Age</th>
               {showBalaDecay ? (

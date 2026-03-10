@@ -439,6 +439,18 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                         value={property.ltv}
                         onChange={(value) => updateProperty(property.id, { ltv: value })}
                       />
+                      <div className="flex items-center justify-between rounded-md border p-3 md:col-span-2 xl:col-span-4">
+                        <div>
+                          <div className="font-medium">Apply Bala lease decay</div>
+                          <div className="text-sm text-muted-foreground">
+                            Use this for leasehold assets when you want the model to degrade resale value as the remaining lease shortens.
+                          </div>
+                        </div>
+                        <Switch
+                          checked={property.existingApplyBalaDecay}
+                          onCheckedChange={(checked) => updateProperty(property.id, { existingApplyBalaDecay: checked })}
+                        />
+                      </div>
                     </div>
                   </div>
                   )}
