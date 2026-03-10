@@ -548,6 +548,7 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
           },
           amount: partnerAnnualExpenses,
           periodicity: 'annual',
+          growthModel: 'inflation-linked',
         })
       }
 
@@ -578,6 +579,7 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
         },
         amount: jointAnnualExpenses,
         periodicity: 'annual',
+        growthModel: 'inflation-linked',
       })
     }
 
