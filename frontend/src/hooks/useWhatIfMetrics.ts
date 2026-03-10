@@ -64,7 +64,7 @@ export function resolveEffectiveIncome(
 
 export function buildBaseInputsFromEffectiveIncome(
   profile: ProfileState,
-  allocation: AllocationState,
+  allocation: Pick<AllocationState, 'currentWeights' | 'returnOverrides' | 'validationErrors'>,
   property: PropertyState,
   effectiveIncome: number,
   timingOverride?: TimingOverride,

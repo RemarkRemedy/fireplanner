@@ -321,6 +321,7 @@ describe('Household analysis presentation', () => {
       hdbSublettingRooms: 0,
       hdbSublettingRate: 0,
       hdbCpfUsedForHousing: 0,
+      purchaseYearsFromNow: 0,
     }
     compiledPlan.propertyOrder = ['property-analysis-only']
 

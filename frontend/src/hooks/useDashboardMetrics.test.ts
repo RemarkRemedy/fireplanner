@@ -34,7 +34,17 @@ describe('useDashboardMetrics', () => {
         cpfSA: 100000,
         cpfMA: 50000,
         parentSupportEnabled: false,
-        healthcareConfig: { enabled: false, ispTier: 'none', mediSaveTopUpAnnual: 0, lifeExpectancy: 90 },
+        healthcareConfig: {
+          enabled: false,
+          mediShieldLifeEnabled: true,
+          ispTier: 'none',
+          careShieldLifeEnabled: true,
+          oopBaseAmount: 1170,
+          oopModel: 'fixed' as const,
+          oopInflationRate: 0.03,
+          oopReferenceAge: 30,
+          mediSaveTopUpAnnual: 0,
+        },
       },
       expenses: {
         annualExpenses: 48000,

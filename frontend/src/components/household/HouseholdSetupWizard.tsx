@@ -299,13 +299,11 @@ function MetricsRow({ fireNumber, savingsRate, progress }: {
 }
 
 /** Per-person FIRE preview card with metrics + chart */
-function PersonPreview({ label, metrics, desiredRetirementAge }: {
+function PersonPreview({ label, metrics }: {
   label: string
   metrics: PersonFireMetrics
-  desiredRetirementAge?: number
 }) {
   const alreadyFire = metrics.yearsToFire === 0
-  const hasShortfall = desiredRetirementAge != null && (metrics.fireYear + (desiredRetirementAge - desiredRetirementAge)) > 0 && !metrics.fireReachable
 
   return (
     <div className="space-y-2">
@@ -789,13 +787,11 @@ export function HouseholdSetupWizard({ planType, pathway }: HouseholdSetupWizard
                   <PersonPreview
                     label={hasPartner ? (selfName.trim() || 'You') : 'Your projection'}
                     metrics={selfMetrics}
-                    desiredRetirementAge={pathway === 'goal-first' ? selfRetirementAge : undefined}
                   />
                   {hasPartner && partnerMetrics && (
                     <PersonPreview
                       label={partnerName.trim() || 'Partner'}
                       metrics={partnerMetrics}
-                      desiredRetirementAge={pathway === 'goal-first' ? partnerRetirementAge : undefined}
                     />
                   )}
                 </div>

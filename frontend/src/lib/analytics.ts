@@ -57,6 +57,8 @@ type AnalyticsEvent =
   | 'expense_tracker_submit_success'
   | 'expense_tracker_submit_error'
   | 'expense_tracker_form_abandon'
+  | 'projection_view_changed'
+  | 'stress_test_view_changed'
 
 export function trackEvent(event: AnalyticsEvent, data?: Record<string, string | number | boolean>) {
   if (isCompanionMode()) return

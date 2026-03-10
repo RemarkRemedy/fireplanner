@@ -666,7 +666,7 @@ describe('compileHouseholdPlan', () => {
     const baseTotalIncome = baseCompiled.rows[0].totalNetIncome
 
     // Simulate stale localStorage data where isActive was never set
-    delete (plan.income[1] as Record<string, unknown>).isActive
+    delete (plan.income[1] as unknown as Record<string, unknown>).isActive
 
     const compiled = compileHouseholdPlan(plan)
     // Partner income should still contribute — total net income should match baseline
