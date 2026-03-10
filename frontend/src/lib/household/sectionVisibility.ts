@@ -33,6 +33,8 @@ function hasHealthcarePlanningData(adult: PlanningAdult): boolean {
       && healthcare.oopCurveVariant !== DEFAULT_HEALTHCARE_CONFIG.oopCurveVariant)
     || healthcare.mediShieldLifeEnabled !== DEFAULT_HEALTHCARE_CONFIG.mediShieldLifeEnabled
     || healthcare.careShieldLifeEnabled !== DEFAULT_HEALTHCARE_CONFIG.careShieldLifeEnabled
+    || (healthcare.premiumInflationRate != null
+      && healthcare.premiumInflationRate !== DEFAULT_HEALTHCARE_CONFIG.premiumInflationRate)
 }
 
 function hasPropertyPlanningData(property: PropertyPlan): boolean {

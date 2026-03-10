@@ -209,6 +209,7 @@ export function validateProfileField(
     cpfTopUpSA: z.number().min(0).max(RSTU_TAX_RELIEF_CAP),
     cpfTopUpMA: z.number().min(0).max(MEDISAVE_BHS),
     // Healthcare config sub-fields validated here for field-level checks
+    'healthcareConfig.premiumInflationRate': z.number().min(0).max(0.15),
     'healthcareConfig.oopBaseAmount': z.number().min(0).max(50000),
     'healthcareConfig.mediSaveTopUpAnnual': z.number().min(0).max(MEDISAVE_BHS),
     cashReserveFixedAmount: z.number().min(0).max(10_000_000),
