@@ -12,6 +12,32 @@ export interface ChangelogEntry {
 /** Newest first. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-03-10',
+    category: 'feature',
+    title: 'Per-adult Monte Carlo analysis for couples',
+    description:
+      'The Stress Test page now shows Adult 1 / Adult 2 / Joint tabs for households with two adults. Selecting an individual adult runs a hypothetical "what if this person were single?" Monte Carlo simulation using their share of the household plan (income, expenses, and assets split 50/50 for shared items). Joint mode continues to simulate the full household as before.',
+    affectedSections: ['section-stress-test'],
+    insight:
+      'Per-adult MC results are NOT additive: Adult 1 + Adult 2 does not equal Joint. Each per-adult simulation is a standalone "what if single?" scenario with correlated returns and non-linear percentile aggregation. Use it to understand each partner\'s individual financial resilience, not to decompose the joint result.',
+  },
+  {
+    date: '2026-03-10',
+    category: 'feature',
+    title: 'Joint projection charts and tables show both adults\' ages',
+    description:
+      'Net worth charts, Monte Carlo fan charts, and projection tables now use "Years from now" as the x-axis in joint household view, with both adults\' ages shown in tooltips and column headers. This replaces the single-age display that only showed the reference adult\'s age.',
+    affectedSections: ['section-projection', 'section-stress-test'],
+  },
+  {
+    date: '2026-03-10',
+    category: 'feature',
+    title: 'Household planner enabled by default',
+    description:
+      'The single/couple/household plan type selector on the Start page is now always visible. CPF, property, and healthcare sections are also enabled by default for new users.',
+    affectedSections: ['section-personal'],
+  },
+  {
     date: '2026-03-06',
     category: 'feature',
     title: 'Companion mode integration tests for cross-module boundaries',
@@ -826,4 +852,4 @@ export const CHANGELOG: ChangelogEntry[] = [
 ]
 
 /** Bump this string whenever any data file is updated. Triggers the banner for returning users. */
-export const DATA_VINTAGE = '2026-03-02'
+export const DATA_VINTAGE = '2026-03-10'
