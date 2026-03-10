@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { compileHouseholdPlan } from '@/lib/household/compileHouseholdPlan'
 import { fromLegacyIndividual } from '@/lib/household/fromLegacyIndividual'
 import { LEGACY_PARITY_FIXTURES } from '@/lib/household/__tests__/legacyParityFixtures'
@@ -637,11 +637,19 @@ describe('compileHouseholdPlan', () => {
     ]))
   })
 
-  it('throws when duplicate ids would overwrite normalized entries', () => {
+  it('warns and skips duplicate ids instead of overwriting normalized entries', () => {
     const plan = makeCouplePlan()
     plan.income[1].id = plan.income[0].id
 
-    expect(() => compileHouseholdPlan(plan)).toThrow('Duplicate income id "income-salary-self" in household plan.')
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const compiled = compileHouseholdPlan(plan)
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Duplicate income id "income-salary-self"')
+    )
+    warnSpy.mockRestore()
+    // Only the first entry is kept — partner salary is skipped
+    const incomeIds = compiled.rows.length > 0 ? Object.keys(compiled.cpfByAdultId) : []
+    expect(incomeIds).not.toContain('income-salary-partner')
   })
 
   it('throws on unknown owner values instead of silently dropping entries', () => {
