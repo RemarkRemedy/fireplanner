@@ -148,6 +148,35 @@ function validateAdult(adult: PlanningAdult, errors: HouseholdValidationErrors) 
   if (adult.healthcare.mediSaveTopUpAnnual < 0) {
     addEntityError(errors, 'adult', adult.id, 'healthcare.mediSaveTopUpAnnual', 'MediSave top-up cannot be negative.')
   }
+
+  // ── Protection fields ──
+  if (adult.cashSavings < 0) {
+    addEntityError(errors, 'adult', adult.id, 'cashSavings', 'Cash savings cannot be negative.')
+  }
+  if (adult.cashSavings > 0 && adult.liquidNetWorth > 0 && adult.cashSavings > adult.liquidNetWorth) {
+    addEntityError(errors, 'adult', adult.id, 'cashSavings', 'Cash savings cannot exceed liquid net worth.')
+  }
+  if (adult.nonMortgageDebtTotal < 0) {
+    addEntityError(errors, 'adult', adult.id, 'nonMortgageDebtTotal', 'Non-mortgage debt cannot be negative.')
+  }
+  if (adult.nonMortgageDebtMonthlyPayment < 0) {
+    addEntityError(errors, 'adult', adult.id, 'nonMortgageDebtMonthlyPayment', 'Debt payment cannot be negative.')
+  }
+  if (adult.insuranceDeathCoverage < 0) {
+    addEntityError(errors, 'adult', adult.id, 'insuranceDeathCoverage', 'Coverage cannot be negative.')
+  }
+  if (adult.insuranceCICoverage < 0) {
+    addEntityError(errors, 'adult', adult.id, 'insuranceCICoverage', 'Coverage cannot be negative.')
+  }
+  if (adult.insuranceDisabilityMonthly < 0) {
+    addEntityError(errors, 'adult', adult.id, 'insuranceDisabilityMonthly', 'Coverage cannot be negative.')
+  }
+  if (adult.funeralCosts < 0) {
+    addEntityError(errors, 'adult', adult.id, 'funeralCosts', 'Funeral costs cannot be negative.')
+  }
+  if (adult.ciRecoveryYears < 1 || adult.ciRecoveryYears > 10 || !Number.isInteger(adult.ciRecoveryYears)) {
+    addEntityError(errors, 'adult', adult.id, 'ciRecoveryYears', 'Recovery years must be an integer between 1 and 10.')
+  }
 }
 
 function validateDependent(
