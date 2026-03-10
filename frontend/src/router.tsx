@@ -52,6 +52,7 @@ function PlannerRouteShell() {
   const requiredCpfEnabled = useHouseholdPlanStore((state) => deriveHouseholdSectionToggles(state.plan).cpfEnabled)
   const requiredPropertyEnabled = useHouseholdPlanStore((state) => deriveHouseholdSectionToggles(state.plan).propertyEnabled)
   const requiredHealthcareEnabled = useHouseholdPlanStore((state) => deriveHouseholdSectionToggles(state.plan).healthcareEnabled)
+  const requiredProtectionEnabled = useHouseholdPlanStore((state) => deriveHouseholdSectionToggles(state.plan).protectionEnabled)
   const ensureHouseholdDataVisible = useUIStore((state) => state.ensureHouseholdDataVisible)
   const [householdPlannerEnabled] = useState(() => isHouseholdPlannerV1Enabled())
 
@@ -61,6 +62,7 @@ function PlannerRouteShell() {
         cpfEnabled: requiredCpfEnabled,
         propertyEnabled: requiredPropertyEnabled,
         healthcareEnabled: requiredHealthcareEnabled,
+        protectionEnabled: requiredProtectionEnabled,
       })
     }
   }, [
@@ -71,6 +73,7 @@ function PlannerRouteShell() {
     requiredCpfEnabled,
     requiredPropertyEnabled,
     requiredHealthcareEnabled,
+    requiredProtectionEnabled,
   ])
 
   return <AppLayout />

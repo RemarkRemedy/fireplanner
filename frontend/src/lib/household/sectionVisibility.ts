@@ -5,6 +5,7 @@ export interface HouseholdSectionToggles {
   cpfEnabled: boolean
   propertyEnabled: boolean
   healthcareEnabled: boolean
+  protectionEnabled: boolean
 }
 
 function hasCpfPlanningData(adult: PlanningAdult): boolean {
@@ -37,6 +38,16 @@ function hasHealthcarePlanningData(adult: PlanningAdult): boolean {
       && healthcare.premiumInflationRate !== DEFAULT_HEALTHCARE_CONFIG.premiumInflationRate)
 }
 
+function hasProtectionPlanningData(adult: PlanningAdult): boolean {
+  return (
+    adult.cashSavings > 0 ||
+    adult.nonMortgageDebtTotal > 0 ||
+    adult.insuranceDeathCoverage > 0 ||
+    adult.insuranceCICoverage > 0 ||
+    adult.insuranceDisabilityMonthly > 0
+  )
+}
+
 function hasPropertyPlanningData(property: PropertyPlan): boolean {
   return property.ownsProperty
     || property.propertyCount > 0
@@ -54,5 +65,6 @@ export function deriveHouseholdSectionToggles(plan: HouseholdPlan): HouseholdSec
     cpfEnabled: plan.adults.some(hasCpfPlanningData),
     propertyEnabled: plan.properties.some(hasPropertyPlanningData),
     healthcareEnabled: plan.adults.some(hasHealthcarePlanningData),
+    protectionEnabled: plan.adults.some(hasProtectionPlanningData),
   }
 }

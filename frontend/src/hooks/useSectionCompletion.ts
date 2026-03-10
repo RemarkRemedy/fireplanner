@@ -62,6 +62,19 @@ function countHouseholdErrors(
   }, 0)
 }
 
+/** Count protection-related errors from adult validation entries. */
+function countHouseholdProtectionErrors(
+  errors: HouseholdValidationErrors,
+): number {
+  const protectionFields = ['cashSavings', 'nonMortgageDebtTotal', 'insuranceDeathCoverage', 'insuranceCICoverage', 'insuranceDisabilityMonthly']
+  return Object.entries(errors).reduce((count, [key, fieldErrors]) => {
+    const [kind] = key.split(':', 1)
+    if (kind !== 'adult') return count
+
+    return count + Object.keys(fieldErrors).filter((field) => protectionFields.includes(field)).length
+  }, 0)
+}
+
 /** W24: Count healthcare-related errors from adult validation entries. */
 function countHouseholdHealthcareErrors(
   errors: HouseholdValidationErrors,
@@ -267,6 +280,13 @@ function buildHouseholdSectionCompletion(
     adult.healthcare.mediSaveTopUpAnnual > 0
   ))
 
+  const protectionCustomized = plan.adults.some((adult) => (
+    adult.cashSavings > 0 ||
+    adult.insuranceDeathCoverage > 0 ||
+    adult.insuranceCICoverage > 0 ||
+    adult.insuranceDisabilityMonthly > 0
+  ))
+
   const propertyCustomized = hasPropertyData(plan)
   const allocationErrorCount = Object.keys(allocation.validationErrors).length
   const allocationCustomized =
@@ -282,6 +302,7 @@ function buildHouseholdSectionCompletion(
   const propertyErrors = countHouseholdErrors(householdErrors, ['property'])
   const cpfErrors = countHouseholdCpfErrors(plan)
   const healthcareErrors = countHouseholdHealthcareErrors(householdErrors)
+  const protectionErrors = countHouseholdProtectionErrors(householdErrors)
 
   const sections: Record<SectionId, SectionCompletion> = {
     'section-personal': {
@@ -323,6 +344,11 @@ function buildHouseholdSectionCompletion(
       isComplete: healthcareCustomized,
       status: getStatus(healthcareCustomized, healthcareErrors),
       errorCount: healthcareErrors,
+    },
+    'section-protection': {
+      isComplete: protectionCustomized,
+      status: getStatus(protectionCustomized, protectionErrors),
+      errorCount: protectionErrors,
     },
     'section-property': {
       isComplete: propertyCustomized,
