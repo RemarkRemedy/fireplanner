@@ -116,13 +116,17 @@ export function generatePropertyProjection(
     mortgagePayoffAge = startAge + params.mortgageTerm
     appreciationRate = params.appreciationRate
     leaseYears = params.leaseYears
-    applyBalaDecay = false
+    applyBalaDecay = params.existingApplyBalaDecay && leaseYears < FREEHOLD_LEASE_THRESHOLD
     cpfMonthly = 0
   }
 
   // ALL downsizing scenarios end at sellAge
   const sellAge = downsizing.scenario !== 'none' ? downsizing.sellAge : null
-  const endAge = sellAge != null && sellAge >= startAge && sellAge <= lifeExpectancy
+
+  // If sell age is before start age, no projection is possible
+  if (sellAge != null && sellAge < startAge) return []
+
+  const endAge = sellAge != null && sellAge <= lifeExpectancy
     ? sellAge
     : lifeExpectancy
 
