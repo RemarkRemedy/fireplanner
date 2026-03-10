@@ -17,6 +17,7 @@ import type {
   HouseholdPlan,
   IncomeSource,
   PlanningAdult,
+  TimingRule,
 } from '@/lib/household/types'
 
 export interface AdultAges {
@@ -38,13 +39,61 @@ function remapOwner<T extends { owner: EntryOwner }>(entry: T): T {
   return { ...entry, owner: 'self' as EntryOwner }
 }
 
-function remapTiming<T extends { timing: { owner: AdultOwner; [k: string]: unknown } }>(entry: T): T {
-  return { ...entry, timing: { ...entry.timing, owner: 'self' as AdultOwner } }
+/**
+ * Shift timing ages when the timing's original owner differs from the target adult.
+ * If a shared expense says "Age based on: TJ, startAge: 32" and TJ is 32 but Chloe
+ * is 28, the calendar-equivalent for Chloe is startAge: 28.
+ *
+ * ageDelta = originalOwnerAge - targetAdultAge (positive when target is younger)
+ */
+function shiftTimingAges(timing: TimingRule, ageDelta: number): TimingRule {
+  if (ageDelta === 0) return timing
+  if (timing.kind === 'single-age') {
+    return { ...timing, age: timing.age - ageDelta }
+  }
+  return {
+    ...timing,
+    startAge: timing.startAge - ageDelta,
+    endAge: timing.endAge !== null ? timing.endAge - ageDelta : null,
+  }
 }
 
-function remapTimingIfPresent<T extends { timing?: { owner: AdultOwner; [k: string]: unknown } }>(entry: T): T {
-  if (entry.timing?.owner) {
-    return { ...entry, timing: { ...entry.timing, owner: 'self' as AdultOwner } } as T
+/**
+ * Look up the current age of the adult who owns a timing rule.
+ * Returns 0 delta if the owner matches the target already.
+ */
+function getTimingAgeDelta(
+  timing: TimingRule,
+  targetAdult: PlanningAdult,
+  allAdults: readonly PlanningAdult[],
+): number {
+  // If the timing owner matches the target adult's original owner, no shift needed
+  if (timing.owner === targetAdult.owner) return 0
+  // Find the adult who originally owns this timing
+  const originalOwner = allAdults.find((a) => a.owner === timing.owner)
+  if (!originalOwner) return 0
+  return originalOwner.currentAge - targetAdult.currentAge
+}
+
+function remapTiming<T extends { timing: TimingRule }>(
+  entry: T,
+  ageDelta: number,
+): T {
+  return {
+    ...entry,
+    timing: { ...shiftTimingAges(entry.timing, ageDelta), owner: 'self' as AdultOwner },
+  }
+}
+
+function remapTimingIfPresent<T extends { timing?: TimingRule }>(
+  entry: T,
+  ageDelta: number,
+): T {
+  if (entry.timing) {
+    return {
+      ...entry,
+      timing: { ...shiftTimingAges(entry.timing, ageDelta), owner: 'self' as AdultOwner },
+    } as T
   }
   return entry
 }
@@ -76,15 +125,24 @@ export function buildSingleAdultPlanSlice(
 
   const adultIncome = plan.income
     .filter((entry) => isOwnedByTarget(entry.owner))
-    .map((entry) => remapTiming(remapOwner(structuredClone(entry))))
+    .map((entry) => {
+      const delta = getTimingAgeDelta(entry.timing, targetAdult, plan.adults)
+      return remapTiming(remapOwner(structuredClone(entry)), delta)
+    })
 
   const adultExpenses = plan.expenses
     .filter((entry) => isOwnedByTarget(entry.owner) || entry.owner === 'shared')
-    .map((entry) => remapTimingIfPresent(remapOwner(structuredClone(entry))))
+    .map((entry) => {
+      const delta = entry.timing ? getTimingAgeDelta(entry.timing, targetAdult, plan.adults) : 0
+      return remapTimingIfPresent(remapOwner(structuredClone(entry)), delta)
+    })
 
   const adultGoals = plan.goals
     .filter((entry) => isOwnedByTarget(entry.owner) || entry.owner === 'shared')
-    .map((entry) => remapTiming(remapOwner(structuredClone(entry))))
+    .map((entry) => {
+      const delta = getTimingAgeDelta(entry.timing, targetAdult, plan.adults)
+      return remapTiming(remapOwner(structuredClone(entry)), delta)
+    })
 
   const adultAssets = plan.assets
     .filter((entry) => isOwnedByTarget(entry.owner) || entry.owner === 'shared')
@@ -166,30 +224,48 @@ export function buildSplitAdultPlanSlice(
   const adultIncome = [
     ...plan.income
       .filter((entry) => isOwnedByTarget(entry.owner))
-      .map((entry) => remapTiming(remapOwner(structuredClone(entry)))),
+      .map((entry) => {
+        const delta = getTimingAgeDelta(entry.timing, targetAdult, plan.adults)
+        return remapTiming(remapOwner(structuredClone(entry)), delta)
+      }),
     ...plan.income
       .filter((entry) => isShared(entry.owner))
-      .map((entry) => scaleIncomeSource(remapTiming(remapOwner(structuredClone(entry))), splitRatio)),
+      .map((entry) => {
+        const delta = getTimingAgeDelta(entry.timing, targetAdult, plan.adults)
+        return scaleIncomeSource(remapTiming(remapOwner(structuredClone(entry)), delta), splitRatio)
+      }),
   ]
 
   // Expenses: include owned at full value + shared at splitRatio
   const adultExpenses = [
     ...plan.expenses
       .filter((entry) => isOwnedByTarget(entry.owner))
-      .map((entry) => remapTimingIfPresent(remapOwner(structuredClone(entry)))),
+      .map((entry) => {
+        const delta = entry.timing ? getTimingAgeDelta(entry.timing, targetAdult, plan.adults) : 0
+        return remapTimingIfPresent(remapOwner(structuredClone(entry)), delta)
+      }),
     ...plan.expenses
       .filter((entry) => isShared(entry.owner))
-      .map((entry) => scaleExpenseItem(remapTimingIfPresent(remapOwner(structuredClone(entry))), splitRatio)),
+      .map((entry) => {
+        const delta = entry.timing ? getTimingAgeDelta(entry.timing, targetAdult, plan.adults) : 0
+        return scaleExpenseItem(remapTimingIfPresent(remapOwner(structuredClone(entry)), delta), splitRatio)
+      }),
   ]
 
   // Goals: include owned at full value + shared at splitRatio
   const adultGoals = [
     ...plan.goals
       .filter((entry) => isOwnedByTarget(entry.owner))
-      .map((entry) => remapTiming(remapOwner(structuredClone(entry)))),
+      .map((entry) => {
+        const delta = getTimingAgeDelta(entry.timing, targetAdult, plan.adults)
+        return remapTiming(remapOwner(structuredClone(entry)), delta)
+      }),
     ...plan.goals
       .filter((entry) => isShared(entry.owner))
-      .map((entry) => scaleGoalItem(remapTiming(remapOwner(structuredClone(entry))), splitRatio)),
+      .map((entry) => {
+        const delta = getTimingAgeDelta(entry.timing, targetAdult, plan.adults)
+        return scaleGoalItem(remapTiming(remapOwner(structuredClone(entry)), delta), splitRatio)
+      }),
   ]
 
   // Assets: include owned at full value + shared at splitRatio
