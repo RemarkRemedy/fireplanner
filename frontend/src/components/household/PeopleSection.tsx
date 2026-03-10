@@ -292,26 +292,35 @@ export function PeopleSection({
                   <div className="space-y-1">
                     <Label>Residency Status</Label>
                     <Select
-                      value={adult.residencyStatus}
-                      onValueChange={(value) => updateAdultProfile(adult, { residencyStatus: value as PlanningAdult['residencyStatus'] })}
+                      value={adult.residencyStatus === 'pr' && adult.prMonths < 24 ? 'pr-new' : adult.residencyStatus}
+                      onValueChange={(value) => {
+                        if (value === 'pr-new') {
+                          updateAdultProfile(adult, { residencyStatus: 'pr', prMonths: adult.prMonths < 24 ? adult.prMonths : 0 })
+                        } else if (value === 'pr') {
+                          updateAdultProfile(adult, { residencyStatus: 'pr', prMonths: 24 })
+                        } else {
+                          updateAdultProfile(adult, { residencyStatus: value as PlanningAdult['residencyStatus'] })
+                        }
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="citizen">Singapore Citizen</SelectItem>
-                        <SelectItem value="pr">Permanent Resident</SelectItem>
+                        <SelectItem value="pr-new">PR (new, &lt;24 months)</SelectItem>
+                        <SelectItem value="pr">PR (established, 24+ months)</SelectItem>
                         <SelectItem value="foreigner">Foreigner</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  {adult.residencyStatus === 'pr' && (
+                  {adult.residencyStatus === 'pr' && adult.prMonths < 24 && (
                     <div className="space-y-1">
                       <Label>Months as PR</Label>
                       <NumberInput
                         integer
                         min={0}
-                        max={600}
+                        max={23}
                         value={adult.prMonths}
                         onChange={(value) => updateAdultProfile(adult, { prMonths: value })}
                       />
