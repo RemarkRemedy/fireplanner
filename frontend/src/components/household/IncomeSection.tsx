@@ -1108,7 +1108,11 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
             <CardTitle className="text-lg">{projectionLabel}</CardTitle>
           </CardHeader>
           <CardContent>
-            <ProjectionTable data={activeProjection} retirementAge={projectionRetirementAge} />
+            <ProjectionTable
+              data={activeProjection}
+              retirementAge={projectionRetirementAge}
+              jointAdults={isMultiAdult && projectionView === 'joint' ? adults.map((a) => ({ name: a.displayName, currentAge: a.currentAge })) : undefined}
+            />
           </CardContent>
         </Card>
       )}
