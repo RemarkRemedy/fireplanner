@@ -125,7 +125,7 @@ export function HouseholdOverviewBar({
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3 xl:w-[28rem]">
+          <div className="grid gap-3 sm:grid-cols-3 xl:w-[36rem] xl:shrink-0">
             <div className="rounded-lg border bg-background/80 px-4 py-3">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Current savings</p>
               <p className="mt-1 text-lg font-semibold tabular-nums">
