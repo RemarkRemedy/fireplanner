@@ -650,4 +650,20 @@ describe('compileHouseholdPlan', () => {
 
     expect(() => compileHouseholdPlan(plan)).toThrow('Unknown owner "pet" at income-salary-self.owner. Expected "self", "partner", or "shared".')
   })
+
+  it('treats income with undefined isActive as active (backward compat)', () => {
+    const plan = makeCouplePlan()
+    // Compile with isActive present to get baseline
+    const baseCompiled = compileHouseholdPlan(plan)
+    const baseTotalIncome = baseCompiled.rows[0].totalNetIncome
+
+    // Simulate stale localStorage data where isActive was never set
+    delete (plan.income[1] as Record<string, unknown>).isActive
+
+    const compiled = compileHouseholdPlan(plan)
+    // Partner income should still contribute — total net income should match baseline
+    expect(compiled.rows[0].totalNetIncome).toBe(baseTotalIncome)
+    // Savings should be positive (both adults earning)
+    expect(compiled.annualSavingsByYear[0]).toBeGreaterThan(0)
+  })
 })
