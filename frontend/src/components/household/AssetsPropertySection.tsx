@@ -14,7 +14,8 @@ import {
   createDefaultHouseholdAsset,
   createDefaultHouseholdProperty,
 } from '@/lib/household/assetPropertyDefaults'
-import { entryOwnerLabel } from '@/lib/household/editorUtils'
+import { entryOwnerLabel, resolvePropertyAdult } from '@/lib/household/editorUtils'
+import { PropertyProjectionPreview } from '@/components/household/PropertyProjectionPreview'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import type {
   AssetItem,
@@ -718,6 +719,11 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                       )}
                     </div>
                   </div>
+                  {/* Property Projection Preview */}
+                  {(() => {
+                    const adult = resolvePropertyAdult(property, plan.adults)
+                    return adult ? <PropertyProjectionPreview property={property} adult={adult} /> : null
+                  })()}
                 </div>
               )
             })
