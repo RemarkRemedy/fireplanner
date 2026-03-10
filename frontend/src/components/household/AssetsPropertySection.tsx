@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
@@ -80,6 +80,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
   const updateProperty = useHouseholdPlanStore((state) => state.updateProperty)
   const removeProperty = useHouseholdPlanStore((state) => state.removeProperty)
 
+  const [expandedProperties, setExpandedProperties] = useState<Record<string, boolean>>({})
   const ownerOptions: EntryOwner[] = plan.adults.length > 1 ? ENTRY_OWNER_OPTIONS : ['self']
   const handleAddAsset = (kind: AssetItem['kind']) => {
     addAsset(createDefaultHouseholdAsset(kind, plan.adults.length > 1 ? 'shared' : 'self'))
@@ -287,6 +288,14 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                 <div key={property.id} className="rounded-lg border p-4 space-y-6">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="p-1 rounded hover:bg-muted transition-colors"
+                        onClick={() => setExpandedProperties(prev => ({ ...prev, [property.id]: !prev[property.id] }))}
+                        aria-label={expandedProperties[property.id] !== false ? 'Collapse property' : 'Expand property'}
+                      >
+                        <ChevronDown className={`h-4 w-4 shrink-0 transition-transform duration-200 ${expandedProperties[property.id] !== false ? 'rotate-180' : ''}`} />
+                      </button>
                       <Input
                         value={property.label}
                         onChange={(event) => updateProperty(property.id, { label: event.target.value })}
@@ -299,6 +308,8 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                     </Button>
                   </div>
 
+                  {expandedProperties[property.id] !== false && (
+                  <>
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                     {isMultiAdult && (
                       <div className="space-y-1">
@@ -383,16 +394,12 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                     </div>
                   </div>
 
-                  <Accordion type="multiple" defaultValue={['purchase-assumptions', 'existing-home', 'hdb-monetization', 'downsizing', 'projection']}>
                     {!property.ownsProperty && (
-                    <AccordionItem value="purchase-assumptions" className="border rounded-lg px-4">
-                      <AccordionTrigger className="text-sm font-medium hover:no-underline">
-                        <div className="flex items-center gap-2">
-                          Purchase & Return Assumptions
-                          <InfoTooltip text="These assumptions drive purchase, rental, and appreciation modeling for the selected property row." />
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium">Purchase & Return Assumptions</h3>
+                      <InfoTooltip text="These assumptions drive purchase, rental, and appreciation modeling for the selected property row." />
+                    </div>
                         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                           <NumberInput
                             label="Years from now"
@@ -457,19 +464,15 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                             />
                           </div>
                         </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                    )}
+                  </div>
+                  )}
 
-                    {property.ownsProperty && (
-                    <AccordionItem value="existing-home" className="border rounded-lg px-4">
-                      <AccordionTrigger className="text-sm font-medium hover:no-underline">
-                        <div className="flex items-center gap-2">
-                          Existing Home & Mortgage
-                          <InfoTooltip text="Use these fields for the current owned property, including mortgage balance, payments, and lease decay assumptions." />
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
+                  {property.ownsProperty && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium">Existing Home & Mortgage</h3>
+                      <InfoTooltip text="Use these fields for the current owned property, including mortgage balance, payments, and lease decay assumptions." />
+                    </div>
                         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                           <CurrencyInput
                             label="Existing property value"
@@ -533,19 +536,15 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                             />
                           </div>
                         </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                    )}
+                  </div>
+                  )}
 
-                    {property.propertyType === 'hdb' && (
-                    <AccordionItem value="hdb-monetization" className="border rounded-lg px-4">
-                      <AccordionTrigger className="text-sm font-medium hover:no-underline">
-                        <div className="flex items-center gap-2">
-                          HDB Monetization
-                          <InfoTooltip text="Model HDB-specific monetization paths like Lease Buyback Scheme or room subletting directly on the shared property row." />
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
+                  {property.propertyType === 'hdb' && (
+                    <div className="rounded-lg border p-4 space-y-4">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium">HDB Monetization</h3>
+                        <InfoTooltip text="Model HDB-specific monetization paths like Lease Buyback Scheme or room subletting directly on the shared property row." />
+                      </div>
                         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                           <div className="space-y-1">
                             <Label>Flat type</Label>
@@ -614,18 +613,14 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                             />
                           )}
                         </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                    )}
+                    </div>
+                  )}
 
-                    <AccordionItem value="downsizing" className="border rounded-lg px-4">
-                      <AccordionTrigger className="text-sm font-medium hover:no-underline">
-                        <div className="flex items-center gap-2">
-                          Downsizing Scenario
-                          <InfoTooltip text="Plan for selling, downsizing, or moving to rent later without leaving the household property surface." />
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
+                  <div className="rounded-lg border p-4 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium">Downsizing Scenario</h3>
+                      <InfoTooltip text="Plan for selling, downsizing, or moving to rent later without leaving the household property surface." />
+                    </div>
                         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 items-end">
                           <div className="space-y-1">
                             <Label>Scenario</Label>
@@ -747,15 +742,15 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                             </>
                           )}
                         </div>
-                      </AccordionContent>
-                    </AccordionItem>
+                  </div>
 
-                  </Accordion>
                   {/* Property Projection Preview — has its own expand/collapse */}
                   {(() => {
                     const adult = resolvePropertyAdult(property, plan.adults)
                     return adult ? <PropertyProjectionPreview property={property} adult={adult} /> : null
                   })()}
+                  </>
+                  )}
                 </div>
               )
             })
