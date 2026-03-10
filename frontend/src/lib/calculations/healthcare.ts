@@ -11,6 +11,7 @@
  */
 
 import type { IspTier } from '@/lib/data/healthcarePremiums'
+import type { HealthcareConfig } from '@/lib/types'
 import {
   MEDISHIELD_LIFE_PREMIUMS,
   ISP_ADDITIONAL_PREMIUMS,
@@ -24,20 +25,7 @@ import { interpolateOopMultiplier } from '@/lib/data/healthcareOop'
 // Types
 // ============================================================
 
-export interface HealthcareConfig {
-  enabled: boolean
-  mediShieldLifeEnabled: boolean
-  ispTier: IspTier
-  careShieldLifeEnabled: boolean
-  oopBaseAmount: number
-  oopModel: 'fixed' | 'age-curve'
-  oopInflationRate?: number      // annual medical inflation rate (default 0)
-  oopReferenceAge?: number       // age at which oopBaseAmount is in today's dollars
-  oopCurveVariant?: import('@/lib/types').OopCurveVariant  // which age multiplier curve
-  mediSaveTopUpAnnual: number
-  ispDowngradeTier?: IspTier     // tier to switch to (must be lower than ispTier)
-  ispDowngradeAge?: number       // age at which to switch
-}
+export type { HealthcareConfig } from '@/lib/types'
 
 export interface HealthcareCostAtAge {
   age: number
