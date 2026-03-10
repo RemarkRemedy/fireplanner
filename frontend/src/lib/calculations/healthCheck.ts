@@ -74,6 +74,8 @@ const RATIO_COMPUTERS: Record<string, RatioComputer> = {
     if (i.totalDebt === 0) return { value: 0, message: 'No debt' }
     return { value: i.totalDebt / i.totalAssets, message: null }
   },
+  // TODO(v2/W8): Consider returning red status for negative NW instead of null.
+  // Currently null means "can't compute" which may understate risk in the overall score.
   'liquid-to-nw': (i) => {
     if (i.netWorth <= 0) return { value: null, message: i.netWorth < 0 ? 'Negative net worth' : 'Zero net worth' }
     return { value: i.cashSavings / i.netWorth, message: null }

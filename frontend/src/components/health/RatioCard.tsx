@@ -1,5 +1,6 @@
 import { type HealthRatioResult } from '@/lib/calculations/healthCheck'
 import { Card, CardContent } from '@/components/ui/card'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { cn } from '@/lib/utils'
 
 const STATUS_COLORS = {
@@ -18,7 +19,14 @@ export function RatioCard({ ratio }: { ratio: HealthRatioResult }) {
           <div className={cn('mt-1 h-3 w-3 rounded-full shrink-0', dotColor)} />
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline justify-between gap-2">
-              <h4 className="text-sm font-medium truncate">{ratio.meta.label}</h4>
+              <h4 className="text-sm font-medium truncate">
+                {ratio.meta.label}
+                <InfoTooltip
+                  text={ratio.meta.description}
+                  formula={ratio.meta.formula}
+                  source={ratio.meta.source}
+                />
+              </h4>
               <span className="text-sm font-semibold tabular-nums shrink-0">
                 {ratio.displayValue}
               </span>
