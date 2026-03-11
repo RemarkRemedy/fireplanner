@@ -28,7 +28,9 @@ const singlePerson: InsuranceNeedsInputs = {
   hasPartner: false,
   partnerRetirementAge: null,
   partnerCurrentAge: null,
+  partnerLifeExpectancy: null,
   partnerProjectedAnnualIncome: null,
+  partnerCpfLifeMonthlyPayout: null,
   dependentChildren: [],
   dependentParents: [],
   educationGoals: [],
@@ -55,7 +57,9 @@ const marriedWithKids: InsuranceNeedsInputs = {
   hasPartner: true,
   partnerRetirementAge: 55,
   partnerCurrentAge: 40,
+  partnerLifeExpectancy: 85,
   partnerProjectedAnnualIncome: Array(15).fill(60_000),
+  partnerCpfLifeMonthlyPayout: 800,
   dependentChildren: [
     { currentAge: 5, annualCost: 15_000 },
     { currentAge: 10, annualCost: 12_000 },
@@ -156,17 +160,40 @@ describe('computeCapitalNeeds', () => {
     expect(result.deathTpd.spouseIncomeOffset).toBe(0)
     expect(result.deathTpd.householdExpenses).toBeGreaterThan(0)
   })
-  it('married: household expenses PV until spouse retirement', () => {
+  it('married: household expenses cover full remaining life (pre + post retirement)', () => {
     const result = computeCapitalNeeds(marriedWithKids)
+    // partnerAge=40, lifeExp=85 → 45 years total
+    // Pre-retirement (15 yrs): shortfall = 72k-60k = 12k/yr
+    // Post-retirement (30 yrs): shortfall = 72k - 800*12 = 62,400/yr
+    // Total should be much larger than just the pre-retirement portion
     expect(result.deathTpd.householdExpenses).toBeGreaterThan(0)
+    // Must be larger than just 15 years of 12k shortfall
+    const preRetirementOnly = pvAnnuityDue(12_000, 15, 0.03)
+    expect(result.deathTpd.householdExpenses).toBeGreaterThan(preRetirementOnly)
   })
-  it('married: household expenses account for partner income shortfall', () => {
-    // annualExpenses=72k, partnerIncome=60k => shortfall=12k/yr over 15 years (until partner retirement at 55)
+  it('married: household expenses use year-by-year partner income', () => {
+    // annualExpenses=72k, partner income array = [60k]*15
+    // Pre-retirement: shortfall = 12k/yr for 15 years
+    // Post-retirement: shortfall = 72k - 9600 (CPF LIFE) = 62,400/yr for 30 years
     const result = computeCapitalNeeds(marriedWithKids)
-    // PV of 12k/yr for 15 years at discountRate (already a real rate, no double inflation subtraction)
-    const netRate = 0.03 // discountRate is already real
-    const expectedPV = pvAnnuityDue(12_000, 15, netRate)
+    const netRate = 0.03
+
+    // Manually compute expected PV
+    let expectedPV = 0
+    const cpfLifeAnnual = 800 * 12
+    for (let t = 0; t < 45; t++) {
+      const income = t < 15 ? 60_000 : cpfLifeAnnual
+      const shortfall = Math.max(0, 72_000 - income)
+      expectedPV += shortfall / Math.pow(1 + netRate, t)
+    }
     expect(result.deathTpd.householdExpenses).toBeCloseTo(expectedPV, -1)
+  })
+  it('married: no CPF LIFE → full expense burden post-retirement', () => {
+    const noCpfLife = { ...marriedWithKids, partnerCpfLifeMonthlyPayout: 0 }
+    const result = computeCapitalNeeds(noCpfLife)
+    const withCpfLife = computeCapitalNeeds(marriedWithKids)
+    // Without CPF LIFE, household expenses should be higher
+    expect(result.deathTpd.householdExpenses).toBeGreaterThan(withCpfLife.deathTpd.householdExpenses)
   })
   it('gap is floored at zero', () => {
     const wellCovered = {

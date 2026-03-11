@@ -74,14 +74,22 @@ const RATIO_COMPUTERS: Record<string, RatioComputer> = {
     if (i.totalDebt === 0) return { value: 0, message: 'No debt' }
     return { value: i.totalDebt / i.totalAssets, message: null }
   },
-  // TODO(v2/W8): Consider returning red status for negative NW instead of null.
-  // Currently null means "can't compute" which may understate risk in the overall score.
   'liquid-to-nw': (i) => {
-    if (i.netWorth <= 0) return { value: null, message: i.netWorth < 0 ? 'Negative net worth' : 'Zero net worth' }
+    if (i.netWorth === 0) return { value: null, message: 'Zero net worth' }
+    if (i.netWorth < 0) {
+      const monthlySavings = i.netMonthlyIncome - i.monthlyExpenses
+      const recoveryMsg = monthlySavings > 0
+        ? `Negative net worth ($${Math.round(i.netWorth).toLocaleString()}). At current savings rate, ~${Math.ceil(Math.abs(i.netWorth) / monthlySavings)} months to positive NW.`
+        : `Negative net worth ($${Math.round(i.netWorth).toLocaleString()}). Expenses exceed income — NW will continue declining.`
+      return { value: i.cashSavings / i.netWorth, message: recoveryMsg }
+    }
     return { value: i.cashSavings / i.netWorth, message: null }
   },
   'investment-to-nw': (i) => {
-    if (i.netWorth <= 0) return { value: null, message: i.netWorth < 0 ? 'Negative net worth' : 'Zero net worth' }
+    if (i.netWorth === 0) return { value: null, message: 'Zero net worth' }
+    if (i.netWorth < 0) {
+      return { value: i.investedAssets / i.netWorth, message: `Negative net worth ($${Math.round(i.netWorth).toLocaleString()}). Ratio is inverted.` }
+    }
     return { value: i.investedAssets / i.netWorth, message: null }
   },
   'solvency': (i) => {

@@ -28,11 +28,15 @@ export interface InsuranceNeedsInputs {
   nonMortgageDebtTotal: number
   cashSavings: number
   investedAssets: number
+  /** CPF total excluding MediSave Account (OA + SA + RA only). MA is restricted to medical use. */
   cpfTotal: number
   hasPartner: boolean
   partnerRetirementAge: number | null
   partnerCurrentAge: number | null
+  partnerLifeExpectancy: number | null
   partnerProjectedAnnualIncome: number[] | null
+  /** Partner's estimated CPF LIFE monthly payout (starts at partner's retirement age). */
+  partnerCpfLifeMonthlyPayout: number | null
   dependentChildren: { currentAge: number; annualCost: number }[]
   dependentParents: { annualSupport: number; remainingYears: number }[]
   educationGoals: { amount: number; yearsFromNow: number; inflationAdjusted: boolean }[]
@@ -166,25 +170,40 @@ export function computeCapitalNeeds(inputs: InsuranceNeedsInputs): CapitalNeedsR
     return sum + pvAnnuityDue(child.annualCost, yearsToIndependence, netRate)
   }, 0)
 
-  // Household expenses: income-shortfall approach
-  // For married: shortfall = max(0, annualExpenses - partnerIncome), PV until partner retirement
-  // For single: 0
+  // Household expenses: income-shortfall over partner's remaining lifetime.
+  // Pre-retirement: year-by-year shortfall = max(0, expenses - partnerIncome[t])
+  // Post-retirement: shortfall = max(0, expenses - cpfLifeAnnualPayout)
+  // All values in today's dollars; discountRate is already a real rate.
   let householdExpenses = 0
   if (inputs.hasPartner && inputs.partnerCurrentAge != null && inputs.partnerRetirementAge != null) {
+    const partnerLifeExp = inputs.partnerLifeExpectancy ?? 85
+    const partnerRemainingLife = Math.max(0, partnerLifeExp - inputs.partnerCurrentAge)
     const partnerYearsToRetirement = Math.max(
       0,
       inputs.partnerRetirementAge - inputs.partnerCurrentAge
     )
-    // TODO(v2/W5): Use full partner income trajectory instead of year[0] only.
-    // Currently uses first-year income as a flat estimate; ignores salary growth and career breaks.
-    const partnerAnnualIncome =
-      inputs.partnerProjectedAnnualIncome != null && inputs.partnerProjectedAnnualIncome.length > 0
-        ? inputs.partnerProjectedAnnualIncome[0]
-        : 0
-    const annualShortfall = Math.max(0, inputs.annualExpenses - partnerAnnualIncome)
-    // TODO(v2/W6): Extend horizon beyond partner retirement to cover post-retirement life expectancy.
-    // Currently stops at partner retirement, ignoring 20-30 years of unfunded post-retirement expenses.
-    householdExpenses = pvAnnuityDue(annualShortfall, partnerYearsToRetirement, netRate)
+    const cpfLifeAnnualPayout = (inputs.partnerCpfLifeMonthlyPayout ?? 0) * 12
+
+    let totalPV = 0
+    for (let t = 0; t < partnerRemainingLife; t++) {
+      let partnerIncomeInYear: number
+      if (t < partnerYearsToRetirement) {
+        // Pre-retirement: use projected income array, fall back to last known year
+        const incomeArr = inputs.partnerProjectedAnnualIncome
+        if (incomeArr && incomeArr.length > 0) {
+          partnerIncomeInYear = incomeArr[Math.min(t, incomeArr.length - 1)]
+        } else {
+          partnerIncomeInYear = 0
+        }
+      } else {
+        // Post-retirement: CPF LIFE is the only income source
+        partnerIncomeInYear = cpfLifeAnnualPayout
+      }
+      const shortfall = Math.max(0, inputs.annualExpenses - partnerIncomeInYear)
+      // PV of shortfall at year t (annuity-due: payment at start of period)
+      totalPV += shortfall / Math.pow(1 + netRate, t)
+    }
+    householdExpenses = totalPV
   }
 
   // Parent support: PV of annual support over remaining years
