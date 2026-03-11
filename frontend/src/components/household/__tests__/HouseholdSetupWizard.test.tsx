@@ -169,6 +169,7 @@ describe('Household setup flow', () => {
       cpfEnabled: true,
       propertyEnabled: true,
       healthcareEnabled: true,
+      protectionEnabled: false,
     })
 
     useUIStore.getState().ensureHouseholdDataVisible(deriveHouseholdSectionToggles(plan))
@@ -193,6 +194,7 @@ describe('Household setup flow', () => {
       cpfEnabled: false,
       propertyEnabled: false,
       healthcareEnabled: false,
+      protectionEnabled: false,
     })
 
     useUIStore.getState().ensureHouseholdDataVisible(deriveHouseholdSectionToggles(plan))

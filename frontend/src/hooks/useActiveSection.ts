@@ -13,6 +13,7 @@ export function useActiveSection() {
   const cpfEnabled = useUIStore((s) => s.cpfEnabled)
   const healthcareEnabled = useUIStore((s) => s.healthcareEnabled)
   const propertyEnabled = useUIStore((s) => s.propertyEnabled)
+  const protectionEnabled = useUIStore((s) => s.protectionEnabled)
 
   useEffect(() => {
     if (!isInputsPage) {
@@ -27,6 +28,7 @@ export function useActiveSection() {
       'section-net-worth',
       ...(cpfEnabled ? ['section-cpf'] : []),
       ...(healthcareEnabled ? ['section-healthcare'] : []),
+      ...(protectionEnabled ? ['section-protection'] : []),
       ...(propertyEnabled ? ['section-property'] : []),
       'section-allocation',
     ]
@@ -67,7 +69,7 @@ export function useActiveSection() {
       observer.disconnect()
       document.removeEventListener('focusin', onFocusIn)
     }
-  }, [isInputsPage, cpfEnabled, healthcareEnabled, propertyEnabled])
+  }, [isInputsPage, cpfEnabled, healthcareEnabled, protectionEnabled, propertyEnabled])
 
   // When not on inputs page, don't report any active section
   return { activeSection: isInputsPage ? activeSection : null, isInputsPage }

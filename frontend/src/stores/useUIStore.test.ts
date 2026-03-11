@@ -282,17 +282,20 @@ describe('useUIStore', () => {
         cpfEnabled: false,
         propertyEnabled: false,
         healthcareEnabled: false,
+        protectionEnabled: false,
       })
 
       useUIStore.getState().ensureHouseholdDataVisible({
         cpfEnabled: false,
         propertyEnabled: true,
         healthcareEnabled: false,
+        protectionEnabled: false,
       })
 
       expect(useUIStore.getState().cpfEnabled).toBe(false)
       expect(useUIStore.getState().propertyEnabled).toBe(true)
       expect(useUIStore.getState().healthcareEnabled).toBe(false)
+      expect(useUIStore.getState().protectionEnabled).toBe(false)
     })
   })
 })

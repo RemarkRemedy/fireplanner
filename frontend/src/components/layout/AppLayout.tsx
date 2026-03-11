@@ -24,7 +24,7 @@ import { useExitIntent } from '@/hooks/useExitIntent'
 import { ExpenseTrackerModal } from '@/components/email/ExpenseTrackerModal'
 
 // Pages that show the stats strip (inputs and analysis pages, not start/reference)
-const STATS_ROUTES = ['/inputs', '/projection', '/withdrawal', '/stress-test', '/dashboard', '/planner']
+const STATS_ROUTES = ['/inputs', '/projection', '/withdrawal', '/stress-test', '/dashboard', '/planner', '/health-check']
 
 function AppLayoutBannerArea() {
   const { isEligible } = useExpenseTracker()

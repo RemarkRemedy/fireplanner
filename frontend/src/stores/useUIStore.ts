@@ -14,6 +14,7 @@ interface UIState {
   cpfEnabled: boolean
   propertyEnabled: boolean
   healthcareEnabled: boolean
+  protectionEnabled: boolean  // Show Protection section on InputsPage + Health Check in nav
   mode: 'simple' | 'advanced'
   sectionOverrides: Partial<Record<string, 'simple' | 'advanced'>>
   dismissedNudges: string[]
@@ -52,6 +53,7 @@ const DEFAULT_UI: UIState = {
   cpfEnabled: true,
   propertyEnabled: true,
   healthcareEnabled: true,
+  protectionEnabled: false,
   mode: 'simple',
   sectionOverrides: {},
   dismissedNudges: [],
@@ -93,6 +95,7 @@ export const useUIStore = create<UIState & UIActions>()(
             cpfEnabled: state.cpfEnabled || required.cpfEnabled,
             propertyEnabled: state.propertyEnabled || required.propertyEnabled,
             healthcareEnabled: state.healthcareEnabled || required.healthcareEnabled,
+            protectionEnabled: state.protectionEnabled || required.protectionEnabled,
           }
         }),
 
@@ -142,7 +145,7 @@ export const useUIStore = create<UIState & UIActions>()(
     }),
     {
       name: 'fireplanner-ui',
-      version: 10,
+      version: 11,
       partialize: (state) => {
         // Exclude transient fields from persistence
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -188,6 +191,9 @@ export const useUIStore = create<UIState & UIActions>()(
         }
         if (version < 10) {
           state.quickModeActive = false
+        }
+        if (version < 11) {
+          state.protectionEnabled = false
         }
         return state
       },

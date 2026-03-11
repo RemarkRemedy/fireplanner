@@ -19,6 +19,7 @@ const ChecklistPage = lazy(() => import('@/pages/ChecklistPage').then(m => ({ de
 const PrivacyPage = lazy(() => import('@/pages/PrivacyPage').then(m => ({ default: m.PrivacyPage })))
 const RetirementPlannerPage = lazy(() => import('@/pages/RetirementPlannerPage').then(m => ({ default: m.RetirementPlannerPage })))
 const RetirementCalculatorPage = lazy(() => import('@/pages/RetirementCalculatorPage').then(m => ({ default: m.RetirementCalculatorPage })))
+const HealthCheckPage = lazy(() => import('@/pages/HealthCheckPage').then(m => ({ default: m.HealthCheckPage })))
 
 function PageLoader() {
   return (
@@ -52,6 +53,7 @@ function PlannerRouteShell() {
   const requiredCpfEnabled = useHouseholdPlanStore((state) => deriveHouseholdSectionToggles(state.plan).cpfEnabled)
   const requiredPropertyEnabled = useHouseholdPlanStore((state) => deriveHouseholdSectionToggles(state.plan).propertyEnabled)
   const requiredHealthcareEnabled = useHouseholdPlanStore((state) => deriveHouseholdSectionToggles(state.plan).healthcareEnabled)
+  const requiredProtectionEnabled = useHouseholdPlanStore((state) => deriveHouseholdSectionToggles(state.plan).protectionEnabled)
   const ensureHouseholdDataVisible = useUIStore((state) => state.ensureHouseholdDataVisible)
   const [householdPlannerEnabled] = useState(() => isHouseholdPlannerV1Enabled())
 
@@ -61,6 +63,7 @@ function PlannerRouteShell() {
         cpfEnabled: requiredCpfEnabled,
         propertyEnabled: requiredPropertyEnabled,
         healthcareEnabled: requiredHealthcareEnabled,
+        protectionEnabled: requiredProtectionEnabled,
       })
     }
   }, [
@@ -71,6 +74,7 @@ function PlannerRouteShell() {
     requiredCpfEnabled,
     requiredPropertyEnabled,
     requiredHealthcareEnabled,
+    requiredProtectionEnabled,
   ])
 
   return <AppLayout />
@@ -89,6 +93,7 @@ export const router = createBrowserRouter([
       { path: '/projection', element: page(ProjectionPage) },
       { path: '/withdrawal', element: page(WithdrawalPage) },
       { path: '/stress-test', element: page(StressTestPage) },
+      { path: '/health-check', element: page(HealthCheckPage) },
       { path: '/dashboard', element: page(DashboardPage) },
       { path: '/reference', element: page(ReferencePage) },
       { path: '/checklist', element: page(ChecklistPage) },

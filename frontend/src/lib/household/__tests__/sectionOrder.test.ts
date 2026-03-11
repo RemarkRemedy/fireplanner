@@ -9,6 +9,7 @@ const ALL_ORDERABLE: SectionId[] = [
   'section-net-worth',
   'section-cpf',
   'section-property',
+  'section-protection',
   'section-fire-settings',
   'section-allocation',
 ]
