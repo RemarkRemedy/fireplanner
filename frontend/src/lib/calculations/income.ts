@@ -895,7 +895,7 @@ export function calculateIncomeSummary(
 // ---------------------------------------------------------------------------
 
 export interface MergePerAdultProjectionsParams {
-  /** Per-adult projections keyed by adult ID (computed with cpfHousingMode:'none', annualExpenses:0) */
+  /** Per-adult projections keyed by adult ID (each computed with per-adult housing deduction, annualExpenses:0) */
   perAdultProjections: Record<string, IncomeProjectionRow[]>
   /** Adult IDs in canonical order */
   adultOrder: string[]
@@ -903,10 +903,6 @@ export interface MergePerAdultProjectionsParams {
   referenceCurrentAge: number
   /** Year offset at which the reference adult retires */
   referenceRetirementYearOffset: number
-  /** CPF housing monthly deduction (already scaled by ownership percent) */
-  cpfHousingMonthly: number
-  /** Years remaining on mortgage */
-  cpfMortgageYearsLeft: number
   /** Household annual base expenses (today's dollars) */
   annualExpenses: number
   /** Annual inflation rate */
@@ -921,17 +917,15 @@ export interface MergePerAdultProjectionsParams {
  * Merge per-adult income projections into a single household projection.
  *
  * Each adult's projection was computed independently with correct per-person
- * CPF ceilings, SRS caps, tax brackets, and BHS limits. This function sums
- * them year-by-year, then applies household-level concerns:
- *   1. CPF OA housing deduction (shared mortgage)
- *   2. Annual savings (totalNet - inflated household expenses)
- *   3. Locked asset unlocks
- *   4. Expense adjustments
+ * CPF ceilings, SRS caps, tax brackets, BHS limits, and per-adult CPF housing
+ * deduction. This function sums them year-by-year, then applies household-level
+ * concerns:
+ *   1. Annual savings (totalNet - inflated household expenses)
+ *   2. Locked asset unlocks
+ *   3. Expense adjustments
  *
- * The OA interest correction tracks a running adjustment to account for the
- * fact that per-adult OA balances were computed without housing deductions
- * (so they earned interest on the full balance). The adjustment compounds
- * at 2.5% (OA base rate) each year.
+ * CPF OA housing deduction is already embedded in each adult's projection,
+ * so the merged OA is simply the sum of per-adult OA balances.
  */
 export function mergePerAdultProjections(
   params: MergePerAdultProjectionsParams,
@@ -941,8 +935,6 @@ export function mergePerAdultProjections(
     adultOrder,
     referenceCurrentAge,
     referenceRetirementYearOffset,
-    cpfHousingMonthly,
-    cpfMortgageYearsLeft,
     annualExpenses,
     inflation,
     lockedAssets = [],
@@ -953,9 +945,6 @@ export function mergePerAdultProjections(
   const maxLength = Math.max(...projections.map((p) => p.length))
   if (maxLength === 0) return []
 
-  const cpfHousingEndYearOffset = Math.ceil(cpfMortgageYearsLeft)
-  const annualHousingDeduction = cpfHousingMonthly * 12
-  let oaAdjustment = 0 // running correction for OA interest overcounting
   let cumulativeSavings = 0
 
   const rows: IncomeProjectionRow[] = []
@@ -1043,24 +1032,16 @@ export function mergePerAdultProjections(
       }
     }
 
-    // Compound the OA adjustment from previous years (interest overcounting)
-    // Per-adult projections earned OA_INTEREST_RATE on the full balance including
-    // amounts that should have been deducted for housing. This correction grows
-    // at the OA interest rate each year.
-    oaAdjustment *= (1 + OA_INTEREST_RATE)
-
-    // Apply CPF housing deduction to merged OA
+    // CPF housing deduction is already embedded in per-adult projections.
+    // Sum the per-adult housing deduction and shortfall fields.
     let cpfOaHousingDeduction = 0
     let cpfOaShortfall = 0
-    if (annualHousingDeduction > 0 && yearOffset < cpfHousingEndYearOffset) {
-      const availableOA = Math.max(0, cpfOA - oaAdjustment)
-      cpfOaHousingDeduction = Math.min(annualHousingDeduction, availableOA)
-      cpfOaShortfall = Math.max(0, annualHousingDeduction - availableOA)
-      oaAdjustment += cpfOaHousingDeduction
+    for (let adultIdx = 0; adultIdx < projections.length; adultIdx++) {
+      if (yearOffset >= projections[adultIdx].length) continue
+      const row = projections[adultIdx][yearOffset]
+      cpfOaHousingDeduction += row.cpfOaHousingDeduction
+      cpfOaShortfall += row.cpfOaShortfall
     }
-
-    // Final merged OA balance = raw sum minus cumulative adjustment
-    cpfOA = Math.max(0, cpfOA - oaAdjustment)
 
     // Use reference adult's retirement status for the merged row
     const isRetired = yearOffset >= referenceRetirementYearOffset

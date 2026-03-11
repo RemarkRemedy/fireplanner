@@ -12,6 +12,7 @@ import {
   sumPostRetirementIncome,
 } from '@/lib/calculations/income'
 import { getPropertyRentalIncome } from '@/lib/calculations/hdb'
+import { getPerAdultHousingParams } from '@/lib/calculations/projectionParams'
 import {
   calculateSellAndDownsize,
   calculateSellAndRent,
@@ -47,6 +48,21 @@ import type {
   PlanningAdult,
   PropertyPlan,
 } from './types'
+
+/**
+ * Select the primary property for CPF housing deduction.
+ * Mirrors the logic in runtimeLegacyInputs.ts pickPrimaryProperty():
+ * shared first → self → first property in plan order.
+ */
+function pickPrimaryPropertyForCpf(
+  normalized: NormalizedHouseholdPlan,
+): PropertyPlan | null {
+  const properties = normalized.propertyOrder.map((id) => normalized.propertiesById[id])
+  return properties.find((p) => p.owner === 'shared')
+    ?? properties.find((p) => p.owner === 'self')
+    ?? properties[0]
+    ?? null
+}
 
 export type HouseholdCompilerWarningCode =
   | TimingWarning['code']
@@ -402,7 +418,8 @@ function buildAdultIncomeProjection(
   normalized: NormalizedHouseholdPlan,
   resolvedTiming: ResolvedHouseholdTiming,
   warnings: HouseholdCompilerWarning[],
-  seenWarnings: Set<string>
+  seenWarnings: Set<string>,
+  primaryProperty: PropertyPlan | null,
 ): IncomeProjectionRow[] {
   const ownerIncome = normalized.incomeOrder
     .map((incomeId) => normalized.incomeById[incomeId])
@@ -466,9 +483,7 @@ function buildAdultIncomeProjection(
     cpfLifeStartAge: adult.cpf.lifeStartAge,
     cpfLifePlan: adult.cpf.lifePlan,
     cpfRetirementSum: adult.cpf.retirementSum,
-    cpfHousingMode: 'none',
-    cpfHousingMonthly: 0,
-    cpfMortgageYearsLeft: 0,
+    ...getPerAdultHousingParams(adult.owner, primaryProperty, normalized.adultOrder.length),
     cpfLifeActualMonthlyPayout: adult.cpf.lifeActualMonthlyPayout,
     residencyStatus: adult.residencyStatus,
     prMonths: adult.prMonths,
@@ -889,6 +904,8 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
     ...normalized.adultOrder.map((adultId) => adultTimingById[adultId].retirementYearOffset)
   )
 
+  const primaryProperty = pickPrimaryPropertyForCpf(normalized)
+
   const adultProjectionsById = Object.fromEntries(
     normalized.adultOrder.map((adultId) => {
       const adult = normalized.adultsById[adultId]
@@ -899,7 +916,8 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
           normalized,
           resolvedTiming,
           warnings,
-          seenWarnings
+          seenWarnings,
+          primaryProperty,
         ),
       ]
     })
