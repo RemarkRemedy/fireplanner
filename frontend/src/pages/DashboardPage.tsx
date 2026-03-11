@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Info, FlaskConical } from 'lucide-react'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { StatusPanel } from '@/components/dashboard/StatusPanel'
 import { WhatIfPanel } from '@/components/dashboard/WhatIfPanel'
 import { TimeCostPanel } from '@/components/dashboard/TimeCostPanel'
@@ -10,7 +12,9 @@ import { EmptyDashboardState } from '@/components/dashboard/EmptyDashboardState'
 import { StrategyCard } from '@/components/dashboard/StrategyCard'
 import { PassiveIncomePanel } from '@/components/dashboard/PassiveIncomePanel'
 import { TrajectoryPanel } from '@/components/dashboard/TrajectoryPanel'
+import { PerAdultBreakdownPanel } from '@/components/dashboard/PerAdultBreakdownPanel'
 import { useDashboardMetrics } from '@/hooks/useDashboardMetrics'
+import { usePerAdultBreakdown } from '@/hooks/usePerAdultBreakdown'
 import { useSectionCompletion, type SectionId } from '@/hooks/useSectionCompletion'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { usePageMeta } from '@/hooks/usePageMeta'
@@ -46,6 +50,9 @@ export function DashboardPage() {
   const lastMC = useSimulationStore((s) => s.lastMCSuccessRate)
   const lastBT = useSimulationStore((s) => s.lastBacktestSuccessRate)
   const hasRunSimulation = lastMC !== null || lastBT !== null
+
+  const perAdult = usePerAdultBreakdown()
+  const [selectedView, setSelectedView] = useState('joint')
 
   const isHouseholdMode = isHouseholdPlannerV1Enabled() && householdPlanType !== 'individual'
   const keySections = isHouseholdMode ? HOUSEHOLD_KEY_SECTIONS : INDIVIDUAL_KEY_SECTIONS
@@ -98,42 +105,90 @@ export function DashboardPage() {
 
       {isEmpty ? (
         <EmptyDashboardState />
+      ) : perAdult ? (
+        <Tabs value={selectedView} onValueChange={setSelectedView} className="mt-2">
+          <TabsList>
+            <TabsTrigger value="joint">Joint</TabsTrigger>
+            {perAdult.adults.map((adult) => (
+              <TabsTrigger key={adult.id} value={adult.id}>
+                {adult.displayName}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          <TabsContent value="joint">
+            <JointPanels metrics={metrics} isEligible={isEligible} />
+          </TabsContent>
+
+          {perAdult.adults.map((adult) => (
+            <TabsContent key={adult.id} value={adult.id}>
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold mb-3" data-testid="per-adult-heading">
+                    {adult.displayName}&apos;s Financial Snapshot
+                  </h2>
+                  <PerAdultBreakdownPanel
+                    adult={adult}
+                    householdTotalIncome={perAdult.householdTotalIncome}
+                    householdTotalNetWorth={perAdult.householdTotalNetWorth}
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h2 className="text-lg font-semibold">Joint Plan Metrics</h2>
+                    <span className="text-xs text-muted-foreground">(household-level)</span>
+                  </div>
+                  <StatusPanel {...metrics} />
+                  <TrajectoryPanel />
+                </div>
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
       ) : (
-        <>
-          <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '0ms' }}>
-            <StatusPanel {...metrics} />
-          </div>
-          <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '40ms' }}>
-            <TrajectoryPanel />
-          </div>
-          <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '80ms' }}>
-            <WhatIfPanel />
-          </div>
-          <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '120ms' }}>
-            <TimeCostPanel />
-          </div>
-          <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '160ms' }}>
-            <OneMoreYearPanel />
-          </div>
-          <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-            <StrategyCard />
-          </div>
-          <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '240ms' }}>
-            <PassiveIncomePanel />
-          </div>
-          <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '320ms' }}>
-            <CashFlowPanel />
-          </div>
-          <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
-            <RiskDashboard />
-          </div>
-          {isEligible && (
-            <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '440ms' }}>
-              <ExpenseTrackerCard />
-            </div>
-          )}
-        </>
+        <JointPanels metrics={metrics} isEligible={isEligible} />
       )}
     </div>
+  )
+}
+
+// Internal component: all existing joint-view panels, extracted to avoid duplication
+// between the couple (Tabs) and individual (plain) render paths.
+function JointPanels({ metrics, isEligible }: { metrics: ReturnType<typeof useDashboardMetrics>; isEligible: boolean }) {
+  return (
+    <>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '0ms' }}>
+        <StatusPanel {...metrics} />
+      </div>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '40ms' }}>
+        <TrajectoryPanel />
+      </div>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '80ms' }}>
+        <WhatIfPanel />
+      </div>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '120ms' }}>
+        <TimeCostPanel />
+      </div>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '160ms' }}>
+        <OneMoreYearPanel />
+      </div>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+        <StrategyCard />
+      </div>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '240ms' }}>
+        <PassiveIncomePanel />
+      </div>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '320ms' }}>
+        <CashFlowPanel />
+      </div>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
+        <RiskDashboard />
+      </div>
+      {isEligible && (
+        <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '440ms' }}>
+          <ExpenseTrackerCard />
+        </div>
+      )}
+    </>
   )
 }
