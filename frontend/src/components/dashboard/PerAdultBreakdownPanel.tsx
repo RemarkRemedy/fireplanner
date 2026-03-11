@@ -66,9 +66,8 @@ export function PerAdultBreakdownPanel({ adult, householdTotalIncome, householdT
       {adult.incomeRows.length > 0 && (
         <AdultIncomeChart rows={adult.incomeRows} />
       )}
-      {adult.cpfRows.length > 0 && (
-        <AdultCpfChart rows={adult.cpfRows} />
-      )}
+      {/* CPF chart hidden: per-adult OA balances don't reflect housing deduction
+         (applied post-merge). Needs per-adult housing split before enabling. */}
     </div>
   )
 }
