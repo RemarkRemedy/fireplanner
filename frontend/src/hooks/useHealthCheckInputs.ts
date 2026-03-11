@@ -70,13 +70,13 @@ export function useHealthCheckInputs(adultId?: string): HealthCheckInputsResult 
       }, 0
     )
 
-    // Assets — CPF total for health ratios includes all accounts (full picture of net worth),
-    // but insurance cpfTotal excludes MA (restricted to medical/insurance use, not withdrawable).
-    const cpfTotalAllAccounts = adult.cpf.balances.oa + adult.cpf.balances.sa + adult.cpf.balances.ma + adult.cpf.balances.ra
-    const cpfTotalExcludingMA = adult.cpf.balances.oa + adult.cpf.balances.sa + adult.cpf.balances.ra
+    // Assets — CPF total includes all accounts (OA + SA + MA + RA).
+    // MA is restricted while alive, but upon death nominees receive it as cash,
+    // so it counts as available resources for death/TPD insurance calculations.
+    const cpfTotal = adult.cpf.balances.oa + adult.cpf.balances.sa + adult.cpf.balances.ma + adult.cpf.balances.ra
     const liquidNW = adult.liquidNetWorth
     const investedAssets = Math.max(0, liquidNW - adult.cashSavings)
-    const totalAssets = liquidNW + cpfTotalAllAccounts + propertyValue
+    const totalAssets = liquidNW + cpfTotal + propertyValue
     const totalDebt = mortgageFraction + adult.nonMortgageDebtTotal
     const netWorth = totalAssets - totalDebt
 
@@ -161,7 +161,7 @@ export function useHealthCheckInputs(adultId?: string): HealthCheckInputsResult 
       nonMortgageDebtTotal: adult.nonMortgageDebtTotal,
       cashSavings: adult.cashSavings,
       investedAssets,
-      cpfTotal: cpfTotalExcludingMA,
+      cpfTotal: cpfTotal,
       hasPartner,
       partnerRetirementAge: partner?.retirementAge ?? null,
       partnerCurrentAge: partner?.currentAge ?? null,
