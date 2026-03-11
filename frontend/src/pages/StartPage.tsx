@@ -62,6 +62,7 @@ export function StartPage() {
   const cpfEnabled = useUIStore((s) => s.cpfEnabled)
   const propertyEnabled = useUIStore((s) => s.propertyEnabled)
   const healthcareEnabled = useUIStore((s) => s.healthcareEnabled)
+
   const navigate = useNavigate()
   const [activePathway, setActivePathway] = useState<ActivePathway>(null)
   const [selectedPlanType, setSelectedPlanType] = useState<HouseholdPlanType>('individual')
@@ -338,6 +339,7 @@ export function StartPage() {
           onCheckedChange={(v) => { setUIField('propertyEnabled', v); trackEvent('feature_toggle', { feature: 'property', enabled: v }) }}
         />
       </div>
+      {/* Protection & Insurance toggle hidden — feature not yet released */}
     </div>
   )
 

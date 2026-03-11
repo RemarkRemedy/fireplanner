@@ -13,8 +13,8 @@ beforeEach(() => {
 describe('useSectionCompletion', () => {
   it('returns 10 sections', () => {
     const { result } = renderHook(() => useSectionCompletion())
-    expect(result.current.totalSections).toBe(10)
-    expect(Object.keys(result.current.sections)).toHaveLength(10)
+    expect(result.current.totalSections).toBe(11)
+    expect(Object.keys(result.current.sections)).toHaveLength(11)
   })
 
   it('default state: personal and fire-settings at "default" status', () => {

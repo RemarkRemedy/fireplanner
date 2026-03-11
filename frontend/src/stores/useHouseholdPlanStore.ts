@@ -28,7 +28,7 @@ import type {
   TimingRule,
 } from '@/lib/household/types'
 export { HOUSEHOLD_PLAN_STORAGE_KEY } from '@/lib/storeKeys'
-export const HOUSEHOLD_PLAN_STORAGE_VERSION = 3
+export const HOUSEHOLD_PLAN_STORAGE_VERSION = 4
 
 export type HouseholdPlanProvenanceSource =
   | 'manual'
@@ -552,6 +552,21 @@ export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
           const plan = state.plan as { planYear?: number }
           if (plan && plan.planYear == null) {
             plan.planYear = new Date().getFullYear()
+          }
+        }
+        if (version < 4) {
+          const plan = state.plan as { adults?: Array<Record<string, unknown>> }
+          if (plan?.adults) {
+            for (const adult of plan.adults) {
+              adult.cashSavings = adult.cashSavings ?? 0
+              adult.nonMortgageDebtTotal = adult.nonMortgageDebtTotal ?? 0
+              adult.nonMortgageDebtMonthlyPayment = adult.nonMortgageDebtMonthlyPayment ?? 0
+              adult.insuranceDeathCoverage = adult.insuranceDeathCoverage ?? 0
+              adult.insuranceCICoverage = adult.insuranceCICoverage ?? 0
+              adult.insuranceDisabilityMonthly = adult.insuranceDisabilityMonthly ?? 0
+              adult.funeralCosts = adult.funeralCosts ?? 15_000
+              adult.ciRecoveryYears = adult.ciRecoveryYears ?? 5
+            }
           }
         }
         return state

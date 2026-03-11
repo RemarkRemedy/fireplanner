@@ -184,6 +184,14 @@ function mapPlanningAdult(snapshot: LegacyIndividualSnapshot): PlanningAdult {
       reliefBasisAge: resolveReliefBasisAge(profile.currentAge, income),
     },
     lifeEvents: income.lifeEvents.map((event) => ({ ...event })),
+    cashSavings: 0,
+    nonMortgageDebtTotal: 0,
+    nonMortgageDebtMonthlyPayment: 0,
+    insuranceDeathCoverage: 0,
+    insuranceCICoverage: 0,
+    insuranceDisabilityMonthly: 0,
+    funeralCosts: 15_000,
+    ciRecoveryYears: 5,
   }
 }
 
