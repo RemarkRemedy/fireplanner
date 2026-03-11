@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import type { IncomeProjectionRow, IncomeSummaryStats } from '@/lib/types'
 import { generateIncomeProjection, calculateIncomeSummary, mergePerAdultProjections } from '@/lib/calculations/income'
 export { buildProjectionParams, deriveCpfHousingFromProperty } from '@/lib/calculations/projectionParams'
-import { buildProjectionParams, deriveCpfHousingFromProperty } from '@/lib/calculations/projectionParams'
+import { buildProjectionParams } from '@/lib/calculations/projectionParams'
 import {
   compileHouseholdPlan,
   type CompiledHouseholdPlan,
@@ -224,10 +224,6 @@ export function useIncomeProjection(): IncomeProjectionResult {
     [normalized.compiledPlan, plan]
   )
   const { profile, income, property } = runtime
-  const cpfHousing = useMemo(
-    () => deriveCpfHousingFromProperty(property),
-    [property]
-  )
 
   const isMultiAdult = plan.adults.length > 1
   const compiledPlan = normalized.compiledPlan
