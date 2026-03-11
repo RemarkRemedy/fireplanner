@@ -975,7 +975,53 @@ export const CHANGELOG: ChangelogEntry[] = [
     description:
       'Keyboard input and blur now correctly clamp values to min/max ranges instead of allowing out-of-bounds entries.',
   },
+  {
+    date: '2026-03-11',
+    category: 'feature',
+    title: 'Per-adult Dashboard breakdown',
+    description:
+      'Couple plans now show per-adult tabs on the Dashboard with individual income projections, CPF balances, net worth, and income share metrics.',
+    affectedSections: ['section-fire-settings'],
+  },
+  {
+    date: '2026-03-11',
+    category: 'fix',
+    title: 'Per-adult CPF housing deduction',
+    description:
+      'CPF OA housing deduction is now computed per-adult before merging, so each adult\'s CPF chart correctly reflects their share of the mortgage drawdown.',
+    affectedSections: ['section-cpf'],
+  },
+  {
+    date: '2026-03-11',
+    category: 'fix',
+    title: 'CPF bequest double-count fix',
+    description:
+      'Fixed a bug where CPF bequest was counted twice in household projections — once via locked asset unlock and again via annual savings.',
+  },
+  {
+    date: '2026-03-11',
+    category: 'fix',
+    title: 'Dashboard trajectory chart',
+    description:
+      'Dashboard portfolio trajectory now shows the full stacked net worth breakdown (liquid, CPF, bequest, property equity) instead of just liquid net worth.',
+    affectedSections: ['section-fire-settings'],
+  },
+  {
+    date: '2026-03-11',
+    category: 'feature',
+    title: 'What-If active disruptions display',
+    description:
+      'Active life event disruptions are now visible in the What-If Explorer with remove buttons for quick toggling.',
+    affectedSections: ['section-fire-settings'],
+  },
+  {
+    date: '2026-03-11',
+    category: 'feature',
+    title: 'Financial health check',
+    description:
+      '8 financial health ratios (savings, liquidity, debt service, investment, CPF adequacy) with traffic-light grading and insurance needs analysis.',
+  },
 ]
 
 /** Bump this string whenever any data file is updated. Triggers the banner for returning users. */
-export const DATA_VINTAGE = '2026-03-10'
+export const DATA_VINTAGE = '2026-03-11'
