@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Slider } from '@/components/ui/slider'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { SlidersHorizontal, RotateCcw, AlertTriangle, Plus } from 'lucide-react'
+import { SlidersHorizontal, RotateCcw, AlertTriangle, Plus, X } from 'lucide-react'
 import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useWhatIfMetrics, type WhatIfOverrides } from '@/hooks/useWhatIfMetrics'
 import {
@@ -304,6 +304,35 @@ function DisruptionsTab() {
           </Button>
         ))}
       </div>
+
+      {/* Active disruptions in plan */}
+      {targetAdult && targetAdult.lifeEvents.length > 0 && (
+        <div className="space-y-2 pt-2 border-t">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Active in your plan</p>
+          <div className="flex flex-wrap gap-2">
+            {targetAdult.lifeEvents.map((event) => (
+              <span
+                key={event.id}
+                className="inline-flex items-center gap-1.5 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-2.5 py-1 text-xs font-medium text-amber-800 dark:text-amber-200"
+              >
+                <AlertTriangle className="h-3 w-3" />
+                {event.name} (Age {event.startAge}-{event.endAge})
+                <button
+                  onClick={() => {
+                    updateAdult(targetAdult.id, {
+                      lifeEvents: targetAdult.lifeEvents.filter((e) => e.id !== event.id),
+                    })
+                  }}
+                  className="ml-0.5 rounded-sm hover:bg-amber-200 dark:hover:bg-amber-800 p-0.5 transition-colors"
+                  title={`Remove ${event.name}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Age slider when template is selected */}
       {selectedTemplate && (
