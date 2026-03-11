@@ -1,28 +1,16 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { QuickProjectionChart } from '@/components/shared/QuickProjectionChart'
+import { NWChartView } from '@/components/projection/NWChartView'
 import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useProjection } from '@/hooks/useProjection'
-import { useFireCalculations } from '@/hooks/useFireCalculations'
 
 export function TrajectoryPanel() {
   const { normalized } = useHouseholdRuntimeInputs()
   const retirementAge = normalized.retirementAge
   const { rows } = useProjection()
-  const { metrics } = useFireCalculations()
 
-  if (!rows || rows.length === 0 || !metrics) return null
-
-  const fireNumber = metrics.fireNumber
-  const fireAge = metrics.fireAge
-
-  // Transform full projection rows into the simple {age, balance, phase} format
-  const chartData = rows.map((row) => ({
-    age: row.age,
-    balance: row.liquidNW,
-    phase: (row.age >= retirementAge ? 'decumulation' : 'accumulation') as 'accumulation' | 'decumulation',
-  }))
+  if (!rows || rows.length === 0) return null
 
   return (
     <Card>
@@ -39,7 +27,7 @@ export function TrajectoryPanel() {
         </div>
       </CardHeader>
       <CardContent>
-        <QuickProjectionChart data={chartData} fireNumber={fireNumber} fireAge={fireAge} />
+        <NWChartView rows={rows} retirementAge={retirementAge} />
       </CardContent>
     </Card>
   )
