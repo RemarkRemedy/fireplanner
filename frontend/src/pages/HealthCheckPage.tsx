@@ -9,6 +9,7 @@ import { RatioGrid } from '@/components/health/RatioGrid'
 import { InsuranceNeedsPanel } from '@/components/health/InsuranceNeedsPanel'
 import { HEALTH_RATIOS } from '@/lib/data/healthBenchmarks'
 import { cn } from '@/lib/utils'
+import { usePageMeta } from '@/hooks/usePageMeta'
 
 function formatThreshold(value: number, unit: string): string {
   if (unit === 'months') return `${value} mo`
@@ -17,6 +18,7 @@ function formatThreshold(value: number, unit: string): string {
 }
 
 export function HealthCheckPage() {
+  usePageMeta({ title: 'Health Check — SG FIRE Planner', description: 'Financial health ratios and insurance needs analysis for Singapore residents. Covers savings, liquidity, debt service, and CPF adequacy.', path: '/health-check' })
   const adults = useHouseholdPlanStore((s) => s.plan.adults)
   const isMultiAdult = adults.length > 1
 

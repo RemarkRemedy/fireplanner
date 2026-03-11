@@ -91,6 +91,12 @@ const routes = [
     heading: 'Reference Guide',
     description: 'Comprehensive guide to Singapore retirement planning: CPF, tax, withdrawal strategies, Monte Carlo methods, and data sources.',
   },
+  {
+    path: '/health-check',
+    title: 'Health Check \u2014 SG FIRE Planner',
+    heading: 'Financial Health Check',
+    description: 'Financial health ratios and insurance needs analysis for Singapore residents. Covers savings, liquidity, debt service, and CPF adequacy.',
+  },
 ]
 
 const template = readFileSync(join(distDir, 'index.html'), 'utf-8')
