@@ -95,8 +95,28 @@ describe('computeRatioValue', () => {
   it('returns null for zero assets (solvency)', () => {
     expect(computeRatioValue('solvency', { ...freshGraduate, totalAssets: 0 })).toBeNull()
   })
-  it('handles negative net worth for liquid-to-nw', () => {
-    expect(computeRatioValue('liquid-to-nw', { ...freshGraduate, netWorth: -50_000 })).toBeNull()
+  it('returns negative ratio for negative net worth (liquid-to-nw)', () => {
+    const value = computeRatioValue('liquid-to-nw', { ...freshGraduate, netWorth: -50_000 })
+    // cashSavings (5000) / netWorth (-50000) = -0.1
+    expect(value).toBeCloseTo(-0.1)
+  })
+  it('returns negative ratio for negative net worth (investment-to-nw)', () => {
+    const value = computeRatioValue('investment-to-nw', { ...freshGraduate, netWorth: -50_000 })
+    // investedAssets (5000) / netWorth (-50000) = -0.1
+    expect(value).toBeCloseTo(-0.1)
+  })
+  it('negative NW liquid-to-nw includes recovery estimate in message', () => {
+    const result = computeHealthRatios({
+      ...freshGraduate,
+      netWorth: -50_000,
+      netMonthlyIncome: 3_200,
+      monthlyExpenses: 2_500,
+    })
+    const liquidRatio = result.ratios.find((r) => r.id === 'liquid-to-nw')!
+    expect(liquidRatio.status).toBe('red')
+    expect(liquidRatio.message).toContain('months to positive NW')
+    // 50000 / 700 ≈ 72 months
+    expect(liquidRatio.message).toContain('72')
   })
 })
 
