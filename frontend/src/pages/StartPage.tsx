@@ -9,7 +9,7 @@ import {
 } from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
 import { calculateFireNumber, calculateYearsToFire, projectNetWorthPath } from '@/lib/calculations/fire'
-import { Target, TrendingUp, CheckCircle, Clock, CalendarClock, Landmark, ArrowRight, Building, Heart, Info, Shield } from 'lucide-react'
+import { Target, TrendingUp, CheckCircle, Clock, CalendarClock, Landmark, ArrowRight, Building, Heart, Info } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { QuickProjectionChart } from '@/components/shared/QuickProjectionChart'
 import { NumberInput } from '@/components/shared/NumberInput'
@@ -62,7 +62,7 @@ export function StartPage() {
   const cpfEnabled = useUIStore((s) => s.cpfEnabled)
   const propertyEnabled = useUIStore((s) => s.propertyEnabled)
   const healthcareEnabled = useUIStore((s) => s.healthcareEnabled)
-  const protectionEnabled = useUIStore((s) => s.protectionEnabled)
+
   const navigate = useNavigate()
   const [activePathway, setActivePathway] = useState<ActivePathway>(null)
   const [selectedPlanType, setSelectedPlanType] = useState<HouseholdPlanType>('individual')
@@ -339,19 +339,7 @@ export function StartPage() {
           onCheckedChange={(v) => { setUIField('propertyEnabled', v); trackEvent('feature_toggle', { feature: 'property', enabled: v }) }}
         />
       </div>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Shield className="h-4 w-4 text-muted-foreground" />
-          <div>
-            <div className="text-sm font-medium">Protection & Insurance</div>
-            <p className="text-xs text-muted-foreground">Financial health ratios and insurance needs analysis</p>
-          </div>
-        </div>
-        <Switch
-          checked={protectionEnabled}
-          onCheckedChange={(v) => { setUIField('protectionEnabled', v); trackEvent('feature_toggle', { feature: 'protection', enabled: v }) }}
-        />
-      </div>
+      {/* Protection & Insurance toggle hidden — feature not yet released */}
     </div>
   )
 
