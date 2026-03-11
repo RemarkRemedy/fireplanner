@@ -28,7 +28,7 @@ export interface InsuranceNeedsInputs {
   nonMortgageDebtTotal: number
   cashSavings: number
   investedAssets: number
-  /** CPF total excluding MediSave Account (OA + SA + RA only). MA is restricted to medical use. */
+  /** CPF total (OA + SA + MA + RA). MA is restricted while alive but paid as cash to nominees upon death. */
   cpfTotal: number
   hasPartner: boolean
   partnerRetirementAge: number | null
