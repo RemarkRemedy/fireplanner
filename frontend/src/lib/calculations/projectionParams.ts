@@ -8,6 +8,7 @@ import type {
   CpfHousingMode,
   SimulationState,
 } from '@/lib/types'
+import type { AdultOwner } from '@/lib/household/types'
 import type { IncomeProjectionParams } from '@/lib/calculations/income'
 import type { ProjectionParams } from '@/lib/calculations/projection'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
@@ -28,6 +29,46 @@ export function deriveCpfHousingFromProperty(property: { mortgageCpfMonthly: num
     cpfHousingMonthly: scaledCpf,
     cpfMortgageYearsLeft: property.existingMortgageRemainingYears,
   }
+}
+
+/**
+ * Compute per-adult CPF housing params from the primary property.
+ * 1. Delegates to deriveCpfHousingFromProperty with the real ownershipPercent
+ *    to get the household-level scaled deduction.
+ * 2. For non-shared properties, the owning adult gets the full scaled amount.
+ * 3. For shared properties, the scaled amount is split equally among adults.
+ */
+export function getPerAdultHousingParams(
+  adultOwner: AdultOwner,
+  primaryProperty: {
+    owner: string
+    mortgageCpfMonthly: number
+    existingMortgageRemainingYears: number
+    ownershipPercent: number
+  } | null,
+  adultCount: number,
+): { cpfHousingMode: CpfHousingMode; cpfHousingMonthly: number; cpfMortgageYearsLeft: number } {
+  if (!primaryProperty || primaryProperty.mortgageCpfMonthly <= 0) {
+    return { cpfHousingMode: 'none', cpfHousingMonthly: 0, cpfMortgageYearsLeft: 0 }
+  }
+
+  // Step 1: Get household-level housing params (applies ownershipPercent scaling)
+  const householdHousing = deriveCpfHousingFromProperty({
+    mortgageCpfMonthly: primaryProperty.mortgageCpfMonthly,
+    existingMortgageRemainingYears: primaryProperty.existingMortgageRemainingYears,
+    ownershipPercent: primaryProperty.ownershipPercent,
+  })
+
+  // Step 2: Split per-adult based on property ownership
+  if (primaryProperty.owner === adultOwner) {
+    // This adult owns it outright — full household-level deduction
+    return householdHousing
+  } else if (primaryProperty.owner === 'shared') {
+    // Split equally among adults
+    return { ...householdHousing, cpfHousingMonthly: householdHousing.cpfHousingMonthly / adultCount }
+  }
+  // Other adult owns it — no deduction for this adult
+  return { cpfHousingMode: 'none', cpfHousingMonthly: 0, cpfMortgageYearsLeft: 0 }
 }
 
 /**
