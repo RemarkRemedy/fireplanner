@@ -1083,8 +1083,11 @@ export function mergePerAdultProjections(
     }
 
     // Recalculate annual savings (per-adult projections used annualExpenses=0)
+    // Do NOT include lockedAssetUnlock here — projection.ts credits it separately
+    // at line 498 (liquidNW += incomeRow.lockedAssetUnlock). Including it here
+    // would double-count bequest and locked asset unlocks.
     const inflatedExpenses = (annualExpenses + expenseAdjustment) * Math.pow(1 + inflation, yearOffset)
-    const annualSavings = totalNet - inflatedExpenses + lockedAssetUnlock
+    const annualSavings = totalNet - inflatedExpenses
     cumulativeSavings += annualSavings
 
     rows.push({
