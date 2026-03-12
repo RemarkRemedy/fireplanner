@@ -97,6 +97,20 @@ const routes = [
     heading: 'Financial Health Check',
     description: 'Financial health ratios and insurance needs analysis for Singapore residents. Covers savings, liquidity, debt service, and CPF adequacy.',
   },
+  {
+    path: '/ilp-review',
+    title: 'ILP Review \u2014 SG FIRE Planner',
+    heading: 'ILP Review',
+    description: 'Compare ILP fee drag, early exit penalties, and MIP-end outcomes across multiple investment-linked policies.',
+    bodyHtml: `
+      <p>Review how much your investment-linked policy may be costing you in fees, what surrendering could mean today, and how different ILPs compare side by side.</p>
+      <p>The tool highlights fee drag, best pre-MIP exit timing, and the opportunity cost of redirecting premiums elsewhere.</p>
+      <ul>
+        <li><a href="/ilp-review">Open ILP Review</a></li>
+        <li><a href="/retirement-planner">Return to the retirement planner</a></li>
+      </ul>
+    `,
+  },
 ]
 
 const template = readFileSync(join(distDir, 'index.html'), 'utf-8')

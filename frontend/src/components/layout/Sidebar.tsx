@@ -116,6 +116,7 @@ const AFTER_INPUTS_GROUPS: { title: string; items: NavItem[] }[] = [
     title: 'ANALYSIS',
     items: [
       { label: 'Stress Test', path: '/stress-test', icon: <ShieldAlert className="h-4 w-4" /> },
+      { label: 'ILP Review', path: '/ilp-review', icon: <FileSpreadsheet className="h-4 w-4" /> },
     ],
   },
   {

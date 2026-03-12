@@ -20,6 +20,7 @@ const PrivacyPage = lazy(() => import('@/pages/PrivacyPage').then(m => ({ defaul
 const RetirementPlannerPage = lazy(() => import('@/pages/RetirementPlannerPage').then(m => ({ default: m.RetirementPlannerPage })))
 const RetirementCalculatorPage = lazy(() => import('@/pages/RetirementCalculatorPage').then(m => ({ default: m.RetirementCalculatorPage })))
 const HealthCheckPage = lazy(() => import('@/pages/HealthCheckPage').then(m => ({ default: m.HealthCheckPage })))
+const IlpReviewPage = lazy(() => import('@/pages/IlpReviewPage').then(m => ({ default: m.IlpReviewPage })))
 
 function PageLoader() {
   return (
@@ -94,6 +95,7 @@ export const router = createBrowserRouter([
       { path: '/withdrawal', element: page(WithdrawalPage) },
       { path: '/stress-test', element: page(StressTestPage) },
       { path: '/health-check', element: page(HealthCheckPage) },
+      { path: '/ilp-review', element: page(IlpReviewPage) },
       { path: '/dashboard', element: page(DashboardPage) },
       { path: '/reference', element: page(ReferencePage) },
       { path: '/checklist', element: page(ChecklistPage) },
