@@ -83,6 +83,144 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('missed-bonus restoration'))).toBe(false)
   })
 
+  it('maps HSBC Wealth Harvest into a partial seed with regular-vs-topup mechanics', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'hsbc-life-wealth-harvest')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-11')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-harvest-premium-holiday-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-harvest-regular-account-partial-withdrawal-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-harvest-brc')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-harvest-regular-withdrawal-facility')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-harvest-dividend-distribution-option')
+    expect(seed.accounts.find((account) => account.id === 'regular')?.contributionShare).toBe(1)
+    expect(seed.accounts.find((account) => account.id === 'topup')?.contributionRules).toEqual([
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.eventChargeRules?.map((rule) => rule.label)).toContain('Premium Holiday Charge')
+    expect(seed.eventChargeRules?.map((rule) => rule.label)).toContain('Partial Withdrawal Charge')
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Start-up Bonus')?.rate).toBe(0.35)
+  })
+
+  it('maps HSBC Wealth Abundance into a partial seed with tiered startup recovery and free withdrawals', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'hsbc-life-wealth-abundance')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-abundance-tiered-brc')
+    expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-abundance-free-partial-withdrawal')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-abundance-dividend-distribution-option')
+    expect(seed.accounts.find((account) => account.id === 'topup')?.contributionRules).toEqual([
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'amf-during-mip',
+          basis: 'account-value',
+          rate: 0.021,
+        }),
+        expect.objectContaining({
+          id: 'amf-after-mip',
+          basis: 'account-value',
+          rate: 0.006,
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'bonus-recovery-charge',
+          basis: 'premium-reduction-tiered-startup-recovery',
+          sourceBonusId: 'startup-bonus',
+        }),
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          freeEventCount: 2,
+          freeEventStartPolicyYear: 3,
+          freeEventMaxAmountRate: 0.06,
+        }),
+      ]),
+    )
+    expect(seed.bonuses.find((bonus) => bonus.id === 'startup-bonus')?.tieredRates).toHaveLength(3)
+    expect(seed.bonuses.find((bonus) => bonus.id === 'power-up-bonus')?.restorationRules).toEqual([
+      {
+        trigger: 'premium-holiday-repayment',
+        basis: 'account-value-plus-repaid-premium-with-missed-months',
+      },
+    ])
+  })
+
+  it('maps HSBC Wealth Voyage into a partial seed with premium-base AMF and split startup recovery rules', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'hsbc-life-wealth-voyage')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-20')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-voyage-premium-base-amf')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-voyage-premium-holiday-charge-after-free-duration')
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'amf-during-mip',
+          basis: 'premium-base-mip-multiplier',
+          rate: 0.0215,
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: true,
+            multiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 16, mode: 'policy-year' },
+              { startPolicyYear: 17, endPolicyYear: 20, mode: 'fixed', multiplier: 16 },
+            ],
+          },
+        }),
+        expect.objectContaining({
+          id: 'amf-after-mip',
+          basis: 'premium-base-mip-multiplier',
+          rate: 0.01,
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'bonus-recovery-charge-y1',
+          basis: 'premium-reduction-tiered-startup-recovery',
+          sourceBonusId: 'startup-bonus-y1',
+        }),
+        expect.objectContaining({
+          id: 'bonus-recovery-charge-y2',
+          basis: 'premium-reduction-tiered-startup-recovery',
+          sourceBonusId: 'startup-bonus-y2',
+        }),
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          trigger: 'top-up',
+          basis: 'event-amount',
+          rate: 0.03,
+        }),
+      ]),
+    )
+    expect(seed.bonuses.find((bonus) => bonus.id === 'startup-bonus-y1')?.tieredRates).toHaveLength(2)
+    expect(seed.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.rate).toBe(0.011)
+  })
+
   it('maps PRUVantage Wealth II into a multi-account seeded ILP policy', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'prudential-pruvantage-wealth-ii')
@@ -134,7 +272,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings).not.toContain('Free first partial withdrawal after 10 years is not modeled automatically.')
   })
 
-  it('maps PRUVantage Prosper into a partial seed with a manual assurance-charge placeholder', () => {
+  it('maps PRUVantage Prosper into a partial seed with assurance sum-at-risk rules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'prudential-pruvantage-prosper')
     expect(product).toBeDefined()
@@ -145,7 +283,8 @@ describe('templateVariantToPolicySeed', () => {
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('assurance-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:prosper-assurance-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('growth-account-distribution-election')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -153,19 +292,31 @@ describe('templateVariantToPolicySeed', () => {
           basis: 'account-value',
         }),
         expect.objectContaining({
-          id: 'manual-assurance-charge',
-          basis: 'fixed-annual',
+          id: 'assurance-charge-death',
+          basis: 'assurance-sum-at-risk',
           requiresManualInput: true,
           appliesTo: ['growth', 'flex'],
           fallbackAppliesTo: ['additional'],
-          amount: 0,
+          assuranceConfig: {
+            formula: 'prudential-prosper-death',
+            monthlyModalFactor: 0.0834,
+          },
           allocation: 'pro-rata-by-value',
+        }),
+        expect.objectContaining({
+          id: 'assurance-charge-accidental-death',
+          basis: 'assurance-sum-at-risk',
+          requiresManualInput: true,
+          assuranceConfig: {
+            formula: 'prudential-prosper-accidental-death',
+            monthlyModalFactor: 0.0834,
+          },
         }),
       ]),
     )
   })
 
-  it('maps PRUVantage Assure II into a partial seed with a manual assurance-charge placeholder', () => {
+  it('maps PRUVantage Assure II into a partial seed with an Appendix A assurance-charge rule', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'prudential-pruvantage-assure-ii')
     expect(product).toBeDefined()
@@ -176,19 +327,179 @@ describe('templateVariantToPolicySeed', () => {
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('assurance-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-ii-pre-70-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-ii-post-70-charge-tail')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-ii-manual-reduction-resumption')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('premium-pass-wealth-share-change-of-life-assured-options')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'manual-assurance-charge',
-          basis: 'fixed-annual',
+          id: 'assurance-charge-combined',
+          basis: 'assurance-sum-at-risk',
           requiresManualInput: true,
           appliesTo: ['growth', 'flex'],
           fallbackAppliesTo: ['additional'],
-          amount: 0,
+          assuranceConfig: {
+            formula: 'prudential-assure-ii-combined',
+            monthlyModalFactor: 0.0834,
+          },
           allocation: 'pro-rata-by-value',
         }),
       ]),
     )
+  })
+
+  it('maps Tokio Marine Wealth Max (II) into a partial seed with recurring-single-premium routing and charges', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-wealth-max-ii')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-15')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-recurring-single-premium-routing')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-regular-premium-reduction-consumes-recurring-single-premium-first')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-premium-shortfall-charge-non-payment')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-premium-shortfall-charge-regular-premium-reduction')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-premium-increase-restores-shortfall-charge-cessation')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-bonus-tiered-premium-allocation')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-performance-investment-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-loyalty-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-power-up-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-post-mip-regular-premium-routing-back-to-initial-account')
+    expect(seed.accounts.find((account) => account.id === 'initial')?.contributionRules).toEqual([
+      { phase: 'during-icp', contributionShare: 1 },
+      { phase: 'after-mip', contributionShare: 1 },
+    ])
+    expect(seed.accounts.find((account) => account.id === 'accumulation')?.contributionRules).toEqual([
+      { phase: 'after-icp', contributionShare: 1 },
+    ])
+    expect(seed.accounts.find((account) => account.id === 'topup')?.contributionRules).toEqual([
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.eventChargeRules).toEqual([
+      {
+        id: 'top-up-premium-charge',
+        label: 'Top-up Premium Charge',
+        trigger: 'top-up',
+        basis: 'event-amount',
+        appliesTo: ['topup'],
+        rate: 0.05,
+        amount: 0,
+        allocation: 'equal-split',
+      },
+      {
+        id: 'recurring-single-premium-charge',
+        label: 'Recurring Single Premium Charge',
+        trigger: 'recurring-single-premium',
+        basis: 'event-amount-with-overlap-months',
+        appliesTo: ['topup'],
+        rate: 0.05,
+        amount: 0,
+        allocation: 'equal-split',
+      },
+      {
+        id: 'partial-withdrawal-charge',
+        label: 'Partial Withdrawal Charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
+        appliesTo: ['accumulation'],
+        rate: 0,
+        rateSchedule: [
+          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.95 },
+          { startPolicyYear: 5, endPolicyYear: 5, rate: 0.76 },
+          { startPolicyYear: 6, endPolicyYear: 15, rate: 0.05 },
+        ],
+        amount: 0,
+        allocation: 'equal-split',
+      },
+      {
+        id: 'premium-shortfall-charge-non-payment',
+        label: 'Premium Shortfall Charge (Non-payment)',
+        trigger: 'premium-holiday',
+        basis: 'committed-annual-premium-with-overlap-months',
+        appliesTo: ['accumulation'],
+        fallbackAppliesTo: ['topup', 'initial'],
+        rate: 0,
+        rateSchedule: [
+          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.7 },
+          { startPolicyYear: 5, endPolicyYear: 5, rate: 0.6 },
+          { startPolicyYear: 6, endPolicyYear: 6, rate: 0.58 },
+          { startPolicyYear: 7, endPolicyYear: 7, rate: 0.53 },
+          { startPolicyYear: 8, endPolicyYear: 8, rate: 0.51 },
+        ],
+        amount: 0,
+        exclusiveGroup: 'tokio-premium-shortfall',
+        groupResolution: 'max-total-charge',
+        allocation: 'equal-split',
+      },
+      {
+        id: 'premium-shortfall-charge-reduction',
+        label: 'Premium Shortfall Charge (Regular Premium Reduction)',
+        trigger: 'regular-premium-reduction',
+        basis: 'annual-reduction-with-active-months',
+        appliesTo: ['accumulation'],
+        fallbackAppliesTo: ['topup', 'initial'],
+        rate: 0,
+        rateSchedule: [
+          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.7 },
+          { startPolicyYear: 5, endPolicyYear: 5, rate: 0.6 },
+          { startPolicyYear: 6, endPolicyYear: 6, rate: 0.58 },
+          { startPolicyYear: 7, endPolicyYear: 7, rate: 0.53 },
+          { startPolicyYear: 8, endPolicyYear: 8, rate: 0.51 },
+        ],
+        amount: 0,
+        exclusiveGroup: 'tokio-premium-shortfall',
+        groupResolution: 'max-total-charge',
+        allocation: 'equal-split',
+      },
+    ])
+    expect(seed.bonuses.map((bonus) => bonus.label)).toEqual([
+      'Initial Bonus',
+      'Performance Investment Bonus',
+      'Loyalty Bonus',
+      'Power-up Bonus',
+    ])
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.33 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.52 },
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.53 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.59 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.6 },
+    ])
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-initial-bonus-and-performance-loyalty-power-up-bonuses')
+  })
+
+  it('maps Tokio Marine Wealth Pro (II) into a partial seed with executable bonus ladders', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-wealth-pro-ii')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-bonus-tiered-premium-allocation')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-performance-investment-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-loyalty-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-power-up-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-post-mip-regular-premium-routing-back-to-initial-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events')
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.17 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.35 },
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.37 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.41 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.43 },
+    ])
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Performance Investment Bonus')?.rate).toBe(0.018)
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Loyalty Bonus')?.startPolicyYear).toBe(11)
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Power-up Bonus')?.startPolicyYear).toBe(11)
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-involuntary-unemployment-and-hospitalisation-waiver')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-initial-bonus-performance-investment-bonus-loyalty-bonus-and-power-up-bonus')
   })
 })
