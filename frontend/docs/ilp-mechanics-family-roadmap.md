@@ -95,13 +95,88 @@ Remaining work in this workstream:
 
 Needed when the structural family is `multi-account-special-account`.
 
+Current status:
+- first vertical slice complete
+- green on:
+  - `npm run type-check`
+  - targeted ILP unit tests
+  - targeted golden refresh / golden check
+
+Completed in this slice:
+- normalized internal multi-account role metadata
+- normalized supplementary-routing and fallback-resolution path through the unified cashflow kernel
+- non-Prudential structural proof coverage on `tokio-marine-wealth-pro-ii`
+
+Promotion review result:
+- no new `supported` promotions yet
+- `prudential-pruvantage-prosper`, `prudential-pruvantage-assure-ii`, and `tokio-marine-wealth-pro-ii` remain `partial`
+- blocker is no longer multi-account structure itself; the remaining blockers are:
+  - assurance-charge scope
+  - distribution-mode assumptions
+  - broader protection-state / ownership mechanics
+
 ### 3. Assurance-charge kernel
 
 Needed where insurance / assurance charges materially affect economics.
 
+Current status:
+- first vertical slice complete
+- green on:
+  - `npm run type-check`
+  - targeted ILP unit tests
+  - `npm run golden:check`
+
+Completed in this slice:
+- one normalized internal assurance evaluation path for:
+  - `prudential-pruvantage-prosper`
+  - `prudential-pruvantage-assure-ii`
+  - bounded `hsbc-life-flexi-protector` death / TI COI
+- unified normalized assurance profile + state-event seam
+- preserved Prudential fallback deduction order
+- bounded non-catalog golden proof for HSBC Flexi Choice vs Max death / TI charges
+
+Promotion review result:
+- no new `supported` promotions yet
+- the assurance kernel is no longer the primary blocker for:
+  - `prudential-pruvantage-prosper`
+  - `prudential-pruvantage-assure-ii`
+- remaining blockers are outside this kernel:
+  - distribution-mode assumptions
+  - broader protection-state / ownership mechanics
+  - parser/catalog expansion where no safe public product entry exists yet
+
 ### 4. Bonus-richness kernel
 
 Needed after the cashflow kernel is trustworthy.
+
+Current status:
+- first vertical slice complete
+- green on:
+  - `npm run type-check`
+  - targeted ILP unit tests
+  - `npm run golden:check`
+
+Completed in this slice:
+- one normalized internal bonus-evaluation path for:
+  - HSBC bonus subsets
+  - Tokio bonus subsets
+- unified normalized tier resolution for:
+  - annual-premium bands
+  - account-value bands
+- unified suspension / restoration evaluation against normalized cashflow-state signals
+- tighter golden integrity assertions for:
+  - HSBC Wealth Accelerate
+  - HSBC Wealth Abundance
+  - Tokio Wealth Pro (II)
+
+Promotion review result:
+- no new `supported` promotions yet
+- `hsbc-life-wealth-abundance` remains `partial`
+- `tokio-marine-wealth-pro-ii` remains `partial`
+- blocker is no longer bonus-richness itself; the remaining blockers are:
+  - distribution-mode assumptions
+  - broader protection-state / ownership mechanics
+  - broader parser/catalog expansion where no safe supported boundary exists
 
 ### 5. Distribution-mode assumption model
 

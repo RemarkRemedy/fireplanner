@@ -52,13 +52,15 @@ Current rule:
 ### 1. Prudential Assurance-Charge Completion
 
 Status:
-- partially implemented
+- first vertical slice complete
 - PRUVantage Prosper now has first-class assurance-charge modeling with explicit life-assured inputs and rate-table-backed sum-at-risk charges
 - PRUVantage Assure II now uses Prudential's published Appendix A total assurance-charge curve across the projected age path
 - manual reduction and later resumption of sum assured / Wealth Assure Value are now modeled as user-entered resulting-state events and locked by partial-subset golden fixtures
+- bounded HSBC Flexi Protector death / TI COI now runs through the same normalized assurance path and is locked by a manual partial-subset golden fixture
 
 What is missing:
 - fuller protection-state transitions after Wealth Share activation, change of life assured, Premium Pass, and other Prudential option-driven state changes
+- broader HSBC Flexi expansion only if TPD / option-state mechanics become source-complete enough to model safely
 - supported-grade golden coverage if any Prudential assurance family is ever upgraded from `partial` to `supported`
 
 Why it matters:
@@ -69,7 +71,9 @@ Current boundary:
 - Prosper can now be modeled after entering age-next-birthday, sex, smoker status, and the current net regular premium base
 - Assure II can now be modeled from Prudential's published Appendix A age-based total assurance-charge curve after the user enters current sum assured plus current Wealth Assure Value
 - Assure II can also model user-entered manual reduction/resumption events as resulting-state overrides
+- HSBC Flexi can now model the bounded death / TI COI subset with explicit basic sum assured and net supplementary premium base inputs
 - Assure II remains intentionally partial because option-driven protection-state changes like Wealth Share, Premium Pass, and change-of-life-assured are still not encoded
+- HSBC Flexi remains intentionally partial because TPD and broader option-state mechanics are still out of scope
 
 ### 2. Broader Top-Up / Ad-Hoc Premium Mechanics
 
@@ -101,19 +105,11 @@ Why it matters:
 ### 3. Richer Bonus Ladder Modeling
 
 Status:
-- partially implemented
-- annual-rate, premium-allocation, one-time, tiered rates, suspension, and restoration exist
+- first vertical slice complete
+- annual-rate, premium-allocation, one-time, tiered rates, suspension, and restoration exist behind one normalized internal bonus-evaluation path
 - annual-rate bonuses can now resolve tiered rates from account-value bands as well as annual-premium bands
-- HSBC and PRUVantage bonus ladders are modeled for the current supported / partial families
-- HSBC Wealth Abundance now models its tiered first-year Start-up Bonus, Power-up Bonus, Loyalty Bonus, and free-withdrawal-linked bonus suspension subset behind partial golden fixtures
-- HSBC Wealth Harvest now models its start-up bonus and loyalty-bonus suspension subset behind partial golden fixtures
-- HSBC Wealth Voyage now models its split startup bonus tiers, power-up bonus subset, loyalty-bonus partial-withdrawal subset, and premium-base AMF behind partial golden fixtures
-- Tokio Wealth Max (II) and Wealth Pro (II) now model:
-  - tiered Initial Bonus in year 1
-  - Performance Investment Bonus
-  - Loyalty Bonus
-  - Power-up Bonus
-  and lock the executable subset with baseline golden fixtures
+- HSBC and Tokio bonus ladders now run through the same normalized kernel path
+- current supported / partial bonus subsets remain golden-gated
 
 What is missing:
 - more complex conditional bonus ladders
@@ -122,6 +118,10 @@ What is missing:
 
 Why it matters:
 - bonus structure is a large part of projected fee drag and hold-vs-exit economics
+- the remaining blockers for current partial products are now mostly outside the bonus kernel itself:
+  - distribution-mode assumptions
+  - broader protection / ownership mechanics
+  - parser/catalog expansion where no safe supported boundary exists
 
 ### 4. Distribution / Dividend Mode Modeling
 
@@ -148,12 +148,19 @@ Why it matters:
 ### 5. Broader Multi-Account / Special Account Structures
 
 Status:
-- partially implemented
-- current runtime now handles more than two accounts and fallback deduction
+- first vertical slice complete
+- current runtime now has a normalized multi-account role/group layer on top of the unified cashflow kernel
+- proven on:
+  - Prudential multi-account shapes
+  - Tokio Wealth Pro (II) as the non-Prudential structural proof
 
 What is missing:
 - more generalized support for special account structures beyond current Prudential shapes
 - additional routing / fee / withdrawal interactions across more complex account sets
+- promotion-grade closure for current partial products still blocked by:
+  - assurance-charge scope
+  - distribution-mode assumptions
+  - broader protection / ownership mechanics
 
 Why it matters:
 - corpus audit still shows non-trivial multi-account variation outside the currently modeled families
