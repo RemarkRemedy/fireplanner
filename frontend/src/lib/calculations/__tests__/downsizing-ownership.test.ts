@@ -370,8 +370,8 @@ describe('downsizing ownership scaling: legacy MC path', () => {
       property: halfStores.property as any,
     })
 
-    const fullAdj = fullResult.portfolioAdjustments.find((a) => a.amount !== 0)
-    const halfAdj = halfResult.portfolioAdjustments.find((a) => a.amount !== 0)
+    const fullAdj = fullResult.portfolioAdjustments?.find((a) => a.amount !== 0)
+    const halfAdj = halfResult.portfolioAdjustments?.find((a) => a.amount !== 0)
 
     expect(fullAdj).toBeDefined()
     expect(halfAdj).toBeDefined()
