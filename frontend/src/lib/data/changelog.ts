@@ -24,6 +24,56 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     date: '2026-03-13',
     category: 'fix',
+    title: 'Joint healthcare cash outlay fix',
+    description:
+      'Fixed a bug where joint mode healthcare costs only counted the reference adult, ignoring the partner\'s premiums. The household compiler\'s per-adult healthcareCashOutlayByYear array is now piped through to the projection engine so both adults\' healthcare costs are included.',
+    affectedSections: ['section-projection'],
+    insight:
+      'This was RC2 from the joint daily expenses bug report. At age 80+, the missing partner healthcare caused Daily Expenses to be 25-29% lower than expected.',
+  },
+  {
+    date: '2026-03-13',
+    category: 'fix',
+    title: 'Retirement expense fallback double-counting fix',
+    description:
+      'Fixed a bug where the retirementExpenseBase fallback path double-counted non-base expenses (healthcare, parent support, dependents, property costs) by including them in both the base and the add-on layers.',
+    affectedSections: ['section-projection'],
+    insight:
+      'RC1 from the joint daily expenses bug report. The fallback used total annual expenses instead of stripping out components that are added separately by the projection engine.',
+  },
+  {
+    date: '2026-03-13',
+    category: 'fix',
+    title: 'Merged savings deduction for SRS and CPF top-ups',
+    description:
+      'Fixed mergePerAdultProjections to deduct SRS contributions and voluntary CPF top-ups from the combined savings figure. Previously these outflows were tracked but not subtracted, overstating annual savings in joint plans.',
+    affectedSections: ['section-projection'],
+    insight:
+      'RC3 from the joint daily expenses bug report. Single-adult projections already deducted these; the merge path was missing the subtraction.',
+  },
+  {
+    date: '2026-03-13',
+    category: 'fix',
+    title: 'Partner timing shifts for household plan fields',
+    description:
+      'Fixed missing partner age-to-year shifts for parentSupport, expenseAdjustments, retirementWithdrawals, and financialGoals in the household compiler. Partner-sourced entries now correctly map to the reference adult\'s timeline.',
+    affectedSections: ['section-projection', 'section-income'],
+    insight:
+      'Seam A fix. A 3-year age gap between adults meant partner events fired 3 years too early or late in the combined timeline.',
+  },
+  {
+    date: '2026-03-13',
+    category: 'fix',
+    title: 'CPF merge strategies for household plans',
+    description:
+      'Fixed household compiler to correctly merge CPF-related plan fields: lifePlan (partner LIFE payout timing), retirementSum (per-adult FRS/BRS election), and virtualRebalancingMode (CPF rebalancing preferences).',
+    affectedSections: ['section-cpf'],
+    insight:
+      'Seam C fix. These fields were silently dropped during household compilation, causing the projection to use default CPF strategies instead of each adult\'s configured preferences.',
+  },
+  {
+    date: '2026-03-13',
+    category: 'fix',
     title: 'Partner life event and CPF OA withdrawal age shifts',
     description:
       'Fixed missing age shifts for partner life events and CPF OA withdrawals in household plans. Partner ages are now correctly converted to the reference adult\'s timeline.',
