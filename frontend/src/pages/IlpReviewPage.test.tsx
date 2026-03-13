@@ -193,6 +193,18 @@ describe('IlpReviewPage', () => {
     expect(within(dialog).getByRole('button', { name: /sgd \/ mip 25/i })).toBeEnabled()
   }, 10_000)
 
+  it('shows PRUVantage Assure (SP) as a partial catalog product that can be selected from the picker', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Assure (SP)')
+
+    expect(within(dialog).getByText('PRUVantage Assure (SP)')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: /sgd \/ mip 8/i })).toBeEnabled()
+  }, 10_000)
+
   it('seeds Tokio Marine Wealth Max (II) as a partial catalog product with recurring-premium warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()

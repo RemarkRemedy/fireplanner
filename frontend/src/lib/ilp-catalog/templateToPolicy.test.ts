@@ -355,6 +355,70 @@ describe('templateVariantToPolicySeed', () => {
     )
   })
 
+  it('maps PRUVantage Assure (SP) into a partial single-premium seed with explicit unsupported economics warnings', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'prudential-pruvantage-assure-sp')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-8')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-sp-combined-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-sp-administration-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('pruvantage-assure-sp-loyalty-bonus-every-8-years')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('pruvantage-assure-sp-first-withdrawal-free-up-to-10pct-single-premium')
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('single-premium product'))).toBe(true)
+    expect(seed.monthlyContribution).toBe(0)
+    expect(seed.accounts.find((account) => account.id === 'iia')?.contributionRules).toEqual([
+      { phase: 'during-icp', contributionShare: 1 },
+    ])
+    expect(seed.accounts.find((account) => account.id === 'aia')?.contributionRules).toEqual([
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'administration-charge',
+          basis: 'account-value',
+          appliesTo: ['iia'],
+          rate: 0.008,
+        }),
+        expect.objectContaining({
+          id: 'assurance-charge-combined',
+          basis: 'assurance-sum-at-risk',
+          requiresManualInput: true,
+          appliesTo: ['iia'],
+          fallbackAppliesTo: ['aia'],
+          assuranceConfig: {
+            formula: 'prudential-assure-ii-combined',
+            monthlyModalFactor: 0.0834,
+          },
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          trigger: 'top-up',
+          basis: 'event-amount',
+          appliesTo: ['aia'],
+          rate: 0.03,
+        }),
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          trigger: 'partial-withdrawal',
+          basis: 'event-amount',
+          appliesTo: ['iia'],
+        }),
+      ]),
+    )
+    expect(seed.bonuses).toEqual([])
+  })
+
   it('maps Tokio Marine Wealth Max (II) into a partial seed with recurring-single-premium routing and charges', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-wealth-max-ii')

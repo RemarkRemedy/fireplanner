@@ -9,6 +9,7 @@ import { parseHsbcWealthAbundance } from './parsers/hsbcWealthAbundance.js'
 import { parseHsbcWealthHarvest } from './parsers/hsbcWealthHarvest.js'
 import { parseHsbcWealthVoyage } from './parsers/hsbcWealthVoyage.js'
 import { parsePrudentialPruVantageAssureII } from './parsers/prudentialPruVantageAssureII.js'
+import { parsePrudentialPruVantageAssureSp } from './parsers/prudentialPruVantageAssureSp.js'
 import { parsePrudentialPruVantageProsper } from './parsers/prudentialPruVantageProsper.js'
 import { parsePrudentialPruVantageWealthII } from './parsers/prudentialPruVantageWealthII.js'
 import { parseTokioMarineWealthMaxIi } from './parsers/tokioMarineWealthMaxIi.js'
@@ -26,6 +27,7 @@ const HSBC_WEALTH_ABUNDANCE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life We
 const HSBC_WEALTH_HARVEST_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Harvest Product Summary.pdf'
 const HSBC_WEALTH_VOYAGE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Voyage Product Summary.pdf'
 const PRUDENTIAL_PRUVANTAGE_ASSURE_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRUVantage Assure II Product Summary.pdf'
+const PRUDENTIAL_PRUVANTAGE_ASSURE_SP_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRUVantage Assure (SP) Product Summary.pdf'
 const PRUDENTIAL_PRUVANTAGE_PROSPER_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRUVantage Prosper Product Summary.pdf'
 const PRUDENTIAL_PRUVANTAGE_WEALTH_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRUVantage Wealth II Product Summary.pdf'
 const TOKIO_MARINE_WEALTH_MAX_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNZV_TPDN_CIZ_Summary.pdf'
@@ -106,6 +108,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const prudentialChecksum = await sha256(PRUDENTIAL_PRUVANTAGE_WEALTH_II_SOURCE_PATH)
   const prudentialAssureExtracted = await extractPdfText(PRUDENTIAL_PRUVANTAGE_ASSURE_II_SOURCE_PATH)
   const prudentialAssureChecksum = await sha256(PRUDENTIAL_PRUVANTAGE_ASSURE_II_SOURCE_PATH)
+  const prudentialAssureSpExtracted = await extractPdfText(PRUDENTIAL_PRUVANTAGE_ASSURE_SP_SOURCE_PATH)
+  const prudentialAssureSpChecksum = await sha256(PRUDENTIAL_PRUVANTAGE_ASSURE_SP_SOURCE_PATH)
   const prudentialProsperExtracted = await extractPdfText(PRUDENTIAL_PRUVANTAGE_PROSPER_SOURCE_PATH)
   const prudentialProsperChecksum = await sha256(PRUDENTIAL_PRUVANTAGE_PROSPER_SOURCE_PATH)
   const tokioMarineExtracted = await extractPdfText(TOKIO_MARINE_WEALTH_MAX_II_SOURCE_PATH)
@@ -138,6 +142,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parsePrudentialPruVantageAssureII({
       document: prudentialAssureExtracted,
       sourceChecksumSha256: prudentialAssureChecksum,
+    }),
+    parsePrudentialPruVantageAssureSp({
+      document: prudentialAssureSpExtracted,
+      sourceChecksumSha256: prudentialAssureSpChecksum,
     }),
     parsePrudentialPruVantageProsper({
       document: prudentialProsperExtracted,

@@ -16,6 +16,12 @@ function variantLabel(variant: IlpTemplateVariant): string {
   return `${variant.currency} / MIP ${variant.mipLength}`
 }
 
+function deriveSeedMonthlyContribution(product: IlpCatalogProduct): number {
+  return product.metadataOnlyBehaviors.includes('pruvantage-assure-sp-single-premium-principal-tracking')
+    ? 0
+    : 350
+}
+
 function sameRate(left: number | null, right: number | null): boolean {
   if (left == null || right == null) return false
   return Math.abs(left - right) < 0.000001
@@ -171,7 +177,7 @@ export function templateVariantToPolicySeed(
     name: `${product.productName} (${variantLabel(variant)})`,
     insurer: product.insurer,
     currency: variant.currency,
-    monthlyContribution: 350,
+    monthlyContribution: deriveSeedMonthlyContribution(product),
     monthsAlreadyPaid: 0,
     currentPolicyYear: 1,
     icpMonths: variant.icpMonths,

@@ -1655,9 +1655,9 @@
       ],
       "implementationCohort": "prudential-pruvantage-multi-account",
       "v1SupportBoundary": "supported-after-kernel",
-      "currentCatalogStatus": "not-in-catalog",
-      "economicsStatus": "not-modeled",
-      "parserExists": false,
+      "currentCatalogStatus": "partial",
+      "economicsStatus": "partial-modeled-subset",
+      "parserExists": true,
       "goldenCoverageStatus": "none",
       "kernelWorkstreams": [
         "core-cashflow-kernel",
@@ -1668,14 +1668,31 @@
         "core-cashflow-kernel",
         "multi-account-special-account-kernel"
       ],
-      "modeledSubsetAlreadyCovered": [],
-      "metadataOnlyBehaviors": [],
-      "manualInputRequirements": [],
-      "classificationRationale": "Primary family is multi-account-special-account based on account model \"Additional Investment Account\" and gap tags ad-hoc-premium-routing, dynamic-charge-model, non-guaranteed-charges, withdrawal-reduction-charges. Cross-cutting overlays are ad-hoc-premium-routing, dynamic-charge, premium-holiday-recovery. Implementation cohort is prudential-pruvantage-multi-account from insurer/product patterning. No current parser-backed catalog product exists for this source yet.",
-      "confidence": 0.9,
+      "modeledSubsetAlreadyCovered": [
+        "pruvantage-assure-sp-administration-charge",
+        "branch:assure-sp-combined-assurance",
+        "branch:pru-top-up-charge",
+        "branch:pru-charged-withdrawal",
+        "pruvantage-assure-sp-iia-surrender-charge"
+      ],
+      "metadataOnlyBehaviors": [
+        "pruvantage-assure-sp-single-premium-allocation-enhancement",
+        "pruvantage-assure-sp-loyalty-bonus-every-8-years",
+        "pruvantage-assure-sp-first-withdrawal-free-up-to-10pct-single-premium",
+        "pruvantage-assure-sp-single-premium-principal-tracking",
+        "pruvantage-assure-sp-change-of-life-assured",
+        "pruvantage-assure-sp-sum-assured-wealth-assure-reduction-resumption",
+        "pruvantage-assure-sp-dividend-payout-election"
+      ],
+      "manualInputRequirements": [
+        "Assurance Charge (Appendix A total charge curve)"
+      ],
+      "classificationRationale": "Primary family is multi-account-special-account based on account model \"Additional Investment Account\" and gap tags ad-hoc-premium-routing, dynamic-charge-model, non-guaranteed-charges, withdrawal-reduction-charges. Cross-cutting overlays are ad-hoc-premium-routing, dynamic-charge, premium-holiday-recovery. Implementation cohort is prudential-pruvantage-multi-account from insurer/product patterning. Current catalog status is partial with economics status partial-modeled-subset.",
+      "confidence": 0.85,
       "evidenceRefs": [
         "accountModel:Additional Investment Account",
         "bucket:B-extendable",
+        "catalog:prudential-pruvantage-assure-sp",
         "cohort:prudential-pruvantage-multi-account",
         "file:PRUVantage Assure (SP) Product Summary.pdf",
         "gap:ad-hoc-premium-routing",

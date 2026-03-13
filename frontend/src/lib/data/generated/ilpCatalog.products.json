@@ -13389,6 +13389,338 @@
     ]
   },
   {
+    "id": "prudential-pruvantage-assure-sp",
+    "insurer": "Prudential",
+    "productName": "PRUVantage Assure (SP)",
+    "sourceFileName": "PRUVantage Assure (SP) Product Summary.pdf",
+    "sourceChecksumSha256": "326c0e61167c98ca4e725605ec54f8462c3ac5392410a0fdc985479af28d7db3",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:assure-sp-administration-charge",
+      "branch:assure-sp-combined-assurance",
+      "branch:assure-sp-top-up-charge",
+      "branch:assure-sp-charged-withdrawal",
+      "branch:assure-sp-iia-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "pruvantage-assure-sp-single-premium-allocation-enhancement",
+      "pruvantage-assure-sp-loyalty-bonus-every-8-years",
+      "pruvantage-assure-sp-first-withdrawal-free-up-to-10pct-single-premium",
+      "pruvantage-assure-sp-single-premium-principal-tracking",
+      "pruvantage-assure-sp-change-of-life-assured",
+      "pruvantage-assure-sp-sum-assured-wealth-assure-reduction-resumption",
+      "pruvantage-assure-sp-dividend-payout-election"
+    ],
+    "warnings": [
+      "PRUVantage Assure (SP) is cataloged as a partial modeled subset in V1. The parser captures the two-account structure, administration charge, combined Appendix A assurance charge, top-up premium charge, and Initial Investment Account withdrawal / surrender charge schedules, but the enhanced single-premium allocation, recurring 8-year loyalty bonus, first-withdrawal free cap, and single-premium principal tracking remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-8",
+        "currency": "SGD",
+        "mipLength": 8,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "iia",
+            "label": "Initial Investment Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "iia",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Accounts and Death Benefit",
+                "excerpt": "- Initial Investment Account is where your single premium is invested. - Additional Investment Account is where your top-up premiums that you make through the Investment Booster (Lump Sum) are invested. Death Benefit: Wh"
+              },
+              {
+                "page": 7,
+                "section": "Premium Size and Loyalty Bonus",
+                "excerpt": "Premium Size: The minimum single premium is $50,000. When your single premium is between $50,000 and $149,999, we use 100% of your single premium to buy units at the bid price in the PRULink fund(s) you have chosen. When"
+              }
+            ]
+          },
+          {
+            "id": "aia",
+            "label": "Additional Investment Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "aia",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Accounts and Death Benefit",
+                "excerpt": "- Initial Investment Account is where your single premium is invested. - Additional Investment Account is where your top-up premiums that you make through the Investment Booster (Lump Sum) are invested. Death Benefit: Wh"
+              },
+              {
+                "page": 18,
+                "section": "Top-up premium with the Investment Booster (Lump Sum)",
+                "excerpt": "What is the impact of early surrender? As buying a life insurance policy is a long-term commitment, an early termination of the policy usually involves high costs and the surrender value, if any, that is payable to you m"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "administration-charge",
+            "label": "Administration Charge",
+            "basis": "account-value",
+            "rate": 0.008,
+            "amount": null,
+            "appliesTo": [
+              "iia"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 8,
+            "notes": [
+              "Modeled as a monthly 0.8% p.a. administration charge on the Initial Investment Account only for the first 8 policy years.",
+              "There are no administration charges on the Additional Investment Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Charges",
+                "excerpt": "1. Administration Charge From the first premium due date of the policy and on the same day every month thereafter, we will deduct a monthly administration charge of 0.8% p.a. of the latest account value of the Initial In"
+              }
+            ]
+          },
+          {
+            "id": "assurance-charge-combined",
+            "label": "Assurance Charge (Appendix A total charge curve)",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "prudential-assure-ii-combined",
+              "monthlyModalFactor": 0.0834
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "iia"
+            ],
+            "fallbackAppliesTo": [
+              "aia"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Modeled from Prudential Appendix A as the published total charge curve for death and accidental disability benefits.",
+              "Enter the insured-life details and use the current net single-premium base in the current net regular premium base field to activate the modeled assurance charge path.",
+              "Charges the Initial Investment Account first and falls back to the Additional Investment Account when the Initial Investment Account is exhausted."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Charges",
+                "excerpt": "1. Administration Charge From the first premium due date of the policy and on the same day every month thereafter, we will deduct a monthly administration charge of 0.8% p.a. of the latest account value of the Initial In"
+              },
+              {
+                "page": 22,
+                "section": "Appendix A assurance charges",
+                "excerpt": "PRULink Pan European Fund 1.50% PRULink Singapore ASEAN Managed Fund 1.30% PRULink Singapore Asian Managed Fund 1.30% PRULink Singapore Dynamic Bond Fund (Accumulation) 0.50% PRULink Singapore Dynamic Bond Fund (Distribu"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Investment Booster Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "aia"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies a 3% upfront premium charge on Investment Booster (Lump Sum) top-ups.",
+              "The remaining top-up premium is credited to the Additional Investment Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Charges",
+                "excerpt": "1. Administration Charge From the first premium due date of the policy and on the same day every month thereafter, we will deduct a monthly administration charge of 0.8% p.a. of the latest account value of the Initial In"
+              },
+              {
+                "page": 18,
+                "section": "Top-up premium with the Investment Booster (Lump Sum)",
+                "excerpt": "What is the impact of early surrender? As buying a life insurance policy is a long-term commitment, an early termination of the policy usually involves high costs and the surrender value, if any, that is payable to you m"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "iia"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.12
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.105
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.09
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.075
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.045
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.03
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.015
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to Initial Investment Account withdrawals only during the first 8 policy years.",
+              "There is no withdrawal charge on the Additional Investment Account.",
+              "The first Initial Investment Account withdrawal free up to 10% of original single premium is not modeled automatically in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 12,
+                "section": "Partial Withdrawal Charge",
+                "excerpt": "Partial Withdrawal Charge Table Number of Months from the Cover Start Date Percentage of the Withdrawn Amount 1 – 12 12.0% 13 – 24 10.5% 25 – 36 9.0% 37 – 48 7.5%"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          0.12,
+          0.105,
+          0.09,
+          0.075,
+          0.06,
+          0.045,
+          0.03,
+          0.015
+        ],
+        "warnings": [
+          "This single-premium product currently models administration charges, Appendix A combined assurance charges, top-up premium charges, Initial Investment Account withdrawal charges, and Initial Investment Account surrender charges.",
+          "The enhanced single-premium allocation tiers, the recurring 8-year Loyalty Bonus, and the first Initial Investment Account withdrawal free up to 10% of original single premium remain informational only in V1.",
+          "Enter insured-life details and use the current net regular premium base field as the current net single-premium base to activate the modeled assurance charge path.",
+          "The current ILP engine does not yet track original single-premium principal separately from recurring-premium inputs, so premiums-paid and opportunity-cost outputs should be treated as partial for this product."
+        ],
+        "unsupportedItems": [
+          "Enhanced single-premium allocation tiers (100% / 100.49999999999999% / 101%) remain informational only.",
+          "Loyalty Bonus paid every block of 8 completed policy years remains informational only.",
+          "First Initial Investment Account withdrawal free up to 10% of original single premium remains informational only.",
+          "Change of life assured and sum assured / Wealth Assure Value reduction-resumption options remain informational only.",
+          "Cash dividend payout election remains informational only; reinvestment should be assumed for accumulation review."
+        ],
+        "sourceRefs": [
+          {
+            "page": 3,
+            "section": "Accounts and Death Benefit",
+            "excerpt": "- Initial Investment Account is where your single premium is invested. - Additional Investment Account is where your top-up premiums that you make through the Investment Booster (Lump Sum) are invested. Death Benefit: Wh"
+          },
+          {
+            "page": 7,
+            "section": "Premium Size and Loyalty Bonus",
+            "excerpt": "Premium Size: The minimum single premium is $50,000. When your single premium is between $50,000 and $149,999, we use 100% of your single premium to buy units at the bid price in the PRULink fund(s) you have chosen. When"
+          },
+          {
+            "page": 8,
+            "section": "Charges",
+            "excerpt": "1. Administration Charge From the first premium due date of the policy and on the same day every month thereafter, we will deduct a monthly administration charge of 0.8% p.a. of the latest account value of the Initial In"
+          },
+          {
+            "page": 12,
+            "section": "Partial Withdrawal Charge",
+            "excerpt": "Partial Withdrawal Charge Table Number of Months from the Cover Start Date Percentage of the Withdrawn Amount 1 – 12 12.0% 13 – 24 10.5% 25 – 36 9.0% 37 – 48 7.5%"
+          },
+          {
+            "page": 13,
+            "section": "Surrender Charge",
+            "excerpt": "Surrender Charge Table Number of Months from the Cover Start Date Percentage of the Initial Investment Account Value 1 – 12 12.0% 13 – 24 10.5% 25 – 36 9.0% 37 – 48 7.5%"
+          },
+          {
+            "page": 16,
+            "section": "Change of Life Assured and Wealth Assure adjustments",
+            "excerpt": "manager is appointed in respect of the Trustee, the Manager may by notice in writing remove the Trustee and appoint another person as the new trustee of the Fund in accordance with the Deed. In the event the Custodian be"
+          },
+          {
+            "page": 17,
+            "section": "Reduce Sum Assured/Wealth Assure Value",
+            "excerpt": "Depositary’s insolvency, or someone acting on its behalf, the Fund may suffer a financial loss. However, this risk is mitigat ed to a certain extent by the fact the Depositary is required by law to segregate its own asse"
+          },
+          {
+            "page": 18,
+            "section": "Top-up premium with the Investment Booster (Lump Sum)",
+            "excerpt": "What is the impact of early surrender? As buying a life insurance policy is a long-term commitment, an early termination of the policy usually involves high costs and the surrender value, if any, that is payable to you m"
+          },
+          {
+            "page": 19,
+            "section": "Dividend payout election",
+            "excerpt": "Appendix A – Assurance Charges Charges for Death and Accidental Disability Benefits (per $1,000 Sum-at-Risk, per annum) Monthly Modal Factor: 0.0834 Age* MS MN FS FN Age* MS MN FS FN 1 0.57 0.57 0.57 0.57 61 16.14 7.89 9"
+          },
+          {
+            "page": 22,
+            "section": "Appendix A assurance charges",
+            "excerpt": "PRULink Pan European Fund 1.50% PRULink Singapore ASEAN Managed Fund 1.30% PRULink Singapore Asian Managed Fund 1.30% PRULink Singapore Dynamic Bond Fund (Accumulation) 0.50% PRULink Singapore Dynamic Bond Fund (Distribu"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "prudential-pruvantage-prosper",
     "insurer": "Prudential",
     "productName": "PRUVantage Prosper",
