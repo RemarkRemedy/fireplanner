@@ -62,7 +62,7 @@ export interface IlpTemplateBonus {
 export interface IlpTemplateFeeRule {
   id: string
   label: string
-  basis?: 'account-value' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier'
+  basis?: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier'
   rate: number | null
   amount?: number | null
   assuranceConfig?: {
@@ -82,6 +82,11 @@ export interface IlpTemplateFeeRule {
   requiresManualInput?: boolean
   appliesTo: string[]
   fallbackAppliesTo?: string[]
+  rateSchedule?: Array<{
+    startPolicyYear: number
+    endPolicyYear: number | null
+    rate: number
+  }>
   amountSchedule?: Array<{
     startPolicyYear: number
     endPolicyYear: number | null

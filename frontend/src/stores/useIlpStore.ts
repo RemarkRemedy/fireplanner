@@ -137,6 +137,7 @@ function cloneChargeRule(rule: IlpChargeRule): IlpChargeRule {
       : undefined,
     appliesTo: [...rule.appliesTo],
     fallbackAppliesTo: rule.fallbackAppliesTo ? [...rule.fallbackAppliesTo] : undefined,
+    rateSchedule: rule.rateSchedule?.map((tier) => ({ ...tier })),
     amountSchedule: rule.amountSchedule?.map((tier) => ({ ...tier })),
   }
 }

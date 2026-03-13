@@ -223,6 +223,11 @@ export const ilpChargeRuleSchema = z.object({
   endPolicyYear: z.number().int().min(1).max(100).nullable().optional(),
   appliesTo: z.array(z.string().min(1)).min(1).max(10),
   fallbackAppliesTo: z.array(z.string().min(1)).min(1).max(10).optional(),
+  rateSchedule: z.array(z.object({
+    startPolicyYear: z.number().int().min(1).max(100),
+    endPolicyYear: z.number().int().min(1).max(100).nullable(),
+    rate: z.number().min(0).max(1),
+  })).max(40).optional(),
   amountSchedule: z.array(z.object({
     startPolicyYear: z.number().int().min(1).max(100),
     endPolicyYear: z.number().int().min(1).max(100).nullable(),
@@ -270,6 +275,24 @@ export const ilpChargeRuleSchema = z.object({
       })
     }
   })
+
+  rule.rateSchedule?.forEach((tier, index) => {
+    if (tier.endPolicyYear != null && tier.endPolicyYear < tier.startPolicyYear) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Charge rule rate schedule endPolicyYear must be greater than or equal to startPolicyYear',
+        path: ['rateSchedule', index, 'endPolicyYear'],
+      })
+    }
+  })
+
+  if ((rule.rateSchedule?.length ?? 0) > 0 && !(rule.basis === 'account-value' || rule.basis === 'annual-contribution')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Charge rule rate schedules can only be used with account-value or annual-contribution basis',
+      path: ['rateSchedule'],
+    })
+  }
 
   if ((rule.amountSchedule?.length ?? 0) > 0 && rule.basis !== 'fixed-annual') {
     ctx.addIssue({

@@ -57,7 +57,7 @@ export const ilpTemplateBonusSchema = z.object({
 export const ilpTemplateFeeRuleSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
-  basis: z.enum(['account-value', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier']).optional(),
+  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier']).optional(),
   rate: z.number().min(0).max(0.2).nullable(),
   amount: z.number().min(0).max(100_000_000).nullable().optional(),
   assuranceConfig: z.object({
@@ -77,6 +77,11 @@ export const ilpTemplateFeeRuleSchema = z.object({
   requiresManualInput: z.boolean().optional(),
   appliesTo: z.array(z.string().min(1)).max(20),
   fallbackAppliesTo: z.array(z.string().min(1)).max(20).optional(),
+  rateSchedule: z.array(z.object({
+    startPolicyYear: z.number().int().min(1).max(100),
+    endPolicyYear: z.number().int().min(1).max(100).nullable(),
+    rate: z.number().min(0).max(1),
+  })).max(40).optional(),
   amountSchedule: z.array(z.object({
     startPolicyYear: z.number().int().min(1).max(100),
     endPolicyYear: z.number().int().min(1).max(100).nullable(),

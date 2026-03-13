@@ -44,6 +44,13 @@ describe('IlpReviewPage', () => {
     renderIlpReviewPage()
 
     expect(screen.getByText('ILP Review')).toBeInTheDocument()
+    expect(screen.getByText('Available Templates')).toBeInTheDocument()
+    expect(screen.getByText('Supported templates')).toBeInTheDocument()
+    expect(screen.getByText('Partial templates')).toBeInTheDocument()
+    expect(screen.getByText('Wealth Accelerate')).toBeInTheDocument()
+    expect(screen.getByText('PRUVantage Wealth II')).toBeInTheDocument()
+    expect(screen.getByText('Wealth Abundance')).toBeInTheDocument()
+    expect(screen.getByText('Wealth Pro (II)')).toBeInTheDocument()
     expect(screen.getByText('Policy Details')).toBeInTheDocument()
     expect(screen.getByText('Decision Panel')).toBeInTheDocument()
     expect(screen.getByText('Opportunity Cost')).toBeInTheDocument()

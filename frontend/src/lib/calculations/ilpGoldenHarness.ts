@@ -338,7 +338,15 @@ export function buildGoldenFixtureArtifact(
 ): GoldenFixtureArtifact {
   assertNoUnresolvedManualInputs(fixture)
   const catalogVersion = snapshot?.manifest.catalogVersion ?? fixture.policy.catalogSource?.catalogVersion ?? 'unknown'
-  const catalogProduct = snapshot ? requireCatalogProduct(snapshot, fixture) : null
+  const catalogProduct = snapshot
+    ? snapshot.products.some((entry) => entry.id === fixture.productId)
+      ? requireCatalogProduct(snapshot, fixture)
+      : null
+    : null
+
+  if (!catalogProduct && snapshot && !fixture.manualSource) {
+    requireCatalogProduct(snapshot, fixture)
+  }
 
   const artifact: GoldenFixtureArtifact = {
     metadata: {
@@ -347,12 +355,12 @@ export function buildGoldenFixtureArtifact(
       productId: fixture.productId,
       variantId: fixture.variantId,
       scenarioId: fixture.scenarioId,
-      supportStatus: catalogProduct?.product.supportStatus ?? (fixture.fixtureClass === 'supported' ? 'supported' : 'partial'),
+      supportStatus: catalogProduct?.product.supportStatus ?? fixture.manualSource?.supportStatus ?? (fixture.fixtureClass === 'supported' ? 'supported' : 'partial'),
       description: fixture.description,
       coverageTags: [...fixture.coverageTags],
       catalogVersion,
-      sourceFileName: catalogProduct?.product.sourceFileName ?? 'unknown',
-      sourceChecksumSha256: catalogProduct?.product.sourceChecksumSha256 ?? 'unknown',
+      sourceFileName: catalogProduct?.product.sourceFileName ?? fixture.manualSource?.sourceFileName ?? 'unknown',
+      sourceChecksumSha256: catalogProduct?.product.sourceChecksumSha256 ?? fixture.manualSource?.sourceChecksumSha256 ?? 'unknown',
     },
     policyInput: normalizePolicyInput(fixture.policy),
     expected: normalizeAnalysisSurface(fixture.policy),
@@ -386,7 +394,7 @@ export function collectGoldenCoverageReport(
   const unsupportedFixtureTargets = fixtures
     .filter((fixture) => {
       const product = snapshot.products.find((entry) => entry.id === fixture.productId)
-      if (!product) return true
+      if (!product) return !fixture.manualSource
       if (fixture.fixtureClass === 'supported' && product.supportStatus !== 'supported') return true
       return !product.variants.some((variant) => variant.id === fixture.variantId)
     })

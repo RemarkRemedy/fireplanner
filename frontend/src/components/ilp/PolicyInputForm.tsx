@@ -805,6 +805,7 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                     activeWindow: 'policy-term',
                     appliesTo: policy.accounts[0] ? [policy.accounts[0].id] : [],
                     fallbackAppliesTo: [],
+                    rateSchedule: undefined,
                     amountSchedule: [],
                     rate: 0,
                     amount: 0,
@@ -867,6 +868,9 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                                     },
                                   ],
                                 })
+                              : undefined,
+                            rateSchedule: value === 'account-value' || value === 'annual-contribution'
+                              ? (rule.rateSchedule ?? [])
                               : undefined,
                             amountSchedule: value === 'fixed-annual' ? (rule.amountSchedule ?? []) : undefined,
                           }
@@ -1061,6 +1065,107 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                       />
                     )}
                   </div>
+
+                  {(rule.basis === 'account-value' || rule.basis === 'annual-contribution') && (
+                    <div className="space-y-3 rounded-md border p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium">Rate Schedule</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Override the base rate by policy-year range for dynamic or non-guaranteed charges.
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          type="button"
+                          onClick={() => {
+                            const nextRules = [...(policy.chargeRules ?? [])]
+                            nextRules[index] = {
+                              ...rule,
+                              rateSchedule: [
+                                ...(rule.rateSchedule ?? []),
+                                {
+                                  startPolicyYear: rule.startPolicyYear ?? 1,
+                                  endPolicyYear: null,
+                                  rate: rule.rate,
+                                },
+                              ],
+                            }
+                            updateChargeRules(nextRules)
+                          }}
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add Rate Tier
+                        </Button>
+                      </div>
+
+                      {(rule.rateSchedule?.length ?? 0) === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          No rate tiers configured. The base rate above applies for the whole active window.
+                        </p>
+                      ) : rule.rateSchedule?.map((tier, tierIndex) => (
+                        <Card key={`${rule.id}-rate-tier-${tierIndex}`}>
+                          <CardContent className="grid gap-4 pt-6 md:grid-cols-2 xl:grid-cols-4">
+                            <NumberInput
+                              label="Start Policy Year"
+                              value={tier.startPolicyYear}
+                              onChange={(value) => {
+                                const nextRules = [...(policy.chargeRules ?? [])]
+                                const nextSchedule = [...(rule.rateSchedule ?? [])]
+                                nextSchedule[tierIndex] = { ...tier, startPolicyYear: value }
+                                nextRules[index] = { ...rule, rateSchedule: nextSchedule }
+                                updateChargeRules(nextRules)
+                              }}
+                              integer
+                              min={1}
+                            />
+                            <NumberInput
+                              label="End Policy Year"
+                              value={tier.endPolicyYear ?? tier.startPolicyYear}
+                              onChange={(value) => {
+                                const nextRules = [...(policy.chargeRules ?? [])]
+                                const nextSchedule = [...(rule.rateSchedule ?? [])]
+                                nextSchedule[tierIndex] = { ...tier, endPolicyYear: value }
+                                nextRules[index] = { ...rule, rateSchedule: nextSchedule }
+                                updateChargeRules(nextRules)
+                              }}
+                              integer
+                              min={tier.startPolicyYear}
+                            />
+                            <PercentInput
+                              label="Rate"
+                              value={tier.rate}
+                              onChange={(value) => {
+                                const nextRules = [...(policy.chargeRules ?? [])]
+                                const nextSchedule = [...(rule.rateSchedule ?? [])]
+                                nextSchedule[tierIndex] = { ...tier, rate: value }
+                                nextRules[index] = { ...rule, rateSchedule: nextSchedule }
+                                updateChargeRules(nextRules)
+                              }}
+                              step={0.0001}
+                            />
+                            <div className="flex items-end justify-end">
+                              <Button
+                                variant="outline"
+                                className="text-destructive"
+                                onClick={() => {
+                                  const nextRules = [...(policy.chargeRules ?? [])]
+                                  nextRules[index] = {
+                                    ...rule,
+                                    rateSchedule: (rule.rateSchedule ?? []).filter((_, candidateIndex) => candidateIndex !== tierIndex),
+                                  }
+                                  updateChargeRules(nextRules)
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Remove Tier
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label>Applies To Accounts</Label>

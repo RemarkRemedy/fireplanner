@@ -56,16 +56,26 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
       const isAssurance = rule.basis === 'assurance-sum-at-risk'
       const isPremiumBase = rule.basis === 'premium-base-mip-multiplier'
       const isFixedAnnual = rule.basis === 'fixed-annual'
+      const isAnnualContribution = rule.basis === 'annual-contribution'
 
       return {
         id: rule.id,
         label: rule.label,
-        basis: isAssurance ? 'assurance-sum-at-risk' : (isPremiumBase ? 'premium-base-mip-multiplier' : (isFixedAnnual ? 'fixed-annual' : 'account-value')),
+        basis: isAssurance
+          ? 'assurance-sum-at-risk'
+          : isPremiumBase
+            ? 'premium-base-mip-multiplier'
+            : isFixedAnnual
+              ? 'fixed-annual'
+              : isAnnualContribution
+                ? 'annual-contribution'
+                : 'account-value',
         activeWindow: rule.activeWindow,
         startPolicyYear: rule.startPolicyYear,
         endPolicyYear: rule.endPolicyYear,
         appliesTo: [...rule.appliesTo],
         fallbackAppliesTo: rule.fallbackAppliesTo ? [...rule.fallbackAppliesTo] : undefined,
+        rateSchedule: rule.rateSchedule?.map((tier) => ({ ...tier })),
         amountSchedule: rule.amountSchedule?.map((tier) => ({ ...tier })),
         rate: isFixedAnnual || isAssurance ? 0 : (rule.rate ?? 0),
         amount: isAssurance ? 0 : (rule.amount ?? 0),

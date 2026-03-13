@@ -51,6 +51,15 @@ const PICTET_DEBT: IlpFund = {
   grossReturnHigh: 0.06,
 }
 
+const ZERO_RETURN_FUND: IlpFund = {
+  name: 'Zero Return Test Fund',
+  allocation: 1,
+  ocf: 0,
+  grossReturnLow: 0,
+  grossReturnMid: 0,
+  grossReturnHigh: 0,
+}
+
 const IUA_ACCOUNT: IlpAccount = {
   id: 'iua',
   label: 'Initial Unit Account',
@@ -918,6 +927,43 @@ describe('projectIlpPolicy', () => {
 
     expect(accountRow(firstRow, 'iua').grossFee).toBeCloseTo(1_131, 2)
     expect(accountRow(firstRow, 'aua').grossFee).toBeCloseTo(224, 2)
+  })
+
+  it('uses recurring charge rate tiers by policy year for dynamic charge rules', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 5,
+      monthsAlreadyPaid: 0,
+      monthlyContribution: 100,
+      accounts: [
+        { ...IUA_ACCOUNT, currentValue: 0, feeRate: 0, postMipFeeRate: 0, contributionShare: 0 },
+        { ...AUA_ACCOUNT, currentValue: 0, feeRate: 0, postMipFeeRate: 0, contributionShare: 1 },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'policy-charge',
+          label: 'Policy Charge',
+          basis: 'annual-contribution',
+          activeWindow: 'policy-term',
+          appliesTo: ['aua'],
+          rateSchedule: [
+            { startPolicyYear: 6, endPolicyYear: 6, rate: 0.02 },
+            { startPolicyYear: 7, endPolicyYear: null, rate: 0.05 },
+          ],
+          rate: 0,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0].policyYear).toBe(6)
+    expect(accountRow(result.rows[0], 'aua').grossFee).toBeCloseTo(24, 2)
+    expect(result.rows[1].policyYear).toBe(7)
+    expect(accountRow(result.rows[1], 'aua').grossFee).toBeCloseTo(60, 2)
   })
 
   it('uses fixed-annual amount tiers and falls back to secondary accounts when primary balances are exhausted', () => {

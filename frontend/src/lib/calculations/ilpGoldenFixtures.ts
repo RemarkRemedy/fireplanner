@@ -38,8 +38,10 @@ export type GoldenCoverageTag =
   | 'branch:assure-ii-pre-70-assurance'
   | 'branch:assure-ii-post-70-charge-tail'
   | 'branch:assure-ii-manual-reduction-resumption'
+  | 'branch:hsbc-flexi-choice-max-assurance'
   | 'branch:tokio-bonus-ladder'
   | 'branch:tokio-post-mip-routing'
+  | 'branch:tokio-multi-account-structure'
   | 'branch:tokio-rsp-manual-resumption'
   | 'branch:tokio-shortfall-exclusive'
   | 'branch:tokio-reduction-consumes-rsp-first'
@@ -53,11 +55,18 @@ export interface GoldenFixtureCoverageTarget {
   coverageTags: GoldenCoverageTag[]
 }
 
+interface GoldenFixtureManualSource {
+  supportStatus: 'partial'
+  sourceFileName: string
+  sourceChecksumSha256: string
+}
+
 export interface GoldenIlpFixtureInput extends GoldenFixtureCoverageTarget {
   id: string
   fileName: `${string}.json`
   description: string
   policy: IlpPolicyInput
+  manualSource?: GoldenFixtureManualSource
   integrityChecks?: Array<{
     description: string
     test: (fixture: GoldenIlpFixtureInput, artifact: GoldenFixtureArtifact) => boolean
@@ -66,6 +75,7 @@ export interface GoldenIlpFixtureInput extends GoldenFixtureCoverageTarget {
 
 interface GoldenFixtureDefinition extends GoldenFixtureCoverageTarget {
   description: string
+  manualSource?: GoldenFixtureManualSource
   integrityChecks?: Array<{
     description: string
     test: (fixture: GoldenIlpFixtureInput, artifact: GoldenFixtureArtifact) => boolean
@@ -344,6 +354,73 @@ function withTokioBalances(
       }
       return { ...account, currentValue: topup }
     }),
+  })
+}
+
+function hsbcFlexiChoiceAssurancePolicy(id: string): IlpPolicyInput {
+  return ilpPolicySchema.parse({
+    ...createDefaultPolicy(),
+    id,
+    name: 'Golden HSBC Life Flexi Protector (Choice Death / TI COI)',
+    insurer: 'HSBC Life',
+    currency: 'SGD',
+    monthlyContribution: 0,
+    monthsAlreadyPaid: 72,
+    currentPolicyYear: 7,
+    icpMonths: 0,
+    mipLength: 20,
+    postMipYears: 10,
+    eecTable: Array.from({ length: 20 }, () => 0),
+    accounts: [
+      {
+        id: 'policy-value',
+        label: 'Policy Value',
+        feeRate: 0,
+        currentValue: 30_000,
+        contributionShare: 0,
+        subjectToEec: false,
+        postMipFeeRate: null,
+      },
+    ],
+    funds: [
+      {
+        name: 'Stable Fund',
+        allocation: 1,
+        ocf: 0,
+        grossReturnLow: 0,
+        grossReturnMid: 0,
+        grossReturnHigh: 0,
+      },
+    ],
+    bonuses: [],
+    chargeRules: [
+      {
+        id: 'flexi-choice-death-ti',
+        label: 'Death / TI COI',
+        basis: 'assurance-sum-at-risk',
+        activeWindow: 'policy-term',
+        appliesTo: ['policy-value'],
+        rate: 0,
+        amount: 0,
+        assuranceConfig: {
+          formula: 'hsbc-flexi-choice-death-ti',
+          monthlyModalFactor: 1 / 12,
+          maxAgeNextBirthday: 99,
+        },
+        allocation: 'pro-rata-by-value',
+      },
+    ],
+    eventChargeRules: [],
+    assuranceProfile: {
+      currentAgeNextBirthday: 30,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentBasicSumAssured: 100_000,
+      currentNetSupplementaryPremiumBase: 20_000,
+    },
+    discountRate: 0.03,
+    inflationRate: 0.02,
+    alternativeReturn: 0.07,
   })
 }
 
@@ -1113,6 +1190,55 @@ function tokioWealthProWaivedChargesPolicy(snapshot: Pick<IlpCatalogSnapshot, 'm
   )
 }
 
+function tokioWealthProStructuralProofPolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-wealth-pro-ii', 'sgd-mip-10', id)
+  return withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Wealth Pro (II) (SGD / MIP 10 Structural Proof)',
+        monthlyContribution: 350,
+        currentPolicyYear: 3,
+        monthsAlreadyPaid: 36,
+        policyEvents: [
+          {
+            id: 'topup-1',
+            type: 'top-up',
+            startPolicyMonth: 37,
+            durationMonths: 1,
+            amount: 1_000,
+          },
+          {
+            id: 'withdrawal-1',
+            type: 'partial-withdrawal',
+            startPolicyMonth: 38,
+            durationMonths: 1,
+            amount: 500,
+            accountId: 'accumulation',
+          },
+          {
+            id: 'reduction-1',
+            type: 'regular-premium-reduction',
+            startPolicyMonth: 39,
+            durationMonths: 1,
+            amount: 1_200,
+          },
+          {
+            id: 'holiday-1',
+            type: 'premium-holiday',
+            startPolicyMonth: 37,
+            durationMonths: 3,
+          },
+        ],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    200,
+    50,
+    300,
+  )
+}
+
 const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   {
     productId: 'hsbc-life-wealth-accelerate',
@@ -1190,6 +1316,24 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
           row.accounts.some((account) => account.accountId === 'aua' && account.withdrawalAmount >= 3_500)
         )),
+      },
+      {
+        description: 'premium-holiday repayment restores a stronger later AUA bonus path than the same holiday without repayment',
+        test: (fixture, artifact) => {
+          const withoutRepayment = ilpPolicySchema.parse({
+            ...fixture.policy,
+            policyEvents: fixture.policy.policyEvents?.map((event) => (
+              event.type === 'premium-holiday' ? { ...event, repayMissedPremiums: false, repaymentAccountId: undefined } : event
+            )),
+          })
+          const withRepaymentBonus = artifact.expected.projections.mid.rows
+            .filter((row) => row.policyYear >= 18)
+            .reduce((sum, row) => sum + (row.accounts.find((account) => account.accountId === 'aua')?.bonusCredit ?? 0), 0)
+          const withoutRepaymentBonus = analyzeIlpPolicy(withoutRepayment).projections.mid.rows
+            .filter((row) => row.policyYear >= 18)
+            .reduce((sum, row) => sum + (row.accounts.find((account) => account.accountId === 'aua')?.bonusCredit ?? 0), 0)
+          return withRepaymentBonus > withoutRepaymentBonus
+        },
       },
     ],
   },
@@ -1329,6 +1473,25 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
           row.policyYear >= 8 && row.annualContribution > 28_000
         )),
+      },
+      {
+        description: 'removing restoration rules materially weakens the later regular-account bonus path',
+        test: (fixture, artifact) => {
+          const withoutRestoration = ilpPolicySchema.parse({
+            ...fixture.policy,
+            bonuses: fixture.policy.bonuses.map((bonus) => ({
+              ...bonus,
+              restorationRules: [],
+            })),
+          })
+          const withRestorationBonus = artifact.expected.projections.mid.rows
+            .filter((row) => row.policyYear >= 11)
+            .reduce((sum, row) => sum + (row.accounts.find((account) => account.accountId === 'regular')?.bonusCredit ?? 0), 0)
+          const withoutRestorationBonus = analyzeIlpPolicy(withoutRestoration).projections.mid.rows
+            .filter((row) => row.policyYear >= 11)
+            .reduce((sum, row) => sum + (row.accounts.find((account) => account.accountId === 'regular')?.bonusCredit ?? 0), 0)
+          return withRestorationBonus > withoutRestorationBonus
+        },
       },
     ],
   },
@@ -1588,6 +1751,50 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     ],
   },
   {
+    productId: 'hsbc-life-flexi-protector',
+    variantId: 'manual-bounded-subset',
+    scenarioId: 'assurance-choice-vs-max',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: ['baseline', 'branch:hsbc-flexi-choice-max-assurance'],
+    description: 'HSBC Life Flexi Protector bounded manual subset proving the normalized death / TI assurance path distinguishes Choice and Max cover formulas.',
+    manualSource: {
+      supportStatus: 'partial',
+      sourceFileName: 'HSBC Life Flexi Protector Product Summary.pdf',
+      sourceChecksumSha256: 'manual-bounded-hsbc-flexi-subset',
+    },
+    integrityChecks: [
+      {
+        description: 'Choice cover applies a non-zero death / TI assurance charge from the normalized path',
+        test: (_, artifact) => {
+          const firstRow = artifact.expected.projections.mid.rows[0]
+          const policyValueFee = firstRow?.accounts.find((account) => account.accountId === 'policy-value')?.grossFee ?? 0
+          return policyValueFee > 0
+        },
+      },
+      {
+        description: 'Max cover produces a higher first-year death / TI assurance charge than Choice from the same balances',
+        test: (fixture) => {
+          const maxPolicy = ilpPolicySchema.parse({
+            ...fixture.policy,
+            chargeRules: fixture.policy.chargeRules?.map((rule) => ({
+              ...rule,
+              id: 'flexi-max-death-ti',
+              assuranceConfig: rule.assuranceConfig
+                ? {
+                    ...rule.assuranceConfig,
+                    formula: 'hsbc-flexi-max-death-ti',
+                  }
+                : undefined,
+            })),
+          })
+          const choiceFee = analyzeIlpPolicy(fixture.policy).projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'policy-value')?.grossFee ?? 0
+          const maxFee = analyzeIlpPolicy(maxPolicy).projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'policy-value')?.grossFee ?? 0
+          return maxFee > choiceFee
+        },
+      },
+    ],
+  },
+  {
     productId: 'tokio-marine-wealth-max-ii',
     variantId: 'sgd-mip-15',
     scenarioId: 'baseline',
@@ -1713,6 +1920,22 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
           && (row.accounts.find((account) => account.accountId === 'accumulation')?.contributionAmount ?? 0) === 0
         )),
       },
+      {
+        description: 'lowering the premium tier weakens the later Tokio accumulation bonus path',
+        test: (fixture, artifact) => {
+          const lowerTierPolicy = ilpPolicySchema.parse({
+            ...fixture.policy,
+            monthlyContribution: 1_000,
+          })
+          const baselineAccumulationBonus = artifact.expected.projections.mid.rows
+            .filter((row) => row.policyYear >= 6 && row.policyYear <= 10)
+            .reduce((sum, row) => sum + (row.accounts.find((account) => account.accountId === 'accumulation')?.bonusCredit ?? 0), 0)
+          const lowerTierAccumulationBonus = analyzeIlpPolicy(lowerTierPolicy).projections.mid.rows
+            .filter((row) => row.policyYear >= 6 && row.policyYear <= 10)
+            .reduce((sum, row) => sum + (row.accounts.find((account) => account.accountId === 'accumulation')?.bonusCredit ?? 0), 0)
+          return baselineAccumulationBonus > lowerTierAccumulationBonus
+        },
+      },
     ],
   },
   {
@@ -1794,6 +2017,44 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       },
     ],
   },
+  {
+    productId: 'tokio-marine-wealth-pro-ii',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'structural-proof',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: ['event-heavy', 'branch:tokio-multi-account-structure'],
+    description: 'Tokio Marine Wealth Pro (II) structural proof scenario covering supplementary routing, fallback deduction into non-primary accounts, and accumulation-only withdrawal scope.',
+    integrityChecks: [
+      {
+        description: 'supplementary premium routing keeps the explicit top-up premium in the Top-up Units Account while regular premium stays off the top-up path',
+        test: (_, artifact) => {
+          const firstRow = artifact.expected.projections.mid.rows[0]
+          const topupContribution = firstRow?.accounts.find((account) => account.accountId === 'topup')?.contributionAmount ?? 0
+          const initialContribution = firstRow?.accounts.find((account) => account.accountId === 'initial')?.contributionAmount ?? 0
+          return topupContribution >= 1_000 && initialContribution === 0
+        },
+      },
+      {
+        description: 'shortfall fallback reaches the Top-up and Initial Units Accounts when the Accumulation Units Account is insufficient',
+        test: (_, artifact) => {
+          const firstRow = artifact.expected.projections.mid.rows[0]
+          const topupFee = firstRow?.accounts.find((account) => account.accountId === 'topup')?.grossFee ?? 0
+          const initialFee = firstRow?.accounts.find((account) => account.accountId === 'initial')?.grossFee ?? 0
+          return topupFee > 50 && initialFee > 0
+        },
+      },
+      {
+        description: 'the seeded withdrawal stays on the Accumulation Units Account rather than leaking into Top-up or Initial Units',
+        test: (_, artifact) => {
+          const firstRow = artifact.expected.projections.mid.rows[0]
+          const accumulationWithdrawal = firstRow?.accounts.find((account) => account.accountId === 'accumulation')?.withdrawalAmount ?? 0
+          const topupWithdrawal = firstRow?.accounts.find((account) => account.accountId === 'topup')?.withdrawalAmount ?? 0
+          const initialWithdrawal = firstRow?.accounts.find((account) => account.accountId === 'initial')?.withdrawalAmount ?? 0
+          return accumulationWithdrawal >= 500 && topupWithdrawal === 0 && initialWithdrawal === 0
+        },
+      },
+    ],
+  },
 ]
 
 function buildPolicyForDefinition(
@@ -1853,6 +2114,9 @@ function buildPolicyForDefinition(
   if (definition.productId === 'prudential-pruvantage-assure-ii' && definition.scenarioId === 'assurance-state-override') {
     return assureIiStateOverridePolicy(snapshot, id)
   }
+  if (definition.productId === 'hsbc-life-flexi-protector' && definition.scenarioId === 'assurance-choice-vs-max') {
+    return hsbcFlexiChoiceAssurancePolicy(id)
+  }
   if (definition.productId === 'tokio-marine-wealth-max-ii' && definition.scenarioId === 'baseline') {
     return tokioBaselinePolicy(
       snapshot,
@@ -1879,6 +2143,9 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'tokio-marine-wealth-pro-ii' && definition.scenarioId === 'waived-charges') {
     return tokioWealthProWaivedChargesPolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-wealth-pro-ii' && definition.scenarioId === 'structural-proof') {
+    return tokioWealthProStructuralProofPolicy(snapshot, id)
   }
 
   throw new Error(`No golden policy builder is defined for ${definition.productId}:${definition.variantId}:${definition.scenarioId}.`)
@@ -1911,6 +2178,7 @@ export function buildGoldenIlpFixtureInputs(
       coverageTags: [...definition.coverageTags],
       description: definition.description,
       policy,
+      manualSource: definition.manualSource,
       integrityChecks: definition.integrityChecks,
     }
   })
