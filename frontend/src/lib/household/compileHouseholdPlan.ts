@@ -753,6 +753,7 @@ function compilePropertyCashflows(
         property.existingMortgageRate,
         sellYearOffset
       )
+      const ownershipPct = property.ownershipPercent ?? 1
 
       let adjustmentAmount = 0
       if (property.downsizing.scenario === 'sell-and-downsize') {
@@ -766,16 +767,16 @@ function compilePropertyCashflows(
           residency: property.residencyForAbsd,
           propertyCount: Math.max(0, property.propertyCount - 1),
         })
-        adjustmentAmount = result.netEquityToPortfolio - result.shortfall
-        postSaleAnnualMortgage = result.newMonthlyPayment * 12
+        adjustmentAmount = (result.netEquityToPortfolio - result.shortfall) * ownershipPct
+        postSaleAnnualMortgage = result.newMonthlyPayment * 12 * ownershipPct
       } else if (property.downsizing.scenario === 'sell-and-rent') {
         const result = calculateSellAndRent({
           salePrice: property.downsizing.expectedSalePrice,
           outstandingMortgage,
           monthlyRent: property.downsizing.monthlyRent,
         })
-        adjustmentAmount = result.netProceedsToPortfolio - result.shortfall
-        postSaleAnnualRent = result.annualRent
+        adjustmentAmount = (result.netProceedsToPortfolio - result.shortfall) * ownershipPct
+        postSaleAnnualRent = result.annualRent * ownershipPct
       }
 
       if (adjustmentAmount !== 0) {
