@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { compileHouseholdPlan } from '@/lib/household/compileHouseholdPlan'
 import type { HouseholdPlan, PlanningAdult, PropertyPlan } from '@/lib/household/types'
 import { buildLegacyMonteCarloEngineParams } from '@/lib/simulation/monteCarloParams'
+import { buildFullProjectionParams } from '@/lib/calculations/projectionParams'
+import { generateProjection } from '@/lib/calculations/projection'
+import { mergePerAdultProjections } from '@/lib/calculations/income'
+import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 
 function makeDownsizingFixture(ownershipPercent: number): HouseholdPlan {
   const adult: PlanningAdult = {
@@ -371,6 +375,68 @@ describe('downsizing ownership scaling: legacy MC path', () => {
     expect(fullAdj).toBeDefined()
     expect(halfAdj).toBeDefined()
     expect(halfAdj!.amount).toBeCloseTo(fullAdj!.amount * 0.5, 0)
+  })
+})
+
+function buildProjectionForOwnership(ownershipPercent: number) {
+  const plan = makeDownsizingFixture(ownershipPercent)
+  const compiled = compileHouseholdPlan(plan)
+  const runtime = buildHouseholdRuntimeLegacyInputs(plan, compiled)
+
+  const incomeProjection = mergePerAdultProjections({
+    perAdultProjections: compiled.incomeByAdultId,
+    adultOrder: compiled.adultOrder,
+    referenceCurrentAge: runtime.profile.currentAge,
+    referenceRetirementYearOffset: compiled.householdRetirementYearOffset,
+    annualExpenses: runtime.profile.annualExpenses,
+    inflation: runtime.profile.inflation,
+    lockedAssets: runtime.profile.lockedAssets,
+    expenseAdjustments: runtime.profile.expenseAdjustments,
+  })
+
+  const { params } = buildFullProjectionParams({
+    profile: runtime.profile,
+    income: runtime.income,
+    property: runtime.property,
+    allocation: BASE_ALLOCATION,
+    simulation: BASE_SIMULATION,
+    ages: {
+      currentAge: runtime.profile.currentAge,
+      retirementAge: runtime.profile.retirementAge,
+      lifeExpectancy: runtime.profile.lifeExpectancy,
+    },
+    incomeProjection,
+    healthcareCashOutlayByYear: runtime.healthcareCashOutlayByYear,
+  })
+
+  return generateProjection(params)
+}
+
+describe('downsizing ownership scaling: deterministic projection path', () => {
+  it('scales downsizing equity injection by ownershipPercent', () => {
+    const fullProjection = buildProjectionForOwnership(1.0)
+    const halfProjection = buildProjectionForOwnership(0.5)
+
+    const sellAge = 60
+    const fullSellRow = fullProjection.rows.find((r) => r.age === sellAge)
+    const halfSellRow = halfProjection.rows.find((r) => r.age === sellAge)
+
+    expect(fullSellRow).toBeDefined()
+    expect(halfSellRow).toBeDefined()
+
+    // The liquidNW jump at sell age should be ~half for 50% ownership.
+    const fullPreSell = fullProjection.rows.find((r) => r.age === sellAge - 1)
+    const halfPreSell = halfProjection.rows.find((r) => r.age === sellAge - 1)
+
+    const fullEquityJump = fullSellRow!.liquidNW - fullPreSell!.liquidNW
+    const halfEquityJump = halfSellRow!.liquidNW - halfPreSell!.liquidNW
+
+    // The ratio should be close to 0.5. It won't be exact because non-property
+    // cash flows (savings, portfolio returns, expenses) are identical for both cases,
+    // so only the property-related portion of the jump scales by ownership.
+    const ratio = halfEquityJump / fullEquityJump
+    expect(ratio).toBeGreaterThan(0.4)
+    expect(ratio).toBeLessThan(0.7)
   })
 })
 

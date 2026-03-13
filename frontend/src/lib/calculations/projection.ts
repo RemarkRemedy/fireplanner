@@ -98,6 +98,8 @@ export interface ProjectionParams {
   propertyCount: number
   /** Cumulative CPF principal used for HDB housing. Refunded to OA on sale (+ 2.5% accrued interest). */
   hdbCpfUsedForHousing: number
+  /** Ownership percentage for property (1.0 = full, 0.5 = half). Used to scale downsizing outputs. */
+  propertyOwnershipPct: number
   // Parent support
   parentSupport: ParentSupport[]
   parentSupportEnabled: boolean
@@ -285,6 +287,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     residencyForAbsd,
     propertyCount,
     hdbCpfUsedForHousing,
+    propertyOwnershipPct = 1,
     parentSupport,
     parentSupportEnabled,
     healthcareConfig,
@@ -330,9 +333,16 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
 
   if (dsActive && downsizing) {
     const yearsToSell = dsSellAge - currentAge
+    // Unscale mortgage for downsizing calc — calculateSellAndDownsize expects full property values
+    const rawMortgageBalance = propertyOwnershipPct > 0
+      ? existingMortgageBalance / propertyOwnershipPct
+      : existingMortgageBalance
+    const rawMonthlyPayment = propertyOwnershipPct > 0
+      ? existingMonthlyPayment / propertyOwnershipPct
+      : existingMonthlyPayment
     const outstandingAtSell = outstandingMortgageAtAge(
-      existingMortgageBalance,
-      existingMonthlyPayment,
+      rawMortgageBalance,
+      rawMonthlyPayment,
       existingMortgageRate,
       Math.max(0, yearsToSell),
     )
@@ -343,7 +353,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
         cpfUsedForHousing: hdbCpfUsedForHousing,
         yearsOfMortgage: Math.max(0, yearsToSell),
       })
-      dsCpfRefundToOa = refund.totalRefund
+      dsCpfRefundToOa = refund.totalRefund * propertyOwnershipPct
     }
 
     if (downsizing.scenario === 'sell-and-downsize') {
@@ -357,18 +367,18 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
         residency: residencyForAbsd,
         propertyCount: Math.max(0, propertyCount - 1),
       })
-      dsNetEquity = result.netEquityToPortfolio
-      dsShortfall = result.shortfall
-      dsNewMonthlyPayment = result.newMonthlyPayment
+      dsNetEquity = result.netEquityToPortfolio * propertyOwnershipPct
+      dsShortfall = result.shortfall * propertyOwnershipPct
+      dsNewMonthlyPayment = result.newMonthlyPayment * propertyOwnershipPct
     } else if (downsizing.scenario === 'sell-and-rent') {
       const result = calculateSellAndRent({
         salePrice: downsizing.expectedSalePrice,
         outstandingMortgage: outstandingAtSell,
         monthlyRent: downsizing.monthlyRent,
       })
-      dsNetEquity = result.netProceedsToPortfolio
-      dsShortfall = result.shortfall
-      dsAnnualRent = result.annualRent
+      dsNetEquity = result.netProceedsToPortfolio * propertyOwnershipPct
+      dsShortfall = result.shortfall * propertyOwnershipPct
+      dsAnnualRent = result.annualRent * propertyOwnershipPct
     }
   }
 
@@ -618,19 +628,21 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       // After selling, no existing mortgage or rental income
       effectiveRentalIncome = 0
       if (downsizing.scenario === 'sell-and-downsize') {
-        effectiveMortgagePayment = dsNewMonthlyPayment * 12
-        // New property equity grows from down payment
+        effectiveMortgagePayment = dsNewMonthlyPayment * 12  // already scaled
+        // Compute with full values, scale at the end
         const yearsSinceSell = age - dsSellAge
-        const newDownPayment = downsizing.newPropertyCost * (1 - downsizing.newLtv)
-        const newMortgageBalance = outstandingMortgageAtAge(
+        const fullMonthlyPayment = propertyOwnershipPct > 0
+          ? dsNewMonthlyPayment / propertyOwnershipPct
+          : dsNewMonthlyPayment
+        const fullNewMortgageBalance = outstandingMortgageAtAge(
           downsizing.newPropertyCost * downsizing.newLtv,
-          dsNewMonthlyPayment,
+          fullMonthlyPayment,
           downsizing.newMortgageRate,
           yearsSinceSell,
         )
-        effectivePropertyValue = downsizing.newPropertyCost
-        effectiveMortgageBalance = newMortgageBalance
-        effectivePropertyEquity = newDownPayment + (downsizing.newPropertyCost * downsizing.newLtv - newMortgageBalance)
+        effectivePropertyValue = downsizing.newPropertyCost * propertyOwnershipPct
+        effectiveMortgageBalance = fullNewMortgageBalance * propertyOwnershipPct
+        effectivePropertyEquity = (downsizing.newPropertyCost - fullNewMortgageBalance) * propertyOwnershipPct
       } else if (downsizing.scenario === 'sell-and-rent') {
         effectiveMortgagePayment = 0
         effectivePropertyValue = 0

@@ -248,6 +248,7 @@ export function buildFullProjectionParams(
     residencyForAbsd: property.residencyForAbsd,
     propertyCount: property.propertyCount,
     hdbCpfUsedForHousing: property.hdbCpfUsedForHousing,
+    propertyOwnershipPct: ownershipPct,
     parentSupport: profile.parentSupport,
     parentSupportEnabled: profile.parentSupportEnabled,
     healthcareConfig: profile.healthcareConfig?.enabled ? profile.healthcareConfig : null,
