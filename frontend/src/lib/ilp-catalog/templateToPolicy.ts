@@ -50,25 +50,34 @@ function isCoveredByAccountFee(rule: IlpTemplateFeeRule, accounts: IlpTemplateAc
 
 function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] {
   return variant.feeRules
-    .filter((rule) => rule.rate != null || rule.amount != null || (rule.amountSchedule?.length ?? 0) > 0)
+    .filter((rule) => rule.basis === 'assurance-sum-at-risk' || rule.rate != null || rule.amount != null || (rule.amountSchedule?.length ?? 0) > 0)
     .filter((rule) => !isCoveredByAccountFee(rule, variant.accounts))
     .map((rule) => {
-      const isFixedAnnual = rule.amount != null || (rule.amountSchedule?.length ?? 0) > 0
+      const isAssurance = rule.basis === 'assurance-sum-at-risk'
+      const isPremiumBase = rule.basis === 'premium-base-mip-multiplier'
+      const isFixedAnnual = rule.basis === 'fixed-annual'
 
       return {
         id: rule.id,
         label: rule.label,
-        basis: isFixedAnnual ? 'fixed-annual' : 'account-value',
+        basis: isAssurance ? 'assurance-sum-at-risk' : (isPremiumBase ? 'premium-base-mip-multiplier' : (isFixedAnnual ? 'fixed-annual' : 'account-value')),
         activeWindow: rule.activeWindow,
         startPolicyYear: rule.startPolicyYear,
         endPolicyYear: rule.endPolicyYear,
         appliesTo: [...rule.appliesTo],
         fallbackAppliesTo: rule.fallbackAppliesTo ? [...rule.fallbackAppliesTo] : undefined,
         amountSchedule: rule.amountSchedule?.map((tier) => ({ ...tier })),
-        rate: isFixedAnnual ? 0 : (rule.rate ?? 0),
-        amount: rule.amount ?? 0,
+        rate: isFixedAnnual || isAssurance ? 0 : (rule.rate ?? 0),
+        amount: isAssurance ? 0 : (rule.amount ?? 0),
+        assuranceConfig: rule.assuranceConfig ? { ...rule.assuranceConfig } : undefined,
+        premiumBaseConfig: rule.premiumBaseConfig
+          ? {
+              useHigherOfCommencementAndPrevailing: rule.premiumBaseConfig.useHigherOfCommencementAndPrevailing,
+              multiplierSchedule: rule.premiumBaseConfig.multiplierSchedule.map((tier) => ({ ...tier })),
+            }
+          : undefined,
         requiresManualInput: rule.requiresManualInput,
-        allocation: isFixedAnnual ? 'pro-rata-by-value' : 'equal-split',
+        allocation: isFixedAnnual || isAssurance ? 'pro-rata-by-value' : 'equal-split',
       }
     })
 }
@@ -83,6 +92,7 @@ function mapEventChargeRules(variant: IlpTemplateVariant): NonNullable<IlpPolicy
       basis: rule.basis,
       appliesTo: [...rule.appliesTo],
       fallbackAppliesTo: rule.fallbackAppliesTo ? [...rule.fallbackAppliesTo] : undefined,
+      freeLifetimeMonths: rule.freeLifetimeMonths,
       freeEventCount: rule.freeEventCount,
       freeEventStartPolicyYear: rule.freeEventStartPolicyYear,
       freeEventMaxAmountRate: rule.freeEventMaxAmountRate,
@@ -90,7 +100,10 @@ function mapEventChargeRules(variant: IlpTemplateVariant): NonNullable<IlpPolicy
       rateSchedule: rule.rateSchedule?.map((tier) => ({ ...tier })),
       amount: rule.amount ?? 0,
       sourceChargeRuleId: rule.sourceChargeRuleId,
+      sourceBonusId: rule.sourceBonusId,
       requiresManualInput: rule.requiresManualInput,
+      exclusiveGroup: rule.exclusiveGroup,
+      groupResolution: rule.groupResolution,
       allocation: rule.allocation,
     }))
 }
@@ -102,6 +115,7 @@ function mapTemplateBonus(
   const defaultTierRate = bonus.tieredRates.find((tier) => tier.currency === currency)?.rate ?? 0
 
   return {
+    id: bonus.id,
     type: bonus.type,
     label: bonus.label,
     mode: bonus.mode,
@@ -111,7 +125,7 @@ function mapTemplateBonus(
     startPolicyYear: bonus.startPolicyYear,
     endPolicyYear: bonus.endPolicyYear,
     tieredRates: bonus.tieredRates.map((tier) => ({ ...tier })),
-    suspensionRules: [
+    suspensionRules: bonus.suspensionRules?.map((rule) => ({ ...rule })) ?? [
       ...(bonus.notes.some((note) => note.toLowerCase().includes('partial withdrawal'))
         ? [{ trigger: 'partial-withdrawal' as const, suspensionMonths: 12 }]
         : []),
@@ -144,6 +158,7 @@ export function templateVariantToPolicySeed(
     monthsAlreadyPaid: 0,
     currentPolicyYear: 1,
     icpMonths: variant.icpMonths,
+    assuranceProfile: undefined,
     policyEvents: [],
     accounts: variant.accounts.map((account) => ({
       id: account.id,

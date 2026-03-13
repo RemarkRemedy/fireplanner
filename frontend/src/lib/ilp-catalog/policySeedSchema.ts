@@ -1,5 +1,11 @@
 import { z } from 'zod'
-import { ilpAccountSchema, ilpBonusRuleSchema, ilpChargeRuleSchema, ilpFundSchema } from '@/lib/validation/ilpSchema'
+import {
+  ilpAccountSchema,
+  ilpAssuranceProfileSchema,
+  ilpBonusRuleSchema,
+  ilpChargeRuleSchema,
+  ilpFundSchema,
+} from '@/lib/validation/ilpSchema'
 
 export const ilpPolicySeedSchema = z.object({
   name: z.string().min(1).max(100),
@@ -9,15 +15,19 @@ export const ilpPolicySeedSchema = z.object({
   monthsAlreadyPaid: z.number().int().min(0).max(1_200),
   currentPolicyYear: z.number().int().min(1).max(100),
   icpMonths: z.number().int().min(0).max(1_200).optional(),
+  assuranceProfile: ilpAssuranceProfileSchema.optional(),
   policyEvents: z.array(z.object({
     id: z.string().min(1),
-    type: z.enum(['premium-holiday', 'partial-withdrawal', 'regular-premium-reduction', 'top-up']),
+    type: z.enum(['premium-holiday', 'partial-withdrawal', 'regular-premium-reduction', 'regular-premium-increase', 'top-up', 'recurring-single-premium', 'recurring-single-premium-resumption', 'assurance-benefit-reduction', 'assurance-benefit-resumption']),
     startPolicyMonth: z.number().int().min(1).max(10_000),
     durationMonths: z.number().int().min(1).max(120),
     amount: z.number().min(0).max(100_000_000).optional(),
     accountId: z.string().min(1).optional(),
+    chargeWaived: z.boolean().optional(),
     repayMissedPremiums: z.boolean().optional(),
     repaymentAccountId: z.string().min(1).optional(),
+    resultingSumAssured: z.number().min(0).max(100_000_000).optional(),
+    resultingWealthAssureValue: z.number().min(0).max(100_000_000).optional(),
   })).max(20).optional(),
   accounts: z.array(ilpAccountSchema).min(1).max(10),
   mipLength: z.number().int().min(5).max(100),
@@ -29,10 +39,11 @@ export const ilpPolicySeedSchema = z.object({
   eventChargeRules: z.array(z.object({
     id: z.string().min(1),
     label: z.string().min(1),
-    trigger: z.enum(['partial-withdrawal', 'regular-premium-reduction', 'premium-holiday', 'premium-holiday-repayment', 'top-up']),
-    basis: z.enum(['event-amount', 'account-value', 'premium-reduction-with-startup-recovery', 'repaid-premium-with-missed-months', 'annual-premium-with-overlap-months', 'premium-holiday-charge-refund']),
+    trigger: z.enum(['partial-withdrawal', 'regular-premium-reduction', 'premium-holiday', 'premium-holiday-repayment', 'top-up', 'recurring-single-premium']),
+    basis: z.enum(['event-amount', 'account-value', 'premium-reduction-with-startup-recovery', 'premium-reduction-tiered-startup-recovery', 'repaid-premium-with-missed-months', 'annual-premium-with-overlap-months', 'committed-annual-premium-with-overlap-months', 'premium-holiday-charge-refund', 'event-amount-with-overlap-months', 'annual-reduction-with-active-months']),
     appliesTo: z.array(z.string().min(1)).min(1).max(10),
     fallbackAppliesTo: z.array(z.string().min(1)).min(1).max(10).optional(),
+    freeLifetimeMonths: z.number().int().min(1).max(240).optional(),
     freeEventCount: z.number().int().min(1).max(10).optional(),
     freeEventStartPolicyYear: z.number().int().min(1).max(100).optional(),
     freeEventMaxAmountRate: z.number().min(0).max(1).optional(),
@@ -44,7 +55,10 @@ export const ilpPolicySeedSchema = z.object({
     })).max(40).optional(),
     amount: z.number().min(0).max(100_000_000),
     sourceChargeRuleId: z.string().min(1).optional(),
+    sourceBonusId: z.string().min(1).optional(),
     requiresManualInput: z.boolean().optional(),
+    exclusiveGroup: z.string().min(1).optional(),
+    groupResolution: z.enum(['max-total-charge']).optional(),
     allocation: z.enum(['pro-rata-by-value', 'pro-rata-by-contribution-share', 'equal-split']),
   })).max(20).optional(),
   catalogSource: z.object({

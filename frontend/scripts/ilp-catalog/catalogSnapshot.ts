@@ -5,9 +5,14 @@ import { ilpCatalogManifestSchema, ilpCatalogProductsSchema } from '../../src/li
 import type { IlpCatalogManifest, IlpCatalogProduct } from '../../src/lib/ilp-catalog/types.js'
 import { analyzeStructuredEconomics, discoverManualCatalogSources } from './discovery.js'
 import { parseHsbcWealthAccelerate } from './parsers/hsbcWealthAccelerate.js'
+import { parseHsbcWealthAbundance } from './parsers/hsbcWealthAbundance.js'
+import { parseHsbcWealthHarvest } from './parsers/hsbcWealthHarvest.js'
+import { parseHsbcWealthVoyage } from './parsers/hsbcWealthVoyage.js'
 import { parsePrudentialPruVantageAssureII } from './parsers/prudentialPruVantageAssureII.js'
 import { parsePrudentialPruVantageProsper } from './parsers/prudentialPruVantageProsper.js'
 import { parsePrudentialPruVantageWealthII } from './parsers/prudentialPruVantageWealthII.js'
+import { parseTokioMarineWealthMaxIi } from './parsers/tokioMarineWealthMaxIi.js'
+import { parseTokioMarineWealthProIi } from './parsers/tokioMarineWealthProIi.js'
 import { extractPdfText } from './pdf/extractPdfText.js'
 
 const ROOT_DIR = path.resolve(import.meta.dirname, '../..')
@@ -17,9 +22,14 @@ export const PRODUCTS_PATH = path.join(GENERATED_DIR, 'ilpCatalog.products.json'
 export const PARSER_VERSION = '0.1.0'
 export const CATALOG_VERSION = '0.1.0'
 const HSBC_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Accelerate Product Summary.pdf'
+const HSBC_WEALTH_ABUNDANCE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Abundance Product Summary.pdf'
+const HSBC_WEALTH_HARVEST_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Harvest Product Summary.pdf'
+const HSBC_WEALTH_VOYAGE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Voyage Product Summary.pdf'
 const PRUDENTIAL_PRUVANTAGE_ASSURE_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRUVantage Assure II Product Summary.pdf'
 const PRUDENTIAL_PRUVANTAGE_PROSPER_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRUVantage Prosper Product Summary.pdf'
 const PRUDENTIAL_PRUVANTAGE_WEALTH_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRUVantage Wealth II Product Summary.pdf'
+const TOKIO_MARINE_WEALTH_MAX_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNZV_TPDN_CIZ_Summary.pdf'
+const TOKIO_MARINE_WEALTH_PRO_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNZS_TPDN_CIZ_Summary.pdf'
 
 export interface IlpCatalogSnapshot {
   manifest: IlpCatalogManifest
@@ -86,18 +96,40 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const discovery = await discoverManualCatalogSources()
   const extracted = await extractPdfText(HSBC_SOURCE_PATH)
   const checksum = await sha256(HSBC_SOURCE_PATH)
+  const hsbcAbundanceExtracted = await extractPdfText(HSBC_WEALTH_ABUNDANCE_SOURCE_PATH)
+  const hsbcAbundanceChecksum = await sha256(HSBC_WEALTH_ABUNDANCE_SOURCE_PATH)
+  const hsbcHarvestExtracted = await extractPdfText(HSBC_WEALTH_HARVEST_SOURCE_PATH)
+  const hsbcHarvestChecksum = await sha256(HSBC_WEALTH_HARVEST_SOURCE_PATH)
+  const hsbcVoyageExtracted = await extractPdfText(HSBC_WEALTH_VOYAGE_SOURCE_PATH)
+  const hsbcVoyageChecksum = await sha256(HSBC_WEALTH_VOYAGE_SOURCE_PATH)
   const prudentialExtracted = await extractPdfText(PRUDENTIAL_PRUVANTAGE_WEALTH_II_SOURCE_PATH)
   const prudentialChecksum = await sha256(PRUDENTIAL_PRUVANTAGE_WEALTH_II_SOURCE_PATH)
   const prudentialAssureExtracted = await extractPdfText(PRUDENTIAL_PRUVANTAGE_ASSURE_II_SOURCE_PATH)
   const prudentialAssureChecksum = await sha256(PRUDENTIAL_PRUVANTAGE_ASSURE_II_SOURCE_PATH)
   const prudentialProsperExtracted = await extractPdfText(PRUDENTIAL_PRUVANTAGE_PROSPER_SOURCE_PATH)
   const prudentialProsperChecksum = await sha256(PRUDENTIAL_PRUVANTAGE_PROSPER_SOURCE_PATH)
+  const tokioMarineExtracted = await extractPdfText(TOKIO_MARINE_WEALTH_MAX_II_SOURCE_PATH)
+  const tokioMarineChecksum = await sha256(TOKIO_MARINE_WEALTH_MAX_II_SOURCE_PATH)
+  const tokioMarineWealthProExtracted = await extractPdfText(TOKIO_MARINE_WEALTH_PRO_II_SOURCE_PATH)
+  const tokioMarineWealthProChecksum = await sha256(TOKIO_MARINE_WEALTH_PRO_II_SOURCE_PATH)
   const brochurePartialProducts = await buildBrochurePartialProducts(discovery.brochureOnlySources)
 
   const products = [
     parseHsbcWealthAccelerate({
       document: extracted,
       sourceChecksumSha256: checksum,
+    }),
+    parseHsbcWealthAbundance({
+      document: hsbcAbundanceExtracted,
+      sourceChecksumSha256: hsbcAbundanceChecksum,
+    }),
+    parseHsbcWealthHarvest({
+      document: hsbcHarvestExtracted,
+      sourceChecksumSha256: hsbcHarvestChecksum,
+    }),
+    parseHsbcWealthVoyage({
+      document: hsbcVoyageExtracted,
+      sourceChecksumSha256: hsbcVoyageChecksum,
     }),
     parsePrudentialPruVantageWealthII({
       document: prudentialExtracted,
@@ -110,6 +142,14 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parsePrudentialPruVantageProsper({
       document: prudentialProsperExtracted,
       sourceChecksumSha256: prudentialProsperChecksum,
+    }),
+    parseTokioMarineWealthMaxIi({
+      document: tokioMarineExtracted,
+      sourceChecksumSha256: tokioMarineChecksum,
+    }),
+    parseTokioMarineWealthProIi({
+      document: tokioMarineWealthProExtracted,
+      sourceChecksumSha256: tokioMarineWealthProChecksum,
     }),
     ...brochurePartialProducts,
   ]

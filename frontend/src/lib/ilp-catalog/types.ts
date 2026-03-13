@@ -12,7 +12,7 @@ export interface IlpCatalogSourceRef {
 }
 
 export interface IlpTemplateContributionRule {
-  phase: 'during-icp' | 'after-icp' | 'top-up'
+  phase: 'during-icp' | 'after-icp' | 'after-mip' | 'top-up'
   targetAccountId: string
   contributionShare: number
 }
@@ -31,6 +31,8 @@ export interface IlpTemplateBonusTier {
   currency: IlpCatalogCurrency
   minAnnualPremium: number | null
   maxAnnualPremium: number | null
+  minAccountValue?: number | null
+  maxAccountValue?: number | null
   rate: number
 }
 
@@ -45,6 +47,10 @@ export interface IlpTemplateBonus {
   rate: number | null
   amount: number | null
   tieredRates: IlpTemplateBonusTier[]
+  suspensionRules?: Array<{
+    trigger: 'premium-holiday' | 'partial-withdrawal' | 'regular-premium-reduction'
+    suspensionMonths: number
+  }>
   restorationRules?: Array<{
     trigger: 'premium-holiday-repayment'
     basis: 'repaid-premium-with-missed-months' | 'account-value-plus-repaid-premium-with-missed-months'
@@ -56,8 +62,23 @@ export interface IlpTemplateBonus {
 export interface IlpTemplateFeeRule {
   id: string
   label: string
+  basis?: 'account-value' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier'
   rate: number | null
   amount?: number | null
+  assuranceConfig?: {
+    formula: 'prudential-prosper-death' | 'prudential-prosper-accidental-death' | 'prudential-assure-ii-combined'
+    monthlyModalFactor: number
+    maxAgeNextBirthday?: number
+  }
+  premiumBaseConfig?: {
+    useHigherOfCommencementAndPrevailing: boolean
+    multiplierSchedule: Array<{
+      startPolicyYear: number
+      endPolicyYear: number | null
+      mode: 'policy-year' | 'fixed'
+      multiplier?: number
+    }>
+  }
   requiresManualInput?: boolean
   appliesTo: string[]
   fallbackAppliesTo?: string[]
@@ -76,10 +97,11 @@ export interface IlpTemplateFeeRule {
 export interface IlpTemplateEventChargeRule {
   id: string
   label: string
-  trigger: 'partial-withdrawal' | 'regular-premium-reduction' | 'premium-holiday' | 'premium-holiday-repayment' | 'top-up'
-  basis: 'event-amount' | 'account-value' | 'premium-reduction-with-startup-recovery' | 'repaid-premium-with-missed-months' | 'annual-premium-with-overlap-months' | 'premium-holiday-charge-refund'
+  trigger: 'partial-withdrawal' | 'regular-premium-reduction' | 'premium-holiday' | 'premium-holiday-repayment' | 'top-up' | 'recurring-single-premium'
+  basis: 'event-amount' | 'account-value' | 'premium-reduction-with-startup-recovery' | 'premium-reduction-tiered-startup-recovery' | 'repaid-premium-with-missed-months' | 'annual-premium-with-overlap-months' | 'committed-annual-premium-with-overlap-months' | 'premium-holiday-charge-refund' | 'event-amount-with-overlap-months' | 'annual-reduction-with-active-months'
   appliesTo: string[]
   fallbackAppliesTo?: string[]
+  freeLifetimeMonths?: number
   freeEventCount?: number
   freeEventStartPolicyYear?: number
   freeEventMaxAmountRate?: number
@@ -91,7 +113,10 @@ export interface IlpTemplateEventChargeRule {
   }>
   amount: number | null
   sourceChargeRuleId?: string
+  sourceBonusId?: string
   requiresManualInput?: boolean
+  exclusiveGroup?: string
+  groupResolution?: 'max-total-charge'
   activeWindow: 'during-mip' | 'after-mip' | 'policy-term'
   allocation: 'pro-rata-by-value' | 'pro-rata-by-contribution-share' | 'equal-split'
   notes: string[]
