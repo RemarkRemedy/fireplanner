@@ -1,6 +1,6 @@
 ---
 name: deep-review-plan
-description: 4-agent deep review of an implementation plan for feasibility, CLAUDE.md compliance, and scope analysis. Only for reviewing plans, NOT for reviewing code.
+description: 4-agent deep review of an implementation plan for feasibility, CLAUDE.md compliance, and scope analysis. Only for reviewing plans, NOT for reviewing code. ALSO invoke proactively after fixing BLOCKER-level issues found in a prior review — see Step 6 for the targeted re-review protocol.
 ---
 
 # Deep Plan Review Skill
@@ -70,3 +70,29 @@ If invoked and there is no plan to review, ask the user which plan file to revie
 
 5. **Present revised plan** if blockers were found. Otherwise confirm the plan is ready
    for execution and ask the user how to proceed.
+
+6. **Post-fix targeted re-review** (invoked automatically after fixing BLOCKERs):
+
+   When BLOCKER-level issues are found in Step 4 and then fixed in the plan,
+   classify each fix before deciding whether to re-review:
+
+   **Skip re-review when the fix is:**
+   - A mechanical typo (wrong variable name, off-by-one line number)
+   - Self-evidently correct (adding a missing import, fixing a string literal)
+   - Applied verbatim from the reviewer's suggested fix
+
+   **Run targeted re-review when the fix:**
+   - Changes structural assumptions (e.g., switching which field/API to assert against)
+   - Involves type compatibility across multiple interfaces (e.g., matching 20+ fields)
+   - Has cascading effects on other parts of the plan (e.g., reordering shared constants)
+
+   Rule of thumb: **re-review when you can't verify correctness by inspection alone.**
+   If you need to read source code to confirm the fix is right, dispatch a reviewer.
+
+   **How to run:** Launch a single `feature-dev:code-reviewer` agent with a focused prompt
+   listing ONLY the specific fixes to verify. Do NOT re-run the full 4-agent review.
+   The agent should read the relevant source files and confirm each fix as OK or BLOCKER.
+
+   **If no fixes warrant re-review:** State that explicitly and proceed to execution.
+   **If re-review finds new issues:** Fix them and re-classify. Do not loop more than
+   2 times — surface to the user if issues persist after 2 targeted re-reviews.

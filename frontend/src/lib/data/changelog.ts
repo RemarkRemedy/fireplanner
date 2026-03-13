@@ -12,6 +12,24 @@ export interface ChangelogEntry {
 /** Newest first. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-03-13',
+    category: 'fix',
+    title: 'Downsizing ownership scaling',
+    description:
+      'Fixed a bug where downsizing equity injection, post-sale mortgage, and post-sale rent were not scaled by ownership percentage. Previously, a 50% owner received 100% of the downsizing proceeds. The fix applies to all three execution paths: household compiler, legacy Monte Carlo, and deterministic projection.',
+    affectedSections: ['section-property'],
+    insight:
+      'Stamp duties (BSD/ABSD) are computed on the full transaction amount regardless of ownership share, so the calculation functions receive full property values. Only the outputs (net equity, new mortgage, rent) are scaled by ownership percentage.',
+  },
+  {
+    date: '2026-03-13',
+    category: 'fix',
+    title: 'Partner life event and CPF OA withdrawal age shifts',
+    description:
+      'Fixed missing age shifts for partner life events and CPF OA withdrawals in household plans. Partner ages are now correctly converted to the reference adult\'s timeline.',
+    affectedSections: ['section-property', 'section-cpf'],
+  },
+  {
     date: '2026-03-11',
     category: 'feature',
     title: 'Per-adult Dashboard breakdown',
