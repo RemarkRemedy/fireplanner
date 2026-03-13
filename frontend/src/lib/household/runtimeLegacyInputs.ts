@@ -1,4 +1,5 @@
 import type {
+  CpfRetirementSum,
   IncomeState,
   ProfileState,
   PropertyState,
@@ -84,6 +85,33 @@ function getTimingRange(
   }
 }
 
+/**
+ * Compute the age delta to shift a timing rule's ages into the reference adult's frame.
+ *
+ * Context: timing ages are in the timing owner's age frame. The projection engine
+ * tracks the reference adult's age. To convert, we need:
+ *   referenceAge = timingAge + delta
+ *
+ * Example: Chloe (28) has parent support at her age 30. TJ (reference, 32).
+ * Both hit the same calendar year when Chloe is 30 and TJ is 34.
+ * So delta = referenceAdult.currentAge - timingOwner.currentAge = 32 - 28 = +4.
+ * Result: 30 + 4 = 34.
+ *
+ * Note: this is the inverse of planSlice.ts's getTimingAgeDelta, which converts
+ * from the reference adult frame down to the target adult frame.
+ */
+function getTimingOwnerDelta(
+  timing: TimingRule | null,
+  referenceAdult: PlanningAdult,
+  allAdults: readonly PlanningAdult[],
+): number {
+  if (!timing) return 0
+  if (timing.owner === referenceAdult.owner) return 0
+  const timingOwner = allAdults.find((adult) => adult.owner === timing.owner)
+  if (!timingOwner) return 0
+  return referenceAdult.currentAge - timingOwner.currentAge
+}
+
 function isActiveAtCurrentYear(
   sourceId: string,
   windows: Record<string, { startYearOffset: number; endYearOffset: number }>,
@@ -123,16 +151,20 @@ function resolveGrowthRate(expense: ExpenseItem, inflation: number): number {
 function mapParentSupport(
   expenses: ExpenseItem[],
   referenceAdult: PlanningAdult,
+  allAdults: readonly PlanningAdult[],
   inflation: number,
 ): ProfileState['parentSupport'] {
   return expenses
     .filter((expense) => expense.kind === 'parent-support')
     .map((expense) => {
+      const delta = getTimingOwnerDelta(expense.timing, referenceAdult, allAdults)
       const range = getTimingRange(
         expense.timing,
         referenceAdult.currentAge,
         referenceAdult.lifeExpectancy,
       )
+      const startAge = range.startAge + delta
+      const endAge = (range.endAge ?? referenceAdult.lifeExpectancy) + delta
       const monthlyAmount = expense.periodicity === 'monthly'
         ? expense.amount
         : expense.periodicity === 'annual'
@@ -143,8 +175,8 @@ function mapParentSupport(
         id: expense.id.replace(/^expense-parent-support-/, ''),
         label: expense.label,
         monthlyAmount,
-        startAge: range.startAge,
-        endAge: range.endAge ?? referenceAdult.lifeExpectancy,
+        startAge,
+        endAge,
         growthRate: resolveGrowthRate(expense, inflation),
       }
     })
@@ -153,10 +185,12 @@ function mapParentSupport(
 function mapExpenseAdjustments(
   expenses: ExpenseItem[],
   referenceAdult: PlanningAdult,
+  allAdults: readonly PlanningAdult[],
 ): ProfileState['expenseAdjustments'] {
   return expenses
     .filter((expense) => expense.kind === 'expense-adjustment')
     .map((expense) => {
+      const delta = getTimingOwnerDelta(expense.timing, referenceAdult, allAdults)
       const range = getTimingRange(
         expense.timing,
         referenceAdult.currentAge,
@@ -170,8 +204,8 @@ function mapExpenseAdjustments(
         id: expense.id.replace(/^expense-adjustment-/, ''),
         label: expense.label,
         amount: annualAmount,
-        startAge: range.startAge,
-        endAge: range.endAge,
+        startAge: range.startAge + delta,
+        endAge: range.endAge != null ? range.endAge + delta : null,
       }
     })
 }
@@ -179,10 +213,12 @@ function mapExpenseAdjustments(
 function mapRetirementWithdrawals(
   expenses: ExpenseItem[],
   referenceAdult: PlanningAdult,
+  allAdults: readonly PlanningAdult[],
 ): ProfileState['retirementWithdrawals'] {
   return expenses
     .filter((expense) => expense.kind === 'retirement-withdrawal')
     .map((expense) => {
+      const delta = getTimingOwnerDelta(expense.timing, referenceAdult, allAdults)
       const range = getTimingRange(
         expense.timing,
         referenceAdult.currentAge,
@@ -195,7 +231,7 @@ function mapRetirementWithdrawals(
         id: expense.id.replace(/^expense-retirement-withdrawal-/, ''),
         label: expense.label,
         amount: expense.amount,
-        age: range.startAge,
+        age: range.startAge + delta,
         durationYears,
         inflationAdjusted: expense.inflationAdjusted ?? false,
       }
@@ -205,23 +241,25 @@ function mapRetirementWithdrawals(
 function mapGoals(
   goals: GoalItem[],
   referenceAdult: PlanningAdult,
+  allAdults: readonly PlanningAdult[],
 ): ProfileState['financialGoals'] {
   return goals.map((goal) => {
+    const delta = getTimingOwnerDelta(goal.timing, referenceAdult, allAdults)
     const range = getTimingRange(
       goal.timing,
       referenceAdult.currentAge,
       referenceAdult.lifeExpectancy,
     )
 
-    return {
-      id: goal.id.replace(/^goal-/, ''),
-      label: goal.label,
-      amount: goal.amount,
-      targetAge: range.startAge,
-      durationYears: goal.durationYears,
-      priority: goal.priority,
-      inflationAdjusted: goal.inflationAdjusted,
-      category: goal.category,
+      return {
+        id: goal.id.replace(/^goal-/, ''),
+        label: goal.label,
+        amount: goal.amount,
+        targetAge: range.startAge + delta,
+        durationYears: goal.durationYears,
+        priority: goal.priority,
+        inflationAdjusted: goal.inflationAdjusted,
+        category: goal.category,
     }
   })
 }
@@ -406,10 +444,30 @@ function buildAggregateRuntimeSnapshot(
   defaults.profile.retirementPhase = referenceAdult.cpf.retirementPhase
   defaults.profile.cpfLifeActualMonthlyPayout = sumAdultField(plan.adults, (adult) => adult.cpf.lifeActualMonthlyPayout)
   defaults.profile.cpfLifeStartAge = Math.min(...plan.adults.map((adult) => adult.cpf.lifeStartAge))
-  defaults.profile.cpfLifePlan = referenceAdult.cpf.lifePlan
-  defaults.profile.cpfRetirementSum = referenceAdult.cpf.retirementSum
+  // Use 'basic' only if all adults chose it. Otherwise fall back to 'standard':
+  // it is the safer merged bequest path when adults differ and per-adult payouts
+  // already come from the compiler's own income projection.
+  defaults.profile.cpfLifePlan = plan.adults.every((adult) => adult.cpf.lifePlan === 'basic')
+    ? 'basic'
+    : 'standard'
+  // cpfRetirementSum is consumed by buildFullProjectionParams for LBS cash proceeds.
+  // Use the highest tier across adults: ERS > FRS > BRS.
+  const retirementSumRank = { brs: 0, frs: 1, ers: 2 } as const
+  defaults.profile.cpfRetirementSum = plan.adults.reduce<CpfRetirementSum>(
+    (best, adult) => retirementSumRank[adult.cpf.retirementSum] > retirementSumRank[best]
+      ? adult.cpf.retirementSum
+      : best,
+    plan.adults[0].cpf.retirementSum,
+  )
   defaults.profile.parentSupportEnabled = plan.expenses.some((expense) => expense.kind === 'parent-support')
-  defaults.profile.parentSupport = mapParentSupport(plan.expenses, referenceAdult, plan.assumptions.returns.inflation)
+  defaults.profile.parentSupport = mapParentSupport(
+    plan.expenses,
+    referenceAdult,
+    plan.adults,
+    plan.assumptions.returns.inflation,
+  )
+  // healthcareConfig remains reference-adult-only for display. Joint calculations use
+  // healthcareCashOutlayByYear below, which already sums the compiler's per-adult totals.
   defaults.profile.healthcareConfig = structuredClone(referenceAdult.healthcare)
   defaults.profile.cpfOaWithdrawals = plan.adults.flatMap((adult) => (
     adult.cpf.oaWithdrawals.map((withdrawal) => ({ ...withdrawal }))
@@ -432,10 +490,12 @@ function buildAggregateRuntimeSnapshot(
   defaults.profile.cpfAutoFallback = plan.adults.some((adult) => adult.cpf.autoFallback)
   defaults.profile.cpfAutoFallbackIncludeSA = plan.adults.some((adult) => adult.cpf.autoFallbackIncludeSA)
   defaults.profile.cpfVirtualRebalancing = plan.adults.some((adult) => adult.cpf.virtualRebalancing)
-  defaults.profile.cpfVirtualRebalancingMode = referenceAdult.cpf.virtualRebalancingMode
-  defaults.profile.retirementWithdrawals = mapRetirementWithdrawals(plan.expenses, referenceAdult)
-  defaults.profile.expenseAdjustments = mapExpenseAdjustments(plan.expenses, referenceAdult)
-  defaults.profile.financialGoals = mapGoals(plan.goals, referenceAdult)
+  defaults.profile.cpfVirtualRebalancingMode = plan.adults.some(
+    (adult) => adult.cpf.virtualRebalancing && adult.cpf.virtualRebalancingMode === 'always',
+  ) ? 'always' : 'from55'
+  defaults.profile.retirementWithdrawals = mapRetirementWithdrawals(plan.expenses, referenceAdult, plan.adults)
+  defaults.profile.expenseAdjustments = mapExpenseAdjustments(plan.expenses, referenceAdult, plan.adults)
+  defaults.profile.financialGoals = mapGoals(plan.goals, referenceAdult, plan.adults)
   defaults.profile.lockedAssets = mapLockedAssets(plan)
 
   defaults.income.salaryModel = salaryModel
@@ -468,10 +528,15 @@ function buildAggregateRuntimeSnapshot(
   defaults.income.promotionJumps = activeSalaryModels.length === 1
     ? structuredClone(activeSalaryModels[0].promotionJumps ?? [])
     : []
+  // momEducation and momAdjustment are reference-adult-only for legacy single-adult
+  // compatibility. Joint mode bypasses generateIncomeProjection and uses compiler
+  // per-adult income instead, so these fields are not consumed in the joint path.
   defaults.income.momEducation = referenceAdult.taxProfile.momEducation
   defaults.income.momAdjustment = referenceAdult.taxProfile.momAdjustment
   defaults.income.lifeEventsEnabled = plan.adults.some((adult) => adult.lifeEventsEnabled && adult.lifeEvents.length > 0)
   defaults.income.personalReliefs = sumAdultField(plan.adults, (adult) => adult.taxProfile.personalReliefs)
+  // reliefBreakdown and reliefBasisAge follow the same legacy-only pattern as
+  // momEducation: joint mode uses compiler per-adult income rather than these fields.
   defaults.income.reliefBreakdown = referenceAdult.taxProfile.reliefBreakdown
     ? structuredClone(referenceAdult.taxProfile.reliefBreakdown)
     : null
