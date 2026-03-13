@@ -83,6 +83,7 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
                 ? 'annual-contribution'
                 : 'account-value',
         activeWindow: rule.activeWindow,
+        yearBasis: rule.yearBasis,
         startPolicyYear: rule.startPolicyYear,
         endPolicyYear: rule.endPolicyYear,
         appliesTo: [...rule.appliesTo],
@@ -93,8 +94,9 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
         amount: isAssurance ? 0 : (rule.amount ?? 0),
         assuranceConfig: rule.assuranceConfig ? { ...rule.assuranceConfig } : undefined,
         premiumBaseConfig: rule.premiumBaseConfig
-          ? {
+            ? {
               useHigherOfCommencementAndPrevailing: rule.premiumBaseConfig.useHigherOfCommencementAndPrevailing,
+              multiplierYearBasis: rule.premiumBaseConfig.multiplierYearBasis,
               multiplierSchedule: rule.premiumBaseConfig.multiplierSchedule.map((tier) => ({ ...tier })),
             }
           : undefined,
@@ -112,13 +114,13 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
 
 function mapEventChargeRules(variant: IlpTemplateVariant): NonNullable<IlpPolicyInput['eventChargeRules']> {
   return variant.eventChargeRules
-    .filter((rule) => rule.activeWindow !== 'after-mip')
     .map((rule) => ({
       id: rule.id,
       label: rule.label,
       trigger: rule.trigger,
       basis: rule.basis,
       activeWindow: rule.activeWindow,
+      yearBasis: rule.yearBasis,
       appliesTo: [...rule.appliesTo],
       fallbackAppliesTo: rule.fallbackAppliesTo ? [...rule.fallbackAppliesTo] : undefined,
       freeLifetimeMonths: rule.freeLifetimeMonths,
@@ -153,6 +155,8 @@ function mapTemplateBonus(
     appliesTo: [...bonus.appliesTo],
     startPolicyYear: bonus.startPolicyYear,
     endPolicyYear: bonus.endPolicyYear,
+    yearBasis: bonus.yearBasis,
+    requiresPremiumsPaidUpToDate: bonus.requiresPremiumsPaidUpToDate,
     tieredRates: bonus.tieredRates.map((tier) => ({ ...tier })),
     suspensionRules: bonus.suspensionRules?.map((rule) => ({ ...rule })) ?? [
       ...(bonus.notes.some((note) => note.toLowerCase().includes('partial withdrawal'))
@@ -207,6 +211,7 @@ export function templateVariantToPolicySeed(
     mipLength: variant.mipLength,
     postMipYears: 0,
     eecTable: [...variant.eecTable],
+    eecYearBasis: variant.eecYearBasis,
     funds: [{ ...DEFAULT_TEMPLATE_FUND }],
     bonuses: variant.bonuses.map((bonus) => mapTemplateBonus(bonus, variant.currency)),
     chargeRules,

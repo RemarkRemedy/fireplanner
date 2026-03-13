@@ -188,6 +188,8 @@ export const ilpBonusRuleSchema = z.object({
   appliesTo: z.array(z.string()).max(20),
   startPolicyYear: z.number().int().min(1).max(100),
   endPolicyYear: z.number().int().min(1).max(100).nullable(),
+  yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
+  requiresPremiumsPaidUpToDate: z.boolean().optional(),
   tieredRates: z.array(z.object({
     currency: z.enum(['SGD', 'USD']),
     minAnnualPremium: z.number().min(0).nullable(),
@@ -219,6 +221,7 @@ export const ilpChargeRuleSchema = z.object({
   label: z.string().min(1),
   basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium']),
   activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']),
+  yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   startPolicyYear: z.number().int().min(1).max(100).optional(),
   endPolicyYear: z.number().int().min(1).max(100).nullable().optional(),
   appliesTo: z.array(z.string().min(1)).min(1).max(10),
@@ -248,6 +251,7 @@ export const ilpChargeRuleSchema = z.object({
   }).optional(),
   premiumBaseConfig: z.object({
     useHigherOfCommencementAndPrevailing: z.boolean(),
+    multiplierYearBasis: z.enum(['policy-year', 'premium-year']).optional(),
     multiplierSchedule: z.array(z.object({
       startPolicyYear: z.number().int().min(1).max(100),
       endPolicyYear: z.number().int().min(1).max(100).nullable(),
@@ -294,10 +298,10 @@ export const ilpChargeRuleSchema = z.object({
     }
   })
 
-  if ((rule.rateSchedule?.length ?? 0) > 0 && !(rule.basis === 'account-value' || rule.basis === 'annual-contribution' || rule.basis === 'cumulative-paid-regular-premium')) {
+  if ((rule.rateSchedule?.length ?? 0) > 0 && !(rule.basis === 'account-value' || rule.basis === 'annual-contribution' || rule.basis === 'cumulative-paid-regular-premium' || rule.basis === 'premium-base-mip-multiplier')) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'Charge rule rate schedules can only be used with account-value, annual-contribution, or cumulative-paid-regular-premium basis',
+      message: 'Charge rule rate schedules can only be used with account-value, annual-contribution, cumulative-paid-regular-premium, or premium-base-mip-multiplier basis',
       path: ['rateSchedule'],
     })
   }
@@ -413,6 +417,7 @@ export const ilpEventChargeRuleSchema = z.object({
   trigger: z.enum(['partial-withdrawal', 'regular-premium-reduction', 'premium-holiday', 'premium-holiday-repayment', 'top-up', 'recurring-single-premium']),
   basis: z.enum(['event-amount', 'account-value', 'premium-reduction-with-startup-recovery', 'premium-reduction-tiered-startup-recovery', 'repaid-premium-with-missed-months', 'annual-premium-with-overlap-months', 'committed-annual-premium-with-overlap-months', 'premium-holiday-charge-refund', 'event-amount-with-overlap-months', 'annual-reduction-with-active-months']),
   activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']).optional(),
+  yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   appliesTo: z.array(z.string().min(1)).min(1).max(10),
   fallbackAppliesTo: z.array(z.string().min(1)).min(1).max(10).optional(),
   freeLifetimeMonths: z.number().int().min(1).max(240).optional(),
@@ -542,6 +547,7 @@ export const ilpPolicySchema = z.object({
   mipLength: z.number().int().min(5).max(100),
   postMipYears: z.number().int().min(0).max(50),
   eecTable: z.array(z.number().min(0).max(1)).min(1).max(100),
+  eecYearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   funds: z.array(ilpFundSchema).min(1).max(20),
   bonuses: z.array(ilpBonusRuleSchema).max(20),
   chargeRules: z.array(ilpChargeRuleSchema).max(30).optional(),

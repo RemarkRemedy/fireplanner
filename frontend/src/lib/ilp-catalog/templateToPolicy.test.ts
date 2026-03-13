@@ -767,6 +767,74 @@ describe('templateVariantToPolicySeed', () => {
     )
   })
 
+  it('maps Goal Builder II into a partial premium-year seed with PAF and surrender schedules', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'hsbc-life-goal-builder-ii')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:goal-builder-ii-premium-year-paf')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('goal-builder-ii-loyalty-bonus-cadence')
+    expect(seed.mipLength).toBe(10)
+    expect(seed.eecYearBasis).toBe('premium-year')
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'policy',
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+          { phase: 'after-icp', contributionShare: 1 },
+          { phase: 'top-up', contributionShare: 1 },
+        ],
+      }),
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'product-administration-fee',
+        basis: 'premium-base-mip-multiplier',
+        yearBasis: 'premium-year',
+        premiumBaseConfig: {
+          useHigherOfCommencementAndPrevailing: false,
+          multiplierYearBasis: 'policy-year',
+          multiplierSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 10, mode: 'policy-year' },
+            { startPolicyYear: 11, endPolicyYear: null, mode: 'fixed', multiplier: 10 },
+          ],
+        },
+      }),
+    ])
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          trigger: 'top-up',
+          basis: 'event-amount',
+          rate: 0.03,
+        }),
+        expect.objectContaining({
+          id: 'recurring-single-premium-charge',
+          trigger: 'recurring-single-premium',
+          basis: 'event-amount-with-overlap-months',
+          rate: 0.03,
+        }),
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          trigger: 'partial-withdrawal',
+          yearBasis: 'premium-year',
+        }),
+      ]),
+    )
+    expect(seed.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'welcome-bonus',
+        mode: 'premium-allocation',
+      }),
+    ])
+  })
+
   it('maps Etiqa Invest flex prime II into a partial seed with distinct Flexi 3 and Flexi 5 variants', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-flex-prime-ii')

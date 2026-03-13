@@ -6,6 +6,7 @@ import type { IlpCatalogManifest, IlpCatalogProduct } from '../../src/lib/ilp-ca
 import { analyzeStructuredEconomics, discoverManualCatalogSources } from './discovery.js'
 import { parseHsbcWealthAccelerate } from './parsers/hsbcWealthAccelerate.js'
 import { parseHsbcWealthAbundance } from './parsers/hsbcWealthAbundance.js'
+import { parseHsbcGoalBuilderIi } from './parsers/hsbcGoalBuilderIi.js'
 import { parseHsbcWealthHarvest } from './parsers/hsbcWealthHarvest.js'
 import { parseHsbcWealthVoyage } from './parsers/hsbcWealthVoyage.js'
 import { parseIncomeInvestFlex } from './parsers/incomeInvestFlex.js'
@@ -38,6 +39,7 @@ const ETIQA_INVEST_FLEX_WEALTH_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_In
 const ETIQA_INVEST_SMART_FLEX_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest smart flex II_Product Summary.pdf'
 const ETIQA_INVEST_STARTER_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest starter_Product Summary.pdf'
 const ETIQA_INVEST_WEALTH_PURPOSE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest Wealth Purpose_Product Summary.pdf'
+const HSBC_GOAL_BUILDER_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/GBII_Summary.pdf'
 const HSBC_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Accelerate Product Summary.pdf'
 const HSBC_WEALTH_ABUNDANCE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Abundance Product Summary.pdf'
 const HSBC_WEALTH_HARVEST_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Harvest Product Summary.pdf'
@@ -128,6 +130,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const etiqaInvestStarterChecksum = await sha256(ETIQA_INVEST_STARTER_SOURCE_PATH)
   const etiqaInvestWealthPurposeExtracted = await extractPdfText(ETIQA_INVEST_WEALTH_PURPOSE_SOURCE_PATH)
   const etiqaInvestWealthPurposeChecksum = await sha256(ETIQA_INVEST_WEALTH_PURPOSE_SOURCE_PATH)
+  const hsbcGoalBuilderIiExtracted = await extractPdfText(HSBC_GOAL_BUILDER_II_SOURCE_PATH)
+  const hsbcGoalBuilderIiChecksum = await sha256(HSBC_GOAL_BUILDER_II_SOURCE_PATH)
   const extracted = await extractPdfText(HSBC_SOURCE_PATH)
   const checksum = await sha256(HSBC_SOURCE_PATH)
   const hsbcAbundanceExtracted = await extractPdfText(HSBC_WEALTH_ABUNDANCE_SOURCE_PATH)
@@ -182,6 +186,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseEtiqaInvestWealthPurpose({
       document: etiqaInvestWealthPurposeExtracted,
       sourceChecksumSha256: etiqaInvestWealthPurposeChecksum,
+    }),
+    parseHsbcGoalBuilderIi({
+      document: hsbcGoalBuilderIiExtracted,
+      sourceChecksumSha256: hsbcGoalBuilderIiChecksum,
     }),
     parseHsbcWealthAccelerate({
       document: extracted,

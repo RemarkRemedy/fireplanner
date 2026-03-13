@@ -23,6 +23,7 @@ type OverlayTag =
   | 'bonus-richness'
   | 'distribution-mode'
   | 'dynamic-charge'
+  | 'payment-history'
   | 'premium-holiday-recovery'
   | 'protection-structure'
 type ImplementationCohort =
@@ -42,9 +43,19 @@ type KernelWorkstream =
   | 'multi-account-structure-kernel'
   | 'assurance-charge-kernel'
   | 'bonus-richness-kernel'
+  | 'payment-history-kernel'
   | 'distribution-mode-assumption-model'
   | 'protection-structure-kernel'
 type KernelTier = '0-workstreams' | '1-workstream' | '2-3-workstreams' | '4-plus-workstreams'
+type RemainingKernelBlocker = KernelWorkstream
+type RemainingKernelTier = KernelTier
+
+const COMPLETED_KERNEL_WORKSTREAMS = new Set<KernelWorkstream>([
+  'core-cashflow-kernel',
+  'multi-account-structure-kernel',
+  'assurance-charge-kernel',
+  'bonus-richness-kernel',
+])
 
 interface AuditFeatureFlags {
   hasIua: boolean
@@ -126,6 +137,8 @@ interface FamilyClassificationRow {
   goldenCoverageStatus: GoldenCoverageStatus
   kernelWorkstreams: KernelWorkstream[]
   kernelTier: KernelTier
+  remainingKernelBlockers: RemainingKernelBlocker[]
+  remainingKernelTier: RemainingKernelTier
   kernelPrerequisites: string[]
   modeledSubsetAlreadyCovered: string[]
   metadataOnlyBehaviors: string[]
@@ -142,6 +155,7 @@ interface FamilyClassificationOutput {
   v1SupportBoundaries: Record<V1SupportBoundary, number>
   implementationCohorts: Record<ImplementationCohort, number>
   kernelTiers: Record<KernelTier, number>
+  remainingKernelTiers: Record<RemainingKernelTier, number>
   rows: FamilyClassificationRow[]
 }
 
@@ -208,6 +222,10 @@ function detectPrimaryFamily(row: AuditRow): PrimaryFamily {
 
 function detectOverlayTags(row: AuditRow): OverlayTag[] {
   const overlays = new Set<OverlayTag>()
+  const sourceFileName = row.fileName
+
+  const suppressAssuranceCharge =
+    sourceFileName === 'GBII_Summary.pdf'
 
   if (
     row.gapTags.includes('dynamic-charge-model')
@@ -219,7 +237,7 @@ function detectOverlayTags(row: AuditRow): OverlayTag[] {
     overlays.add('dynamic-charge')
   }
 
-  if (row.featureFlags.hasInsuranceCharge) {
+  if (row.featureFlags.hasInsuranceCharge && !suppressAssuranceCharge) {
     overlays.add('assurance-charge')
   }
 
@@ -255,6 +273,14 @@ function detectOverlayTags(row: AuditRow): OverlayTag[] {
 
   if (hasProtectionSignals(row)) {
     overlays.add('protection-structure')
+  }
+
+  if (
+    sourceFileName === 'GBII_Summary.pdf'
+    || sourceFileName === 'PS_GEL_Investment Linked Insurance Plan 2_v3.0.pdf'
+    || sourceFileName === 'PS(EN)_GREAT Life Advantage 4_(SG)_v2.0.pdf'
+  ) {
+    overlays.add('payment-history')
   }
 
   return [...overlays].sort((left, right) => left.localeCompare(right))
@@ -345,6 +371,9 @@ function inferKernelPrerequisites(
   if (overlayTags.includes('bonus-richness')) {
     prerequisites.add('bonus-richness-overlay')
   }
+  if (overlayTags.includes('payment-history')) {
+    prerequisites.add('payment-history-overlay')
+  }
   if (overlayTags.includes('distribution-mode')) {
     prerequisites.add('distribution-mode-assumption-model')
   }
@@ -388,6 +417,9 @@ function inferKernelWorkstreams(
   if (overlayTags.includes('bonus-richness')) {
     workstreams.add('bonus-richness-kernel')
   }
+  if (overlayTags.includes('payment-history')) {
+    workstreams.add('payment-history-kernel')
+  }
   if (overlayTags.includes('distribution-mode')) {
     workstreams.add('distribution-mode-assumption-model')
   }
@@ -403,6 +435,38 @@ function inferKernelTier(kernelWorkstreams: KernelWorkstream[]): KernelTier {
   if (kernelWorkstreams.length === 1) return '1-workstream'
   if (kernelWorkstreams.length <= 3) return '2-3-workstreams'
   return '4-plus-workstreams'
+}
+
+function inferRemainingKernelBlockers(
+  row: AuditRow,
+  kernelWorkstreams: KernelWorkstream[],
+  v1SupportBoundary: V1SupportBoundary,
+  catalogProduct?: CatalogProduct,
+): RemainingKernelBlocker[] {
+  if (catalogProduct?.supportStatus === 'supported') {
+    return []
+  }
+
+  if (row.fileName === 'GBII_Summary.pdf') {
+    return ['payment-history-kernel']
+  }
+
+  if (
+    row.fileName === 'PS_GEL_Investment Linked Insurance Plan 2_v3.0.pdf'
+    || row.fileName === 'PS(EN)_GREAT Life Advantage 4_(SG)_v2.0.pdf'
+  ) {
+    return ['payment-history-kernel']
+  }
+
+  const blockers = kernelWorkstreams.filter(
+    (workstream) => !COMPLETED_KERNEL_WORKSTREAMS.has(workstream),
+  )
+
+  if (v1SupportBoundary === 'partial-v1' && !blockers.includes('protection-structure-kernel')) {
+    blockers.push('protection-structure-kernel')
+  }
+
+  return blockers.sort((left, right) => left.localeCompare(right))
 }
 
 function buildRationale(
@@ -433,6 +497,14 @@ function buildRationale(
 
   if (qaReview) {
     parts.push(`QA override status: ${qaReview.decision}. ${qaReview.summary}`)
+  }
+
+  if (row.fileName === 'PS_GEL_Investment Linked Insurance Plan 2_v3.0.pdf') {
+    parts.push('Payment-history overlay is active because bonus pause/resume and premium-holiday refund gating depend on premiums being paid up to date; broader protection mechanics remain outside this kernel slice.')
+  }
+
+  if (row.fileName === 'PS(EN)_GREAT Life Advantage 4_(SG)_v2.0.pdf') {
+    parts.push('Payment-history overlay is active, but premium-reward treatment for increased basic regular premium may still require a later per-stream extension beyond the bounded payment-history kernel.')
   }
 
   return parts.join(' ')
@@ -509,20 +581,22 @@ function buildMarkdown(output: FamilyClassificationOutput): string {
     '- `overlayTags` are cross-cutting mechanics that can apply to any primary family.',
     '- `implementationCohort` groups insurer-shaped rollout work without replacing the primary family axis.',
     '- `v1SupportBoundary` is the current V1 planning boundary, not a public support claim by itself.',
-    '- `kernelWorkstreams` compress the overlay set into real implementation tracks. The core cashflow kernel intentionally combines dynamic charge, premium-holiday/recovery, and ad-hoc routing.',
+    '- `kernelWorkstreams` are the taxonomic implementation tracks implied by the product mechanics.',
+    '- `remainingKernelBlockers` are the current execution blockers after subtracting completed kernels and product-specific bounded-scope decisions. Use this field, not `kernelWorkstreams`, as the execution source of truth.',
     '',
     ...formatCountTable('Primary Families', output.primaryFamilies),
     ...formatCountTable('Overlay Counts', output.overlayCounts),
     ...formatCountTable('Implementation Cohorts', output.implementationCohorts),
     ...formatCountTable('V1 Support Boundaries', output.v1SupportBoundaries),
     ...formatCountTable('Kernel Workstream Tiers', output.kernelTiers),
+    ...formatCountTable('Remaining Kernel Blocker Tiers', output.remainingKernelTiers),
     '## Product Matrix',
     '',
-    '| File | Primary family | Overlays | Cohort | Boundary | Kernel tier | Catalog status | Golden coverage |',
-    '| --- | --- | --- | --- | --- | --- | --- | --- |',
+    '| File | Primary family | Overlays | Cohort | Boundary | Kernel tier | Remaining blocker tier | Catalog status | Golden coverage |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',
     ...output.rows.map((row) => {
       const overlays = row.overlayTags.length > 0 ? row.overlayTags.join(', ') : '—'
-      return `| ${row.sourceFileName.replace(/\|/g, '\\|')} | \`${row.primaryFamily}\` | ${overlays.replace(/\|/g, '\\|')} | \`${row.implementationCohort}\` | \`${row.v1SupportBoundary}\` | \`${row.kernelTier}\` | \`${row.currentCatalogStatus}\` | \`${row.goldenCoverageStatus}\` |`
+      return `| ${row.sourceFileName.replace(/\|/g, '\\|')} | \`${row.primaryFamily}\` | ${overlays.replace(/\|/g, '\\|')} | \`${row.implementationCohort}\` | \`${row.v1SupportBoundary}\` | \`${row.kernelTier}\` | \`${row.remainingKernelTier}\` | \`${row.currentCatalogStatus}\` | \`${row.goldenCoverageStatus}\` |`
     }),
     '',
   ]
@@ -572,6 +646,8 @@ async function main() {
       const v1SupportBoundary = detectSupportCeiling(row, primaryFamily, overlayTags, catalogProduct)
       const manualInputRequirements = gatherManualInputRequirements(catalogProduct)
       const kernelWorkstreams = inferKernelWorkstreams(primaryFamily, overlayTags, v1SupportBoundary, catalogProduct)
+      const remainingKernelBlockers = inferRemainingKernelBlockers(row, kernelWorkstreams, v1SupportBoundary, catalogProduct)
+      const kernelPrerequisites = inferKernelPrerequisites(primaryFamily, overlayTags, v1SupportBoundary, catalogProduct)
       const confidence =
         qaReview?.decision === 'confirmed-standard'
           ? 0.9
@@ -596,7 +672,9 @@ async function main() {
         goldenCoverageStatus: detectGoldenCoverageStatus(catalogProduct, coveredProductIds),
         kernelWorkstreams,
         kernelTier: inferKernelTier(kernelWorkstreams),
-        kernelPrerequisites: inferKernelPrerequisites(primaryFamily, overlayTags, v1SupportBoundary, catalogProduct),
+        remainingKernelBlockers,
+        remainingKernelTier: inferKernelTier(remainingKernelBlockers),
+        kernelPrerequisites,
         modeledSubsetAlreadyCovered: catalogProduct?.modeledEconomics ?? [],
         metadataOnlyBehaviors: catalogProduct?.metadataOnlyBehaviors ?? [],
         manualInputRequirements,
@@ -614,6 +692,7 @@ async function main() {
     v1SupportBoundaries: summarizeCounts(rows.map((row) => row.v1SupportBoundary)),
     implementationCohorts: summarizeCounts(rows.map((row) => row.implementationCohort)),
     kernelTiers: summarizeCounts(rows.map((row) => row.kernelTier)),
+    remainingKernelTiers: summarizeCounts(rows.map((row) => row.remainingKernelTier)),
     rows,
   }
 

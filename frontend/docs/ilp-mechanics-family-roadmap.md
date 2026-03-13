@@ -11,6 +11,11 @@ The execution source of truth is now:
 - product classification: `frontend/scripts/ilp-catalog/fixtures/audit/family-classification.json`
 - classification summary: `frontend/docs/ilp-mechanics-family-classification.md`
 
+Execution sequencing must read:
+
+- `kernelWorkstreams` as the taxonomic set implied by a product's mechanics
+- `remainingKernelBlockers` as the active execution blocker set after subtracting completed kernels and bounded-scope decisions
+
 This roadmap now exists only to explain sequencing.
 
 ## Planning Model
@@ -34,6 +39,7 @@ The planning model has three layers:
    - `bonus-richness`
    - `distribution-mode`
    - `protection-structure`
+   - `payment-history`
 
 3. `implementationCohort`
    Insurer-shaped rollout grouping. Useful for execution, not the canonical family axis.
@@ -180,7 +186,27 @@ Promotion review result:
 
 Useful for fidelity, but not ahead of cashflow correctness.
 
-### 6. Protection-structure kernel
+### 6. Payment-history kernel
+
+Needed for products whose economically material charges, penalty horizons, or bonus cadence are keyed to Premium Year / payment-history state rather than Policy Year alone.
+
+Current status:
+- spec drafted
+- not implemented yet
+
+Current mandatory proof target:
+- `GBII`
+
+Optional follow-ons after `GBII` is green and re-reviewed:
+- `Investment-linked Insurance Plan 2`
+- `GREAT Life Advantage 4`
+
+Scope line:
+- add normalized Premium Year / payment-history state
+- allow fee / penalty / bonus rules to consume that state honestly
+- do not absorb broader protection-state or rider-stream logic into this slice
+
+### 7. Protection-structure kernel
 
 The clearest V1 partial boundary. This is last unless scope expands deliberately.
 
@@ -199,23 +225,21 @@ Validated classifier state:
 - `57` supported-after-kernel
 - `29` partial-v1
 
-The immediate execution focus is no longer classifier QA. It is choosing the next family/cohort promotion that should consume the completed cashflow kernel.
+The immediate execution focus is the `payment-history-kernel`, with `GBII` as the mandatory proof parser.
 
 ## Sequencing After QA
 
-1. Lock the classifier and use it as the execution source of truth.
-2. Treat the first vertical `core-cashflow-kernel` slice as complete:
-   - generalized charge objects
-   - routing phases
-   - premium-holiday state transitions
-   - golden proof on the named products
-3. Use that completed slice to drive the next adoption step:
-   - pick the highest-yield family/cohort that mainly depended on the cashflow kernel
-   - verify promotion with targeted fixtures and golden coverage
-4. Only then decide whether the next major workstream is:
-   - multi-account structure
-   - assurance-charge
-   - bonus richness
+1. Lock the classifier and use `remainingKernelBlockers` as the execution source of truth.
+2. Treat the completed workstreams as stable:
+   - core cashflow kernel
+   - multi-account structure kernel
+   - assurance-charge kernel
+   - bonus-richness kernel
+3. Execute the next active kernel workstream:
+   - `payment-history-kernel`
+   - mandatory proof target: `GBII`
+   - optional follow-ons only if they still fit the bounded slice after `GBII` is green
+4. After that kernel is green, return to parser throughput for the cheapest truthful corridor it unlocks.
 
 ## V1 Boundary
 

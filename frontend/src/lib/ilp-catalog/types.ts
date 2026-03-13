@@ -44,6 +44,8 @@ export interface IlpTemplateBonus {
   appliesTo: string[]
   startPolicyYear: number
   endPolicyYear: number | null
+  yearBasis?: 'policy-year' | 'premium-year'
+  requiresPremiumsPaidUpToDate?: boolean
   rate: number | null
   amount: number | null
   tieredRates: IlpTemplateBonusTier[]
@@ -63,6 +65,7 @@ export interface IlpTemplateFeeRule {
   id: string
   label: string
   basis?: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium'
+  yearBasis?: 'policy-year' | 'premium-year'
   rate: number | null
   amount?: number | null
   assuranceConfig?: {
@@ -72,6 +75,7 @@ export interface IlpTemplateFeeRule {
   }
   premiumBaseConfig?: {
     useHigherOfCommencementAndPrevailing: boolean
+    multiplierYearBasis?: 'policy-year' | 'premium-year'
     multiplierSchedule: Array<{
       startPolicyYear: number
       endPolicyYear: number | null
@@ -112,6 +116,7 @@ export interface IlpTemplateEventChargeRule {
   label: string
   trigger: 'partial-withdrawal' | 'regular-premium-reduction' | 'premium-holiday' | 'premium-holiday-repayment' | 'top-up' | 'recurring-single-premium'
   basis: 'event-amount' | 'account-value' | 'premium-reduction-with-startup-recovery' | 'premium-reduction-tiered-startup-recovery' | 'repaid-premium-with-missed-months' | 'annual-premium-with-overlap-months' | 'committed-annual-premium-with-overlap-months' | 'premium-holiday-charge-refund' | 'event-amount-with-overlap-months' | 'annual-reduction-with-active-months'
+  yearBasis?: 'policy-year' | 'premium-year'
   appliesTo: string[]
   fallbackAppliesTo?: string[]
   freeLifetimeMonths?: number
@@ -146,6 +151,7 @@ export interface IlpTemplateVariant {
   feeRules: IlpTemplateFeeRule[]
   eventChargeRules: IlpTemplateEventChargeRule[]
   eecTable: number[]
+  eecYearBasis?: 'policy-year' | 'premium-year'
   warnings: string[]
   unsupportedItems: string[]
   sourceRefs: IlpCatalogSourceRef[]

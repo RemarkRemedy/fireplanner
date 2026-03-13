@@ -1734,7 +1734,7 @@ describe('projectIlpPolicy', () => {
           id: 'regular',
           label: 'Regular Premium Account',
           feeRate: 0,
-          currentValue: 0,
+          currentValue: 10_000,
           contributionShare: 1,
           subjectToEec: false,
           postMipFeeRate: null,
@@ -1775,7 +1775,7 @@ describe('projectIlpPolicy', () => {
           id: 'regular',
           label: 'Regular Premium Account',
           feeRate: 0,
-          currentValue: 0,
+          currentValue: 10_000,
           contributionShare: 1,
           subjectToEec: false,
           postMipFeeRate: null,
@@ -1872,6 +1872,273 @@ describe('projectIlpPolicy', () => {
     expect(result.rows[1].policyYear).toBe(11)
     expect(result.rows[1].annualContribution).toBe(0)
     expect(accountRow(result.rows[1], 'regular').grossFee).toBeCloseTo(722.4, 2)
+  })
+
+  it('uses premium-year rate bands with policy-year multipliers for premium-base charges', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+      monthlyContribution: 500,
+      currency: 'SGD',
+      mipLength: 10,
+      postMipYears: 2,
+      funds: [ZERO_RETURN_FUND],
+      accounts: [
+        {
+          id: 'regular',
+          label: 'Regular Premium Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+        },
+      ],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'paf',
+          label: 'Product Administration Fee',
+          basis: 'premium-base-mip-multiplier',
+          yearBasis: 'premium-year',
+          activeWindow: 'policy-term',
+          appliesTo: ['regular'],
+          rate: 0,
+          amount: 0,
+          allocation: 'equal-split',
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 8, rate: 0.025 },
+            { startPolicyYear: 9, endPolicyYear: 24, rate: 0.006 },
+          ],
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: false,
+            multiplierYearBasis: 'policy-year',
+            multiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 10, mode: 'policy-year' },
+              { startPolicyYear: 11, endPolicyYear: null, mode: 'fixed', multiplier: 10 },
+            ],
+          },
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0].policyYear).toBe(5)
+    expect(accountRow(result.rows[0], 'regular').grossFee).toBeCloseTo(750, 2)
+    expect(result.rows[4].policyYear).toBe(9)
+    expect(accountRow(result.rows[4], 'regular').grossFee).toBeCloseTo(324, 2)
+  })
+
+  it('freezes premium-year charge bands during premium holidays and resumes when premiums restart', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 5,
+      monthsAlreadyPaid: 60,
+      monthlyContribution: 500,
+      currency: 'SGD',
+      mipLength: 10,
+      postMipYears: 4,
+      funds: [ZERO_RETURN_FUND],
+      accounts: [
+        {
+          id: 'regular',
+          label: 'Regular Premium Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+        },
+      ],
+      bonuses: [],
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 61,
+          durationMonths: 36,
+        },
+      ],
+      chargeRules: [
+        {
+          id: 'paf',
+          label: 'Product Administration Fee',
+          basis: 'premium-base-mip-multiplier',
+          yearBasis: 'premium-year',
+          activeWindow: 'policy-term',
+          appliesTo: ['regular'],
+          rate: 0,
+          amount: 0,
+          allocation: 'equal-split',
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 8, rate: 0.025 },
+            { startPolicyYear: 9, endPolicyYear: 24, rate: 0.006 },
+          ],
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: false,
+            multiplierYearBasis: 'policy-year',
+            multiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 10, mode: 'policy-year' },
+              { startPolicyYear: 11, endPolicyYear: null, mode: 'fixed', multiplier: 10 },
+            ],
+          },
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0].annualContribution).toBe(0)
+    expect(accountRow(result.rows[0], 'regular').grossFee).toBeCloseTo(900, 2)
+    expect(accountRow(result.rows[2], 'regular').grossFee).toBeCloseTo(1_200, 2)
+    expect(result.rows[3].annualContribution).toBe(6_000)
+    expect(accountRow(result.rows[3], 'regular').grossFee).toBeCloseTo(1_350, 2)
+  })
+
+  it('extends EEC by premium year when holidays stall payment progress', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 5,
+      monthsAlreadyPaid: 60,
+      monthlyContribution: 500,
+      currency: 'SGD',
+      mipLength: 10,
+      postMipYears: 2,
+      funds: [ZERO_RETURN_FUND],
+      accounts: [
+        {
+          id: 'regular',
+          label: 'Regular Premium Account',
+          feeRate: 0,
+          currentValue: 10_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+        },
+      ],
+      bonuses: [],
+      eecTable: [1, 0.9, 0.75, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05],
+      eecYearBasis: 'premium-year',
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 61,
+          durationMonths: 24,
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0].eecRate).toBe(0.5)
+    expect(result.rows[1].eecRate).toBe(0.5)
+    expect(result.rows[2].eecRate).toBe(0.4)
+  })
+
+  it('gates bonus eligibility on premiums being paid up to date and uses premium-year cadence', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 9,
+      monthsAlreadyPaid: 108,
+      monthlyContribution: 500,
+      currency: 'SGD',
+      mipLength: 20,
+      postMipYears: 2,
+      funds: [ZERO_RETURN_FUND],
+      accounts: [
+        {
+          id: 'regular',
+          label: 'Regular Premium Account',
+          feeRate: 0,
+          currentValue: 10_000,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+        },
+      ],
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 109,
+          durationMonths: 12,
+          repayMissedPremiums: true,
+        },
+      ],
+      bonuses: [
+        {
+          id: 'payment-history-bonus',
+          type: 'loyalty',
+          label: 'Payment History Bonus',
+          mode: 'annual-rate',
+          rate: 0.01,
+          amount: 0,
+          appliesTo: ['regular'],
+          startPolicyYear: 10,
+          endPolicyYear: null,
+          yearBasis: 'premium-year',
+          requiresPremiumsPaidUpToDate: true,
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'regular').bonusCredit).toBe(0)
+    expect(accountRow(result.rows[1], 'regular').bonusCredit).toBeGreaterThan(0)
+  })
+
+  it('keeps policy-year based charge schedules unchanged during premium holidays', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 5,
+      monthsAlreadyPaid: 60,
+      monthlyContribution: 500,
+      currency: 'SGD',
+      mipLength: 10,
+      postMipYears: 2,
+      funds: [ZERO_RETURN_FUND],
+      accounts: [
+        {
+          id: 'regular',
+          label: 'Regular Premium Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+        },
+      ],
+      bonuses: [],
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 61,
+          durationMonths: 24,
+        },
+      ],
+      chargeRules: [
+        {
+          id: 'policy-year-charge',
+          label: 'Policy-Year Charge',
+          basis: 'fixed-annual',
+          yearBasis: 'policy-year',
+          activeWindow: 'policy-term',
+          appliesTo: ['regular'],
+          rate: 0,
+          amount: 0,
+          allocation: 'equal-split',
+          amountSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 6, amount: 100 },
+            { startPolicyYear: 7, endPolicyYear: null, amount: 50 },
+          ],
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'regular').grossFee).toBe(100)
+    expect(accountRow(result.rows[1], 'regular').grossFee).toBe(50)
   })
 
   it('restores missed premiums and bonus credits after a premium holiday back-pay', () => {

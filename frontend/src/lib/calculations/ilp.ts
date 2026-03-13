@@ -65,6 +65,8 @@ export interface IlpBonusRule {
   appliesTo: string[]
   startPolicyYear: number
   endPolicyYear: number | null
+  yearBasis?: 'policy-year' | 'premium-year'
+  requiresPremiumsPaidUpToDate?: boolean
   tieredRates?: IlpBonusTier[]
   suspensionRules?: IlpBonusSuspensionRule[]
   restorationRules?: IlpBonusRestorationRule[]
@@ -110,6 +112,7 @@ export interface IlpPremiumBaseMultiplierTier {
 
 export interface IlpPremiumBaseChargeConfig {
   useHigherOfCommencementAndPrevailing: boolean
+  multiplierYearBasis?: 'policy-year' | 'premium-year'
   multiplierSchedule: IlpPremiumBaseMultiplierTier[]
 }
 
@@ -129,6 +132,7 @@ export interface IlpChargeRule {
   label: string
   basis: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium'
   activeWindow: 'during-mip' | 'after-mip' | 'policy-term'
+  yearBasis?: 'policy-year' | 'premium-year'
   startPolicyYear?: number
   endPolicyYear?: number | null
   appliesTo: string[]
@@ -168,6 +172,7 @@ export interface IlpEventChargeRule {
   trigger: 'partial-withdrawal' | 'regular-premium-reduction' | 'premium-holiday' | 'premium-holiday-repayment' | 'top-up' | 'recurring-single-premium'
   basis: 'event-amount' | 'account-value' | 'premium-reduction-with-startup-recovery' | 'premium-reduction-tiered-startup-recovery' | 'repaid-premium-with-missed-months' | 'annual-premium-with-overlap-months' | 'committed-annual-premium-with-overlap-months' | 'premium-holiday-charge-refund' | 'event-amount-with-overlap-months' | 'annual-reduction-with-active-months'
   activeWindow?: 'during-mip' | 'after-mip' | 'policy-term'
+  yearBasis?: 'policy-year' | 'premium-year'
   appliesTo: string[]
   fallbackAppliesTo?: string[]
   freeLifetimeMonths?: number
@@ -213,6 +218,7 @@ export interface IlpPolicyInput {
   mipLength: number
   postMipYears: number
   eecTable: number[]
+  eecYearBasis?: 'policy-year' | 'premium-year'
   funds: IlpFund[]
   bonuses: IlpBonusRule[]
   chargeRules?: IlpChargeRule[]
@@ -363,6 +369,13 @@ interface IlpCashflowYearContext {
   }
   premiumHolidayMonths: number
   payableMonths: number
+  paymentHistory: {
+    premiumYearAtStart: number
+    premiumYearAtEnd: number
+    premiumYearMonthsInYear: number
+    premiumPaidInYear: number
+    premiumsPaidUpToDate: boolean
+  }
 }
 
 interface IlpNormalizedContributionRoute {
@@ -453,6 +466,9 @@ interface IlpNormalizedPolicyInput {
     committedAnnualPremiumAtIssue: number
     paidByPolicyMonth: Map<number, number>
     cumulativePaidByPolicyMonth: Map<number, number>
+    premiumYearByPolicyMonth: Map<number, number>
+    paidUpToDateByPolicyMonth: Map<number, boolean>
+    arrearsByPolicyMonth: Map<number, number>
   }
 }
 
@@ -710,25 +726,59 @@ function buildNormalizedRegularPremiumState(
   const maxPolicyMonth = normalized.input.monthsAlreadyPaid + (computeTotalProjectionYears(normalized.input) * 12)
   const paidByPolicyMonth = new Map<number, number>()
   const cumulativePaidByPolicyMonth = new Map<number, number>()
+  const premiumYearByPolicyMonth = new Map<number, number>()
+  const paidUpToDateByPolicyMonth = new Map<number, boolean>()
+  const arrearsByPolicyMonth = new Map<number, number>()
+  const repaymentByPolicyMonth = new Map<number, number>()
   let cumulativePaid = 0
+  let arrears = 0
+
+  for (const event of normalized.events.premiumHolidays) {
+    if (!event.repayMissedPremiums) continue
+    const repaymentMonth = event.startPolicyMonth + event.durationMonths
+    const repaymentAmount = Array.from({ length: event.durationMonths }, (_, index) => (
+      getScheduledMonthlyPremiumAtMonth(normalized as IlpNormalizedPolicyInput, event.startPolicyMonth + index)
+    )).reduce((sum, value) => sum + value, 0)
+
+    repaymentByPolicyMonth.set(
+      repaymentMonth,
+      (repaymentByPolicyMonth.get(repaymentMonth) ?? 0) + repaymentAmount,
+    )
+  }
 
   for (let policyMonth = 1; policyMonth <= maxPolicyMonth; policyMonth += 1) {
     const policyYear = getPolicyYearForMonth(policyMonth)
     const regularPremiumIsPayable = policyYear <= normalized.input.mipLength
       || hasAfterMipContributionRules(normalized.input)
+    const scheduledMonthlyPremium = regularPremiumIsPayable
+      ? getScheduledMonthlyPremiumAtMonth(normalized as IlpNormalizedPolicyInput, policyMonth)
+      : 0
     const actualPaid = !regularPremiumIsPayable || isPremiumHolidayActiveAtMonth(normalized, policyMonth)
       ? 0
-      : getScheduledMonthlyPremiumAtMonth(normalized as IlpNormalizedPolicyInput, policyMonth)
+      : scheduledMonthlyPremium
+    const repaymentAmount = repaymentByPolicyMonth.get(policyMonth) ?? 0
 
     cumulativePaid += actualPaid
+    arrears = Math.max(0, arrears + scheduledMonthlyPremium - actualPaid - repaymentAmount)
     paidByPolicyMonth.set(policyMonth, actualPaid)
     cumulativePaidByPolicyMonth.set(policyMonth, cumulativePaid)
+    premiumYearByPolicyMonth.set(
+      policyMonth,
+      normalized.input.monthlyContribution > CONTRIBUTION_TOLERANCE
+        ? Math.ceil(cumulativePaid / (normalized.input.monthlyContribution * 12))
+        : 0,
+    )
+    paidUpToDateByPolicyMonth.set(policyMonth, arrears <= CONTRIBUTION_TOLERANCE)
+    arrearsByPolicyMonth.set(policyMonth, arrears)
   }
 
   return {
     committedAnnualPremiumAtIssue: normalized.input.monthlyContribution * 12,
     paidByPolicyMonth,
     cumulativePaidByPolicyMonth,
+    premiumYearByPolicyMonth,
+    paidUpToDateByPolicyMonth,
+    arrearsByPolicyMonth,
   }
 }
 
@@ -763,6 +813,9 @@ function buildNormalizedPolicyInput(input: IlpPolicyInput): IlpNormalizedPolicyI
       committedAnnualPremiumAtIssue: input.monthlyContribution * 12,
       paidByPolicyMonth: new Map<number, number>(),
       cumulativePaidByPolicyMonth: new Map<number, number>(),
+      premiumYearByPolicyMonth: new Map<number, number>(),
+      paidUpToDateByPolicyMonth: new Map<number, boolean>(),
+      arrearsByPolicyMonth: new Map<number, number>(),
     },
   } satisfies IlpNormalizedPolicyInput
 
@@ -804,7 +857,74 @@ function buildCashflowYearContext(
     range,
     premiumHolidayMonths,
     payableMonths: Math.max(0, 12 - premiumHolidayMonths),
+    paymentHistory: {
+      premiumYearAtStart: getPremiumYearAtMonth(normalized, Math.max(range.startPolicyMonth - 1, 0)),
+      premiumYearAtEnd: getPremiumYearAtMonth(normalized, range.endPolicyMonth),
+      premiumYearMonthsInYear: countPremiumYearMonthsInRange(normalized, range.startPolicyMonth, range.endPolicyMonth),
+      premiumPaidInYear: sumRegularPremiumPaidInRange(normalized, range.startPolicyMonth, range.endPolicyMonth),
+      premiumsPaidUpToDate: arePremiumsPaidUpToDateAtMonth(normalized, range.endPolicyMonth),
+    },
   }
+}
+
+function getPremiumYearAtMonth(
+  normalized: IlpNormalizedPolicyInput,
+  policyMonth: number,
+): number {
+  if (policyMonth <= 0) return 0
+  return normalized.regularPremiums.premiumYearByPolicyMonth.get(policyMonth) ?? 0
+}
+
+function arePremiumsPaidUpToDateAtMonth(
+  normalized: IlpNormalizedPolicyInput,
+  policyMonth: number,
+): boolean {
+  if (policyMonth <= 0) return true
+  return normalized.regularPremiums.paidUpToDateByPolicyMonth.get(policyMonth) ?? true
+}
+
+function countPremiumYearMonthsInRange(
+  normalized: IlpNormalizedPolicyInput,
+  startPolicyMonth: number,
+  endPolicyMonth: number,
+): number {
+  let count = 0
+  for (let policyMonth = startPolicyMonth; policyMonth <= endPolicyMonth; policyMonth += 1) {
+    if ((normalized.regularPremiums.paidByPolicyMonth.get(policyMonth) ?? 0) > CONTRIBUTION_TOLERANCE) {
+      count += 1
+    }
+  }
+  return count
+}
+
+function sumRegularPremiumPaidInRange(
+  normalized: IlpNormalizedPolicyInput,
+  startPolicyMonth: number,
+  endPolicyMonth: number,
+): number {
+  let total = 0
+  for (let policyMonth = startPolicyMonth; policyMonth <= endPolicyMonth; policyMonth += 1) {
+    total += normalized.regularPremiums.paidByPolicyMonth.get(policyMonth) ?? 0
+  }
+  return total
+}
+
+function getRuleReferenceYear(
+  context: IlpCashflowYearContext,
+  yearBasis: 'policy-year' | 'premium-year' | undefined,
+): number {
+  return yearBasis === 'premium-year'
+    ? context.paymentHistory.premiumYearAtEnd
+    : context.policyYear
+}
+
+function getEecReferenceYear(
+  input: IlpPolicyInput,
+  context: IlpCashflowYearContext,
+): number {
+  return input.eecYearBasis === 'premium-year'
+    ? context.paymentHistory.premiumYearAtEnd
+    : context.policyYear
 }
 
 function getPolicyYearForMonth(policyMonth: number): number {
@@ -1391,13 +1511,16 @@ function getNormalizedEventsForBonusTrigger(
 function getBonusEligibilityFraction(
   normalizedBonus: IlpNormalizedBonusRule,
   normalized: IlpNormalizedPolicyInput,
-  projectionYear: number,
+  context: IlpCashflowYearContext,
 ): number {
+  if (normalizedBonus.bonus.requiresPremiumsPaidUpToDate && !context.paymentHistory.premiumsPaidUpToDate) {
+    return 0
+  }
+
   if (normalizedBonus.bonus.suspensionRules == null || normalizedBonus.bonus.suspensionRules.length === 0) {
     return 1
   }
-
-  const range = buildCashflowYearContext(normalized, projectionYear).range
+  const range = context.range
   const suspendedMonths = (normalizedBonus.bonus.suspensionRules ?? []).reduce((sum, rule) => {
     const overlapForRule = getNormalizedEventsForBonusTrigger(normalized, rule.trigger)
       .reduce((innerSum, event) => {
@@ -1416,6 +1539,15 @@ function getBonusEligibilityFraction(
   }, 0)
 
   return Math.max(0, (12 - Math.min(12, suspendedMonths)) / 12)
+}
+
+function getBonusReferenceYear(
+  normalizedBonus: IlpNormalizedBonusRule,
+  context: IlpCashflowYearContext,
+): number {
+  return normalizedBonus.bonus.yearBasis === 'premium-year'
+    ? context.paymentHistory.premiumYearAtEnd
+    : context.policyYear
 }
 
 function computeRestoredBonusCredit(
@@ -1464,7 +1596,6 @@ function computeRestoredBonusCredit(
 function computeBonusCredit(
   normalized: IlpNormalizedPolicyInput,
   accountId: string,
-  policyYear: number,
   accountOpenBalance: number,
   accountContribution: number,
   annualContribution: number,
@@ -1472,16 +1603,18 @@ function computeBonusCredit(
   projectionYear: number,
 ): number {
   let total = 0
+  const context = buildCashflowYearContext(normalized, projectionYear)
 
   for (const normalizedBonus of normalized.bonuses.rules) {
     const bonus = normalizedBonus.bonus
+    const referenceYear = getBonusReferenceYear(normalizedBonus, context)
     if (!normalizedBonus.targetAccountIds.includes(accountId)) continue
-    if (policyYear < bonus.startPolicyYear) continue
-    if (bonus.endPolicyYear != null && policyYear > bonus.endPolicyYear) continue
+    if (referenceYear < bonus.startPolicyYear) continue
+    if (bonus.endPolicyYear != null && referenceYear > bonus.endPolicyYear) continue
 
     const splitCount = Math.max(normalizedBonus.targetAccountIds.length, 1)
     const effectiveRate = resolveNormalizedBonusRate(normalizedBonus, annualContribution, currency, accountOpenBalance)
-    const eligibilityFraction = getBonusEligibilityFraction(normalizedBonus, normalized, projectionYear)
+    const eligibilityFraction = getBonusEligibilityFraction(normalizedBonus, normalized, context)
 
     switch (bonus.mode) {
       case 'annual-rate':
@@ -1495,7 +1628,7 @@ function computeBonusCredit(
         )
         break
       case 'one-time':
-        if (policyYear === bonus.startPolicyYear) {
+        if (referenceYear === bonus.startPolicyYear) {
           total += bonus.amount / splitCount
         }
         break
@@ -1542,20 +1675,21 @@ function normalizeContributionRoutes(
 
 function normalizeRecurringChargeRules(
   normalized: IlpNormalizedPolicyInput,
-  policyYear: number,
+  context: IlpCashflowYearContext,
 ): IlpNormalizedRecurringChargeRule[] {
   const { input } = normalized
-  const isPostMip = policyYear > input.mipLength
+  const isPostMip = context.policyYear > input.mipLength
 
   return (input.chargeRules ?? [])
     .filter((rule) => {
+      const referenceYear = getRuleReferenceYear(context, rule.yearBasis)
       const isActive = rule.activeWindow === 'policy-term'
         || (rule.activeWindow === 'during-mip' && !isPostMip)
         || (rule.activeWindow === 'after-mip' && isPostMip)
 
       return isActive
-        && (rule.startPolicyYear == null || policyYear >= rule.startPolicyYear)
-        && (rule.endPolicyYear == null || policyYear <= rule.endPolicyYear)
+        && (rule.startPolicyYear == null || referenceYear >= rule.startPolicyYear)
+        && (rule.endPolicyYear == null || referenceYear <= rule.endPolicyYear)
     })
     .map((rule) => ({
       rule,
@@ -1846,11 +1980,12 @@ function allocateChargeTotal(
 
 function resolveEventChargeRate(
   rule: IlpEventChargeRule,
-  policyYear: number,
+  context: IlpCashflowYearContext,
 ): number {
+  const referenceYear = getRuleReferenceYear(context, rule.yearBasis)
   const matchedTier = rule.rateSchedule?.find((tier) => (
-    policyYear >= tier.startPolicyYear
-    && (tier.endPolicyYear == null || policyYear <= tier.endPolicyYear)
+    referenceYear >= tier.startPolicyYear
+    && (tier.endPolicyYear == null || referenceYear <= tier.endPolicyYear)
   ))
 
   return matchedTier?.rate ?? rule.rate
@@ -1858,11 +1993,12 @@ function resolveEventChargeRate(
 
 function resolveChargeAmount(
   rule: IlpChargeRule,
-  policyYear: number,
+  context: IlpCashflowYearContext,
 ): number {
+  const referenceYear = getRuleReferenceYear(context, rule.yearBasis)
   const matchedTier = rule.amountSchedule?.find((tier) => (
-    policyYear >= tier.startPolicyYear
-    && (tier.endPolicyYear == null || policyYear <= tier.endPolicyYear)
+    referenceYear >= tier.startPolicyYear
+    && (tier.endPolicyYear == null || referenceYear <= tier.endPolicyYear)
   ))
 
   return matchedTier?.amount ?? rule.amount
@@ -1870,11 +2006,12 @@ function resolveChargeAmount(
 
 function resolveChargeRate(
   rule: IlpChargeRule,
-  policyYear: number,
+  context: IlpCashflowYearContext,
 ): number {
+  const referenceYear = getRuleReferenceYear(context, rule.yearBasis)
   const matchedTier = rule.rateSchedule?.find((tier) => (
-    policyYear >= tier.startPolicyYear
-    && (tier.endPolicyYear == null || policyYear <= tier.endPolicyYear)
+    referenceYear >= tier.startPolicyYear
+    && (tier.endPolicyYear == null || referenceYear <= tier.endPolicyYear)
   ))
 
   return matchedTier?.rate ?? rule.rate
@@ -1882,11 +2019,15 @@ function resolveChargeRate(
 
 function resolvePremiumBaseMultiplier(
   rule: IlpChargeRule,
-  policyYear: number,
+  context: IlpCashflowYearContext,
 ): number {
+  const referenceYear = getRuleReferenceYear(
+    context,
+    rule.premiumBaseConfig?.multiplierYearBasis ?? rule.yearBasis,
+  )
   const matchedTier = rule.premiumBaseConfig?.multiplierSchedule.find((tier) => (
-    policyYear >= tier.startPolicyYear
-    && (tier.endPolicyYear == null || policyYear <= tier.endPolicyYear)
+    referenceYear >= tier.startPolicyYear
+    && (tier.endPolicyYear == null || referenceYear <= tier.endPolicyYear)
   ))
 
   if (!matchedTier) {
@@ -1894,14 +2035,14 @@ function resolvePremiumBaseMultiplier(
   }
 
   return matchedTier.mode === 'policy-year'
-    ? policyYear
+    ? referenceYear
     : Math.max(0, matchedTier.multiplier ?? 0)
 }
 
 function resolveCumulativePaidRegularPremiumRate(
   normalized: IlpNormalizedPolicyInput,
   rule: IlpChargeRule,
-  policyYear: number,
+  context: IlpCashflowYearContext,
   policyMonth: number,
 ): number {
   const annualisedPremiumAtIssue = rule.cumulativePaidPremiumConfig?.annualisedPremiumAtIssue
@@ -1921,13 +2062,13 @@ function resolveCumulativePaidRegularPremiumRate(
     }
   }
 
-  return resolveChargeRate(rule, policyYear)
+  return resolveChargeRate(rule, context)
 }
 
 function computePremiumBaseMultiplierCharge(
   normalized: IlpNormalizedPolicyInput,
   projectionYear: number,
-  policyYear: number,
+  context: IlpCashflowYearContext,
   rule: IlpChargeRule,
 ): number {
   if (!rule.premiumBaseConfig) {
@@ -1936,9 +2077,10 @@ function computePremiumBaseMultiplierCharge(
 
   const range = buildCashflowYearContext(normalized, projectionYear).range
   const committedAnnualPremium = normalized.input.monthlyContribution * 12
-  const multiplier = resolvePremiumBaseMultiplier(rule, policyYear)
+  const multiplier = resolvePremiumBaseMultiplier(rule, context)
+  const rate = resolveChargeRate(rule, context)
 
-  if (multiplier <= 0) {
+  if (multiplier <= 0 || rate <= 0) {
     return 0
   }
 
@@ -1949,7 +2091,7 @@ function computePremiumBaseMultiplierCharge(
       ? Math.max(committedAnnualPremium, prevailingAnnualPremium)
       : prevailingAnnualPremium
 
-    total += (rule.rate / 12) * premiumBase * multiplier
+    total += (rate / 12) * premiumBase * multiplier
   }
 
   return total
@@ -1958,7 +2100,7 @@ function computePremiumBaseMultiplierCharge(
 function computeCumulativePaidRegularPremiumCharge(
   normalized: IlpNormalizedPolicyInput,
   projectionYear: number,
-  policyYear: number,
+  context: IlpCashflowYearContext,
   rule: IlpChargeRule,
 ): number {
   const range = buildCashflowYearContext(normalized, projectionYear).range
@@ -1966,7 +2108,7 @@ function computeCumulativePaidRegularPremiumCharge(
 
   for (let policyMonth = range.startPolicyMonth; policyMonth <= range.endPolicyMonth; policyMonth += 1) {
     const cumulativePaidRegularPremium = getCumulativePaidRegularPremiumAtMonth(normalized, policyMonth)
-    const rate = resolveCumulativePaidRegularPremiumRate(normalized, rule, policyYear, policyMonth)
+    const rate = resolveCumulativePaidRegularPremiumRate(normalized, rule, context, policyMonth)
     total += (rate / 12) * cumulativePaidRegularPremium
   }
 
@@ -2037,6 +2179,7 @@ function computePremiumHolidayChargeForEvent(
   normalized: IlpNormalizedPolicyInput,
   event: IlpPolicyEvent,
   rule: IlpEventChargeRule,
+  context: IlpCashflowYearContext,
   monthRange?: { start: number, end: number },
   useCommittedPremium = false,
 ): number {
@@ -2061,10 +2204,20 @@ function computePremiumHolidayChargeForEvent(
     }
 
     const policyYear = getPolicyYearForMonth(policyMonth)
+    const monthlyContext: IlpCashflowYearContext = {
+      ...context,
+      policyYear,
+      paymentHistory: {
+        ...context.paymentHistory,
+        premiumYearAtStart: getPremiumYearAtMonth(normalized, policyMonth - 1),
+        premiumYearAtEnd: getPremiumYearAtMonth(normalized, policyMonth),
+        premiumsPaidUpToDate: arePremiumsPaidUpToDateAtMonth(normalized, policyMonth),
+      },
+    }
     const monthlyPremium = useCommittedPremium
       ? normalized.input.monthlyContribution
       : getScheduledMonthlyPremiumAtMonth(normalized, policyMonth)
-    total += monthlyPremium * resolveEventChargeRate(rule, policyYear)
+    total += monthlyPremium * resolveEventChargeRate(rule, monthlyContext)
   }
 
   return total
@@ -2113,13 +2266,13 @@ function computeFreePartialWithdrawalAmount(
 function computeAdditionalChargeByAccount(
   normalized: IlpNormalizedPolicyInput,
   projectionYear: number,
-  policyYear: number,
+  context: IlpCashflowYearContext,
   openBalances: Map<string, number>,
   contributionByAccount: Map<string, number>,
 ): Map<string, number> {
   const { input } = normalized
   const charges = new Map<string, number>(input.accounts.map((account) => [account.id, 0]))
-  const chargeRules = normalizeRecurringChargeRules(normalized, policyYear)
+  const chargeRules = normalizeRecurringChargeRules(normalized, context)
 
   for (const { rule, appliesTo, fallbackAppliesTo } of chargeRules) {
 
@@ -2127,20 +2280,20 @@ function computeAdditionalChargeByAccount(
       case 'account-value':
         for (const account of appliesTo) {
           const open = openBalances.get(account.id) ?? 0
-          charges.set(account.id, (charges.get(account.id) ?? 0) + (open * resolveChargeRate(rule, policyYear)))
+          charges.set(account.id, (charges.get(account.id) ?? 0) + (open * resolveChargeRate(rule, context)))
         }
         break
 
       case 'annual-contribution':
         for (const account of appliesTo) {
           const routedContribution = contributionByAccount.get(account.id) ?? 0
-          charges.set(account.id, (charges.get(account.id) ?? 0) + (routedContribution * resolveChargeRate(rule, policyYear)))
+          charges.set(account.id, (charges.get(account.id) ?? 0) + (routedContribution * resolveChargeRate(rule, context)))
         }
         break
 
       case 'fixed-annual': {
         const allocations = applyChargeAllocationsWithFallback(
-          resolveChargeAmount(rule, policyYear),
+          resolveChargeAmount(rule, context),
           rule.allocation,
           appliesTo,
           fallbackAppliesTo,
@@ -2156,7 +2309,7 @@ function computeAdditionalChargeByAccount(
         break
 
       case 'premium-base-mip-multiplier': {
-        const totalCharge = computePremiumBaseMultiplierCharge(normalized, projectionYear, policyYear, rule)
+        const totalCharge = computePremiumBaseMultiplierCharge(normalized, projectionYear, context, rule)
         const allocations = applyChargeAllocationsWithFallback(
           totalCharge,
           rule.allocation,
@@ -2171,7 +2324,7 @@ function computeAdditionalChargeByAccount(
       }
 
       case 'cumulative-paid-regular-premium': {
-        const totalCharge = computeCumulativePaidRegularPremiumCharge(normalized, projectionYear, policyYear, rule)
+        const totalCharge = computeCumulativePaidRegularPremiumCharge(normalized, projectionYear, context, rule)
         const allocations = applyChargeAllocationsWithFallback(
           totalCharge,
           rule.allocation,
@@ -2219,7 +2372,16 @@ function computeEventChargeByAccount(
       }
 
       let totalCharge = 0
-      const effectiveRuleRate = resolveEventChargeRate(rule, getPolicyYearForMonth(event.startPolicyMonth))
+      const effectiveRuleRate = resolveEventChargeRate(rule, {
+        ...context,
+        policyYear: getPolicyYearForMonth(event.startPolicyMonth),
+        paymentHistory: {
+          ...context.paymentHistory,
+          premiumYearAtStart: getPremiumYearAtMonth(normalized, event.startPolicyMonth - 1),
+          premiumYearAtEnd: getPremiumYearAtMonth(normalized, event.startPolicyMonth),
+          premiumsPaidUpToDate: arePremiumsPaidUpToDateAtMonth(normalized, event.startPolicyMonth),
+        },
+      })
       const appliesTo = resolveWithdrawalChargeAccounts(normalized, rule, event)
       if (appliesTo.length === 0) continue
 
@@ -2249,14 +2411,14 @@ function computeEventChargeByAccount(
           break
 
         case 'annual-premium-with-overlap-months':
-          totalCharge = computePremiumHolidayChargeForEvent(normalized, event as IlpPolicyEvent, rule, {
+          totalCharge = computePremiumHolidayChargeForEvent(normalized, event as IlpPolicyEvent, rule, context, {
             start: context.range.startPolicyMonth,
             end: context.range.endPolicyMonth,
           }) + rule.amount
           break
 
         case 'committed-annual-premium-with-overlap-months':
-          totalCharge = computePremiumHolidayChargeForEvent(normalized, event as IlpPolicyEvent, rule, {
+          totalCharge = computePremiumHolidayChargeForEvent(normalized, event as IlpPolicyEvent, rule, context, {
             start: context.range.startPolicyMonth,
             end: context.range.endPolicyMonth,
           }, true) + rule.amount
@@ -2272,7 +2434,7 @@ function computeEventChargeByAccount(
             break
           }
 
-          const sourceCharge = computePremiumHolidayChargeForEvent(normalized, sourceEvent, sourceChargeRule)
+          const sourceCharge = computePremiumHolidayChargeForEvent(normalized, sourceEvent, sourceChargeRule, context)
           totalCharge = -(sourceCharge * effectiveRuleRate) + rule.amount
           break
         }
@@ -2292,7 +2454,16 @@ function computeEventChargeByAccount(
           totalCharge = 0
           for (let policyMonth = context.range.startPolicyMonth; policyMonth <= context.range.endPolicyMonth; policyMonth += 1) {
             const monthShortfall = ((input.monthlyContribution * 12) - getScheduledAnnualPremiumAtMonth(normalized, policyMonth)) / 12
-            totalCharge += monthShortfall * resolveEventChargeRate(rule, getPolicyYearForMonth(policyMonth))
+            totalCharge += monthShortfall * resolveEventChargeRate(rule, {
+              ...context,
+              policyYear: getPolicyYearForMonth(policyMonth),
+              paymentHistory: {
+                ...context.paymentHistory,
+                premiumYearAtStart: getPremiumYearAtMonth(normalized, policyMonth - 1),
+                premiumYearAtEnd: getPremiumYearAtMonth(normalized, policyMonth),
+                premiumsPaidUpToDate: arePremiumsPaidUpToDateAtMonth(normalized, policyMonth),
+              },
+            })
           }
           totalCharge += rule.amount
           break
@@ -2397,7 +2568,9 @@ export function projectIlpPolicy(
     const scheduledContributionForYear = (isPostMip && !hasAfterMipContributionRules(input))
       ? 0
       : Math.max(0, annualContribution - getRegularPremiumReductionForYear(normalized, year))
-    const eecRate = isPostMip ? 0 : lookupEecRate(policyYear, input.eecTable)
+    const context = buildCashflowYearContext(normalized, year)
+    const eecReferenceYear = getEecReferenceYear(input, context)
+    const eecRate = isPostMip ? 0 : lookupEecRate(eecReferenceYear, input.eecTable)
     const openBalances = new Map(
       input.accounts.map((account) => [account.id, previousClose.get(account.id) ?? account.currentValue]),
     )
@@ -2425,7 +2598,7 @@ export function projectIlpPolicy(
     const additionalChargeByAccount = computeAdditionalChargeByAccount(
       normalized,
       year,
-      policyYear,
+      context,
       openBalances,
       contributionByAccount,
     )
@@ -2443,7 +2616,6 @@ export function projectIlpPolicy(
       const bonusCredit = computeBonusCredit(
         normalized,
         account.id,
-        policyYear,
         open,
         accountContribution,
         contributionForYear,
@@ -2496,7 +2668,6 @@ export function projectIlpPolicy(
       const bonusCredit = computeBonusCredit(
         normalized,
         account.id,
-        policyYear,
         open,
         accountContribution,
         contributionForYear,

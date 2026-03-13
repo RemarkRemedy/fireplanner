@@ -10678,6 +10678,2174 @@
     ]
   },
   {
+    "id": "hsbc-life-goal-builder-ii",
+    "insurer": "HSBC Life",
+    "productName": "Goal Builder II",
+    "sourceFileName": "GBII_Summary.pdf",
+    "sourceChecksumSha256": "21293501f779d5718c87160a5bfae50bcb38438b39afc16c7d6453b78bc7c3e3",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:goal-builder-ii-welcome-bonus",
+      "branch:goal-builder-ii-welcome-bonus-recovery",
+      "branch:goal-builder-ii-premium-year-paf",
+      "branch:goal-builder-ii-top-up-premium-charge",
+      "branch:goal-builder-ii-recurrent-single-premium-charge",
+      "branch:goal-builder-ii-premium-year-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "goal-builder-ii-loyalty-bonus-cadence",
+      "goal-builder-ii-death-ti-benefit",
+      "goal-builder-ii-dividend-payout-election",
+      "goal-builder-ii-regular-withdrawal"
+    ],
+    "warnings": [
+      "Goal Builder II is a partial modeled subset in V1. Premium-Year-based Product Administration Fee and surrender mechanics are modeled; loyalty bonus cadence, payout election, and death/TI payout mechanics are not."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-5",
+        "currency": "SGD",
+        "mipLength": 5,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "• A 5, 10 or 15-year limited premium payment investment-linked product that provides insurance protection up to Age 99. • This product is available in SGD and USD. • This product allows you to invest your money in a rang"
+              },
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "welcome-bonus",
+            "type": "allocation",
+            "label": "Welcome Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.15
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": null,
+                "rate": 0.3
+              }
+            ],
+            "notes": [
+              "Applied to regular premiums paid in the first policy year only.",
+              "Top-up premiums and recurrent single premiums are excluded."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome bonus",
+                "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "product-administration-fee",
+            "label": "Product Administration Fee",
+            "basis": "premium-base-mip-multiplier",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": null,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 5,
+                  "mode": "policy-year"
+                },
+                {
+                  "startPolicyYear": 6,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 5
+                }
+              ]
+            },
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 8,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 24,
+                "rate": 0.006
+              }
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 24,
+            "notes": [
+              "Premium Year selects the annual PAF band while Policy Year capped at premium term determines the multiplier.",
+              "Premium holidays freeze Premium Year but do not stop the Product Administration Fee."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Product Administration Fee",
+                "excerpt": "5.2 Product Administration Fee (PAF) For the first 24 Premium Years, an annual PAF is payable by cancellation of Units from your Policy on a monthly basis. If there is rounding of the fee, it will be rounded down. The mo"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on ad-hoc top-up premiums after units are allocated."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurrent Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "after-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on recurrent single premium contributions after the premium term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "yearBasis": "premium-year",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.1
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Uses the same premium-year based surrender penalty schedule as full surrender during the penalty period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Surrender penalty charge",
+                "excerpt": "5.5 Surrender Penalty Charge There will be a surrender penalty charge for any Partial Withdrawal or Full Surrender made on or before 8, 10 or 15 Premium Years according to your chosen Premium Term as per the table below:"
+              }
+            ]
+          },
+          {
+            "id": "welcome-bonus-recovery-charge",
+            "label": "Welcome Bonus Recovery Charge",
+            "trigger": "regular-premium-reduction",
+            "basis": "premium-reduction-tiered-startup-recovery",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "sourceBonusId": "welcome-bonus",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published Welcome Bonus recovery formula on approved premium reduction."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome bonus",
+                "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.75,
+          0.6,
+          0.5,
+          0.3,
+          0.2,
+          0.1
+        ],
+        "eecYearBasis": "premium-year",
+        "warnings": [
+          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
+          "Loyalty Bonus remains informational only in V1 because its every-2-Premium-Year cadence and 24-month top-up exclusion are not yet modeled.",
+          "Dividend-paying funds are treated as reinvesting by default in V1. Cash payout elections remain informational only and are not reflected in projected values."
+        ],
+        "unsupportedItems": [
+          "Loyalty Bonus cadence and top-up exclusion window remain informational only.",
+          "Death and terminal illness benefit payout mechanics remain informational only.",
+          "Dividend payout election remains informational only.",
+          "Automatic paid-up / lapse state is not modeled beyond premium-holiday fee drag.",
+          "Regular withdrawal behavior remains informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "• A 5, 10 or 15-year limited premium payment investment-linked product that provides insurance protection up to Age 99. • This product is available in SGD and USD. • This product allows you to invest your money in a rang"
+          },
+          {
+            "page": 4,
+            "section": "Welcome bonus",
+            "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+          },
+          {
+            "page": 5,
+            "section": "Premium Year and loyalty bonus",
+            "excerpt": "You will be entitled to a loyalty bonus (“Loyalty Bonus”) at the end of Premium Year 10, and every 2 years thereafter until Premium Year 24 if your Policy is still in force at the relevant time. The Loyalty Bonus is equi"
+          },
+          {
+            "page": 8,
+            "section": "Product Administration Fee",
+            "excerpt": "5.2 Product Administration Fee (PAF) For the first 24 Premium Years, an annual PAF is payable by cancellation of Units from your Policy on a monthly basis. If there is rounding of the fee, it will be rounded down. The mo"
+          },
+          {
+            "page": 9,
+            "section": "Surrender penalty charge",
+            "excerpt": "5.5 Surrender Penalty Charge There will be a surrender penalty charge for any Partial Withdrawal or Full Surrender made on or before 8, 10 or 15 Premium Years according to your chosen Premium Term as per the table below:"
+          },
+          {
+            "page": 11,
+            "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+            "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+          },
+          {
+            "page": 15,
+            "section": "Dividends",
+            "excerpt": "websites or upon your request to us. You may refer to the individual ILP Sub-Fund Product Highlights Sheets for more details. 14 Valuation of Units The Unit Price of the Units in the respective Fund(s) will be determined"
+          }
+        ]
+      },
+      {
+        "id": "usd-mip-5",
+        "currency": "USD",
+        "mipLength": 5,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "• A 5, 10 or 15-year limited premium payment investment-linked product that provides insurance protection up to Age 99. • This product is available in SGD and USD. • This product allows you to invest your money in a rang"
+              },
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "welcome-bonus",
+            "type": "allocation",
+            "label": "Welcome Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "USD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.15
+              },
+              {
+                "currency": "USD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": null,
+                "rate": 0.3
+              }
+            ],
+            "notes": [
+              "Applied to regular premiums paid in the first policy year only.",
+              "Top-up premiums and recurrent single premiums are excluded."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome bonus",
+                "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "product-administration-fee",
+            "label": "Product Administration Fee",
+            "basis": "premium-base-mip-multiplier",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": null,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 5,
+                  "mode": "policy-year"
+                },
+                {
+                  "startPolicyYear": 6,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 5
+                }
+              ]
+            },
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 8,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 24,
+                "rate": 0.006
+              }
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 24,
+            "notes": [
+              "Premium Year selects the annual PAF band while Policy Year capped at premium term determines the multiplier.",
+              "Premium holidays freeze Premium Year but do not stop the Product Administration Fee."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Product Administration Fee",
+                "excerpt": "5.2 Product Administration Fee (PAF) For the first 24 Premium Years, an annual PAF is payable by cancellation of Units from your Policy on a monthly basis. If there is rounding of the fee, it will be rounded down. The mo"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on ad-hoc top-up premiums after units are allocated."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurrent Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "after-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on recurrent single premium contributions after the premium term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "yearBasis": "premium-year",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.1
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Uses the same premium-year based surrender penalty schedule as full surrender during the penalty period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Surrender penalty charge",
+                "excerpt": "5.5 Surrender Penalty Charge There will be a surrender penalty charge for any Partial Withdrawal or Full Surrender made on or before 8, 10 or 15 Premium Years according to your chosen Premium Term as per the table below:"
+              }
+            ]
+          },
+          {
+            "id": "welcome-bonus-recovery-charge",
+            "label": "Welcome Bonus Recovery Charge",
+            "trigger": "regular-premium-reduction",
+            "basis": "premium-reduction-tiered-startup-recovery",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "sourceBonusId": "welcome-bonus",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published Welcome Bonus recovery formula on approved premium reduction."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome bonus",
+                "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.75,
+          0.6,
+          0.5,
+          0.3,
+          0.2,
+          0.1
+        ],
+        "eecYearBasis": "premium-year",
+        "warnings": [
+          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
+          "Loyalty Bonus remains informational only in V1 because its every-2-Premium-Year cadence and 24-month top-up exclusion are not yet modeled.",
+          "Dividend-paying funds are treated as reinvesting by default in V1. Cash payout elections remain informational only and are not reflected in projected values."
+        ],
+        "unsupportedItems": [
+          "Loyalty Bonus cadence and top-up exclusion window remain informational only.",
+          "Death and terminal illness benefit payout mechanics remain informational only.",
+          "Dividend payout election remains informational only.",
+          "Automatic paid-up / lapse state is not modeled beyond premium-holiday fee drag.",
+          "Regular withdrawal behavior remains informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "• A 5, 10 or 15-year limited premium payment investment-linked product that provides insurance protection up to Age 99. • This product is available in SGD and USD. • This product allows you to invest your money in a rang"
+          },
+          {
+            "page": 4,
+            "section": "Welcome bonus",
+            "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+          },
+          {
+            "page": 5,
+            "section": "Premium Year and loyalty bonus",
+            "excerpt": "You will be entitled to a loyalty bonus (“Loyalty Bonus”) at the end of Premium Year 10, and every 2 years thereafter until Premium Year 24 if your Policy is still in force at the relevant time. The Loyalty Bonus is equi"
+          },
+          {
+            "page": 8,
+            "section": "Product Administration Fee",
+            "excerpt": "5.2 Product Administration Fee (PAF) For the first 24 Premium Years, an annual PAF is payable by cancellation of Units from your Policy on a monthly basis. If there is rounding of the fee, it will be rounded down. The mo"
+          },
+          {
+            "page": 9,
+            "section": "Surrender penalty charge",
+            "excerpt": "5.5 Surrender Penalty Charge There will be a surrender penalty charge for any Partial Withdrawal or Full Surrender made on or before 8, 10 or 15 Premium Years according to your chosen Premium Term as per the table below:"
+          },
+          {
+            "page": 11,
+            "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+            "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+          },
+          {
+            "page": 15,
+            "section": "Dividends",
+            "excerpt": "websites or upon your request to us. You may refer to the individual ILP Sub-Fund Product Highlights Sheets for more details. 14 Valuation of Units The Unit Price of the Units in the respective Fund(s) will be determined"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-10",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "• A 5, 10 or 15-year limited premium payment investment-linked product that provides insurance protection up to Age 99. • This product is available in SGD and USD. • This product allows you to invest your money in a rang"
+              },
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "welcome-bonus",
+            "type": "allocation",
+            "label": "Welcome Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.2
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": null,
+                "rate": 0.4
+              }
+            ],
+            "notes": [
+              "Applied to regular premiums paid in the first policy year only.",
+              "Top-up premiums and recurrent single premiums are excluded."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome bonus",
+                "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "product-administration-fee",
+            "label": "Product Administration Fee",
+            "basis": "premium-base-mip-multiplier",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": null,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 10,
+                  "mode": "policy-year"
+                },
+                {
+                  "startPolicyYear": 11,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 10
+                }
+              ]
+            },
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 8,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 24,
+                "rate": 0.006
+              }
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 24,
+            "notes": [
+              "Premium Year selects the annual PAF band while Policy Year capped at premium term determines the multiplier.",
+              "Premium holidays freeze Premium Year but do not stop the Product Administration Fee."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Product Administration Fee",
+                "excerpt": "5.2 Product Administration Fee (PAF) For the first 24 Premium Years, an annual PAF is payable by cancellation of Units from your Policy on a monthly basis. If there is rounding of the fee, it will be rounded down. The mo"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on ad-hoc top-up premiums after units are allocated."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurrent Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "after-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on recurrent single premium contributions after the premium term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "yearBasis": "premium-year",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.1
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Uses the same premium-year based surrender penalty schedule as full surrender during the penalty period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Surrender penalty charge",
+                "excerpt": "5.5 Surrender Penalty Charge There will be a surrender penalty charge for any Partial Withdrawal or Full Surrender made on or before 8, 10 or 15 Premium Years according to your chosen Premium Term as per the table below:"
+              }
+            ]
+          },
+          {
+            "id": "welcome-bonus-recovery-charge",
+            "label": "Welcome Bonus Recovery Charge",
+            "trigger": "regular-premium-reduction",
+            "basis": "premium-reduction-tiered-startup-recovery",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "sourceBonusId": "welcome-bonus",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published Welcome Bonus recovery formula on approved premium reduction."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome bonus",
+                "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.75,
+          0.6,
+          0.5,
+          0.4,
+          0.3,
+          0.2,
+          0.1,
+          0.1
+        ],
+        "eecYearBasis": "premium-year",
+        "warnings": [
+          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
+          "Loyalty Bonus remains informational only in V1 because its every-2-Premium-Year cadence and 24-month top-up exclusion are not yet modeled.",
+          "Dividend-paying funds are treated as reinvesting by default in V1. Cash payout elections remain informational only and are not reflected in projected values."
+        ],
+        "unsupportedItems": [
+          "Loyalty Bonus cadence and top-up exclusion window remain informational only.",
+          "Death and terminal illness benefit payout mechanics remain informational only.",
+          "Dividend payout election remains informational only.",
+          "Automatic paid-up / lapse state is not modeled beyond premium-holiday fee drag.",
+          "Regular withdrawal behavior remains informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "• A 5, 10 or 15-year limited premium payment investment-linked product that provides insurance protection up to Age 99. • This product is available in SGD and USD. • This product allows you to invest your money in a rang"
+          },
+          {
+            "page": 4,
+            "section": "Welcome bonus",
+            "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+          },
+          {
+            "page": 5,
+            "section": "Premium Year and loyalty bonus",
+            "excerpt": "You will be entitled to a loyalty bonus (“Loyalty Bonus”) at the end of Premium Year 10, and every 2 years thereafter until Premium Year 24 if your Policy is still in force at the relevant time. The Loyalty Bonus is equi"
+          },
+          {
+            "page": 8,
+            "section": "Product Administration Fee",
+            "excerpt": "5.2 Product Administration Fee (PAF) For the first 24 Premium Years, an annual PAF is payable by cancellation of Units from your Policy on a monthly basis. If there is rounding of the fee, it will be rounded down. The mo"
+          },
+          {
+            "page": 9,
+            "section": "Surrender penalty charge",
+            "excerpt": "5.5 Surrender Penalty Charge There will be a surrender penalty charge for any Partial Withdrawal or Full Surrender made on or before 8, 10 or 15 Premium Years according to your chosen Premium Term as per the table below:"
+          },
+          {
+            "page": 11,
+            "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+            "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+          },
+          {
+            "page": 15,
+            "section": "Dividends",
+            "excerpt": "websites or upon your request to us. You may refer to the individual ILP Sub-Fund Product Highlights Sheets for more details. 14 Valuation of Units The Unit Price of the Units in the respective Fund(s) will be determined"
+          }
+        ]
+      },
+      {
+        "id": "usd-mip-10",
+        "currency": "USD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "• A 5, 10 or 15-year limited premium payment investment-linked product that provides insurance protection up to Age 99. • This product is available in SGD and USD. • This product allows you to invest your money in a rang"
+              },
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "welcome-bonus",
+            "type": "allocation",
+            "label": "Welcome Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "USD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.2
+              },
+              {
+                "currency": "USD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": null,
+                "rate": 0.4
+              }
+            ],
+            "notes": [
+              "Applied to regular premiums paid in the first policy year only.",
+              "Top-up premiums and recurrent single premiums are excluded."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome bonus",
+                "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "product-administration-fee",
+            "label": "Product Administration Fee",
+            "basis": "premium-base-mip-multiplier",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": null,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 10,
+                  "mode": "policy-year"
+                },
+                {
+                  "startPolicyYear": 11,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 10
+                }
+              ]
+            },
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 8,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 24,
+                "rate": 0.006
+              }
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 24,
+            "notes": [
+              "Premium Year selects the annual PAF band while Policy Year capped at premium term determines the multiplier.",
+              "Premium holidays freeze Premium Year but do not stop the Product Administration Fee."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Product Administration Fee",
+                "excerpt": "5.2 Product Administration Fee (PAF) For the first 24 Premium Years, an annual PAF is payable by cancellation of Units from your Policy on a monthly basis. If there is rounding of the fee, it will be rounded down. The mo"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on ad-hoc top-up premiums after units are allocated."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurrent Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "after-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on recurrent single premium contributions after the premium term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "yearBasis": "premium-year",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.1
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Uses the same premium-year based surrender penalty schedule as full surrender during the penalty period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Surrender penalty charge",
+                "excerpt": "5.5 Surrender Penalty Charge There will be a surrender penalty charge for any Partial Withdrawal or Full Surrender made on or before 8, 10 or 15 Premium Years according to your chosen Premium Term as per the table below:"
+              }
+            ]
+          },
+          {
+            "id": "welcome-bonus-recovery-charge",
+            "label": "Welcome Bonus Recovery Charge",
+            "trigger": "regular-premium-reduction",
+            "basis": "premium-reduction-tiered-startup-recovery",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "sourceBonusId": "welcome-bonus",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published Welcome Bonus recovery formula on approved premium reduction."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome bonus",
+                "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.75,
+          0.6,
+          0.5,
+          0.4,
+          0.3,
+          0.2,
+          0.1,
+          0.1
+        ],
+        "eecYearBasis": "premium-year",
+        "warnings": [
+          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
+          "Loyalty Bonus remains informational only in V1 because its every-2-Premium-Year cadence and 24-month top-up exclusion are not yet modeled.",
+          "Dividend-paying funds are treated as reinvesting by default in V1. Cash payout elections remain informational only and are not reflected in projected values."
+        ],
+        "unsupportedItems": [
+          "Loyalty Bonus cadence and top-up exclusion window remain informational only.",
+          "Death and terminal illness benefit payout mechanics remain informational only.",
+          "Dividend payout election remains informational only.",
+          "Automatic paid-up / lapse state is not modeled beyond premium-holiday fee drag.",
+          "Regular withdrawal behavior remains informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "• A 5, 10 or 15-year limited premium payment investment-linked product that provides insurance protection up to Age 99. • This product is available in SGD and USD. • This product allows you to invest your money in a rang"
+          },
+          {
+            "page": 4,
+            "section": "Welcome bonus",
+            "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+          },
+          {
+            "page": 5,
+            "section": "Premium Year and loyalty bonus",
+            "excerpt": "You will be entitled to a loyalty bonus (“Loyalty Bonus”) at the end of Premium Year 10, and every 2 years thereafter until Premium Year 24 if your Policy is still in force at the relevant time. The Loyalty Bonus is equi"
+          },
+          {
+            "page": 8,
+            "section": "Product Administration Fee",
+            "excerpt": "5.2 Product Administration Fee (PAF) For the first 24 Premium Years, an annual PAF is payable by cancellation of Units from your Policy on a monthly basis. If there is rounding of the fee, it will be rounded down. The mo"
+          },
+          {
+            "page": 9,
+            "section": "Surrender penalty charge",
+            "excerpt": "5.5 Surrender Penalty Charge There will be a surrender penalty charge for any Partial Withdrawal or Full Surrender made on or before 8, 10 or 15 Premium Years according to your chosen Premium Term as per the table below:"
+          },
+          {
+            "page": 11,
+            "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+            "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+          },
+          {
+            "page": 15,
+            "section": "Dividends",
+            "excerpt": "websites or upon your request to us. You may refer to the individual ILP Sub-Fund Product Highlights Sheets for more details. 14 Valuation of Units The Unit Price of the Units in the respective Fund(s) will be determined"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-15",
+        "currency": "SGD",
+        "mipLength": 15,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "• A 5, 10 or 15-year limited premium payment investment-linked product that provides insurance protection up to Age 99. • This product is available in SGD and USD. • This product allows you to invest your money in a rang"
+              },
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "welcome-bonus",
+            "type": "allocation",
+            "label": "Welcome Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.3
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": null,
+                "rate": 0.55
+              }
+            ],
+            "notes": [
+              "Applied to regular premiums paid in the first policy year only.",
+              "Top-up premiums and recurrent single premiums are excluded."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome bonus",
+                "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "product-administration-fee",
+            "label": "Product Administration Fee",
+            "basis": "premium-base-mip-multiplier",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": null,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 15,
+                  "mode": "policy-year"
+                },
+                {
+                  "startPolicyYear": 16,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 15
+                }
+              ]
+            },
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 8,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 24,
+                "rate": 0.006
+              }
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 24,
+            "notes": [
+              "Premium Year selects the annual PAF band while Policy Year capped at premium term determines the multiplier.",
+              "Premium holidays freeze Premium Year but do not stop the Product Administration Fee."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Product Administration Fee",
+                "excerpt": "5.2 Product Administration Fee (PAF) For the first 24 Premium Years, an annual PAF is payable by cancellation of Units from your Policy on a monthly basis. If there is rounding of the fee, it will be rounded down. The mo"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on ad-hoc top-up premiums after units are allocated."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurrent Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "after-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on recurrent single premium contributions after the premium term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "yearBasis": "premium-year",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.7
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Uses the same premium-year based surrender penalty schedule as full surrender during the penalty period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Surrender penalty charge",
+                "excerpt": "5.5 Surrender Penalty Charge There will be a surrender penalty charge for any Partial Withdrawal or Full Surrender made on or before 8, 10 or 15 Premium Years according to your chosen Premium Term as per the table below:"
+              }
+            ]
+          },
+          {
+            "id": "welcome-bonus-recovery-charge",
+            "label": "Welcome Bonus Recovery Charge",
+            "trigger": "regular-premium-reduction",
+            "basis": "premium-reduction-tiered-startup-recovery",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "sourceBonusId": "welcome-bonus",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published Welcome Bonus recovery formula on approved premium reduction."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome bonus",
+                "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.75,
+          0.7,
+          0.6,
+          0.5,
+          0.4,
+          0.3,
+          0.2,
+          0.1,
+          0.08,
+          0.08,
+          0.08,
+          0.08,
+          0.08
+        ],
+        "eecYearBasis": "premium-year",
+        "warnings": [
+          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
+          "Loyalty Bonus remains informational only in V1 because its every-2-Premium-Year cadence and 24-month top-up exclusion are not yet modeled.",
+          "Dividend-paying funds are treated as reinvesting by default in V1. Cash payout elections remain informational only and are not reflected in projected values."
+        ],
+        "unsupportedItems": [
+          "Loyalty Bonus cadence and top-up exclusion window remain informational only.",
+          "Death and terminal illness benefit payout mechanics remain informational only.",
+          "Dividend payout election remains informational only.",
+          "Automatic paid-up / lapse state is not modeled beyond premium-holiday fee drag.",
+          "Regular withdrawal behavior remains informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "• A 5, 10 or 15-year limited premium payment investment-linked product that provides insurance protection up to Age 99. • This product is available in SGD and USD. • This product allows you to invest your money in a rang"
+          },
+          {
+            "page": 4,
+            "section": "Welcome bonus",
+            "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+          },
+          {
+            "page": 5,
+            "section": "Premium Year and loyalty bonus",
+            "excerpt": "You will be entitled to a loyalty bonus (“Loyalty Bonus”) at the end of Premium Year 10, and every 2 years thereafter until Premium Year 24 if your Policy is still in force at the relevant time. The Loyalty Bonus is equi"
+          },
+          {
+            "page": 8,
+            "section": "Product Administration Fee",
+            "excerpt": "5.2 Product Administration Fee (PAF) For the first 24 Premium Years, an annual PAF is payable by cancellation of Units from your Policy on a monthly basis. If there is rounding of the fee, it will be rounded down. The mo"
+          },
+          {
+            "page": 9,
+            "section": "Surrender penalty charge",
+            "excerpt": "5.5 Surrender Penalty Charge There will be a surrender penalty charge for any Partial Withdrawal or Full Surrender made on or before 8, 10 or 15 Premium Years according to your chosen Premium Term as per the table below:"
+          },
+          {
+            "page": 11,
+            "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+            "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+          },
+          {
+            "page": 15,
+            "section": "Dividends",
+            "excerpt": "websites or upon your request to us. You may refer to the individual ILP Sub-Fund Product Highlights Sheets for more details. 14 Valuation of Units The Unit Price of the Units in the respective Fund(s) will be determined"
+          }
+        ]
+      },
+      {
+        "id": "usd-mip-15",
+        "currency": "USD",
+        "mipLength": 15,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "• A 5, 10 or 15-year limited premium payment investment-linked product that provides insurance protection up to Age 99. • This product is available in SGD and USD. • This product allows you to invest your money in a rang"
+              },
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "welcome-bonus",
+            "type": "allocation",
+            "label": "Welcome Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "USD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.3
+              },
+              {
+                "currency": "USD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": null,
+                "rate": 0.55
+              }
+            ],
+            "notes": [
+              "Applied to regular premiums paid in the first policy year only.",
+              "Top-up premiums and recurrent single premiums are excluded."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome bonus",
+                "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "product-administration-fee",
+            "label": "Product Administration Fee",
+            "basis": "premium-base-mip-multiplier",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": null,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 15,
+                  "mode": "policy-year"
+                },
+                {
+                  "startPolicyYear": 16,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 15
+                }
+              ]
+            },
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 8,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 24,
+                "rate": 0.006
+              }
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 24,
+            "notes": [
+              "Premium Year selects the annual PAF band while Policy Year capped at premium term determines the multiplier.",
+              "Premium holidays freeze Premium Year but do not stop the Product Administration Fee."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Product Administration Fee",
+                "excerpt": "5.2 Product Administration Fee (PAF) For the first 24 Premium Years, an annual PAF is payable by cancellation of Units from your Policy on a monthly basis. If there is rounding of the fee, it will be rounded down. The mo"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on ad-hoc top-up premiums after units are allocated."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurrent Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "after-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on recurrent single premium contributions after the premium term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+                "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "yearBasis": "premium-year",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.7
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Uses the same premium-year based surrender penalty schedule as full surrender during the penalty period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Surrender penalty charge",
+                "excerpt": "5.5 Surrender Penalty Charge There will be a surrender penalty charge for any Partial Withdrawal or Full Surrender made on or before 8, 10 or 15 Premium Years according to your chosen Premium Term as per the table below:"
+              }
+            ]
+          },
+          {
+            "id": "welcome-bonus-recovery-charge",
+            "label": "Welcome Bonus Recovery Charge",
+            "trigger": "regular-premium-reduction",
+            "basis": "premium-reduction-tiered-startup-recovery",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "sourceBonusId": "welcome-bonus",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published Welcome Bonus recovery formula on approved premium reduction."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome bonus",
+                "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.75,
+          0.7,
+          0.6,
+          0.5,
+          0.4,
+          0.3,
+          0.2,
+          0.1,
+          0.08,
+          0.08,
+          0.08,
+          0.08,
+          0.08
+        ],
+        "eecYearBasis": "premium-year",
+        "warnings": [
+          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
+          "Loyalty Bonus remains informational only in V1 because its every-2-Premium-Year cadence and 24-month top-up exclusion are not yet modeled.",
+          "Dividend-paying funds are treated as reinvesting by default in V1. Cash payout elections remain informational only and are not reflected in projected values."
+        ],
+        "unsupportedItems": [
+          "Loyalty Bonus cadence and top-up exclusion window remain informational only.",
+          "Death and terminal illness benefit payout mechanics remain informational only.",
+          "Dividend payout election remains informational only.",
+          "Automatic paid-up / lapse state is not modeled beyond premium-holiday fee drag.",
+          "Regular withdrawal behavior remains informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "• A 5, 10 or 15-year limited premium payment investment-linked product that provides insurance protection up to Age 99. • This product is available in SGD and USD. • This product allows you to invest your money in a rang"
+          },
+          {
+            "page": 4,
+            "section": "Welcome bonus",
+            "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+          },
+          {
+            "page": 5,
+            "section": "Premium Year and loyalty bonus",
+            "excerpt": "You will be entitled to a loyalty bonus (“Loyalty Bonus”) at the end of Premium Year 10, and every 2 years thereafter until Premium Year 24 if your Policy is still in force at the relevant time. The Loyalty Bonus is equi"
+          },
+          {
+            "page": 8,
+            "section": "Product Administration Fee",
+            "excerpt": "5.2 Product Administration Fee (PAF) For the first 24 Premium Years, an annual PAF is payable by cancellation of Units from your Policy on a monthly basis. If there is rounding of the fee, it will be rounded down. The mo"
+          },
+          {
+            "page": 9,
+            "section": "Surrender penalty charge",
+            "excerpt": "5.5 Surrender Penalty Charge There will be a surrender penalty charge for any Partial Withdrawal or Full Surrender made on or before 8, 10 or 15 Premium Years according to your chosen Premium Term as per the table below:"
+          },
+          {
+            "page": 11,
+            "section": "Top-up Premium(s) and Recurrent Single Premium(s)",
+            "excerpt": "6 Top-up Premium(s) and Recurrent Single Premium(s) (RSP) th • You may choose to do ad-hoc Top-up Premium(s), starting from the 13 Policy Month and before the Life Insured attains Age 70, into one or more ILP Sub-Funds. "
+          },
+          {
+            "page": 15,
+            "section": "Dividends",
+            "excerpt": "websites or upon your request to us. You may refer to the individual ILP Sub-Fund Product Highlights Sheets for more details. 14 Valuation of Units The Unit Price of the Units in the respective Fund(s) will be determined"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "hsbc-life-wealth-accelerate",
     "insurer": "HSBC Life",
     "productName": "Wealth Accelerate",
