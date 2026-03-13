@@ -448,6 +448,7 @@ describe('projectIlpPolicy', () => {
     const result = projectIlpPolicy(policy, 'mid')
 
     expect(result.rows[0].annualContribution).toBe(6_200)
+    expect(result.rows[0].cumulativePremiums).toBe(6_200)
     expect(accountRow(result.rows[0], 'iua').close).toBeCloseTo((10_000 - 350) * (1 + result.blendedNetReturn) + 2_100, 2)
     expect(accountRow(result.rows[0], 'aua').close).toBeCloseTo((5_000 - 50) * (1 + result.blendedNetReturn) + 4_100, 2)
   })
@@ -565,9 +566,11 @@ describe('projectIlpPolicy', () => {
     const result = projectIlpPolicy(policy, 'mid')
 
     expect(result.rows[0].annualContribution).toBe(300)
+    expect(result.rows[0].cumulativePremiums).toBe(300)
     expect(accountRow(result.rows[0], 'topup').contributionAmount).toBe(300)
     expect(accountRow(result.rows[0], 'topup').grossFee).toBeCloseTo(15, 2)
     expect(result.rows[1].annualContribution).toBe(300)
+    expect(result.rows[1].cumulativePremiums).toBe(600)
     expect(accountRow(result.rows[1], 'topup').contributionAmount).toBe(300)
     expect(accountRow(result.rows[1], 'topup').grossFee).toBeCloseTo(15, 2)
   })
@@ -1143,6 +1146,86 @@ describe('projectIlpPolicy', () => {
 
     expect(accountRow(choiceResult.rows[0], 'policy-value').grossFee).toBeCloseTo(77.4, 6)
     expect(accountRow(maxResult.rows[0], 'policy-value').grossFee).toBeCloseTo(86, 6)
+  })
+
+  it('does not reduce supplementary premium base for withdrawals outside the supplementary account scope', () => {
+    const basePolicy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 120,
+      currentPolicyYear: 10,
+      accounts: [
+        {
+          id: 'regular',
+          label: 'Regular Account',
+          feeRate: 0,
+          currentValue: 1_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+        },
+        {
+          id: 'topup',
+          label: 'Supplementary Account',
+          feeRate: 0,
+          currentValue: 30_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [{ phase: 'top-up', contributionShare: 1 }],
+        },
+      ],
+      funds: [{
+        name: 'Stable Fund',
+        allocation: 1,
+        ocf: 0,
+        grossReturnLow: 0,
+        grossReturnMid: 0,
+        grossReturnHigh: 0,
+      }],
+      bonuses: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 30,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentBasicSumAssured: 100_000,
+        currentNetSupplementaryPremiumBase: 20_000,
+      },
+      chargeRules: [
+        {
+          id: 'flexi-choice-death-ti',
+          label: 'Death / TI COI',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['topup'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'hsbc-flexi-choice-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    })
+
+    const noWithdrawal = projectIlpPolicy(basePolicy, 'mid')
+    const regularWithdrawal = projectIlpPolicy({
+      ...basePolicy,
+      policyEvents: [
+        {
+          id: 'withdrawal-1',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 121,
+          durationMonths: 1,
+          amount: 500,
+          accountId: 'regular',
+        },
+      ],
+    }, 'mid')
+
+    expect(accountRow(regularWithdrawal.rows[0], 'topup').grossFee).toBeCloseTo(accountRow(noWithdrawal.rows[0], 'topup').grossFee, 6)
   })
 
   it('projects the next-year Prudential Assure II combined assurance charge from the current worked-example state', () => {
@@ -1794,7 +1877,48 @@ describe('projectIlpPolicy', () => {
 
     expect(accountRow(result.rows[0], 'growth').grossFee).toBeCloseTo(10.1, 2)
     expect(accountRow(result.rows[0], 'flex').grossFee).toBeCloseTo(10.1, 2)
-    expect(accountRow(result.rows[0], 'additional').grossFee).toBeCloseTo(580, 2)
+    expect(accountRow(result.rows[0], 'additional').grossFee).toBeCloseTo(500, 2)
+    expect(accountRow(result.rows[0], 'additional').close).toBeCloseTo(0, 2)
+  })
+
+  it('does not let fallback charge allocation overdraw a secondarily charged account', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 36,
+      monthlyContribution: 100,
+      accounts: [
+        { ...IUA_ACCOUNT, id: 'growth', label: 'Growth', currentValue: 5, feeRate: 0, postMipFeeRate: 0, contributionShare: 0.5, subjectToEec: true },
+        { ...AUA_ACCOUNT, id: 'flex', label: 'Flex', currentValue: 5, feeRate: 0, postMipFeeRate: 0, contributionShare: 0.5, subjectToEec: true },
+        { ...AUA_ACCOUNT, id: 'additional', label: 'Additional', currentValue: 50, feeRate: 0, postMipFeeRate: 0, contributionShare: 0, subjectToEec: false },
+      ],
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 37,
+          durationMonths: 12,
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'holiday-charge',
+          label: 'Premium Holiday Charge',
+          trigger: 'premium-holiday',
+          basis: 'annual-premium-with-overlap-months',
+          appliesTo: ['growth', 'flex'],
+          fallbackAppliesTo: ['additional'],
+          rate: 0.5,
+          amount: 0,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      bonuses: [],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'additional').grossFee).toBeCloseTo(50, 2)
+    expect(accountRow(result.rows[0], 'additional').close).toBeCloseTo(0, 2)
   })
 
   it('waives the first eligible partial withdrawal charge up to the configured free limit', () => {
@@ -1992,7 +2116,8 @@ describe('computeNpvAnalysis', () => {
 
     expect(npv.holdToMip.finalValue).toBeCloseTo(projection.rows[24].combinedValue, 2)
     expect(npv.holdToMip.totalContributions).toBe(projection.rows[24].cumulativePremiums)
-    expect(npv.holdToMip.totalNpvFees).toBeCloseTo(npv.holdToMip.npvGrossFees - npv.holdToMip.npvBonuses, 2)
+    expect(npv.holdToMip.totalNpvFees).toBeCloseTo(npv.futureExitOptions[24].totalNpvFees, 2)
+    expect(npv.holdToMip.totalNpvFees).toBeGreaterThan(npv.holdToMip.npvGrossFees - npv.holdToMip.npvBonuses)
   })
 })
 
@@ -2013,6 +2138,41 @@ describe('computeOpportunityCost', () => {
     expect(opportunityCost.alternativePortfolioValue).toBeCloseTo(expected, 0)
     expect(opportunityCost.ilpValueAtHorizon).toBeCloseTo(projection.rows[24].combinedValue, 2)
     expect(opportunityCost.atBestExit.ilpValueAtHorizon).toBeCloseTo(opportunityCost.ilpValueAtHorizon, 2)
+  })
+
+  it('uses the modeled contribution stream instead of a flat annual premium', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 10,
+      monthsAlreadyPaid: 120,
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 121,
+          durationMonths: 3,
+          repayMissedPremiums: false,
+        },
+        {
+          id: 'top-up-1',
+          type: 'top-up',
+          startPolicyMonth: 128,
+          durationMonths: 1,
+          amount: 2_000,
+        },
+      ],
+      bonuses: [],
+    })
+    const projection = projectIlpPolicy(policy, 'mid')
+    const npv = computeNpvAnalysis(policy, projection)
+    const opportunityCost = computeOpportunityCost(policy, projection, npv)
+    const mipEndIndex = 19
+
+    let expected = npv.surrenderNow.netSurrenderValue * Math.pow(1 + policy.alternativeReturn, 20)
+    for (const row of projection.rows.slice(0, mipEndIndex + 1)) {
+      expected += row.annualContribution * Math.pow(1 + policy.alternativeReturn, 20 - row.year)
+    }
+
+    expect(opportunityCost.alternativePortfolioValue).toBeCloseTo(expected, 0)
   })
 })
 

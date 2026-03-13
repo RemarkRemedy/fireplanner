@@ -1095,7 +1095,6 @@ function computeAssuranceChargeByAccount(
   regularPremiumPaidThisYear: number,
   supplementaryPremiumBaseAtStartOfYear: number,
   supplementaryPremiumPaidThisYear: number,
-  annualWithdrawals: number,
   withdrawalByAccount: Map<string, number>,
   sumAssuredAtStartOfYear: number | undefined,
   wealthAssureValueAtStartOfYear: number | undefined,
@@ -1138,6 +1137,9 @@ function computeAssuranceChargeByAccount(
     const provisionalApplicableValue = sumBalancesForAccounts(provisionalCloseByAccount, appliesToIds)
     const midpointApplicableValue = Math.max(0, (openApplicableValue + provisionalApplicableValue) / 2)
     const currentYearApplicableWithdrawals = sumWithdrawalsForAccounts(withdrawalByAccount, appliesToIds)
+    const supplementaryApplicableWithdrawals = normalized.multiAccount.supplementaryPremiumAccountIds.length > 0
+      ? sumWithdrawalsForAccounts(withdrawalByAccount, normalized.multiAccount.supplementaryPremiumAccountIds)
+      : currentYearApplicableWithdrawals
     const midpointRegularPremiumBase = Math.max(
       0,
       regularPremiumBaseAtStartOfYear + ((regularPremiumPaidThisYear - currentYearApplicableWithdrawals) / 2),
@@ -1157,7 +1159,7 @@ function computeAssuranceChargeByAccount(
       case 'hsbc-flexi': {
         const midpointSupplementaryPremiumBase = Math.max(
           0,
-          supplementaryPremiumBaseAtStartOfYear + ((supplementaryPremiumPaidThisYear - annualWithdrawals) / 2),
+          supplementaryPremiumBaseAtStartOfYear + ((supplementaryPremiumPaidThisYear - supplementaryApplicableWithdrawals) / 2),
         )
         sumAtRisk = computeHsbcFlexiSumAtRisk(
           rule.assuranceConfig.formula as Extract<IlpAssuranceChargeConfig['formula'], 'hsbc-flexi-choice-death-ti' | 'hsbc-flexi-max-death-ti'>,
@@ -1273,11 +1275,11 @@ function resolveNormalizedBonusRate(
 }
 
 function computeTieredStartupRecoveryCharge(
-  input: IlpPolicyInput,
+  normalized: IlpNormalizedPolicyInput,
   rule: IlpEventChargeRule,
   event: Pick<IlpPolicyEvent, 'startPolicyMonth' | 'amount'>,
 ): number {
-  const normalized = buildNormalizedPolicyInput(input)
+  const { input } = normalized
   const reductionAmount = event.amount ?? 0
   if (reductionAmount <= 0 || !rule.sourceBonusId) {
     return rule.amount
@@ -1856,26 +1858,54 @@ function applyChargeAllocationsWithFallback(
   fallbackAppliesTo: IlpAccount[],
   openBalances: Map<string, number>,
 ): Map<string, number> {
-  const primaryAllocations = allocateChargeTotal(totalCharge, allocation, appliesTo, openBalances)
-  let overflowCharge = 0
-  const allocations = new Map<string, number>()
-
-  for (const account of appliesTo) {
-    const primaryAllocation = primaryAllocations.get(account.id) ?? 0
-    const availableValue = Math.max(openBalances.get(account.id) ?? 0, 0)
-    const appliedCharge = fallbackAppliesTo.length > 0
-      ? Math.min(primaryAllocation, availableValue)
-      : primaryAllocation
-
-    overflowCharge += Math.max(0, primaryAllocation - appliedCharge)
-    allocations.set(account.id, appliedCharge)
+  if (fallbackAppliesTo.length === 0) {
+    return allocateChargeTotal(totalCharge, allocation, appliesTo, openBalances)
   }
 
-  if (overflowCharge > 0 && fallbackAppliesTo.length > 0) {
-    const fallbackAllocations = allocateChargeTotal(overflowCharge, allocation, fallbackAppliesTo, openBalances)
-    for (const [accountId, amount] of fallbackAllocations.entries()) {
-      allocations.set(accountId, (allocations.get(accountId) ?? 0) + amount)
+  const allocations = new Map<string, number>()
+  const applyCappedAllocations = (remainingCharge: number, candidateAccounts: IlpAccount[]): number => {
+    let pending = remainingCharge
+    let eligibleAccounts = candidateAccounts.filter((account) => (
+      Math.max((openBalances.get(account.id) ?? 0) - (allocations.get(account.id) ?? 0), 0) > CONTRIBUTION_TOLERANCE
+    ))
+
+    while (pending > CONTRIBUTION_TOLERANCE && eligibleAccounts.length > 0) {
+      const capacityByAccountId = new Map(
+        eligibleAccounts.map((account) => [
+          account.id,
+          Math.max((openBalances.get(account.id) ?? 0) - (allocations.get(account.id) ?? 0), 0),
+        ]),
+      )
+      const proposedAllocations = allocateChargeTotal(pending, allocation, eligibleAccounts, capacityByAccountId)
+      let appliedThisPass = 0
+
+      for (const account of eligibleAccounts) {
+        const remainingCapacity = capacityByAccountId.get(account.id) ?? 0
+        const proposedAmount = proposedAllocations.get(account.id) ?? 0
+        const appliedAmount = Math.min(proposedAmount, remainingCapacity)
+
+        if (appliedAmount <= 0) continue
+
+        allocations.set(account.id, (allocations.get(account.id) ?? 0) + appliedAmount)
+        pending -= appliedAmount
+        appliedThisPass += appliedAmount
+      }
+
+      if (appliedThisPass <= CONTRIBUTION_TOLERANCE) {
+        break
+      }
+
+      eligibleAccounts = eligibleAccounts.filter((account) => (
+        Math.max((openBalances.get(account.id) ?? 0) - (allocations.get(account.id) ?? 0), 0) > CONTRIBUTION_TOLERANCE
+      ))
     }
+
+    return pending
+  }
+
+  const overflowCharge = applyCappedAllocations(totalCharge, appliesTo)
+  if (overflowCharge > CONTRIBUTION_TOLERANCE) {
+    applyCappedAllocations(overflowCharge, fallbackAppliesTo)
   }
 
   return allocations
@@ -2074,7 +2104,7 @@ function computeEventChargeByAccount(
         }
 
         case 'premium-reduction-tiered-startup-recovery':
-          totalCharge = computeTieredStartupRecoveryCharge(input, rule, event)
+          totalCharge = computeTieredStartupRecoveryCharge(normalized, rule, event)
           break
 
         case 'repaid-premium-with-missed-months':
@@ -2216,7 +2246,7 @@ export function projectIlpPolicy(
 
   let cumulativeGrossFees = 0
   let cumulativeBonuses = 0
-  let cumulativeRegularPremiums = input.monthlyContribution * input.monthsAlreadyPaid
+  let cumulativePremiums = input.monthlyContribution * input.monthsAlreadyPaid
   let assuranceRegularPremiumBase = input.assuranceProfile?.currentNetRegularPremiumBase ?? 0
   let assuranceSupplementaryPremiumBase = input.assuranceProfile?.currentNetSupplementaryPremiumBase ?? 0
   let assuranceSumAssured = input.assuranceProfile?.currentSumAssured
@@ -2238,7 +2268,6 @@ export function projectIlpPolicy(
     const repaymentContributionByAccount = getPremiumHolidayRepaymentContributionByAccount(normalized, year)
     const regularPremiumPaidThisYear = Array.from(contributionByAccount.values()).reduce((sum, value) => sum + value, 0)
       + Array.from(repaymentContributionByAccount.values()).reduce((sum, value) => sum + value, 0)
-    cumulativeRegularPremiums += regularPremiumPaidThisYear
     for (const [accountId, amount] of repaymentContributionByAccount.entries()) {
       contributionByAccount.set(accountId, (contributionByAccount.get(accountId) ?? 0) + amount)
     }
@@ -2253,6 +2282,7 @@ export function projectIlpPolicy(
     const supplementaryPremiumPaidThisYear = Array.from(topUpContributionByAccount.values()).reduce((sum, value) => sum + value, 0)
       + Array.from(recurringSinglePremiumContributionByAccount.values()).reduce((sum, value) => sum + value, 0)
     const contributionForYear = Array.from(contributionByAccount.values()).reduce((sum, value) => sum + value, 0)
+    cumulativePremiums += contributionForYear
     const withdrawalByAccount = getPartialWithdrawalsByAccount(normalized, year)
     const annualWithdrawals = Array.from(withdrawalByAccount.values()).reduce((sum, value) => sum + value, 0)
     const additionalChargeByAccount = computeAdditionalChargeByAccount(
@@ -2301,7 +2331,6 @@ export function projectIlpPolicy(
       regularPremiumPaidThisYear,
       assuranceSupplementaryPremiumBase,
       supplementaryPremiumPaidThisYear,
-      annualWithdrawals,
       withdrawalByAccount,
       assuranceSumAssured,
       assuranceWealthAssureValue,
@@ -2372,7 +2401,7 @@ export function projectIlpPolicy(
       eecRate,
       eecCharge,
       surrenderValue: combinedValue - eecCharge,
-      cumulativePremiums: cumulativeRegularPremiums,
+      cumulativePremiums,
       cumulativeGrossFees: cumulativeGrossFees,
       cumulativeBonuses: cumulativeBonuses,
     })
@@ -2384,7 +2413,11 @@ export function projectIlpPolicy(
     )
     assuranceSupplementaryPremiumBase = Math.max(
       0,
-      assuranceSupplementaryPremiumBase + supplementaryPremiumPaidThisYear - annualWithdrawals,
+      assuranceSupplementaryPremiumBase + supplementaryPremiumPaidThisYear - (
+        normalized.multiAccount.supplementaryPremiumAccountIds.length > 0
+          ? sumWithdrawalsForAccounts(withdrawalByAccount, normalized.multiAccount.supplementaryPremiumAccountIds)
+          : sumWithdrawalsForAccounts(withdrawalByAccount, assuranceRelevantAccountIds)
+      ),
     )
   }
 
@@ -2473,7 +2506,7 @@ export function computeNpvAnalysis(
     holdToMip: {
       npvGrossFees: mipEndOption.npvGrossFees,
       npvBonuses: mipEndOption.npvBonuses,
-      totalNpvFees: mipEndOption.npvGrossFees - mipEndOption.npvBonuses,
+      totalNpvFees: mipEndOption.totalNpvFees,
       finalValue: mipEndRow.combinedValue,
       totalContributions: mipEndRow.cumulativePremiums,
     },
@@ -2486,14 +2519,16 @@ export function computeOpportunityCost(
   npv: IlpNpvAnalysis,
 ): IlpOpportunityCost {
   const remainingMipYears = getRemainingMipYears(input)
-  const annualContribution = input.monthlyContribution * 12
   const horizonRow = projection.rows[getMipEndProjectionIndex(input)]
   const ilpValueAtHorizon = horizonRow.combinedValue
   const growthRate = input.alternativeReturn
 
   let alternativePortfolioValue = npv.surrenderNow.netSurrenderValue * Math.pow(1 + growthRate, remainingMipYears)
-  for (let year = 1; year <= remainingMipYears; year += 1) {
-    alternativePortfolioValue += annualContribution * Math.pow(1 + growthRate, remainingMipYears - year)
+  const mipEndIndex = getMipEndProjectionIndex(input)
+  const contributionRows = projection.rows.slice(0, mipEndIndex + 1)
+
+  for (const row of contributionRows) {
+    alternativePortfolioValue += row.annualContribution * Math.pow(1 + growthRate, remainingMipYears - row.year)
   }
 
   const bestExit = npv.futureExitOptions.find((option) => option.exitYear === npv.bestExitYear)
@@ -2503,8 +2538,8 @@ export function computeOpportunityCost(
 
   const yearsAfterBestExit = Math.max(remainingMipYears - bestExit.exitYear, 0)
   let alternativeAtBestExit = bestExit.netSurrenderValue * Math.pow(1 + growthRate, yearsAfterBestExit)
-  for (let year = 1; year <= yearsAfterBestExit; year += 1) {
-    alternativeAtBestExit += annualContribution * Math.pow(1 + growthRate, yearsAfterBestExit - year)
+  for (const row of contributionRows.filter((candidate) => candidate.year > bestExit.exitYear)) {
+    alternativeAtBestExit += row.annualContribution * Math.pow(1 + growthRate, remainingMipYears - row.year)
   }
 
   return {

@@ -268,7 +268,7 @@ function withoutRecurringContribution(policy: IlpPolicyInput): IlpPolicyInput {
       contributionShare: 0,
       contributionRules: account.contributionRules?.map((rule) => ({
         ...rule,
-        share: 0,
+        contributionShare: rule.phase === 'top-up' ? rule.contributionShare : 0,
       })),
     })),
   })
