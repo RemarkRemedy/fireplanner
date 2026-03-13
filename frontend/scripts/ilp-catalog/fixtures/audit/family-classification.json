@@ -4736,9 +4736,9 @@
       ],
       "implementationCohort": "generic",
       "v1SupportBoundary": "supported-after-kernel",
-      "currentCatalogStatus": "not-in-catalog",
-      "economicsStatus": "not-modeled",
-      "parserExists": false,
+      "currentCatalogStatus": "partial",
+      "economicsStatus": "partial-modeled-subset",
+      "parserExists": true,
       "goldenCoverageStatus": "none",
       "kernelWorkstreams": [
         "core-cashflow-kernel"
@@ -4749,14 +4749,28 @@
       "kernelPrerequisites": [
         "core-cashflow-kernel"
       ],
-      "modeledSubsetAlreadyCovered": [],
-      "metadataOnlyBehaviors": [],
+      "modeledSubsetAlreadyCovered": [
+        "branch:income-vs3-regular-premium-allocation-uplift",
+        "branch:income-vs3-investment-bonus",
+        "branch:income-vs3-loyalty-bonus",
+        "branch:income-vs3-premium-holiday-charge",
+        "branch:income-vs3-partial-withdrawal-charge",
+        "branch:income-vs3-surrender-charge",
+        "branch:income-vs3-ad-hoc-top-up-routing"
+      ],
+      "metadataOnlyBehaviors": [
+        "income-vs3-death-ti-insurance-cover-charge",
+        "income-vs3-secondary-insured-option",
+        "income-vs3-life-events-withdrawal-benefit",
+        "income-vs3-future-premium-option"
+      ],
       "manualInputRequirements": [],
-      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Unclear\" and gap tags dynamic-charge-model, free-partial-withdrawal, non-guaranteed-charges, premium-holiday, withdrawal-reduction-charges. Cross-cutting overlays are dynamic-charge, premium-holiday-recovery. No current parser-backed catalog product exists for this source yet. QA override status: confirmed-standard. No hard protection or special-account structure markers were found in the extracted source evidence; the standard-family default remains defensible.",
+      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Unclear\" and gap tags dynamic-charge-model, free-partial-withdrawal, non-guaranteed-charges, premium-holiday, withdrawal-reduction-charges. Cross-cutting overlays are dynamic-charge, premium-holiday-recovery. Current catalog status is partial with economics status partial-modeled-subset. QA override status: confirmed-standard. No hard protection or special-account structure markers were found in the extracted source evidence; the standard-family default remains defensible.",
       "confidence": 0.9,
       "evidenceRefs": [
         "accountModel:Unclear",
         "bucket:B-extendable",
+        "catalog:income-invest-flex-trivantage",
         "cohort:generic",
         "file:VS3_Summary.pdf",
         "gap:dynamic-charge-model",

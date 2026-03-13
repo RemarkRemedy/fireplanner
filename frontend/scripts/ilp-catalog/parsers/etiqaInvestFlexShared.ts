@@ -15,7 +15,7 @@ interface ParseContext {
   sourceChecksumSha256: string
 }
 
-type ProductKind = 'prime-ii' | 'pro'
+type ProductKind = 'prime-ii' | 'pro' | 'vista'
 const TERM_OPTIONS = [10, 20] as const
 type MipTerm = (typeof TERM_OPTIONS)[number]
 type FlexMode = 'flexi-3' | 'flexi-5'
@@ -390,9 +390,21 @@ function buildVariant(document: ExtractedPdfDocument, mode: FlexMode | 'twenty')
 }
 
 function buildProduct(context: ParseContext, kind: ProductKind): IlpCatalogProduct {
-  const productName = kind === 'prime-ii' ? 'Invest flex prime II' : 'Invest flex pro'
-  const productId = kind === 'prime-ii' ? 'etiqa-invest-flex-prime-ii' : 'etiqa-invest-flex-pro'
-  const branchPrefix = kind === 'prime-ii' ? 'etiqa-flex-prime-ii' : 'etiqa-flex-pro'
+  const productName = kind === 'prime-ii'
+    ? 'Invest flex prime II'
+    : kind === 'pro'
+      ? 'Invest flex pro'
+      : 'Invest vista'
+  const productId = kind === 'prime-ii'
+    ? 'etiqa-invest-flex-prime-ii'
+    : kind === 'pro'
+      ? 'etiqa-invest-flex-pro'
+      : 'etiqa-invest-vista'
+  const branchPrefix = kind === 'prime-ii'
+    ? 'etiqa-flex-prime-ii'
+    : kind === 'pro'
+      ? 'etiqa-flex-pro'
+      : 'etiqa-vista'
 
   return {
     id: productId,
@@ -441,4 +453,8 @@ export function parseEtiqaInvestFlexPrimeIi(context: ParseContext): IlpCatalogPr
 
 export function parseEtiqaInvestFlexPro(context: ParseContext): IlpCatalogProduct {
   return buildProduct(context, 'pro')
+}
+
+export function parseEtiqaInvestVista(context: ParseContext): IlpCatalogProduct {
+  return buildProduct(context, 'vista')
 }

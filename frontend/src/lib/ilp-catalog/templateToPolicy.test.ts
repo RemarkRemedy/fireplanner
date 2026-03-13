@@ -883,6 +883,43 @@ describe('templateVariantToPolicySeed', () => {
     ])
   })
 
+  it('maps Invest vista into a partial two-account seed with Etiqa flex-family bonus and charge schedules', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'etiqa-invest-vista')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10-flexi-5')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-vista-policy-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-vista-premium-shortfall-charge')
+    expect(seed.accounts.map((account) => account.id)).toEqual(['regular', 'topup'])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-charge-during-premium-term',
+          basis: 'premium-base-mip-multiplier',
+          rate: 0.0218,
+        }),
+        expect.objectContaining({
+          id: 'policy-charge-after-premium-term',
+          basis: 'premium-base-mip-multiplier',
+          rate: 0.006,
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules?.map((rule) => rule.id)).toEqual(
+      expect.arrayContaining([
+        'top-up-premium-charge',
+        'startup-bonus-recovery-charge',
+        'partial-withdrawal-charge',
+      ]),
+    )
+  })
+
   it('maps Goal Builder II into a partial premium-year seed with PAF and surrender schedules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'hsbc-life-goal-builder-ii')
