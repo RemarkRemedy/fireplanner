@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- test helpers use partial store shapes */
 import { describe, expect, it } from 'vitest'
 import { compileHouseholdPlan } from '@/lib/household/compileHouseholdPlan'
 import type { HouseholdPlan, PlanningAdult, PropertyPlan } from '@/lib/household/types'
