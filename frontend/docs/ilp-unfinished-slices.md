@@ -1,5 +1,15 @@
 # ILP Unfinished Slices
 
+This document is now a historical product-slice backlog.
+
+It is not the sequencing source of truth anymore.
+
+Use these instead for current planning:
+
+- `frontend/scripts/ilp-catalog/fixtures/audit/family-classification.json`
+- `frontend/docs/ilp-mechanics-family-classification.md`
+- `frontend/docs/ilp-mechanics-family-roadmap.md`
+
 Last updated: 2026-03-13
 
 This file tracks the meaningful ILP modeling slices that are still not complete for a public release.
@@ -18,6 +28,24 @@ Current gate status:
 2. PRUVantage Wealth II has full supported-product golden coverage
 3. PRUVantage Prosper and bounded PRUVantage Assure II assurance paths now have modeled-subset golden fixtures
 4. Golden coverage remains required before any product is labeled `supported`
+
+## Core Cashflow Kernel
+
+Status:
+- first vertical slice complete
+- green behind:
+  - `npm run type-check`
+  - targeted ILP unit tests
+  - `npm run golden:check`
+
+Completed in this slice:
+- unified internal runtime path for recurring routing
+- unified internal runtime path for recurring and event-driven cashflow-linked charges
+- premium-holiday state integration through the same normalized cashflow path
+
+Current rule:
+- future cashflow-kernel changes must extend this unified path
+- do not reintroduce bespoke insurer-specific routing / charge branches outside the kernel
 
 ## Unfinished Slices
 
