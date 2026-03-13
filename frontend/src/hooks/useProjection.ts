@@ -30,7 +30,7 @@ export function useProjection(): ProjectionResult {
   const allocation = useAllocationStore()
   const simulation = useSimulationStore()
   const normalized = useNormalizedLegacyAnalysisContext()
-  const { profile, income, property } = useMemo(
+  const { profile, income, property, healthcareCashOutlayByYear } = useMemo(
     () => buildHouseholdRuntimeLegacyInputs(plan, normalized.compiledPlan),
     [normalized.compiledPlan, plan]
   )
@@ -53,6 +53,7 @@ export function useProjection(): ProjectionResult {
         lifeExpectancy: normalized.lifeExpectancy,
       },
       incomeProjection,
+      healthcareCashOutlayByYear,
     })
 
     const { rows, summary } = generateProjection(params)

@@ -847,6 +847,47 @@ describe('generateProjection', () => {
       // Healthcare cost should be > 0 for all ages
       expect(result.rows[0].healthcareCashOutlay).toBeGreaterThan(0)
     })
+
+    it('uses healthcareCashOutlayByYear override when provided (joint household bug fix)', () => {
+      // Reproduction test for the joint Daily Expenses bug:
+      // In joint mode, only the reference adult's healthcareConfig was used,
+      // missing the partner's healthcare entirely. The fix pipes pre-computed
+      // per-year totals (summed across all adults) from the compiler.
+      const overridePerYear = [5000, 6000, 7000, 8000, 9000]
+      const params = makeParams({
+        currentAge: 60, retirementAge: 63, lifeExpectancy: 64,
+        inflation: 0, expectedReturn: 0,
+        annualExpenses: 50000,
+        // Single-adult healthcareConfig that would produce DIFFERENT values
+        healthcareConfig: {
+          enabled: true,
+          mediShieldLifeEnabled: true,
+          ispTier: 'none',
+          careShieldLifeEnabled: false,
+          oopBaseAmount: 1000,
+          oopModel: 'fixed',
+          oopInflationRate: 0,
+          oopReferenceAge: 60,
+          mediSaveTopUpAnnual: 0,
+        },
+        // The override should take precedence
+        healthcareCashOutlayByYear: overridePerYear,
+      })
+      params.incomeProjection = generateMockIncomeProjection({
+        currentAge: 60, retirementAge: 63, lifeExpectancy: 64,
+      })
+
+      const result = generateProjection(params)
+
+      // Each row's healthcareCashOutlay should match the override, not the config
+      for (let i = 0; i < result.rows.length; i++) {
+        expect(result.rows[i].healthcareCashOutlay).toBe(overridePerYear[i])
+      }
+      // annualExpenses should include the override healthcare amounts
+      // Year 0: base 50K + healthcare 5K = 55K (with 0% inflation)
+      expect(result.rows[0].annualExpenses).toBeCloseTo(55000, 0)
+      expect(result.rows[1].annualExpenses).toBeCloseTo(56000, 0)
+    })
   })
 
   describe('pre-retirement expense shortfall deducted from portfolio', () => {

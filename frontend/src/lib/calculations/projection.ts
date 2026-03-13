@@ -103,6 +103,11 @@ export interface ProjectionParams {
   parentSupportEnabled: boolean
   // Healthcare
   healthcareConfig: HealthcareConfig | null
+  /** Pre-computed healthcare cash outlay per year (summed across all adults).
+   *  When provided, overrides healthcareConfig-based per-year calculation.
+   *  Used by joint household projections where each adult has a separate
+   *  HealthcareConfig with age-specific premiums that can't be naively merged. */
+  healthcareCashOutlayByYear?: number[]
   // One-time retirement withdrawals
   retirementWithdrawals?: RetirementWithdrawal[]
   // Financial goals (pre- and post-retirement)
@@ -283,6 +288,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     parentSupport,
     parentSupportEnabled,
     healthcareConfig,
+    healthcareCashOutlayByYear: healthcareOutlayOverride,
     cpfLifeStartAge,
     cpfLifePlan,
     yearlyReturns,
@@ -440,12 +446,17 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       const estParentSupport = parentSupportEnabled
         ? calculateParentSupportAtAge(parentSupport, age)
         : 0
-      const estHealthCareBase = healthcareConfig?.enabled
-        ? calculateHealthcareCostAtAge(healthcareConfig, age)
-        : null
-      const estHealthCare = estHealthCareBase && healthcareConfig
-        ? (inflateHealthcareCost(estHealthCareBase, healthcareConfig, currentAge).cashOutlay ?? 0)
-        : 0
+      let estHealthCare: number
+      if (healthcareOutlayOverride && i < healthcareOutlayOverride.length) {
+        estHealthCare = healthcareOutlayOverride[i]
+      } else {
+        const estHealthCareBase = healthcareConfig?.enabled
+          ? calculateHealthcareCostAtAge(healthcareConfig, age)
+          : null
+        estHealthCare = estHealthCareBase && healthcareConfig
+          ? (inflateHealthcareCost(estHealthCareBase, healthcareConfig, currentAge).cashOutlay ?? 0)
+          : 0
+      }
       let estDsRent = 0
       if (soldProperty && downsizing?.scenario === 'sell-and-rent') {
         estDsRent = dsAnnualRent * Math.pow(1 + (downsizing.rentGrowthRate ?? 0.03), age - dsSellAge)
@@ -548,14 +559,22 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       ? calculateParentSupportAtAge(parentSupport, age)
       : 0
 
-    // Healthcare cash outlay at this age (nominal — base cost inflated to future dollars)
-    const healthcareCostBase = healthcareConfig?.enabled
-      ? calculateHealthcareCostAtAge(healthcareConfig, age)
-      : null
-    const healthcareCost = healthcareCostBase && healthcareConfig
-      ? inflateHealthcareCost(healthcareCostBase, healthcareConfig, currentAge)
-      : healthcareCostBase
-    const healthcareCashOutlay = healthcareCost?.cashOutlay ?? 0
+    // Healthcare cash outlay at this age (nominal — base cost inflated to future dollars).
+    // When healthcareOutlayOverride is provided (joint household mode), use the pre-computed
+    // per-year totals (summed across all adults) instead of computing from a single-adult config.
+    let healthcareCashOutlay: number
+    let healthcareCost: ReturnType<typeof inflateHealthcareCost> | null = null
+    if (healthcareOutlayOverride && i < healthcareOutlayOverride.length) {
+      healthcareCashOutlay = healthcareOutlayOverride[i]
+    } else {
+      const healthcareCostBase = healthcareConfig?.enabled
+        ? calculateHealthcareCostAtAge(healthcareConfig, age)
+        : null
+      healthcareCost = healthcareCostBase && healthcareConfig
+        ? inflateHealthcareCost(healthcareCostBase, healthcareConfig, currentAge)
+        : healthcareCostBase
+      healthcareCashOutlay = healthcareCost?.cashOutlay ?? 0
+    }
 
     // Override cpfMA with MediSave-adjusted balance (healthcare premiums deducted)
     const effectiveCpfMA = mediSaveAdjustedMA?.[i] ?? incomeRow.cpfMA

@@ -154,6 +154,9 @@ export interface FullProjectionContext {
   simulation: Pick<SimulationState, 'selectedStrategy' | 'strategyParams' | 'withdrawalBasis'>
   ages: { currentAge: number; retirementAge: number; lifeExpectancy: number }
   incomeProjection: IncomeProjectionRow[]
+  /** Pre-computed healthcare cash outlay per year (summed across all adults).
+   *  Passed through to ProjectionParams.healthcareCashOutlayByYear. */
+  healthcareCashOutlayByYear?: number[]
 }
 
 /**
@@ -166,7 +169,7 @@ export interface FullProjectionContext {
 export function buildFullProjectionParams(
   ctx: FullProjectionContext,
 ): { params: ProjectionParams; fireMetrics: FireMetrics } {
-  const { profile, income, property, allocation, simulation, ages, incomeProjection } = ctx
+  const { profile, income, property, allocation, simulation, ages, incomeProjection, healthcareCashOutlayByYear } = ctx
 
   const assetReturns = getEffectiveReturns(allocation.returnOverrides)
   const allocationHasErrors = Object.keys(allocation.validationErrors).length > 0
@@ -248,6 +251,7 @@ export function buildFullProjectionParams(
     parentSupport: profile.parentSupport,
     parentSupportEnabled: profile.parentSupportEnabled,
     healthcareConfig: profile.healthcareConfig?.enabled ? profile.healthcareConfig : null,
+    healthcareCashOutlayByYear,
     retirementWithdrawals: profile.retirementWithdrawals,
     financialGoals: profile.financialGoals,
     cpfLifeStartAge: profile.cpfLifeStartAge,

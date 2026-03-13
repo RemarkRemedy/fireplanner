@@ -27,6 +27,9 @@ export interface HouseholdRuntimeLegacyInputs {
   profile: ProfileState
   income: IncomeState
   property: PropertyState
+  /** Pre-computed healthcare cash outlay per year, summed across all adults.
+   *  Only populated for multi-adult plans (joint mode). undefined for single-adult. */
+  healthcareCashOutlayByYear?: number[]
 }
 
 function emptyValidationErrors(): ValidationErrors {
@@ -471,6 +474,12 @@ function buildAggregateRuntimeSnapshot(
   defaults.income.reliefBasisAge = referenceAdult.taxProfile.reliefBasisAge
 
   defaults.property = mapProperty(primaryProperty, defaults.property)
+
+  // Extract pre-computed healthcare outlay per year (summed across all adults).
+  // The compiler already sums each adult's healthcare costs into row.healthcareCashOutlay.
+  // Passing this to the projection engine avoids the bug where only the reference adult's
+  // HealthcareConfig was used (missing the partner's healthcare entirely).
+  defaults.healthcareCashOutlayByYear = compiledPlan.rows.map((row) => row.healthcareCashOutlay)
 
   return defaults
 }
