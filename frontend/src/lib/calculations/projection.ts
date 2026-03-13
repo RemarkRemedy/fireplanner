@@ -99,7 +99,7 @@ export interface ProjectionParams {
   /** Cumulative CPF principal used for HDB housing. Refunded to OA on sale (+ 2.5% accrued interest). */
   hdbCpfUsedForHousing: number
   /** Ownership percentage for property (1.0 = full, 0.5 = half). Used to scale downsizing outputs. */
-  propertyOwnershipPct: number
+  propertyOwnershipPct?: number
   // Parent support
   parentSupport: ParentSupport[]
   parentSupportEnabled: boolean
