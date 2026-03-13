@@ -419,6 +419,87 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.bonuses).toEqual([])
   })
 
+  it('maps Etiqa Invest starter into a partial regular-premium seed with holiday and withdrawal charge rules', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'etiqa-invest-starter')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-5')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:invest-starter-policy-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:invest-starter-premium-shortfall-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:invest-starter-premium-shortfall-refund')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:invest-starter-partial-withdrawal-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:invest-starter-surrender-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('invest-starter-policy-charge-refund-every-3-years')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('invest-starter-one-time-reward')
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.mipLength).toBe(5)
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'portfolio',
+        contributionRules: [
+          { phase: 'top-up', contributionShare: 1 },
+        ],
+      }),
+    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-charge',
+          basis: 'account-value',
+          activeWindow: 'policy-term',
+          appliesTo: ['portfolio'],
+          rate: 0.008,
+          amount: 0,
+          allocation: 'equal-split',
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'premium-shortfall-charge',
+          trigger: 'premium-holiday',
+          basis: 'annual-premium-with-overlap-months',
+          appliesTo: ['portfolio'],
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 0.07 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 0.07 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.06 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.06 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.05 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'premium-shortfall-charge-refund',
+          trigger: 'premium-holiday-repayment',
+          basis: 'premium-holiday-charge-refund',
+          sourceChargeRuleId: 'premium-shortfall-charge',
+          rate: 1,
+        }),
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          trigger: 'partial-withdrawal',
+          basis: 'event-amount',
+          appliesTo: ['portfolio'],
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 0.07 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 0.07 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.06 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.06 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.05 },
+          ],
+        }),
+      ]),
+    )
+    expect(seed.bonuses).toEqual([])
+  })
+
   it('maps Tokio Marine Wealth Max (II) into a partial seed with recurring-single-premium routing and charges', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-wealth-max-ii')

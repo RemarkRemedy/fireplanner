@@ -481,9 +481,9 @@
       ],
       "implementationCohort": "generic",
       "v1SupportBoundary": "supported-after-kernel",
-      "currentCatalogStatus": "not-in-catalog",
-      "economicsStatus": "not-modeled",
-      "parserExists": false,
+      "currentCatalogStatus": "partial",
+      "economicsStatus": "partial-modeled-subset",
+      "parserExists": true,
       "goldenCoverageStatus": "none",
       "kernelWorkstreams": [
         "core-cashflow-kernel"
@@ -492,14 +492,27 @@
       "kernelPrerequisites": [
         "core-cashflow-kernel"
       ],
-      "modeledSubsetAlreadyCovered": [],
-      "metadataOnlyBehaviors": [],
+      "modeledSubsetAlreadyCovered": [
+        "branch:invest-starter-policy-charge",
+        "branch:invest-starter-premium-shortfall-charge",
+        "branch:invest-starter-premium-shortfall-refund",
+        "branch:invest-starter-partial-withdrawal-charge",
+        "branch:invest-starter-surrender-charge",
+        "branch:invest-starter-ad-hoc-top-up-routing"
+      ],
+      "metadataOnlyBehaviors": [
+        "invest-starter-policy-charge-refund-every-3-years",
+        "invest-starter-one-time-reward",
+        "invest-starter-change-of-life-insured",
+        "invest-starter-optional-protection-riders"
+      ],
       "manualInputRequirements": [],
-      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Unclear\" and gap tags dynamic-charge-model, premium-holiday, withdrawal-reduction-charges. Cross-cutting overlays are dynamic-charge, premium-holiday-recovery. No current parser-backed catalog product exists for this source yet. QA override status: confirmed-standard. No hard protection or special-account structure markers were found in the extracted source evidence; the standard-family default remains defensible.",
+      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Unclear\" and gap tags dynamic-charge-model, premium-holiday, withdrawal-reduction-charges. Cross-cutting overlays are dynamic-charge, premium-holiday-recovery. Current catalog status is partial with economics status partial-modeled-subset. QA override status: confirmed-standard. No hard protection or special-account structure markers were found in the extracted source evidence; the standard-family default remains defensible.",
       "confidence": 0.9,
       "evidenceRefs": [
         "accountModel:Unclear",
         "bucket:B-extendable",
+        "catalog:etiqa-invest-starter",
         "cohort:generic",
         "file:EIP_Invest starter_Product Summary.pdf",
         "gap:dynamic-charge-model",
@@ -1669,11 +1682,11 @@
         "multi-account-special-account-kernel"
       ],
       "modeledSubsetAlreadyCovered": [
-        "pruvantage-assure-sp-administration-charge",
+        "branch:assure-sp-administration-charge",
         "branch:assure-sp-combined-assurance",
-        "branch:pru-top-up-charge",
-        "branch:pru-charged-withdrawal",
-        "pruvantage-assure-sp-iia-surrender-charge"
+        "branch:assure-sp-top-up-charge",
+        "branch:assure-sp-charged-withdrawal",
+        "branch:assure-sp-iia-surrender-charge"
       ],
       "metadataOnlyBehaviors": [
         "pruvantage-assure-sp-single-premium-allocation-enhancement",

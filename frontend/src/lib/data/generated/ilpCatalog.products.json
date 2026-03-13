@@ -1,5 +1,304 @@
 [
   {
+    "id": "etiqa-invest-starter",
+    "insurer": "Etiqa",
+    "productName": "Invest starter",
+    "sourceFileName": "EIP_Invest starter_Product Summary.pdf",
+    "sourceChecksumSha256": "a523913b86dfd3ae62d098a27ea4c88e2bf937c3b899f6c0400b1df792f696a2",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:invest-starter-policy-charge",
+      "branch:invest-starter-premium-shortfall-charge",
+      "branch:invest-starter-premium-shortfall-refund",
+      "branch:invest-starter-partial-withdrawal-charge",
+      "branch:invest-starter-surrender-charge",
+      "branch:invest-starter-ad-hoc-top-up-routing"
+    ],
+    "metadataOnlyBehaviors": [
+      "invest-starter-policy-charge-refund-every-3-years",
+      "invest-starter-one-time-reward",
+      "invest-starter-change-of-life-insured",
+      "invest-starter-optional-protection-riders"
+    ],
+    "warnings": [
+      "Invest starter is currently modeled as a partial product in V1. The regular-premium cashflow, top-up routing, policy charge, premium-holiday shortfall charge/refund, and first-five-year withdrawal / surrender charge schedules are modeled, but the three-year policy charge refund and one-time reward remain informational only."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-5",
+        "currency": "SGD",
+        "mipLength": 5,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "portfolio",
+            "label": "Portfolio Fund Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "portfolio",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Nature of plan and death benefit",
+                "excerpt": "Nature and Objective of the Plan: This is a whole life regular Premium investment-linked plan that is designed to meet Your wealth accumulation needs and provides You protection coverage against death and terminal illnes"
+              },
+              {
+                "page": 3,
+                "section": "Change in regular premium and ad-hoc top-up",
+                "excerpt": "6. Change in Regular Premium You may request for a change in regular Premium, subject to Our approval. An increase in regular Premium is allowed at any time. A decrease in regular Premium is only allowed th starting from"
+              },
+              {
+                "page": 13,
+                "section": "Regular premium minimums",
+                "excerpt": "This is a regular Premium investment-linked insurance plan. You can choose to pay the regular premiums on a monthly, quarterly, half-yearly or yearly basis. The minimum regular Premium requirements are as follows: Annual"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "policy-charge",
+            "label": "Policy Charge",
+            "basis": "account-value",
+            "rate": 0.008,
+            "amount": null,
+            "appliesTo": [
+              "portfolio"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Modeled as the published monthly 0.80% p.a. policy charge on account value throughout the policy term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy charge",
+                "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units starting once the policy commences and the next day after the policy monthiversary for subsequent deduct"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "premium-shortfall-charge",
+            "label": "Premium Shortfall Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "portfolio"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.07
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.07
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies during premium holiday in the first five policy years based on the annualised regular premium.",
+              "The published refund on full repayment is modeled separately via a premium-holiday repayment refund rule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium holiday and partial withdrawal",
+                "excerpt": "8. Premium Holiday Premium holiday will be activated automatically if regular Premium due are unpaid after the grace period. The policy will continue to be in force as long as the Account value is sufficient to cover the"
+              },
+              {
+                "page": 11,
+                "section": "Premium shortfall and partial withdrawal charges",
+                "excerpt": "27. Premium Shortfall Charge If You miss paying any regular Premium during the first five (5) policy years, a monthly premium shortfall charge is payable starting from the first business day after the end of the grace pe"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge-refund",
+            "label": "Premium Shortfall Charge Refund",
+            "trigger": "premium-holiday-repayment",
+            "basis": "premium-holiday-charge-refund",
+            "appliesTo": [
+              "portfolio"
+            ],
+            "rate": 1,
+            "amount": 0,
+            "sourceChargeRuleId": "premium-shortfall-charge",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Returns all previously imposed premium shortfall charges without interest after all missed regular premiums are paid back in full."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Premium shortfall and partial withdrawal charges",
+                "excerpt": "27. Premium Shortfall Charge If You miss paying any regular Premium during the first five (5) policy years, a monthly premium shortfall charge is payable starting from the first business day after the end of the grace pe"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "portfolio"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.07
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.07
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to partial withdrawals in the first five policy years."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium holiday and partial withdrawal",
+                "excerpt": "8. Premium Holiday Premium holiday will be activated automatically if regular Premium due are unpaid after the grace period. The policy will continue to be in force as long as the Account value is sufficient to cover the"
+              },
+              {
+                "page": 11,
+                "section": "Premium shortfall and partial withdrawal charges",
+                "excerpt": "27. Premium Shortfall Charge If You miss paying any regular Premium during the first five (5) policy years, a monthly premium shortfall charge is payable starting from the first business day after the end of the grace pe"
+              },
+              {
+                "page": 12,
+                "section": "Surrender charge",
+                "excerpt": "Surrender charge is payable if You request for full surrender during the first five (5) years. The surrender charge is calculated as below: Surrender charge = Surrender charge percentage (depending on the policy year at "
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          0.07,
+          0.07,
+          0.06,
+          0.06,
+          0.05
+        ],
+        "warnings": [
+          "Invest starter is cataloged as a partial modeled subset in V1. The parser captures the policy charge, premium-holiday shortfall charge and refund, partial-withdrawal charge, surrender charge horizon, and regular-premium / top-up cashflow structure.",
+          "The three-year policy charge refund and one-time reward remain informational only in V1 because they require bonus-state logic beyond the current kernel.",
+          "Dividend reinvestment is automatic at the sub-fund level and is therefore treated as part of accumulation value rather than as a separate user election."
+        ],
+        "unsupportedItems": [
+          "Policy charge refund every three years remains informational only.",
+          "One-time reward for linked insurance purchases remains informational only.",
+          "Change of life insured remains informational only.",
+          "Optional protection riders remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Nature of plan and death benefit",
+            "excerpt": "Nature and Objective of the Plan: This is a whole life regular Premium investment-linked plan that is designed to meet Your wealth accumulation needs and provides You protection coverage against death and terminal illnes"
+          },
+          {
+            "page": 2,
+            "section": "Policy charge refund and one-time reward",
+            "excerpt": "3. Policy Charge Refund We will provide a refund of policy charge for every three (3) year period after Your policy has completed every three (3) policy years and provided you have not made any partial withdrawal during "
+          },
+          {
+            "page": 3,
+            "section": "Change in regular premium and ad-hoc top-up",
+            "excerpt": "6. Change in Regular Premium You may request for a change in regular Premium, subject to Our approval. An increase in regular Premium is allowed at any time. A decrease in regular Premium is only allowed th starting from"
+          },
+          {
+            "page": 4,
+            "section": "Premium holiday and partial withdrawal",
+            "excerpt": "8. Premium Holiday Premium holiday will be activated automatically if regular Premium due are unpaid after the grace period. The policy will continue to be in force as long as the Account value is sufficient to cover the"
+          },
+          {
+            "page": 10,
+            "section": "Policy charge",
+            "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units starting once the policy commences and the next day after the policy monthiversary for subsequent deduct"
+          },
+          {
+            "page": 11,
+            "section": "Premium shortfall and partial withdrawal charges",
+            "excerpt": "27. Premium Shortfall Charge If You miss paying any regular Premium during the first five (5) policy years, a monthly premium shortfall charge is payable starting from the first business day after the end of the grace pe"
+          },
+          {
+            "page": 12,
+            "section": "Surrender charge",
+            "excerpt": "Surrender charge is payable if You request for full surrender during the first five (5) years. The surrender charge is calculated as below: Surrender charge = Surrender charge percentage (depending on the policy year at "
+          },
+          {
+            "page": 13,
+            "section": "Regular premium minimums",
+            "excerpt": "This is a regular Premium investment-linked insurance plan. You can choose to pay the regular premiums on a monthly, quarterly, half-yearly or yearly basis. The minimum regular Premium requirements are as follows: Annual"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "hsbc-life-wealth-accelerate",
     "insurer": "HSBC Life",
     "productName": "Wealth Accelerate",
