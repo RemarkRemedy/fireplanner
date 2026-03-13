@@ -563,6 +563,83 @@ describe('templateVariantToPolicySeed', () => {
     )
   })
 
+  it('maps Invest Flex into a partial regular-premium seed with policy-fee, bonus, and MIP-charge schedules', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'income-invest-flex')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs1-policy-fee')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs1-investment-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs1-loyalty-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs1-premium-holiday-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs1-partial-withdrawal-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs1-death-ti-insurance-cover-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs1-distribution-payout-election')
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.mipLength).toBe(10)
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'policy',
+        contributionRules: [
+          { phase: 'top-up', contributionShare: 1 },
+        ],
+      }),
+    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-fee',
+          basis: 'account-value',
+          appliesTo: ['policy'],
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 10, rate: 0.025 },
+            { startPolicyYear: 11, endPolicyYear: null, rate: 0.005 },
+          ],
+        }),
+      ]),
+    )
+    expect(seed.bonuses).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'investment-bonus',
+          mode: 'premium-allocation',
+          tieredRates: [
+            { currency: 'SGD', minAnnualPremium: 6000, maxAnnualPremium: 9599.99, rate: 0.1 },
+            { currency: 'SGD', minAnnualPremium: 9600, maxAnnualPremium: null, rate: 0.25 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'loyalty-bonus',
+          mode: 'annual-rate',
+          startPolicyYear: 10,
+          rate: 0.005,
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'premium-holiday-charge',
+          trigger: 'premium-holiday',
+          basis: 'annual-premium-with-overlap-months',
+          appliesTo: ['policy'],
+        }),
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          trigger: 'partial-withdrawal',
+          basis: 'event-amount',
+          appliesTo: ['policy'],
+        }),
+      ]),
+    )
+  })
+
   it('maps Tokio Marine Wealth Max (II) into a partial seed with recurring-single-premium routing and charges', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-wealth-max-ii')

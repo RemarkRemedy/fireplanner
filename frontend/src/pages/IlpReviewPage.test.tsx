@@ -229,6 +229,21 @@ describe('IlpReviewPage', () => {
     expect(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i })).toBeEnabled()
   }, 10_000)
 
+  it('shows Invest Flex as a partial catalog product that can be selected from the picker', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest Flex')
+
+    const title = within(dialog).getByText(/^Invest Flex$/)
+    expect(title).toBeInTheDocument()
+    const card = title.closest('.space-y-4')
+    expect(card).not.toBeNull()
+    expect(within(card as HTMLElement).getByRole('button', { name: /sgd \/ mip 10/i })).toBeEnabled()
+  }, 10_000)
+
   it('seeds Tokio Marine Wealth Max (II) as a partial catalog product with recurring-premium warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()

@@ -134,7 +134,7 @@ Corpus size: 92
 | VA2_Summary.pdf | `standard-2-account-core-cashflow` | dynamic-charge, premium-holiday-recovery | `generic` | `supported-after-kernel` | `1-workstream` | `not-in-catalog` | `none` |
 | VA3R_VA3S_Summary.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, dynamic-charge, premium-holiday-recovery | `generic` | `supported-after-kernel` | `1-workstream` | `not-in-catalog` | `none` |
 | VS1_Summary.pdf | `standard-2-account-core-cashflow` | dynamic-charge, premium-holiday-recovery | `generic` | `supported-after-kernel` | `1-workstream` | `not-in-catalog` | `none` |
-| VS2_Summary.pdf | `standard-2-account-core-cashflow` | dynamic-charge, premium-holiday-recovery | `generic` | `supported-after-kernel` | `1-workstream` | `not-in-catalog` | `none` |
+| VS2_Summary.pdf | `standard-2-account-core-cashflow` | dynamic-charge, premium-holiday-recovery | `generic` | `supported-after-kernel` | `1-workstream` | `partial` | `none` |
 | VS3_Summary.pdf | `standard-2-account-core-cashflow` | dynamic-charge, premium-holiday-recovery | `generic` | `supported-after-kernel` | `1-workstream` | `not-in-catalog` | `none` |
 | WA_MI2_ILP_PdtSum.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, dynamic-charge | `aia-ilp-generic` | `supported-after-kernel` | `1-workstream` | `not-in-catalog` | `none` |
 | WA_MID01_PdtSum.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, bonus-richness, distribution-mode, premium-holiday-recovery | `aia-ilp-generic` | `supported-after-kernel` | `2-3-workstreams` | `not-in-catalog` | `none` |
