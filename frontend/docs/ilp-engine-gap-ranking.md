@@ -2,6 +2,13 @@
 
 Generated at: 2026-03-12T15:00:00+08:00
 
+This document ranks kernel workstreams. It does not assign products to families.
+
+For the canonical product-level classifier, use:
+
+- `frontend/scripts/ilp-catalog/fixtures/audit/family-classification.json`
+- `frontend/docs/ilp-mechanics-family-classification.md`
+
 ## Baseline
 
 - Summary corpus baseline: 92 product summary PDFs
