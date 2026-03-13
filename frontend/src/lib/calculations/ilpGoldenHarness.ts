@@ -45,6 +45,7 @@ export interface GoldenPolicyInputSurface {
   monthsAlreadyPaid: number
   currentPolicyYear: number
   icpMonths?: number
+  assuranceProfile?: IlpPolicyInput['assuranceProfile']
   mipLength: number
   postMipYears: number
   eecTable: number[]
@@ -117,6 +118,28 @@ function normalizePolicyInput(policy: IlpPolicyInput): GoldenPolicyInputSurface 
     monthsAlreadyPaid: policy.monthsAlreadyPaid,
     currentPolicyYear: policy.currentPolicyYear,
     icpMonths: policy.icpMonths,
+    assuranceProfile: policy.assuranceProfile
+      ? {
+          currentAgeNextBirthday: policy.assuranceProfile.currentAgeNextBirthday,
+          sex: policy.assuranceProfile.sex,
+          smokerStatus: policy.assuranceProfile.smokerStatus,
+          currentNetRegularPremiumBase: policy.assuranceProfile.currentNetRegularPremiumBase == null
+            ? undefined
+            : roundCurrency(policy.assuranceProfile.currentNetRegularPremiumBase),
+          currentSumAssured: policy.assuranceProfile.currentSumAssured == null
+            ? undefined
+            : roundCurrency(policy.assuranceProfile.currentSumAssured),
+          currentWealthAssureValue: policy.assuranceProfile.currentWealthAssureValue == null
+            ? undefined
+            : roundCurrency(policy.assuranceProfile.currentWealthAssureValue),
+          currentBasicSumAssured: policy.assuranceProfile.currentBasicSumAssured == null
+            ? undefined
+            : roundCurrency(policy.assuranceProfile.currentBasicSumAssured),
+          currentNetSupplementaryPremiumBase: policy.assuranceProfile.currentNetSupplementaryPremiumBase == null
+            ? undefined
+            : roundCurrency(policy.assuranceProfile.currentNetSupplementaryPremiumBase),
+        }
+      : undefined,
     mipLength: policy.mipLength,
     postMipYears: policy.postMipYears,
     eecTable: policy.eecTable.map(roundRate),
@@ -157,6 +180,10 @@ function normalizePolicyInput(policy: IlpPolicyInput): GoldenPolicyInputSurface 
       ...rule,
       rate: roundRate(rule.rate),
       amount: roundCurrency(rule.amount),
+      assuranceConfig: rule.assuranceConfig ? {
+        ...rule.assuranceConfig,
+        monthlyModalFactor: roundRate(rule.assuranceConfig.monthlyModalFactor),
+      } : undefined,
       amountSchedule: rule.amountSchedule?.map((tier) => ({
         ...tier,
         amount: roundCurrency(tier.amount),

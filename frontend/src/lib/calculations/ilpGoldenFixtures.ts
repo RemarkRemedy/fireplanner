@@ -17,11 +17,33 @@ export type GoldenCoverageTag =
   | 'branch:hsbc-bonus-suspension'
   | 'branch:hsbc-premium-reduction-brc'
   | 'branch:hsbc-top-up-routing'
+  | 'branch:hsbc-harvest-holiday-charge'
+  | 'branch:hsbc-harvest-pwc'
+  | 'branch:hsbc-harvest-brc'
+  | 'branch:hsbc-harvest-topup-charge'
+  | 'branch:hsbc-abundance-free-withdrawal'
+  | 'branch:hsbc-abundance-tiered-brc'
+  | 'branch:hsbc-abundance-topup-charge'
+  | 'branch:hsbc-abundance-power-up-restoration'
+  | 'branch:hsbc-voyage-premium-base-amf'
+  | 'branch:hsbc-voyage-tiered-brc'
+  | 'branch:hsbc-voyage-topup-charge'
+  | 'branch:hsbc-voyage-premium-holiday-suspension'
   | 'branch:pru-holiday-refund'
   | 'branch:pru-holiday-fallback'
   | 'branch:pru-top-up-charge'
   | 'branch:pru-free-withdrawal'
   | 'branch:pru-charged-withdrawal'
+  | 'branch:prosper-assurance-charge'
+  | 'branch:assure-ii-pre-70-assurance'
+  | 'branch:assure-ii-post-70-charge-tail'
+  | 'branch:assure-ii-manual-reduction-resumption'
+  | 'branch:tokio-bonus-ladder'
+  | 'branch:tokio-post-mip-routing'
+  | 'branch:tokio-rsp-manual-resumption'
+  | 'branch:tokio-shortfall-exclusive'
+  | 'branch:tokio-reduction-consumes-rsp-first'
+  | 'branch:tokio-charge-waiver'
 
 export interface GoldenFixtureCoverageTarget {
   productId: string
@@ -126,6 +148,25 @@ const PRU_STRESS_FUNDS: IlpFund[] = [
   },
 ]
 
+const TOKIO_BALANCED_FUNDS: IlpFund[] = [
+  {
+    name: 'Asia Balanced Growth',
+    allocation: 0.6,
+    ocf: 0.013,
+    grossReturnLow: 0.045,
+    grossReturnMid: 0.072,
+    grossReturnHigh: 0.098,
+  },
+  {
+    name: 'Global Income Opportunities',
+    allocation: 0.4,
+    ocf: 0.01,
+    grossReturnLow: 0.03,
+    grossReturnMid: 0.05,
+    grossReturnHigh: 0.068,
+  },
+]
+
 function cloneFunds(funds: IlpFund[]): IlpFund[] {
   return funds.map((fund) => ({ ...fund }))
 }
@@ -154,12 +195,19 @@ function clonePolicySeedIntoInput(seed: ReturnType<typeof templateVariantToPolic
       ...rule,
       appliesTo: [...rule.appliesTo],
       fallbackAppliesTo: rule.fallbackAppliesTo ? [...rule.fallbackAppliesTo] : undefined,
+      premiumBaseConfig: rule.premiumBaseConfig
+        ? {
+            useHigherOfCommencementAndPrevailing: rule.premiumBaseConfig.useHigherOfCommencementAndPrevailing,
+            multiplierSchedule: rule.premiumBaseConfig.multiplierSchedule.map((tier) => ({ ...tier })),
+          }
+        : undefined,
       amountSchedule: rule.amountSchedule?.map((tier) => ({ ...tier })),
     })) ?? [],
     eventChargeRules: seed.eventChargeRules?.map((rule) => ({
       ...rule,
       appliesTo: [...rule.appliesTo],
       fallbackAppliesTo: rule.fallbackAppliesTo ? [...rule.fallbackAppliesTo] : undefined,
+      freeLifetimeMonths: rule.freeLifetimeMonths,
       rateSchedule: rule.rateSchedule?.map((tier) => ({ ...tier })),
     })) ?? [],
     catalogSource: seed.catalogSource ? { ...seed.catalogSource } : undefined,
@@ -201,12 +249,37 @@ function withFunds(policy: IlpPolicyInput, funds: IlpFund[]): IlpPolicyInput {
   })
 }
 
+function withoutRecurringContribution(policy: IlpPolicyInput): IlpPolicyInput {
+  return ilpPolicySchema.parse({
+    ...policy,
+    monthlyContribution: 0,
+    accounts: policy.accounts.map((account) => ({
+      ...account,
+      contributionShare: 0,
+      contributionRules: account.contributionRules?.map((rule) => ({
+        ...rule,
+        share: 0,
+      })),
+    })),
+  })
+}
+
 function withHsbcBalances(policy: IlpPolicyInput, iua: number, aua: number): IlpPolicyInput {
   return ilpPolicySchema.parse({
     ...policy,
     accounts: policy.accounts.map((account) => ({
       ...account,
       currentValue: account.id === 'iua' ? iua : aua,
+    })),
+  })
+}
+
+function withHsbcHarvestBalances(policy: IlpPolicyInput, regular: number, topup: number): IlpPolicyInput {
+  return ilpPolicySchema.parse({
+    ...policy,
+    accounts: policy.accounts.map((account) => ({
+      ...account,
+      currentValue: account.id === 'regular' ? regular : topup,
     })),
   })
 }
@@ -230,6 +303,46 @@ function withPruBalancesAndSplit(
         return { ...account, currentValue: flex, contributionShare: flexShare }
       }
       return { ...account, currentValue: additional, contributionShare: 0 }
+    }),
+  })
+}
+
+function withPruBalancesOnly(
+  policy: IlpPolicyInput,
+  growth: number,
+  flex: number,
+  additional: number,
+): IlpPolicyInput {
+  return ilpPolicySchema.parse({
+    ...policy,
+    accounts: policy.accounts.map((account) => {
+      if (account.id === 'growth') {
+        return { ...account, currentValue: growth }
+      }
+      if (account.id === 'flex') {
+        return { ...account, currentValue: flex }
+      }
+      return { ...account, currentValue: additional }
+    }),
+  })
+}
+
+function withTokioBalances(
+  policy: IlpPolicyInput,
+  initial: number,
+  accumulation: number,
+  topup: number,
+): IlpPolicyInput {
+  return ilpPolicySchema.parse({
+    ...policy,
+    accounts: policy.accounts.map((account) => {
+      if (account.id === 'initial') {
+        return { ...account, currentValue: initial }
+      }
+      if (account.id === 'accumulation') {
+        return { ...account, currentValue: accumulation }
+      }
+      return { ...account, currentValue: topup }
     }),
   })
 }
@@ -353,6 +466,250 @@ function hsbcStressPolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'produ
     ),
     14_000,
     10_200,
+  )
+}
+
+function hsbcHarvestBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'hsbc-life-wealth-harvest', 'sgd-mip-11', id)
+  return withHsbcHarvestBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden HSBC Wealth Harvest (SGD / MIP 11 Baseline)',
+        monthlyContribution: 1_000,
+        currentPolicyYear: 4,
+        monthsAlreadyPaid: 36,
+        postMipYears: 10,
+        policyEvents: [],
+      }),
+      HSBC_BALANCED_FUNDS,
+    ),
+    14_000,
+    2_500,
+  )
+}
+
+function hsbcHarvestEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'hsbc-life-wealth-harvest', 'sgd-mip-11', id)
+  return withHsbcHarvestBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden HSBC Wealth Harvest (SGD / MIP 11 Event Heavy)',
+        monthlyContribution: 1_000,
+        currentPolicyYear: 10,
+        monthsAlreadyPaid: 108,
+        postMipYears: 5,
+        policyEvents: [
+          {
+            id: 'top-up-1',
+            type: 'top-up',
+            startPolicyMonth: 109,
+            durationMonths: 1,
+            amount: 1_200,
+          },
+          {
+            id: 'holiday-1',
+            type: 'premium-holiday',
+            startPolicyMonth: 110,
+            durationMonths: 2,
+          },
+          {
+            id: 'reduction-1',
+            type: 'regular-premium-reduction',
+            startPolicyMonth: 112,
+            durationMonths: 1,
+            amount: 1_200,
+          },
+          {
+            id: 'withdrawal-1',
+            type: 'partial-withdrawal',
+            startPolicyMonth: 114,
+            durationMonths: 1,
+            amount: 500,
+            accountId: 'regular',
+          },
+        ],
+      }),
+      HSBC_BALANCED_FUNDS,
+    ),
+    24_000,
+    3_000,
+  )
+}
+
+function hsbcAbundanceBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: string,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'hsbc-life-wealth-abundance', variantId, id)
+  const isUsd = variantId.startsWith('usd')
+
+  return withHsbcHarvestBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: `Golden HSBC Wealth Abundance (${variantId.toUpperCase()})`,
+        monthlyContribution: isUsd ? 2_000 : 2_500,
+        currentPolicyYear: 5,
+        monthsAlreadyPaid: 48,
+        postMipYears: 8,
+        policyEvents: [],
+      }),
+      HSBC_BALANCED_FUNDS,
+    ),
+    isUsd ? 26_000 : 32_000,
+    isUsd ? 4_000 : 5_500,
+  )
+}
+
+function hsbcAbundanceEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'hsbc-life-wealth-abundance', 'sgd-mip-10', id)
+  return withHsbcHarvestBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden HSBC Wealth Abundance (SGD / MIP 10 Event Heavy)',
+        monthlyContribution: 2_500,
+        currentPolicyYear: 8,
+        monthsAlreadyPaid: 84,
+        postMipYears: 5,
+        policyEvents: [
+          {
+            id: 'holiday-1',
+            type: 'premium-holiday',
+            startPolicyMonth: 85,
+            durationMonths: 2,
+            repayMissedPremiums: true,
+            repaymentAccountId: 'regular',
+          },
+          {
+            id: 'top-up-1',
+            type: 'top-up',
+            startPolicyMonth: 88,
+            durationMonths: 1,
+            amount: 2_000,
+          },
+          {
+            id: 'reduction-1',
+            type: 'regular-premium-reduction',
+            startPolicyMonth: 90,
+            durationMonths: 1,
+            amount: 3_000,
+          },
+          {
+            id: 'free-withdrawal-1',
+            type: 'partial-withdrawal',
+            startPolicyMonth: 92,
+            durationMonths: 1,
+            amount: 1_500,
+            accountId: 'regular',
+          },
+          {
+            id: 'charged-withdrawal-2',
+            type: 'partial-withdrawal',
+            startPolicyMonth: 94,
+            durationMonths: 1,
+            amount: 4_000,
+            accountId: 'regular',
+          },
+        ],
+      }),
+      HSBC_BALANCED_FUNDS,
+    ),
+    34_000,
+    6_000,
+  )
+}
+
+function hsbcVoyageBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: string,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'hsbc-life-wealth-voyage', variantId, id)
+  const isUsd = variantId.startsWith('usd')
+  const mipLength = Number(variantId.slice(variantId.lastIndexOf('-') + 1))
+  const currentPolicyYear = Math.max(3, Math.min(mipLength - 2, Math.floor(mipLength / 2)))
+
+  return withHsbcHarvestBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: `Golden HSBC Wealth Voyage (${variantId.toUpperCase()})`,
+        monthlyContribution: isUsd ? 1_200 : 1_500,
+        currentPolicyYear,
+        monthsAlreadyPaid: (currentPolicyYear - 1) * 12,
+        postMipYears: 5,
+        policyEvents: [],
+      }),
+      HSBC_BALANCED_FUNDS,
+    ),
+    isUsd ? 18_000 : 24_000,
+    isUsd ? 5_500 : 7_500,
+  )
+}
+
+function hsbcVoyageEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'hsbc-life-wealth-voyage', 'sgd-mip-20', id)
+  return withHsbcHarvestBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden HSBC Wealth Voyage (SGD / MIP 20 Event Heavy)',
+        monthlyContribution: 1_500,
+        currentPolicyYear: 9,
+        monthsAlreadyPaid: 96,
+        postMipYears: 5,
+        policyEvents: [
+          {
+            id: 'holiday-1',
+            type: 'premium-holiday',
+            startPolicyMonth: 97,
+            durationMonths: 2,
+            repayMissedPremiums: false,
+          },
+          {
+            id: 'top-up-1',
+            type: 'top-up',
+            startPolicyMonth: 100,
+            durationMonths: 1,
+            amount: 2_000,
+          },
+          {
+            id: 'reduction-1',
+            type: 'regular-premium-reduction',
+            startPolicyMonth: 102,
+            durationMonths: 1,
+            amount: 1_800,
+          },
+          {
+            id: 'withdrawal-1',
+            type: 'partial-withdrawal',
+            startPolicyMonth: 104,
+            durationMonths: 1,
+            amount: 3_000,
+            accountId: 'regular',
+          },
+        ],
+      }),
+      HSBC_BALANCED_FUNDS,
+    ),
+    28_000,
+    5_000,
   )
 }
 
@@ -487,6 +844,275 @@ function pruStressSplitPolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'p
   )
 }
 
+function prosperAssurancePolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'prudential-pruvantage-prosper', 'sgd-mip-25', id)
+  return withPruBalancesAndSplit(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden PRUVantage Prosper (SGD / MIP 25 Assurance)',
+        monthlyContribution: 1_200,
+        currentPolicyYear: 10,
+        monthsAlreadyPaid: 120,
+        assuranceProfile: {
+          currentAgeNextBirthday: 50,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 100_000,
+        },
+        policyEvents: [],
+      }),
+      PRU_BALANCED_FUNDS,
+    ),
+    50_000,
+    50_000,
+    50_000,
+    0.5,
+  )
+}
+
+function assureIiBoundedAssurancePolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'prudential-pruvantage-assure-ii', 'sgd-mip-25', id)
+  return withPruBalancesOnly(
+    withFunds(
+      withoutRecurringContribution(
+        ilpPolicySchema.parse({
+          ...base,
+          name: 'Golden PRUVantage Assure II (SGD / MIP 25 Bounded Assurance)',
+          currentPolicyYear: 23,
+          monthsAlreadyPaid: 276,
+          postMipYears: 3,
+          assuranceProfile: {
+            currentAgeNextBirthday: 68,
+            sex: 'male',
+            smokerStatus: 'non-smoker',
+            currentNetRegularPremiumBase: 100_000,
+            currentSumAssured: 148_000,
+            currentWealthAssureValue: 101_000,
+          },
+          policyEvents: [],
+        }),
+      ),
+      PRU_BALANCED_FUNDS,
+    ),
+    50_000,
+    50_000,
+    50_000,
+  )
+}
+
+function assureIiStateOverridePolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'prudential-pruvantage-assure-ii', 'sgd-mip-25', id)
+  return withPruBalancesOnly(
+    withFunds(
+      withoutRecurringContribution(
+        ilpPolicySchema.parse({
+          ...base,
+          name: 'Golden PRUVantage Assure II (SGD / MIP 25 State Override)',
+          currentPolicyYear: 24,
+          monthsAlreadyPaid: 288,
+          postMipYears: 3,
+          assuranceProfile: {
+            currentAgeNextBirthday: 70,
+            sex: 'male',
+            smokerStatus: 'non-smoker',
+            currentNetRegularPremiumBase: 100_000,
+            currentSumAssured: 140_000,
+            currentWealthAssureValue: 135_000,
+          },
+          policyEvents: [
+            {
+              id: 'reduce-1',
+              type: 'assurance-benefit-reduction',
+              startPolicyMonth: 289,
+              durationMonths: 1,
+              resultingSumAssured: 110_000,
+              resultingWealthAssureValue: 105_000,
+            },
+            {
+              id: 'resume-1',
+              type: 'assurance-benefit-resumption',
+              startPolicyMonth: 313,
+              durationMonths: 1,
+              resultingSumAssured: 140_000,
+            },
+          ],
+        }),
+      ),
+      PRU_BALANCED_FUNDS,
+    ),
+    50_000,
+    50_000,
+    50_000,
+  )
+}
+
+function tokioEventHeavyPolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-wealth-max-ii', 'sgd-mip-15', id)
+  return withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Wealth Max (II) (SGD / MIP 15 Event Heavy)',
+        monthlyContribution: 350,
+        currentPolicyYear: 3,
+        monthsAlreadyPaid: 36,
+        policyEvents: [
+          {
+            id: 'rsp-1',
+            type: 'recurring-single-premium',
+            startPolicyMonth: 37,
+            durationMonths: 12,
+            amount: 100,
+          },
+          {
+            id: 'reduction-1',
+            type: 'regular-premium-reduction',
+            startPolicyMonth: 39,
+            durationMonths: 1,
+            amount: 600,
+          },
+          {
+            id: 'holiday-1',
+            type: 'premium-holiday',
+            startPolicyMonth: 40,
+            durationMonths: 3,
+          },
+          {
+            id: 'rsp-resume-1',
+            type: 'recurring-single-premium-resumption',
+            startPolicyMonth: 45,
+            durationMonths: 1,
+          },
+        ],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    1_500,
+    8_000,
+    0,
+  )
+}
+
+function tokioBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  productId: 'tokio-marine-wealth-max-ii' | 'tokio-marine-wealth-pro-ii',
+  variantId: 'sgd-mip-15' | 'sgd-mip-10',
+  id: string,
+  name: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, productId, variantId, id)
+  return withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name,
+        monthlyContribution: 2_000,
+        currentPolicyYear: 1,
+        monthsAlreadyPaid: 0,
+        postMipYears: 15,
+        policyEvents: [],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    0,
+    0,
+    0,
+  )
+}
+
+function tokioWealthProEventHeavyPolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-wealth-pro-ii', 'sgd-mip-10', id)
+  return withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Wealth Pro (II) (SGD / MIP 10 Event Heavy)',
+        monthlyContribution: 350,
+        currentPolicyYear: 3,
+        monthsAlreadyPaid: 36,
+        policyEvents: [
+          {
+            id: 'rsp-1',
+            type: 'recurring-single-premium',
+            startPolicyMonth: 37,
+            durationMonths: 12,
+            amount: 100,
+          },
+          {
+            id: 'reduction-1',
+            type: 'regular-premium-reduction',
+            startPolicyMonth: 39,
+            durationMonths: 1,
+            amount: 600,
+          },
+          {
+            id: 'holiday-1',
+            type: 'premium-holiday',
+            startPolicyMonth: 40,
+            durationMonths: 3,
+          },
+          {
+            id: 'rsp-resume-1',
+            type: 'recurring-single-premium-resumption',
+            startPolicyMonth: 45,
+            durationMonths: 1,
+          },
+        ],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    1_500,
+    8_000,
+    0,
+  )
+}
+
+function tokioWealthProWaivedChargesPolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-wealth-pro-ii', 'sgd-mip-10', id)
+  return withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Wealth Pro (II) (SGD / MIP 10 Waived Charges)',
+        monthlyContribution: 350,
+        currentPolicyYear: 3,
+        monthsAlreadyPaid: 36,
+        policyEvents: [
+          {
+            id: 'withdrawal-1',
+            type: 'partial-withdrawal',
+            startPolicyMonth: 37,
+            durationMonths: 1,
+            amount: 500,
+            accountId: 'accumulation',
+            chargeWaived: true,
+          },
+          {
+            id: 'holiday-1',
+            type: 'premium-holiday',
+            startPolicyMonth: 40,
+            durationMonths: 3,
+            chargeWaived: true,
+          },
+          {
+            id: 'reduction-1',
+            type: 'regular-premium-reduction',
+            startPolicyMonth: 44,
+            durationMonths: 2,
+            amount: 600,
+            chargeWaived: true,
+          },
+        ],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    1_500,
+    8_000,
+    0,
+  )
+}
+
 const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   {
     productId: 'hsbc-life-wealth-accelerate',
@@ -594,6 +1220,184 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: ['ocf-stress'],
     description: 'HSBC alternate-fund stress scenario.',
+  },
+  {
+    productId: 'hsbc-life-wealth-harvest',
+    variantId: 'sgd-mip-11',
+    scenarioId: 'baseline',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: ['baseline'],
+    description: 'HSBC Wealth Harvest modeled-subset baseline scenario.',
+  },
+  {
+    productId: 'hsbc-life-wealth-harvest',
+    variantId: 'sgd-mip-11',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: [
+      'event-heavy',
+      'branch:hsbc-harvest-holiday-charge',
+      'branch:hsbc-harvest-pwc',
+      'branch:hsbc-harvest-brc',
+      'branch:hsbc-harvest-topup-charge',
+    ],
+    description: 'HSBC Wealth Harvest modeled-subset event-heavy scenario covering holiday charges, BRC, top-up charge, and regular-account PWC.',
+    integrityChecks: [
+      {
+        description: 'premium holiday materially increases regular-account gross fees beyond the base AMF path',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.policyYear >= 10
+          && (row.accounts.find((account) => account.accountId === 'regular')?.grossFee ?? 0) > 1_200
+        )),
+      },
+      {
+        description: 'the seeded top-up credits the top-up account after its premium charge',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          (row.accounts.find((account) => account.accountId === 'topup')?.contributionAmount ?? 0) > 1_000
+        )),
+      },
+      {
+        description: 'BRC adds a material regular-account charge after the reduction event',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.policyYear >= 10
+          && (row.accounts.find((account) => account.accountId === 'regular')?.grossFee ?? 0) > 1_250
+        )),
+      },
+      {
+        description: 'the regular-account partial withdrawal is recorded',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          (row.accounts.find((account) => account.accountId === 'regular')?.withdrawalAmount ?? 0) >= 500
+        )),
+      },
+    ],
+  },
+  {
+    productId: 'hsbc-life-wealth-abundance',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: ['baseline'],
+    description: 'HSBC Wealth Abundance modeled-subset baseline scenario.',
+  },
+  {
+    productId: 'hsbc-life-wealth-abundance',
+    variantId: 'usd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: ['baseline'],
+    description: 'HSBC Wealth Abundance USD baseline scenario without recurring single premium.',
+  },
+  {
+    productId: 'hsbc-life-wealth-abundance',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: [
+      'event-heavy',
+      'branch:hsbc-abundance-free-withdrawal',
+      'branch:hsbc-abundance-tiered-brc',
+      'branch:hsbc-abundance-topup-charge',
+      'branch:hsbc-abundance-power-up-restoration',
+    ],
+    description: 'HSBC Wealth Abundance modeled-subset event-heavy scenario covering free and charged withdrawals, top-up charge, premium-holiday repayment, and tiered BRC.',
+    integrityChecks: [
+      {
+        description: 'the top-up charge reduces the top-up account contribution below the gross top-up amount',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          (row.accounts.find((account) => account.accountId === 'topup')?.contributionAmount ?? 0) > 1_900
+        )),
+      },
+      {
+        description: 'the free first withdrawal keeps regular-account gross fees materially below the charged second withdrawal year',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.annualWithdrawals >= 5_500
+          && (() => {
+            const regularGrossFee = row.accounts.find((account) => account.accountId === 'regular')?.grossFee ?? 0
+            return regularGrossFee > 900 && regularGrossFee < 1_000
+          })()
+        )),
+      },
+      {
+        description: 'tiered BRC adds a material regular-account charge after the reduction event',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.policyYear >= 8
+          && (row.accounts.find((account) => account.accountId === 'regular')?.grossFee ?? 0) > 800
+        )),
+      },
+      {
+        description: 'premium-holiday repayment restores a positive annual contribution after the holiday year',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.policyYear >= 8 && row.annualContribution > 28_000
+        )),
+      },
+    ],
+  },
+  {
+    productId: 'hsbc-life-wealth-voyage',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'baseline',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: ['baseline'],
+    description: 'HSBC Wealth Voyage SGD / MIP 15 baseline scenario.',
+  },
+  {
+    productId: 'hsbc-life-wealth-voyage',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'baseline',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: ['baseline'],
+    description: 'HSBC Wealth Voyage SGD / MIP 20 baseline scenario.',
+  },
+  {
+    productId: 'hsbc-life-wealth-voyage',
+    variantId: 'usd-mip-25',
+    scenarioId: 'baseline',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: ['baseline'],
+    description: 'HSBC Wealth Voyage USD / MIP 25 baseline scenario.',
+  },
+  {
+    productId: 'hsbc-life-wealth-voyage',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: [
+      'event-heavy',
+      'branch:hsbc-voyage-premium-base-amf',
+      'branch:hsbc-voyage-tiered-brc',
+      'branch:hsbc-voyage-topup-charge',
+      'branch:hsbc-voyage-premium-holiday-suspension',
+    ],
+    description: 'HSBC Wealth Voyage event-heavy scenario covering premium-base AMF, top-up charge, partial withdrawal charge, regular-premium reduction BRC, and a free-duration premium holiday suspension.',
+    integrityChecks: [
+      {
+        description: 'premium-base AMF remains materially above the old account-value fee scale',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.policyYear >= 10
+          && (row.accounts.find((account) => account.accountId === 'regular')?.grossFee ?? 0) > 3_000
+        )),
+      },
+      {
+        description: 'the seeded top-up reaches the top-up account after its premium charge',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          (row.accounts.find((account) => account.accountId === 'topup')?.contributionAmount ?? 0) > 1_900
+        )),
+      },
+      {
+        description: 'tiered startup recovery adds a visible regular-account charge after the reduction event',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.policyYear >= 10
+          && (row.accounts.find((account) => account.accountId === 'regular')?.grossFee ?? 0) > 3_500
+        )),
+      },
+      {
+        description: 'premium holiday suppresses annual contribution below the full committed premium year',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.policyYear >= 10
+          && row.annualContribution < artifact.policyInput.monthlyContribution * 12
+        )),
+      },
+    ],
   },
   {
     productId: 'prudential-pruvantage-wealth-ii',
@@ -708,6 +1512,288 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: ['ocf-stress'],
     description: 'PRUVantage Wealth II alternate-fund high-OCF stress scenario with non-default premium split.',
   },
+  {
+    productId: 'prudential-pruvantage-prosper',
+    variantId: 'sgd-mip-25',
+    scenarioId: 'assurance-active',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: ['baseline', 'branch:prosper-assurance-charge'],
+    description: 'PRUVantage Prosper modeled-subset scenario with assurance charges active from explicit insured-life inputs.',
+    integrityChecks: [
+      {
+        description: 'applies non-zero Prosper assurance charges to Growth and Flex',
+        test: (_, artifact) => {
+          const firstRow = artifact.expected.projections.mid.rows[0]
+          const growthFee = firstRow?.accounts.find((account) => account.accountId === 'growth')?.grossFee ?? 0
+          const flexFee = firstRow?.accounts.find((account) => account.accountId === 'flex')?.grossFee ?? 0
+          return growthFee > 0 && flexFee > 0
+        },
+      },
+    ],
+  },
+  {
+    productId: 'prudential-pruvantage-assure-ii',
+    variantId: 'sgd-mip-25',
+    scenarioId: 'assurance-tail',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: ['baseline', 'branch:assure-ii-pre-70-assurance', 'branch:assure-ii-post-70-charge-tail'],
+    description: 'PRUVantage Assure II modeled-subset scenario proving pre-70 assurance and the post-70 charge tail.',
+    integrityChecks: [
+      {
+        description: 'applies non-zero Assure II combined assurance before age 70',
+        test: (_, artifact) => {
+          const firstRow = artifact.expected.projections.mid.rows[0]
+          const growthFee = firstRow?.accounts.find((account) => account.accountId === 'growth')?.grossFee ?? 0
+          return growthFee > 0
+        },
+      },
+      {
+        description: 'continues non-zero Assure II assurance charges after age 70 from the published rate curve',
+        test: (_, artifact) => {
+          const laterRow = artifact.expected.projections.mid.rows.find((row) => row.policyYear >= 26)
+          const growthFee = laterRow?.accounts.find((account) => account.accountId === 'growth')?.grossFee ?? 0
+          return growthFee > 0
+        },
+      },
+    ],
+  },
+  {
+    productId: 'prudential-pruvantage-assure-ii',
+    variantId: 'sgd-mip-25',
+    scenarioId: 'assurance-state-override',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: ['event-heavy', 'branch:assure-ii-manual-reduction-resumption'],
+    description: 'PRUVantage Assure II modeled-subset scenario proving manual reduction and later resumption of the assurance state.',
+    integrityChecks: [
+      {
+        description: 'reduced assurance state lowers the charge after the reduction year',
+        test: (_, artifact) => {
+          const reductionYear = artifact.expected.projections.mid.rows.find((row) => row.policyYear === 25)
+          const frozenYear = artifact.expected.projections.mid.rows.find((row) => row.policyYear === 26)
+          const reducedGrowthFee = reductionYear?.accounts.find((account) => account.accountId === 'growth')?.grossFee ?? 0
+          const frozenGrowthFee = frozenYear?.accounts.find((account) => account.accountId === 'growth')?.grossFee ?? 0
+          return reducedGrowthFee > frozenGrowthFee && frozenGrowthFee > 0
+        },
+      },
+      {
+        description: 'resumption restores a higher charge path from the next policy year',
+        test: (_, artifact) => {
+          const frozenYear = artifact.expected.projections.mid.rows.find((row) => row.policyYear === 26)
+          const resumedYear = artifact.expected.projections.mid.rows.find((row) => row.policyYear === 27)
+          const frozenGrowthFee = frozenYear?.accounts.find((account) => account.accountId === 'growth')?.grossFee ?? 0
+          const resumedGrowthFee = resumedYear?.accounts.find((account) => account.accountId === 'growth')?.grossFee ?? 0
+          return resumedGrowthFee > frozenGrowthFee
+        },
+      },
+    ],
+  },
+  {
+    productId: 'tokio-marine-wealth-max-ii',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'baseline',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: ['baseline', 'branch:tokio-bonus-ladder', 'branch:tokio-post-mip-routing'],
+    description: 'Tokio Marine Wealth Max (II) modeled-subset baseline proving later performance, loyalty, and power-up bonus credit on top of the seeded bonus ladder.',
+    integrityChecks: [
+      {
+        description: 'performance investment bonus eventually credits the Accumulation Units Account after the ICP routing phase',
+        test: (_, artifact) => {
+          return artifact.expected.projections.mid.rows.some((row) => (
+            row.policyYear >= 5
+            && row.policyYear <= 15
+            && (row.accounts.find((account) => account.accountId === 'accumulation')?.bonusCredit ?? 0) > 0
+          ))
+        },
+      },
+      {
+        description: 'loyalty and power-up bonuses both become active in the post-MIP tail',
+        test: (_, artifact) => {
+          return artifact.expected.projections.mid.rows.some((row) => (
+            row.policyYear >= 16
+            && (row.accounts.find((account) => account.accountId === 'accumulation')?.bonusCredit ?? 0) > 0
+            && (row.accounts.find((account) => account.accountId === 'initial')?.bonusCredit ?? 0) > 0
+          ))
+        },
+      },
+      {
+        description: 'post-MIP regular premiums route back into the Initial Units Account',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.policyYear > 15
+          && row.annualContribution > 0
+          && (row.accounts.find((account) => account.accountId === 'initial')?.contributionAmount ?? 0) === row.annualContribution
+          && (row.accounts.find((account) => account.accountId === 'accumulation')?.contributionAmount ?? 0) === 0
+        )),
+      },
+    ],
+  },
+  {
+    productId: 'tokio-marine-wealth-max-ii',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: [
+      'event-heavy',
+      'branch:tokio-rsp-manual-resumption',
+      'branch:tokio-shortfall-exclusive',
+      'branch:tokio-reduction-consumes-rsp-first',
+    ],
+    description: 'Tokio Marine Wealth Max (II) modeled-subset scenario covering recurring-single-premium resumption, shortfall exclusivity, and reduction ordering.',
+    integrityChecks: [
+      {
+        description: 'manual recurring-single-premium resumption restores additional top-up contribution after the holiday window',
+        test: (fixture, artifact) => {
+          const withoutResumption = ilpPolicySchema.parse({
+            ...fixture.policy,
+            policyEvents: fixture.policy.policyEvents?.filter((event) => event.type !== 'recurring-single-premium-resumption'),
+          })
+          const withResumptionContribution = artifact.expected.projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'topup')?.contributionAmount ?? 0
+          const withoutResumptionContribution = analyzeIlpPolicy(withoutResumption).projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'topup')?.contributionAmount ?? 0
+          return withResumptionContribution > withoutResumptionContribution
+        },
+      },
+      {
+        description: 'reduction consumes recurring single premium first before cutting the regular-premium path',
+        test: (_, artifact) => {
+          const topupContribution = artifact.expected.projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'topup')?.contributionAmount ?? 0
+          return topupContribution > 0 && topupContribution < 700
+        },
+      },
+      {
+        description: 'exclusive shortfall grouping avoids charging both Tokio shortfall paths together',
+        test: (fixture, artifact) => {
+          const withoutExclusivity = ilpPolicySchema.parse({
+            ...fixture.policy,
+            eventChargeRules: fixture.policy.eventChargeRules?.map((rule) => ({
+              ...rule,
+              exclusiveGroup: undefined,
+              groupResolution: undefined,
+            })),
+          })
+          const withExclusiveFees = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutExclusiveFees = analyzeIlpPolicy(withoutExclusivity).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withExclusiveFees < withoutExclusiveFees
+        },
+      },
+    ],
+  },
+  {
+    productId: 'tokio-marine-wealth-pro-ii',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: ['baseline', 'branch:tokio-bonus-ladder', 'branch:tokio-post-mip-routing'],
+    description: 'Tokio Marine Wealth Pro (II) modeled-subset baseline proving later performance, loyalty, and power-up bonus credit on top of the seeded bonus ladder.',
+    integrityChecks: [
+      {
+        description: 'performance investment bonus eventually credits the Accumulation Units Account after the ICP routing phase',
+        test: (_, artifact) => {
+          return artifact.expected.projections.mid.rows.some((row) => (
+            row.policyYear >= 5
+            && row.policyYear <= 10
+            && (row.accounts.find((account) => account.accountId === 'accumulation')?.bonusCredit ?? 0) > 0
+          ))
+        },
+      },
+      {
+        description: 'loyalty and power-up bonuses both become active in the post-MIP tail',
+        test: (_, artifact) => {
+          return artifact.expected.projections.mid.rows.some((row) => (
+            row.policyYear >= 11
+            && (row.accounts.find((account) => account.accountId === 'accumulation')?.bonusCredit ?? 0) > 0
+            && (row.accounts.find((account) => account.accountId === 'initial')?.bonusCredit ?? 0) > 0
+          ))
+        },
+      },
+      {
+        description: 'post-MIP regular premiums route back into the Initial Units Account',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.policyYear > 10
+          && row.annualContribution > 0
+          && (row.accounts.find((account) => account.accountId === 'initial')?.contributionAmount ?? 0) === row.annualContribution
+          && (row.accounts.find((account) => account.accountId === 'accumulation')?.contributionAmount ?? 0) === 0
+        )),
+      },
+    ],
+  },
+  {
+    productId: 'tokio-marine-wealth-pro-ii',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: [
+      'event-heavy',
+      'branch:tokio-rsp-manual-resumption',
+      'branch:tokio-shortfall-exclusive',
+      'branch:tokio-reduction-consumes-rsp-first',
+    ],
+    description: 'Tokio Marine Wealth Pro (II) modeled-subset scenario covering recurring-single-premium resumption, shortfall exclusivity, and reduction ordering.',
+    integrityChecks: [
+      {
+        description: 'manual recurring-single-premium resumption restores additional top-up contribution after the holiday window',
+        test: (fixture, artifact) => {
+          const withoutResumption = ilpPolicySchema.parse({
+            ...fixture.policy,
+            policyEvents: fixture.policy.policyEvents?.filter((event) => event.type !== 'recurring-single-premium-resumption'),
+          })
+          const withResumptionContribution = artifact.expected.projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'topup')?.contributionAmount ?? 0
+          const withoutResumptionContribution = analyzeIlpPolicy(withoutResumption).projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'topup')?.contributionAmount ?? 0
+          return withResumptionContribution > withoutResumptionContribution
+        },
+      },
+      {
+        description: 'reduction consumes recurring single premium first before cutting the regular-premium path',
+        test: (_, artifact) => {
+          const topupContribution = artifact.expected.projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'topup')?.contributionAmount ?? 0
+          return topupContribution > 0 && topupContribution < 700
+        },
+      },
+      {
+        description: 'exclusive shortfall grouping avoids charging both Tokio shortfall paths together',
+        test: (fixture, artifact) => {
+          const withoutExclusivity = ilpPolicySchema.parse({
+            ...fixture.policy,
+            eventChargeRules: fixture.policy.eventChargeRules?.map((rule) => ({
+              ...rule,
+              exclusiveGroup: undefined,
+              groupResolution: undefined,
+            })),
+          })
+          const withExclusiveFees = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutExclusiveFees = analyzeIlpPolicy(withoutExclusivity).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withExclusiveFees < withoutExclusiveFees
+        },
+      },
+    ],
+  },
+  {
+    productId: 'tokio-marine-wealth-pro-ii',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'waived-charges',
+    fixtureClass: 'partial-modeled-subset',
+    coverageTags: ['event-heavy', 'branch:tokio-charge-waiver'],
+    description: 'Tokio Marine Wealth Pro (II) modeled-subset scenario proving explicit insurer-approved charge waivers for withdrawal and shortfall events.',
+    integrityChecks: [
+      {
+        description: 'waived events materially reduce cumulative gross fees versus the same events without waivers',
+        test: (fixture, artifact) => {
+          const withoutWaivers = ilpPolicySchema.parse({
+            ...fixture.policy,
+            policyEvents: fixture.policy.policyEvents?.map((event) => ({
+              ...event,
+              chargeWaived: false,
+            })),
+          })
+          const withWaiverFees = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutWaiverFees = analyzeIlpPolicy(withoutWaivers).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withWaiverFees < withoutWaiverFees
+        },
+      },
+      {
+        description: 'the waived partial withdrawal still executes against the accumulation account',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'accumulation')?.withdrawalAmount ?? 0) >= 500,
+      },
+    ],
+  },
 ]
 
 function buildPolicyForDefinition(
@@ -728,6 +1814,24 @@ function buildPolicyForDefinition(
   if (definition.productId === 'hsbc-life-wealth-accelerate' && definition.scenarioId === 'ocf-stress') {
     return hsbcStressPolicy(snapshot, id)
   }
+  if (definition.productId === 'hsbc-life-wealth-harvest' && definition.scenarioId === 'baseline') {
+    return hsbcHarvestBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'hsbc-life-wealth-harvest' && definition.scenarioId === 'event-heavy') {
+    return hsbcHarvestEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'hsbc-life-wealth-abundance' && definition.scenarioId === 'baseline') {
+    return hsbcAbundanceBaselinePolicy(snapshot, definition.variantId, id)
+  }
+  if (definition.productId === 'hsbc-life-wealth-abundance' && definition.scenarioId === 'event-heavy') {
+    return hsbcAbundanceEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'hsbc-life-wealth-voyage' && definition.scenarioId === 'baseline') {
+    return hsbcVoyageBaselinePolicy(snapshot, definition.variantId, id)
+  }
+  if (definition.productId === 'hsbc-life-wealth-voyage' && definition.scenarioId === 'event-heavy') {
+    return hsbcVoyageEventHeavyPolicy(snapshot, id)
+  }
   if (definition.productId === 'prudential-pruvantage-wealth-ii' && definition.scenarioId === 'baseline') {
     return pruBaselinePolicy(snapshot, definition.variantId, id)
   }
@@ -739,6 +1843,42 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'prudential-pruvantage-wealth-ii' && definition.scenarioId === 'ocf-stress-split') {
     return pruStressSplitPolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-pruvantage-prosper' && definition.scenarioId === 'assurance-active') {
+    return prosperAssurancePolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-pruvantage-assure-ii' && definition.scenarioId === 'assurance-tail') {
+    return assureIiBoundedAssurancePolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-pruvantage-assure-ii' && definition.scenarioId === 'assurance-state-override') {
+    return assureIiStateOverridePolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-wealth-max-ii' && definition.scenarioId === 'baseline') {
+    return tokioBaselinePolicy(
+      snapshot,
+      'tokio-marine-wealth-max-ii',
+      'sgd-mip-15',
+      id,
+      'Golden Tokio Marine Wealth Max (II) (SGD / MIP 15 Baseline)',
+    )
+  }
+  if (definition.productId === 'tokio-marine-wealth-max-ii' && definition.scenarioId === 'event-heavy') {
+    return tokioEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-wealth-pro-ii' && definition.scenarioId === 'baseline') {
+    return tokioBaselinePolicy(
+      snapshot,
+      'tokio-marine-wealth-pro-ii',
+      'sgd-mip-10',
+      id,
+      'Golden Tokio Marine Wealth Pro (II) (SGD / MIP 10 Baseline)',
+    )
+  }
+  if (definition.productId === 'tokio-marine-wealth-pro-ii' && definition.scenarioId === 'event-heavy') {
+    return tokioWealthProEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-wealth-pro-ii' && definition.scenarioId === 'waived-charges') {
+    return tokioWealthProWaivedChargesPolicy(snapshot, id)
   }
 
   throw new Error(`No golden policy builder is defined for ${definition.productId}:${definition.variantId}:${definition.scenarioId}.`)

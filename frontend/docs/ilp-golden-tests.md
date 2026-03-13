@@ -59,6 +59,13 @@ The current supported golden matrix covers:
   holiday-fallback branch-forcing scenario
   higher-OCF stress scenario with a different routing split
 
+The current partial-modeled-subset matrix also locks:
+- PRUVantage Prosper
+  assurance-active scenario for the modeled assurance-charge path
+- PRUVantage Assure II
+  assurance-tail scenario for the modeled pre-70 path and the published post-70 charge tail
+  assurance-state-override scenario for manual reduction and later resumption of the assurance state
+
 Coverage tags are explicit in [ilpGoldenFixtures.ts](/Users/tj/TJDevelopment/fireplanner-ilp/frontend/src/lib/calculations/ilpGoldenFixtures.ts) and enforced by the meta gate.
 
 ## Locked Surface
@@ -149,3 +156,5 @@ npm run golden:refresh
 Passing this gate does not mean every document fact is economically modeled.
 
 It only means the product is supported within the explicitly declared modeled-economics boundary. Anything kept in `metadataOnlyBehaviors` still requires user review and must not be treated as covered by the golden gate.
+
+For `partial-modeled-subset` products, passing the curated subset fixtures means the documented modeled subset is locked for regression. It does not upgrade the product to public `supported` status.
