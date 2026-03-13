@@ -6,6 +6,7 @@ import type { IlpCatalogManifest, IlpCatalogProduct } from '../../src/lib/ilp-ca
 import { analyzeStructuredEconomics, discoverManualCatalogSources } from './discovery.js'
 import { parseHsbcWealthAccelerate } from './parsers/hsbcWealthAccelerate.js'
 import { parseHsbcWealthAbundance } from './parsers/hsbcWealthAbundance.js'
+import { parseHsbcWealthFocus } from './parsers/hsbcWealthFocus.js'
 import { parseHsbcGoalBuilderIi } from './parsers/hsbcGoalBuilderIi.js'
 import { parseHsbcWealthHarvest } from './parsers/hsbcWealthHarvest.js'
 import { parseHsbcWealthVoyage } from './parsers/hsbcWealthVoyage.js'
@@ -42,6 +43,9 @@ const ETIQA_INVEST_WEALTH_PURPOSE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_In
 const HSBC_GOAL_BUILDER_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/GBII_Summary.pdf'
 const HSBC_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Accelerate Product Summary.pdf'
 const HSBC_WEALTH_ABUNDANCE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Abundance Product Summary.pdf'
+const HSBC_WEALTH_FOCUS_FLEXI_1_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WF PS v1.51_MIP10Flexi1.pdf'
+const HSBC_WEALTH_FOCUS_FLEXI_3_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WF PS v1.51_MIP10Flexi3.pdf'
+const HSBC_WEALTH_FOCUS_FLEXI_5_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WF PS v1.51_MIP10Flexi5.pdf'
 const HSBC_WEALTH_HARVEST_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Harvest Product Summary.pdf'
 const HSBC_WEALTH_VOYAGE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Voyage Product Summary.pdf'
 const PRUDENTIAL_PRUVANTAGE_ASSURE_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRUVantage Assure II Product Summary.pdf'
@@ -136,6 +140,12 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const checksum = await sha256(HSBC_SOURCE_PATH)
   const hsbcAbundanceExtracted = await extractPdfText(HSBC_WEALTH_ABUNDANCE_SOURCE_PATH)
   const hsbcAbundanceChecksum = await sha256(HSBC_WEALTH_ABUNDANCE_SOURCE_PATH)
+  const hsbcWealthFocusFlexi1Extracted = await extractPdfText(HSBC_WEALTH_FOCUS_FLEXI_1_SOURCE_PATH)
+  const hsbcWealthFocusFlexi1Checksum = await sha256(HSBC_WEALTH_FOCUS_FLEXI_1_SOURCE_PATH)
+  const hsbcWealthFocusFlexi3Extracted = await extractPdfText(HSBC_WEALTH_FOCUS_FLEXI_3_SOURCE_PATH)
+  const hsbcWealthFocusFlexi3Checksum = await sha256(HSBC_WEALTH_FOCUS_FLEXI_3_SOURCE_PATH)
+  const hsbcWealthFocusFlexi5Extracted = await extractPdfText(HSBC_WEALTH_FOCUS_FLEXI_5_SOURCE_PATH)
+  const hsbcWealthFocusFlexi5Checksum = await sha256(HSBC_WEALTH_FOCUS_FLEXI_5_SOURCE_PATH)
   const hsbcHarvestExtracted = await extractPdfText(HSBC_WEALTH_HARVEST_SOURCE_PATH)
   const hsbcHarvestChecksum = await sha256(HSBC_WEALTH_HARVEST_SOURCE_PATH)
   const hsbcVoyageExtracted = await extractPdfText(HSBC_WEALTH_VOYAGE_SOURCE_PATH)
@@ -198,6 +208,18 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseHsbcWealthAbundance({
       document: hsbcAbundanceExtracted,
       sourceChecksumSha256: hsbcAbundanceChecksum,
+    }),
+    parseHsbcWealthFocus({
+      document: hsbcWealthFocusFlexi1Extracted,
+      sourceChecksumSha256: hsbcWealthFocusFlexi1Checksum,
+    }),
+    parseHsbcWealthFocus({
+      document: hsbcWealthFocusFlexi3Extracted,
+      sourceChecksumSha256: hsbcWealthFocusFlexi3Checksum,
+    }),
+    parseHsbcWealthFocus({
+      document: hsbcWealthFocusFlexi5Extracted,
+      sourceChecksumSha256: hsbcWealthFocusFlexi5Checksum,
     }),
     parseHsbcWealthHarvest({
       document: hsbcHarvestExtracted,

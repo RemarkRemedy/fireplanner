@@ -15435,6 +15435,2821 @@
     ]
   },
   {
+    "id": "hsbc-life-wealth-focus-flexi-1",
+    "insurer": "HSBC Life",
+    "productName": "Wealth Focus (Flexi 1)",
+    "sourceFileName": "WF PS v1.51_MIP10Flexi1.pdf",
+    "sourceChecksumSha256": "e16cac21c1e8c0902c0636f109f1730413afce3bab5727ad302fbf53ef7f7aa4",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:wealth-focus-startup-bonus",
+      "branch:wealth-focus-premium-contribution-bonus",
+      "branch:wealth-focus-loyalty-bonus",
+      "branch:wealth-focus-premium-base-amf",
+      "branch:wealth-focus-top-up-premium-charge",
+      "branch:wealth-focus-partial-withdrawal-charge",
+      "branch:wealth-focus-eec",
+      "branch:wealth-focus-ad-hoc-top-up-routing"
+    ],
+    "metadataOnlyBehaviors": [
+      "wealth-focus-life-replacement-option",
+      "wealth-focus-free-partial-withdrawal-benefit",
+      "wealth-focus-regular-withdrawal-facility",
+      "wealth-focus-dividend-payout-election",
+      "wealth-focus-death-and-ti-benefits"
+    ],
+    "warnings": [
+      "Wealth Focus Flexi 1 is currently modeled as a partial product in V1. Accumulation charges, MIP-end surrender charges, regular/top-up routing, and the documented bonuses are modeled, but life-event free withdrawals, dividend payout election, and protection-side options remain informational only."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-10",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "regular",
+            "label": "Regular Premium Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "regular",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "regular",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "HSBC Life Wealth Focus Product Summary Details of Product Provider HSBC Life (Singapore) Pte. Ltd. (“HSBC”, “We”, “Our”, “Us”) (Reg. No. 199903512M) is the product provider and underwriter for this product. This product "
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "AMF is not guaranteed. We reserve the right to revise the rate of AMF by giving you at least 30 days’ advance notice in writing. 6.4 Partial Withdrawal Charge (“PWC”) If you make a Partial Withdrawal during the MIP, a PW"
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Account",
+            "feeRate": 0,
+            "postMipFeeRate": 0,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 13,
+                "section": "Top-up Premiums",
+                "excerpt": "• Top-up Premiums are allocated to the Top-up Account. There will be no Start-up Bonus, Premium Contribution Bonus and/or Loyalty Bonus credited to the Top-up Account. 8 Withdrawal of Units • You may make a partial, regu"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "startup-bonus",
+            "type": "allocation",
+            "label": "Start-up Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 25000,
+                "maxAnnualPremium": 49999.99,
+                "rate": 0.05
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 50000,
+                "maxAnnualPremium": null,
+                "rate": 0.1
+              }
+            ],
+            "notes": [
+              "Applied to regular premiums paid in the first policy year only.",
+              "Top-up premiums are excluded."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Bonuses",
+                "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+              }
+            ]
+          },
+          {
+            "id": "premium-contribution-bonus",
+            "type": "allocation",
+            "label": "Premium Contribution Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 2,
+            "endPolicyYear": 10,
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied from policy month 13 to the end of the MIP on regular premiums only.",
+              "Missed premiums during premium holiday receive no Premium Contribution Bonus, and repaid missed premiums also receive no bonus."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Bonuses",
+                "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+              },
+              {
+                "page": 8,
+                "section": "Premium holiday",
+                "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": null,
+            "rate": 0.007,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Allocated monthly from the first policy month after MIP on the Regular Premium Account only.",
+              "Dividend payout elections and repayment-specific Loyalty Bonus exclusions remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+                "excerpt": "2.4.3 Loyalty Bonus While the Policy is in force, you will be entitled to a bonus (“ Loyalty Bonus ”) starting from the end of the first Policy Month after the expiry of the MIP. The Loyalty Bonus is calculated as a perc"
+              },
+              {
+                "page": 8,
+                "section": "Premium holiday",
+                "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "amf",
+            "label": "Account Maintenance Fee",
+            "basis": "premium-base-mip-multiplier",
+            "yearBasis": "policy-year",
+            "rate": 0,
+            "amount": null,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 1,
+                  "mode": "policy-year"
+                },
+                {
+                  "startPolicyYear": 2,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 1
+                }
+              ]
+            },
+            "appliesTo": [
+              "regular"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.01
+              }
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Charged monthly on the Regular Premium Account throughout the policy term, including during premium holiday."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "AMF is not guaranteed. We reserve the right to revise the rate of AMF by giving you at least 30 days’ advance notice in writing. 6.4 Partial Withdrawal Charge (“PWC”) If you make a Partial Withdrawal during the MIP, a PW"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on top-up premiums allocated into the Top-up Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 13,
+                "section": "Top-up Premiums",
+                "excerpt": "• Top-up Premiums are allocated to the Top-up Account. There will be no Start-up Bonus, Premium Contribution Bonus and/or Loyalty Bonus credited to the Top-up Account. 8 Withdrawal of Units • You may make a partial, regu"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "regular"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.23
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.19
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.16
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.13
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.04
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.03
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to withdrawals from the Regular Premium Account during the MIP.",
+              "Top-up Account withdrawals are not charged.",
+              "Free life-event withdrawals up to 30% of the Regular Premium Account value at the 5th anniversary remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+                "excerpt": "2.4.3 Loyalty Bonus While the Policy is in force, you will be entitled to a bonus (“ Loyalty Bonus ”) starting from the end of the first Policy Month after the expiry of the MIP. The Loyalty Bonus is calculated as a perc"
+              },
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "AMF is not guaranteed. We reserve the right to revise the rate of AMF by giving you at least 30 days’ advance notice in writing. 6.4 Partial Withdrawal Charge (“PWC”) If you make a Partial Withdrawal during the MIP, a PW"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          0.3,
+          0.23,
+          0.19,
+          0.16,
+          0.13,
+          0.1,
+          0.08,
+          0.06,
+          0.04,
+          0.03
+        ],
+        "warnings": [
+          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, and MIP-end surrender charges.",
+          "Dividend-paying funds are assumed to reinvest by default in V1. Cash payout election remains informational only.",
+          "Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Life Replacement Option remains informational only.",
+          "Free Partial Withdrawal Benefit remains informational only.",
+          "Regular Withdrawal facility remains informational only.",
+          "Dividend payout election remains informational only.",
+          "Death, terminal illness, and accidental death payout mechanics remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "HSBC Life Wealth Focus Product Summary Details of Product Provider HSBC Life (Singapore) Pte. Ltd. (“HSBC”, “We”, “Our”, “Us”) (Reg. No. 199903512M) is the product provider and underwriter for this product. This product "
+          },
+          {
+            "page": 4,
+            "section": "Life Replacement Option",
+            "excerpt": "2.3 Life Replacement Option (“LRO”) You may request to replace the Life Assured up to 3 times during the Policy Term as long as such replacement occurs no earlier than 12 months from the Date of Issue. To request to repl"
+          },
+          {
+            "page": 5,
+            "section": "Bonuses",
+            "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+          },
+          {
+            "page": 6,
+            "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+            "excerpt": "2.4.3 Loyalty Bonus While the Policy is in force, you will be entitled to a bonus (“ Loyalty Bonus ”) starting from the end of the first Policy Month after the expiry of the MIP. The Loyalty Bonus is calculated as a perc"
+          },
+          {
+            "page": 8,
+            "section": "Premium holiday",
+            "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+          },
+          {
+            "page": 10,
+            "section": "Premium Charge and Premium Holiday Charge",
+            "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+          },
+          {
+            "page": 11,
+            "section": "AMF and Partial Withdrawal Charge",
+            "excerpt": "AMF is not guaranteed. We reserve the right to revise the rate of AMF by giving you at least 30 days’ advance notice in writing. 6.4 Partial Withdrawal Charge (“PWC”) If you make a Partial Withdrawal during the MIP, a PW"
+          },
+          {
+            "page": 12,
+            "section": "Early Encashment Charge",
+            "excerpt": "5 13% 6 10% 7 8% 8 6% 9 4% 10 3% The EEC will be deducted when calculating the Surrender Value payable to you. The EEC does not apply to the Top-up Account. The EEC rates are guaranteed throughout the Policy Term. 6.6 In"
+          },
+          {
+            "page": 13,
+            "section": "Top-up Premiums",
+            "excerpt": "• Top-up Premiums are allocated to the Top-up Account. There will be no Start-up Bonus, Premium Contribution Bonus and/or Loyalty Bonus credited to the Top-up Account. 8 Withdrawal of Units • You may make a partial, regu"
+          },
+          {
+            "page": 15,
+            "section": "Regular Withdrawal",
+            "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the amount to be withd"
+          },
+          {
+            "page": 18,
+            "section": "Distribution of Dividend",
+            "excerpt": "• If you do not indicate any option to either reinvest these dividends or to receive payment of these dividends, the default option is to reinvest all dividends from such ILP Sub-Fund(s). For any change to the preferred "
+          }
+        ]
+      },
+      {
+        "id": "usd-mip-10",
+        "currency": "USD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "regular",
+            "label": "Regular Premium Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "regular",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "regular",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "HSBC Life Wealth Focus Product Summary Details of Product Provider HSBC Life (Singapore) Pte. Ltd. (“HSBC”, “We”, “Our”, “Us”) (Reg. No. 199903512M) is the product provider and underwriter for this product. This product "
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "AMF is not guaranteed. We reserve the right to revise the rate of AMF by giving you at least 30 days’ advance notice in writing. 6.4 Partial Withdrawal Charge (“PWC”) If you make a Partial Withdrawal during the MIP, a PW"
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Account",
+            "feeRate": 0,
+            "postMipFeeRate": 0,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 13,
+                "section": "Top-up Premiums",
+                "excerpt": "• Top-up Premiums are allocated to the Top-up Account. There will be no Start-up Bonus, Premium Contribution Bonus and/or Loyalty Bonus credited to the Top-up Account. 8 Withdrawal of Units • You may make a partial, regu"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "startup-bonus",
+            "type": "allocation",
+            "label": "Start-up Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "USD",
+                "minAnnualPremium": 25000,
+                "maxAnnualPremium": 49999.99,
+                "rate": 0.05
+              },
+              {
+                "currency": "USD",
+                "minAnnualPremium": 50000,
+                "maxAnnualPremium": null,
+                "rate": 0.1
+              }
+            ],
+            "notes": [
+              "Applied to regular premiums paid in the first policy year only.",
+              "Top-up premiums are excluded."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Bonuses",
+                "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+              }
+            ]
+          },
+          {
+            "id": "premium-contribution-bonus",
+            "type": "allocation",
+            "label": "Premium Contribution Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 2,
+            "endPolicyYear": 10,
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied from policy month 13 to the end of the MIP on regular premiums only.",
+              "Missed premiums during premium holiday receive no Premium Contribution Bonus, and repaid missed premiums also receive no bonus."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Bonuses",
+                "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+              },
+              {
+                "page": 8,
+                "section": "Premium holiday",
+                "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": null,
+            "rate": 0.007,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Allocated monthly from the first policy month after MIP on the Regular Premium Account only.",
+              "Dividend payout elections and repayment-specific Loyalty Bonus exclusions remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+                "excerpt": "2.4.3 Loyalty Bonus While the Policy is in force, you will be entitled to a bonus (“ Loyalty Bonus ”) starting from the end of the first Policy Month after the expiry of the MIP. The Loyalty Bonus is calculated as a perc"
+              },
+              {
+                "page": 8,
+                "section": "Premium holiday",
+                "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "amf",
+            "label": "Account Maintenance Fee",
+            "basis": "premium-base-mip-multiplier",
+            "yearBasis": "policy-year",
+            "rate": 0,
+            "amount": null,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 1,
+                  "mode": "policy-year"
+                },
+                {
+                  "startPolicyYear": 2,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 1
+                }
+              ]
+            },
+            "appliesTo": [
+              "regular"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.01
+              }
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Charged monthly on the Regular Premium Account throughout the policy term, including during premium holiday."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "AMF is not guaranteed. We reserve the right to revise the rate of AMF by giving you at least 30 days’ advance notice in writing. 6.4 Partial Withdrawal Charge (“PWC”) If you make a Partial Withdrawal during the MIP, a PW"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on top-up premiums allocated into the Top-up Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 13,
+                "section": "Top-up Premiums",
+                "excerpt": "• Top-up Premiums are allocated to the Top-up Account. There will be no Start-up Bonus, Premium Contribution Bonus and/or Loyalty Bonus credited to the Top-up Account. 8 Withdrawal of Units • You may make a partial, regu"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "regular"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.23
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.19
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.16
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.13
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.04
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.03
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to withdrawals from the Regular Premium Account during the MIP.",
+              "Top-up Account withdrawals are not charged.",
+              "Free life-event withdrawals up to 30% of the Regular Premium Account value at the 5th anniversary remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+                "excerpt": "2.4.3 Loyalty Bonus While the Policy is in force, you will be entitled to a bonus (“ Loyalty Bonus ”) starting from the end of the first Policy Month after the expiry of the MIP. The Loyalty Bonus is calculated as a perc"
+              },
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "AMF is not guaranteed. We reserve the right to revise the rate of AMF by giving you at least 30 days’ advance notice in writing. 6.4 Partial Withdrawal Charge (“PWC”) If you make a Partial Withdrawal during the MIP, a PW"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          0.3,
+          0.23,
+          0.19,
+          0.16,
+          0.13,
+          0.1,
+          0.08,
+          0.06,
+          0.04,
+          0.03
+        ],
+        "warnings": [
+          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, and MIP-end surrender charges.",
+          "Dividend-paying funds are assumed to reinvest by default in V1. Cash payout election remains informational only.",
+          "Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Life Replacement Option remains informational only.",
+          "Free Partial Withdrawal Benefit remains informational only.",
+          "Regular Withdrawal facility remains informational only.",
+          "Dividend payout election remains informational only.",
+          "Death, terminal illness, and accidental death payout mechanics remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "HSBC Life Wealth Focus Product Summary Details of Product Provider HSBC Life (Singapore) Pte. Ltd. (“HSBC”, “We”, “Our”, “Us”) (Reg. No. 199903512M) is the product provider and underwriter for this product. This product "
+          },
+          {
+            "page": 4,
+            "section": "Life Replacement Option",
+            "excerpt": "2.3 Life Replacement Option (“LRO”) You may request to replace the Life Assured up to 3 times during the Policy Term as long as such replacement occurs no earlier than 12 months from the Date of Issue. To request to repl"
+          },
+          {
+            "page": 5,
+            "section": "Bonuses",
+            "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+          },
+          {
+            "page": 6,
+            "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+            "excerpt": "2.4.3 Loyalty Bonus While the Policy is in force, you will be entitled to a bonus (“ Loyalty Bonus ”) starting from the end of the first Policy Month after the expiry of the MIP. The Loyalty Bonus is calculated as a perc"
+          },
+          {
+            "page": 8,
+            "section": "Premium holiday",
+            "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+          },
+          {
+            "page": 10,
+            "section": "Premium Charge and Premium Holiday Charge",
+            "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+          },
+          {
+            "page": 11,
+            "section": "AMF and Partial Withdrawal Charge",
+            "excerpt": "AMF is not guaranteed. We reserve the right to revise the rate of AMF by giving you at least 30 days’ advance notice in writing. 6.4 Partial Withdrawal Charge (“PWC”) If you make a Partial Withdrawal during the MIP, a PW"
+          },
+          {
+            "page": 12,
+            "section": "Early Encashment Charge",
+            "excerpt": "5 13% 6 10% 7 8% 8 6% 9 4% 10 3% The EEC will be deducted when calculating the Surrender Value payable to you. The EEC does not apply to the Top-up Account. The EEC rates are guaranteed throughout the Policy Term. 6.6 In"
+          },
+          {
+            "page": 13,
+            "section": "Top-up Premiums",
+            "excerpt": "• Top-up Premiums are allocated to the Top-up Account. There will be no Start-up Bonus, Premium Contribution Bonus and/or Loyalty Bonus credited to the Top-up Account. 8 Withdrawal of Units • You may make a partial, regu"
+          },
+          {
+            "page": 15,
+            "section": "Regular Withdrawal",
+            "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the amount to be withd"
+          },
+          {
+            "page": 18,
+            "section": "Distribution of Dividend",
+            "excerpt": "• If you do not indicate any option to either reinvest these dividends or to receive payment of these dividends, the default option is to reinvest all dividends from such ILP Sub-Fund(s). For any change to the preferred "
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hsbc-life-wealth-focus-flexi-3",
+    "insurer": "HSBC Life",
+    "productName": "Wealth Focus (Flexi 3)",
+    "sourceFileName": "WF PS v1.51_MIP10Flexi3.pdf",
+    "sourceChecksumSha256": "d6c0e7f9ad9a2a3a7e5eba47896e0486d1677847006422164ff5dd264c5d457d",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:wealth-focus-startup-bonus",
+      "branch:wealth-focus-premium-contribution-bonus",
+      "branch:wealth-focus-loyalty-bonus",
+      "branch:wealth-focus-premium-base-amf",
+      "branch:wealth-focus-top-up-premium-charge",
+      "branch:wealth-focus-partial-withdrawal-charge",
+      "branch:wealth-focus-eec",
+      "branch:wealth-focus-ad-hoc-top-up-routing",
+      "branch:wealth-focus-premium-holiday-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "wealth-focus-life-replacement-option",
+      "wealth-focus-free-partial-withdrawal-benefit",
+      "wealth-focus-regular-withdrawal-facility",
+      "wealth-focus-dividend-payout-election",
+      "wealth-focus-death-and-ti-benefits"
+    ],
+    "warnings": [
+      "Wealth Focus Flexi 3 is currently modeled as a partial product in V1. Accumulation charges, MIP-end surrender charges, regular/top-up routing, and the documented bonuses are modeled, but life-event free withdrawals, dividend payout election, and protection-side options remain informational only."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-10",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "regular",
+            "label": "Regular Premium Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "regular",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "regular",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "HSBC Life Wealth Focus Product Summary Details of Product Provider HSBC Life (Singapore) Pte. Ltd. (“HSBC”, “We”, “Our”, “Us”) (Reg. No. 199903512M) is the product provider and underwriter for this product. This product "
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "6.3 Account Maintenance Fee (“AMF”) While the Policy is in force, an AMF is chargeable on a monthly basis by cancellation of Units from the Regular Premium Account. If the balance in the Regular Premium Account is insuff"
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Account",
+            "feeRate": 0,
+            "postMipFeeRate": 0,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 13,
+                "section": "Top-up Premiums",
+                "excerpt": "7 Top-up Premium(s) th • While the Policy is in force, starting from the 13 Policy Month and before the Life Assured attains Age 80, you may apply to pay Top-up Premium(s) to purchase additional Units by sending us your "
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "startup-bonus",
+            "type": "allocation",
+            "label": "Start-up Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 9000,
+                "maxAnnualPremium": 17999.99,
+                "rate": 0.06
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 18000,
+                "maxAnnualPremium": null,
+                "rate": 0.12
+              }
+            ],
+            "notes": [
+              "Applied to regular premiums paid in the first policy year only.",
+              "Top-up premiums are excluded."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Bonuses",
+                "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+              }
+            ]
+          },
+          {
+            "id": "premium-contribution-bonus",
+            "type": "allocation",
+            "label": "Premium Contribution Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 2,
+            "endPolicyYear": 10,
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied from policy month 13 to the end of the MIP on regular premiums only.",
+              "Missed premiums during premium holiday receive no Premium Contribution Bonus, and repaid missed premiums also receive no bonus."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Bonuses",
+                "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+              },
+              {
+                "page": 8,
+                "section": "Premium holiday",
+                "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": null,
+            "rate": 0.001,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Allocated monthly from the first policy month after MIP on the Regular Premium Account only.",
+              "Dividend payout elections and repayment-specific Loyalty Bonus exclusions remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+                "excerpt": "Top-up Premium(s) are not entitled to the Loyalty Bonus. 2.5 Maturity Benefit If the Policy matures on the Policy Expiry Date without any death or Terminal Illness claims, the Maturity Benefit payable to you in one lump "
+              },
+              {
+                "page": 8,
+                "section": "Premium holiday",
+                "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "amf",
+            "label": "Account Maintenance Fee",
+            "basis": "premium-base-mip-multiplier",
+            "yearBasis": "policy-year",
+            "rate": 0,
+            "amount": null,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 3,
+                  "mode": "policy-year"
+                },
+                {
+                  "startPolicyYear": 4,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 3
+                }
+              ]
+            },
+            "appliesTo": [
+              "regular"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.01
+              }
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Charged monthly on the Regular Premium Account throughout the policy term, including during premium holiday."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "6.3 Account Maintenance Fee (“AMF”) While the Policy is in force, an AMF is chargeable on a monthly basis by cancellation of Units from the Regular Premium Account. If the balance in the Regular Premium Account is insuff"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on top-up premiums allocated into the Top-up Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 13,
+                "section": "Top-up Premiums",
+                "excerpt": "7 Top-up Premium(s) th • While the Policy is in force, starting from the 13 Policy Month and before the Life Assured attains Age 80, you may apply to pay Top-up Premium(s) to purchase additional Units by sending us your "
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "regular"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.65
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.47
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.44
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.21
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.16
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to withdrawals from the Regular Premium Account during the MIP.",
+              "Top-up Account withdrawals are not charged.",
+              "Free life-event withdrawals up to 20% of the Regular Premium Account value at the 5th anniversary remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+                "excerpt": "Top-up Premium(s) are not entitled to the Loyalty Bonus. 2.5 Maturity Benefit If the Policy matures on the Policy Expiry Date without any death or Terminal Illness claims, the Maturity Benefit payable to you in one lump "
+              },
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "6.3 Account Maintenance Fee (“AMF”) While the Policy is in force, an AMF is chargeable on a monthly basis by cancellation of Units from the Regular Premium Account. If the balance in the Regular Premium Account is insuff"
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "regular"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged monthly on annualised regular premium during premium holiday until the end of the selected Flexi Term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Premium holiday",
+                "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.8,
+          0.65,
+          0.5,
+          0.47,
+          0.44,
+          0.21,
+          0.16,
+          0.08
+        ],
+        "warnings": [
+          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, and MIP-end surrender charges.",
+          "Dividend-paying funds are assumed to reinvest by default in V1. Cash payout election remains informational only.",
+          "Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Life Replacement Option remains informational only.",
+          "Free Partial Withdrawal Benefit remains informational only.",
+          "Regular Withdrawal facility remains informational only.",
+          "Dividend payout election remains informational only.",
+          "Death, terminal illness, and accidental death payout mechanics remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "HSBC Life Wealth Focus Product Summary Details of Product Provider HSBC Life (Singapore) Pte. Ltd. (“HSBC”, “We”, “Our”, “Us”) (Reg. No. 199903512M) is the product provider and underwriter for this product. This product "
+          },
+          {
+            "page": 4,
+            "section": "Life Replacement Option",
+            "excerpt": "2.3 Life Replacement Option (“LRO”) You may request to replace the Life Assured up to 3 times during the Policy Term as long as such replacement occurs no earlier than 12 months from the Date of Issue. To request to repl"
+          },
+          {
+            "page": 5,
+            "section": "Bonuses",
+            "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+          },
+          {
+            "page": 6,
+            "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+            "excerpt": "Top-up Premium(s) are not entitled to the Loyalty Bonus. 2.5 Maturity Benefit If the Policy matures on the Policy Expiry Date without any death or Terminal Illness claims, the Maturity Benefit payable to you in one lump "
+          },
+          {
+            "page": 8,
+            "section": "Premium holiday",
+            "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+          },
+          {
+            "page": 10,
+            "section": "Premium Charge and Premium Holiday Charge",
+            "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+          },
+          {
+            "page": 11,
+            "section": "AMF and Partial Withdrawal Charge",
+            "excerpt": "6.3 Account Maintenance Fee (“AMF”) While the Policy is in force, an AMF is chargeable on a monthly basis by cancellation of Units from the Regular Premium Account. If the balance in the Regular Premium Account is insuff"
+          },
+          {
+            "page": 12,
+            "section": "Early Encashment Charge",
+            "excerpt": "6.5 Early Encashment Charge (“EEC”) An EEC will be imposed on the Regular Premium Account during the MIP upon the occurrence of any of the following events: (i) Full Surrender of the Policy during the MIP; (ii) Terminati"
+          },
+          {
+            "page": 13,
+            "section": "Top-up Premiums",
+            "excerpt": "7 Top-up Premium(s) th • While the Policy is in force, starting from the 13 Policy Month and before the Life Assured attains Age 80, you may apply to pay Top-up Premium(s) to purchase additional Units by sending us your "
+          },
+          {
+            "page": 15,
+            "section": "Regular Withdrawal",
+            "excerpt": "sufficient to deduct the withdrawal amount, the remaining withdrawal amount will be deducted from the Regular Premium Account, which may incur a Partial Withdrawal Charge. If you do not indicate the account to withdraw f"
+          },
+          {
+            "page": 18,
+            "section": "Distribution of Dividend",
+            "excerpt": "10 Distribution of Dividend • While the Policy is in force, if you choose to invest in any ILP Sub-Fund(s) that pays dividends, you have the option to either reinvest these dividends or to receive payment of these divide"
+          }
+        ]
+      },
+      {
+        "id": "usd-mip-10",
+        "currency": "USD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "regular",
+            "label": "Regular Premium Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "regular",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "regular",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "HSBC Life Wealth Focus Product Summary Details of Product Provider HSBC Life (Singapore) Pte. Ltd. (“HSBC”, “We”, “Our”, “Us”) (Reg. No. 199903512M) is the product provider and underwriter for this product. This product "
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "6.3 Account Maintenance Fee (“AMF”) While the Policy is in force, an AMF is chargeable on a monthly basis by cancellation of Units from the Regular Premium Account. If the balance in the Regular Premium Account is insuff"
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Account",
+            "feeRate": 0,
+            "postMipFeeRate": 0,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 13,
+                "section": "Top-up Premiums",
+                "excerpt": "7 Top-up Premium(s) th • While the Policy is in force, starting from the 13 Policy Month and before the Life Assured attains Age 80, you may apply to pay Top-up Premium(s) to purchase additional Units by sending us your "
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "startup-bonus",
+            "type": "allocation",
+            "label": "Start-up Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "USD",
+                "minAnnualPremium": 9000,
+                "maxAnnualPremium": 17999.99,
+                "rate": 0.06
+              },
+              {
+                "currency": "USD",
+                "minAnnualPremium": 18000,
+                "maxAnnualPremium": null,
+                "rate": 0.12
+              }
+            ],
+            "notes": [
+              "Applied to regular premiums paid in the first policy year only.",
+              "Top-up premiums are excluded."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Bonuses",
+                "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+              }
+            ]
+          },
+          {
+            "id": "premium-contribution-bonus",
+            "type": "allocation",
+            "label": "Premium Contribution Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 2,
+            "endPolicyYear": 10,
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied from policy month 13 to the end of the MIP on regular premiums only.",
+              "Missed premiums during premium holiday receive no Premium Contribution Bonus, and repaid missed premiums also receive no bonus."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Bonuses",
+                "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+              },
+              {
+                "page": 8,
+                "section": "Premium holiday",
+                "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": null,
+            "rate": 0.001,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Allocated monthly from the first policy month after MIP on the Regular Premium Account only.",
+              "Dividend payout elections and repayment-specific Loyalty Bonus exclusions remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+                "excerpt": "Top-up Premium(s) are not entitled to the Loyalty Bonus. 2.5 Maturity Benefit If the Policy matures on the Policy Expiry Date without any death or Terminal Illness claims, the Maturity Benefit payable to you in one lump "
+              },
+              {
+                "page": 8,
+                "section": "Premium holiday",
+                "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "amf",
+            "label": "Account Maintenance Fee",
+            "basis": "premium-base-mip-multiplier",
+            "yearBasis": "policy-year",
+            "rate": 0,
+            "amount": null,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 3,
+                  "mode": "policy-year"
+                },
+                {
+                  "startPolicyYear": 4,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 3
+                }
+              ]
+            },
+            "appliesTo": [
+              "regular"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.01
+              }
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Charged monthly on the Regular Premium Account throughout the policy term, including during premium holiday."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "6.3 Account Maintenance Fee (“AMF”) While the Policy is in force, an AMF is chargeable on a monthly basis by cancellation of Units from the Regular Premium Account. If the balance in the Regular Premium Account is insuff"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on top-up premiums allocated into the Top-up Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 13,
+                "section": "Top-up Premiums",
+                "excerpt": "7 Top-up Premium(s) th • While the Policy is in force, starting from the 13 Policy Month and before the Life Assured attains Age 80, you may apply to pay Top-up Premium(s) to purchase additional Units by sending us your "
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "regular"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.65
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.47
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.44
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.21
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.16
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to withdrawals from the Regular Premium Account during the MIP.",
+              "Top-up Account withdrawals are not charged.",
+              "Free life-event withdrawals up to 20% of the Regular Premium Account value at the 5th anniversary remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+                "excerpt": "Top-up Premium(s) are not entitled to the Loyalty Bonus. 2.5 Maturity Benefit If the Policy matures on the Policy Expiry Date without any death or Terminal Illness claims, the Maturity Benefit payable to you in one lump "
+              },
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "6.3 Account Maintenance Fee (“AMF”) While the Policy is in force, an AMF is chargeable on a monthly basis by cancellation of Units from the Regular Premium Account. If the balance in the Regular Premium Account is insuff"
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "regular"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged monthly on annualised regular premium during premium holiday until the end of the selected Flexi Term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Premium holiday",
+                "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.8,
+          0.65,
+          0.5,
+          0.47,
+          0.44,
+          0.21,
+          0.16,
+          0.08
+        ],
+        "warnings": [
+          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, and MIP-end surrender charges.",
+          "Dividend-paying funds are assumed to reinvest by default in V1. Cash payout election remains informational only.",
+          "Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Life Replacement Option remains informational only.",
+          "Free Partial Withdrawal Benefit remains informational only.",
+          "Regular Withdrawal facility remains informational only.",
+          "Dividend payout election remains informational only.",
+          "Death, terminal illness, and accidental death payout mechanics remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "HSBC Life Wealth Focus Product Summary Details of Product Provider HSBC Life (Singapore) Pte. Ltd. (“HSBC”, “We”, “Our”, “Us”) (Reg. No. 199903512M) is the product provider and underwriter for this product. This product "
+          },
+          {
+            "page": 4,
+            "section": "Life Replacement Option",
+            "excerpt": "2.3 Life Replacement Option (“LRO”) You may request to replace the Life Assured up to 3 times during the Policy Term as long as such replacement occurs no earlier than 12 months from the Date of Issue. To request to repl"
+          },
+          {
+            "page": 5,
+            "section": "Bonuses",
+            "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+          },
+          {
+            "page": 6,
+            "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+            "excerpt": "Top-up Premium(s) are not entitled to the Loyalty Bonus. 2.5 Maturity Benefit If the Policy matures on the Policy Expiry Date without any death or Terminal Illness claims, the Maturity Benefit payable to you in one lump "
+          },
+          {
+            "page": 8,
+            "section": "Premium holiday",
+            "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+          },
+          {
+            "page": 10,
+            "section": "Premium Charge and Premium Holiday Charge",
+            "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+          },
+          {
+            "page": 11,
+            "section": "AMF and Partial Withdrawal Charge",
+            "excerpt": "6.3 Account Maintenance Fee (“AMF”) While the Policy is in force, an AMF is chargeable on a monthly basis by cancellation of Units from the Regular Premium Account. If the balance in the Regular Premium Account is insuff"
+          },
+          {
+            "page": 12,
+            "section": "Early Encashment Charge",
+            "excerpt": "6.5 Early Encashment Charge (“EEC”) An EEC will be imposed on the Regular Premium Account during the MIP upon the occurrence of any of the following events: (i) Full Surrender of the Policy during the MIP; (ii) Terminati"
+          },
+          {
+            "page": 13,
+            "section": "Top-up Premiums",
+            "excerpt": "7 Top-up Premium(s) th • While the Policy is in force, starting from the 13 Policy Month and before the Life Assured attains Age 80, you may apply to pay Top-up Premium(s) to purchase additional Units by sending us your "
+          },
+          {
+            "page": 15,
+            "section": "Regular Withdrawal",
+            "excerpt": "sufficient to deduct the withdrawal amount, the remaining withdrawal amount will be deducted from the Regular Premium Account, which may incur a Partial Withdrawal Charge. If you do not indicate the account to withdraw f"
+          },
+          {
+            "page": 18,
+            "section": "Distribution of Dividend",
+            "excerpt": "10 Distribution of Dividend • While the Policy is in force, if you choose to invest in any ILP Sub-Fund(s) that pays dividends, you have the option to either reinvest these dividends or to receive payment of these divide"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hsbc-life-wealth-focus-flexi-5",
+    "insurer": "HSBC Life",
+    "productName": "Wealth Focus (Flexi 5)",
+    "sourceFileName": "WF PS v1.51_MIP10Flexi5.pdf",
+    "sourceChecksumSha256": "3f89f45fc35d768ace6f6f68d2fd93a4b55d172fcb93747217c5c657c450116f",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:wealth-focus-startup-bonus",
+      "branch:wealth-focus-premium-contribution-bonus",
+      "branch:wealth-focus-loyalty-bonus",
+      "branch:wealth-focus-premium-base-amf",
+      "branch:wealth-focus-top-up-premium-charge",
+      "branch:wealth-focus-partial-withdrawal-charge",
+      "branch:wealth-focus-eec",
+      "branch:wealth-focus-ad-hoc-top-up-routing",
+      "branch:wealth-focus-premium-holiday-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "wealth-focus-life-replacement-option",
+      "wealth-focus-free-partial-withdrawal-benefit",
+      "wealth-focus-regular-withdrawal-facility",
+      "wealth-focus-dividend-payout-election",
+      "wealth-focus-death-and-ti-benefits"
+    ],
+    "warnings": [
+      "Wealth Focus Flexi 5 is currently modeled as a partial product in V1. Accumulation charges, MIP-end surrender charges, regular/top-up routing, and the documented bonuses are modeled, but life-event free withdrawals, dividend payout election, and protection-side options remain informational only."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-10",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "regular",
+            "label": "Regular Premium Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "regular",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "regular",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "HSBC Life Wealth Focus Product Summary Details of Product Provider HSBC Life (Singapore) Pte. Ltd. (“HSBC”, “We”, “Our”, “Us”) (Reg. No. 199903512M) is the product provider and underwriter for this product. This product "
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "6.3 Account Maintenance Fee (“AMF”) While the Policy is in force, an AMF is chargeable on a monthly basis by cancellation of Units from the Regular Premium Account. If the balance in the Regular Premium Account is insuff"
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Account",
+            "feeRate": 0,
+            "postMipFeeRate": 0,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 13,
+                "section": "Top-up Premiums",
+                "excerpt": "7 Top-up Premium(s) th • While the Policy is in force, starting from the 13 Policy Month and before the Life Assured attains Age 80, you may apply to pay Top-up Premium(s) to purchase additional Units by sending us your "
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "startup-bonus",
+            "type": "allocation",
+            "label": "Start-up Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.075
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": null,
+                "rate": 0.15
+              }
+            ],
+            "notes": [
+              "Applied to regular premiums paid in the first policy year only.",
+              "Top-up premiums are excluded."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Bonuses",
+                "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+              }
+            ]
+          },
+          {
+            "id": "premium-contribution-bonus",
+            "type": "allocation",
+            "label": "Premium Contribution Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 2,
+            "endPolicyYear": 10,
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied from policy month 13 to the end of the MIP on regular premiums only.",
+              "Missed premiums during premium holiday receive no Premium Contribution Bonus, and repaid missed premiums also receive no bonus."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Bonuses",
+                "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+              },
+              {
+                "page": 8,
+                "section": "Premium holiday",
+                "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": null,
+            "rate": 0.0035,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Allocated monthly from the first policy month after MIP on the Regular Premium Account only.",
+              "Dividend payout elections and repayment-specific Loyalty Bonus exclusions remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+                "excerpt": "Top-up Premium(s) are not entitled to the Loyalty Bonus. 2.5 Maturity Benefit If the Policy matures on the Policy Expiry Date without any death or Terminal Illness claims, the Maturity Benefit payable to you in one lump "
+              },
+              {
+                "page": 8,
+                "section": "Premium holiday",
+                "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "amf",
+            "label": "Account Maintenance Fee",
+            "basis": "premium-base-mip-multiplier",
+            "yearBasis": "policy-year",
+            "rate": 0,
+            "amount": null,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 5,
+                  "mode": "policy-year"
+                },
+                {
+                  "startPolicyYear": 6,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 5
+                }
+              ]
+            },
+            "appliesTo": [
+              "regular"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.01
+              }
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Charged monthly on the Regular Premium Account throughout the policy term, including during premium holiday."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "6.3 Account Maintenance Fee (“AMF”) While the Policy is in force, an AMF is chargeable on a monthly basis by cancellation of Units from the Regular Premium Account. If the balance in the Regular Premium Account is insuff"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on top-up premiums allocated into the Top-up Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 13,
+                "section": "Top-up Premiums",
+                "excerpt": "7 Top-up Premium(s) th • While the Policy is in force, starting from the 13 Policy Month and before the Life Assured attains Age 80, you may apply to pay Top-up Premium(s) to purchase additional Units by sending us your "
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "regular"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.65
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.47
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.44
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.21
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.16
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to withdrawals from the Regular Premium Account during the MIP.",
+              "Top-up Account withdrawals are not charged.",
+              "Free life-event withdrawals up to 20% of the Regular Premium Account value at the 5th anniversary remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+                "excerpt": "Top-up Premium(s) are not entitled to the Loyalty Bonus. 2.5 Maturity Benefit If the Policy matures on the Policy Expiry Date without any death or Terminal Illness claims, the Maturity Benefit payable to you in one lump "
+              },
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "6.3 Account Maintenance Fee (“AMF”) While the Policy is in force, an AMF is chargeable on a monthly basis by cancellation of Units from the Regular Premium Account. If the balance in the Regular Premium Account is insuff"
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "regular"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.65
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged monthly on annualised regular premium during premium holiday until the end of the selected Flexi Term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Premium holiday",
+                "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.8,
+          0.65,
+          0.5,
+          0.47,
+          0.44,
+          0.21,
+          0.16,
+          0.08
+        ],
+        "warnings": [
+          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, and MIP-end surrender charges.",
+          "Dividend-paying funds are assumed to reinvest by default in V1. Cash payout election remains informational only.",
+          "Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Life Replacement Option remains informational only.",
+          "Free Partial Withdrawal Benefit remains informational only.",
+          "Regular Withdrawal facility remains informational only.",
+          "Dividend payout election remains informational only.",
+          "Death, terminal illness, and accidental death payout mechanics remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "HSBC Life Wealth Focus Product Summary Details of Product Provider HSBC Life (Singapore) Pte. Ltd. (“HSBC”, “We”, “Our”, “Us”) (Reg. No. 199903512M) is the product provider and underwriter for this product. This product "
+          },
+          {
+            "page": 4,
+            "section": "Life Replacement Option",
+            "excerpt": "2.3 Life Replacement Option (“LRO”) You may request to replace the Life Assured up to 3 times during the Policy Term as long as such replacement occurs no earlier than 12 months from the Date of Issue. To request to repl"
+          },
+          {
+            "page": 5,
+            "section": "Bonuses",
+            "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+          },
+          {
+            "page": 6,
+            "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+            "excerpt": "Top-up Premium(s) are not entitled to the Loyalty Bonus. 2.5 Maturity Benefit If the Policy matures on the Policy Expiry Date without any death or Terminal Illness claims, the Maturity Benefit payable to you in one lump "
+          },
+          {
+            "page": 8,
+            "section": "Premium holiday",
+            "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+          },
+          {
+            "page": 10,
+            "section": "Premium Charge and Premium Holiday Charge",
+            "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+          },
+          {
+            "page": 11,
+            "section": "AMF and Partial Withdrawal Charge",
+            "excerpt": "6.3 Account Maintenance Fee (“AMF”) While the Policy is in force, an AMF is chargeable on a monthly basis by cancellation of Units from the Regular Premium Account. If the balance in the Regular Premium Account is insuff"
+          },
+          {
+            "page": 12,
+            "section": "Early Encashment Charge",
+            "excerpt": "6.5 Early Encashment Charge (“EEC”) An EEC will be imposed on the Regular Premium Account during the MIP upon the occurrence of any of the following events: (i) Full Surrender of the Policy during the MIP; (ii) Terminati"
+          },
+          {
+            "page": 13,
+            "section": "Top-up Premiums",
+            "excerpt": "7 Top-up Premium(s) th • While the Policy is in force, starting from the 13 Policy Month and before the Life Assured attains Age 80, you may apply to pay Top-up Premium(s) to purchase additional Units by sending us your "
+          },
+          {
+            "page": 15,
+            "section": "Regular Withdrawal",
+            "excerpt": "sufficient to deduct the withdrawal amount, the remaining withdrawal amount will be deducted from the Regular Premium Account, which may incur a Partial Withdrawal Charge. If you do not indicate the account to withdraw f"
+          },
+          {
+            "page": 18,
+            "section": "Distribution of Dividend",
+            "excerpt": "10 Distribution of Dividend • While the Policy is in force, if you choose to invest in any ILP Sub-Fund(s) that pays dividends, you have the option to either reinvest these dividends or to receive payment of these divide"
+          }
+        ]
+      },
+      {
+        "id": "usd-mip-10",
+        "currency": "USD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "regular",
+            "label": "Regular Premium Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "regular",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "regular",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "HSBC Life Wealth Focus Product Summary Details of Product Provider HSBC Life (Singapore) Pte. Ltd. (“HSBC”, “We”, “Our”, “Us”) (Reg. No. 199903512M) is the product provider and underwriter for this product. This product "
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "6.3 Account Maintenance Fee (“AMF”) While the Policy is in force, an AMF is chargeable on a monthly basis by cancellation of Units from the Regular Premium Account. If the balance in the Regular Premium Account is insuff"
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Account",
+            "feeRate": 0,
+            "postMipFeeRate": 0,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 13,
+                "section": "Top-up Premiums",
+                "excerpt": "7 Top-up Premium(s) th • While the Policy is in force, starting from the 13 Policy Month and before the Life Assured attains Age 80, you may apply to pay Top-up Premium(s) to purchase additional Units by sending us your "
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "startup-bonus",
+            "type": "allocation",
+            "label": "Start-up Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "USD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.075
+              },
+              {
+                "currency": "USD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": null,
+                "rate": 0.15
+              }
+            ],
+            "notes": [
+              "Applied to regular premiums paid in the first policy year only.",
+              "Top-up premiums are excluded."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Bonuses",
+                "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+              }
+            ]
+          },
+          {
+            "id": "premium-contribution-bonus",
+            "type": "allocation",
+            "label": "Premium Contribution Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 2,
+            "endPolicyYear": 10,
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied from policy month 13 to the end of the MIP on regular premiums only.",
+              "Missed premiums during premium holiday receive no Premium Contribution Bonus, and repaid missed premiums also receive no bonus."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Bonuses",
+                "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+              },
+              {
+                "page": 8,
+                "section": "Premium holiday",
+                "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": null,
+            "rate": 0.0035,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Allocated monthly from the first policy month after MIP on the Regular Premium Account only.",
+              "Dividend payout elections and repayment-specific Loyalty Bonus exclusions remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+                "excerpt": "Top-up Premium(s) are not entitled to the Loyalty Bonus. 2.5 Maturity Benefit If the Policy matures on the Policy Expiry Date without any death or Terminal Illness claims, the Maturity Benefit payable to you in one lump "
+              },
+              {
+                "page": 8,
+                "section": "Premium holiday",
+                "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "amf",
+            "label": "Account Maintenance Fee",
+            "basis": "premium-base-mip-multiplier",
+            "yearBasis": "policy-year",
+            "rate": 0,
+            "amount": null,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 5,
+                  "mode": "policy-year"
+                },
+                {
+                  "startPolicyYear": 6,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 5
+                }
+              ]
+            },
+            "appliesTo": [
+              "regular"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.01
+              }
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Charged monthly on the Regular Premium Account throughout the policy term, including during premium holiday."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "6.3 Account Maintenance Fee (“AMF”) While the Policy is in force, an AMF is chargeable on a monthly basis by cancellation of Units from the Regular Premium Account. If the balance in the Regular Premium Account is insuff"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged on top-up premiums allocated into the Top-up Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              },
+              {
+                "page": 13,
+                "section": "Top-up Premiums",
+                "excerpt": "7 Top-up Premium(s) th • While the Policy is in force, starting from the 13 Policy Month and before the Life Assured attains Age 80, you may apply to pay Top-up Premium(s) to purchase additional Units by sending us your "
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "regular"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.65
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.47
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.44
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.21
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.16
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to withdrawals from the Regular Premium Account during the MIP.",
+              "Top-up Account withdrawals are not charged.",
+              "Free life-event withdrawals up to 20% of the Regular Premium Account value at the 5th anniversary remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+                "excerpt": "Top-up Premium(s) are not entitled to the Loyalty Bonus. 2.5 Maturity Benefit If the Policy matures on the Policy Expiry Date without any death or Terminal Illness claims, the Maturity Benefit payable to you in one lump "
+              },
+              {
+                "page": 11,
+                "section": "AMF and Partial Withdrawal Charge",
+                "excerpt": "6.3 Account Maintenance Fee (“AMF”) While the Policy is in force, an AMF is chargeable on a monthly basis by cancellation of Units from the Regular Premium Account. If the balance in the Regular Premium Account is insuff"
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "regular"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.65
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Charged monthly on annualised regular premium during premium holiday until the end of the selected Flexi Term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Premium holiday",
+                "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge and Premium Holiday Charge",
+                "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.8,
+          0.65,
+          0.5,
+          0.47,
+          0.44,
+          0.21,
+          0.16,
+          0.08
+        ],
+        "warnings": [
+          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, and MIP-end surrender charges.",
+          "Dividend-paying funds are assumed to reinvest by default in V1. Cash payout election remains informational only.",
+          "Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Life Replacement Option remains informational only.",
+          "Free Partial Withdrawal Benefit remains informational only.",
+          "Regular Withdrawal facility remains informational only.",
+          "Dividend payout election remains informational only.",
+          "Death, terminal illness, and accidental death payout mechanics remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "HSBC Life Wealth Focus Product Summary Details of Product Provider HSBC Life (Singapore) Pte. Ltd. (“HSBC”, “We”, “Our”, “Us”) (Reg. No. 199903512M) is the product provider and underwriter for this product. This product "
+          },
+          {
+            "page": 4,
+            "section": "Life Replacement Option",
+            "excerpt": "2.3 Life Replacement Option (“LRO”) You may request to replace the Life Assured up to 3 times during the Policy Term as long as such replacement occurs no earlier than 12 months from the Date of Issue. To request to repl"
+          },
+          {
+            "page": 5,
+            "section": "Bonuses",
+            "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time bonus for the first Policy Year (“ Start-up Bonus ”), calculated as a percentage of the Regular Premium(s) paid as set out in the table below (“ Start-up Bonus rate"
+          },
+          {
+            "page": 6,
+            "section": "Loyalty Bonus and Free Partial Withdrawal Benefit",
+            "excerpt": "Top-up Premium(s) are not entitled to the Loyalty Bonus. 2.5 Maturity Benefit If the Policy matures on the Policy Expiry Date without any death or Terminal Illness claims, the Maturity Benefit payable to you in one lump "
+          },
+          {
+            "page": 8,
+            "section": "Premium holiday",
+            "excerpt": "Backpayment of missed Regular Premiums: • You may pay the Regular Premiums that were missed during a Premium Holiday, subject to the following conditions: (a) the missed Regular Premiums are in respect of the latest Prem"
+          },
+          {
+            "page": 10,
+            "section": "Premium Charge and Premium Holiday Charge",
+            "excerpt": "6.1 Premium Charge Regular Premium(s) You do not need to pay a premium charge for Regular Premium(s). 100% of the Regular Premium(s) will be used to purchase Units in the respective ILP Sub-Fund(s) you have chosen at the"
+          },
+          {
+            "page": 11,
+            "section": "AMF and Partial Withdrawal Charge",
+            "excerpt": "6.3 Account Maintenance Fee (“AMF”) While the Policy is in force, an AMF is chargeable on a monthly basis by cancellation of Units from the Regular Premium Account. If the balance in the Regular Premium Account is insuff"
+          },
+          {
+            "page": 12,
+            "section": "Early Encashment Charge",
+            "excerpt": "6.5 Early Encashment Charge (“EEC”) An EEC will be imposed on the Regular Premium Account during the MIP upon the occurrence of any of the following events: (i) Full Surrender of the Policy during the MIP; (ii) Terminati"
+          },
+          {
+            "page": 13,
+            "section": "Top-up Premiums",
+            "excerpt": "7 Top-up Premium(s) th • While the Policy is in force, starting from the 13 Policy Month and before the Life Assured attains Age 80, you may apply to pay Top-up Premium(s) to purchase additional Units by sending us your "
+          },
+          {
+            "page": 15,
+            "section": "Regular Withdrawal",
+            "excerpt": "sufficient to deduct the withdrawal amount, the remaining withdrawal amount will be deducted from the Regular Premium Account, which may incur a Partial Withdrawal Charge. If you do not indicate the account to withdraw f"
+          },
+          {
+            "page": 18,
+            "section": "Distribution of Dividend",
+            "excerpt": "10 Distribution of Dividend • While the Policy is in force, if you choose to invest in any ILP Sub-Fund(s) that pays dividends, you have the option to either reinvest these dividends or to receive payment of these divide"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "hsbc-life-wealth-harvest",
     "insurer": "HSBC Life",
     "productName": "Wealth Harvest",

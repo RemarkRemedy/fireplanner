@@ -227,6 +227,69 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.rate).toBe(0.011)
   })
 
+  it('maps HSBC Wealth Focus Flexi 3 into a partial seed with two-account routing and holiday charges', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'hsbc-life-wealth-focus-flexi-3')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:wealth-focus-premium-base-amf')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:wealth-focus-premium-holiday-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-free-partial-withdrawal-benefit')
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('reinvest by default'))).toBe(true)
+    expect(seed.accounts.find((account) => account.id === 'regular')?.contributionRules).toEqual([
+      { phase: 'during-icp', contributionShare: 1 },
+      { phase: 'after-icp', contributionShare: 1 },
+    ])
+    expect(seed.accounts.find((account) => account.id === 'topup')?.contributionRules).toEqual([
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'amf',
+        basis: 'premium-base-mip-multiplier',
+        rate: 0,
+        premiumBaseConfig: {
+          useHigherOfCommencementAndPrevailing: false,
+          multiplierYearBasis: 'policy-year',
+          multiplierSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 3, mode: 'policy-year' },
+            { startPolicyYear: 4, endPolicyYear: null, mode: 'fixed', multiplier: 3 },
+          ],
+        },
+      }),
+    ])
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          trigger: 'top-up',
+          basis: 'event-amount',
+          appliesTo: ['topup'],
+          rate: 0.03,
+        }),
+        expect.objectContaining({
+          id: 'premium-holiday-charge',
+          trigger: 'premium-holiday',
+          basis: 'annual-premium-with-overlap-months',
+          appliesTo: ['regular'],
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 0 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 0 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.8 },
+          ],
+        }),
+      ]),
+    )
+    expect(seed.bonuses.find((bonus) => bonus.id === 'premium-contribution-bonus')?.rate).toBe(0.01)
+    expect(seed.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.rate).toBe(0.001)
+  })
+
   it('maps PRUVantage Wealth II into a multi-account seeded ILP policy', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'prudential-pruvantage-wealth-ii')
