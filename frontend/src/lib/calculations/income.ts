@@ -1068,7 +1068,22 @@ export function mergePerAdultProjections(
     // at line 498 (liquidNW += incomeRow.lockedAssetUnlock). Including it here
     // would double-count bequest and locked asset unlocks.
     const inflatedExpenses = (annualExpenses + expenseAdjustment) * Math.pow(1 + inflation, yearOffset)
-    const annualSavings = totalNet - inflatedExpenses
+    // Derive voluntary top-ups from per-adult data: each adult's annualSavings was
+    // computed as max(0, totalNet) - voluntaryTopUps - srsContribution (with expenses=0).
+    // Sum of per-adult (totalNet - annualSavings) gives total deductions (topUps + SRS + clamping).
+    // Subtract srsContribution (already summed above) to isolate voluntaryTopUps.
+    let perAdultSavingsSum = 0
+    for (let adultIdx = 0; adultIdx < projections.length; adultIdx++) {
+      if (yearOffset >= projections[adultIdx].length) continue
+      perAdultSavingsSum += projections[adultIdx][yearOffset].annualSavings
+    }
+    // perAdultSavingsSum = sum(max(0, totalNet_i) - topUps_i - srs_i)
+    // We want: totalNet - inflatedExpenses - topUps - srs
+    // = totalNet - inflatedExpenses - (sum(totalNet_i) - perAdultSavingsSum - srsContribution) - srsContribution
+    // = totalNet - inflatedExpenses - sum(totalNet_i) + perAdultSavingsSum
+    // Note: totalNet === sum(totalNet_i) so they cancel, leaving:
+    // = perAdultSavingsSum - inflatedExpenses
+    const annualSavings = perAdultSavingsSum - inflatedExpenses
     cumulativeSavings += annualSavings
 
     rows.push({

@@ -362,7 +362,11 @@ function buildAggregateRuntimeSnapshot(
   defaults.profile.residencyStatus = referenceAdult.residencyStatus
   defaults.profile.prMonths = referenceAdult.prMonths
   defaults.profile.annualIncome = aggregateAnnualIncome
-  defaults.profile.annualExpenses = currentRecurringBaseExpense || compiledPlan.rows[0]?.retirementExpenseBase || referenceAdult.annualExpenses
+  // Use active base-living expenses. Fallback to referenceAdult.annualExpenses if none
+  // are active at year 0. Do NOT use retirementExpenseBase as fallback — it includes
+  // healthcare, parentSupport, dependents, and property, which projection.ts adds
+  // independently, causing double-counting.
+  defaults.profile.annualExpenses = currentRecurringBaseExpense || referenceAdult.annualExpenses
   defaults.profile.liquidNetWorth = sumAdultField(plan.adults, (adult) => adult.liquidNetWorth)
   defaults.profile.cpfOA = sumAdultField(plan.adults, (adult) => adult.cpf.balances.oa)
   defaults.profile.cpfSA = sumAdultField(plan.adults, (adult) => adult.cpf.balances.sa)
