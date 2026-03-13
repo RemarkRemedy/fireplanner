@@ -154,7 +154,7 @@ export const ilpFundSchema = z.object({
 )
 
 export const ilpAssuranceProfileSchema = z.object({
-  currentAgeNextBirthday: z.number().int().min(1).max(120),
+  currentAgeNextBirthday: z.number().int().min(1).max(99),
   sex: z.enum(['male', 'female']),
   smokerStatus: z.enum(['smoker', 'non-smoker']),
   currentNetRegularPremiumBase: z.number().min(0).max(100_000_000).optional(),
@@ -366,6 +366,7 @@ export const ilpEventChargeRuleSchema = z.object({
   label: z.string().min(1),
   trigger: z.enum(['partial-withdrawal', 'regular-premium-reduction', 'premium-holiday', 'premium-holiday-repayment', 'top-up', 'recurring-single-premium']),
   basis: z.enum(['event-amount', 'account-value', 'premium-reduction-with-startup-recovery', 'premium-reduction-tiered-startup-recovery', 'repaid-premium-with-missed-months', 'annual-premium-with-overlap-months', 'committed-annual-premium-with-overlap-months', 'premium-holiday-charge-refund', 'event-amount-with-overlap-months', 'annual-reduction-with-active-months']),
+  activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']).optional(),
   appliesTo: z.array(z.string().min(1)).min(1).max(10),
   fallbackAppliesTo: z.array(z.string().min(1)).min(1).max(10).optional(),
   freeLifetimeMonths: z.number().int().min(1).max(240).optional(),

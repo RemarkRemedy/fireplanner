@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
+import type { IlpCatalogManifest, IlpCatalogProduct, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
 
 describe('templateVariantToPolicySeed', () => {
   it('maps the supported HSBC variant into a seeded ILP policy', () => {
@@ -29,36 +30,39 @@ describe('templateVariantToPolicySeed', () => {
     ])
     expect(seed.chargeRules).toEqual([])
     expect(seed.eventChargeRules).toEqual([
-      {
+      expect.objectContaining({
         id: 'pwc-aua-during-mip',
         label: 'Partial Withdrawal Charge',
         trigger: 'partial-withdrawal',
         basis: 'event-amount',
+        activeWindow: 'during-mip',
         appliesTo: ['aua'],
         rate: 0.07,
         amount: 0,
         allocation: 'equal-split',
-      },
-      {
+      }),
+      expect.objectContaining({
         id: 'missed-imf-on-premium-holiday-repayment',
         label: 'Missed IMF on Repaid Premiums',
         trigger: 'premium-holiday-repayment',
         basis: 'repaid-premium-with-missed-months',
+        activeWindow: 'policy-term',
         appliesTo: ['aua'],
         rate: 0.01,
         amount: 0,
         allocation: 'equal-split',
-      },
-      {
+      }),
+      expect.objectContaining({
         id: 'brc-regular-premium-reduction',
         label: 'Bonus Recovery Charge',
         trigger: 'regular-premium-reduction',
         basis: 'premium-reduction-with-startup-recovery',
+        activeWindow: 'during-mip',
         appliesTo: ['iua'],
         rate: 1.45,
         amount: 0,
         allocation: 'equal-split',
-      },
+      }),
     ])
     expect(powerUpBonus?.rate).toBe(0.01)
     expect(powerUpBonus?.tieredRates).toHaveLength(2)
@@ -381,31 +385,34 @@ describe('templateVariantToPolicySeed', () => {
       { phase: 'top-up', contributionShare: 1 },
     ])
     expect(seed.eventChargeRules).toEqual([
-      {
+      expect.objectContaining({
         id: 'top-up-premium-charge',
         label: 'Top-up Premium Charge',
         trigger: 'top-up',
         basis: 'event-amount',
+        activeWindow: 'policy-term',
         appliesTo: ['topup'],
         rate: 0.05,
         amount: 0,
         allocation: 'equal-split',
-      },
-      {
+      }),
+      expect.objectContaining({
         id: 'recurring-single-premium-charge',
         label: 'Recurring Single Premium Charge',
         trigger: 'recurring-single-premium',
         basis: 'event-amount-with-overlap-months',
+        activeWindow: 'policy-term',
         appliesTo: ['topup'],
         rate: 0.05,
         amount: 0,
         allocation: 'equal-split',
-      },
-      {
+      }),
+      expect.objectContaining({
         id: 'partial-withdrawal-charge',
         label: 'Partial Withdrawal Charge',
         trigger: 'partial-withdrawal',
         basis: 'event-amount',
+        activeWindow: 'during-mip',
         appliesTo: ['accumulation'],
         rate: 0,
         rateSchedule: [
@@ -415,12 +422,13 @@ describe('templateVariantToPolicySeed', () => {
         ],
         amount: 0,
         allocation: 'equal-split',
-      },
-      {
+      }),
+      expect.objectContaining({
         id: 'premium-shortfall-charge-non-payment',
         label: 'Premium Shortfall Charge (Non-payment)',
         trigger: 'premium-holiday',
         basis: 'committed-annual-premium-with-overlap-months',
+        activeWindow: 'during-mip',
         appliesTo: ['accumulation'],
         fallbackAppliesTo: ['topup', 'initial'],
         rate: 0,
@@ -435,12 +443,13 @@ describe('templateVariantToPolicySeed', () => {
         exclusiveGroup: 'tokio-premium-shortfall',
         groupResolution: 'max-total-charge',
         allocation: 'equal-split',
-      },
-      {
+      }),
+      expect.objectContaining({
         id: 'premium-shortfall-charge-reduction',
         label: 'Premium Shortfall Charge (Regular Premium Reduction)',
         trigger: 'regular-premium-reduction',
         basis: 'annual-reduction-with-active-months',
+        activeWindow: 'during-mip',
         appliesTo: ['accumulation'],
         fallbackAppliesTo: ['topup', 'initial'],
         rate: 0,
@@ -455,7 +464,7 @@ describe('templateVariantToPolicySeed', () => {
         exclusiveGroup: 'tokio-premium-shortfall',
         groupResolution: 'max-total-charge',
         allocation: 'equal-split',
-      },
+      }),
     ])
     expect(seed.bonuses.map((bonus) => bonus.label)).toEqual([
       'Initial Bonus',
@@ -501,5 +510,152 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.bonuses.find((bonus) => bonus.label === 'Power-up Bonus')?.startPolicyYear).toBe(11)
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-involuntary-unemployment-and-hospitalisation-waiver')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-initial-bonus-performance-investment-bonus-loyalty-bonus-and-power-up-bonus')
+  })
+
+  it('preserves template charge allocation, event activeWindow, and rateSchedule-only fee rules', () => {
+    const manifest: IlpCatalogManifest = {
+      generatedAt: '2026-03-13T00:00:00.000Z',
+      catalogVersion: 'test',
+      parserVersion: 'test-parser',
+      sourceStrategy: 'manual-pdf-corpus',
+      productsCount: 1,
+      supportedCount: 0,
+      partialCount: 1,
+      parserErrorCount: 0,
+      summarySourceCount: 1,
+      brochureOnlySourceCount: 0,
+      brochurePartialEligibleCount: 0,
+    }
+    const variant: IlpTemplateVariant = {
+      id: 'sgd-mip-10',
+      currency: 'SGD',
+      mipLength: 10,
+      icpMonths: 12,
+      accounts: [
+        {
+          id: 'growth',
+          label: 'Growth',
+          feeRate: null,
+          postMipFeeRate: null,
+          subjectToEec: true,
+          contributionRules: [],
+          sourceRefs: [],
+        },
+        {
+          id: 'flex',
+          label: 'Flex',
+          feeRate: null,
+          postMipFeeRate: null,
+          subjectToEec: false,
+          contributionRules: [],
+          sourceRefs: [],
+        },
+      ],
+      feeRules: [
+        {
+          id: 'tiered-admin',
+          label: 'Tiered Admin Charge',
+          basis: 'account-value',
+          activeWindow: 'policy-term',
+          appliesTo: ['growth', 'flex'],
+          rate: null,
+          amount: null,
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 5, rate: 0.02 },
+            { startPolicyYear: 6, endPolicyYear: null, rate: 0.01 },
+          ],
+          amountSchedule: undefined,
+          notes: [],
+          sourceRefs: [],
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'post-mip-topup',
+          label: 'Post-MIP Top-up Charge',
+          trigger: 'top-up',
+          basis: 'event-amount',
+          activeWindow: 'during-mip',
+          appliesTo: ['flex'],
+          rate: 0.03,
+          amount: 0,
+          allocation: 'pro-rata-by-value',
+          notes: [],
+          sourceRefs: [],
+        },
+      ],
+      bonuses: [],
+      eecTable: Array.from({ length: 10 }, () => 0),
+      warnings: [],
+      unsupportedItems: [],
+      sourceRefs: [],
+    }
+    const product: IlpCatalogProduct = {
+      id: 'test-product',
+      insurer: 'Test Insurer',
+      productName: 'Test Product',
+      sourceFileName: 'test.pdf',
+      sourceChecksumSha256: 'abc123',
+      sourceDocumentType: 'summary',
+      sourceClass: 'summary',
+      supportStatus: 'partial',
+      structureStatus: 'structured',
+      economicsStatus: 'partial-modeled-subset',
+      modeledEconomics: [],
+      metadataOnlyBehaviors: [],
+      warnings: [],
+      archived: false,
+      variants: [variant],
+    }
+
+    const seed = templateVariantToPolicySeed(product, variant, manifest)
+
+    expect(seed.chargeRules).toEqual([
+      {
+        id: 'tiered-admin',
+        label: 'Tiered Admin Charge',
+        basis: 'account-value',
+        activeWindow: 'policy-term',
+        startPolicyYear: undefined,
+        endPolicyYear: undefined,
+        appliesTo: ['growth', 'flex'],
+        fallbackAppliesTo: undefined,
+        rateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 5, rate: 0.02 },
+          { startPolicyYear: 6, endPolicyYear: null, rate: 0.01 },
+        ],
+        amountSchedule: undefined,
+        rate: 0,
+        amount: 0,
+        assuranceConfig: undefined,
+        premiumBaseConfig: undefined,
+        requiresManualInput: undefined,
+        allocation: 'equal-split',
+      },
+    ])
+    expect(seed.eventChargeRules).toEqual([
+      {
+        id: 'post-mip-topup',
+        label: 'Post-MIP Top-up Charge',
+        trigger: 'top-up',
+        basis: 'event-amount',
+        activeWindow: 'during-mip',
+        appliesTo: ['flex'],
+        fallbackAppliesTo: undefined,
+        freeLifetimeMonths: undefined,
+        freeEventCount: undefined,
+        freeEventStartPolicyYear: undefined,
+        freeEventMaxAmountRate: undefined,
+        rate: 0.03,
+        rateSchedule: undefined,
+        amount: 0,
+        sourceChargeRuleId: undefined,
+        sourceBonusId: undefined,
+        requiresManualInput: undefined,
+        exclusiveGroup: undefined,
+        groupResolution: undefined,
+        allocation: 'pro-rata-by-value',
+      },
+    ])
   })
 })

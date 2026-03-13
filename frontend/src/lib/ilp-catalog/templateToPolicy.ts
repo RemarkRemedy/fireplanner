@@ -50,7 +50,13 @@ function isCoveredByAccountFee(rule: IlpTemplateFeeRule, accounts: IlpTemplateAc
 
 function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] {
   return variant.feeRules
-    .filter((rule) => rule.basis === 'assurance-sum-at-risk' || rule.rate != null || rule.amount != null || (rule.amountSchedule?.length ?? 0) > 0)
+    .filter((rule) => (
+      rule.basis === 'assurance-sum-at-risk'
+      || rule.rate != null
+      || rule.amount != null
+      || (rule.amountSchedule?.length ?? 0) > 0
+      || (rule.rateSchedule?.length ?? 0) > 0
+    ))
     .filter((rule) => !isCoveredByAccountFee(rule, variant.accounts))
     .map((rule) => {
       const isAssurance = rule.basis === 'assurance-sum-at-risk'
@@ -100,6 +106,7 @@ function mapEventChargeRules(variant: IlpTemplateVariant): NonNullable<IlpPolicy
       label: rule.label,
       trigger: rule.trigger,
       basis: rule.basis,
+      activeWindow: rule.activeWindow,
       appliesTo: [...rule.appliesTo],
       fallbackAppliesTo: rule.fallbackAppliesTo ? [...rule.fallbackAppliesTo] : undefined,
       freeLifetimeMonths: rule.freeLifetimeMonths,
@@ -114,7 +121,7 @@ function mapEventChargeRules(variant: IlpTemplateVariant): NonNullable<IlpPolicy
       requiresManualInput: rule.requiresManualInput,
       exclusiveGroup: rule.exclusiveGroup,
       groupResolution: rule.groupResolution,
-      allocation: rule.allocation,
+      allocation: rule.allocation ?? 'equal-split',
     }))
 }
 
@@ -207,7 +214,7 @@ export function templateVariantToPolicySeed(
     catalogWarnings: [
       ...product.warnings,
       ...variant.warnings,
-      ...variant.unsupportedItems,
+      ...(variant.unsupportedItems ?? []),
     ],
     discountRate: DEFAULT_DISCOUNT_RATE,
     inflationRate: DEFAULT_INFLATION_RATE,

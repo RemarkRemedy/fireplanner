@@ -155,6 +155,7 @@ export interface IlpEventChargeRule {
   label: string
   trigger: 'partial-withdrawal' | 'regular-premium-reduction' | 'premium-holiday' | 'premium-holiday-repayment' | 'top-up' | 'recurring-single-premium'
   basis: 'event-amount' | 'account-value' | 'premium-reduction-with-startup-recovery' | 'premium-reduction-tiered-startup-recovery' | 'repaid-premium-with-missed-months' | 'annual-premium-with-overlap-months' | 'committed-annual-premium-with-overlap-months' | 'premium-holiday-charge-refund' | 'event-amount-with-overlap-months' | 'annual-reduction-with-active-months'
+  activeWindow?: 'during-mip' | 'after-mip' | 'policy-term'
   appliesTo: string[]
   fallbackAppliesTo?: string[]
   freeLifetimeMonths?: number
@@ -885,7 +886,7 @@ function getScheduledAnnualPremiumAtMonth(
   const recurringSinglePremiumReductionAbsorbed = Math.min(monthlyReduction, getRecurringSinglePremiumAmountAtMonth(normalized, policyMonth))
   const residualRegularPremiumReduction = (monthlyReduction - recurringSinglePremiumReductionAbsorbed) * 12
   const reducedAnnualPremium = baseAnnualPremium - residualRegularPremiumReduction + getAnnualPremiumIncreaseAtMonth(normalized, policyMonth)
-  return Math.max(0, Math.min(baseAnnualPremium, reducedAnnualPremium))
+  return Math.max(0, reducedAnnualPremium)
 }
 
 function getScheduledMonthlyPremiumAtMonth(
@@ -1499,8 +1500,15 @@ function normalizeEventChargeRules(
   projectionYear: number,
 ): IlpNormalizedEventChargeRule[] {
   const context = buildCashflowYearContext(normalized, projectionYear)
+  const isPostMip = context.policyYear > normalized.input.mipLength
 
   return (normalized.input.eventChargeRules ?? [])
+    .filter((rule) => {
+      const activeWindow = rule.activeWindow ?? 'policy-term'
+      return activeWindow === 'policy-term'
+        || (activeWindow === 'during-mip' && !isPostMip)
+        || (activeWindow === 'after-mip' && isPostMip)
+    })
     .map((rule) => {
       const events = rule.trigger === 'premium-holiday-repayment'
         ? getPremiumHolidayRepayments(normalized, projectionYear)
@@ -2368,7 +2376,7 @@ export function projectIlpPolicy(
       )
       const netFee = grossFee - bonusCredit
       const withdrawalAmount = withdrawalByAccount.get(account.id) ?? 0
-      const close = (open - netFee) * (1 + blendedNetReturn) + accountContribution - withdrawalAmount
+      const close = Math.max(0, (open - netFee) * (1 + blendedNetReturn) + accountContribution - withdrawalAmount)
 
       cumulativeGrossFees += grossFee
       cumulativeBonuses += bonusCredit

@@ -23,6 +23,7 @@ import {
   DEFAULT_IUA_FEE_RATE,
   EEC_PRESET_MIP_30,
 } from '@/lib/data/ilpDefaults'
+import { ilpPolicySchema } from '@/lib/validation/ilpSchema'
 
 const FUNDSMITH: IlpFund = {
   name: 'Fundsmith Equity Fund Feeder EUR',
@@ -809,6 +810,33 @@ describe('projectIlpPolicy', () => {
     expect(result.rows[1].annualContribution).toBe(4_200)
     expect(accountRow(result.rows[0], 'accumulation').grossFee).toBeCloseTo(150, 2)
     expect(accountRow(result.rows[1], 'accumulation').grossFee).toBeCloseTo(0, 2)
+  })
+
+  it('allows regular premium increases to raise the scheduled annual premium above the original base', () => {
+    const policy = makeDefaultPolicy({
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 1,
+      monthlyContribution: 100,
+      accounts: [
+        { ...IUA_ACCOUNT, id: 'initial', currentValue: 0, contributionShare: 0, feeRate: 0, subjectToEec: true },
+        { ...AUA_ACCOUNT, id: 'accumulation', currentValue: 0, feeRate: 0, contributionShare: 1 },
+      ],
+      policyEvents: [
+        {
+          id: 'increase-1',
+          type: 'regular-premium-increase',
+          startPolicyMonth: 3,
+          durationMonths: 1,
+          amount: 600,
+        },
+      ],
+      bonuses: [],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0].annualContribution).toBe(1_700)
+    expect(accountRow(result.rows[0], 'accumulation').contributionAmount).toBe(1_700)
   })
 
   it('bases non-payment shortfall charges on the committed premium even after a regular premium reduction', () => {
@@ -2085,6 +2113,45 @@ describe('projectIlpPolicy', () => {
   it('throws for mature policies instead of silently projecting', () => {
     expect(() => projectIlpPolicy(makeDefaultPolicy({ currentPolicyYear: 30 }), 'mid')).toThrow(/at or past MIP/)
   })
+
+  it('floors negative close values at zero before EEC is applied', () => {
+    const policy = makeDefaultPolicy({
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 1,
+      accounts: [
+        {
+          id: 'core',
+          label: 'Core',
+          feeRate: 0,
+          currentValue: 100,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'wipeout-charge',
+          label: 'Wipeout Charge',
+          basis: 'fixed-annual',
+          activeWindow: 'policy-term',
+          appliesTo: ['core'],
+          rate: 0,
+          amount: 500,
+          allocation: 'equal-split',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'core').close).toBe(0)
+    expect(result.rows[0].eecCharge).toBe(0)
+    expect(result.rows[0].surrenderValue).toBe(0)
+  })
 })
 
 describe('computeNpvAnalysis', () => {
@@ -2118,6 +2185,16 @@ describe('computeNpvAnalysis', () => {
     expect(npv.holdToMip.totalContributions).toBe(projection.rows[24].cumulativePremiums)
     expect(npv.holdToMip.totalNpvFees).toBeCloseTo(npv.futureExitOptions[24].totalNpvFees, 2)
     expect(npv.holdToMip.totalNpvFees).toBeGreaterThan(npv.holdToMip.npvGrossFees - npv.holdToMip.npvBonuses)
+  })
+
+  it('rejects assurance ages above the supported table ceiling', () => {
+    expect(() => ilpPolicySchema.parse(makeDefaultPolicy({
+      assuranceProfile: {
+        currentAgeNextBirthday: 100,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+      },
+    }))).toThrow(/99/)
   })
 })
 
