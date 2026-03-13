@@ -236,5 +236,144 @@ describe('downsizing ownership scaling: compiler path', () => {
   })
 })
 
+// Shared constants for MC and projection tests
+const BASE_ALLOCATION = {
+  currentWeights: [0.25, 0.05, 0.10, 0.35, 0.05, 0.05, 0.15, 0],
+  targetWeights: [0.20, 0.05, 0.10, 0.40, 0.05, 0.05, 0.15, 0],
+  returnOverrides: [null, null, null, null, null, null, null, null],
+  stdDevOverrides: [null, null, null, null, null, null, null, null],
+  glidePathConfig: { enabled: false, method: 'linear' as const, startAge: 60, endAge: 75 },
+  validationErrors: {},
+}
+
+const BASE_SIMULATION = {
+  selectedStrategy: 'constant_dollar' as const,
+  strategyParams: {
+    constant_dollar: { swr: 0.04 },
+    vpw: { expectedRealReturn: 0.03, targetEndValue: 0.10 },
+    guardrails: { initialRate: 0.05, ceilingTrigger: 1.20, floorTrigger: 0.80, adjustmentSize: 0.10 },
+    vanguard_dynamic: { swr: 0.04, ceiling: 0.05, floor: 0.025 },
+    cape_based: { baseRate: 0.04, capeWeight: 0.50, currentCape: 30 },
+    floor_ceiling: { floor: 60_000, ceiling: 150_000, targetRate: 0.045 },
+    percent_of_portfolio: { rate: 0.04 },
+    one_over_n: {},
+    sensible_withdrawals: { baseRate: 0.03, extrasRate: 0.10 },
+    ninety_five_percent: { swr: 0.04 },
+    endowment: { swr: 0.04, smoothingWeight: 0.70 },
+    hebeler_autopilot: { expectedRealReturn: 0.03 },
+  },
+  withdrawalBasis: 'expenses' as const,
+}
+
+function buildMcStores(ownershipPercent: number) {
+  const fixture = makeDownsizingFixture(ownershipPercent)
+  const adult = fixture.adults[0]
+  const prop = fixture.properties[0]
+
+  const profile = {
+    currentAge: adult.currentAge,
+    retirementAge: adult.retirementAge,
+    lifeExpectancy: adult.lifeExpectancy,
+    swr: 0.04,
+    annualExpenses: adult.annualExpenses,
+    inflation: 0.025,
+    expectedReturn: 0.07,
+    usePortfolioReturn: false,
+    expenseRatio: 0.003,
+    initialLiquidNW: adult.liquidNetWorth,
+    liquidNetWorth: adult.liquidNetWorth,
+    retirementSpendingAdjustment: 1.0,
+    parentSupport: [],
+    parentSupportEnabled: false,
+    healthcareConfig: { enabled: false } as any,
+    retirementWithdrawals: [],
+    financialGoals: [],
+    expenseAdjustments: [],
+    lifeEvents: [],
+    lifeEventsEnabled: false,
+    cpfLifeStartAge: 65,
+    cpfLifePlan: 'standard' as const,
+    cpfOaWithdrawals: [],
+    lockedAssets: [],
+    validationErrors: {},
+    cpfOA: 0,
+    cpfSA: 0,
+    cpfMA: 0,
+    cpfRA: 0,
+  }
+
+  const income = {
+    salaryModel: 'simple' as const,
+    annualSalary: adult.annualIncome,
+    salaryGrowthRate: 0.03,
+    bonusMonths: 2,
+    employerCpfEnabled: true,
+    incomeStreams: [],
+    lifeEvents: [],
+    lifeEventsEnabled: false,
+    realisticPhases: [],
+    promotionJumps: [],
+    momEducation: 'degree' as const,
+    momAdjustment: 1.0,
+    personalReliefs: 0,
+    reliefBreakdown: null,
+    reliefBasisAge: adult.currentAge,
+    validationErrors: {},
+  }
+
+  const property = {
+    ownsProperty: prop.ownsProperty,
+    ownershipPercent: prop.ownershipPercent,
+    existingPropertyValue: prop.existingPropertyValue,
+    existingAppreciationRate: prop.existingAppreciationRate,
+    existingLeaseYears: prop.existingLeaseYears,
+    existingApplyBalaDecay: prop.existingApplyBalaDecay,
+    existingMortgageBalance: prop.existingMortgageBalance,
+    existingMortgageRate: prop.existingMortgageRate,
+    existingMonthlyPayment: prop.existingMonthlyPayment,
+    existingMortgageRemainingYears: prop.existingMortgageRemainingYears,
+    mortgageCpfMonthly: prop.mortgageCpfMonthly,
+    residencyForAbsd: prop.residencyForAbsd,
+    propertyCount: prop.propertyCount,
+    hdbCpfUsedForHousing: prop.hdbCpfUsedForHousing,
+    hdbSublettingRooms: prop.hdbSublettingRooms,
+    hdbSublettingRate: prop.hdbSublettingRate,
+    downsizing: prop.downsizing,
+  }
+
+  return { profile, income, property }
+}
+
+import { buildLegacyMonteCarloEngineParams } from '@/lib/simulation/monteCarloParams'
+
+describe('downsizing ownership scaling: legacy MC path', () => {
+  it('scales downsizing portfolio adjustment by ownershipPercent', () => {
+    const fullStores = buildMcStores(1.0)
+    const halfStores = buildMcStores(0.5)
+
+    const fullResult = buildLegacyMonteCarloEngineParams({
+      profile: fullStores.profile as any,
+      income: fullStores.income as any,
+      allocation: BASE_ALLOCATION as any,
+      simulation: BASE_SIMULATION as any,
+      property: fullStores.property as any,
+    })
+    const halfResult = buildLegacyMonteCarloEngineParams({
+      profile: halfStores.profile as any,
+      income: halfStores.income as any,
+      allocation: BASE_ALLOCATION as any,
+      simulation: BASE_SIMULATION as any,
+      property: halfStores.property as any,
+    })
+
+    const fullAdj = fullResult.portfolioAdjustments.find((a) => a.amount !== 0)
+    const halfAdj = halfResult.portfolioAdjustments.find((a) => a.amount !== 0)
+
+    expect(fullAdj).toBeDefined()
+    expect(halfAdj).toBeDefined()
+    expect(halfAdj!.amount).toBeCloseTo(fullAdj!.amount * 0.5, 0)
+  })
+})
+
 // Export the fixture for use by Task 2 and Task 3 tests
 export { makeDownsizingFixture }

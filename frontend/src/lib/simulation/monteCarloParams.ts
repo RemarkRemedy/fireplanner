@@ -104,18 +104,18 @@ export function buildLegacyMonteCarloEngineParams({
           residency: property.residencyForAbsd,
           propertyCount: Math.max(0, property.propertyCount - 1),
         })
-        netEquity = result.netEquityToPortfolio
-        shortfall = result.shortfall
-        dsNewMonthlyPayment = result.newMonthlyPayment
+        netEquity = result.netEquityToPortfolio * ownershipPct
+        shortfall = result.shortfall * ownershipPct
+        dsNewMonthlyPayment = result.newMonthlyPayment * ownershipPct
       } else if (ds.scenario === 'sell-and-rent') {
         const result = calculateSellAndRent({
           salePrice: ds.expectedSalePrice,
           outstandingMortgage: outstandingAtSell,
           monthlyRent: ds.monthlyRent,
         })
-        netEquity = result.netProceedsToPortfolio
-        shortfall = result.shortfall
-        dsAnnualRent = result.annualRent
+        netEquity = result.netProceedsToPortfolio * ownershipPct
+        shortfall = result.shortfall * ownershipPct
+        dsAnnualRent = result.annualRent * ownershipPct
       }
 
       // Inject net equity or deduct shortfall from portfolio
