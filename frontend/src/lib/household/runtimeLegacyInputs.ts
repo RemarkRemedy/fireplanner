@@ -469,9 +469,15 @@ function buildAggregateRuntimeSnapshot(
   // healthcareConfig remains reference-adult-only for display. Joint calculations use
   // healthcareCashOutlayByYear below, which already sums the compiler's per-adult totals.
   defaults.profile.healthcareConfig = structuredClone(referenceAdult.healthcare)
-  defaults.profile.cpfOaWithdrawals = plan.adults.flatMap((adult) => (
-    adult.cpf.oaWithdrawals.map((withdrawal) => ({ ...withdrawal }))
-  ))
+  defaults.profile.cpfOaWithdrawals = plan.adults.flatMap((adult) => {
+    const delta = adult.owner === referenceAdult.owner
+      ? 0
+      : referenceAdult.currentAge - adult.currentAge
+    return adult.cpf.oaWithdrawals.map((withdrawal) => ({
+      ...withdrawal,
+      age: withdrawal.age + delta,
+    }))
+  })
   defaults.profile.cpfisEnabled = plan.adults.some((adult) => adult.cpf.cpfisEnabled)
   defaults.profile.cpfisOaReturn = weightedAverage(
     plan.adults.map((adult) => ({
@@ -521,7 +527,16 @@ function buildAggregateRuntimeSnapshot(
         isActive: income.isActive,
       }
     })
-  defaults.income.lifeEvents = plan.adults.flatMap((adult) => adult.lifeEvents.map((event) => ({ ...event })))
+  defaults.income.lifeEvents = plan.adults.flatMap((adult) => {
+    const delta = adult.owner === referenceAdult.owner
+      ? 0
+      : referenceAdult.currentAge - adult.currentAge
+    return adult.lifeEvents.map((event) => ({
+      ...event,
+      startAge: event.startAge + delta,
+      endAge: event.endAge + delta,
+    }))
+  })
   defaults.income.realisticPhases = activeSalaryModels.length === 1
     ? structuredClone(activeSalaryModels[0].realisticPhases ?? [])
     : []

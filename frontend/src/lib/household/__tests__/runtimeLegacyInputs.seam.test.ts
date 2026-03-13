@@ -408,6 +408,45 @@ describe('household adapter seam: timing owner age shift', () => {
     expect(goal?.targetAge).toBe(44)
   })
 
+  it('shifts partner life event ages to reference adult frame', () => {
+    const plan = makeTwoAdultFixture()
+    plan.adults[1].lifeEventsEnabled = true
+    plan.adults[1].lifeEvents = [
+      {
+        id: 'chloe-career-break',
+        name: 'Career Break',
+        startAge: 35,
+        endAge: 37,
+        incomeImpact: 0,
+        affectedStreamIds: [],
+        savingsPause: true,
+        cpfPause: true,
+      },
+    ]
+    const compiled = compileHouseholdPlan(plan)
+    const result = buildHouseholdRuntimeLegacyInputs(plan, compiled)
+
+    // Chloe age 35 = TJ age 39, Chloe age 37 = TJ age 41 (delta = +4)
+    const event = result.income.lifeEvents.find((e) => e.id === 'chloe-career-break')
+    expect(event).toBeDefined()
+    expect(event?.startAge).toBe(39)
+    expect(event?.endAge).toBe(41)
+  })
+
+  it('shifts partner CPF OA withdrawal age to reference adult frame', () => {
+    const plan = makeTwoAdultFixture()
+    plan.adults[1].cpf.oaWithdrawals = [
+      { id: 'chloe-oa-withdrawal', label: 'Chloe OA Withdrawal', amount: 50_000, age: 58 },
+    ]
+    const compiled = compileHouseholdPlan(plan)
+    const result = buildHouseholdRuntimeLegacyInputs(plan, compiled)
+
+    // Chloe age 58 = TJ age 62 (delta = +4)
+    const withdrawal = result.profile.cpfOaWithdrawals.find((w) => w.id === 'chloe-oa-withdrawal')
+    expect(withdrawal).toBeDefined()
+    expect(withdrawal?.age).toBe(62)
+  })
+
   it('does not shift self-owned timing (delta = 0)', () => {
     const plan = makeTwoAdultFixture()
     plan.expenses.push({
