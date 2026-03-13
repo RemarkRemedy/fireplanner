@@ -113,10 +113,21 @@ export interface IlpPremiumBaseChargeConfig {
   multiplierSchedule: IlpPremiumBaseMultiplierTier[]
 }
 
+export interface IlpCumulativePaidPremiumRateTier {
+  minAnnualisedPremiumsPaid: number
+  maxAnnualisedPremiumsPaid: number | null
+  rate: number
+}
+
+export interface IlpCumulativePaidPremiumChargeConfig {
+  annualisedPremiumAtIssue?: number
+  countRateSchedule?: IlpCumulativePaidPremiumRateTier[]
+}
+
 export interface IlpChargeRule {
   id: string
   label: string
-  basis: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier'
+  basis: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium'
   activeWindow: 'during-mip' | 'after-mip' | 'policy-term'
   startPolicyYear?: number
   endPolicyYear?: number | null
@@ -128,6 +139,7 @@ export interface IlpChargeRule {
   amount: number
   assuranceConfig?: IlpAssuranceChargeConfig
   premiumBaseConfig?: IlpPremiumBaseChargeConfig
+  cumulativePaidPremiumConfig?: IlpCumulativePaidPremiumChargeConfig
   requiresManualInput?: boolean
   allocation: 'pro-rata-by-value' | 'pro-rata-by-contribution-share' | 'equal-split'
 }
@@ -437,6 +449,11 @@ interface IlpNormalizedPolicyInput {
   bonuses: IlpNormalizedBonusKernel
   multiAccount: IlpNormalizedMultiAccountStructure
   events: IlpNormalizedPolicyEvents
+  regularPremiums: {
+    committedAnnualPremiumAtIssue: number
+    paidByPolicyMonth: Map<number, number>
+    cumulativePaidByPolicyMonth: Map<number, number>
+  }
 }
 
 function assertBeforeMip(input: IlpPolicyInput) {
@@ -677,6 +694,44 @@ function buildNormalizedBonusKernel(
   }
 }
 
+function isPremiumHolidayActiveAtMonth(
+  normalized: Pick<IlpNormalizedPolicyInput, 'events'>,
+  policyMonth: number,
+): boolean {
+  return normalized.events.premiumHolidays.some((event) => (
+    policyMonth >= event.startPolicyMonth
+    && policyMonth < (event.startPolicyMonth + event.durationMonths)
+  ))
+}
+
+function buildNormalizedRegularPremiumState(
+  normalized: Pick<IlpNormalizedPolicyInput, 'input' | 'events' | 'contributionRoutesByPhase'>,
+): IlpNormalizedPolicyInput['regularPremiums'] {
+  const maxPolicyMonth = normalized.input.monthsAlreadyPaid + (computeTotalProjectionYears(normalized.input) * 12)
+  const paidByPolicyMonth = new Map<number, number>()
+  const cumulativePaidByPolicyMonth = new Map<number, number>()
+  let cumulativePaid = 0
+
+  for (let policyMonth = 1; policyMonth <= maxPolicyMonth; policyMonth += 1) {
+    const policyYear = getPolicyYearForMonth(policyMonth)
+    const regularPremiumIsPayable = policyYear <= normalized.input.mipLength
+      || hasAfterMipContributionRules(normalized.input)
+    const actualPaid = !regularPremiumIsPayable || isPremiumHolidayActiveAtMonth(normalized, policyMonth)
+      ? 0
+      : getScheduledMonthlyPremiumAtMonth(normalized as IlpNormalizedPolicyInput, policyMonth)
+
+    cumulativePaid += actualPaid
+    paidByPolicyMonth.set(policyMonth, actualPaid)
+    cumulativePaidByPolicyMonth.set(policyMonth, cumulativePaid)
+  }
+
+  return {
+    committedAnnualPremiumAtIssue: normalized.input.monthlyContribution * 12,
+    paidByPolicyMonth,
+    cumulativePaidByPolicyMonth,
+  }
+}
+
 function buildNormalizedPolicyInput(input: IlpPolicyInput): IlpNormalizedPolicyInput {
   const policyEvents = input.policyEvents ?? []
   const contributionRoutesByPhase = {
@@ -686,7 +741,7 @@ function buildNormalizedPolicyInput(input: IlpPolicyInput): IlpNormalizedPolicyI
     'top-up': normalizeContributionRoutes(input, 'top-up'),
   } satisfies Record<IlpContributionRule['phase'], IlpNormalizedContributionRoute[]>
 
-  return {
+  const normalized = {
     input,
     contributionRoutesByPhase,
     assurance: buildNormalizedAssuranceKernel(input),
@@ -704,7 +759,15 @@ function buildNormalizedPolicyInput(input: IlpPolicyInput): IlpNormalizedPolicyI
         event.type === 'assurance-benefit-reduction' || event.type === 'assurance-benefit-resumption'
       ))),
     },
-  }
+    regularPremiums: {
+      committedAnnualPremiumAtIssue: input.monthlyContribution * 12,
+      paidByPolicyMonth: new Map<number, number>(),
+      cumulativePaidByPolicyMonth: new Map<number, number>(),
+    },
+  } satisfies IlpNormalizedPolicyInput
+
+  normalized.regularPremiums = buildNormalizedRegularPremiumState(normalized)
+  return normalized
 }
 
 function overlapMonths(
@@ -894,6 +957,13 @@ function getScheduledMonthlyPremiumAtMonth(
   policyMonth: number,
 ): number {
   return getScheduledAnnualPremiumAtMonth(normalized, policyMonth) / 12
+}
+
+function getCumulativePaidRegularPremiumAtMonth(
+  normalized: IlpNormalizedPolicyInput,
+  policyMonth: number,
+): number {
+  return normalized.regularPremiums.cumulativePaidByPolicyMonth.get(policyMonth) ?? 0
 }
 
 function getRegularPremiumReductionForYear(
@@ -1828,6 +1898,32 @@ function resolvePremiumBaseMultiplier(
     : Math.max(0, matchedTier.multiplier ?? 0)
 }
 
+function resolveCumulativePaidRegularPremiumRate(
+  normalized: IlpNormalizedPolicyInput,
+  rule: IlpChargeRule,
+  policyYear: number,
+  policyMonth: number,
+): number {
+  const annualisedPremiumAtIssue = rule.cumulativePaidPremiumConfig?.annualisedPremiumAtIssue
+    ?? normalized.regularPremiums.committedAnnualPremiumAtIssue
+
+  if (annualisedPremiumAtIssue > CONTRIBUTION_TOLERANCE) {
+    const annualisedPremiumsPaid = Math.floor(
+      getCumulativePaidRegularPremiumAtMonth(normalized, policyMonth) / annualisedPremiumAtIssue,
+    )
+    const matchedTier = rule.cumulativePaidPremiumConfig?.countRateSchedule?.find((tier) => (
+      annualisedPremiumsPaid >= tier.minAnnualisedPremiumsPaid
+      && (tier.maxAnnualisedPremiumsPaid == null || annualisedPremiumsPaid <= tier.maxAnnualisedPremiumsPaid)
+    ))
+
+    if (matchedTier) {
+      return matchedTier.rate
+    }
+  }
+
+  return resolveChargeRate(rule, policyYear)
+}
+
 function computePremiumBaseMultiplierCharge(
   normalized: IlpNormalizedPolicyInput,
   projectionYear: number,
@@ -1854,6 +1950,24 @@ function computePremiumBaseMultiplierCharge(
       : prevailingAnnualPremium
 
     total += (rule.rate / 12) * premiumBase * multiplier
+  }
+
+  return total
+}
+
+function computeCumulativePaidRegularPremiumCharge(
+  normalized: IlpNormalizedPolicyInput,
+  projectionYear: number,
+  policyYear: number,
+  rule: IlpChargeRule,
+): number {
+  const range = buildCashflowYearContext(normalized, projectionYear).range
+  let total = 0
+
+  for (let policyMonth = range.startPolicyMonth; policyMonth <= range.endPolicyMonth; policyMonth += 1) {
+    const cumulativePaidRegularPremium = getCumulativePaidRegularPremiumAtMonth(normalized, policyMonth)
+    const rate = resolveCumulativePaidRegularPremiumRate(normalized, rule, policyYear, policyMonth)
+    total += (rate / 12) * cumulativePaidRegularPremium
   }
 
   return total
@@ -2043,6 +2157,21 @@ function computeAdditionalChargeByAccount(
 
       case 'premium-base-mip-multiplier': {
         const totalCharge = computePremiumBaseMultiplierCharge(normalized, projectionYear, policyYear, rule)
+        const allocations = applyChargeAllocationsWithFallback(
+          totalCharge,
+          rule.allocation,
+          appliesTo,
+          fallbackAppliesTo,
+          openBalances,
+        )
+        for (const [accountId, amount] of allocations.entries()) {
+          charges.set(accountId, (charges.get(accountId) ?? 0) + amount)
+        }
+        break
+      }
+
+      case 'cumulative-paid-regular-premium': {
+        const totalCharge = computeCumulativePaidRegularPremiumCharge(normalized, projectionYear, policyYear, rule)
         const allocations = applyChargeAllocationsWithFallback(
           totalCharge,
           rule.allocation,

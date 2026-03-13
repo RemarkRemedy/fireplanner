@@ -64,6 +64,7 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
     .map((rule) => {
       const isAssurance = rule.basis === 'assurance-sum-at-risk'
       const isPremiumBase = rule.basis === 'premium-base-mip-multiplier'
+      const isCumulativePaidPremium = rule.basis === 'cumulative-paid-regular-premium'
       const isFixedAnnual = rule.basis === 'fixed-annual'
       const isAnnualContribution = rule.basis === 'annual-contribution'
 
@@ -74,6 +75,8 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
           ? 'assurance-sum-at-risk'
           : isPremiumBase
             ? 'premium-base-mip-multiplier'
+            : isCumulativePaidPremium
+              ? 'cumulative-paid-regular-premium'
             : isFixedAnnual
               ? 'fixed-annual'
               : isAnnualContribution
@@ -93,6 +96,12 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
           ? {
               useHigherOfCommencementAndPrevailing: rule.premiumBaseConfig.useHigherOfCommencementAndPrevailing,
               multiplierSchedule: rule.premiumBaseConfig.multiplierSchedule.map((tier) => ({ ...tier })),
+            }
+          : undefined,
+        cumulativePaidPremiumConfig: rule.cumulativePaidPremiumConfig
+          ? {
+              annualisedPremiumAtIssue: rule.cumulativePaidPremiumConfig.annualisedPremiumAtIssue,
+              countRateSchedule: rule.cumulativePaidPremiumConfig.countRateSchedule?.map((tier) => ({ ...tier })),
             }
           : undefined,
         requiresManualInput: rule.requiresManualInput,

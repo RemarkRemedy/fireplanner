@@ -217,7 +217,7 @@ export const ilpBonusRuleSchema = z.object({
 export const ilpChargeRuleSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
-  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier']),
+  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium']),
   activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']),
   startPolicyYear: z.number().int().min(1).max(100).optional(),
   endPolicyYear: z.number().int().min(1).max(100).nullable().optional(),
@@ -255,6 +255,14 @@ export const ilpChargeRuleSchema = z.object({
       multiplier: z.number().min(0).max(100).optional(),
     })).min(1).max(20),
   }).optional(),
+  cumulativePaidPremiumConfig: z.object({
+    annualisedPremiumAtIssue: z.number().min(0).max(100_000_000).optional(),
+    countRateSchedule: z.array(z.object({
+      minAnnualisedPremiumsPaid: z.number().int().min(0).max(1_200),
+      maxAnnualisedPremiumsPaid: z.number().int().min(0).max(1_200).nullable(),
+      rate: z.number().min(0).max(5),
+    })).max(40).optional(),
+  }).optional(),
   requiresManualInput: z.boolean().optional(),
   allocation: z.enum(['pro-rata-by-value', 'pro-rata-by-contribution-share', 'equal-split']),
 }).superRefine((rule, ctx) => {
@@ -286,10 +294,10 @@ export const ilpChargeRuleSchema = z.object({
     }
   })
 
-  if ((rule.rateSchedule?.length ?? 0) > 0 && !(rule.basis === 'account-value' || rule.basis === 'annual-contribution')) {
+  if ((rule.rateSchedule?.length ?? 0) > 0 && !(rule.basis === 'account-value' || rule.basis === 'annual-contribution' || rule.basis === 'cumulative-paid-regular-premium')) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'Charge rule rate schedules can only be used with account-value or annual-contribution basis',
+      message: 'Charge rule rate schedules can only be used with account-value, annual-contribution, or cumulative-paid-regular-premium basis',
       path: ['rateSchedule'],
     })
   }
@@ -357,6 +365,44 @@ export const ilpChargeRuleSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'Premium-base configuration can only be used on premium-base-mip-multiplier charge rules',
       path: ['premiumBaseConfig'],
+    })
+  }
+
+  rule.cumulativePaidPremiumConfig?.countRateSchedule?.forEach((tier, index, tiers) => {
+    if (tier.maxAnnualisedPremiumsPaid != null && tier.maxAnnualisedPremiumsPaid < tier.minAnnualisedPremiumsPaid) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Cumulative-paid premium count tier maxAnnualisedPremiumsPaid must be greater than or equal to minAnnualisedPremiumsPaid',
+        path: ['cumulativePaidPremiumConfig', 'countRateSchedule', index, 'maxAnnualisedPremiumsPaid'],
+      })
+    }
+
+    if (index > 0) {
+      const previous = tiers[index - 1]
+      const expectedNextMinimum = (previous.maxAnnualisedPremiumsPaid ?? previous.minAnnualisedPremiumsPaid) + 1
+      if (tier.minAnnualisedPremiumsPaid > expectedNextMinimum) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Cumulative-paid premium count tiers must not skip annualised-premium counts',
+          path: ['cumulativePaidPremiumConfig', 'countRateSchedule', index, 'minAnnualisedPremiumsPaid'],
+        })
+      }
+    }
+  })
+
+  if (rule.basis === 'cumulative-paid-regular-premium' && rule.cumulativePaidPremiumConfig?.annualisedPremiumAtIssue != null && rule.cumulativePaidPremiumConfig.annualisedPremiumAtIssue <= 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Cumulative-paid premium charge rules must use a positive annualised premium at issue when overridden',
+      path: ['cumulativePaidPremiumConfig', 'annualisedPremiumAtIssue'],
+    })
+  }
+
+  if (rule.basis !== 'cumulative-paid-regular-premium' && rule.cumulativePaidPremiumConfig) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Cumulative-paid premium configuration can only be used on cumulative-paid-regular-premium charge rules',
+      path: ['cumulativePaidPremiumConfig'],
     })
   }
 })

@@ -500,6 +500,72 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.bonuses).toEqual([])
   })
 
+  it('maps Etiqa Invest smart flex II into a partial seed with cumulative-paid policy charges', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'etiqa-invest-smart-flex-ii')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('Invest smart flex II (SGD / MIP 10)')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-smart-flex-ii-cumulative-paid-policy-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-smart-flex-ii-premium-shortfall-charge')
+    expect(seed.accounts.find((account) => account.id === 'regular')?.contributionRules).toEqual([
+      { phase: 'during-icp', contributionShare: 1 },
+      { phase: 'after-icp', contributionShare: 1 },
+    ])
+    expect(seed.accounts.find((account) => account.id === 'topup')?.contributionRules).toEqual([
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-charge-during-premium-term',
+          basis: 'cumulative-paid-regular-premium',
+          rate: 0.023,
+          appliesTo: ['regular'],
+          cumulativePaidPremiumConfig: {
+            annualisedPremiumAtIssue: 4800,
+          },
+        }),
+        expect.objectContaining({
+          id: 'policy-charge-after-premium-term',
+          basis: 'cumulative-paid-regular-premium',
+          cumulativePaidPremiumConfig: {
+            annualisedPremiumAtIssue: 4800,
+            countRateSchedule: [
+              { minAnnualisedPremiumsPaid: 0, maxAnnualisedPremiumsPaid: 5, rate: 0.012 },
+              { minAnnualisedPremiumsPaid: 6, maxAnnualisedPremiumsPaid: 6, rate: 0.01 },
+              { minAnnualisedPremiumsPaid: 7, maxAnnualisedPremiumsPaid: 7, rate: 0.0086 },
+              { minAnnualisedPremiumsPaid: 8, maxAnnualisedPremiumsPaid: 8, rate: 0.0075 },
+              { minAnnualisedPremiumsPaid: 9, maxAnnualisedPremiumsPaid: 9, rate: 0.0067 },
+              { minAnnualisedPremiumsPaid: 10, maxAnnualisedPremiumsPaid: null, rate: 0.006 },
+            ],
+          },
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          trigger: 'top-up',
+          basis: 'event-amount',
+          appliesTo: ['topup'],
+          rate: 0.03,
+        }),
+        expect.objectContaining({
+          id: 'startup-bonus-recovery-charge',
+          trigger: 'regular-premium-reduction',
+          sourceBonusId: 'startup-bonus',
+        }),
+      ]),
+    )
+  })
+
   it('maps Invest Flex Vantage into a partial regular-premium seed with bonus and MIP-charge schedules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'income-invest-flex-vantage')

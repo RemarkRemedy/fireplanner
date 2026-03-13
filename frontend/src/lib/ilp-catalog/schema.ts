@@ -57,7 +57,7 @@ export const ilpTemplateBonusSchema = z.object({
 export const ilpTemplateFeeRuleSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
-  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier']).optional(),
+  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium']).optional(),
   rate: z.number().min(0).max(0.2).nullable(),
   amount: z.number().min(0).max(100_000_000).nullable().optional(),
   assuranceConfig: z.object({
@@ -73,6 +73,14 @@ export const ilpTemplateFeeRuleSchema = z.object({
       mode: z.enum(['policy-year', 'fixed']),
       multiplier: z.number().min(0).max(100).optional(),
     })).min(1).max(20),
+  }).optional(),
+  cumulativePaidPremiumConfig: z.object({
+    annualisedPremiumAtIssue: z.number().min(0).max(100_000_000).optional(),
+    countRateSchedule: z.array(z.object({
+      minAnnualisedPremiumsPaid: z.number().int().min(0).max(1_200),
+      maxAnnualisedPremiumsPaid: z.number().int().min(0).max(1_200).nullable(),
+      rate: z.number().min(0).max(1),
+    })).min(1).max(40).optional(),
   }).optional(),
   requiresManualInput: z.boolean().optional(),
   appliesTo: z.array(z.string().min(1)).max(20),

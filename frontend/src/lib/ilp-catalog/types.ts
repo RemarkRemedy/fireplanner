@@ -62,7 +62,7 @@ export interface IlpTemplateBonus {
 export interface IlpTemplateFeeRule {
   id: string
   label: string
-  basis?: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier'
+  basis?: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium'
   rate: number | null
   amount?: number | null
   assuranceConfig?: {
@@ -77,6 +77,14 @@ export interface IlpTemplateFeeRule {
       endPolicyYear: number | null
       mode: 'policy-year' | 'fixed'
       multiplier?: number
+    }>
+  }
+  cumulativePaidPremiumConfig?: {
+    annualisedPremiumAtIssue?: number
+    countRateSchedule?: Array<{
+      minAnnualisedPremiumsPaid: number
+      maxAnnualisedPremiumsPaid: number | null
+      rate: number
     }>
   }
   requiresManualInput?: boolean
