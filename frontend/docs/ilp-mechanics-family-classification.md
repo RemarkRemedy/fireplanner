@@ -133,7 +133,7 @@ Corpus size: 92
 | TML_UOAN_TPDN_CIN_Summary.pdf | `protection-heavy-death-benefit` | ad-hoc-premium-routing, assurance-charge, bonus-richness, distribution-mode, dynamic-charge, premium-holiday-recovery, protection-structure | `tokio-shortfall-recurring-single-premium` | `partial-v1` | `4-plus-workstreams` | `not-in-catalog` | `none` |
 | VA2_Summary.pdf | `standard-2-account-core-cashflow` | dynamic-charge, premium-holiday-recovery | `generic` | `supported-after-kernel` | `1-workstream` | `not-in-catalog` | `none` |
 | VA3R_VA3S_Summary.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, dynamic-charge, premium-holiday-recovery | `generic` | `supported-after-kernel` | `1-workstream` | `not-in-catalog` | `none` |
-| VS1_Summary.pdf | `standard-2-account-core-cashflow` | dynamic-charge, premium-holiday-recovery | `generic` | `supported-after-kernel` | `1-workstream` | `not-in-catalog` | `none` |
+| VS1_Summary.pdf | `standard-2-account-core-cashflow` | dynamic-charge, premium-holiday-recovery | `generic` | `supported-after-kernel` | `1-workstream` | `partial` | `none` |
 | VS2_Summary.pdf | `standard-2-account-core-cashflow` | dynamic-charge, premium-holiday-recovery | `generic` | `supported-after-kernel` | `1-workstream` | `partial` | `none` |
 | VS3_Summary.pdf | `standard-2-account-core-cashflow` | dynamic-charge, premium-holiday-recovery | `generic` | `supported-after-kernel` | `1-workstream` | `not-in-catalog` | `none` |
 | WA_MI2_ILP_PdtSum.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, dynamic-charge | `aia-ilp-generic` | `supported-after-kernel` | `1-workstream` | `not-in-catalog` | `none` |

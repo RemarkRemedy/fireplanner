@@ -1,5 +1,6 @@
 import type { IlpChargeRule, IlpPolicyInput } from '@/lib/calculations/ilp'
 import { DEFAULT_ALTERNATIVE_RETURN, DEFAULT_DISCOUNT_RATE, DEFAULT_INFLATION_RATE } from '@/lib/data/ilpDefaults'
+import { formatCatalogVariantLabel } from '@/lib/ilp-catalog/labels'
 import type { IlpCatalogManifest, IlpCatalogProduct, IlpTemplateAccount, IlpTemplateBonus, IlpTemplateFeeRule, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
 import { ilpPolicySeedSchema, type IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
 
@@ -10,10 +11,6 @@ const DEFAULT_TEMPLATE_FUND: IlpPolicyInput['funds'][number] = {
   grossReturnLow: 0.06,
   grossReturnMid: 0.08,
   grossReturnHigh: 0.1,
-}
-
-function variantLabel(variant: IlpTemplateVariant): string {
-  return `${variant.currency} / MIP ${variant.mipLength}`
 }
 
 function deriveSeedMonthlyContribution(product: IlpCatalogProduct): number {
@@ -174,7 +171,7 @@ export function templateVariantToPolicySeed(
   const defaultContributionShare = accountsWithoutRegularRules.length > 0 ? (1 / accountsWithoutRegularRules.length) : 0
 
   return ilpPolicySeedSchema.parse({
-    name: `${product.productName} (${variantLabel(variant)})`,
+    name: `${product.productName} (${formatCatalogVariantLabel(variant)})`,
     insurer: product.insurer,
     currency: variant.currency,
     monthlyContribution: deriveSeedMonthlyContribution(product),
@@ -209,7 +206,7 @@ export function templateVariantToPolicySeed(
       productId: product.id,
       productName: product.productName,
       variantId: variant.id,
-      variantLabel: variantLabel(variant),
+      variantLabel: formatCatalogVariantLabel(variant),
       catalogVersion: manifest.catalogVersion,
       supportStatus: product.supportStatus,
       economicsStatus: product.economicsStatus,

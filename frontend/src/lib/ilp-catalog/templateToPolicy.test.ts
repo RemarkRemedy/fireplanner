@@ -640,6 +640,84 @@ describe('templateVariantToPolicySeed', () => {
     )
   })
 
+  it('maps Etiqa Invest flex prime II into a partial seed with distinct Flexi 3 and Flexi 5 variants', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'etiqa-invest-flex-prime-ii')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10-flexi-5')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('Invest flex prime II (SGD / MIP 10 (Flexi 5))')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-flex-prime-ii-policy-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-flex-prime-ii-premium-shortfall-charge')
+    expect(seed.accounts.find((account) => account.id === 'regular')?.contributionRules).toEqual([
+      { phase: 'during-icp', contributionShare: 1 },
+      { phase: 'after-icp', contributionShare: 1 },
+    ])
+    expect(seed.accounts.find((account) => account.id === 'topup')?.contributionRules).toEqual([
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-charge-during-premium-term',
+          basis: 'premium-base-mip-multiplier',
+          rate: 0.0218,
+          appliesTo: ['regular'],
+        }),
+        expect.objectContaining({
+          id: 'policy-charge-after-premium-term',
+          basis: 'premium-base-mip-multiplier',
+          rate: 0.006,
+          appliesTo: ['regular'],
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          trigger: 'top-up',
+          appliesTo: ['topup'],
+          rate: 0.03,
+        }),
+        expect.objectContaining({
+          id: 'startup-bonus-recovery-charge',
+          trigger: 'regular-premium-reduction',
+          sourceBonusId: 'startup-bonus',
+        }),
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          trigger: 'partial-withdrawal',
+          appliesTo: ['regular'],
+        }),
+      ]),
+    )
+    expect(seed.bonuses.find((bonus) => bonus.id === 'special-bonus')?.startPolicyYear).toBe(6)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('Premium-Free Period gating'))).toBe(true)
+  })
+
+  it('maps Etiqa Invest flex pro into a partial seed with the same bounded mechanics family', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'etiqa-invest-flex-pro')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-20')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('Invest flex pro (SGD / MIP 20)')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-flex-pro-loyalty-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-flex-pro-insurance-charge')
+    expect(seed.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.rate).toBe(0.001)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('distribution-paying fund election'))).toBe(true)
+  })
+
   it('maps Tokio Marine Wealth Max (II) into a partial seed with recurring-single-premium routing and charges', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-wealth-max-ii')

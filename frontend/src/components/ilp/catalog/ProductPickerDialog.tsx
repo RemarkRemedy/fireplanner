@@ -6,16 +6,13 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
+import { formatCatalogVariantLabel } from '@/lib/ilp-catalog/labels'
 import type { IlpCatalogProduct, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
 
 interface ProductPickerDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSelect: (product: IlpCatalogProduct, variant: IlpTemplateVariant) => void
-}
-
-function variantLabel(variant: IlpTemplateVariant): string {
-  return `${variant.currency} / MIP ${variant.mipLength}`
 }
 
 function humanizeCatalogTag(value: string): string {
@@ -108,7 +105,7 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
                       className="justify-between"
                       onClick={() => onSelect(product, variant)}
                     >
-                      <span>{variantLabel(variant)}</span>
+                      <span>{formatCatalogVariantLabel(variant)}</span>
                       <span className="text-xs text-muted-foreground">
                         {product.supportStatus === 'supported' ? 'Use template' : 'Use partial template'}
                       </span>

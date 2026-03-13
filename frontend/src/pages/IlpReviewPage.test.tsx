@@ -244,6 +244,32 @@ describe('IlpReviewPage', () => {
     expect(within(card as HTMLElement).getByRole('button', { name: /sgd \/ mip 10/i })).toBeEnabled()
   }, 10_000)
 
+  it('shows Invest flex prime II with distinct Flexi term variants in the picker', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest flex prime II')
+
+    expect(within(dialog).getByText('Invest flex prime II')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: /sgd \/ mip 10 \(flexi 3\)/i })).toBeEnabled()
+    expect(within(dialog).getByRole('button', { name: /sgd \/ mip 10 \(flexi 5\)/i })).toBeEnabled()
+    expect(within(dialog).getByRole('button', { name: /sgd \/ mip 20/i })).toBeEnabled()
+  }, 10_000)
+
+  it('shows Invest flex pro as a partial catalog product that can be selected from the picker', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest flex pro')
+
+    expect(within(dialog).getByText('Invest flex pro')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: /sgd \/ mip 10 \(flexi 3\)/i })).toBeEnabled()
+  }, 10_000)
+
   it('seeds Tokio Marine Wealth Max (II) as a partial catalog product with recurring-premium warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()

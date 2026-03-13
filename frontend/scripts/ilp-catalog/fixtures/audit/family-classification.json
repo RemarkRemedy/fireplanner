@@ -4262,9 +4262,9 @@
       ],
       "implementationCohort": "generic",
       "v1SupportBoundary": "supported-after-kernel",
-      "currentCatalogStatus": "not-in-catalog",
-      "economicsStatus": "not-modeled",
-      "parserExists": false,
+      "currentCatalogStatus": "partial",
+      "economicsStatus": "partial-modeled-subset",
+      "parserExists": true,
       "goldenCoverageStatus": "none",
       "kernelWorkstreams": [
         "core-cashflow-kernel"
@@ -4273,14 +4273,30 @@
       "kernelPrerequisites": [
         "core-cashflow-kernel"
       ],
-      "modeledSubsetAlreadyCovered": [],
-      "metadataOnlyBehaviors": [],
+      "modeledSubsetAlreadyCovered": [
+        "branch:income-vs1-policy-fee",
+        "branch:income-vs1-regular-premium-allocation-uplift",
+        "branch:income-vs1-investment-bonus",
+        "branch:income-vs1-loyalty-bonus",
+        "branch:income-vs1-premium-holiday-charge",
+        "branch:income-vs1-partial-withdrawal-charge",
+        "branch:income-vs1-surrender-charge",
+        "branch:income-vs1-ad-hoc-top-up-routing"
+      ],
+      "metadataOnlyBehaviors": [
+        "income-vs1-death-ti-insurance-cover-charge",
+        "income-vs1-secondary-insured-option",
+        "income-vs1-life-events-withdrawal-benefit",
+        "income-vs1-future-premium-option",
+        "income-vs1-distribution-payout-election"
+      ],
       "manualInputRequirements": [],
-      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Unclear\" and gap tags dynamic-charge-model, free-partial-withdrawal, non-guaranteed-charges, premium-holiday, withdrawal-reduction-charges. Cross-cutting overlays are dynamic-charge, premium-holiday-recovery. No current parser-backed catalog product exists for this source yet. QA override status: confirmed-standard. No hard protection or special-account structure markers were found in the extracted source evidence; the standard-family default remains defensible.",
+      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Unclear\" and gap tags dynamic-charge-model, free-partial-withdrawal, non-guaranteed-charges, premium-holiday, withdrawal-reduction-charges. Cross-cutting overlays are dynamic-charge, premium-holiday-recovery. Current catalog status is partial with economics status partial-modeled-subset. QA override status: confirmed-standard. No hard protection or special-account structure markers were found in the extracted source evidence; the standard-family default remains defensible.",
       "confidence": 0.9,
       "evidenceRefs": [
         "accountModel:Unclear",
         "bucket:B-extendable",
+        "catalog:income-invest-flex",
         "cohort:generic",
         "file:VS1_Summary.pdf",
         "gap:dynamic-charge-model",
