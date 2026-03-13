@@ -213,10 +213,15 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumTerm): IlpTem
       sourceRefs: [page9],
     },
     {
-      id: 'manual-assurance-charge',
-      label: 'Manual Assurance Charge Placeholder',
+      id: 'assurance-charge-combined',
+      label: 'Assurance Charge (Appendix A total charge curve)',
+      basis: 'assurance-sum-at-risk',
       rate: null,
-      amount: 0,
+      amount: null,
+      assuranceConfig: {
+        formula: 'prudential-assure-ii-combined',
+        monthlyModalFactor: 0.0834,
+      },
       requiresManualInput: true,
       appliesTo: ['growth', 'flex'],
       fallbackAppliesTo: ['additional'],
@@ -224,7 +229,8 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumTerm): IlpTem
       startPolicyYear: 1,
       endPolicyYear: null,
       notes: [
-        'Enter an annualised assurance-charge estimate manually. This product summary describes assurance charges as depending on age, Wealth Assure Value, and policy state, so the parser cannot derive a numeric schedule.',
+        'Requires life-assured details, current net regular premium base, and the current Wealth Assure Value before the calculator can model the combined assurance charge.',
+        'Modeled from Prudential Appendix A as the total published assurance charge curve by age next birthday.',
         'Use fallback deduction to route any overflow to the Additional Investment Account after Growth and Flex are exhausted.',
       ],
       sourceRefs: [page10],
@@ -356,8 +362,8 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumTerm): IlpTem
       'Growth-account dividend/distribution election remains informational only in V1.',
     ],
     unsupportedItems: [
-      'Assurance charges depend on age, higher of sum assured or Wealth Assure Value, and policy state, and are not modeled yet.',
-      'Wealth Assure Value, sum-assured reduction, Premium Pass, Wealth Share, and change-of-life-assured features remain informational only.',
+      'Manual reductions or resumptions of sum assured / Wealth Assure Value are not modeled automatically.',
+      'Premium Pass, Wealth Share, and change-of-life-assured features remain informational only.',
     ],
     sourceRefs: [page7, page8, page9, page10, page14, page15],
   }
@@ -378,6 +384,9 @@ export function parsePrudentialPruVantageAssureII(context: ParseContext): IlpCat
     structureStatus: 'structured',
     economicsStatus: 'partial-modeled-subset',
     modeledEconomics: [
+      'branch:assure-ii-pre-70-assurance',
+      'branch:assure-ii-post-70-charge-tail',
+      'branch:assure-ii-manual-reduction-resumption',
       'branch:pru-holiday-refund',
       'branch:pru-holiday-fallback',
       'branch:pru-top-up-charge',
@@ -385,11 +394,10 @@ export function parsePrudentialPruVantageAssureII(context: ParseContext): IlpCat
       'branch:pru-charged-withdrawal',
     ],
     metadataOnlyBehaviors: [
-      'assurance-charge',
-      'wealth-assure-value-dependent-fees',
+      'premium-pass-wealth-share-change-of-life-assured-options',
     ],
     warnings: [
-      'This template captures account routing, welcome/loyalty bonuses, premium-holiday mechanics, and exit charges, but assurance charges and Wealth Assure protection logic are still outside the current ILP engine.',
+      'This template captures account routing, welcome/loyalty bonuses, premium-holiday mechanics, exit charges, and Assure II assurance charges from Prudential Appendix A after you enter the insured-life details, Wealth Assure Value, and current sum assured. Manual reduction/resumption events for sum assured and Wealth Assure Value are modeled as user-entered resulting states. Premium Pass / Wealth Share / change-of-life-assured options remain outside the current model.',
     ],
     archived: false,
     variants,

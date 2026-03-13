@@ -1,0 +1,363 @@
+import path from 'node:path'
+import type {
+  IlpCatalogProduct,
+  IlpCatalogSourceRef,
+  IlpTemplateBonus,
+  IlpTemplateBonusTier,
+  IlpTemplateEventChargeRule,
+  IlpTemplateVariant,
+} from '../../../src/lib/ilp-catalog/types.js'
+import type { ExtractedPdfDocument } from '../pdf/extractPdfText.js'
+
+interface ParseContext {
+  document: ExtractedPdfDocument
+  sourceChecksumSha256: string
+}
+
+const MIP_LENGTH = 15
+
+const SURRENDER_CHARGE_TABLE = [
+  1,
+  1,
+  1,
+  0.99,
+  0.99,
+  0.98,
+  0.96,
+  0.95,
+  0.9,
+  0.89,
+  0.88,
+  0.83,
+  0.8,
+  0.75,
+  0.08,
+]
+
+const PARTIAL_WITHDRAWAL_CHARGE_SCHEDULE = [
+  { startPolicyYear: 4, endPolicyYear: 4, rate: 0.95 },
+  { startPolicyYear: 5, endPolicyYear: 5, rate: 0.76 },
+  { startPolicyYear: 6, endPolicyYear: 15, rate: 0.05 },
+]
+
+const PREMIUM_SHORTFALL_NON_PAYMENT_SCHEDULE = [
+  { startPolicyYear: 4, endPolicyYear: 4, rate: 0.7 },
+  { startPolicyYear: 5, endPolicyYear: 5, rate: 0.6 },
+  { startPolicyYear: 6, endPolicyYear: 6, rate: 0.58 },
+  { startPolicyYear: 7, endPolicyYear: 7, rate: 0.53 },
+  { startPolicyYear: 8, endPolicyYear: 8, rate: 0.51 },
+]
+
+const INITIAL_BONUS_TIERS: IlpTemplateBonusTier[] = [
+  { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.33 },
+  { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.52 },
+  { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.53 },
+  { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.59 },
+  { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.6 },
+]
+
+function normalizeWhitespace(text: string): string {
+  return text.replace(/\s+/g, ' ').trim()
+}
+
+function sourceRef(page: number, section: string, excerpt: string): IlpCatalogSourceRef {
+  return {
+    page,
+    section,
+    excerpt: normalizeWhitespace(excerpt).slice(0, 220),
+  }
+}
+
+function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword: string, lineWindow = 6): string {
+  const page = document.pages.find((candidate) => candidate.pageNumber === pageNumber)
+  if (!page) return ''
+
+  const lineIndex = page.lines.findIndex((line) => line.text.toLowerCase().includes(keyword.toLowerCase()))
+  if (lineIndex === -1) {
+    return page.lines.slice(0, lineWindow).map((line) => line.text).join(' ')
+  }
+
+  return page.lines.slice(lineIndex, lineIndex + lineWindow).map((line) => line.text).join(' ')
+}
+
+function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
+  const page2 = sourceRef(2, 'Initial Bonus', snippetNear(document, 2, 'Initial Bonus', 16))
+  const page3 = sourceRef(3, 'Performance Investment / Loyalty / Power-up Bonus', snippetNear(document, 3, 'Performance Investment Bonus', 20))
+
+  return [
+    {
+      id: 'initial-bonus',
+      type: 'allocation',
+      label: 'Initial Bonus',
+      mode: 'premium-allocation',
+      appliesTo: ['initial'],
+      startPolicyYear: 1,
+      endPolicyYear: 1,
+      rate: null,
+      amount: null,
+      tieredRates: INITIAL_BONUS_TIERS.map((tier) => ({ ...tier })),
+      notes: [
+        'Tier is based on the annualised regular premium band stated in the product summary.',
+        'Allocated to the Initial Units Account in the first policy year.',
+      ],
+      sourceRefs: [page2],
+    },
+    {
+      id: 'performance-investment-bonus',
+      type: 'custom',
+      label: 'Performance Investment Bonus',
+      mode: 'annual-rate',
+      appliesTo: ['accumulation'],
+      startPolicyYear: 4,
+      endPolicyYear: MIP_LENGTH,
+      rate: 0.017,
+      amount: null,
+      tieredRates: [],
+      notes: [
+        'Annual bonus on the Accumulation Units Account value from the end of policy year 4 until the end of the minimum investment period.',
+      ],
+      sourceRefs: [page3],
+    },
+    {
+      id: 'loyalty-bonus',
+      type: 'loyalty',
+      label: 'Loyalty Bonus',
+      mode: 'annual-rate',
+      appliesTo: ['accumulation'],
+      startPolicyYear: 16,
+      endPolicyYear: 28,
+      rate: 0.012,
+      amount: null,
+      tieredRates: [],
+      notes: [
+        'Annual bonus on the Accumulation Units Account value from policy year 16 to policy year 28.',
+      ],
+      sourceRefs: [page3],
+    },
+    {
+      id: 'power-up-bonus',
+      type: 'power-up',
+      label: 'Power-up Bonus',
+      mode: 'annual-rate',
+      appliesTo: ['initial'],
+      startPolicyYear: 16,
+      endPolicyYear: null,
+      rate: 0.003,
+      amount: null,
+      tieredRates: [],
+      notes: [
+        'Annual bonus on the Initial Units Account value from policy year 16 onward.',
+      ],
+      sourceRefs: [page3],
+    },
+  ]
+}
+
+function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
+  const page1 = sourceRef(1, 'Plan Description', snippetNear(document, 1, 'via top-up premium or recurring single premium'))
+  const page2 = sourceRef(2, 'Initial Bonus', snippetNear(document, 2, 'Initial Bonus', 16))
+  const page3 = sourceRef(3, 'Performance Investment / Loyalty / Power-up Bonus', snippetNear(document, 3, 'Performance Investment Bonus', 20))
+  const page5 = sourceRef(5, 'Regular Premium Routing', snippetNear(document, 5, 'Initial Units Account'))
+  const page6 = sourceRef(6, 'Recurring Single Premium and Top-up Premium', snippetNear(document, 6, 'Recurring Single Premium'))
+  const page11 = sourceRef(11, 'Premium Charge', snippetNear(document, 11, 'Premium Charge for Recurring Single Premium and Top-up Premium'))
+  const page12 = sourceRef(12, 'Premium Shortfall Charge', snippetNear(document, 12, 'Premium Shortfall Charge'))
+  const page19 = sourceRef(19, 'Appendix A Charges', snippetNear(document, 19, 'SURRENDER CHARGE'))
+
+  const eventChargeRules: IlpTemplateEventChargeRule[] = [
+    {
+      id: 'top-up-premium-charge',
+      label: 'Top-up Premium Charge',
+      trigger: 'top-up',
+      basis: 'event-amount',
+      appliesTo: ['topup'],
+      rate: 0.05,
+      amount: 0,
+      activeWindow: 'policy-term',
+      allocation: 'equal-split',
+      notes: [
+        'A 5% premium charge is deducted before each top-up premium is allocated to the Top-up Units Account.',
+      ],
+      sourceRefs: [page6, page11],
+    },
+    {
+      id: 'recurring-single-premium-charge',
+      label: 'Recurring Single Premium Charge',
+      trigger: 'recurring-single-premium',
+      basis: 'event-amount-with-overlap-months',
+      appliesTo: ['topup'],
+      rate: 0.05,
+      amount: 0,
+      activeWindow: 'policy-term',
+      allocation: 'equal-split',
+      notes: [
+        'A 5% premium charge is deducted before each recurring single premium allocation to the Top-up Units Account.',
+      ],
+      sourceRefs: [page6, page11],
+    },
+    {
+      id: 'partial-withdrawal-charge',
+      label: 'Partial Withdrawal Charge',
+      trigger: 'partial-withdrawal',
+      basis: 'event-amount',
+      appliesTo: ['accumulation'],
+      rate: 0,
+      rateSchedule: PARTIAL_WITHDRAWAL_CHARGE_SCHEDULE,
+      amount: 0,
+      activeWindow: 'during-mip',
+      allocation: 'equal-split',
+      notes: [
+        'Applies only to partial withdrawals from the Accumulation Units Account during the minimum investment period.',
+      ],
+      sourceRefs: [page11, page19],
+    },
+    {
+      id: 'premium-shortfall-charge-non-payment',
+      label: 'Premium Shortfall Charge (Non-payment)',
+      trigger: 'premium-holiday',
+      basis: 'committed-annual-premium-with-overlap-months',
+      appliesTo: ['accumulation'],
+      fallbackAppliesTo: ['topup', 'initial'],
+      rate: 0,
+      rateSchedule: PREMIUM_SHORTFALL_NON_PAYMENT_SCHEDULE,
+      amount: 0,
+      exclusiveGroup: 'tokio-premium-shortfall',
+      groupResolution: 'max-total-charge',
+      activeWindow: 'during-mip',
+      allocation: 'equal-split',
+      notes: [
+        'Models the published monthly premium shortfall charge when regular premium is not paid after the grace period.',
+        'Deduct from Accumulation Units Account first, then Top-up Units Account, then Initial Units Account.',
+        'Use a premium-holiday event to represent the non-payment period after the grace period.',
+      ],
+      sourceRefs: [page12, page19],
+    },
+    {
+      id: 'premium-shortfall-charge-reduction',
+      label: 'Premium Shortfall Charge (Regular Premium Reduction)',
+      trigger: 'regular-premium-reduction',
+      basis: 'annual-reduction-with-active-months',
+      appliesTo: ['accumulation'],
+      fallbackAppliesTo: ['topup', 'initial'],
+      rate: 0,
+      rateSchedule: PREMIUM_SHORTFALL_NON_PAYMENT_SCHEDULE,
+      amount: 0,
+      exclusiveGroup: 'tokio-premium-shortfall',
+      groupResolution: 'max-total-charge',
+      activeWindow: 'during-mip',
+      allocation: 'equal-split',
+      notes: [
+        'Models the published monthly premium shortfall charge when annualised regular premium is reduced below the commencement-date commitment.',
+        'Uses the annual reduction amount as the charge base and deducts from Accumulation Units Account first, then Top-up Units Account, then Initial Units Account.',
+        'Use a regular-premium-increase event to restore the commencement-date amount and stop this shortfall charge.',
+      ],
+      sourceRefs: [page12, page19],
+    },
+  ]
+
+  return {
+    id: 'sgd-mip-15',
+    currency: 'SGD',
+    mipLength: MIP_LENGTH,
+    icpMonths: 36,
+    accounts: [
+      {
+        id: 'initial',
+        label: 'Initial Units Account',
+        feeRate: null,
+        postMipFeeRate: null,
+        subjectToEec: true,
+        contributionRules: [
+          { phase: 'during-icp', targetAccountId: 'initial', contributionShare: 1 },
+          { phase: 'after-mip', targetAccountId: 'initial', contributionShare: 1 },
+        ],
+        sourceRefs: [page5],
+      },
+      {
+        id: 'accumulation',
+        label: 'Accumulation Units Account',
+        feeRate: null,
+        postMipFeeRate: null,
+        subjectToEec: false,
+        contributionRules: [
+          { phase: 'after-icp', targetAccountId: 'accumulation', contributionShare: 1 },
+        ],
+        sourceRefs: [page5],
+      },
+      {
+        id: 'topup',
+        label: 'Top-up Units Account',
+        feeRate: null,
+        postMipFeeRate: null,
+        subjectToEec: false,
+        contributionRules: [
+          { phase: 'top-up', targetAccountId: 'topup', contributionShare: 1 },
+        ],
+        sourceRefs: [page6],
+      },
+    ],
+    bonuses: buildBonuses(document),
+    feeRules: [],
+    eventChargeRules,
+    eecTable: [...SURRENDER_CHARGE_TABLE],
+    warnings: [
+      'This partial template models regular-premium routing through year 15, top-up routing, recurring single premium routing, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.',
+      'This partial template also models the published premium shortfall charge for non-payment periods and regular-premium reductions, including the higher-charge rule when both overlap.',
+      'Recurring single premium remains blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.',
+      'Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.',
+      'Regular premiums paid after the minimum investment period route back to the Initial Units Account in the source document, but post-MIP regular-premium routing is not modeled in V1.',
+    ],
+    unsupportedItems: [
+      'Initial setup charge, admin charge, monthly protection charge, and post-MIP regular-premium routing remain metadata-only for this product.',
+    ],
+    sourceRefs: [page1, page2, page3, page5, page6, page11, page12, page19],
+  }
+}
+
+export function parseTokioMarineWealthMaxIi(context: ParseContext): IlpCatalogProduct {
+  return {
+    id: 'tokio-marine-wealth-max-ii',
+    insurer: 'Tokio Marine',
+    productName: 'Wealth Max (II)',
+    sourceFileName: path.basename(context.document.filePath),
+    sourceChecksumSha256: context.sourceChecksumSha256,
+    sourceDocumentType: 'summary',
+    sourceClass: 'summary',
+    supportStatus: 'partial',
+    structureStatus: 'structured',
+    economicsStatus: 'partial-modeled-subset',
+    modeledEconomics: [
+      'tokio-initial-vs-accumulation-regular-premium-routing',
+      'tokio-initial-bonus-tiered-premium-allocation',
+      'tokio-performance-investment-bonus',
+      'tokio-loyalty-bonus',
+      'tokio-power-up-bonus',
+      'tokio-top-up-routing',
+      'tokio-post-mip-regular-premium-routing-back-to-initial-account',
+      'tokio-recurring-single-premium-routing',
+      'tokio-recurring-single-premium-manual-resumption-after-premium-holiday',
+      'tokio-regular-premium-reduction-consumes-recurring-single-premium-first',
+      'tokio-top-up-premium-charge',
+      'tokio-recurring-single-premium-charge',
+      'tokio-initial-account-surrender-charge',
+      'tokio-accumulation-partial-withdrawal-charge',
+      'tokio-premium-shortfall-charge-non-payment',
+      'tokio-premium-shortfall-charge-regular-premium-reduction',
+      'tokio-premium-increase-restores-shortfall-charge-cessation',
+      'tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only',
+    ],
+    metadataOnlyBehaviors: [
+      'tokio-initial-setup-admin-and-monthly-protection-charges',
+      'tokio-dividend-distribution-election',
+      'tokio-multiple-life-and-capital-guarantee-options',
+    ],
+    warnings: [
+      'Structured extraction validated against the Wealth Max (II) product summary text layer.',
+      'Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.',
+      'When a regular-premium reduction overlaps a recurring single premium, the modeled cashflow reduces the recurring single premium first before reducing regular premium contributions.',
+      'Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.',
+      'Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary.',
+    ],
+    archived: false,
+    variants: [buildVariant(context.document)],
+  }
+}
