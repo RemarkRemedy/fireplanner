@@ -17,6 +17,9 @@ const ALLOWED_IMPORTERS = [
   // HouseholdSetupWizard imports DEFAULT_PROFILE constant (not a store subscription)
   // for FIRE preview calculations in the couple/household onboarding wizard.
   path.resolve(FRONTEND_ROOT, 'src/components/household/HouseholdSetupWizard.tsx'),
+  // monteCarloParamParity is a parity test helper that assembles normalized
+  // snapshots from legacy defaults; it is intentionally not a runtime importer.
+  path.resolve(FRONTEND_ROOT, 'src/test-helpers/monteCarloParamParity.ts'),
 ].sort()
 const LEGACY_STORE_IMPORT_PATTERN = /from\s+['"][^'"]*use(Profile|Income|Property)Store['"]/m
 

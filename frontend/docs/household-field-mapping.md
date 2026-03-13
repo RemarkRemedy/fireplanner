@@ -238,6 +238,10 @@ Snapshot date: `2026-03-07`
 - [useIncomeProjection.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/hooks/useIncomeProjection.ts)
 - [useMonteCarloWorkerQuery.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/hooks/useMonteCarloWorkerQuery.ts) — PR 4B owner; replace serialized stale detection with normalized revision signatures from `useNormalizedAnalysisStore`
 - [useOneMoreYear.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/hooks/useOneMoreYear.ts)
+
+### Parity Helpers
+
+- [monteCarloParamParity.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/test-helpers/monteCarloParamParity.ts) — test-only parity helper that assembles normalized Monte Carlo inputs from legacy defaults and persisted snapshots.
 - [usePortfolioStats.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/hooks/usePortfolioStats.ts)
 - [useProjection.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/hooks/useProjection.ts)
 - [useRiskAssessment.ts](/Users/tj/TJDevelopment/fireplanner/frontend/src/hooks/useRiskAssessment.ts)
