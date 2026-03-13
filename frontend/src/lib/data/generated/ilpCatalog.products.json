@@ -1,5 +1,1685 @@
 [
   {
+    "id": "income-invest-flex-vantage",
+    "insurer": "Income Insurance",
+    "productName": "Invest Flex Vantage",
+    "sourceFileName": "VS2_Summary.pdf",
+    "sourceChecksumSha256": "608707ccf5b408db8bb8f7e9c9696efe0aca38036f22259010d83c6074234da0",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:income-vs2-regular-premium-allocation-uplift",
+      "branch:income-vs2-investment-bonus",
+      "branch:income-vs2-loyalty-bonus",
+      "branch:income-vs2-premium-holiday-charge",
+      "branch:income-vs2-partial-withdrawal-charge",
+      "branch:income-vs2-surrender-charge",
+      "branch:income-vs2-ad-hoc-top-up-routing"
+    ],
+    "metadataOnlyBehaviors": [
+      "income-vs2-death-ti-insurance-cover-charge",
+      "income-vs2-secondary-insured-option",
+      "income-vs2-life-events-withdrawal-benefit",
+      "income-vs2-future-premium-option"
+    ],
+    "warnings": [
+      "Invest Flex Vantage is currently cataloged as a partial product. The regular-premium charge and bonus path is modeled, but insurance-cover charges and insured-replacement / life-event options remain informational only."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-5",
+        "currency": "SGD",
+        "mipLength": 5,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Fund Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and MIP",
+                "excerpt": "You may choose a Minimum Investment Period (MIP) of 5 years, 10 years, 15 years or 20 years. MIP refers to the period you have chosen during which certain charges may apply. During the MIP, charges such as Premium Holida"
+              },
+              {
+                "page": 2,
+                "section": "Regular premium allocation and investment bonus",
+                "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+              },
+              {
+                "page": 3,
+                "section": "Loyalty bonus and top-ups",
+                "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "regular-premium-allocation-step-2",
+            "type": "allocation",
+            "label": "Regular Premium Allocation Step 2",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": 20,
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published increase from 100% to 102% of regular premium units starting after the first 120 months."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Regular premium allocation and investment bonus",
+                "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+              }
+            ]
+          },
+          {
+            "id": "regular-premium-allocation-step-3",
+            "type": "allocation",
+            "label": "Regular Premium Allocation Step 3",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 21,
+            "endPolicyYear": null,
+            "rate": 0.05,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published increase from 100% to 105% of regular premium units starting after the first 240 months."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Regular premium allocation and investment bonus",
+                "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+              }
+            ]
+          },
+          {
+            "id": "investment-bonus",
+            "type": "allocation",
+            "label": "Investment Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 9600,
+                "maxAnnualPremium": null,
+                "rate": 0.04
+              }
+            ],
+            "notes": [
+              "Applied to regular premiums paid in the first 12 months only.",
+              "No investment bonus is provided for top-ups."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Regular premium allocation and investment bonus",
+                "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": null,
+            "rate": 0.005,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual loyalty bonus from the 10th policy anniversary or the end of MIP, whichever is later.",
+              "If any partial withdrawal is made in the prior 12 months, loyalty bonus eligibility is lost.",
+              "Withdrawals under the Life Events Withdrawal Benefit are not modeled separately in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty bonus and top-ups",
+                "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+              }
+            ]
+          }
+        ],
+        "feeRules": [],
+        "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.2
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applied monthly during premium holiday based on the published annualised-regular-premium percentages."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Premium holiday",
+                "excerpt": "We will apply any fees and charges applicable even during grace period and premium holiday, until your policy ends. 7.1 Premium Charge We currently do not charge premium charge. However, we may change this at any time by"
+              },
+              {
+                "page": 21,
+                "section": "Appendix 4 premium holiday charge",
+                "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.2
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applied to partial withdrawals during the minimum investment period.",
+              "Life Events Withdrawal Benefit free withdrawals remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Secondary insured and life events withdrawal benefit",
+                "excerpt": "Version 1.26 When you exercise the free partial withdrawal: • You may withdraw no more than 10% of the prevailing policy value and there will be no partial withdrawal charge for the amount withdrawn. The policy value of "
+              },
+              {
+                "page": 20,
+                "section": "Appendix 3 partial withdrawal charge",
+                "excerpt": "Version 1.26 Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due t"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.75,
+          0.4,
+          0.2
+        ],
+        "warnings": [
+          "Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, and surrender-charge schedules.",
+          "Death/TI insurance cover charges, secondary insured option, and life-events withdrawal benefit remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Death and terminal illness insurance cover charges remain informational only.",
+          "Secondary insured option remains informational only.",
+          "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
+          "Future Premium Option remains informational only.",
+          "Death benefit continuation after insured replacement remains informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan description and MIP",
+            "excerpt": "You may choose a Minimum Investment Period (MIP) of 5 years, 10 years, 15 years or 20 years. MIP refers to the period you have chosen during which certain charges may apply. During the MIP, charges such as Premium Holida"
+          },
+          {
+            "page": 2,
+            "section": "Regular premium allocation and investment bonus",
+            "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+          },
+          {
+            "page": 3,
+            "section": "Loyalty bonus and top-ups",
+            "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+          },
+          {
+            "page": 4,
+            "section": "Death and terminal illness benefit",
+            "excerpt": "Version 1.26 4. Flexible Options 4.1 Changing your Regular Premium You may reduce the amount of your regular premium only from the 5th policy anniversary and we will make this change when your next regular premium is due"
+          },
+          {
+            "page": 5,
+            "section": "Secondary insured and life events withdrawal benefit",
+            "excerpt": "Version 1.26 When you exercise the free partial withdrawal: • You may withdraw no more than 10% of the prevailing policy value and there will be no partial withdrawal charge for the amount withdrawn. The policy value of "
+          },
+          {
+            "page": 7,
+            "section": "Premium holiday",
+            "excerpt": "We will apply any fees and charges applicable even during grace period and premium holiday, until your policy ends. 7.1 Premium Charge We currently do not charge premium charge. However, we may change this at any time by"
+          },
+          {
+            "page": 12,
+            "section": "Appendix 1 death and TI insurance cover charge",
+            "excerpt": "Version 1.26 11. SUSPENSION OF DEALINGS We may suspend all transactions on a ILP sub-fund. Transactions include new applications to the ILP sub-fund, top-ups, switching, and cashing-in. We reserve the right to delay the "
+          },
+          {
+            "page": 19,
+            "section": "Appendix 2 surrender charge",
+            "excerpt": "Version 1.26 67 16.68 9.21 68 19.15 10.79 69 21.62 12.37 70 24.10 13.94 71 27.03 16.82 72 29.96 19.70 73 32.89 22.58 74 35.82 25.46 75 38.73 28.32 76 42.86 32.81 77 46.99 37.30 78 51.12 41.79 79 55.25 46.28 80 59.36 50.7"
+          },
+          {
+            "page": 20,
+            "section": "Appendix 3 partial withdrawal charge",
+            "excerpt": "Version 1.26 Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due t"
+          },
+          {
+            "page": 21,
+            "section": "Appendix 4 premium holiday charge",
+            "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-10",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Fund Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and MIP",
+                "excerpt": "You may choose a Minimum Investment Period (MIP) of 5 years, 10 years, 15 years or 20 years. MIP refers to the period you have chosen during which certain charges may apply. During the MIP, charges such as Premium Holida"
+              },
+              {
+                "page": 2,
+                "section": "Regular premium allocation and investment bonus",
+                "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+              },
+              {
+                "page": 3,
+                "section": "Loyalty bonus and top-ups",
+                "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "regular-premium-allocation-step-2",
+            "type": "allocation",
+            "label": "Regular Premium Allocation Step 2",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": 20,
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published increase from 100% to 102% of regular premium units starting after the first 120 months."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Regular premium allocation and investment bonus",
+                "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+              }
+            ]
+          },
+          {
+            "id": "regular-premium-allocation-step-3",
+            "type": "allocation",
+            "label": "Regular Premium Allocation Step 3",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 21,
+            "endPolicyYear": null,
+            "rate": 0.05,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published increase from 100% to 105% of regular premium units starting after the first 240 months."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Regular premium allocation and investment bonus",
+                "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+              }
+            ]
+          },
+          {
+            "id": "investment-bonus",
+            "type": "allocation",
+            "label": "Investment Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 9599.99,
+                "rate": 0.05
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 9600,
+                "maxAnnualPremium": null,
+                "rate": 0.2
+              }
+            ],
+            "notes": [
+              "Applied to regular premiums paid in the first 12 months only.",
+              "No investment bonus is provided for top-ups."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Regular premium allocation and investment bonus",
+                "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": null,
+            "rate": 0.005,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual loyalty bonus from the 10th policy anniversary or the end of MIP, whichever is later.",
+              "If any partial withdrawal is made in the prior 12 months, loyalty bonus eligibility is lost.",
+              "Withdrawals under the Life Events Withdrawal Benefit are not modeled separately in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty bonus and top-ups",
+                "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+              }
+            ]
+          }
+        ],
+        "feeRules": [],
+        "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applied monthly during premium holiday based on the published annualised-regular-premium percentages."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Premium holiday",
+                "excerpt": "We will apply any fees and charges applicable even during grace period and premium holiday, until your policy ends. 7.1 Premium Charge We currently do not charge premium charge. However, we may change this at any time by"
+              },
+              {
+                "page": 21,
+                "section": "Appendix 4 premium holiday charge",
+                "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applied to partial withdrawals during the minimum investment period.",
+              "Life Events Withdrawal Benefit free withdrawals remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Secondary insured and life events withdrawal benefit",
+                "excerpt": "Version 1.26 When you exercise the free partial withdrawal: • You may withdraw no more than 10% of the prevailing policy value and there will be no partial withdrawal charge for the amount withdrawn. The policy value of "
+              },
+              {
+                "page": 20,
+                "section": "Appendix 3 partial withdrawal charge",
+                "excerpt": "Version 1.26 Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due t"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.8,
+          0.6,
+          0.5,
+          0.45,
+          0.4,
+          0.2,
+          0.15,
+          0.05
+        ],
+        "warnings": [
+          "Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, and surrender-charge schedules.",
+          "Death/TI insurance cover charges, secondary insured option, and life-events withdrawal benefit remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Death and terminal illness insurance cover charges remain informational only.",
+          "Secondary insured option remains informational only.",
+          "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
+          "Future Premium Option remains informational only.",
+          "Death benefit continuation after insured replacement remains informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan description and MIP",
+            "excerpt": "You may choose a Minimum Investment Period (MIP) of 5 years, 10 years, 15 years or 20 years. MIP refers to the period you have chosen during which certain charges may apply. During the MIP, charges such as Premium Holida"
+          },
+          {
+            "page": 2,
+            "section": "Regular premium allocation and investment bonus",
+            "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+          },
+          {
+            "page": 3,
+            "section": "Loyalty bonus and top-ups",
+            "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+          },
+          {
+            "page": 4,
+            "section": "Death and terminal illness benefit",
+            "excerpt": "Version 1.26 4. Flexible Options 4.1 Changing your Regular Premium You may reduce the amount of your regular premium only from the 5th policy anniversary and we will make this change when your next regular premium is due"
+          },
+          {
+            "page": 5,
+            "section": "Secondary insured and life events withdrawal benefit",
+            "excerpt": "Version 1.26 When you exercise the free partial withdrawal: • You may withdraw no more than 10% of the prevailing policy value and there will be no partial withdrawal charge for the amount withdrawn. The policy value of "
+          },
+          {
+            "page": 7,
+            "section": "Premium holiday",
+            "excerpt": "We will apply any fees and charges applicable even during grace period and premium holiday, until your policy ends. 7.1 Premium Charge We currently do not charge premium charge. However, we may change this at any time by"
+          },
+          {
+            "page": 12,
+            "section": "Appendix 1 death and TI insurance cover charge",
+            "excerpt": "Version 1.26 11. SUSPENSION OF DEALINGS We may suspend all transactions on a ILP sub-fund. Transactions include new applications to the ILP sub-fund, top-ups, switching, and cashing-in. We reserve the right to delay the "
+          },
+          {
+            "page": 19,
+            "section": "Appendix 2 surrender charge",
+            "excerpt": "Version 1.26 67 16.68 9.21 68 19.15 10.79 69 21.62 12.37 70 24.10 13.94 71 27.03 16.82 72 29.96 19.70 73 32.89 22.58 74 35.82 25.46 75 38.73 28.32 76 42.86 32.81 77 46.99 37.30 78 51.12 41.79 79 55.25 46.28 80 59.36 50.7"
+          },
+          {
+            "page": 20,
+            "section": "Appendix 3 partial withdrawal charge",
+            "excerpt": "Version 1.26 Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due t"
+          },
+          {
+            "page": 21,
+            "section": "Appendix 4 premium holiday charge",
+            "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-15",
+        "currency": "SGD",
+        "mipLength": 15,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Fund Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and MIP",
+                "excerpt": "You may choose a Minimum Investment Period (MIP) of 5 years, 10 years, 15 years or 20 years. MIP refers to the period you have chosen during which certain charges may apply. During the MIP, charges such as Premium Holida"
+              },
+              {
+                "page": 2,
+                "section": "Regular premium allocation and investment bonus",
+                "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+              },
+              {
+                "page": 3,
+                "section": "Loyalty bonus and top-ups",
+                "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "regular-premium-allocation-step-2",
+            "type": "allocation",
+            "label": "Regular Premium Allocation Step 2",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": 20,
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published increase from 100% to 102% of regular premium units starting after the first 120 months."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Regular premium allocation and investment bonus",
+                "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+              }
+            ]
+          },
+          {
+            "id": "regular-premium-allocation-step-3",
+            "type": "allocation",
+            "label": "Regular Premium Allocation Step 3",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 21,
+            "endPolicyYear": null,
+            "rate": 0.05,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published increase from 100% to 105% of regular premium units starting after the first 240 months."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Regular premium allocation and investment bonus",
+                "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+              }
+            ]
+          },
+          {
+            "id": "investment-bonus",
+            "type": "allocation",
+            "label": "Investment Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 3600,
+                "maxAnnualPremium": 9599.99,
+                "rate": 0.1
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 9600,
+                "maxAnnualPremium": null,
+                "rate": 0.4
+              }
+            ],
+            "notes": [
+              "Applied to regular premiums paid in the first 12 months only.",
+              "No investment bonus is provided for top-ups."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Regular premium allocation and investment bonus",
+                "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 15,
+            "endPolicyYear": null,
+            "rate": 0.005,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual loyalty bonus from the 10th policy anniversary or the end of MIP, whichever is later.",
+              "If any partial withdrawal is made in the prior 12 months, loyalty bonus eligibility is lost.",
+              "Withdrawals under the Life Events Withdrawal Benefit are not modeled separately in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty bonus and top-ups",
+                "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+              }
+            ]
+          }
+        ],
+        "feeRules": [],
+        "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.65
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.55
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.35
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applied monthly during premium holiday based on the published annualised-regular-premium percentages."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Premium holiday",
+                "excerpt": "We will apply any fees and charges applicable even during grace period and premium holiday, until your policy ends. 7.1 Premium Charge We currently do not charge premium charge. However, we may change this at any time by"
+              },
+              {
+                "page": 21,
+                "section": "Appendix 4 premium holiday charge",
+                "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.65
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.55
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.47
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.05
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applied to partial withdrawals during the minimum investment period.",
+              "Life Events Withdrawal Benefit free withdrawals remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Secondary insured and life events withdrawal benefit",
+                "excerpt": "Version 1.26 When you exercise the free partial withdrawal: • You may withdraw no more than 10% of the prevailing policy value and there will be no partial withdrawal charge for the amount withdrawn. The policy value of "
+              },
+              {
+                "page": 20,
+                "section": "Appendix 3 partial withdrawal charge",
+                "excerpt": "Version 1.26 Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due t"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.8,
+          0.65,
+          0.55,
+          0.5,
+          0.47,
+          0.45,
+          0.4,
+          0.35,
+          0.25,
+          0.15,
+          0.1,
+          0.05,
+          0.05
+        ],
+        "warnings": [
+          "Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, and surrender-charge schedules.",
+          "Death/TI insurance cover charges, secondary insured option, and life-events withdrawal benefit remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Death and terminal illness insurance cover charges remain informational only.",
+          "Secondary insured option remains informational only.",
+          "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
+          "Future Premium Option remains informational only.",
+          "Death benefit continuation after insured replacement remains informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan description and MIP",
+            "excerpt": "You may choose a Minimum Investment Period (MIP) of 5 years, 10 years, 15 years or 20 years. MIP refers to the period you have chosen during which certain charges may apply. During the MIP, charges such as Premium Holida"
+          },
+          {
+            "page": 2,
+            "section": "Regular premium allocation and investment bonus",
+            "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+          },
+          {
+            "page": 3,
+            "section": "Loyalty bonus and top-ups",
+            "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+          },
+          {
+            "page": 4,
+            "section": "Death and terminal illness benefit",
+            "excerpt": "Version 1.26 4. Flexible Options 4.1 Changing your Regular Premium You may reduce the amount of your regular premium only from the 5th policy anniversary and we will make this change when your next regular premium is due"
+          },
+          {
+            "page": 5,
+            "section": "Secondary insured and life events withdrawal benefit",
+            "excerpt": "Version 1.26 When you exercise the free partial withdrawal: • You may withdraw no more than 10% of the prevailing policy value and there will be no partial withdrawal charge for the amount withdrawn. The policy value of "
+          },
+          {
+            "page": 7,
+            "section": "Premium holiday",
+            "excerpt": "We will apply any fees and charges applicable even during grace period and premium holiday, until your policy ends. 7.1 Premium Charge We currently do not charge premium charge. However, we may change this at any time by"
+          },
+          {
+            "page": 12,
+            "section": "Appendix 1 death and TI insurance cover charge",
+            "excerpt": "Version 1.26 11. SUSPENSION OF DEALINGS We may suspend all transactions on a ILP sub-fund. Transactions include new applications to the ILP sub-fund, top-ups, switching, and cashing-in. We reserve the right to delay the "
+          },
+          {
+            "page": 19,
+            "section": "Appendix 2 surrender charge",
+            "excerpt": "Version 1.26 67 16.68 9.21 68 19.15 10.79 69 21.62 12.37 70 24.10 13.94 71 27.03 16.82 72 29.96 19.70 73 32.89 22.58 74 35.82 25.46 75 38.73 28.32 76 42.86 32.81 77 46.99 37.30 78 51.12 41.79 79 55.25 46.28 80 59.36 50.7"
+          },
+          {
+            "page": 20,
+            "section": "Appendix 3 partial withdrawal charge",
+            "excerpt": "Version 1.26 Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due t"
+          },
+          {
+            "page": 21,
+            "section": "Appendix 4 premium holiday charge",
+            "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-20",
+        "currency": "SGD",
+        "mipLength": 20,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Fund Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and MIP",
+                "excerpt": "You may choose a Minimum Investment Period (MIP) of 5 years, 10 years, 15 years or 20 years. MIP refers to the period you have chosen during which certain charges may apply. During the MIP, charges such as Premium Holida"
+              },
+              {
+                "page": 2,
+                "section": "Regular premium allocation and investment bonus",
+                "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+              },
+              {
+                "page": 3,
+                "section": "Loyalty bonus and top-ups",
+                "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "regular-premium-allocation-step-2",
+            "type": "allocation",
+            "label": "Regular Premium Allocation Step 2",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": 20,
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published increase from 100% to 102% of regular premium units starting after the first 120 months."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Regular premium allocation and investment bonus",
+                "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+              }
+            ]
+          },
+          {
+            "id": "regular-premium-allocation-step-3",
+            "type": "allocation",
+            "label": "Regular Premium Allocation Step 3",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 21,
+            "endPolicyYear": null,
+            "rate": 0.05,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published increase from 100% to 105% of regular premium units starting after the first 240 months."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Regular premium allocation and investment bonus",
+                "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+              }
+            ]
+          },
+          {
+            "id": "investment-bonus",
+            "type": "allocation",
+            "label": "Investment Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 2400,
+                "maxAnnualPremium": 9599.99,
+                "rate": 0.25
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 9600,
+                "maxAnnualPremium": null,
+                "rate": 0.55
+              }
+            ],
+            "notes": [
+              "Applied to regular premiums paid in the first 12 months only.",
+              "No investment bonus is provided for top-ups."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Regular premium allocation and investment bonus",
+                "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 20,
+            "endPolicyYear": null,
+            "rate": 0.005,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual loyalty bonus from the 10th policy anniversary or the end of MIP, whichever is later.",
+              "If any partial withdrawal is made in the prior 12 months, loyalty bonus eligibility is lost.",
+              "Withdrawals under the Life Events Withdrawal Benefit are not modeled separately in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty bonus and top-ups",
+                "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+              }
+            ]
+          }
+        ],
+        "feeRules": [],
+        "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.9
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.65
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.55
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 16,
+                "endPolicyYear": 16,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 17,
+                "endPolicyYear": 17,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 18,
+                "endPolicyYear": 18,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 19,
+                "endPolicyYear": 19,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 20,
+                "endPolicyYear": 20,
+                "rate": 0.4
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applied monthly during premium holiday based on the published annualised-regular-premium percentages."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Premium holiday",
+                "excerpt": "We will apply any fees and charges applicable even during grace period and premium holiday, until your policy ends. 7.1 Premium Charge We currently do not charge premium charge. However, we may change this at any time by"
+              },
+              {
+                "page": 21,
+                "section": "Appendix 4 premium holiday charge",
+                "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.9
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.65
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.55
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 16,
+                "endPolicyYear": 16,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 17,
+                "endPolicyYear": 17,
+                "rate": 0.05
+              },
+              {
+                "startPolicyYear": 18,
+                "endPolicyYear": 18,
+                "rate": 0.05
+              },
+              {
+                "startPolicyYear": 19,
+                "endPolicyYear": 19,
+                "rate": 0.05
+              },
+              {
+                "startPolicyYear": 20,
+                "endPolicyYear": 20,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applied to partial withdrawals during the minimum investment period.",
+              "Life Events Withdrawal Benefit free withdrawals remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Secondary insured and life events withdrawal benefit",
+                "excerpt": "Version 1.26 When you exercise the free partial withdrawal: • You may withdraw no more than 10% of the prevailing policy value and there will be no partial withdrawal charge for the amount withdrawn. The policy value of "
+              },
+              {
+                "page": 20,
+                "section": "Appendix 3 partial withdrawal charge",
+                "excerpt": "Version 1.26 Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due t"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.9,
+          0.75,
+          0.65,
+          0.6,
+          0.55,
+          0.5,
+          0.45,
+          0.4,
+          0.35,
+          0.3,
+          0.25,
+          0.2,
+          0.15,
+          0.1,
+          0.05,
+          0.05,
+          0.05,
+          0.05
+        ],
+        "warnings": [
+          "Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, and surrender-charge schedules.",
+          "Death/TI insurance cover charges, secondary insured option, and life-events withdrawal benefit remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Death and terminal illness insurance cover charges remain informational only.",
+          "Secondary insured option remains informational only.",
+          "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
+          "Future Premium Option remains informational only.",
+          "Death benefit continuation after insured replacement remains informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan description and MIP",
+            "excerpt": "You may choose a Minimum Investment Period (MIP) of 5 years, 10 years, 15 years or 20 years. MIP refers to the period you have chosen during which certain charges may apply. During the MIP, charges such as Premium Holida"
+          },
+          {
+            "page": 2,
+            "section": "Regular premium allocation and investment bonus",
+            "excerpt": "2.2 Investment Bonus We will provide an investment bonus based on a percentage of the regular premiums paid for the first 12 months of the policy term as shown below. This percentage varies based on the MIP and annualise"
+          },
+          {
+            "page": 3,
+            "section": "Loyalty bonus and top-ups",
+            "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+          },
+          {
+            "page": 4,
+            "section": "Death and terminal illness benefit",
+            "excerpt": "Version 1.26 4. Flexible Options 4.1 Changing your Regular Premium You may reduce the amount of your regular premium only from the 5th policy anniversary and we will make this change when your next regular premium is due"
+          },
+          {
+            "page": 5,
+            "section": "Secondary insured and life events withdrawal benefit",
+            "excerpt": "Version 1.26 When you exercise the free partial withdrawal: • You may withdraw no more than 10% of the prevailing policy value and there will be no partial withdrawal charge for the amount withdrawn. The policy value of "
+          },
+          {
+            "page": 7,
+            "section": "Premium holiday",
+            "excerpt": "We will apply any fees and charges applicable even during grace period and premium holiday, until your policy ends. 7.1 Premium Charge We currently do not charge premium charge. However, we may change this at any time by"
+          },
+          {
+            "page": 12,
+            "section": "Appendix 1 death and TI insurance cover charge",
+            "excerpt": "Version 1.26 11. SUSPENSION OF DEALINGS We may suspend all transactions on a ILP sub-fund. Transactions include new applications to the ILP sub-fund, top-ups, switching, and cashing-in. We reserve the right to delay the "
+          },
+          {
+            "page": 19,
+            "section": "Appendix 2 surrender charge",
+            "excerpt": "Version 1.26 67 16.68 9.21 68 19.15 10.79 69 21.62 12.37 70 24.10 13.94 71 27.03 16.82 72 29.96 19.70 73 32.89 22.58 74 35.82 25.46 75 38.73 28.32 76 42.86 32.81 77 46.99 37.30 78 51.12 41.79 79 55.25 46.28 80 59.36 50.7"
+          },
+          {
+            "page": 20,
+            "section": "Appendix 3 partial withdrawal charge",
+            "excerpt": "Version 1.26 Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due t"
+          },
+          {
+            "page": 21,
+            "section": "Appendix 4 premium holiday charge",
+            "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "etiqa-invest-starter",
     "insurer": "Etiqa",
     "productName": "Invest starter",

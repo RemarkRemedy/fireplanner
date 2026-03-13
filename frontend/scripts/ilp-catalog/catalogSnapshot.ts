@@ -8,6 +8,7 @@ import { parseHsbcWealthAccelerate } from './parsers/hsbcWealthAccelerate.js'
 import { parseHsbcWealthAbundance } from './parsers/hsbcWealthAbundance.js'
 import { parseHsbcWealthHarvest } from './parsers/hsbcWealthHarvest.js'
 import { parseHsbcWealthVoyage } from './parsers/hsbcWealthVoyage.js'
+import { parseIncomeInvestFlexVantage } from './parsers/incomeInvestFlexVantage.js'
 import { parseEtiqaInvestStarter } from './parsers/etiqaInvestStarter.js'
 import { parsePrudentialPruVantageAssureII } from './parsers/prudentialPruVantageAssureII.js'
 import { parsePrudentialPruVantageAssureSp } from './parsers/prudentialPruVantageAssureSp.js'
@@ -23,6 +24,7 @@ export const MANIFEST_PATH = path.join(GENERATED_DIR, 'ilpCatalog.manifest.json'
 export const PRODUCTS_PATH = path.join(GENERATED_DIR, 'ilpCatalog.products.json')
 export const PARSER_VERSION = '0.1.0'
 export const CATALOG_VERSION = '0.1.0'
+const INCOME_INVEST_FLEX_VANTAGE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/VS2_Summary.pdf'
 const ETIQA_INVEST_STARTER_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest starter_Product Summary.pdf'
 const HSBC_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Accelerate Product Summary.pdf'
 const HSBC_WEALTH_ABUNDANCE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Abundance Product Summary.pdf'
@@ -98,6 +100,8 @@ async function buildBrochurePartialProducts(
 
 export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const discovery = await discoverManualCatalogSources()
+  const incomeInvestFlexVantageExtracted = await extractPdfText(INCOME_INVEST_FLEX_VANTAGE_SOURCE_PATH)
+  const incomeInvestFlexVantageChecksum = await sha256(INCOME_INVEST_FLEX_VANTAGE_SOURCE_PATH)
   const etiqaInvestStarterExtracted = await extractPdfText(ETIQA_INVEST_STARTER_SOURCE_PATH)
   const etiqaInvestStarterChecksum = await sha256(ETIQA_INVEST_STARTER_SOURCE_PATH)
   const extracted = await extractPdfText(HSBC_SOURCE_PATH)
@@ -123,6 +127,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const brochurePartialProducts = await buildBrochurePartialProducts(discovery.brochureOnlySources)
 
   const products = [
+    parseIncomeInvestFlexVantage({
+      document: incomeInvestFlexVantageExtracted,
+      sourceChecksumSha256: incomeInvestFlexVantageChecksum,
+    }),
     parseEtiqaInvestStarter({
       document: etiqaInvestStarterExtracted,
       sourceChecksumSha256: etiqaInvestStarterChecksum,
