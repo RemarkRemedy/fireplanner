@@ -74,6 +74,7 @@ const DEFAULT_AUA: IlpAccount = {
 
 const DEFAULT_BONUSES: IlpBonusRule[] = [
   {
+    id: 'power-up-bonus',
     type: 'power-up',
     label: 'Power-up Bonus',
     mode: 'annual-rate',
@@ -84,6 +85,7 @@ const DEFAULT_BONUSES: IlpBonusRule[] = [
     endPolicyYear: DEFAULT_POWER_UP_END_PY,
   },
   {
+    id: 'loyalty-bonus',
     type: 'loyalty',
     label: 'Loyalty Bonus',
     mode: 'annual-rate',
@@ -126,6 +128,13 @@ function cloneBonus(bonus: IlpBonusRule): IlpBonusRule {
 function cloneChargeRule(rule: IlpChargeRule): IlpChargeRule {
   return {
     ...rule,
+    assuranceConfig: rule.assuranceConfig ? { ...rule.assuranceConfig } : undefined,
+    premiumBaseConfig: rule.premiumBaseConfig
+      ? {
+          useHigherOfCommencementAndPrevailing: rule.premiumBaseConfig.useHigherOfCommencementAndPrevailing,
+          multiplierSchedule: rule.premiumBaseConfig.multiplierSchedule.map((tier) => ({ ...tier })),
+        }
+      : undefined,
     appliesTo: [...rule.appliesTo],
     fallbackAppliesTo: rule.fallbackAppliesTo ? [...rule.fallbackAppliesTo] : undefined,
     amountSchedule: rule.amountSchedule?.map((tier) => ({ ...tier })),
@@ -137,6 +146,7 @@ function cloneEventChargeRule(rule: IlpEventChargeRule): IlpEventChargeRule {
     ...rule,
     appliesTo: [...rule.appliesTo],
     fallbackAppliesTo: rule.fallbackAppliesTo ? [...rule.fallbackAppliesTo] : undefined,
+    freeLifetimeMonths: rule.freeLifetimeMonths,
     rateSchedule: rule.rateSchedule?.map((tier) => ({ ...tier })),
   }
 }
@@ -145,6 +155,7 @@ function clonePolicy(policy: IlpPolicyInput): IlpPolicyInput {
   return {
     ...policy,
     eecTable: [...policy.eecTable],
+    assuranceProfile: policy.assuranceProfile ? { ...policy.assuranceProfile } : undefined,
     policyEvents: policy.policyEvents?.map((event) => ({ ...event })),
     funds: policy.funds.map(cloneFund),
     accounts: policy.accounts.map(cloneAccount),
@@ -166,6 +177,7 @@ export function createDefaultPolicy(): IlpPolicyInput {
     monthsAlreadyPaid: 0,
     currentPolicyYear: 1,
     icpMonths: 12,
+    assuranceProfile: undefined,
     accounts: [cloneAccount(DEFAULT_IUA), cloneAccount(DEFAULT_AUA)],
     mipLength: DEFAULT_MIP_LENGTH,
     postMipYears: 0,
@@ -187,6 +199,7 @@ function mergePolicySeed(seed: IlpPolicySeed): IlpPolicyInput {
     ...base,
     ...seed,
     eecTable: [...seed.eecTable],
+    assuranceProfile: seed.assuranceProfile ? { ...seed.assuranceProfile } : undefined,
     policyEvents: seed.policyEvents?.map((event) => ({ ...event })),
     funds: seed.funds.map(cloneFund),
     accounts: seed.accounts.map(cloneAccount),
@@ -394,6 +407,7 @@ export const useIlpStore = create<IlpStoreState>()(
           bonuses: [
             ...policy.bonuses,
             {
+              id: createId('bonus'),
               type: 'custom',
               label: 'Custom Bonus',
               mode: 'annual-rate',

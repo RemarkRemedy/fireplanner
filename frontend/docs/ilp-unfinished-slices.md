@@ -13,41 +13,57 @@ Why:
 - the calculator now includes policy-state behavior, fallback accounts, event charges, and seeded partial products
 - release confidence now depends on product-level golden outputs, not just slice-specific unit tests
 
-Recommended gate:
-1. Add golden fixtures for HSBC Wealth Accelerate
-2. Add golden fixtures for PRUVantage Wealth II
-3. Add modeled-subset golden fixtures for partial Prudential families
-4. Require golden coverage before any product is labeled `supported`
+Current gate status:
+1. HSBC Wealth Accelerate has full supported-product golden coverage
+2. PRUVantage Wealth II has full supported-product golden coverage
+3. PRUVantage Prosper and bounded PRUVantage Assure II assurance paths now have modeled-subset golden fixtures
+4. Golden coverage remains required before any product is labeled `supported`
 
 ## Unfinished Slices
 
-### 1. Real Assurance-Charge Modeling
+### 1. Prudential Assurance-Charge Completion
 
 Status:
-- not implemented
-- current Prudential partial products only seed a manual fixed-annual placeholder
+- partially implemented
+- PRUVantage Prosper now has first-class assurance-charge modeling with explicit life-assured inputs and rate-table-backed sum-at-risk charges
+- PRUVantage Assure II now uses Prudential's published Appendix A total assurance-charge curve across the projected age path
+- manual reduction and later resumption of sum assured / Wealth Assure Value are now modeled as user-entered resulting-state events and locked by partial-subset golden fixtures
 
 What is missing:
-- first-class assurance-charge inputs
-- age / life-assured dependent charge basis
-- Wealth Assure / sum-assured dependent logic where applicable
-- monthly deduction behavior beyond a manual annual estimate
+- fuller protection-state transitions after Wealth Share activation, change of life assured, Premium Pass, and other Prudential option-driven state changes
+- supported-grade golden coverage if any Prudential assurance family is ever upgraded from `partial` to `supported`
 
 Why it matters:
-- this is the largest known remaining modeled cost gap in the seeded Prudential partial products
+- assurance charges are still the largest remaining modeled cost gap in the seeded Prudential partial products
+- the next unsafe shortcut would be to auto-model Assure II without resolving the post-70 protection split
 
-Current workaround:
-- users can seed partial Prudential products
-- the page warns when the manual assurance-charge placeholder is still zero
+Current boundary:
+- Prosper can now be modeled after entering age-next-birthday, sex, smoker status, and the current net regular premium base
+- Assure II can now be modeled from Prudential's published Appendix A age-based total assurance-charge curve after the user enters current sum assured plus current Wealth Assure Value
+- Assure II can also model user-entered manual reduction/resumption events as resulting-state overrides
+- Assure II remains intentionally partial because option-driven protection-state changes like Wealth Share, Premium Pass, and change-of-life-assured are still not encoded
 
 ### 2. Broader Top-Up / Ad-Hoc Premium Mechanics
 
 Status:
 - partially implemented
 - simple top-up routing and top-up premium charges are supported
+- HSBC Wealth Abundance now seeds a partial modeled subset with regular-vs-top-up routing, SGD recurring-single-premium charges, and tier-aware startup bonus recovery
+- HSBC Wealth Harvest now seeds a partial modeled subset with regular-vs-top-up routing plus explicit top-up and recurring single premium charges
+- HSBC Wealth Voyage now seeds a partial modeled subset with top-up routing, top-up premium charge, partial-withdrawal charge, and split startup bonus recovery
+- recurring single premium routing and premium charges are now supported for Tokio-style top-up-account flows
+- Tokio non-payment premium shortfall charge is now supported when represented with premium-holiday events
+- Tokio regular-premium-reduction shortfall charge is now supported from the reduction month onward
+- Tokio premium increases can now restore the regular-premium path and stop reduction-based shortfall charges from the increase month onward
+- Tokio non-payment shortfall charge now uses the committed premium basis from the product summary, even when a prior reduction exists
+- Tokio overlapping non-payment and reduction shortfall charges now keep only the higher published charge instead of double-counting
+- Tokio regular-premium reductions now consume recurring single premium first before lowering the regular premium path
+- Tokio Wealth Pro (II) now models explicit user-entered insurer-approved charge waivers on qualifying partial withdrawals, premium-holiday events, and regular-premium-reduction shortfall events
+- recurring single premium now stays blocked after a premium-holiday event until an explicit recurring-single-premium-resumption event restarts the stream, and the published premium charge only applies in active months
+- Tokio Wealth Max (II) and Wealth Pro (II) now model post-MIP regular-premium routing back into the Initial Units Account and lock that path with partial-subset golden fixtures
 
 What is missing:
-- richer ad-hoc premium variants beyond current top-up event handling
+- richer ad-hoc premium variants beyond current top-up / recurring-single-premium handling
 - more product-specific routing cases
 - cases where ad-hoc premiums affect other downstream mechanics not yet modeled
 
@@ -59,6 +75,17 @@ Why it matters:
 Status:
 - partially implemented
 - annual-rate, premium-allocation, one-time, tiered rates, suspension, and restoration exist
+- annual-rate bonuses can now resolve tiered rates from account-value bands as well as annual-premium bands
+- HSBC and PRUVantage bonus ladders are modeled for the current supported / partial families
+- HSBC Wealth Abundance now models its tiered first-year Start-up Bonus, Power-up Bonus, Loyalty Bonus, and free-withdrawal-linked bonus suspension subset behind partial golden fixtures
+- HSBC Wealth Harvest now models its start-up bonus and loyalty-bonus suspension subset behind partial golden fixtures
+- HSBC Wealth Voyage now models its split startup bonus tiers, power-up bonus subset, loyalty-bonus partial-withdrawal subset, and premium-base AMF behind partial golden fixtures
+- Tokio Wealth Max (II) and Wealth Pro (II) now model:
+  - tiered Initial Bonus in year 1
+  - Performance Investment Bonus
+  - Loyalty Bonus
+  - Power-up Bonus
+  and lock the executable subset with baseline golden fixtures
 
 What is missing:
 - more complex conditional bonus ladders
@@ -72,12 +99,20 @@ Why it matters:
 
 Status:
 - not implemented as executable behavior
-- currently warning/informational only for affected products
+- currently metadata/warning only for affected products
+- source-backed analysis is now captured in [ilp-distribution-mode-analysis.md](/Users/tj/TJDevelopment/fireplanner-ilp/frontend/docs/ilp-distribution-mode-analysis.md)
 
 What is missing:
 - explicit distribution-mode state
 - account-value impact from payout/dividend elections
 - downstream effect on fee drag and surrender value where relevant
+
+Current boundary:
+- PRUVantage Prosper only states that dividend-paying funds in the Growth Account default to reinvestment, and that payout is allowed only for dividend-paying funds. It does not provide a deterministic future dividend amount.
+- Tokio Wealth Max (II) and Wealth Pro (II) define the cash-vs-reinvest election mechanics and account eligibility, but the actual cash distribution still depends on future fund dividend declarations and therefore cannot be computed from the product summary alone.
+- A release-safe implementation therefore needs either:
+  1. an explicit user-entered dividend-yield / payout assumption, or
+  2. a deliberate simplifying assumption such as "all dividend funds reinvest" with the alternative mode remaining metadata-only.
 
 Why it matters:
 - several Prudential-family products expose distribution-related choices that can change account growth
@@ -100,6 +135,8 @@ Why it matters:
 Status:
 - not implemented
 - still outside the intended scope of the current ILP fee-drag engine
+- HSBC Flexi Protector is the next bounded protection-light target, but only after a dedicated COI profile + formula slice captured in [ilp-hsbc-flexi-protector-analysis.md](/Users/tj/TJDevelopment/fireplanner-ilp/frontend/docs/ilp-hsbc-flexi-protector-analysis.md)
+- HSBC Flexi death / TI COI is now runtime-supported as a bounded subset; TPD COI and broader option-state mechanics remain unfinished
 
 What is missing:
 - multi-life support
@@ -114,13 +151,12 @@ Why it matters:
 ## Execution Order After Golden Tests
 
 Recommended next order after the golden-test harness is in place:
-1. Real assurance-charge modeling
-2. Broader top-up / ad-hoc premium mechanics
-3. Richer bonus ladder modeling
-4. Distribution / dividend mode
-5. Broader multi-account special cases
-6. Protection-heavy structures only if explicitly in scope
+1. Broader top-up / ad-hoc premium mechanics
+2. Richer bonus ladder modeling
+3. Distribution / dividend mode
+4. Broader multi-account special cases
+5. Protection-heavy structures only if explicitly in scope
 
 ## Current Rule
 
-Do not continue major kernel expansion until the golden-test harness exists for the currently strongest supported/partial families.
+Extend the golden gate alongside any future modeled assurance-charge expansion before changing additional supported boundaries.

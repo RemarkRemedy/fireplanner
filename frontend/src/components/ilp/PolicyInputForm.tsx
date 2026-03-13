@@ -9,7 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { PercentInput } from '@/components/shared/PercentInput'
-import { computeBlendedReturn, type IlpChargeRule, type IlpEventChargeRule, type IlpPolicyEvent, type IlpPolicyInput } from '@/lib/calculations/ilp'
+import {
+  computeBlendedReturn,
+  computeTotalProjectionYears,
+  type IlpChargeRule,
+  type IlpEventChargeRule,
+  type IlpPolicyEvent,
+  type IlpPolicyInput,
+} from '@/lib/calculations/ilp'
 import { EEC_PRESETS } from '@/lib/data/ilpDefaults'
 import { useIlpStore } from '@/stores/useIlpStore'
 import { cn } from '@/lib/utils'
@@ -38,6 +45,29 @@ function humanizeCatalogTag(value: string): string {
     .replace(/-/g, ' ')
 }
 
+function requiresWealthAssureValue(rule: IlpChargeRule): boolean {
+  return rule.assuranceConfig?.formula === 'prudential-assure-ii-combined'
+}
+
+function requiresCurrentSumAssured(rule: IlpChargeRule): boolean {
+  return rule.assuranceConfig?.formula === 'prudential-assure-ii-combined'
+}
+
+function requiresCurrentNetRegularPremiumBase(rule: IlpChargeRule): boolean {
+  return rule.assuranceConfig?.formula === 'prudential-prosper-death'
+    || rule.assuranceConfig?.formula === 'prudential-prosper-accidental-death'
+    || rule.assuranceConfig?.formula === 'prudential-assure-ii-combined'
+}
+
+function requiresCurrentBasicSumAssured(rule: IlpChargeRule): boolean {
+  return rule.assuranceConfig?.formula === 'hsbc-flexi-choice-death-ti'
+    || rule.assuranceConfig?.formula === 'hsbc-flexi-max-death-ti'
+}
+
+function requiresCurrentNetSupplementaryPremiumBase(rule: IlpChargeRule): boolean {
+  return rule.assuranceConfig?.formula === 'hsbc-flexi-choice-death-ti'
+}
+
 export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
   const updatePolicy = useIlpStore((state) => state.updatePolicy)
   const setFund = useIlpStore((state) => state.setFund)
@@ -57,16 +87,80 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
   const contributionShareValid = Math.abs(contributionShareTotal - contributionShareTarget) < 0.001
   const fundAllocationTotal = policy.funds.reduce((sum, fund) => sum + fund.allocation, 0)
   const fundAllocationValid = Math.abs(fundAllocationTotal - 1) < 0.001
-  const manualChargeWarnings = (policy.chargeRules ?? [])
+  const assuranceRules = (policy.chargeRules ?? []).filter((rule) => rule.basis === 'assurance-sum-at-risk')
+  const assuranceProfile = policy.assuranceProfile
+  const missingAssuranceProfile = assuranceRules.some((rule) => rule.requiresManualInput) && !assuranceProfile
+  const missingRegularPremiumBase = assuranceRules.some((rule) => rule.requiresManualInput && requiresCurrentNetRegularPremiumBase(rule))
+    && assuranceProfile?.currentNetRegularPremiumBase == null
+  const missingWealthAssureValue = assuranceRules.some((rule) => rule.requiresManualInput && requiresWealthAssureValue(rule))
+    && assuranceProfile?.currentWealthAssureValue == null
+  const missingCurrentSumAssured = assuranceRules.some((rule) => rule.requiresManualInput && requiresCurrentSumAssured(rule))
+    && assuranceProfile?.currentSumAssured == null
+  const missingCurrentBasicSumAssured = assuranceRules.some((rule) => rule.requiresManualInput && requiresCurrentBasicSumAssured(rule))
+    && assuranceProfile?.currentBasicSumAssured == null
+  const missingCurrentNetSupplementaryPremiumBase = assuranceRules.some((rule) => rule.requiresManualInput && requiresCurrentNetSupplementaryPremiumBase(rule))
+    && assuranceProfile?.currentNetSupplementaryPremiumBase == null
+  const assuranceAgeBoundaryWarning = assuranceProfile
+    ? assuranceRules
+      .map((rule) => {
+        const maxAge = rule.assuranceConfig?.maxAgeNextBirthday
+        if (maxAge == null) return null
+
+        const finalProjectedAge = assuranceProfile.currentAgeNextBirthday + computeTotalProjectionYears(policy) - 1
+        if (assuranceProfile.currentAgeNextBirthday > maxAge) {
+          return `${rule.label} no longer applies from the current projection start because the life assured is already beyond age next birthday ${maxAge}.`
+        }
+        if (finalProjectedAge > maxAge) {
+          return `${rule.label} is only modeled through age next birthday ${maxAge}. Later projection years still need manual review.`
+        }
+        return null
+      })
+      .filter((value): value is string => value != null)
+    : []
+  const manualChargeWarnings = [
+    ...(policy.chargeRules ?? [])
     .filter((rule) => (
       rule.basis === 'fixed-annual'
       && rule.requiresManualInput
       && rule.amount === 0
       && (rule.amountSchedule?.length ?? 0) === 0
     ))
-    .map((rule) => `${rule.label} is still zero. Enter an annualized estimate before trusting the analysis.`)
+    .map((rule) => `${rule.label} is still zero. Enter an annualized estimate before trusting the analysis.`),
+    ...(missingAssuranceProfile
+      ? ['Assurance-charge modeling still needs life-assured inputs before the charge math can be trusted.']
+      : []),
+    ...(missingRegularPremiumBase
+      ? ['This product also needs the current net regular premium base before the assurance charge can be trusted.']
+      : []),
+    ...(missingWealthAssureValue
+      ? ['This product also needs the current Wealth Assure Value before the assurance charge can be trusted.']
+      : []),
+    ...(missingCurrentSumAssured
+      ? ['This product also needs the current sum assured before the assurance charge can be trusted.']
+      : []),
+    ...(missingCurrentBasicSumAssured
+      ? ['This product also needs the current basic sum assured before the assurance charge can be trusted.']
+      : []),
+    ...(missingCurrentNetSupplementaryPremiumBase
+      ? ['This product also needs the current net RSP + top-up base before the HSBC Flexi Choice Cover charge can be trusted.']
+      : []),
+    ...assuranceAgeBoundaryWarning,
+  ]
   const eecChartData = policy.eecTable.map((rate, index) => ({ year: index + 1, rate: rate * 100 }))
   const updateChargeRules = (chargeRules: IlpChargeRule[]) => updatePolicy(policy.id, { chargeRules })
+  const upsertAssuranceProfile = (patch: Partial<NonNullable<IlpPolicyInput['assuranceProfile']>>) => updatePolicy(policy.id, {
+    assuranceProfile: {
+      currentAgeNextBirthday: assuranceProfile?.currentAgeNextBirthday ?? 35,
+      sex: assuranceProfile?.sex ?? 'male',
+      smokerStatus: assuranceProfile?.smokerStatus ?? 'non-smoker',
+      currentNetRegularPremiumBase: assuranceProfile?.currentNetRegularPremiumBase,
+      currentSumAssured: assuranceProfile?.currentSumAssured,
+      currentWealthAssureValue: assuranceProfile?.currentWealthAssureValue,
+      currentBasicSumAssured: assuranceProfile?.currentBasicSumAssured,
+      currentNetSupplementaryPremiumBase: assuranceProfile?.currentNetSupplementaryPremiumBase,
+      ...patch,
+    },
+  })
   const updatePolicyEvents = (policyEvents: IlpPolicyEvent[]) => updatePolicy(policy.id, { policyEvents })
   const updateEventChargeRules = (eventChargeRules: IlpEventChargeRule[]) => updatePolicy(policy.id, { eventChargeRules })
 
@@ -187,6 +281,82 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
               integer
               min={1}
             />
+            {assuranceRules.length > 0 && (
+              <>
+                <NumberInput
+                  label="Age Next Birthday"
+                  value={assuranceProfile?.currentAgeNextBirthday ?? 35}
+                  onChange={(value) => upsertAssuranceProfile({ currentAgeNextBirthday: value })}
+                  integer
+                  min={1}
+                />
+                <div className="space-y-1">
+                  <Label>Life Assured Sex</Label>
+                  <Select
+                    value={assuranceProfile?.sex ?? 'male'}
+                    onValueChange={(value) => upsertAssuranceProfile({ sex: value as 'male' | 'female' })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Smoker Status</Label>
+                  <Select
+                    value={assuranceProfile?.smokerStatus ?? 'non-smoker'}
+                    onValueChange={(value) => upsertAssuranceProfile({ smokerStatus: value as 'smoker' | 'non-smoker' })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="non-smoker">Non-Smoker</SelectItem>
+                      <SelectItem value="smoker">Smoker</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {assuranceRules.some(requiresCurrentNetRegularPremiumBase) && (
+                  <CurrencyInput
+                    label={`Current Net Regular Premium Base (${policy.currency})`}
+                    value={assuranceProfile?.currentNetRegularPremiumBase ?? 0}
+                    onChange={(value) => upsertAssuranceProfile({ currentNetRegularPremiumBase: value })}
+                  />
+                )}
+                {assuranceRules.some(requiresCurrentSumAssured) && (
+                  <CurrencyInput
+                    label={`Current Sum Assured (${policy.currency})`}
+                    value={assuranceProfile?.currentSumAssured ?? 0}
+                    onChange={(value) => upsertAssuranceProfile({ currentSumAssured: value })}
+                  />
+                )}
+                {assuranceRules.some(requiresWealthAssureValue) && (
+                  <CurrencyInput
+                    label={`Current Wealth Assure Value (${policy.currency})`}
+                    value={assuranceProfile?.currentWealthAssureValue ?? 0}
+                    onChange={(value) => upsertAssuranceProfile({ currentWealthAssureValue: value })}
+                  />
+                )}
+                {assuranceRules.some(requiresCurrentBasicSumAssured) && (
+                  <CurrencyInput
+                    label={`Current Basic Sum Assured (${policy.currency})`}
+                    value={assuranceProfile?.currentBasicSumAssured ?? 0}
+                    onChange={(value) => upsertAssuranceProfile({ currentBasicSumAssured: value })}
+                  />
+                )}
+                {assuranceRules.some(requiresCurrentNetSupplementaryPremiumBase) && (
+                  <CurrencyInput
+                    label={`Current Net RSP + Top-up Base (${policy.currency})`}
+                    value={assuranceProfile?.currentNetSupplementaryPremiumBase ?? 0}
+                    onChange={(value) => upsertAssuranceProfile({ currentNetSupplementaryPremiumBase: value })}
+                  />
+                )}
+              </>
+            )}
             <NumberInput
               label="MIP Length"
               value={policy.mipLength}
@@ -638,6 +808,7 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                     amountSchedule: [],
                     rate: 0,
                     amount: 0,
+                    premiumBaseConfig: undefined,
                     allocation: 'equal-split',
                   },
                 ])}
@@ -679,6 +850,24 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                           nextRules[index] = {
                             ...rule,
                             basis: value as IlpChargeRule['basis'],
+                            assuranceConfig: value === 'assurance-sum-at-risk'
+                              ? (rule.assuranceConfig ?? {
+                                  formula: 'prudential-prosper-death',
+                                  monthlyModalFactor: 0.0834,
+                                })
+                              : undefined,
+                            premiumBaseConfig: value === 'premium-base-mip-multiplier'
+                              ? (rule.premiumBaseConfig ?? {
+                                  useHigherOfCommencementAndPrevailing: true,
+                                  multiplierSchedule: [
+                                    {
+                                      startPolicyYear: 1,
+                                      endPolicyYear: null,
+                                      mode: 'policy-year',
+                                    },
+                                  ],
+                                })
+                              : undefined,
                             amountSchedule: value === 'fixed-annual' ? (rule.amountSchedule ?? []) : undefined,
                           }
                           updateChargeRules(nextRules)
@@ -691,6 +880,8 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                           <SelectItem value="fixed-annual">Fixed Annual</SelectItem>
                           <SelectItem value="account-value">Account Value</SelectItem>
                           <SelectItem value="annual-contribution">Annual Contribution</SelectItem>
+                          <SelectItem value="assurance-sum-at-risk">Assurance Sum-at-Risk</SelectItem>
+                          <SelectItem value="premium-base-mip-multiplier">Premium-Base AMF</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -747,6 +938,51 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                           updateChargeRules(nextRules)
                         }}
                       />
+                    ) : rule.basis === 'assurance-sum-at-risk' ? (
+                      <>
+                        <div className="space-y-1">
+                          <Label>Assurance Formula</Label>
+                          <Select
+                            value={rule.assuranceConfig?.formula ?? 'prudential-prosper-death'}
+                            onValueChange={(value) => {
+                              const nextRules = [...(policy.chargeRules ?? [])]
+                              nextRules[index] = {
+                                ...rule,
+                                assuranceConfig: {
+                                  formula: value as NonNullable<IlpChargeRule['assuranceConfig']>['formula'],
+                                  monthlyModalFactor: rule.assuranceConfig?.monthlyModalFactor ?? 0.0834,
+                                },
+                              }
+                              updateChargeRules(nextRules)
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="prudential-prosper-death">Prudential Prosper Death</SelectItem>
+                              <SelectItem value="prudential-prosper-accidental-death">Prudential Prosper Accidental Death</SelectItem>
+                              <SelectItem value="prudential-assure-ii-combined">Prudential Assure II Combined</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <NumberInput
+                          label="Monthly Modal Factor"
+                          value={rule.assuranceConfig?.monthlyModalFactor ?? 0.0834}
+                          onChange={(value) => {
+                            const nextRules = [...(policy.chargeRules ?? [])]
+                            nextRules[index] = {
+                              ...rule,
+                              assuranceConfig: {
+                                formula: rule.assuranceConfig?.formula ?? 'prudential-prosper-death',
+                                monthlyModalFactor: value,
+                              },
+                            }
+                            updateChargeRules(nextRules)
+                          }}
+                          min={0}
+                        />
+                      </>
                     ) : (
                       <PercentInput
                         label="Rate"
@@ -876,9 +1112,179 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                       ))}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      When the primary deduction accounts are exhausted, the remaining fixed annual charge can fall through to these accounts.
+                      When the primary deduction accounts are exhausted, the remaining charge can fall through to these accounts.
                     </p>
                   </div>
+
+                  {rule.basis === 'assurance-sum-at-risk' && (
+                    <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                      This rule uses the policy-level assurance inputs above. Keep this product partial until the insured-life fields and any required Wealth Assure Value are reviewed against the source document.
+                    </p>
+                  )}
+
+                  {rule.basis === 'premium-base-mip-multiplier' && (
+                    <div className="space-y-3 rounded-md border p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium">Premium-Base Multiplier Schedule</h4>
+                          <p className="text-sm text-muted-foreground">
+                            This annual charge uses the higher of committed and prevailing annual regular premium, then applies the schedule below as the policy-year multiplier.
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          type="button"
+                          onClick={() => {
+                            const nextRules = [...(policy.chargeRules ?? [])]
+                            nextRules[index] = {
+                              ...rule,
+                              premiumBaseConfig: {
+                                useHigherOfCommencementAndPrevailing: rule.premiumBaseConfig?.useHigherOfCommencementAndPrevailing ?? true,
+                                multiplierSchedule: [
+                                  ...(rule.premiumBaseConfig?.multiplierSchedule ?? []),
+                                  {
+                                    startPolicyYear: rule.startPolicyYear ?? 1,
+                                    endPolicyYear: null,
+                                    mode: 'policy-year',
+                                  },
+                                ],
+                              },
+                            }
+                            updateChargeRules(nextRules)
+                          }}
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add Multiplier Tier
+                        </Button>
+                      </div>
+
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={rule.premiumBaseConfig?.useHigherOfCommencementAndPrevailing ?? true}
+                          onChange={(event) => {
+                            const nextRules = [...(policy.chargeRules ?? [])]
+                            nextRules[index] = {
+                              ...rule,
+                              premiumBaseConfig: {
+                                useHigherOfCommencementAndPrevailing: event.target.checked,
+                                multiplierSchedule: rule.premiumBaseConfig?.multiplierSchedule ?? [],
+                              },
+                            }
+                            updateChargeRules(nextRules)
+                          }}
+                        />
+                        Use the higher of committed and prevailing annual regular premium
+                      </label>
+
+                      {(rule.premiumBaseConfig?.multiplierSchedule.length ?? 0) === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          No premium-base multiplier tiers configured.
+                        </p>
+                      ) : rule.premiumBaseConfig?.multiplierSchedule.map((tier, tierIndex) => (
+                        <Card key={`${rule.id}-premium-base-tier-${tierIndex}`}>
+                          <CardContent className="grid gap-4 pt-6 md:grid-cols-2 xl:grid-cols-5">
+                            <NumberInput
+                              label="Start Policy Year"
+                              value={tier.startPolicyYear}
+                              onChange={(value) => {
+                                const nextRules = [...(policy.chargeRules ?? [])]
+                                const nextConfig = {
+                                  useHigherOfCommencementAndPrevailing: rule.premiumBaseConfig?.useHigherOfCommencementAndPrevailing ?? true,
+                                  multiplierSchedule: [...(rule.premiumBaseConfig?.multiplierSchedule ?? [])],
+                                }
+                                nextConfig.multiplierSchedule[tierIndex] = { ...tier, startPolicyYear: value }
+                                nextRules[index] = { ...rule, premiumBaseConfig: nextConfig }
+                                updateChargeRules(nextRules)
+                              }}
+                              integer
+                              min={1}
+                            />
+                            <NumberInput
+                              label="End Policy Year"
+                              value={tier.endPolicyYear ?? tier.startPolicyYear}
+                              onChange={(value) => {
+                                const nextRules = [...(policy.chargeRules ?? [])]
+                                const nextConfig = {
+                                  useHigherOfCommencementAndPrevailing: rule.premiumBaseConfig?.useHigherOfCommencementAndPrevailing ?? true,
+                                  multiplierSchedule: [...(rule.premiumBaseConfig?.multiplierSchedule ?? [])],
+                                }
+                                nextConfig.multiplierSchedule[tierIndex] = { ...tier, endPolicyYear: value }
+                                nextRules[index] = { ...rule, premiumBaseConfig: nextConfig }
+                                updateChargeRules(nextRules)
+                              }}
+                              integer
+                              min={tier.startPolicyYear}
+                            />
+                            <div className="space-y-1">
+                              <Label>Multiplier Mode</Label>
+                              <Select
+                                value={tier.mode}
+                                onValueChange={(value) => {
+                                  const nextRules = [...(policy.chargeRules ?? [])]
+                                  const nextConfig = {
+                                    useHigherOfCommencementAndPrevailing: rule.premiumBaseConfig?.useHigherOfCommencementAndPrevailing ?? true,
+                                    multiplierSchedule: [...(rule.premiumBaseConfig?.multiplierSchedule ?? [])],
+                                  }
+                                  nextConfig.multiplierSchedule[tierIndex] = {
+                                    ...tier,
+                                    mode: value as 'policy-year' | 'fixed',
+                                    multiplier: value === 'fixed' ? (tier.multiplier ?? tier.startPolicyYear) : undefined,
+                                  }
+                                  nextRules[index] = { ...rule, premiumBaseConfig: nextConfig }
+                                  updateChargeRules(nextRules)
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="policy-year">Policy Year</SelectItem>
+                                  <SelectItem value="fixed">Fixed</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {tier.mode === 'fixed' && (
+                              <NumberInput
+                                label="Fixed Multiplier"
+                                value={tier.multiplier ?? 0}
+                                onChange={(value) => {
+                                  const nextRules = [...(policy.chargeRules ?? [])]
+                                  const nextConfig = {
+                                    useHigherOfCommencementAndPrevailing: rule.premiumBaseConfig?.useHigherOfCommencementAndPrevailing ?? true,
+                                    multiplierSchedule: [...(rule.premiumBaseConfig?.multiplierSchedule ?? [])],
+                                  }
+                                  nextConfig.multiplierSchedule[tierIndex] = { ...tier, multiplier: value }
+                                  nextRules[index] = { ...rule, premiumBaseConfig: nextConfig }
+                                  updateChargeRules(nextRules)
+                                }}
+                                min={0}
+                              />
+                            )}
+                            <div className="flex items-end justify-end">
+                              <Button
+                                variant="outline"
+                                className="text-destructive"
+                                type="button"
+                                onClick={() => {
+                                  const nextRules = [...(policy.chargeRules ?? [])]
+                                  const nextConfig = {
+                                    useHigherOfCommencementAndPrevailing: rule.premiumBaseConfig?.useHigherOfCommencementAndPrevailing ?? true,
+                                    multiplierSchedule: (rule.premiumBaseConfig?.multiplierSchedule ?? []).filter((_, currentIndex) => currentIndex !== tierIndex),
+                                  }
+                                  nextRules[index] = { ...rule, premiumBaseConfig: nextConfig }
+                                  updateChargeRules(nextRules)
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Remove Tier
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
 
                   {rule.basis === 'fixed-annual' && (
                     <div className="space-y-3 rounded-md border p-4">
@@ -1073,12 +1479,30 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                           type: value as IlpPolicyEvent['type'],
                           amount: value === 'partial-withdrawal'
                             ? (event.amount ?? 1_000)
-                            : (value === 'regular-premium-reduction' ? (event.amount ?? 1_200) : (value === 'top-up' ? (event.amount ?? 1_000) : undefined)),
+                            : (value === 'regular-premium-reduction'
+                              ? (event.amount ?? 1_200)
+                              : (value === 'regular-premium-increase'
+                                ? (event.amount ?? 1_200)
+                                : ((value === 'top-up' || value === 'recurring-single-premium') ? (event.amount ?? 1_000) : undefined))),
                           accountId: value === 'partial-withdrawal'
                             ? (event.accountId ?? policy.accounts[0]?.id)
-                            : (value === 'top-up' ? event.accountId : undefined),
+                            : ((value === 'top-up' || value === 'recurring-single-premium') ? event.accountId : undefined),
+                          chargeWaived: value === 'partial-withdrawal'
+                            || value === 'premium-holiday'
+                            || value === 'regular-premium-reduction'
+                            ? (event.chargeWaived ?? false)
+                            : undefined,
                           repayMissedPremiums: value === 'premium-holiday' ? (event.repayMissedPremiums ?? false) : undefined,
                           repaymentAccountId: value === 'premium-holiday' ? event.repaymentAccountId : undefined,
+                          resultingSumAssured: value === 'assurance-benefit-reduction' || value === 'assurance-benefit-resumption'
+                            ? (event.resultingSumAssured ?? policy.assuranceProfile?.currentSumAssured ?? 0)
+                            : undefined,
+                          resultingWealthAssureValue: value === 'assurance-benefit-reduction'
+                            ? (event.resultingWealthAssureValue ?? policy.assuranceProfile?.currentWealthAssureValue ?? 0)
+                            : undefined,
+                          durationMonths: value === 'assurance-benefit-reduction' || value === 'assurance-benefit-resumption' || value === 'recurring-single-premium-resumption'
+                            ? 1
+                            : event.durationMonths,
                         }
                         updatePolicyEvents(nextEvents)
                       }}
@@ -1090,7 +1514,12 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                           <SelectItem value="premium-holiday">Premium Holiday</SelectItem>
                           <SelectItem value="partial-withdrawal">Partial Withdrawal</SelectItem>
                           <SelectItem value="regular-premium-reduction">Regular Premium Reduction</SelectItem>
+                          <SelectItem value="regular-premium-increase">Regular Premium Increase</SelectItem>
                           <SelectItem value="top-up">Top-up</SelectItem>
+                          <SelectItem value="recurring-single-premium">Recurring Single Premium</SelectItem>
+                          <SelectItem value="recurring-single-premium-resumption">Recurring Single Premium Resumption</SelectItem>
+                          <SelectItem value="assurance-benefit-reduction">Assurance Benefit Reduction</SelectItem>
+                          <SelectItem value="assurance-benefit-resumption">Assurance Benefit Resumption</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1107,17 +1536,24 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                       min={1}
                     />
 
-                    <NumberInput
-                      label="Duration (months)"
-                      value={event.durationMonths}
-                      onChange={(value) => {
-                        const nextEvents = [...(policy.policyEvents ?? [])]
-                        nextEvents[index] = { ...event, durationMonths: value }
-                        updatePolicyEvents(nextEvents)
-                      }}
-                      integer
-                      min={1}
-                    />
+                    {event.type === 'assurance-benefit-reduction' || event.type === 'assurance-benefit-resumption' || event.type === 'recurring-single-premium-resumption' ? (
+                      <div className="space-y-1">
+                        <Label>Duration (months)</Label>
+                        <Input value="1" disabled />
+                      </div>
+                    ) : (
+                      <NumberInput
+                        label="Duration (months)"
+                        value={event.durationMonths}
+                        onChange={(value) => {
+                          const nextEvents = [...(policy.policyEvents ?? [])]
+                          nextEvents[index] = { ...event, durationMonths: value }
+                          updatePolicyEvents(nextEvents)
+                        }}
+                        integer
+                        min={1}
+                      />
+                    )}
 
                     {event.type === 'partial-withdrawal' ? (
                       <>
@@ -1150,6 +1586,24 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                             </SelectContent>
                           </Select>
                         </div>
+                        <div className="space-y-3 xl:col-span-2">
+                          <Label className="text-sm font-medium">Charge Waiver</Label>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={event.chargeWaived ?? false}
+                              onChange={(inputEvent) => {
+                                const nextEvents = [...(policy.policyEvents ?? [])]
+                                nextEvents[index] = {
+                                  ...event,
+                                  chargeWaived: inputEvent.target.checked,
+                                }
+                                updatePolicyEvents(nextEvents)
+                              }}
+                            />
+                            Insurer-approved charge waiver applies
+                          </label>
+                        </div>
                       </>
                     ) : event.type === 'premium-holiday' ? (
                       <>
@@ -1172,6 +1626,21 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                               }}
                             />
                             Full back-pay immediately after the latest holiday period
+                          </label>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={event.chargeWaived ?? false}
+                              onChange={(inputEvent) => {
+                                const nextEvents = [...(policy.policyEvents ?? [])]
+                                nextEvents[index] = {
+                                  ...event,
+                                  chargeWaived: inputEvent.target.checked,
+                                }
+                                updatePolicyEvents(nextEvents)
+                              }}
+                            />
+                            Insurer-approved charge waiver applies
                           </label>
                         </div>
                         <div className="space-y-1">
@@ -1197,8 +1666,38 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                         </div>
                       </>
                     ) : event.type === 'regular-premium-reduction' ? (
+                      <>
+                        <CurrencyInput
+                          label={`Annual Reduction Amount (${policy.currency})`}
+                          value={event.amount ?? 0}
+                          onChange={(value) => {
+                            const nextEvents = [...(policy.policyEvents ?? [])]
+                            nextEvents[index] = { ...event, amount: value }
+                            updatePolicyEvents(nextEvents)
+                          }}
+                        />
+                        <div className="space-y-3">
+                          <Label className="text-sm font-medium">Charge Waiver</Label>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={event.chargeWaived ?? false}
+                              onChange={(inputEvent) => {
+                                const nextEvents = [...(policy.policyEvents ?? [])]
+                                nextEvents[index] = {
+                                  ...event,
+                                  chargeWaived: inputEvent.target.checked,
+                                }
+                                updatePolicyEvents(nextEvents)
+                              }}
+                            />
+                            Insurer-approved charge waiver applies
+                          </label>
+                        </div>
+                      </>
+                    ) : event.type === 'regular-premium-increase' ? (
                       <CurrencyInput
-                        label={`Annual Reduction Amount (${policy.currency})`}
+                        label={`Annual Increase Amount (${policy.currency})`}
                         value={event.amount ?? 0}
                         onChange={(value) => {
                           const nextEvents = [...(policy.policyEvents ?? [])]
@@ -1206,10 +1705,10 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                           updatePolicyEvents(nextEvents)
                         }}
                       />
-                    ) : event.type === 'top-up' ? (
+                    ) : event.type === 'top-up' || event.type === 'recurring-single-premium' ? (
                       <>
                         <CurrencyInput
-                          label={`Top-up Amount (${policy.currency})`}
+                          label={`${event.type === 'top-up' ? 'Top-up' : 'Recurring Single Premium'} Amount (${policy.currency})`}
                           value={event.amount ?? 0}
                           onChange={(value) => {
                             const nextEvents = [...(policy.policyEvents ?? [])]
@@ -1244,6 +1743,54 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                             Leave this on routing rules to follow any seeded top-up account split from the catalog template.
                           </p>
                         </div>
+                        {event.type === 'recurring-single-premium' ? (
+                          <div className="md:col-span-2 xl:col-span-4 text-xs text-muted-foreground">
+                            Model this as the amount paid for each scheduled premium mode period. The calculator applies it once per policy month across the event duration and deducts any recurring-single-premium premium charge before crediting the routed account.
+                          </div>
+                        ) : null}
+                      </>
+                    ) : event.type === 'recurring-single-premium-resumption' ? (
+                      <div className="md:col-span-2 xl:col-span-4 text-xs text-muted-foreground">
+                        Use this as the explicit administrative restart month for a recurring single premium stream after it was stopped by a premium holiday. The stream stays blocked until this event occurs.
+                      </div>
+                    ) : event.type === 'assurance-benefit-reduction' ? (
+                      <>
+                        <CurrencyInput
+                          label={`Resulting Sum Assured (${policy.currency})`}
+                          value={event.resultingSumAssured ?? 0}
+                          onChange={(value) => {
+                            const nextEvents = [...(policy.policyEvents ?? [])]
+                            nextEvents[index] = { ...event, resultingSumAssured: value }
+                            updatePolicyEvents(nextEvents)
+                          }}
+                        />
+                        <CurrencyInput
+                          label={`Resulting Wealth Assure Value (${policy.currency})`}
+                          value={event.resultingWealthAssureValue ?? 0}
+                          onChange={(value) => {
+                            const nextEvents = [...(policy.policyEvents ?? [])]
+                            nextEvents[index] = { ...event, resultingWealthAssureValue: value }
+                            updatePolicyEvents(nextEvents)
+                          }}
+                        />
+                        <div className="md:col-span-2 xl:col-span-4 text-xs text-muted-foreground">
+                          Use the accepted post-reduction values from Prudential’s revised certificate. The 3% sum-assured increase and Wealth Assure progression stay frozen until a later resumption event.
+                        </div>
+                      </>
+                    ) : event.type === 'assurance-benefit-resumption' ? (
+                      <>
+                        <CurrencyInput
+                          label={`Resumed Sum Assured (${policy.currency})`}
+                          value={event.resultingSumAssured ?? 0}
+                          onChange={(value) => {
+                            const nextEvents = [...(policy.policyEvents ?? [])]
+                            nextEvents[index] = { ...event, resultingSumAssured: value }
+                            updatePolicyEvents(nextEvents)
+                          }}
+                        />
+                        <div className="md:col-span-2 xl:col-span-3 text-xs text-muted-foreground self-end">
+                          Enter the restored sum assured from the revised certificate. The engine resumes automatic growth from the next policy anniversary and continues Wealth Assure calculation from the carried state.
+                        </div>
                       </>
                     ) : (
                       <div className="flex items-end justify-end">
@@ -1259,7 +1806,14 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                       </div>
                     )}
 
-                    {(event.type === 'partial-withdrawal' || event.type === 'regular-premium-reduction' || event.type === 'top-up') && (
+                    {(event.type === 'partial-withdrawal'
+                      || event.type === 'regular-premium-reduction'
+                      || event.type === 'regular-premium-increase'
+                      || event.type === 'top-up'
+                      || event.type === 'recurring-single-premium'
+                      || event.type === 'recurring-single-premium-resumption'
+                      || event.type === 'assurance-benefit-reduction'
+                      || event.type === 'assurance-benefit-resumption') && (
                       <div className="flex items-end justify-end xl:col-span-4">
                         <Button
                           variant="outline"
@@ -1397,6 +1951,20 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                           updateEventChargeRules(nextRules)
                         }}
                       />
+
+                      {rule.trigger === 'premium-holiday' && (
+                        <NumberInput
+                          label="Free Lifetime Holiday Months"
+                          value={rule.freeLifetimeMonths ?? 24}
+                          onChange={(value) => {
+                            const nextRules = [...(policy.eventChargeRules ?? [])]
+                            nextRules[index] = { ...rule, freeLifetimeMonths: value }
+                            updateEventChargeRules(nextRules)
+                          }}
+                          integer
+                          min={1}
+                        />
+                      )}
 
                       {rule.basis === 'premium-holiday-charge-refund' && (
                         <div className="space-y-1">

@@ -72,6 +72,7 @@ const AUA_ACCOUNT: IlpAccount = {
 }
 
 const POWER_UP: IlpBonusRule = {
+  id: 'power-up-bonus',
   type: 'power-up',
   label: 'Power-up Bonus',
   mode: 'annual-rate',
@@ -83,6 +84,7 @@ const POWER_UP: IlpBonusRule = {
 }
 
 const LOYALTY: IlpBonusRule = {
+  id: 'loyalty-bonus',
   type: 'loyalty',
   label: 'Loyalty Bonus',
   mode: 'annual-rate',
@@ -113,6 +115,36 @@ const POLICY_CHARGE_RULES: IlpChargeRule[] = [
     rate: 0.05,
     amount: 0,
     allocation: 'equal-split',
+  },
+]
+
+const PRUDENTIAL_PROSPER_ACCOUNTS: IlpAccount[] = [
+  {
+    id: 'growth',
+    label: 'Growth Account',
+    feeRate: 0,
+    currentValue: 50_000,
+    contributionShare: 0.5,
+    subjectToEec: false,
+    postMipFeeRate: null,
+  },
+  {
+    id: 'flex',
+    label: 'Flex Account',
+    feeRate: 0,
+    currentValue: 50_000,
+    contributionShare: 0.5,
+    subjectToEec: false,
+    postMipFeeRate: null,
+  },
+  {
+    id: 'additional',
+    label: 'Additional Investment Account',
+    feeRate: 0,
+    currentValue: 50_000,
+    contributionShare: 0,
+    subjectToEec: false,
+    postMipFeeRate: null,
   },
 ]
 
@@ -201,6 +233,54 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(loyaltyRow, 'iua').netFee).toBeCloseTo(accountRow(loyaltyRow, 'iua').open * 0.024, 2)
   })
 
+  it('applies annual-rate tiered bonuses using account-value bands', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 1,
+      accounts: [{
+        id: 'core',
+        label: 'Core Account',
+        feeRate: 0,
+        currentValue: 120_000,
+        contributionShare: 0,
+        subjectToEec: false,
+        postMipFeeRate: null,
+      }],
+      funds: [{
+        name: 'Cash Fund',
+        allocation: 1,
+        ocf: 0,
+        grossReturnLow: 0,
+        grossReturnMid: 0,
+        grossReturnHigh: 0,
+      }],
+      bonuses: [{
+        id: 'additional-bonus-units',
+        type: 'loyalty',
+        label: 'Additional Bonus Units',
+        mode: 'annual-rate',
+        rate: 0,
+        amount: 0,
+        appliesTo: ['core'],
+        startPolicyYear: 1,
+        endPolicyYear: null,
+        tieredRates: [
+          { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: null, minAccountValue: 0, maxAccountValue: 29_999, rate: 0 },
+          { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: null, minAccountValue: 30_000, maxAccountValue: 99_999, rate: 0.001 },
+          { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: null, minAccountValue: 100_000, maxAccountValue: 499_999, rate: 0.002 },
+        ],
+      }],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+    const row = result.rows[0]
+
+    expect(accountRow(row, 'core').bonusCredit).toBeCloseTo(240, 2)
+    expect(accountRow(row, 'core').close).toBeCloseTo(120_240, 2)
+  })
+
   it('splits premium-allocation and one-time bonuses evenly across target accounts', () => {
     const accounts: IlpAccount[] = [
       IUA_ACCOUNT,
@@ -208,6 +288,7 @@ describe('projectIlpPolicy', () => {
       { ...AUA_ACCOUNT, id: 'aua2', label: 'AUA 2', contributionShare: 0.5 },
     ]
     const allocationBonus: IlpBonusRule = {
+      id: 'premium-bonus',
       type: 'allocation',
       label: 'Premium Bonus',
       mode: 'premium-allocation',
@@ -218,6 +299,7 @@ describe('projectIlpPolicy', () => {
       endPolicyYear: null,
     }
     const oneTimeBonus: IlpBonusRule = {
+      id: 'sign-up-bonus',
       type: 'sign-up',
       label: 'Sign-up Bonus',
       mode: 'one-time',
@@ -279,6 +361,47 @@ describe('projectIlpPolicy', () => {
 
     expect(accountRow(firstRow, 'iua').close).toBeCloseTo((10_000 - 350) * (1 + result.blendedNetReturn) + 2_100, 2)
     expect(accountRow(firstRow, 'aua').close).toBeCloseTo((1_000 - 10) * (1 + result.blendedNetReturn) + 2_100, 2)
+  })
+
+  it('continues regular premiums after MIP when after-mip contributionRules are defined', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 29,
+      mipLength: 30,
+      postMipYears: 2,
+      accounts: [
+        {
+          ...IUA_ACCOUNT,
+          currentValue: 10_000,
+          contributionShare: 0,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 0 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+        {
+          ...AUA_ACCOUNT,
+          currentValue: 20_000,
+          contributionShare: 1,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 0 },
+            { phase: 'after-mip', contributionShare: 0 },
+          ],
+        },
+      ],
+      bonuses: [],
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+    const mipRow = result.rows[0]
+    const postMipRow = result.rows[1]
+
+    expect(mipRow.policyYear).toBe(30)
+    expect(accountRow(mipRow, 'iua').contributionAmount).toBeCloseTo(4_200, 2)
+    expect(postMipRow.policyYear).toBe(31)
+    expect(postMipRow.annualContribution).toBeCloseTo(4_200, 2)
+    expect(accountRow(postMipRow, 'iua').contributionAmount).toBeCloseTo(4_200, 2)
+    expect(accountRow(postMipRow, 'aua').contributionAmount).toBeCloseTo(0, 2)
   })
 
   it('routes top-up events through explicit top-up contribution rules', () => {
@@ -390,6 +513,397 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[0], 'additional').grossFee).toBeCloseTo(95, 2)
   })
 
+  it('routes recurring single premiums across overlapping months and applies the published premium charge', () => {
+    const policy = makeDefaultPolicy({
+      monthsAlreadyPaid: 0,
+      monthlyContribution: 0,
+      accounts: [
+        { ...IUA_ACCOUNT, currentValue: 0, contributionShare: 0, feeRate: 0 },
+        {
+          ...AUA_ACCOUNT,
+          id: 'topup',
+          label: 'Top-up Units Account',
+          currentValue: 0,
+          feeRate: 0,
+          contributionShare: 0,
+          contributionRules: [{ phase: 'top-up', contributionShare: 1 }],
+        },
+      ],
+      policyEvents: [
+        {
+          id: 'rsp-1',
+          type: 'recurring-single-premium',
+          startPolicyMonth: 10,
+          durationMonths: 6,
+          amount: 100,
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'rsp-charge',
+          label: 'Recurring Single Premium Charge',
+          trigger: 'recurring-single-premium',
+          basis: 'event-amount-with-overlap-months',
+          appliesTo: ['topup'],
+          rate: 0.05,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+      bonuses: [],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0].annualContribution).toBe(300)
+    expect(accountRow(result.rows[0], 'topup').contributionAmount).toBe(300)
+    expect(accountRow(result.rows[0], 'topup').grossFee).toBeCloseTo(15, 2)
+    expect(result.rows[1].annualContribution).toBe(300)
+    expect(accountRow(result.rows[1], 'topup').contributionAmount).toBe(300)
+    expect(accountRow(result.rows[1], 'topup').grossFee).toBeCloseTo(15, 2)
+  })
+
+  it('stops a recurring single premium stream after a premium holiday until an explicit resumption event exists', () => {
+    const policy = makeDefaultPolicy({
+      monthsAlreadyPaid: 0,
+      monthlyContribution: 0,
+      accounts: [
+        { ...IUA_ACCOUNT, currentValue: 0, contributionShare: 0, feeRate: 0 },
+        {
+          ...AUA_ACCOUNT,
+          id: 'topup',
+          label: 'Top-up Units Account',
+          currentValue: 0,
+          feeRate: 0,
+          contributionShare: 0,
+          contributionRules: [{ phase: 'top-up', contributionShare: 1 }],
+        },
+      ],
+      policyEvents: [
+        {
+          id: 'rsp-1',
+          type: 'recurring-single-premium',
+          startPolicyMonth: 1,
+          durationMonths: 12,
+          amount: 100,
+        },
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 4,
+          durationMonths: 2,
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'rsp-charge',
+          label: 'Recurring Single Premium Charge',
+          trigger: 'recurring-single-premium',
+          basis: 'event-amount-with-overlap-months',
+          appliesTo: ['topup'],
+          rate: 0.05,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+      bonuses: [],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0].annualContribution).toBe(300)
+    expect(accountRow(result.rows[0], 'topup').contributionAmount).toBe(300)
+    expect(accountRow(result.rows[0], 'topup').grossFee).toBeCloseTo(15, 2)
+  })
+
+  it('resumes a recurring single premium stream only from the explicit resumption month onward', () => {
+    const policy = makeDefaultPolicy({
+      monthsAlreadyPaid: 0,
+      monthlyContribution: 0,
+      accounts: [
+        { ...IUA_ACCOUNT, currentValue: 0, contributionShare: 0, feeRate: 0 },
+        {
+          ...AUA_ACCOUNT,
+          id: 'topup',
+          label: 'Top-up Units Account',
+          currentValue: 0,
+          feeRate: 0,
+          contributionShare: 0,
+          contributionRules: [{ phase: 'top-up', contributionShare: 1 }],
+        },
+      ],
+      policyEvents: [
+        {
+          id: 'rsp-1',
+          type: 'recurring-single-premium',
+          startPolicyMonth: 1,
+          durationMonths: 12,
+          amount: 100,
+        },
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 4,
+          durationMonths: 2,
+        },
+        {
+          id: 'rsp-resume-1',
+          type: 'recurring-single-premium-resumption',
+          startPolicyMonth: 8,
+          durationMonths: 1,
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'rsp-charge',
+          label: 'Recurring Single Premium Charge',
+          trigger: 'recurring-single-premium',
+          basis: 'event-amount-with-overlap-months',
+          appliesTo: ['topup'],
+          rate: 0.05,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+      bonuses: [],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0].annualContribution).toBe(800)
+    expect(accountRow(result.rows[0], 'topup').contributionAmount).toBe(800)
+    expect(accountRow(result.rows[0], 'topup').grossFee).toBeCloseTo(40, 2)
+  })
+
+  it('reduces recurring single premium first before reducing the regular premium path', () => {
+    const policy = makeDefaultPolicy({
+      monthsAlreadyPaid: 0,
+      accounts: [
+        { ...IUA_ACCOUNT, currentValue: 0, contributionShare: 0 },
+        {
+          ...AUA_ACCOUNT,
+          id: 'topup',
+          label: 'Top-up Units Account',
+          currentValue: 0,
+          contributionShare: 0,
+          contributionRules: [{ phase: 'top-up', contributionShare: 1 }],
+        },
+        { ...AUA_ACCOUNT, id: 'accumulation', currentValue: 0, contributionShare: 1, feeRate: 0 },
+      ],
+      policyEvents: [
+        {
+          id: 'rsp-1',
+          type: 'recurring-single-premium',
+          startPolicyMonth: 1,
+          durationMonths: 12,
+          amount: 100,
+        },
+        {
+          id: 'reduction-1',
+          type: 'regular-premium-reduction',
+          startPolicyMonth: 1,
+          durationMonths: 1,
+          amount: 600,
+        },
+      ],
+      bonuses: [],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0].annualContribution).toBe(4_800)
+    expect(accountRow(result.rows[0], 'topup').contributionAmount).toBe(600)
+    expect(accountRow(result.rows[0], 'accumulation').contributionAmount).toBe(4_200)
+  })
+
+  it('applies reduction-based shortfall charges across active months after a regular premium reduction', () => {
+    const policy = makeDefaultPolicy({
+      monthsAlreadyPaid: 0,
+      accounts: [
+        { ...IUA_ACCOUNT, id: 'initial', currentValue: 0, contributionShare: 0, feeRate: 0, subjectToEec: true },
+        { ...AUA_ACCOUNT, id: 'accumulation', currentValue: 0, feeRate: 0, contributionShare: 1 },
+      ],
+      policyEvents: [
+        {
+          id: 'reduction-1',
+          type: 'regular-premium-reduction',
+          startPolicyMonth: 10,
+          durationMonths: 1,
+          amount: 1_200,
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'shortfall-charge',
+          label: 'Shortfall Charge',
+          trigger: 'regular-premium-reduction',
+          basis: 'annual-reduction-with-active-months',
+          appliesTo: ['accumulation'],
+          rate: 0.5,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+      bonuses: [],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'accumulation').grossFee).toBeCloseTo(150, 2)
+    expect(accountRow(result.rows[1], 'accumulation').grossFee).toBeCloseTo(600, 2)
+  })
+
+  it('restores reduced regular premiums and stops reduction-based shortfall charges after a premium increase', () => {
+    const policy = makeDefaultPolicy({
+      monthsAlreadyPaid: 0,
+      accounts: [
+        { ...IUA_ACCOUNT, id: 'initial', currentValue: 0, contributionShare: 0, feeRate: 0, subjectToEec: true },
+        { ...AUA_ACCOUNT, id: 'accumulation', currentValue: 0, feeRate: 0, contributionShare: 1 },
+      ],
+      policyEvents: [
+        {
+          id: 'reduction-1',
+          type: 'regular-premium-reduction',
+          startPolicyMonth: 10,
+          durationMonths: 1,
+          amount: 1_200,
+        },
+        {
+          id: 'increase-1',
+          type: 'regular-premium-increase',
+          startPolicyMonth: 13,
+          durationMonths: 1,
+          amount: 1_200,
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'shortfall-charge',
+          label: 'Shortfall Charge',
+          trigger: 'regular-premium-reduction',
+          basis: 'annual-reduction-with-active-months',
+          appliesTo: ['accumulation'],
+          rate: 0.5,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+      bonuses: [],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0].annualContribution).toBe(3_900)
+    expect(result.rows[1].annualContribution).toBe(4_200)
+    expect(accountRow(result.rows[0], 'accumulation').grossFee).toBeCloseTo(150, 2)
+    expect(accountRow(result.rows[1], 'accumulation').grossFee).toBeCloseTo(0, 2)
+  })
+
+  it('bases non-payment shortfall charges on the committed premium even after a regular premium reduction', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 3,
+      monthsAlreadyPaid: 36,
+      accounts: [
+        { ...IUA_ACCOUNT, id: 'initial', currentValue: 0, contributionShare: 0, feeRate: 0, subjectToEec: true },
+        { ...AUA_ACCOUNT, id: 'accumulation', currentValue: 10_000, feeRate: 0, contributionShare: 1 },
+        { ...AUA_ACCOUNT, id: 'topup', currentValue: 0, feeRate: 0, contributionShare: 0, subjectToEec: false },
+      ],
+      policyEvents: [
+        {
+          id: 'reduction-1',
+          type: 'regular-premium-reduction',
+          startPolicyMonth: 37,
+          durationMonths: 1,
+          amount: 1_200,
+        },
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 37,
+          durationMonths: 3,
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'shortfall-non-payment',
+          label: 'Shortfall Non-payment',
+          trigger: 'premium-holiday',
+          basis: 'committed-annual-premium-with-overlap-months',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          rate: 0.7,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+      bonuses: [],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'accumulation').grossFee).toBeCloseTo(735, 2)
+  })
+
+  it('applies only the higher Tokio shortfall charge when non-payment and reduction overlap', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 3,
+      monthsAlreadyPaid: 36,
+      accounts: [
+        { ...IUA_ACCOUNT, id: 'initial', currentValue: 0, contributionShare: 0, feeRate: 0, subjectToEec: true },
+        { ...AUA_ACCOUNT, id: 'accumulation', currentValue: 10_000, feeRate: 0, contributionShare: 1 },
+        { ...AUA_ACCOUNT, id: 'topup', currentValue: 0, feeRate: 0, contributionShare: 0, subjectToEec: false },
+      ],
+      policyEvents: [
+        {
+          id: 'reduction-1',
+          type: 'regular-premium-reduction',
+          startPolicyMonth: 37,
+          durationMonths: 1,
+          amount: 1_200,
+        },
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 37,
+          durationMonths: 3,
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'shortfall-non-payment',
+          label: 'Shortfall Non-payment',
+          trigger: 'premium-holiday',
+          basis: 'committed-annual-premium-with-overlap-months',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          rate: 0.7,
+          amount: 0,
+          exclusiveGroup: 'tokio-premium-shortfall',
+          groupResolution: 'max-total-charge',
+          allocation: 'equal-split',
+        },
+        {
+          id: 'shortfall-reduction',
+          label: 'Shortfall Reduction',
+          trigger: 'regular-premium-reduction',
+          basis: 'annual-reduction-with-active-months',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          rate: 0.7,
+          amount: 0,
+          exclusiveGroup: 'tokio-premium-shortfall',
+          groupResolution: 'max-total-charge',
+          allocation: 'equal-split',
+        },
+      ],
+      bonuses: [],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'accumulation').grossFee).toBeCloseTo(840, 2)
+  })
+
   it('adds generalized charge rules on top of base account fee rates', () => {
     const policy = makeDefaultPolicy({
       accounts: [
@@ -441,6 +955,368 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[0], 'flex').grossFee).toBeCloseTo(50, 2)
     expect(accountRow(result.rows[0], 'additional').grossFee).toBeCloseTo(140, 2)
     expect(accountRow(result.rows[1], 'additional').grossFee).toBeCloseTo(120, 2)
+  })
+
+  it('annualizes Prudential Prosper assurance charges from the worked example inputs', () => {
+    const policy = makeDefaultPolicy({
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 120,
+      currentPolicyYear: 10,
+      accounts: PRUDENTIAL_PROSPER_ACCOUNTS,
+      funds: [{
+        name: 'Stable Fund',
+        allocation: 1,
+        ocf: 0,
+        grossReturnLow: 0,
+        grossReturnMid: 0,
+        grossReturnHigh: 0,
+      }],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'prosper-death',
+          label: 'Assurance Charge (Death)',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['growth', 'flex'],
+          fallbackAppliesTo: ['additional'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'prudential-prosper-death',
+            monthlyModalFactor: 0.0834,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+        {
+          id: 'prosper-accidental-death',
+          label: 'Assurance Charge (Accidental Death)',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['growth', 'flex'],
+          fallbackAppliesTo: ['additional'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'prudential-prosper-accidental-death',
+            monthlyModalFactor: 0.0834,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 50,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 100_000,
+      },
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'growth').grossFee).toBeCloseTo(2.071656, 6)
+    expect(accountRow(result.rows[0], 'flex').grossFee).toBeCloseTo(2.071656, 6)
+    expect(accountRow(result.rows[0], 'additional').grossFee).toBe(0)
+  })
+
+  it('annualizes HSBC Flexi Choice and Max death/TI charges from the published yearly rate table', () => {
+    const basePolicy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 120,
+      currentPolicyYear: 10,
+      accounts: [
+        {
+          id: 'policy-value',
+          label: 'Policy Value',
+          feeRate: 0,
+          currentValue: 30_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+        },
+      ],
+      funds: [{
+        name: 'Stable Fund',
+        allocation: 1,
+        ocf: 0,
+        grossReturnLow: 0,
+        grossReturnMid: 0,
+        grossReturnHigh: 0,
+      }],
+      bonuses: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 30,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentBasicSumAssured: 100_000,
+        currentNetSupplementaryPremiumBase: 20_000,
+      },
+    })
+
+    const choiceResult = projectIlpPolicy({
+      ...basePolicy,
+      chargeRules: [
+        {
+          id: 'flexi-choice-death-ti',
+          label: 'Death / TI COI',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy-value'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'hsbc-flexi-choice-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    }, 'mid')
+
+    const maxResult = projectIlpPolicy({
+      ...basePolicy,
+      chargeRules: [
+        {
+          id: 'flexi-max-death-ti',
+          label: 'Death / TI COI',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy-value'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'hsbc-flexi-max-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    }, 'mid')
+
+    expect(accountRow(choiceResult.rows[0], 'policy-value').grossFee).toBeCloseTo(77.4, 6)
+    expect(accountRow(maxResult.rows[0], 'policy-value').grossFee).toBeCloseTo(86, 6)
+  })
+
+  it('projects the next-year Prudential Assure II combined assurance charge from the current worked-example state', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 120,
+      currentPolicyYear: 10,
+      accounts: PRUDENTIAL_PROSPER_ACCOUNTS,
+      funds: [{
+        name: 'Stable Fund',
+        allocation: 1,
+        ocf: 0,
+        grossReturnLow: 0,
+        grossReturnMid: 0,
+        grossReturnHigh: 0,
+      }],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'assure-ii-combined',
+          label: 'Assurance Charge (Appendix A total charge curve)',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['growth', 'flex'],
+          fallbackAppliesTo: ['additional'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'prudential-assure-ii-combined',
+            monthlyModalFactor: 0.0834,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 50,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 100_000,
+        currentSumAssured: 103_000,
+        currentWealthAssureValue: 101_000,
+      },
+    }), 'mid')
+
+    expect(accountRow(result.rows[0], 'growth').grossFee).toBeCloseTo(6.620292, 6)
+    expect(accountRow(result.rows[0], 'flex').grossFee).toBeCloseTo(6.620292, 6)
+    expect(accountRow(result.rows[0], 'additional').grossFee).toBe(0)
+  })
+
+  it('continues the Assure II assurance charge after age 70 using the published Appendix A curve', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 300,
+      currentPolicyYear: 25,
+      accounts: PRUDENTIAL_PROSPER_ACCOUNTS,
+      funds: [{
+        name: 'Stable Fund',
+        allocation: 1,
+        ocf: 0,
+        grossReturnLow: 0,
+        grossReturnMid: 0,
+        grossReturnHigh: 0,
+      }],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'assure-ii-combined',
+          label: 'Assurance Charge (Appendix A total charge curve)',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['growth', 'flex'],
+          fallbackAppliesTo: ['additional'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'prudential-assure-ii-combined',
+            monthlyModalFactor: 0.0834,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 70,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 100_000,
+        currentSumAssured: 103_000,
+        currentWealthAssureValue: 101_000,
+      },
+    }), 'mid')
+
+    expect(accountRow(result.rows[0], 'growth').grossFee).toBeCloseTo(42.423912, 6)
+    expect(accountRow(result.rows[0], 'flex').grossFee).toBeCloseTo(42.423912, 6)
+    expect(accountRow(result.rows[0], 'additional').grossFee).toBe(0)
+  })
+
+  it('applies a user-entered Assure II reduction event as a resulting-state override', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 300,
+      currentPolicyYear: 25,
+      postMipYears: 0,
+      accounts: PRUDENTIAL_PROSPER_ACCOUNTS,
+      funds: [{
+        name: 'Stable Fund',
+        allocation: 1,
+        ocf: 0,
+        grossReturnLow: 0,
+        grossReturnMid: 0,
+        grossReturnHigh: 0,
+      }],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'assure-ii-combined',
+          label: 'Assurance Charge (Appendix A total charge curve)',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['growth', 'flex'],
+          fallbackAppliesTo: ['additional'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'prudential-assure-ii-combined',
+            monthlyModalFactor: 0.0834,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 70,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 100_000,
+        currentSumAssured: 140_000,
+        currentWealthAssureValue: 135_000,
+      },
+      policyEvents: [
+        {
+          id: 'reduce-1',
+          type: 'assurance-benefit-reduction',
+          startPolicyMonth: 301,
+          durationMonths: 1,
+          resultingSumAssured: 110_000,
+          resultingWealthAssureValue: 105_000,
+        },
+      ],
+    }), 'mid')
+
+    expect(accountRow(result.rows[0], 'growth').grossFee).toBeCloseTo(235.6884, 4)
+    expect(accountRow(result.rows[0], 'flex').grossFee).toBeCloseTo(235.6884, 4)
+  })
+
+  it('keeps the reduced Assure II state frozen until a later resumption event, then resumes a higher charge path', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 300,
+      currentPolicyYear: 25,
+      postMipYears: 3,
+      accounts: PRUDENTIAL_PROSPER_ACCOUNTS,
+      funds: [{
+        name: 'Stable Fund',
+        allocation: 1,
+        ocf: 0,
+        grossReturnLow: 0,
+        grossReturnMid: 0,
+        grossReturnHigh: 0,
+      }],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'assure-ii-combined',
+          label: 'Assurance Charge (Appendix A total charge curve)',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['growth', 'flex'],
+          fallbackAppliesTo: ['additional'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'prudential-assure-ii-combined',
+            monthlyModalFactor: 0.0834,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 70,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 100_000,
+        currentSumAssured: 140_000,
+        currentWealthAssureValue: 135_000,
+      },
+      policyEvents: [
+        {
+          id: 'reduce-1',
+          type: 'assurance-benefit-reduction',
+          startPolicyMonth: 301,
+          durationMonths: 1,
+          resultingSumAssured: 110_000,
+          resultingWealthAssureValue: 105_000,
+        },
+        {
+          id: 'resume-1',
+          type: 'assurance-benefit-resumption',
+          startPolicyMonth: 325,
+          durationMonths: 1,
+          resultingSumAssured: 140_000,
+        },
+      ],
+    }), 'mid')
+
+    const reductionYearFee = accountRow(result.rows[0], 'growth').grossFee
+    const frozenYearFee = accountRow(result.rows[1], 'growth').grossFee
+    const resumedYearFee = accountRow(result.rows[2], 'growth').grossFee
+
+    expect(reductionYearFee).toBeGreaterThan(frozenYearFee)
+    expect(frozenYearFee).toBeCloseTo(120.726765, 4)
+    expect(resumedYearFee).toBeGreaterThan(frozenYearFee)
   })
 
   it('reduces annual contributions during premium-holiday months', () => {
@@ -571,6 +1447,122 @@ describe('projectIlpPolicy', () => {
     expect(result.rows[1].annualContribution).toBeCloseTo(3_000, 2)
   })
 
+  it('applies tier-aware startup recovery charges on regular premium reduction events', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 5,
+      monthsAlreadyPaid: 60,
+      monthlyContribution: 2_000,
+      policyEvents: [
+        {
+          id: 'reduction-1',
+          type: 'regular-premium-reduction',
+          startPolicyMonth: 67,
+          durationMonths: 1,
+          amount: 3_000,
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'brc-tiered',
+          label: 'Bonus Recovery Charge',
+          trigger: 'regular-premium-reduction',
+          basis: 'premium-reduction-tiered-startup-recovery',
+          appliesTo: ['iua'],
+          rate: 0,
+          amount: 0,
+          sourceBonusId: 'startup-bonus',
+          allocation: 'equal-split',
+        },
+      ],
+      bonuses: [
+        {
+          id: 'startup-bonus',
+          type: 'allocation',
+          label: 'Start-up Bonus',
+          appliesTo: ['iua'],
+          startPolicyYear: 1,
+          endPolicyYear: 1,
+          mode: 'premium-allocation',
+          rate: 0,
+          amount: 0,
+          tieredRates: [
+            { currency: 'SGD', minAnnualPremium: 6_000, maxAnnualPremium: 23_999.99, rate: 0.08 },
+            { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 41_999.99, rate: 0.1 },
+            { currency: 'SGD', minAnnualPremium: 42_000, maxAnnualPremium: null, rate: 0.12 },
+          ],
+        },
+      ],
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0].annualContribution).toBeCloseTo(22_500, 2)
+    expect(accountRow(result.rows[0], 'iua').grossFee).toBeCloseTo(1_015, 2)
+  })
+
+  it('applies premium-base AMF multipliers during and after MIP', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 19,
+      monthsAlreadyPaid: 228,
+      currency: 'SGD',
+      monthlyContribution: 1_000,
+      mipLength: 20,
+      postMipYears: 2,
+      accounts: [
+        {
+          ...IUA_ACCOUNT,
+          id: 'regular',
+          label: 'Regular Premium Account',
+          currentValue: 20_000,
+          feeRate: 0,
+          postMipFeeRate: 0,
+          contributionShare: 1,
+        },
+      ],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'voyage-amf-during',
+          label: 'Account Maintenance Fee',
+          basis: 'premium-base-mip-multiplier',
+          activeWindow: 'during-mip',
+          appliesTo: ['regular'],
+          rate: 0.0215,
+          amount: 0,
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: true,
+            multiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 16, mode: 'policy-year' },
+              { startPolicyYear: 17, endPolicyYear: 20, mode: 'fixed', multiplier: 16 },
+            ],
+          },
+          allocation: 'equal-split',
+        },
+        {
+          id: 'voyage-amf-after',
+          label: 'Account Maintenance Fee',
+          basis: 'premium-base-mip-multiplier',
+          activeWindow: 'after-mip',
+          appliesTo: ['regular'],
+          rate: 0.01,
+          amount: 0,
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: true,
+            multiplierSchedule: [
+              { startPolicyYear: 21, endPolicyYear: null, mode: 'fixed', multiplier: 20 },
+            ],
+          },
+          allocation: 'equal-split',
+        },
+      ],
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0].policyYear).toBe(20)
+    expect(accountRow(result.rows[0], 'regular').grossFee).toBeCloseTo(4_128, 2)
+    expect(result.rows[1].policyYear).toBe(21)
+    expect(accountRow(result.rows[1], 'regular').grossFee).toBeCloseTo(2_400, 2)
+  })
+
   it('restores missed premiums and bonus credits after a premium holiday back-pay', () => {
     const policy = makeDefaultPolicy({
       currentPolicyYear: 14,
@@ -615,6 +1607,54 @@ describe('projectIlpPolicy', () => {
     expect(result.rows[0].annualContribution).toBeCloseTo(4_200, 2)
     expect(accountRow(result.rows[0], 'aua').grossFee).toBeCloseTo(105.25, 2)
     expect(accountRow(result.rows[0], 'aua').bonusCredit).toBeCloseTo(331.5, 2)
+  })
+
+  it('skips premium-holiday charges until the free lifetime holiday duration is exhausted', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 2,
+      monthsAlreadyPaid: 24,
+      currency: 'SGD',
+      monthlyContribution: 1_000,
+      accounts: [
+        {
+          ...IUA_ACCOUNT,
+          id: 'regular',
+          label: 'Regular Premium Account',
+          currentValue: 15_000,
+          feeRate: 0,
+          postMipFeeRate: 0,
+          contributionShare: 1,
+        },
+      ],
+      bonuses: [],
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 25,
+          durationMonths: 30,
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'phc',
+          label: 'Premium Holiday Charge',
+          trigger: 'premium-holiday',
+          basis: 'annual-premium-with-overlap-months',
+          appliesTo: ['regular'],
+          freeLifetimeMonths: 24,
+          rate: 0.5,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0].annualContribution).toBe(0)
+    expect(accountRow(result.rows[0], 'regular').grossFee).toBeCloseTo(0, 2)
+    expect(accountRow(result.rows[1], 'regular').grossFee).toBeCloseTo(0, 2)
+    expect(accountRow(result.rows[2], 'regular').grossFee).toBeCloseTo(3_000, 2)
   })
 
   it('accrues premium-holiday charges and refunds a configured share after full repayment', () => {
@@ -751,6 +1791,125 @@ describe('projectIlpPolicy', () => {
 
     expect(accountRow(result.rows[0], 'growth').grossFee).toBeCloseTo(12.5, 2)
     expect(accountRow(result.rows[0], 'growth').withdrawalAmount).toBe(150)
+  })
+
+  it('suppresses a partial-withdrawal charge when the event is explicitly marked as waived', () => {
+    const basePolicy = makeDefaultPolicy({
+      currentPolicyYear: 10,
+      monthsAlreadyPaid: 120,
+      monthlyContribution: 0,
+      accounts: [
+        { ...IUA_ACCOUNT, id: 'growth', label: 'Growth', currentValue: 800, feeRate: 0, postMipFeeRate: 0, contributionShare: 1, subjectToEec: true },
+      ],
+      policyEvents: [
+        {
+          id: 'withdrawal-1',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 121,
+          durationMonths: 1,
+          amount: 150,
+          accountId: 'growth',
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'partial-withdrawal-charge',
+          label: 'Partial Withdrawal Charge',
+          trigger: 'partial-withdrawal',
+          basis: 'event-amount',
+          appliesTo: ['growth'],
+          rate: 0.25,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+      bonuses: [],
+    })
+
+    const charged = projectIlpPolicy(basePolicy, 'mid')
+    const waived = projectIlpPolicy({
+      ...basePolicy,
+      policyEvents: [
+        {
+          ...basePolicy.policyEvents![0],
+          chargeWaived: true,
+        },
+      ],
+    }, 'mid')
+
+    expect(accountRow(charged.rows[0], 'growth').grossFee).toBeCloseTo(37.5, 2)
+    expect(accountRow(waived.rows[0], 'growth').grossFee).toBeCloseTo(0, 2)
+    expect(accountRow(waived.rows[0], 'growth').withdrawalAmount).toBe(150)
+  })
+
+  it('suppresses premium-shortfall charges when holiday and reduction events are explicitly waived', () => {
+    const basePolicy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 36,
+      monthlyContribution: 100,
+      accounts: [
+        { ...IUA_ACCOUNT, id: 'initial', label: 'Initial', currentValue: 0, feeRate: 0, postMipFeeRate: 0, contributionShare: 0, subjectToEec: true },
+        { ...AUA_ACCOUNT, id: 'accumulation', label: 'Accumulation', currentValue: 1_000, feeRate: 0, postMipFeeRate: 0, contributionShare: 1, subjectToEec: true },
+      ],
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 37,
+          durationMonths: 2,
+        },
+        {
+          id: 'reduction-1',
+          type: 'regular-premium-reduction',
+          startPolicyMonth: 39,
+          durationMonths: 1,
+          amount: 600,
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'shortfall-non-payment',
+          label: 'Premium Shortfall Charge (Non-payment)',
+          trigger: 'premium-holiday',
+          basis: 'committed-annual-premium-with-overlap-months',
+          appliesTo: ['accumulation'],
+          rate: 0.6,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+        {
+          id: 'shortfall-reduction',
+          label: 'Premium Shortfall Charge (Regular Premium Reduction)',
+          trigger: 'regular-premium-reduction',
+          basis: 'annual-reduction-with-active-months',
+          appliesTo: ['accumulation'],
+          rate: 0.6,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+      bonuses: [],
+    })
+
+    const charged = projectIlpPolicy(basePolicy, 'mid')
+    const waived = projectIlpPolicy({
+      ...basePolicy,
+      policyEvents: [
+        {
+          ...basePolicy.policyEvents![0],
+          chargeWaived: true,
+        },
+        {
+          ...basePolicy.policyEvents![1],
+          chargeWaived: true,
+        },
+      ],
+    }, 'mid')
+
+    expect(accountRow(charged.rows[0], 'accumulation').grossFee).toBeCloseTo(420, 2)
+    expect(accountRow(waived.rows[0], 'accumulation').grossFee).toBeCloseTo(0, 2)
+    expect(charged.rows[1].annualContribution).toBeCloseTo(600, 2)
+    expect(waived.rows[1].annualContribution).toBeCloseTo(600, 2)
   })
 
   it('throws for mature policies instead of silently projecting', () => {
