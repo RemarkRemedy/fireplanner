@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { compileHouseholdPlan } from '@/lib/household/compileHouseholdPlan'
 import type { HouseholdPlan, PlanningAdult, PropertyPlan } from '@/lib/household/types'
+import { buildLegacyMonteCarloEngineParams } from '@/lib/simulation/monteCarloParams'
 
 function makeDownsizingFixture(ownershipPercent: number): HouseholdPlan {
   const adult: PlanningAdult = {
@@ -344,8 +345,6 @@ function buildMcStores(ownershipPercent: number) {
   return { profile, income, property }
 }
 
-import { buildLegacyMonteCarloEngineParams } from '@/lib/simulation/monteCarloParams'
-
 describe('downsizing ownership scaling: legacy MC path', () => {
   it('scales downsizing portfolio adjustment by ownershipPercent', () => {
     const fullStores = buildMcStores(1.0)
@@ -375,5 +374,5 @@ describe('downsizing ownership scaling: legacy MC path', () => {
   })
 })
 
-// Export the fixture for use by Task 2 and Task 3 tests
+// Export the fixture for use by downstream tests (Task 3 projection path)
 export { makeDownsizingFixture }
