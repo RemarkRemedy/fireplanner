@@ -830,6 +830,59 @@ describe('templateVariantToPolicySeed', () => {
     )
   })
 
+  it('maps Invest Flex TriVantage into a partial regular-premium seed with fixed 10-year MIP bonus and charge schedules', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'income-invest-flex-trivantage')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs3-investment-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs3-loyalty-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs3-future-premium-option')
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.mipLength).toBe(10)
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'policy',
+        contributionRules: [
+          { phase: 'top-up', contributionShare: 1 },
+        ],
+      }),
+    ])
+    expect(seed.bonuses).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'investment-bonus',
+          mode: 'premium-allocation',
+          rate: 0.15,
+        }),
+        expect.objectContaining({
+          id: 'loyalty-bonus',
+          mode: 'annual-rate',
+          startPolicyYear: 10,
+          rate: 0.005,
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules?.find((rule) => rule.id === 'premium-holiday-charge')?.rateSchedule).toEqual([
+      { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
+      { startPolicyYear: 2, endPolicyYear: 2, rate: 1 },
+      { startPolicyYear: 3, endPolicyYear: 3, rate: 0.8 },
+      { startPolicyYear: 4, endPolicyYear: 4, rate: 0 },
+      { startPolicyYear: 5, endPolicyYear: 5, rate: 0 },
+      { startPolicyYear: 6, endPolicyYear: 6, rate: 0 },
+      { startPolicyYear: 7, endPolicyYear: 7, rate: 0 },
+      { startPolicyYear: 8, endPolicyYear: 8, rate: 0 },
+      { startPolicyYear: 9, endPolicyYear: 9, rate: 0 },
+      { startPolicyYear: 10, endPolicyYear: 10, rate: 0 },
+    ])
+  })
+
   it('maps Goal Builder II into a partial premium-year seed with PAF and surrender schedules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'hsbc-life-goal-builder-ii')

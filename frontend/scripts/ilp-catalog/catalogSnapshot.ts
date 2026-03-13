@@ -11,6 +11,7 @@ import { parseHsbcGoalBuilderIi } from './parsers/hsbcGoalBuilderIi.js'
 import { parseHsbcWealthHarvest } from './parsers/hsbcWealthHarvest.js'
 import { parseHsbcWealthVoyage } from './parsers/hsbcWealthVoyage.js'
 import { parseIncomeInvestFlex } from './parsers/incomeInvestFlex.js'
+import { parseIncomeInvestFlexTriVantage } from './parsers/incomeInvestFlexTriVantage.js'
 import { parseIncomeInvestFlexVantage } from './parsers/incomeInvestFlexVantage.js'
 import { parseEtiqaInvestFlexPrimeIi } from './parsers/etiqaInvestFlexPrimeIi.js'
 import { parseEtiqaInvestFlexPro } from './parsers/etiqaInvestFlexPro.js'
@@ -33,6 +34,7 @@ export const PRODUCTS_PATH = path.join(GENERATED_DIR, 'ilpCatalog.products.json'
 export const PARSER_VERSION = '0.1.0'
 export const CATALOG_VERSION = '0.1.0'
 const INCOME_INVEST_FLEX_SOURCE_PATH = '/Users/tj/Downloads/pdfs/VS1_Summary.pdf'
+const INCOME_INVEST_FLEX_TRIVANTAGE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/VS3_Summary.pdf'
 const INCOME_INVEST_FLEX_VANTAGE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/VS2_Summary.pdf'
 const ETIQA_INVEST_FLEX_PRIME_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest flex prime II_Product Summary.pdf'
 const ETIQA_INVEST_FLEX_PRO_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest flex pro_Product Summary.pdf'
@@ -120,6 +122,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const discovery = await discoverManualCatalogSources()
   const incomeInvestFlexExtracted = await extractPdfText(INCOME_INVEST_FLEX_SOURCE_PATH)
   const incomeInvestFlexChecksum = await sha256(INCOME_INVEST_FLEX_SOURCE_PATH)
+  const incomeInvestFlexTriVantageExtracted = await extractPdfText(INCOME_INVEST_FLEX_TRIVANTAGE_SOURCE_PATH)
+  const incomeInvestFlexTriVantageChecksum = await sha256(INCOME_INVEST_FLEX_TRIVANTAGE_SOURCE_PATH)
   const incomeInvestFlexVantageExtracted = await extractPdfText(INCOME_INVEST_FLEX_VANTAGE_SOURCE_PATH)
   const incomeInvestFlexVantageChecksum = await sha256(INCOME_INVEST_FLEX_VANTAGE_SOURCE_PATH)
   const etiqaInvestFlexPrimeIiExtracted = await extractPdfText(ETIQA_INVEST_FLEX_PRIME_II_SOURCE_PATH)
@@ -168,6 +172,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseIncomeInvestFlex({
       document: incomeInvestFlexExtracted,
       sourceChecksumSha256: incomeInvestFlexChecksum,
+    }),
+    parseIncomeInvestFlexTriVantage({
+      document: incomeInvestFlexTriVantageExtracted,
+      sourceChecksumSha256: incomeInvestFlexTriVantageChecksum,
     }),
     parseIncomeInvestFlexVantage({
       document: incomeInvestFlexVantageExtracted,

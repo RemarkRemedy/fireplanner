@@ -265,6 +265,18 @@ describe('IlpReviewPage', () => {
     expect(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i })).toBeEnabled()
   }, 10_000)
 
+  it('shows Invest Flex TriVantage as a partial catalog product that can be selected from the picker', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'TriVantage')
+
+    expect(within(dialog).getByText('Invest Flex TriVantage')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i })).toBeEnabled()
+  }, 10_000)
+
   it('shows Invest Flex as a partial catalog product that can be selected from the picker', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
