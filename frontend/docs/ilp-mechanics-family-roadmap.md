@@ -42,7 +42,7 @@ The planning model has three layers:
 
 - Summary corpus baseline: `92`
 - Current catalog products: `9`
-- Current `supported` products: `4`
+- Current `supported` products: `6`
 - Structural family counts from the classifier:
   - `58` standard 2-account core cashflow
   - `5` multi-account / special-account
@@ -50,8 +50,8 @@ The planning model has three layers:
 
 Most importantly:
 
-- `supported-now` is `4`
-- `supported-after-kernel` is `59`
+- `supported-now` is `6`
+- `supported-after-kernel` is `57`
 - `partial-v1` is `29`
 
 `supported-after-kernel` is a boundary label, not a one-step claim. Many of those products still require multiple workstreams.
@@ -169,11 +169,10 @@ Completed in this slice:
   - Tokio Wealth Pro (II)
 
 Promotion review result:
-- no further promotions from this slice alone beyond the Prudential promotions above
-- `hsbc-life-wealth-abundance` remains `partial`
+- HSBC Wealth Harvest and HSBC Wealth Abundance are now `supported` under the explicit V1 reinvestment-default assumption for dividend-paying funds
 - `tokio-marine-wealth-pro-ii` remains `partial`
 - blocker is no longer bonus-richness itself; the remaining blockers are:
-  - distribution-mode assumptions
+  - distribution-mode assumptions where no safe default has been adopted
   - broader protection-state / ownership mechanics
   - broader parser/catalog expansion where no safe supported boundary exists
 
@@ -196,9 +195,9 @@ Validated classifier state:
   - `5` multi-account / special-account
   - `29` protection-heavy / death-benefit
 - support boundary:
-  - `4` supported-now
-  - `59` supported-after-kernel
-  - `29` partial-v1
+- `6` supported-now
+- `57` supported-after-kernel
+- `29` partial-v1
 
 The immediate execution focus is no longer classifier QA. It is choosing the next family/cohort promotion that should consume the completed cashflow kernel.
 

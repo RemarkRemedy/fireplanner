@@ -16,8 +16,8 @@
   },
   "v1SupportBoundaries": {
     "partial-v1": 29,
-    "supported-after-kernel": 59,
-    "supported-now": 4
+    "supported-after-kernel": 57,
+    "supported-now": 6
   },
   "implementationCohorts": {
     "aia-ilp-generic": 20,
@@ -31,10 +31,10 @@
     "tokio-shortfall-recurring-single-premium": 21
   },
   "kernelTiers": {
-    "0-workstreams": 4,
+    "0-workstreams": 6,
     "1-workstream": 26,
-    "2-3-workstreams": 33,
-    "4-plus-workstreams": 29
+    "2-3-workstreams": 32,
+    "4-plus-workstreams": 28
   },
   "rows": [
     {
@@ -1129,35 +1129,19 @@
         "premium-holiday-recovery"
       ],
       "implementationCohort": "hsbc-premium-base-recovery",
-      "v1SupportBoundary": "supported-after-kernel",
-      "currentCatalogStatus": "partial",
-      "economicsStatus": "partial-modeled-subset",
+      "v1SupportBoundary": "supported-now",
+      "currentCatalogStatus": "supported",
+      "economicsStatus": "supported",
       "parserExists": true,
-      "goldenCoverageStatus": "subset-fixtures",
-      "kernelWorkstreams": [
-        "assurance-charge-kernel",
-        "bonus-richness-kernel",
-        "core-cashflow-kernel",
-        "distribution-mode-assumption-model"
-      ],
-      "kernelTier": "4-plus-workstreams",
-      "kernelPrerequisites": [
-        "assurance-charge-overlay",
-        "bonus-richness-overlay",
-        "core-cashflow-kernel",
-        "distribution-mode-assumption-model"
-      ],
+      "goldenCoverageStatus": "full-supported-gate",
+      "kernelWorkstreams": [],
+      "kernelTier": "0-workstreams",
+      "kernelPrerequisites": [],
       "modeledSubsetAlreadyCovered": [
-        "hsbc-abundance-regular-vs-topup-account-routing",
-        "hsbc-abundance-startup-bonus-tiered",
-        "hsbc-abundance-power-up-bonus",
-        "hsbc-abundance-loyalty-bonus-partial-withdrawal-suspension",
-        "hsbc-abundance-topup-and-rsp-premium-charge",
-        "hsbc-abundance-amf-during-and-after-mip",
-        "hsbc-abundance-tiered-brc",
-        "hsbc-abundance-free-partial-withdrawal",
-        "hsbc-abundance-pwc",
-        "hsbc-abundance-eec"
+        "branch:hsbc-abundance-free-withdrawal",
+        "branch:hsbc-abundance-tiered-brc",
+        "branch:hsbc-abundance-topup-charge",
+        "branch:hsbc-abundance-power-up-restoration"
       ],
       "metadataOnlyBehaviors": [
         "hsbc-abundance-dividend-distribution-option",
@@ -1166,8 +1150,8 @@
         "hsbc-abundance-life-replacement-option"
       ],
       "manualInputRequirements": [],
-      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Top-up Account + Regular Premium Account\" and gap tags ad-hoc-premium-routing, dividend-mode, dynamic-charge-model, free-partial-withdrawal, non-guaranteed-charges, premium-holiday, tiered-bonus, withdrawal-reduction-charges. Cross-cutting overlays are ad-hoc-premium-routing, assurance-charge, bonus-richness, distribution-mode, dynamic-charge, premium-holiday-recovery. Implementation cohort is hsbc-premium-base-recovery from insurer/product patterning. Current catalog status is partial with economics status partial-modeled-subset.",
-      "confidence": 0.85,
+      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Top-up Account + Regular Premium Account\" and gap tags ad-hoc-premium-routing, dividend-mode, dynamic-charge-model, free-partial-withdrawal, non-guaranteed-charges, premium-holiday, tiered-bonus, withdrawal-reduction-charges. Cross-cutting overlays are ad-hoc-premium-routing, assurance-charge, bonus-richness, distribution-mode, dynamic-charge, premium-holiday-recovery. Implementation cohort is hsbc-premium-base-recovery from insurer/product patterning. Current catalog status is supported with economics status supported.",
+      "confidence": 0.95,
       "evidenceRefs": [
         "accountModel:Top-up Account + Regular Premium Account",
         "bucket:B-extendable",
@@ -1286,32 +1270,19 @@
         "premium-holiday-recovery"
       ],
       "implementationCohort": "hsbc-premium-base-recovery",
-      "v1SupportBoundary": "supported-after-kernel",
-      "currentCatalogStatus": "partial",
-      "economicsStatus": "partial-modeled-subset",
+      "v1SupportBoundary": "supported-now",
+      "currentCatalogStatus": "supported",
+      "economicsStatus": "supported",
       "parserExists": true,
-      "goldenCoverageStatus": "subset-fixtures",
-      "kernelWorkstreams": [
-        "assurance-charge-kernel",
-        "core-cashflow-kernel",
-        "distribution-mode-assumption-model"
-      ],
-      "kernelTier": "2-3-workstreams",
-      "kernelPrerequisites": [
-        "assurance-charge-overlay",
-        "core-cashflow-kernel",
-        "distribution-mode-assumption-model"
-      ],
+      "goldenCoverageStatus": "full-supported-gate",
+      "kernelWorkstreams": [],
+      "kernelTier": "0-workstreams",
+      "kernelPrerequisites": [],
       "modeledSubsetAlreadyCovered": [
-        "hsbc-harvest-regular-vs-topup-account-routing",
-        "hsbc-harvest-startup-bonus",
-        "hsbc-harvest-loyalty-bonus-partial-withdrawal-suspension",
-        "hsbc-harvest-topup-and-rsp-premium-charge",
-        "hsbc-harvest-amf",
-        "hsbc-harvest-premium-holiday-charge",
-        "hsbc-harvest-regular-account-partial-withdrawal-charge",
-        "hsbc-harvest-brc",
-        "hsbc-harvest-eec"
+        "branch:hsbc-harvest-holiday-charge",
+        "branch:hsbc-harvest-pwc",
+        "branch:hsbc-harvest-brc",
+        "branch:hsbc-harvest-topup-charge"
       ],
       "metadataOnlyBehaviors": [
         "hsbc-harvest-regular-withdrawal-facility",
@@ -1320,8 +1291,8 @@
         "hsbc-harvest-rsp-restart-after-premium-holiday"
       ],
       "manualInputRequirements": [],
-      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Top-up Account + Regular Premium Account\" and gap tags ad-hoc-premium-routing, dividend-mode, dynamic-charge-model, non-guaranteed-charges, premium-holiday, withdrawal-reduction-charges. Cross-cutting overlays are ad-hoc-premium-routing, assurance-charge, distribution-mode, dynamic-charge, premium-holiday-recovery. Implementation cohort is hsbc-premium-base-recovery from insurer/product patterning. Current catalog status is partial with economics status partial-modeled-subset.",
-      "confidence": 0.85,
+      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Top-up Account + Regular Premium Account\" and gap tags ad-hoc-premium-routing, dividend-mode, dynamic-charge-model, non-guaranteed-charges, premium-holiday, withdrawal-reduction-charges. Cross-cutting overlays are ad-hoc-premium-routing, assurance-charge, distribution-mode, dynamic-charge, premium-holiday-recovery. Implementation cohort is hsbc-premium-base-recovery from insurer/product patterning. Current catalog status is supported with economics status supported.",
+      "confidence": 0.95,
       "evidenceRefs": [
         "accountModel:Top-up Account + Regular Premium Account",
         "bucket:B-extendable",

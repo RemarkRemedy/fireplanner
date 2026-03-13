@@ -87,7 +87,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('missed-bonus restoration'))).toBe(false)
   })
 
-  it('maps HSBC Wealth Harvest into a partial seed with regular-vs-topup mechanics', () => {
+  it('maps HSBC Wealth Harvest into a supported seed with regular-vs-topup mechanics', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'hsbc-life-wealth-harvest')
     expect(product).toBeDefined()
@@ -96,13 +96,14 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
-    expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-harvest-premium-holiday-charge')
-    expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-harvest-regular-account-partial-withdrawal-charge')
-    expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-harvest-brc')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-harvest-holiday-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-harvest-pwc')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-harvest-brc')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-harvest-regular-withdrawal-facility')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-harvest-dividend-distribution-option')
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('reinvest by default'))).toBe(true)
     expect(seed.accounts.find((account) => account.id === 'regular')?.contributionShare).toBe(1)
     expect(seed.accounts.find((account) => account.id === 'topup')?.contributionRules).toEqual([
       { phase: 'top-up', contributionShare: 1 },
@@ -112,7 +113,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.bonuses.find((bonus) => bonus.label === 'Start-up Bonus')?.rate).toBe(0.35)
   })
 
-  it('maps HSBC Wealth Abundance into a partial seed with tiered startup recovery and free withdrawals', () => {
+  it('maps HSBC Wealth Abundance into a supported seed with tiered startup recovery and free withdrawals', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'hsbc-life-wealth-abundance')
     expect(product).toBeDefined()
@@ -121,11 +122,12 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
-    expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-abundance-tiered-brc')
-    expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-abundance-free-partial-withdrawal')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-abundance-tiered-brc')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-abundance-free-withdrawal')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-abundance-dividend-distribution-option')
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('reinvest by default'))).toBe(true)
     expect(seed.accounts.find((account) => account.id === 'topup')?.contributionRules).toEqual([
       { phase: 'top-up', contributionShare: 1 },
     ])
@@ -276,7 +278,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings).not.toContain('Free first partial withdrawal after 10 years is not modeled automatically.')
   })
 
-  it('maps PRUVantage Prosper into a partial seed with assurance sum-at-risk rules', () => {
+  it('maps PRUVantage Prosper into a supported seed with assurance sum-at-risk rules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'prudential-pruvantage-prosper')
     expect(product).toBeDefined()
@@ -285,8 +287,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:prosper-assurance-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('growth-account-distribution-election')
     expect(seed.chargeRules).toEqual(
@@ -320,7 +322,7 @@ describe('templateVariantToPolicySeed', () => {
     )
   })
 
-  it('maps PRUVantage Assure II into a partial seed with an Appendix A assurance-charge rule', () => {
+  it('maps PRUVantage Assure II into a supported seed with an Appendix A assurance-charge rule', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'prudential-pruvantage-assure-ii')
     expect(product).toBeDefined()
@@ -329,8 +331,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-ii-pre-70-assurance')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-ii-post-70-charge-tail')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-ii-manual-reduction-resumption')

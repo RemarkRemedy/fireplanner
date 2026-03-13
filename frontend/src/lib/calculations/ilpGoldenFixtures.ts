@@ -635,6 +635,29 @@ function hsbcHarvestEventHeavyPolicy(
   )
 }
 
+function hsbcHarvestStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'hsbc-life-wealth-harvest', 'sgd-mip-11', id)
+  return withHsbcHarvestBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden HSBC Wealth Harvest (SGD / MIP 11 Stress Mix)',
+        monthlyContribution: 1_000,
+        currentPolicyYear: 6,
+        monthsAlreadyPaid: 60,
+        postMipYears: 8,
+        policyEvents: [],
+      }),
+      HSBC_STRESS_FUNDS,
+    ),
+    17_000,
+    3_400,
+  )
+}
+
 function hsbcAbundanceBaselinePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   variantId: string,
@@ -720,6 +743,29 @@ function hsbcAbundanceEventHeavyPolicy(
     ),
     34_000,
     6_000,
+  )
+}
+
+function hsbcAbundanceStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'hsbc-life-wealth-abundance', 'usd-mip-10', id)
+  return withHsbcHarvestBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden HSBC Wealth Abundance (USD / MIP 10 Stress Mix)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 6,
+        monthsAlreadyPaid: 60,
+        postMipYears: 8,
+        policyEvents: [],
+      }),
+      HSBC_STRESS_FUNDS,
+    ),
+    27_500,
+    4_200,
   )
 }
 
@@ -1701,15 +1747,15 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     productId: 'hsbc-life-wealth-harvest',
     variantId: 'sgd-mip-11',
     scenarioId: 'baseline',
-    fixtureClass: 'partial-modeled-subset',
+    fixtureClass: 'supported',
     coverageTags: ['baseline'],
-    description: 'HSBC Wealth Harvest modeled-subset baseline scenario.',
+    description: 'HSBC Wealth Harvest baseline scenario under the V1 reinvestment-default assumption.',
   },
   {
     productId: 'hsbc-life-wealth-harvest',
     variantId: 'sgd-mip-11',
     scenarioId: 'event-heavy',
-    fixtureClass: 'partial-modeled-subset',
+    fixtureClass: 'supported',
     coverageTags: [
       'event-heavy',
       'branch:hsbc-harvest-holiday-charge',
@@ -1717,7 +1763,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'branch:hsbc-harvest-brc',
       'branch:hsbc-harvest-topup-charge',
     ],
-    description: 'HSBC Wealth Harvest modeled-subset event-heavy scenario covering holiday charges, BRC, top-up charge, and regular-account PWC.',
+    description: 'HSBC Wealth Harvest supported event-heavy scenario covering holiday charges, BRC, top-up charge, and regular-account PWC.',
     integrityChecks: [
       {
         description: 'premium holiday materially increases regular-account gross fees beyond the base AMF path',
@@ -1748,26 +1794,34 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     ],
   },
   {
+    productId: 'hsbc-life-wealth-harvest',
+    variantId: 'sgd-mip-11',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'HSBC Wealth Harvest alternate-fund stress scenario under the V1 reinvestment-default assumption.',
+  },
+  {
     productId: 'hsbc-life-wealth-abundance',
     variantId: 'sgd-mip-10',
     scenarioId: 'baseline',
-    fixtureClass: 'partial-modeled-subset',
+    fixtureClass: 'supported',
     coverageTags: ['baseline'],
-    description: 'HSBC Wealth Abundance modeled-subset baseline scenario.',
+    description: 'HSBC Wealth Abundance SGD baseline scenario under the V1 reinvestment-default assumption.',
   },
   {
     productId: 'hsbc-life-wealth-abundance',
     variantId: 'usd-mip-10',
     scenarioId: 'baseline',
-    fixtureClass: 'partial-modeled-subset',
+    fixtureClass: 'supported',
     coverageTags: ['baseline'],
-    description: 'HSBC Wealth Abundance USD baseline scenario without recurring single premium.',
+    description: 'HSBC Wealth Abundance USD baseline scenario without recurring single premium under the V1 reinvestment-default assumption.',
   },
   {
     productId: 'hsbc-life-wealth-abundance',
     variantId: 'sgd-mip-10',
     scenarioId: 'event-heavy',
-    fixtureClass: 'partial-modeled-subset',
+    fixtureClass: 'supported',
     coverageTags: [
       'event-heavy',
       'branch:hsbc-abundance-free-withdrawal',
@@ -1775,7 +1829,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'branch:hsbc-abundance-topup-charge',
       'branch:hsbc-abundance-power-up-restoration',
     ],
-    description: 'HSBC Wealth Abundance modeled-subset event-heavy scenario covering free and charged withdrawals, top-up charge, premium-holiday repayment, and tiered BRC.',
+    description: 'HSBC Wealth Abundance supported event-heavy scenario covering free and charged withdrawals, top-up charge, premium-holiday repayment, and tiered BRC.',
     integrityChecks: [
       {
         description: 'the top-up charge reduces the top-up account contribution below the gross top-up amount',
@@ -1826,6 +1880,14 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
         },
       },
     ],
+  },
+  {
+    productId: 'hsbc-life-wealth-abundance',
+    variantId: 'usd-mip-10',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'HSBC Wealth Abundance alternate-fund stress scenario under the V1 reinvestment-default assumption.',
   },
   {
     productId: 'hsbc-life-wealth-voyage',
@@ -2623,11 +2685,17 @@ function buildPolicyForDefinition(
   if (definition.productId === 'hsbc-life-wealth-harvest' && definition.scenarioId === 'event-heavy') {
     return hsbcHarvestEventHeavyPolicy(snapshot, id)
   }
+  if (definition.productId === 'hsbc-life-wealth-harvest' && definition.scenarioId === 'ocf-stress') {
+    return hsbcHarvestStressPolicy(snapshot, id)
+  }
   if (definition.productId === 'hsbc-life-wealth-abundance' && definition.scenarioId === 'baseline') {
     return hsbcAbundanceBaselinePolicy(snapshot, definition.variantId, id)
   }
   if (definition.productId === 'hsbc-life-wealth-abundance' && definition.scenarioId === 'event-heavy') {
     return hsbcAbundanceEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'hsbc-life-wealth-abundance' && definition.scenarioId === 'ocf-stress') {
+    return hsbcAbundanceStressPolicy(snapshot, id)
   }
   if (definition.productId === 'hsbc-life-wealth-voyage' && definition.scenarioId === 'baseline') {
     return hsbcVoyageBaselinePolicy(snapshot, definition.variantId, id)

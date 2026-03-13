@@ -50,18 +50,18 @@ Corpus size: 92
 
 | Key | Count |
 | --- | ---: |
-| `supported-after-kernel` | 59 |
+| `supported-after-kernel` | 57 |
 | `partial-v1` | 29 |
-| `supported-now` | 4 |
+| `supported-now` | 6 |
 
 ## Kernel Workstream Tiers
 
 | Key | Count |
 | --- | ---: |
-| `2-3-workstreams` | 33 |
-| `4-plus-workstreams` | 29 |
+| `2-3-workstreams` | 32 |
+| `4-plus-workstreams` | 28 |
 | `1-workstream` | 26 |
-| `0-workstreams` | 4 |
+| `0-workstreams` | 6 |
 
 ## Product Matrix
 
@@ -85,9 +85,9 @@ Corpus size: 92
 | GBII_Summary.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, assurance-charge, distribution-mode, dynamic-charge, premium-holiday-recovery | `great-eastern-ilp-generic` | `supported-after-kernel` | `2-3-workstreams` | `not-in-catalog` | `none` |
 | GL3_Summary.pdf | `standard-2-account-core-cashflow` | dynamic-charge | `great-eastern-ilp-generic` | `supported-after-kernel` | `1-workstream` | `not-in-catalog` | `none` |
 | HSBC Life Flexi Protector Product Summary.pdf | `protection-heavy-death-benefit` | ad-hoc-premium-routing, assurance-charge, distribution-mode, dynamic-charge, premium-holiday-recovery, protection-structure | `hsbc-premium-base-recovery` | `partial-v1` | `4-plus-workstreams` | `not-in-catalog` | `none` |
-| HSBC Life Wealth Abundance Product Summary.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, assurance-charge, bonus-richness, distribution-mode, dynamic-charge, premium-holiday-recovery | `hsbc-premium-base-recovery` | `supported-after-kernel` | `4-plus-workstreams` | `partial` | `subset-fixtures` |
+| HSBC Life Wealth Abundance Product Summary.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, assurance-charge, bonus-richness, distribution-mode, dynamic-charge, premium-holiday-recovery | `hsbc-premium-base-recovery` | `supported-now` | `0-workstreams` | `supported` | `full-supported-gate` |
 | HSBC Life Wealth Accelerate Product Summary.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, assurance-charge, bonus-richness, distribution-mode, dynamic-charge, premium-holiday-recovery | `hsbc-premium-base-recovery` | `supported-now` | `0-workstreams` | `supported` | `full-supported-gate` |
-| HSBC Life Wealth Harvest Product Summary.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, assurance-charge, distribution-mode, dynamic-charge, premium-holiday-recovery | `hsbc-premium-base-recovery` | `supported-after-kernel` | `2-3-workstreams` | `partial` | `subset-fixtures` |
+| HSBC Life Wealth Harvest Product Summary.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, assurance-charge, distribution-mode, dynamic-charge, premium-holiday-recovery | `hsbc-premium-base-recovery` | `supported-now` | `0-workstreams` | `supported` | `full-supported-gate` |
 | HSBC Life Wealth Invest (Cash_SRS) PS.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, assurance-charge, distribution-mode, dynamic-charge | `hsbc-premium-base-recovery` | `supported-after-kernel` | `2-3-workstreams` | `not-in-catalog` | `none` |
 | HSBC Life Wealth Invest (CPF) Product Summary.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, assurance-charge, dynamic-charge | `hsbc-premium-base-recovery` | `supported-after-kernel` | `2-3-workstreams` | `not-in-catalog` | `none` |
 | HSBC Life Wealth Voyage Product Summary.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, bonus-richness, distribution-mode, dynamic-charge, premium-holiday-recovery | `hsbc-premium-base-recovery` | `supported-after-kernel` | `2-3-workstreams` | `partial` | `subset-fixtures` |

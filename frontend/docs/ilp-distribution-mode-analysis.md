@@ -92,3 +92,19 @@ Next safe move:
 1. decide whether V1 accepts explicit manual dividend-yield assumptions
 2. if yes, add an assumption-driven distribution-mode slice and lock it with golden fixtures
 3. if no, keep distribution mode metadata-only and move to the next source-backed kernel gap instead
+
+## Applied V1 decision
+
+Decision taken on 2026-03-13:
+- V1 accepts a narrow default assumption for the HSBC Wealth Harvest and Wealth Abundance family:
+  - dividend-paying funds are assumed to reinvest by default
+  - cash dividend payout election remains metadata-only and is shown explicitly in template warnings
+
+Why this was accepted:
+- the product summaries define the election mechanics but do not provide a deterministic future dividend amount
+- for fee-drag and surrender-value projections, assuming reinvestment preserves policy value unless the user elects an out-of-model cash payout path
+- the alternative election is still disclosed as outside the current model
+
+Why this does not yet unblock Wealth Voyage:
+- Voyage still retains economically material premium-holiday and loyalty mechanics as metadata-only
+- distribution-mode was not the sole remaining blocker for Voyage, so it remains `partial`

@@ -1,12 +1,12 @@
 {
   "metadata": {
     "fixtureId": "hsbc-life-wealth-abundance-sgd-mip-10-event-heavy",
-    "fixtureClass": "partial-modeled-subset",
+    "fixtureClass": "supported",
     "productId": "hsbc-life-wealth-abundance",
     "variantId": "sgd-mip-10",
     "scenarioId": "event-heavy",
-    "supportStatus": "partial",
-    "description": "HSBC Wealth Abundance modeled-subset event-heavy scenario covering free and charged withdrawals, top-up charge, premium-holiday repayment, and tiered BRC.",
+    "supportStatus": "supported",
+    "description": "HSBC Wealth Abundance supported event-heavy scenario covering free and charged withdrawals, top-up charge, premium-holiday repayment, and tiered BRC.",
     "coverageTags": [
       "event-heavy",
       "branch:hsbc-abundance-free-withdrawal",
@@ -365,20 +365,14 @@
       "variantId": "sgd-mip-10",
       "variantLabel": "SGD / MIP 10",
       "catalogVersion": "0.1.0",
-      "supportStatus": "partial",
-      "economicsStatus": "partial-modeled-subset",
+      "supportStatus": "supported",
+      "economicsStatus": "supported",
       "structureStatus": "structured",
       "modeledEconomics": [
-        "hsbc-abundance-regular-vs-topup-account-routing",
-        "hsbc-abundance-startup-bonus-tiered",
-        "hsbc-abundance-power-up-bonus",
-        "hsbc-abundance-loyalty-bonus-partial-withdrawal-suspension",
-        "hsbc-abundance-topup-and-rsp-premium-charge",
-        "hsbc-abundance-amf-during-and-after-mip",
-        "hsbc-abundance-tiered-brc",
-        "hsbc-abundance-free-partial-withdrawal",
-        "hsbc-abundance-pwc",
-        "hsbc-abundance-eec"
+        "branch:hsbc-abundance-free-withdrawal",
+        "branch:hsbc-abundance-tiered-brc",
+        "branch:hsbc-abundance-topup-charge",
+        "branch:hsbc-abundance-power-up-restoration"
       ],
       "metadataOnlyBehaviors": [
         "hsbc-abundance-dividend-distribution-option",
@@ -389,7 +383,8 @@
     },
     "catalogWarnings": [
       "Structured extraction validated against the Wealth Abundance product summary text layer.",
-      "Dividend distribution, regular withdrawals, and post-holiday recurring-single-premium restart remain metadata-only in V1.",
+      "V1 assumes dividend-paying funds reinvest by default. Cash dividend payout election remains metadata-only and is not reflected in projected policy values.",
+      "Regular withdrawals, post-holiday recurring-single-premium administrative restart, and life replacement remain metadata-only in V1.",
       "This template captures the modeled regular-premium, top-up, recurring-single-premium, free-withdrawal, BRC, and account-fee subset only."
     ]
   },

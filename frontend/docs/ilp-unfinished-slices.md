@@ -81,8 +81,8 @@ Current boundary:
 Status:
 - partially implemented
 - simple top-up routing and top-up premium charges are supported
-- HSBC Wealth Abundance now seeds a partial modeled subset with regular-vs-top-up routing, SGD recurring-single-premium charges, and tier-aware startup bonus recovery
-- HSBC Wealth Harvest now seeds a partial modeled subset with regular-vs-top-up routing plus explicit top-up and recurring single premium charges
+- HSBC Wealth Abundance is now supported under the explicit V1 reinvestment-default assumption, with regular-vs-top-up routing, SGD recurring-single-premium charges, and tier-aware startup bonus recovery
+- HSBC Wealth Harvest is now supported under the explicit V1 reinvestment-default assumption, with regular-vs-top-up routing plus explicit top-up and recurring single premium charges
 - HSBC Wealth Voyage now seeds a partial modeled subset with top-up routing, top-up premium charge, partial-withdrawal charge, and split startup bonus recovery
 - recurring single premium routing and premium charges are now supported for Tokio-style top-up-account flows
 - Tokio non-payment premium shortfall charge is now supported when represented with premium-holiday events
@@ -139,6 +139,8 @@ What is missing:
 Current boundary:
 - PRUVantage Prosper only states that dividend-paying funds in the Growth Account default to reinvestment, and that payout is allowed only for dividend-paying funds. It does not provide a deterministic future dividend amount.
 - Tokio Wealth Max (II) and Wealth Pro (II) define the cash-vs-reinvest election mechanics and account eligibility, but the actual cash distribution still depends on future fund dividend declarations and therefore cannot be computed from the product summary alone.
+- HSBC Wealth Harvest and Wealth Abundance now use an explicit V1 default assumption that dividend-paying funds reinvest by default. Cash dividend payout election remains metadata-only and is surfaced in template warnings.
+- HSBC Wealth Voyage remains partial because distribution mode is not its only blocker; premium-holiday charge-after-free-duration and loyalty-side interactions are still outside the executable subset.
 - A release-safe implementation therefore needs either:
   1. an explicit user-entered dividend-yield / payout assumption, or
   2. a deliberate simplifying assumption such as "all dividend funds reinvest" with the alternative mode remaining metadata-only.

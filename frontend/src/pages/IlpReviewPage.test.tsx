@@ -83,7 +83,7 @@ describe('IlpReviewPage', () => {
     expect(screen.getByText(/metadata-only behaviors still outside the calculator: premium holiday delayed or partial repayment/i)).toBeInTheDocument()
   })
 
-  it('seeds HSBC Wealth Harvest as a partial catalog product with explicit metadata-only boundaries', async () => {
+  it('seeds HSBC Wealth Harvest as a supported catalog product with explicit reinvestment-default boundaries', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
 
@@ -95,14 +95,15 @@ describe('IlpReviewPage', () => {
     expect(screen.getAllByText('Wealth Harvest (SGD / MIP 11)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
-    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('hsbc harvest regular withdrawal facility')
+    expect(seededAlert?.textContent).toContain('reinvest by default')
     expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Start-up Bonus')).toBeInTheDocument()
   }, 10_000)
 
-  it('seeds HSBC Wealth Abundance as a partial catalog product with free-withdrawal and tiered-BRC mechanics', async () => {
+  it('seeds HSBC Wealth Abundance as a supported catalog product with free-withdrawal and tiered-BRC mechanics', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
 
@@ -114,8 +115,9 @@ describe('IlpReviewPage', () => {
     expect(screen.getAllByText('Wealth Abundance (SGD / MIP 10)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
-    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('hsbc abundance dividend distribution option')
+    expect(seededAlert?.textContent).toContain('reinvest by default')
     expect(screen.getAllByDisplayValue('Account Maintenance Fee')).toHaveLength(2)
     expect(screen.getByDisplayValue('Bonus Recovery Charge')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
@@ -142,7 +144,7 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
   }, 10_000)
 
-  it('seeds a partial catalog product with explicit warnings', async () => {
+  it('seeds a supported catalog product with explicit metadata-only warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
 
@@ -154,7 +156,7 @@ describe('IlpReviewPage', () => {
 
     expect(screen.getAllByText('PRUVantage Prosper (SGD / MIP 25)').length).toBeGreaterThan(0)
     expect(screen.getByText('Seeded from catalog template')).toBeInTheDocument()
-    expect(screen.getByText('Partial template')).toBeInTheDocument()
+    expect(screen.getByText('Supported template')).toBeInTheDocument()
     expect(screen.getByText(/prudential prosper assurance charges after you enter the insured-life details and current net regular premium base/i)).toBeInTheDocument()
     expect(screen.getByText(/metadata-only behaviors still outside the calculator: growth account distribution election, premium pass wealth share secondary life options/i)).toBeInTheDocument()
     expect(screen.getByDisplayValue('Assurance Charge (Death)')).toBeInTheDocument()

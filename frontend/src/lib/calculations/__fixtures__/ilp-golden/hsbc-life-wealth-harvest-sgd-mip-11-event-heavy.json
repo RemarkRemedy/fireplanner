@@ -1,12 +1,12 @@
 {
   "metadata": {
     "fixtureId": "hsbc-life-wealth-harvest-sgd-mip-11-event-heavy",
-    "fixtureClass": "partial-modeled-subset",
+    "fixtureClass": "supported",
     "productId": "hsbc-life-wealth-harvest",
     "variantId": "sgd-mip-11",
     "scenarioId": "event-heavy",
-    "supportStatus": "partial",
-    "description": "HSBC Wealth Harvest modeled-subset event-heavy scenario covering holiday charges, BRC, top-up charge, and regular-account PWC.",
+    "supportStatus": "supported",
+    "description": "HSBC Wealth Harvest supported event-heavy scenario covering holiday charges, BRC, top-up charge, and regular-account PWC.",
     "coverageTags": [
       "event-heavy",
       "branch:hsbc-harvest-holiday-charge",
@@ -360,19 +360,14 @@
       "variantId": "sgd-mip-11",
       "variantLabel": "SGD / MIP 11",
       "catalogVersion": "0.1.0",
-      "supportStatus": "partial",
-      "economicsStatus": "partial-modeled-subset",
+      "supportStatus": "supported",
+      "economicsStatus": "supported",
       "structureStatus": "structured",
       "modeledEconomics": [
-        "hsbc-harvest-regular-vs-topup-account-routing",
-        "hsbc-harvest-startup-bonus",
-        "hsbc-harvest-loyalty-bonus-partial-withdrawal-suspension",
-        "hsbc-harvest-topup-and-rsp-premium-charge",
-        "hsbc-harvest-amf",
-        "hsbc-harvest-premium-holiday-charge",
-        "hsbc-harvest-regular-account-partial-withdrawal-charge",
-        "hsbc-harvest-brc",
-        "hsbc-harvest-eec"
+        "branch:hsbc-harvest-holiday-charge",
+        "branch:hsbc-harvest-pwc",
+        "branch:hsbc-harvest-brc",
+        "branch:hsbc-harvest-topup-charge"
       ],
       "metadataOnlyBehaviors": [
         "hsbc-harvest-regular-withdrawal-facility",
@@ -383,8 +378,8 @@
     },
     "catalogWarnings": [
       "Structured extraction validated against the Wealth Harvest product summary text layer.",
-      "Regular withdrawal, dividend distribution, and change-of-life-insured behavior remain metadata-only in V1.",
-      "Recurring single premium stop during premium holiday is modeled, but administrative restart after the holiday still requires manual review.",
+      "V1 assumes dividend-paying funds reinvest by default. Cash dividend payout election remains metadata-only and is not reflected in projected policy values.",
+      "Regular withdrawal, change-of-life-insured behavior, and recurring-single-premium administrative restart after premium holiday remain metadata-only in V1.",
       "This template captures the modeled regular-premium, top-up, premium-holiday, withdrawal-charge, and BRC mechanics only."
     ]
   },
