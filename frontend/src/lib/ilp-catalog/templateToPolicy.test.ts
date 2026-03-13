@@ -566,6 +566,67 @@ describe('templateVariantToPolicySeed', () => {
     )
   })
 
+  it('maps Invest flex wealth II into a partial seed with cumulative-paid policy charges and top-up routing', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'etiqa-invest-flex-wealth-ii')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('Invest flex wealth II (SGD / MIP 10)')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-flex-wealth-ii-cumulative-paid-policy-charge')
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-charge-during-premium-term',
+          basis: 'cumulative-paid-regular-premium',
+          rate: 0.025,
+          cumulativePaidPremiumConfig: {
+            annualisedPremiumAtIssue: 4800,
+          },
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          appliesTo: ['topup'],
+          rate: 0.03,
+        }),
+      ]),
+    )
+  })
+
+  it('maps Invest Wealth Purpose into a partial seed with cumulative-paid policy charges and top-up routing', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'etiqa-invest-wealth-purpose')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-20')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('Invest Wealth Purpose (SGD / MIP 20)')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-wealth-purpose-cumulative-paid-policy-charge')
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-charge-during-premium-term',
+          basis: 'cumulative-paid-regular-premium',
+          rate: 0.0195,
+        }),
+      ]),
+    )
+    expect(seed.accounts.find((account) => account.id === 'topup')?.contributionRules).toEqual([
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+  })
+
   it('maps Invest Flex Vantage into a partial regular-premium seed with bonus and MIP-charge schedules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'income-invest-flex-vantage')
