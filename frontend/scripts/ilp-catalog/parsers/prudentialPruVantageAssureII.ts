@@ -360,9 +360,10 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumTerm): IlpTem
     warnings: [
       'Set the actual Growth/Flex regular-premium split before trusting the fee-drag output. The seeded draft defaults to 50/50.',
       'Growth-account dividend/distribution election remains informational only in V1.',
+      'Enter insured-life details, current sum assured, and current Wealth Assure Value to activate the modeled assurance charges.',
+      'Manual reduction or resumption events for sum assured / Wealth Assure Value require explicit resulting-state inputs.',
     ],
     unsupportedItems: [
-      'Manual reductions or resumptions of sum assured / Wealth Assure Value are not modeled automatically.',
       'Premium Pass, Wealth Share, and change-of-life-assured features remain informational only.',
     ],
     sourceRefs: [page7, page8, page9, page10, page14, page15],
@@ -380,9 +381,9 @@ export function parsePrudentialPruVantageAssureII(context: ParseContext): IlpCat
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:assure-ii-pre-70-assurance',
       'branch:assure-ii-post-70-charge-tail',
@@ -397,7 +398,7 @@ export function parsePrudentialPruVantageAssureII(context: ParseContext): IlpCat
       'premium-pass-wealth-share-change-of-life-assured-options',
     ],
     warnings: [
-      'This template captures account routing, welcome/loyalty bonuses, premium-holiday mechanics, exit charges, and Assure II assurance charges from Prudential Appendix A after you enter the insured-life details, Wealth Assure Value, and current sum assured. Manual reduction/resumption events for sum assured and Wealth Assure Value are modeled as user-entered resulting states. Premium Pass / Wealth Share / change-of-life-assured options remain outside the current model.',
+      'This template captures account routing, welcome/loyalty bonuses, premium-holiday mechanics, exit charges, and Assure II assurance charges from Prudential Appendix A after you enter the insured-life details, Wealth Assure Value, and current sum assured. Manual reduction/resumption events for sum assured and Wealth Assure Value are modeled as user-entered resulting states. Premium Pass / Wealth Share / change-of-life-assured options remain informational only.',
     ],
     archived: false,
     variants,

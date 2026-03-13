@@ -26,8 +26,9 @@ Why:
 Current gate status:
 1. HSBC Wealth Accelerate has full supported-product golden coverage
 2. PRUVantage Wealth II has full supported-product golden coverage
-3. PRUVantage Prosper and bounded PRUVantage Assure II assurance paths now have modeled-subset golden fixtures
-4. Golden coverage remains required before any product is labeled `supported`
+3. PRUVantage Prosper now has supported-grade golden coverage
+4. PRUVantage Assure II now has supported-grade golden coverage
+5. Golden coverage remains required before any additional product is labeled `supported`
 
 ## Core Cashflow Kernel
 
@@ -68,11 +69,11 @@ Why it matters:
 - the next unsafe shortcut would be to auto-model Assure II without resolving the post-70 protection split
 
 Current boundary:
-- Prosper can now be modeled after entering age-next-birthday, sex, smoker status, and the current net regular premium base
-- Assure II can now be modeled from Prudential's published Appendix A age-based total assurance-charge curve after the user enters current sum assured plus current Wealth Assure Value
-- Assure II can also model user-entered manual reduction/resumption events as resulting-state overrides
+- Prosper is now supported after entering age-next-birthday, sex, smoker status, and the current net regular premium base
+- Assure II is now supported after entering current sum assured, current Wealth Assure Value, and the insured-life details needed for Prudential's Appendix A assurance-charge curve
+- Assure II also models user-entered manual reduction/resumption events as resulting-state overrides
 - HSBC Flexi can now model the bounded death / TI COI subset with explicit basic sum assured and net supplementary premium base inputs
-- Assure II remains intentionally partial because option-driven protection-state changes like Wealth Share, Premium Pass, and change-of-life-assured are still not encoded
+- option-driven protection-state changes like Wealth Share, Premium Pass, and change-of-life-assured remain metadata-only on supported Prudential products
 - HSBC Flexi remains intentionally partial because TPD and broader option-state mechanics are still out of scope
 
 ### 2. Broader Top-Up / Ad-Hoc Premium Mechanics

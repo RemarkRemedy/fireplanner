@@ -259,6 +259,20 @@ function withFunds(policy: IlpPolicyInput, funds: IlpFund[]): IlpPolicyInput {
   })
 }
 
+function withResolvedManualInputs(policy: IlpPolicyInput): IlpPolicyInput {
+  return ilpPolicySchema.parse({
+    ...policy,
+    chargeRules: policy.chargeRules?.map((rule) => ({
+      ...rule,
+      requiresManualInput: false,
+    })) ?? [],
+    eventChargeRules: policy.eventChargeRules?.map((rule) => ({
+      ...rule,
+      requiresManualInput: false,
+    })) ?? [],
+  })
+}
+
 function withoutRecurringContribution(policy: IlpPolicyInput): IlpPolicyInput {
   return ilpPolicySchema.parse({
     ...policy,
@@ -923,7 +937,7 @@ function pruStressSplitPolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'p
 
 function prosperAssurancePolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
   const base = seedPolicy(snapshot, 'prudential-pruvantage-prosper', 'sgd-mip-25', id)
-  return withPruBalancesAndSplit(
+  return withResolvedManualInputs(withPruBalancesAndSplit(
     withFunds(
       ilpPolicySchema.parse({
         ...base,
@@ -945,12 +959,167 @@ function prosperAssurancePolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 
     50_000,
     50_000,
     0.5,
-  )
+  ))
+}
+
+function prosperBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: string,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'prudential-pruvantage-prosper', variantId, id)
+  const term = Number(variantId.replace('sgd-mip-', ''))
+  const currentPolicyYear = Math.min(Math.max(Math.floor(term / 2) + 1, 3), term - 1)
+
+  return withResolvedManualInputs(withPruBalancesAndSplit(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: `Golden PRUVantage Prosper (${variantId.toUpperCase()})`,
+        monthlyContribution: 1_250,
+        currentPolicyYear,
+        monthsAlreadyPaid: (currentPolicyYear - 1) * 12,
+        assuranceProfile: {
+          currentAgeNextBirthday: 47,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 95_000,
+        },
+        policyEvents: [],
+      }),
+      PRU_BALANCED_FUNDS,
+    ),
+    10_000 + term * 650,
+    9_000 + term * 600,
+    2_500 + term * 120,
+    0.55,
+  ))
+}
+
+function prosperEventHeavyPolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'prudential-pruvantage-prosper', 'sgd-mip-25', id)
+  return withResolvedManualInputs(withPruBalancesAndSplit(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden PRUVantage Prosper (SGD / MIP 25 Event Heavy)',
+        monthlyContribution: 1_350,
+        currentPolicyYear: 11,
+        monthsAlreadyPaid: 120,
+        assuranceProfile: {
+          currentAgeNextBirthday: 49,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 102_000,
+        },
+        policyEvents: [
+          {
+            id: 'holiday-1',
+            type: 'premium-holiday',
+            startPolicyMonth: 121,
+            durationMonths: 4,
+            repayMissedPremiums: true,
+            repaymentAccountId: 'flex',
+          },
+          {
+            id: 'top-up-1',
+            type: 'top-up',
+            startPolicyMonth: 129,
+            durationMonths: 1,
+            amount: 7_500,
+          },
+          {
+            id: 'withdrawal-free-1',
+            type: 'partial-withdrawal',
+            startPolicyMonth: 133,
+            durationMonths: 1,
+            amount: 2_500,
+            accountId: 'growth',
+          },
+          {
+            id: 'withdrawal-charged-1',
+            type: 'partial-withdrawal',
+            startPolicyMonth: 145,
+            durationMonths: 1,
+            amount: 1_800,
+            accountId: 'flex',
+          },
+        ],
+      }),
+      PRU_BALANCED_FUNDS,
+    ),
+    20_000,
+    16_000,
+    4_500,
+    0.58,
+  ))
+}
+
+function prosperHolidayFallbackPolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'prudential-pruvantage-prosper', 'sgd-mip-25', id)
+  return withResolvedManualInputs(withPruBalancesAndSplit(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden PRUVantage Prosper (SGD / MIP 25 Holiday Fallback)',
+        monthlyContribution: 1_350,
+        currentPolicyYear: 12,
+        monthsAlreadyPaid: 132,
+        assuranceProfile: {
+          currentAgeNextBirthday: 50,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 102_000,
+        },
+        policyEvents: [
+          {
+            id: 'holiday-1',
+            type: 'premium-holiday',
+            startPolicyMonth: 133,
+            durationMonths: 6,
+            repayMissedPremiums: false,
+          },
+        ],
+      }),
+      PRU_BALANCED_FUNDS,
+    ),
+    200,
+    150,
+    6_500,
+    0.5,
+  ))
+}
+
+function prosperStressPolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'prudential-pruvantage-prosper', 'sgd-mip-20', id)
+  return withResolvedManualInputs(withPruBalancesAndSplit(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden PRUVantage Prosper (SGD / MIP 20 Split Stress)',
+        monthlyContribution: 1_200,
+        currentPolicyYear: 9,
+        monthsAlreadyPaid: 96,
+        assuranceProfile: {
+          currentAgeNextBirthday: 46,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 86_000,
+        },
+        policyEvents: [],
+      }),
+      PRU_STRESS_FUNDS,
+    ),
+    6_500,
+    21_000,
+    4_800,
+    0.22,
+  ))
 }
 
 function assureIiBoundedAssurancePolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
   const base = seedPolicy(snapshot, 'prudential-pruvantage-assure-ii', 'sgd-mip-25', id)
-  return withPruBalancesOnly(
+  return withResolvedManualInputs(withPruBalancesOnly(
     withFunds(
       withoutRecurringContribution(
         ilpPolicySchema.parse({
@@ -975,12 +1144,12 @@ function assureIiBoundedAssurancePolicy(snapshot: Pick<IlpCatalogSnapshot, 'mani
     50_000,
     50_000,
     50_000,
-  )
+  ))
 }
 
 function assureIiStateOverridePolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
   const base = seedPolicy(snapshot, 'prudential-pruvantage-assure-ii', 'sgd-mip-25', id)
-  return withPruBalancesOnly(
+  return withResolvedManualInputs(withPruBalancesOnly(
     withFunds(
       withoutRecurringContribution(
         ilpPolicySchema.parse({
@@ -1021,7 +1190,170 @@ function assureIiStateOverridePolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifes
     50_000,
     50_000,
     50_000,
-  )
+  ))
+}
+
+function assureIiBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: string,
+  id: string,
+): IlpPolicyInput {
+  if (variantId === 'sgd-mip-25') {
+    return assureIiBoundedAssurancePolicy(snapshot, id)
+  }
+
+  const base = seedPolicy(snapshot, 'prudential-pruvantage-assure-ii', variantId, id)
+  const term = Number(variantId.replace('sgd-mip-', ''))
+  const currentPolicyYear = Math.min(Math.max(Math.floor(term / 2) + 1, 3), term - 1)
+
+  return withResolvedManualInputs(withPruBalancesOnly(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: `Golden PRUVantage Assure II (${variantId.toUpperCase()})`,
+        monthlyContribution: 1_200,
+        currentPolicyYear,
+        monthsAlreadyPaid: (currentPolicyYear - 1) * 12,
+        assuranceProfile: {
+          currentAgeNextBirthday: 48,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 92_000,
+          currentSumAssured: 145_000,
+          currentWealthAssureValue: 110_000,
+        },
+        policyEvents: [],
+      }),
+      PRU_BALANCED_FUNDS,
+    ),
+    11_000 + term * 700,
+    10_000 + term * 650,
+    3_000 + term * 100,
+  ))
+}
+
+function assureIiEventHeavyPolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'prudential-pruvantage-assure-ii', 'sgd-mip-25', id)
+  return withResolvedManualInputs(withPruBalancesOnly(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden PRUVantage Assure II (SGD / MIP 25 Event Heavy)',
+        monthlyContribution: 1_300,
+        currentPolicyYear: 11,
+        monthsAlreadyPaid: 120,
+        assuranceProfile: {
+          currentAgeNextBirthday: 52,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 100_000,
+          currentSumAssured: 150_000,
+          currentWealthAssureValue: 120_000,
+        },
+        policyEvents: [
+          {
+            id: 'holiday-1',
+            type: 'premium-holiday',
+            startPolicyMonth: 121,
+            durationMonths: 4,
+            repayMissedPremiums: true,
+            repaymentAccountId: 'flex',
+          },
+          {
+            id: 'top-up-1',
+            type: 'top-up',
+            startPolicyMonth: 129,
+            durationMonths: 1,
+            amount: 7_500,
+          },
+          {
+            id: 'withdrawal-free-1',
+            type: 'partial-withdrawal',
+            startPolicyMonth: 133,
+            durationMonths: 1,
+            amount: 2_500,
+            accountId: 'growth',
+          },
+          {
+            id: 'withdrawal-charged-1',
+            type: 'partial-withdrawal',
+            startPolicyMonth: 145,
+            durationMonths: 1,
+            amount: 1_800,
+            accountId: 'flex',
+          },
+        ],
+      }),
+      PRU_BALANCED_FUNDS,
+    ),
+    20_000,
+    16_000,
+    4_500,
+  ))
+}
+
+function assureIiHolidayFallbackPolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'prudential-pruvantage-assure-ii', 'sgd-mip-25', id)
+  return withResolvedManualInputs(withPruBalancesOnly(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden PRUVantage Assure II (SGD / MIP 25 Holiday Fallback)',
+        monthlyContribution: 1_300,
+        currentPolicyYear: 12,
+        monthsAlreadyPaid: 132,
+        assuranceProfile: {
+          currentAgeNextBirthday: 53,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 100_000,
+          currentSumAssured: 150_000,
+          currentWealthAssureValue: 122_000,
+        },
+        policyEvents: [
+          {
+            id: 'holiday-1',
+            type: 'premium-holiday',
+            startPolicyMonth: 133,
+            durationMonths: 6,
+            repayMissedPremiums: false,
+          },
+        ],
+      }),
+      PRU_BALANCED_FUNDS,
+    ),
+    200,
+    150,
+    6_500,
+  ))
+}
+
+function assureIiStressPolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'prudential-pruvantage-assure-ii', 'sgd-mip-20', id)
+  return withResolvedManualInputs(withPruBalancesOnly(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden PRUVantage Assure II (SGD / MIP 20 Split Stress)',
+        monthlyContribution: 1_150,
+        currentPolicyYear: 9,
+        monthsAlreadyPaid: 96,
+        assuranceProfile: {
+          currentAgeNextBirthday: 47,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 88_000,
+          currentSumAssured: 135_000,
+          currentWealthAssureValue: 108_000,
+        },
+        policyEvents: [],
+      }),
+      PRU_STRESS_FUNDS,
+    ),
+    7_000,
+    22_000,
+    5_000,
+  ))
 }
 
 function tokioEventHeavyPolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, id: string): IlpPolicyInput {
@@ -1677,11 +2009,43 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'prudential-pruvantage-prosper',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'branch:prosper-assurance-charge'],
+    description: 'Baseline in-force PRUVantage Prosper SGD / MIP 5 scenario.',
+  },
+  {
+    productId: 'prudential-pruvantage-prosper',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'branch:prosper-assurance-charge'],
+    description: 'Baseline in-force PRUVantage Prosper SGD / MIP 10 scenario.',
+  },
+  {
+    productId: 'prudential-pruvantage-prosper',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'branch:prosper-assurance-charge'],
+    description: 'Baseline in-force PRUVantage Prosper SGD / MIP 15 scenario.',
+  },
+  {
+    productId: 'prudential-pruvantage-prosper',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'branch:prosper-assurance-charge'],
+    description: 'Baseline in-force PRUVantage Prosper SGD / MIP 20 scenario.',
+  },
+  {
+    productId: 'prudential-pruvantage-prosper',
     variantId: 'sgd-mip-25',
     scenarioId: 'assurance-active',
-    fixtureClass: 'partial-modeled-subset',
+    fixtureClass: 'supported',
     coverageTags: ['baseline', 'branch:prosper-assurance-charge'],
-    description: 'PRUVantage Prosper modeled-subset scenario with assurance charges active from explicit insured-life inputs.',
+    description: 'PRUVantage Prosper baseline scenario with assurance charges active from explicit insured-life inputs.',
     integrityChecks: [
       {
         description: 'applies non-zero Prosper assurance charges to Growth and Flex',
@@ -1695,12 +2059,117 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     ],
   },
   {
+    productId: 'prudential-pruvantage-prosper',
+    variantId: 'sgd-mip-25',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:pru-holiday-refund',
+      'branch:pru-top-up-charge',
+      'branch:pru-free-withdrawal',
+      'branch:pru-charged-withdrawal',
+    ],
+    description: 'PRUVantage Prosper event-heavy scenario covering refund, top-up charge, and withdrawal branches.',
+    integrityChecks: [
+      {
+        description: 'creates a negative holiday-charge refund in Growth or Flex',
+        test: (fixture, artifact) => {
+          const withoutRefund = ilpPolicySchema.parse({
+            ...fixture.policy,
+            eventChargeRules: fixture.policy.eventChargeRules?.filter((rule) => rule.id !== 'premium-holiday-charge-refund'),
+          })
+          const withRefundFees = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutRefundFees = analyzeIlpPolicy(withoutRefund).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withRefundFees < withoutRefundFees
+        },
+      },
+      {
+        description: 'records top-up premium in the projection year',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.annualContribution > artifact.policyInput.monthlyContribution * 12
+        )),
+      },
+      {
+        description: 'keeps the free withdrawal materially cheaper than the charged withdrawal',
+        test: (_, artifact) => {
+          const rows = artifact.expected.projections.mid.rows
+          const freeRow = rows.find((row) => row.accounts.some((account) => account.accountId === 'growth' && account.withdrawalAmount > 0))
+          const chargedRow = rows.find((row) => row.accounts.some((account) => account.accountId === 'flex' && account.withdrawalAmount > 0))
+          const freeGrossFee = freeRow?.accounts.find((account) => account.accountId === 'growth')?.grossFee ?? 0
+          const chargedGrossFee = chargedRow?.accounts.find((account) => account.accountId === 'flex')?.grossFee ?? 0
+          return chargedGrossFee > freeGrossFee
+        },
+      },
+    ],
+  },
+  {
+    productId: 'prudential-pruvantage-prosper',
+    variantId: 'sgd-mip-25',
+    scenarioId: 'holiday-fallback',
+    fixtureClass: 'supported',
+    coverageTags: ['event-heavy', 'branch:pru-holiday-fallback'],
+    description: 'PRUVantage Prosper holiday fallback scenario forcing charges into Additional Investment Account.',
+    integrityChecks: [
+      {
+        description: 'routes holiday charge fallback into Additional Investment Account',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.accounts.some((account) => account.accountId === 'additional' && account.grossFee > 0)
+        )),
+      },
+      {
+        description: 'suppresses annual contribution during the unrepaid holiday year',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution < artifact.policyInput.monthlyContribution * 12),
+      },
+    ],
+  },
+  {
+    productId: 'prudential-pruvantage-prosper',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'ocf-stress-split',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'PRUVantage Prosper alternate-fund high-OCF stress scenario with non-default premium split.',
+  },
+  {
+    productId: 'prudential-pruvantage-assure-ii',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'branch:assure-ii-pre-70-assurance'],
+    description: 'Baseline in-force PRUVantage Assure II SGD / MIP 5 scenario.',
+  },
+  {
+    productId: 'prudential-pruvantage-assure-ii',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'branch:assure-ii-pre-70-assurance'],
+    description: 'Baseline in-force PRUVantage Assure II SGD / MIP 10 scenario.',
+  },
+  {
+    productId: 'prudential-pruvantage-assure-ii',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'branch:assure-ii-pre-70-assurance'],
+    description: 'Baseline in-force PRUVantage Assure II SGD / MIP 15 scenario.',
+  },
+  {
+    productId: 'prudential-pruvantage-assure-ii',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'branch:assure-ii-pre-70-assurance'],
+    description: 'Baseline in-force PRUVantage Assure II SGD / MIP 20 scenario.',
+  },
+  {
     productId: 'prudential-pruvantage-assure-ii',
     variantId: 'sgd-mip-25',
     scenarioId: 'assurance-tail',
-    fixtureClass: 'partial-modeled-subset',
+    fixtureClass: 'supported',
     coverageTags: ['baseline', 'branch:assure-ii-pre-70-assurance', 'branch:assure-ii-post-70-charge-tail'],
-    description: 'PRUVantage Assure II modeled-subset scenario proving pre-70 assurance and the post-70 charge tail.',
+    description: 'PRUVantage Assure II baseline scenario proving pre-70 assurance and the post-70 charge tail.',
     integrityChecks: [
       {
         description: 'applies non-zero Assure II combined assurance before age 70',
@@ -1723,10 +2192,83 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   {
     productId: 'prudential-pruvantage-assure-ii',
     variantId: 'sgd-mip-25',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:pru-holiday-refund',
+      'branch:pru-top-up-charge',
+      'branch:pru-free-withdrawal',
+      'branch:pru-charged-withdrawal',
+    ],
+    description: 'PRUVantage Assure II event-heavy scenario covering refund, top-up charge, and withdrawal branches.',
+    integrityChecks: [
+      {
+        description: 'creates a negative holiday-charge refund in Growth or Flex',
+        test: (fixture, artifact) => {
+          const withoutRefund = ilpPolicySchema.parse({
+            ...fixture.policy,
+            eventChargeRules: fixture.policy.eventChargeRules?.filter((rule) => rule.id !== 'premium-holiday-charge-refund'),
+          })
+          const withRefundFees = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutRefundFees = analyzeIlpPolicy(withoutRefund).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withRefundFees < withoutRefundFees
+        },
+      },
+      {
+        description: 'records top-up premium in the projection year',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.annualContribution > artifact.policyInput.monthlyContribution * 12
+        )),
+      },
+      {
+        description: 'keeps the free withdrawal materially cheaper than the charged withdrawal',
+        test: (_, artifact) => {
+          const rows = artifact.expected.projections.mid.rows
+          const freeRow = rows.find((row) => row.accounts.some((account) => account.accountId === 'growth' && account.withdrawalAmount > 0))
+          const chargedRow = rows.find((row) => row.accounts.some((account) => account.accountId === 'flex' && account.withdrawalAmount > 0))
+          const freeGrossFee = freeRow?.accounts.find((account) => account.accountId === 'growth')?.grossFee ?? 0
+          const chargedGrossFee = chargedRow?.accounts.find((account) => account.accountId === 'flex')?.grossFee ?? 0
+          return chargedGrossFee > freeGrossFee
+        },
+      },
+    ],
+  },
+  {
+    productId: 'prudential-pruvantage-assure-ii',
+    variantId: 'sgd-mip-25',
+    scenarioId: 'holiday-fallback',
+    fixtureClass: 'supported',
+    coverageTags: ['event-heavy', 'branch:pru-holiday-fallback'],
+    description: 'PRUVantage Assure II holiday fallback scenario forcing charges into Additional Investment Account.',
+    integrityChecks: [
+      {
+        description: 'routes holiday charge fallback into Additional Investment Account',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.accounts.some((account) => account.accountId === 'additional' && account.grossFee > 0)
+        )),
+      },
+      {
+        description: 'suppresses annual contribution during the unrepaid holiday year',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution < artifact.policyInput.monthlyContribution * 12),
+      },
+    ],
+  },
+  {
+    productId: 'prudential-pruvantage-assure-ii',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'ocf-stress-split',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'PRUVantage Assure II alternate-fund high-OCF stress scenario.',
+  },
+  {
+    productId: 'prudential-pruvantage-assure-ii',
+    variantId: 'sgd-mip-25',
     scenarioId: 'assurance-state-override',
-    fixtureClass: 'partial-modeled-subset',
+    fixtureClass: 'supported',
     coverageTags: ['event-heavy', 'branch:assure-ii-manual-reduction-resumption'],
-    description: 'PRUVantage Assure II modeled-subset scenario proving manual reduction and later resumption of the assurance state.',
+    description: 'PRUVantage Assure II scenario proving manual reduction and later resumption of the assurance state.',
     integrityChecks: [
       {
         description: 'reduced assurance state lowers the charge after the reduction year',
@@ -2105,11 +2647,35 @@ function buildPolicyForDefinition(
   if (definition.productId === 'prudential-pruvantage-wealth-ii' && definition.scenarioId === 'ocf-stress-split') {
     return pruStressSplitPolicy(snapshot, id)
   }
+  if (definition.productId === 'prudential-pruvantage-prosper' && definition.scenarioId === 'baseline') {
+    return prosperBaselinePolicy(snapshot, definition.variantId, id)
+  }
   if (definition.productId === 'prudential-pruvantage-prosper' && definition.scenarioId === 'assurance-active') {
     return prosperAssurancePolicy(snapshot, id)
   }
+  if (definition.productId === 'prudential-pruvantage-prosper' && definition.scenarioId === 'event-heavy') {
+    return prosperEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-pruvantage-prosper' && definition.scenarioId === 'holiday-fallback') {
+    return prosperHolidayFallbackPolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-pruvantage-prosper' && definition.scenarioId === 'ocf-stress-split') {
+    return prosperStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-pruvantage-assure-ii' && definition.scenarioId === 'baseline') {
+    return assureIiBaselinePolicy(snapshot, definition.variantId, id)
+  }
   if (definition.productId === 'prudential-pruvantage-assure-ii' && definition.scenarioId === 'assurance-tail') {
     return assureIiBoundedAssurancePolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-pruvantage-assure-ii' && definition.scenarioId === 'event-heavy') {
+    return assureIiEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-pruvantage-assure-ii' && definition.scenarioId === 'holiday-fallback') {
+    return assureIiHolidayFallbackPolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-pruvantage-assure-ii' && definition.scenarioId === 'ocf-stress-split') {
+    return assureIiStressPolicy(snapshot, id)
   }
   if (definition.productId === 'prudential-pruvantage-assure-ii' && definition.scenarioId === 'assurance-state-override') {
     return assureIiStateOverridePolicy(snapshot, id)

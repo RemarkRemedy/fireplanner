@@ -50,18 +50,18 @@ Corpus size: 92
 
 | Key | Count |
 | --- | ---: |
-| `supported-after-kernel` | 61 |
+| `supported-after-kernel` | 59 |
 | `partial-v1` | 29 |
-| `supported-now` | 2 |
+| `supported-now` | 4 |
 
 ## Kernel Workstream Tiers
 
 | Key | Count |
 | --- | ---: |
-| `2-3-workstreams` | 35 |
+| `2-3-workstreams` | 33 |
 | `4-plus-workstreams` | 29 |
 | `1-workstream` | 26 |
-| `0-workstreams` | 2 |
+| `0-workstreams` | 4 |
 
 ## Product Matrix
 
@@ -95,8 +95,8 @@ Corpus size: 92
 | PRULink InvestGrowth (SP) Product Summary.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing | `generic` | `supported-after-kernel` | `1-workstream` | `not-in-catalog` | `none` |
 | PRULink InvestGrowth Product Summary.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing | `generic` | `supported-after-kernel` | `1-workstream` | `not-in-catalog` | `none` |
 | PRUVantage Assure (SP) Product Summary.pdf | `multi-account-special-account` | ad-hoc-premium-routing, dynamic-charge, premium-holiday-recovery | `prudential-pruvantage-multi-account` | `supported-after-kernel` | `2-3-workstreams` | `not-in-catalog` | `none` |
-| PRUVantage Assure II Product Summary.pdf | `multi-account-special-account` | dynamic-charge, premium-holiday-recovery | `prudential-pruvantage-multi-account` | `supported-after-kernel` | `2-3-workstreams` | `partial` | `subset-fixtures` |
-| PRUVantage Prosper Product Summary.pdf | `multi-account-special-account` | dynamic-charge, premium-holiday-recovery | `prudential-pruvantage-multi-account` | `supported-after-kernel` | `2-3-workstreams` | `partial` | `subset-fixtures` |
+| PRUVantage Assure II Product Summary.pdf | `multi-account-special-account` | dynamic-charge, premium-holiday-recovery | `prudential-pruvantage-multi-account` | `supported-now` | `0-workstreams` | `supported` | `full-supported-gate` |
+| PRUVantage Prosper Product Summary.pdf | `multi-account-special-account` | dynamic-charge, premium-holiday-recovery | `prudential-pruvantage-multi-account` | `supported-now` | `0-workstreams` | `supported` | `full-supported-gate` |
 | PRUVantage Wealth II Product Summary.pdf | `multi-account-special-account` | dynamic-charge, premium-holiday-recovery | `prudential-pruvantage-multi-account` | `supported-now` | `0-workstreams` | `supported` | `full-supported-gate` |
 | PS_GEL_Investment Linked Insurance Plan 2_v3.0.pdf | `standard-2-account-core-cashflow` | assurance-charge, dynamic-charge, premium-holiday-recovery | `great-eastern-ilp-generic` | `supported-after-kernel` | `2-3-workstreams` | `not-in-catalog` | `none` |
 | PS(EN)_GREAT Invest Advantage (RSP)_(SG)_v3.0.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, dynamic-charge | `great-eastern-ilp-generic` | `supported-after-kernel` | `1-workstream` | `not-in-catalog` | `none` |

@@ -341,9 +341,9 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumTerm): IlpTem
     warnings: [
       'Set the actual Growth/Flex regular-premium split before trusting the fee-drag output. The seeded draft defaults to 50/50.',
       'Growth-account dividend/distribution election remains informational only in V1.',
+      'Enter insured-life details and the current net regular premium base to activate the modeled assurance charges.',
     ],
     unsupportedItems: [
-      'Assurance charges depend on age, gender, smoking status, and policy state, and are not modeled yet.',
       'Premium Pass, Wealth Share, and secondary-life/ownership options remain informational only.',
     ],
     sourceRefs: [page2, page4, page5, page10, page11, page12, page13, page14],
@@ -361,9 +361,9 @@ export function parsePrudentialPruVantageProsper(context: ParseContext): IlpCata
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:prosper-assurance-charge',
       'branch:pru-holiday-refund',
@@ -377,7 +377,7 @@ export function parsePrudentialPruVantageProsper(context: ParseContext): IlpCata
       'premium-pass-wealth-share-secondary-life-options',
     ],
     warnings: [
-      'This template captures account routing, bonuses, premium-holiday mechanics, exit charges, and Prudential Prosper assurance charges after you enter the insured-life details and current net regular premium base. Growth-account distribution election and Premium Pass / Wealth Share / secondary-life options remain outside the current model.',
+      'This template captures account routing, bonuses, premium-holiday mechanics, exit charges, and Prudential Prosper assurance charges after you enter the insured-life details and current net regular premium base. Growth-account distribution election and Premium Pass / Wealth Share / secondary-life options remain informational only.',
     ],
     archived: false,
     variants,

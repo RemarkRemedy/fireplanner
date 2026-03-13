@@ -42,7 +42,7 @@ The planning model has three layers:
 
 - Summary corpus baseline: `92`
 - Current catalog products: `9`
-- Current `supported` products: `2`
+- Current `supported` products: `4`
 - Structural family counts from the classifier:
   - `58` standard 2-account core cashflow
   - `5` multi-account / special-account
@@ -50,8 +50,8 @@ The planning model has three layers:
 
 Most importantly:
 
-- `supported-now` is only `2`
-- `supported-after-kernel` is `61`
+- `supported-now` is `4`
+- `supported-after-kernel` is `59`
 - `partial-v1` is `29`
 
 `supported-after-kernel` is a boundary label, not a one-step claim. Many of those products still require multiple workstreams.
@@ -108,10 +108,9 @@ Completed in this slice:
 - non-Prudential structural proof coverage on `tokio-marine-wealth-pro-ii`
 
 Promotion review result:
-- no new `supported` promotions yet
-- `prudential-pruvantage-prosper`, `prudential-pruvantage-assure-ii`, and `tokio-marine-wealth-pro-ii` remain `partial`
-- blocker is no longer multi-account structure itself; the remaining blockers are:
-  - assurance-charge scope
+- `prudential-pruvantage-prosper` and `prudential-pruvantage-assure-ii` are now promotable with supported-grade golden coverage
+- `tokio-marine-wealth-pro-ii` remains `partial`
+- remaining blockers after this workstream are now mostly:
   - distribution-mode assumptions
   - broader protection-state / ownership mechanics
 
@@ -136,11 +135,11 @@ Completed in this slice:
 - bounded non-catalog golden proof for HSBC Flexi Choice vs Max death / TI charges
 
 Promotion review result:
-- no new `supported` promotions yet
 - the assurance kernel is no longer the primary blocker for:
   - `prudential-pruvantage-prosper`
   - `prudential-pruvantage-assure-ii`
-- remaining blockers are outside this kernel:
+- those two products now qualify for promotion after supported-grade golden expansion
+- remaining blockers outside this kernel now concentrate in:
   - distribution-mode assumptions
   - broader protection-state / ownership mechanics
   - parser/catalog expansion where no safe public product entry exists yet
@@ -170,7 +169,7 @@ Completed in this slice:
   - Tokio Wealth Pro (II)
 
 Promotion review result:
-- no new `supported` promotions yet
+- no further promotions from this slice alone beyond the Prudential promotions above
 - `hsbc-life-wealth-abundance` remains `partial`
 - `tokio-marine-wealth-pro-ii` remains `partial`
 - blocker is no longer bonus-richness itself; the remaining blockers are:
@@ -197,8 +196,8 @@ Validated classifier state:
   - `5` multi-account / special-account
   - `29` protection-heavy / death-benefit
 - support boundary:
-  - `2` supported-now
-  - `61` supported-after-kernel
+  - `4` supported-now
+  - `59` supported-after-kernel
   - `29` partial-v1
 
 The immediate execution focus is no longer classifier QA. It is choosing the next family/cohort promotion that should consume the completed cashflow kernel.
