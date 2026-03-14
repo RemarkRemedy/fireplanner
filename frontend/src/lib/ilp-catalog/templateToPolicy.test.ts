@@ -1118,6 +1118,64 @@ describe('templateVariantToPolicySeed', () => {
     ])
   })
 
+  it('maps PRUActive LinkGuard into a partial open-ended seed with premium-year charges', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'prudential-pruactive-linkguard')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-cash-or-srs')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:pruactive-linkguard-premium-year-premium-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:pruactive-linkguard-administration-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('pruactive-linkguard-no-lapse-period')
+    expect(seed.mipBasis).toBe('open-ended')
+    expect(seed.mipLength).toBeNull()
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'policy',
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+          { phase: 'after-icp', contributionShare: 1 },
+          { phase: 'top-up', contributionShare: 1 },
+        ],
+      }),
+    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'regular-premium-charge',
+          basis: 'annual-contribution',
+          yearBasis: 'premium-year',
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 0.75 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 0.55 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.45 },
+            { startPolicyYear: 4, endPolicyYear: 7, rate: 0.05 },
+            { startPolicyYear: 8, endPolicyYear: null, rate: 0 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'administration-charge',
+          basis: 'fixed-annual',
+          amountSchedule: [
+            { startPolicyYear: 1, endPolicyYear: null, amount: 60 },
+          ],
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        basis: 'event-amount',
+        rate: 0.03,
+      }),
+    ])
+  })
+
   it('maps Etiqa Invest flex prime II into a partial seed with distinct Flexi 3 and Flexi 5 variants', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-flex-prime-ii')

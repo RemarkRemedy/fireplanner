@@ -35,6 +35,7 @@ import { parseEtiqaInvestStarter } from './parsers/etiqaInvestStarter.js'
 import { parseEtiqaInvestVista } from './parsers/etiqaInvestVista.js'
 import { parseEtiqaTiqInvest } from './parsers/etiqaTiqInvest.js'
 import { parseEtiqaInvestWealthPurpose } from './parsers/etiqaInvestWealthPurpose.js'
+import { parsePrudentialPruActiveLinkGuard } from './parsers/prudentialPruActiveLinkGuard.js'
 import { parsePrudentialPruVantageAssureII } from './parsers/prudentialPruVantageAssureII.js'
 import { parsePrudentialPruVantageAssureSp } from './parsers/prudentialPruVantageAssureSp.js'
 import { parsePrudentialPrulinkInvestGrowth } from './parsers/prudentialPrulinkInvestGrowth.js'
@@ -84,6 +85,7 @@ const HSBC_WEALTH_INVEST_CPF_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life W
 const HSBC_WEALTH_VOYAGE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Voyage Product Summary.pdf'
 const PRUDENTIAL_PRUVANTAGE_ASSURE_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRUVantage Assure II Product Summary.pdf'
 const PRUDENTIAL_PRUVANTAGE_ASSURE_SP_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRUVantage Assure (SP) Product Summary.pdf'
+const PRUDENTIAL_PRUACTIVE_LINKGUARD_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRUActive LinkGuard Product Summary.pdf'
 const PRUDENTIAL_PRULINK_INVESTGROWTH_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRULink InvestGrowth Product Summary.pdf'
 const PRUDENTIAL_PRULINK_INVESTGROWTH_SP_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRULink InvestGrowth (SP) Product Summary.pdf'
 const PRUDENTIAL_PRUVANTAGE_PROSPER_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRUVantage Prosper Product Summary.pdf'
@@ -230,6 +232,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const prudentialAssureChecksum = await sha256(PRUDENTIAL_PRUVANTAGE_ASSURE_II_SOURCE_PATH)
   const prudentialAssureSpExtracted = await extractPdfText(PRUDENTIAL_PRUVANTAGE_ASSURE_SP_SOURCE_PATH)
   const prudentialAssureSpChecksum = await sha256(PRUDENTIAL_PRUVANTAGE_ASSURE_SP_SOURCE_PATH)
+  const prudentialPruActiveLinkGuardExtracted = await extractPdfText(PRUDENTIAL_PRUACTIVE_LINKGUARD_SOURCE_PATH)
+  const prudentialPruActiveLinkGuardChecksum = await sha256(PRUDENTIAL_PRUACTIVE_LINKGUARD_SOURCE_PATH)
   const prudentialPrulinkInvestGrowthExtracted = await extractPdfText(PRUDENTIAL_PRULINK_INVESTGROWTH_SOURCE_PATH)
   const prudentialPrulinkInvestGrowthChecksum = await sha256(PRUDENTIAL_PRULINK_INVESTGROWTH_SOURCE_PATH)
   const prudentialPrulinkInvestGrowthSpExtracted = await extractPdfText(PRUDENTIAL_PRULINK_INVESTGROWTH_SP_SOURCE_PATH)
@@ -388,6 +392,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parsePrudentialPruVantageAssureSp({
       document: prudentialAssureSpExtracted,
       sourceChecksumSha256: prudentialAssureSpChecksum,
+    }),
+    parsePrudentialPruActiveLinkGuard({
+      document: prudentialPruActiveLinkGuardExtracted,
+      sourceChecksumSha256: prudentialPruActiveLinkGuardChecksum,
     }),
     parsePrudentialPrulinkInvestGrowth({
       document: prudentialPrulinkInvestGrowthExtracted,

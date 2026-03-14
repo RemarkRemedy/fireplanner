@@ -38838,6 +38838,263 @@
     ]
   },
   {
+    "id": "prudential-pruactive-linkguard",
+    "insurer": "Prudential",
+    "productName": "PRUActive LinkGuard",
+    "sourceFileName": "PRUActive LinkGuard Product Summary.pdf",
+    "sourceChecksumSha256": "3978da4d00278d994b250b7b3a608757915d1c7764e7d0611116e76d667d191a",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:pruactive-linkguard-premium-year-premium-charge",
+      "branch:pruactive-linkguard-administration-charge",
+      "branch:pruactive-linkguard-top-up-premium-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "pruactive-linkguard-assurance-charge",
+      "pruactive-linkguard-no-lapse-period",
+      "pruactive-linkguard-withdrawal-eligibility",
+      "pruactive-linkguard-surrender-charge",
+      "pruactive-linkguard-investment-booster-regular",
+      "pruactive-linkguard-protection-benefits",
+      "pruactive-linkguard-fund-switching"
+    ],
+    "warnings": [
+      "PRUActive LinkGuard is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, the S$5 monthly administration charge, and the 3% Investment Booster (Lump Sum) premium charge, while assurance charges, No Lapse Period debt behavior, withdrawal eligibility, surrender mechanics, and protection-side payouts remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-open-ended-cash-or-srs",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Nature and objective of plan",
+                "excerpt": "Nature and Objective of Plan: PRUActive LinkGuard is a regular premium investment-linked policy where you can choose your protection and investment mix within one policy. This policy provides financial protection against"
+              },
+              {
+                "page": 6,
+                "section": "Premium",
+                "excerpt": "Minimum premium is $900 (annually); $450 (semi-annually); $225 (quarterly); or $75 (monthly). Prepared by Page 6 of 29 WA_PX3_011 E. & O.E 0 Underwritten by Prudential Assurance Company Singapore (Pte) Limited (Reg. No 1"
+              },
+              {
+                "page": 10,
+                "section": "Investment Booster (Lump Sum)",
+                "excerpt": "9. Top-up with Investment Booster (Lump Sum) You can pay an additional one-off premium called the Investment Booster (Lump Sum), at any time, to increase your investment. The minimum Investment Booster (Lump Sum) premium"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "regular-premium-charge",
+            "label": "Regular Premium Charge",
+            "basis": "annual-contribution",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.55
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 7,
+                "rate": 0.05
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published regular premium charge schedule by premium year.",
+              "Premium-year charge bands freeze when premiums stop and resume at the last accepted premium-year band when regular premiums restart."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Premium",
+                "excerpt": "Minimum premium is $900 (annually); $450 (semi-annually); $225 (quarterly); or $75 (monthly). Prepared by Page 6 of 29 WA_PX3_011 E. & O.E 0 Underwritten by Prudential Assurance Company Singapore (Pte) Limited (Reg. No 1"
+              },
+              {
+                "page": 14,
+                "section": "Charges",
+                "excerpt": "1. Premium Charge We will deduct a premium charge upon the payment of regular premium, Investment Booster (Regular) and Investment Booster (Lump Sum). We then use the remaining amount to buy units in the fund or funds yo"
+              }
+            ]
+          },
+          {
+            "id": "administration-charge",
+            "label": "Administration Charge",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "amountSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": null,
+                "amount": 60
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published S$5 monthly administration charge as a fixed S$60 annual drag.",
+              "The published CPI-linked increase cap above S$5 per month remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 14,
+                "section": "Charges",
+                "excerpt": "1. Premium Charge We will deduct a premium charge upon the payment of regular premium, Investment Booster (Regular) and Investment Booster (Lump Sum). We then use the remaining amount to buy units in the fund or funds yo"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Investment Booster (Lump Sum) Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% upfront charge on Investment Booster (Lump Sum) premiums.",
+              "The recurring Investment Booster (Regular) schedule remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Investment Booster (Lump Sum)",
+                "excerpt": "9. Top-up with Investment Booster (Lump Sum) You can pay an additional one-off premium called the Investment Booster (Lump Sum), at any time, to increase your investment. The minimum Investment Booster (Lump Sum) premium"
+              },
+              {
+                "page": 11,
+                "section": "Investment Booster (Regular) and withdrawal conditions",
+                "excerpt": "10. Top-up with Investment Booster (Regular) You can increase your investment at any time, if the life assured is under 65 years old, by paying an additional premium called the Investment Booster (Regular). The Investmen"
+              },
+              {
+                "page": 14,
+                "section": "Charges",
+                "excerpt": "1. Premium Charge We will deduct a premium charge upon the payment of regular premium, Investment Booster (Regular) and Investment Booster (Lump Sum). We then use the remaining amount to buy units in the fund or funds yo"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "PRUActive LinkGuard is modeled as a partial subset in V1. The parser captures the premium-year regular premium charge schedule, the S$5 monthly administration charge, and the 3% Investment Booster (Lump Sum) premium charge.",
+          "Assurance charges depend on Appendix A rates, age, sum assured, Multiplier settings, and possible medical or occupational loadings, so they remain informational only in V1.",
+          "No Lapse Period debt carry, withdrawal eligibility gating, surrender-charge-on-allocated-premiums, and Investment Booster (Regular) recurrence remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Death, terminal illness, total and permanent disability, and multiplier-benefit payout mechanics remain informational only.",
+          "Appendix A assurance charge curves and medical or occupational loadings remain informational only.",
+          "No Lapse Period amount-owed carry and reinstatement behavior remain informational only.",
+          "Partial withdrawal eligibility is not enforced automatically, including the 25-month fully-paid gate and the Investment Booster paid-to-date cap.",
+          "Surrender charges on allocated premiums, including separate treatment for increased sum assured and exclusion for Investment Booster premiums, remain informational only.",
+          "Investment Booster (Regular) recurrence and the published stop-paying-premiums continuation behavior remain informational only.",
+          "Fund-switch minimums and any future switch administration charge remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Nature and objective of plan",
+            "excerpt": "Nature and Objective of Plan: PRUActive LinkGuard is a regular premium investment-linked policy where you can choose your protection and investment mix within one policy. This policy provides financial protection against"
+          },
+          {
+            "page": 6,
+            "section": "Premium",
+            "excerpt": "Minimum premium is $900 (annually); $450 (semi-annually); $225 (quarterly); or $75 (monthly). Prepared by Page 6 of 29 WA_PX3_011 E. & O.E 0 Underwritten by Prudential Assurance Company Singapore (Pte) Limited (Reg. No 1"
+          },
+          {
+            "page": 10,
+            "section": "Investment Booster (Lump Sum)",
+            "excerpt": "9. Top-up with Investment Booster (Lump Sum) You can pay an additional one-off premium called the Investment Booster (Lump Sum), at any time, to increase your investment. The minimum Investment Booster (Lump Sum) premium"
+          },
+          {
+            "page": 11,
+            "section": "Investment Booster (Regular) and withdrawal conditions",
+            "excerpt": "10. Top-up with Investment Booster (Regular) You can increase your investment at any time, if the life assured is under 65 years old, by paying an additional premium called the Investment Booster (Regular). The Investmen"
+          },
+          {
+            "page": 12,
+            "section": "Surrender charge",
+            "excerpt": "13. Surrender the policy: You can apply at any time to surrender your policy. However, there is a charge when you surrender your policy within the first three premium-paying years of your policy. It is a percentage of th"
+          },
+          {
+            "page": 13,
+            "section": "No Lapse Period",
+            "excerpt": "No Lapse Period: For the first 10 years from the cover start date of the policy, your policy will not lapse even if the unit value in your account is not enough to pay for your administration and assurance charges. The N"
+          },
+          {
+            "page": 14,
+            "section": "Charges",
+            "excerpt": "1. Premium Charge We will deduct a premium charge upon the payment of regular premium, Investment Booster (Regular) and Investment Booster (Lump Sum). We then use the remaining amount to buy units in the fund or funds yo"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "prudential-prulink-investgrowth",
     "insurer": "Prudential",
     "productName": "PRULink InvestGrowth",
