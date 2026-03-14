@@ -23,6 +23,8 @@ export interface NudgeField {
   showWhen?: { field: string; equals: boolean | string }
   /** Helper text shown below the field */
   helperText?: string
+  /** Field name for validation lookup — maps to validateSetupField. Defaults to `name`. */
+  validationKey?: string
 }
 
 export interface NudgeFlowScreen {
@@ -79,10 +81,10 @@ const CPF_FLOW: NudgeFlowDefinition = {
       id: 'cpf-accounts',
       title: 'CPF Account Balances',
       fields: [
-        { name: 'cpfOA', label: 'Ordinary Account (OA)', type: 'currency', required: true },
-        { name: 'cpfSA', label: 'Special Account (SA)', type: 'currency', required: true },
-        { name: 'cpfMA', label: 'MediSave Account (MA)', type: 'currency', required: true },
-        { name: 'cpfRA', label: 'Retirement Account (RA)', type: 'currency' },
+        { name: 'cpfOA', label: 'Ordinary Account (OA)', type: 'currency', required: true, validationKey: 'cpfOA' },
+        { name: 'cpfSA', label: 'Special Account (SA)', type: 'currency', required: true, validationKey: 'cpfSA' },
+        { name: 'cpfMA', label: 'MediSave Account (MA)', type: 'currency', required: true, validationKey: 'cpfMA' },
+        { name: 'cpfRA', label: 'Retirement Account (RA)', type: 'currency', validationKey: 'cpfRA' },
       ],
     },
     {
@@ -98,11 +100,13 @@ const CPF_FLOW: NudgeFlowDefinition = {
           name: 'annualSaTopUp',
           label: 'Annual SA/RA top-up amount',
           type: 'currency',
+          validationKey: 'annualSaTopUp',
         },
         {
           name: 'annualMaTopUp',
           label: 'Annual MediSave top-up amount',
           type: 'currency',
+          validationKey: 'annualMaTopUp',
         },
       ],
       skipWhen: { field: 'hasCpfTopUps', equals: false },
@@ -194,7 +198,7 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
         },
         { name: 'mortgageOutstanding', label: 'Outstanding loan amount', type: 'currency' },
         { name: 'monthlyMortgagePayment', label: 'Monthly repayment', type: 'currency' },
-        { name: 'mortgageRatePercent', label: 'Mortgage interest rate (%)', type: 'percent' },
+        { name: 'mortgageRatePercent', label: 'Mortgage interest rate (%)', type: 'percent', validationKey: 'mortgageRatePercent' },
         { name: 'mortgageEndYear', label: 'Loan end year', type: 'number' },
       ],
     },
@@ -443,7 +447,7 @@ const SRS_FLOW: NudgeFlowDefinition = {
       id: 'srs-details',
       title: 'SRS Contribution Details',
       fields: [
-        { name: 'annualSrsContribution', label: 'Annual SRS contribution', type: 'currency', required: true },
+        { name: 'annualSrsContribution', label: 'Annual SRS contribution', type: 'currency', required: true, validationKey: 'annualSrsContribution' },
         {
           name: 'srsInvestmentStrategy',
           label: 'How are SRS funds invested?',

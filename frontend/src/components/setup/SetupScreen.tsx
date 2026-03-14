@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -13,6 +13,10 @@ import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { PercentInput } from '@/components/shared/PercentInput'
 import type { NudgeField, NudgeFlowScreen } from '@/lib/data/nudgeFlows'
+import {
+  validateSetupField,
+  type SetupFieldContext,
+} from '@/lib/validation/setupFieldValidation'
 
 interface SetupScreenProps {
   screen: NudgeFlowScreen
@@ -29,9 +33,10 @@ interface FieldRendererProps {
   field: NudgeField
   values: Record<string, unknown>
   onChange: (field: string, value: unknown) => void
+  error?: string | null
 }
 
-function FieldRenderer({ field, values, onChange }: FieldRendererProps) {
+function FieldRenderer({ field, values, onChange, error }: FieldRendererProps) {
   const labelId = useId()
   const currentValue = values[field.name]
 
@@ -41,6 +46,7 @@ function FieldRenderer({ field, values, onChange }: FieldRendererProps) {
         label={field.label}
         value={typeof currentValue === 'number' ? currentValue : 0}
         onChange={(v) => onChange(field.name, v)}
+        error={error ?? undefined}
       />
     )
   }
@@ -52,6 +58,7 @@ function FieldRenderer({ field, values, onChange }: FieldRendererProps) {
         value={typeof currentValue === 'number' ? currentValue : 0}
         onChange={(v) => onChange(field.name, v)}
         integer
+        error={error ?? undefined}
       />
     )
   }
@@ -62,6 +69,7 @@ function FieldRenderer({ field, values, onChange }: FieldRendererProps) {
         label={field.label}
         value={typeof currentValue === 'number' ? currentValue : 0}
         onChange={(v) => onChange(field.name, v)}
+        error={error ?? undefined}
       />
     )
   }
@@ -135,6 +143,36 @@ export function SetupScreen({
 }: SetupScreenProps) {
   const [requiredErrors, setRequiredErrors] = useState<Set<string>>(new Set())
 
+  // Build cross-field context for validation
+  const validationContext: SetupFieldContext = useMemo(
+    () => ({
+      currentAge: typeof values.currentAge === 'number' ? values.currentAge : undefined,
+      retirementAge: typeof values.retirementAge === 'number' ? values.retirementAge : undefined,
+      propertyValue: typeof values.propertyValue === 'number' ? values.propertyValue : undefined,
+    }),
+    [values.currentAge, values.retirementAge, values.propertyValue],
+  )
+
+  // Compute validation errors for all visible fields on this screen
+  const fieldErrors = useMemo(() => {
+    const errors: Record<string, string | null> = {}
+    for (const field of screen.fields) {
+      // Skip hidden fields
+      if (field.showWhen) {
+        const depVal = values[field.showWhen.field]
+        if (depVal !== field.showWhen.equals) continue
+      }
+      const key = field.validationKey ?? field.name
+      const val = values[field.name]
+      // Only validate numeric/currency/percent fields that have a value set
+      if (val === undefined || val === null || val === '') continue
+      errors[field.name] = validateSetupField(key, val, validationContext)
+    }
+    return errors
+  }, [screen.fields, values, validationContext])
+
+  const hasValidationErrors = Object.values(fieldErrors).some((e) => e != null)
+
   return (
     <form
       aria-label={screen.title}
@@ -143,6 +181,11 @@ export function SetupScreen({
         // Validate required fields before advancing
         const missing = screen.fields.filter((f) => {
           if (!f.required) return false
+          // Skip hidden fields
+          if (f.showWhen) {
+            const depVal = values[f.showWhen.field]
+            if (depVal !== f.showWhen.equals) return false
+          }
           const val = values[f.name]
           return val === undefined || val === null || val === ''
         })
@@ -150,6 +193,8 @@ export function SetupScreen({
           setRequiredErrors(new Set(missing.map((f) => f.name)))
           return
         }
+        // Block if any field has a validation error
+        if (hasValidationErrors) return
         setRequiredErrors(new Set())
         onNext()
       }}
@@ -180,11 +225,13 @@ export function SetupScreen({
             const depVal = values[field.showWhen.field]
             if (depVal !== field.showWhen.equals) return null
           }
+          const validationError = fieldErrors[field.name] ?? null
           return (
           <div key={field.name}>
             <FieldRenderer
               field={field}
               values={values}
+              error={validationError}
               onChange={(name, value) => {
                 setRequiredErrors((prev) => {
                   if (!prev.has(name)) return prev
@@ -195,10 +242,13 @@ export function SetupScreen({
                 onChange(name, value)
               }}
             />
-            {field.helperText && (
+            {field.helperText && !validationError && (
               <p className="mt-1 text-xs text-muted-foreground">{field.helperText}</p>
             )}
-            {requiredErrors.has(field.name) && (
+            {validationError && (
+              <p className="mt-1 text-xs text-destructive">{validationError}</p>
+            )}
+            {requiredErrors.has(field.name) && !validationError && (
               <p className="mt-1 text-xs text-destructive">This field is required</p>
             )}
           </div>
@@ -212,7 +262,11 @@ export function SetupScreen({
             Back
           </Button>
         )}
-        <Button type="submit" className={onBack ? 'flex-1' : 'w-full'}>
+        <Button
+          type="submit"
+          className={onBack ? 'flex-1' : 'w-full'}
+          disabled={hasValidationErrors}
+        >
           {submitLabel}
         </Button>
       </div>

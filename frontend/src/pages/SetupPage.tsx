@@ -30,8 +30,8 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'age',
     title: 'How old are you?',
     fields: [
-      { name: 'currentAge', label: 'Current age', type: 'number', required: true },
-      { name: 'retirementAge', label: 'Desired retirement age', type: 'number', required: true },
+      { name: 'currentAge', label: 'Current age', type: 'number', required: true, validationKey: 'currentAge' },
+      { name: 'retirementAge', label: 'Desired retirement age', type: 'number', required: true, validationKey: 'retirementAge' },
       {
         name: 'retirementPhase',
         label: 'Retirement phase',
@@ -57,7 +57,7 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'income',
     title: 'What do you earn?',
     fields: [
-      { name: 'annualIncome', label: 'Annual income', type: 'currency', required: true },
+      { name: 'annualIncome', label: 'Annual income', type: 'currency', required: true, validationKey: 'annualIncome' },
       {
         name: 'incomeType',
         label: 'Income basis',
@@ -76,7 +76,7 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'expenses',
     title: 'What do you spend?',
     fields: [
-      { name: 'annualExpenses', label: 'Annual expenses', type: 'currency', required: true, helperText: 'Include all regular spending: rent, food, transport, utilities, subscriptions. You can break it down later.' },
+      { name: 'annualExpenses', label: 'Annual expenses', type: 'currency', required: true, validationKey: 'annualExpenses', helperText: 'Include all regular spending: rent, food, transport, utilities, subscriptions. You can break it down later.' },
     ],
   },
   // Screen 4: Savings
@@ -84,7 +84,7 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'savings',
     title: 'What have you saved?',
     fields: [
-      { name: 'liquidNetWorth', label: 'Cash & investments (excl. CPF/property)', type: 'currency', required: true, helperText: 'Include savings accounts, brokerage, fixed deposits. Exclude CPF and your home — those are tracked separately.' },
+      { name: 'liquidNetWorth', label: 'Cash & investments (excl. CPF/property)', type: 'currency', required: true, validationKey: 'liquidNetWorth', helperText: 'Include savings accounts, brokerage, fixed deposits. Exclude CPF and your home — those are tracked separately.' },
     ],
   },
   // Screen 5: Residency
@@ -112,7 +112,7 @@ const SCREENS: (NudgeFlowScreen & {
     title: 'Your CPF',
     fields: [
       { name: 'cpfKnown', label: 'I know my CPF balances', type: 'toggle', helperText: 'Check my.cpf.gov.sg → My Statement. If you don\'t know, your projection will exclude CPF — you can add it later.' },
-      { name: 'cpfTotal', label: 'Total CPF balance (OA + SA + MA)', type: 'currency', showWhen: { field: 'cpfKnown', equals: true }, helperText: 'A rough total is fine. You can break it down by account later.' },
+      { name: 'cpfTotal', label: 'Total CPF balance (OA + SA + MA)', type: 'currency', validationKey: 'cpfTotal', showWhen: { field: 'cpfKnown', equals: true }, helperText: 'A rough total is fine. You can break it down by account later.' },
     ],
     skipWhen: { field: 'residency', equals: 'foreigner' },
   },
@@ -149,8 +149,8 @@ const SCREENS: (NudgeFlowScreen & {
           { value: 'landed', label: 'Landed' },
         ],
       },
-      { name: 'propertyValue', label: 'Estimated current value', type: 'currency' },
-      { name: 'mortgageBalance', label: 'Outstanding mortgage', type: 'currency' },
+      { name: 'propertyValue', label: 'Estimated current value', type: 'currency', validationKey: 'propertyValue' },
+      { name: 'mortgageBalance', label: 'Outstanding mortgage', type: 'currency', validationKey: 'mortgageBalance' },
     ],
     skipWhen: { field: 'ownsProperty', notEquals: 'owns' },
   },
@@ -169,7 +169,7 @@ const SCREENS: (NudgeFlowScreen & {
           { value: 'landed', label: 'Landed' },
         ],
       },
-      { name: 'purchasePrice', label: 'Expected purchase price', type: 'currency' },
+      { name: 'purchasePrice', label: 'Expected purchase price', type: 'currency', validationKey: 'purchasePrice' },
       { name: 'purchaseYearsFromNow', label: 'Years until purchase', type: 'number' },
     ],
     skipWhen: { field: 'ownsProperty', notEquals: 'planning' },
@@ -208,8 +208,8 @@ const SCREENS: (NudgeFlowScreen & {
     title: "Your partner's details",
     fields: [
       { name: 'partnerName', label: "Partner's name", type: 'text' },
-      { name: 'partnerAge', label: "Partner's current age", type: 'number', required: true },
-      { name: 'partnerRetirementAge', label: "Partner's retirement age", type: 'number', required: true },
+      { name: 'partnerAge', label: "Partner's current age", type: 'number', required: true, validationKey: 'partnerAge' },
+      { name: 'partnerRetirementAge', label: "Partner's retirement age", type: 'number', required: true, validationKey: 'partnerRetirementAge' },
     ],
     planTypes: ['couple', 'household'],
   },
@@ -217,7 +217,7 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'partner-income',
     title: "Partner's income",
     fields: [
-      { name: 'partnerIncome', label: 'Annual income', type: 'currency', required: true },
+      { name: 'partnerIncome', label: 'Annual income', type: 'currency', required: true, validationKey: 'partnerIncome' },
       {
         name: 'partnerIncomeType',
         label: 'Income basis',
@@ -235,8 +235,8 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'partner-expenses',
     title: "Partner's expenses & savings",
     fields: [
-      { name: 'partnerExpenses', label: 'Annual personal expenses', type: 'currency', required: true },
-      { name: 'partnerNetWorth', label: 'Cash & investments', type: 'currency', required: true },
+      { name: 'partnerExpenses', label: 'Annual personal expenses', type: 'currency', required: true, validationKey: 'partnerExpenses' },
+      { name: 'partnerNetWorth', label: 'Cash & investments', type: 'currency', required: true, validationKey: 'partnerNetWorth' },
     ],
     planTypes: ['couple', 'household'],
   },
@@ -256,7 +256,7 @@ const SCREENS: (NudgeFlowScreen & {
         required: true,
       },
       { name: 'partnerCpfKnown', label: 'Partner knows CPF balance', type: 'toggle', helperText: 'If unknown, the projection will exclude their CPF.' },
-      { name: 'partnerCpfTotal', label: 'Total CPF balance', type: 'currency', showWhen: { field: 'partnerCpfKnown', equals: true } },
+      { name: 'partnerCpfTotal', label: 'Total CPF balance', type: 'currency', validationKey: 'partnerCpfTotal', showWhen: { field: 'partnerCpfKnown', equals: true } },
     ],
     planTypes: ['couple', 'household'],
   },
