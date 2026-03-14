@@ -37,6 +37,7 @@ import { parseIncomeInvestFlexVantage } from './parsers/incomeInvestFlexVantage.
 import { parseIncomeLegacyFlexSolitaire } from './parsers/incomeLegacyFlexSolitaire.js'
 import { parseIncomeSnackInvestment } from './parsers/incomeSnackInvestment.js'
 import { parseIncomeWealthLinkGl3 } from './parsers/incomeWealthLinkGl3.js'
+import { parseManulifeInvestreadyGrowth } from './parsers/manulifeInvestreadyGrowth.js'
 import { parseManulifeInvestreadyIii } from './parsers/manulifeInvestreadyIii.js'
 import { parseManulifeManuinvestDuo } from './parsers/manulifeManuinvestDuo.js'
 import { parseManulifeManulinkInvestorIi } from './parsers/manulifeManulinkInvestorIi.js'
@@ -76,6 +77,7 @@ const INCOME_INVEST_FLEX_VANTAGE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/VS2_Sum
 const INCOME_LEGACY_FLEX_SOLITAIRE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/VA3R_VA3S_Summary.pdf'
 const INCOME_WEALTHLINK_GL3_SOURCE_PATH = '/Users/tj/Downloads/pdfs/GL3_Summary.pdf'
 const INCOME_SNACK_INVESTMENT_SOURCE_PATH = '/Users/tj/Downloads/pdfs/SNACKIV_Summary.pdf'
+const MANULIFE_INVESTREADY_GROWTH_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_MIRG_PdtSum.pdf'
 const MANULIFE_INVESTREADY_III_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_MIR03_PdtSum.pdf'
 const MANULIFE_MANUINVEST_DUO_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_MID01_PdtSum.pdf'
 const MANULIFE_MANULINK_INVESTOR_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_MI2_ILP_PdtSum.pdf'
@@ -224,6 +226,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const incomeWealthLinkGl3Checksum = await sha256(INCOME_WEALTHLINK_GL3_SOURCE_PATH)
   const incomeSnackInvestmentExtracted = await extractPdfText(INCOME_SNACK_INVESTMENT_SOURCE_PATH)
   const incomeSnackInvestmentChecksum = await sha256(INCOME_SNACK_INVESTMENT_SOURCE_PATH)
+  const manulifeInvestreadyGrowthExtracted = await extractPdfText(MANULIFE_INVESTREADY_GROWTH_SOURCE_PATH)
+  const manulifeInvestreadyGrowthChecksum = await sha256(MANULIFE_INVESTREADY_GROWTH_SOURCE_PATH)
   const manulifeInvestreadyIiiExtracted = await extractPdfText(MANULIFE_INVESTREADY_III_SOURCE_PATH)
   const manulifeInvestreadyIiiChecksum = await sha256(MANULIFE_INVESTREADY_III_SOURCE_PATH)
   const manulifeManuinvestDuoExtracted = await extractPdfText(MANULIFE_MANUINVEST_DUO_SOURCE_PATH)
@@ -376,6 +380,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseIncomeSnackInvestment({
       document: incomeSnackInvestmentExtracted,
       sourceChecksumSha256: incomeSnackInvestmentChecksum,
+    }),
+    parseManulifeInvestreadyGrowth({
+      document: manulifeInvestreadyGrowthExtracted,
+      sourceChecksumSha256: manulifeInvestreadyGrowthChecksum,
     }),
     parseManulifeInvestreadyIii({
       document: manulifeInvestreadyIiiExtracted,
