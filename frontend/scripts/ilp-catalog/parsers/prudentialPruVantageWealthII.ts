@@ -162,6 +162,7 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumTerm): IlpTem
     {
       id: 'administration-charge',
       label: 'Administration Charge',
+      basis: 'account-value',
       rate: roundRate(adminCharge.annualRate),
       appliesTo: ['growth', 'flex'],
       activeWindow: 'policy-term',

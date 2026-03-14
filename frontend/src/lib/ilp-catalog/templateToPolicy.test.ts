@@ -2082,4 +2082,76 @@ describe('templateVariantToPolicySeed', () => {
       },
     ])
   })
+
+  it('throws when a fee rule is missing a basis instead of silently coercing account-value', () => {
+    const manifest: IlpCatalogManifest = {
+      generatedAt: '2026-03-14T00:00:00.000Z',
+      catalogVersion: 'test',
+      parserVersion: 'test-parser',
+      sourceStrategy: 'manual-pdf-corpus',
+      productsCount: 1,
+      supportedCount: 0,
+      partialCount: 1,
+      parserErrorCount: 0,
+      summarySourceCount: 1,
+      brochureOnlySourceCount: 0,
+      brochurePartialEligibleCount: 0,
+    }
+    const variant: IlpTemplateVariant = {
+      id: 'missing-basis',
+      currency: 'SGD',
+      mipLength: 10,
+      icpMonths: 12,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy',
+          feeRate: 0,
+          postMipFeeRate: 0,
+          subjectToEec: false,
+          contributionRules: [],
+          sourceRefs: [],
+        },
+      ],
+      feeRules: [
+        {
+          id: 'missing-basis-fee',
+          label: 'Missing Basis Fee',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0.01,
+          amount: null,
+          notes: [],
+          sourceRefs: [],
+        },
+      ],
+      eventChargeRules: [],
+      bonuses: [],
+      eecTable: Array.from({ length: 10 }, () => 0),
+      warnings: [],
+      unsupportedItems: [],
+      sourceRefs: [],
+    }
+    const product: IlpCatalogProduct = {
+      id: 'test-product',
+      insurer: 'Test Insurer',
+      productName: 'Test Product',
+      sourceFileName: 'test.pdf',
+      sourceChecksumSha256: 'abc123',
+      sourceDocumentType: 'summary',
+      sourceClass: 'summary',
+      supportStatus: 'partial',
+      structureStatus: 'structured',
+      economicsStatus: 'partial-modeled-subset',
+      modeledEconomics: [],
+      metadataOnlyBehaviors: [],
+      warnings: [],
+      archived: false,
+      variants: [variant],
+    }
+
+    expect(() => templateVariantToPolicySeed(product, variant, manifest)).toThrow(
+      'Fee rule "missing-basis-fee" is missing a basis',
+    )
+  })
 })

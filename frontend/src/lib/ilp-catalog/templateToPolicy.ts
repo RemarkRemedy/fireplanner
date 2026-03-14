@@ -69,6 +69,10 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
     ))
     .filter((rule) => !isCoveredByAccountFee(rule, variant.accounts))
     .map((rule) => {
+      if (rule.basis == null) {
+        throw new Error(`Fee rule "${rule.id}" is missing a basis`)
+      }
+
       const isAssurance = rule.basis === 'assurance-sum-at-risk'
       const isPremiumBase = rule.basis === 'premium-base-mip-multiplier'
       const isCumulativePaidPremium = rule.basis === 'cumulative-paid-regular-premium'
