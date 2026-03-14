@@ -11,6 +11,7 @@ import { parseAiaInvestEasyCpf } from './parsers/aiaInvestEasyCpf.js'
 import { parseAiaPlatinumRetirementElite } from './parsers/aiaPlatinumRetirementElite.js'
 import { parseAiaPlatinumWealthElite2 } from './parsers/aiaPlatinumWealthElite2.js'
 import { parseAiaPlatinumWealthLegacy } from './parsers/aiaPlatinumWealthLegacy.js'
+import { parseAiaWealthVenture } from './parsers/aiaWealthVenture.js'
 import { parseHsbcWealthAccelerate } from './parsers/hsbcWealthAccelerate.js'
 import { parseHsbcWealthAbundance } from './parsers/hsbcWealthAbundance.js'
 import { parseHsbcWealthFocus } from './parsers/hsbcWealthFocus.js'
@@ -112,6 +113,7 @@ const AIA_INVEST_EASY_CPF_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_2011063
 const AIA_PLATINUM_RETIREMENT_ELITE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_PRE_Jul2025.pdf'
 const AIA_PLATINUM_WEALTH_ELITE_2_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_PWE2.0_Jul2025.pdf'
 const AIA_PLATINUM_WEALTH_LEGACY_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_PWL_Jul2025.pdf'
+const AIA_WEALTH_VENTURE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_AWV_Jan2026.pdf'
 
 export interface IlpCatalogSnapshot {
   manifest: IlpCatalogManifest
@@ -190,6 +192,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const aiaPlatinumWealthElite2Checksum = await sha256(AIA_PLATINUM_WEALTH_ELITE_2_SOURCE_PATH)
   const aiaPlatinumWealthLegacyExtracted = await extractPdfText(AIA_PLATINUM_WEALTH_LEGACY_SOURCE_PATH)
   const aiaPlatinumWealthLegacyChecksum = await sha256(AIA_PLATINUM_WEALTH_LEGACY_SOURCE_PATH)
+  const aiaWealthVentureExtracted = await extractPdfText(AIA_WEALTH_VENTURE_SOURCE_PATH)
+  const aiaWealthVentureChecksum = await sha256(AIA_WEALTH_VENTURE_SOURCE_PATH)
   const incomeInvestFlexExtracted = await extractPdfText(INCOME_INVEST_FLEX_SOURCE_PATH)
   const incomeInvestFlexChecksum = await sha256(INCOME_INVEST_FLEX_SOURCE_PATH)
   const incomeAstralinkVa2Extracted = await extractPdfText(INCOME_ASTRALINK_VA2_SOURCE_PATH)
@@ -308,6 +312,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseAiaPlatinumWealthLegacy({
       document: aiaPlatinumWealthLegacyExtracted,
       sourceChecksumSha256: aiaPlatinumWealthLegacyChecksum,
+    }),
+    parseAiaWealthVenture({
+      document: aiaWealthVentureExtracted,
+      sourceChecksumSha256: aiaWealthVentureChecksum,
     }),
     parseIncomeInvestFlex({
       document: incomeInvestFlexExtracted,
