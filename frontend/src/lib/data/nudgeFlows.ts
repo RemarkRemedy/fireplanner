@@ -58,16 +58,17 @@ export const NUDGE_TO_SECTION: Record<NudgeFlowId, SectionId> = {
   protection: 'section-protection',
 }
 
+/** Static priority — ordered by typical impact on FIRE timeline */
 export const NUDGE_PRIORITY: NudgeFlowId[] = [
-  'cpf',
-  'expenses',
-  'property',
-  'healthcare',
-  'salary',
-  'srs',
-  'goals',
-  'allocation',
-  'protection',
+  'salary',      // income growth is the biggest lever on FIRE age
+  'expenses',    // retirement spending adjustment is second
+  'cpf',         // LIFE payouts + per-account balances affect post-65
+  'property',    // equity and downsizing plans
+  'healthcare',  // grows with age but smaller absolute impact
+  'srs',         // tax relief, supplementary
+  'goals',       // one-off future expenses
+  'allocation',  // template choice, most accept defaults
+  'protection',  // safety net, doesn't shift FIRE timeline
 ]
 
 const CPF_FLOW: NudgeFlowDefinition = {
