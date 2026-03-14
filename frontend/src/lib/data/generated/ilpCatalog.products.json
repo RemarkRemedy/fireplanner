@@ -21094,6 +21094,396 @@
     ]
   },
   {
+    "id": "great-eastern-great-life-advantage-4",
+    "insurer": "Great Eastern",
+    "productName": "GREAT Life Advantage 4",
+    "sourceFileName": "PS(EN)_GREAT Life Advantage 4_(SG)_v2.0.pdf",
+    "sourceChecksumSha256": "edfaa47546cf5acd6e2ede8956782aaabf0fe5da858810597b18e731bb8b9a3e",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:great-life-advantage-4-premium-charge",
+      "branch:great-life-advantage-4-premium-reward",
+      "branch:great-life-advantage-4-policy-fee",
+      "branch:great-life-advantage-4-premium-holiday-charge",
+      "branch:great-life-advantage-4-premium-holiday-charge-refund",
+      "branch:great-life-advantage-4-top-up-charge",
+      "branch:great-life-advantage-4-withdrawal-charge",
+      "branch:great-life-advantage-4-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "great-life-advantage-4-insurance-charge",
+      "great-life-advantage-4-non-lapse-guarantee-debt",
+      "great-life-advantage-4-continuation-event",
+      "great-life-advantage-4-basic-sum-assured-state",
+      "great-life-advantage-4-regular-premium-stream-reset",
+      "great-life-advantage-4-rider-charge-deductions",
+      "great-life-advantage-4-child-cover",
+      "great-life-advantage-4-gisa-option",
+      "great-life-advantage-4-fund-level-fees",
+      "great-life-advantage-4-afr-and-fund-switching"
+    ],
+    "warnings": [
+      "GREAT Life Advantage 4 is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, premium reward, first-two-policy-years premium-holiday charge and refund privilege, top-up charge, first-two-policy-years withdrawal / surrender charges, and the fixed policy fee, while insurance charge, non-lapse debt carry, continuation-event behavior, and broader protection-state mechanics remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-open-ended-regular-pay",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and protection scope",
+                "excerpt": "GREAT Life Advantage 4 is a regular premium whole of life investment-linked policy About your plan designed to meet your protection needs. It provides financial protection against death, total and permanent disability (T"
+              },
+              {
+                "page": 5,
+                "section": "Premium charge and premium reward",
+                "excerpt": "Product Summary GREAT Life Advantage 4 Please keep this copy for reference. A premium charge will be deducted from each payment of the basic regular premium. Premium charge The remaining amount of basic regular premium p"
+              },
+              {
+                "page": 10,
+                "section": "Single premium top-ups and partial withdrawal",
+                "excerpt": "You can make single premium top-ups to your policy provided that: Single premium (a) the single premium top-up is made after the inception of your policy; and top-ups (b) all the basic regular premium due and premiums fo"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "premium-reward",
+            "type": "allocation",
+            "label": "Premium Reward",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": null,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Adds 2% of each payment of basic regular premium from policy year 10 onward once the first nine policy years of base premium have been fully paid.",
+              "Premium-stream resets after basic regular premium increases remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium charge and premium reward",
+                "excerpt": "Product Summary GREAT Life Advantage 4 Please keep this copy for reference. A premium charge will be deducted from each payment of the basic regular premium. Premium charge The remaining amount of basic regular premium p"
+              },
+              {
+                "page": 6,
+                "section": "Premium holiday and refund privilege",
+                "excerpt": "Product Summary GREAT Life Advantage 4 Please keep this copy for reference. You can choose to pay the basic regular premium on a monthly, quarterly, half-yearly Premium or yearly basis, subject to the following minimum a"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "regular-premium-charge",
+            "label": "Premium Charge",
+            "basis": "annual-contribution",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.76
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.51
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.26
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 6,
+                "rate": 0.04
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published premium-year charge schedule on the basic regular premium stream.",
+              "Any increase in basic regular premium starts a new premium stream with its own charge clock and remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium charge and premium reward",
+                "excerpt": "Product Summary GREAT Life Advantage 4 Please keep this copy for reference. A premium charge will be deducted from each payment of the basic regular premium. Premium charge The remaining amount of basic regular premium p"
+              },
+              {
+                "page": 6,
+                "section": "Premium holiday and refund privilege",
+                "excerpt": "Product Summary GREAT Life Advantage 4 Please keep this copy for reference. You can choose to pay the basic regular premium on a monthly, quarterly, half-yearly Premium or yearly basis, subject to the following minimum a"
+              }
+            ]
+          },
+          {
+            "id": "policy-fee",
+            "label": "Policy Fee",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "amountSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": null,
+                "amount": 60
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published S$5 monthly policy fee as a fixed S$60 annual drag."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Surrender charge and policy fee",
+                "excerpt": "Product Summary GREAT Life Advantage 4 Please keep this copy for reference. performed according to your last-instructed premium apportionment or a new premium apportionment to be instructed. We reserve the right to impos"
+              },
+              {
+                "page": 12,
+                "section": "Insurance charge and account mechanics",
+                "excerpt": "We will deduct a policy fee of S$5 monthly by cancelling units from the fund(s) you Policy fee have invested in. We may change the policy fee by notifying you 1 month prior to changing the policy fee. We will deduct a mo"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Models the published monthly premium-holiday charge during the first two policy years as 100% of annualised basic regular premium divided by 12.",
+              "Premium holiday after the first two policy years keeps the policy in force with ongoing deductions but no separate premium-holiday charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Premium holiday and refund privilege",
+                "excerpt": "Product Summary GREAT Life Advantage 4 Please keep this copy for reference. You can choose to pay the basic regular premium on a monthly, quarterly, half-yearly Premium or yearly basis, subject to the following minimum a"
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge-refund",
+            "label": "Premium Holiday Charge Refund",
+            "trigger": "premium-holiday-repayment",
+            "basis": "premium-holiday-charge-refund",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 1,
+            "rateSchedule": [],
+            "amount": 0,
+            "sourceChargeRuleId": "premium-holiday-charge",
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-contribution-share",
+            "notes": [
+              "Refunds 100% of premium-holiday charges on reinstatement when the published first-two-policy-years conditions are met.",
+              "The once-per-policy usage limit and the no-prior-withdrawal gate remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Premium holiday and refund privilege",
+                "excerpt": "Product Summary GREAT Life Advantage 4 Please keep this copy for reference. You can choose to pay the basic regular premium on a monthly, quarterly, half-yearly Premium or yearly basis, subject to the following minimum a"
+              }
+            ]
+          },
+          {
+            "id": "top-up-premium-charge",
+            "label": "Single Premium Top-up Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 5% charge on each accepted single premium top-up.",
+              "Top-ups are blocked during premium holiday administratively but that gating is not enforced automatically in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Single premium top-ups and partial withdrawal",
+                "excerpt": "You can make single premium top-ups to your policy provided that: Single premium (a) the single premium top-up is made after the inception of your policy; and top-ups (b) all the basic regular premium due and premiums fo"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies the published 100% partial-withdrawal charge in policy years 1 and 2."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Single premium top-ups and partial withdrawal",
+                "excerpt": "You can make single premium top-ups to your policy provided that: Single premium (a) the single premium top-up is made after the inception of your policy; and top-ups (b) all the basic regular premium due and premiums fo"
+              },
+              {
+                "page": 11,
+                "section": "Surrender charge and policy fee",
+                "excerpt": "Product Summary GREAT Life Advantage 4 Please keep this copy for reference. performed according to your last-instructed premium apportionment or a new premium apportionment to be instructed. We reserve the right to impos"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1
+        ],
+        "warnings": [
+          "GREAT Life Advantage 4 is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, the 2% premium reward path, the first-two-policy-years premium-holiday charge and refund privilege, the 5% top-up charge, the first-two-policy-years withdrawal / surrender charge schedule, and the fixed S$5 monthly policy fee.",
+          "Insurance charge, non-lapse guarantee debt carry, continuation-event behavior after TPD, rider deductions, and basic-sum-assured / premium-stream state changes remain outside the current engine."
+        ],
+        "unsupportedItems": [
+          "Insurance charge remains informational only because it depends on appendix rate tables, attained age, sex, smoker status, and current net sum assured.",
+          "Non-lapse guarantee debt carry and lapse/reinstatement debt sequencing remain informational only.",
+          "Continuation Event behavior after a TPD claim remains informational only.",
+          "Basic sum assured changes, GISA milestones, and premium-stream resets after regular-premium increases remain informational only.",
+          "Rider-side charge deductions and rider continuation behavior remain informational only.",
+          "Fund-level management fees, AFR, and fund switching remain informational only.",
+          "Child cover, TPD, TI, and other protection-benefit payout handling remain informational only beyond the modeled fee drag."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and protection scope",
+            "excerpt": "GREAT Life Advantage 4 is a regular premium whole of life investment-linked policy About your plan designed to meet your protection needs. It provides financial protection against death, total and permanent disability (T"
+          },
+          {
+            "page": 5,
+            "section": "Premium charge and premium reward",
+            "excerpt": "Product Summary GREAT Life Advantage 4 Please keep this copy for reference. A premium charge will be deducted from each payment of the basic regular premium. Premium charge The remaining amount of basic regular premium p"
+          },
+          {
+            "page": 6,
+            "section": "Premium holiday and refund privilege",
+            "excerpt": "Product Summary GREAT Life Advantage 4 Please keep this copy for reference. You can choose to pay the basic regular premium on a monthly, quarterly, half-yearly Premium or yearly basis, subject to the following minimum a"
+          },
+          {
+            "page": 10,
+            "section": "Single premium top-ups and partial withdrawal",
+            "excerpt": "You can make single premium top-ups to your policy provided that: Single premium (a) the single premium top-up is made after the inception of your policy; and top-ups (b) all the basic regular premium due and premiums fo"
+          },
+          {
+            "page": 11,
+            "section": "Surrender charge and policy fee",
+            "excerpt": "Product Summary GREAT Life Advantage 4 Please keep this copy for reference. performed according to your last-instructed premium apportionment or a new premium apportionment to be instructed. We reserve the right to impos"
+          },
+          {
+            "page": 12,
+            "section": "Insurance charge and account mechanics",
+            "excerpt": "We will deduct a policy fee of S$5 monthly by cancelling units from the fund(s) you Policy fee have invested in. We may change the policy fee by notifying you 1 month prior to changing the policy fee. We will deduct a mo"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "great-eastern-prestige-legacy-advantage",
     "insurer": "Great Eastern",
     "productName": "Prestige Legacy Advantage",

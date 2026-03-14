@@ -750,6 +750,77 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('default 20-year review horizon'))).toBe(true)
   })
 
+  it('maps GREAT Life Advantage 4 into an open-ended partial regular-premium seed', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'great-eastern-great-life-advantage-4')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-regular-pay')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('GREAT Life Advantage 4 (SGD / Open-ended (Regular Pay))')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-life-advantage-4-premium-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-life-advantage-4-insurance-charge')
+    expect(seed.mipBasis).toBe('open-ended')
+    expect(seed.mipLength).toBeNull()
+    expect(seed.postMipYears).toBe(20)
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.eecTable).toEqual([1, 1])
+    expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
+      { phase: 'during-icp', contributionShare: 1 },
+      { phase: 'after-icp', contributionShare: 1 },
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'premium-reward',
+        type: 'allocation',
+        rate: 0.02,
+        startPolicyYear: 10,
+      }),
+    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'regular-premium-charge',
+          basis: 'annual-contribution',
+          yearBasis: 'premium-year',
+        }),
+        expect.objectContaining({
+          id: 'policy-fee',
+          basis: 'fixed-annual',
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'premium-holiday-charge',
+          trigger: 'premium-holiday',
+          basis: 'annual-premium-with-overlap-months',
+        }),
+        expect.objectContaining({
+          id: 'premium-holiday-charge-refund',
+          trigger: 'premium-holiday-repayment',
+          basis: 'premium-holiday-charge-refund',
+        }),
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          trigger: 'top-up',
+          rate: 0.05,
+        }),
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          trigger: 'partial-withdrawal',
+        }),
+      ]),
+    )
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('default 20-year review horizon'))).toBe(true)
+  })
+
   it('maps Invest flex wealth II into a partial seed with cumulative-paid policy charges and top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-flex-wealth-ii')

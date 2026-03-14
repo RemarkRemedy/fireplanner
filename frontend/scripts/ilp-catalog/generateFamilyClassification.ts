@@ -551,6 +551,27 @@ async function readLowConfidenceQaReviews(): Promise<Map<string, LowConfidenceQa
   }
 }
 
+function normalizeSourceFileName(value: string): string {
+  return value.normalize('NFKC').trim().toLowerCase()
+}
+
+function buildCatalogBySourceFile(catalogProducts: CatalogProduct[]): Map<string, CatalogProduct> {
+  const bySourceFile = new Map<string, CatalogProduct>()
+
+  for (const product of catalogProducts) {
+    bySourceFile.set(normalizeSourceFileName(product.sourceFileName), product)
+  }
+
+  return bySourceFile
+}
+
+function findCatalogProductBySourceFile(
+  catalogBySourceFile: Map<string, CatalogProduct>,
+  sourceFileName: string,
+): CatalogProduct | undefined {
+  return catalogBySourceFile.get(normalizeSourceFileName(sourceFileName))
+}
+
 function formatCountTable(label: string, counts: Record<string, number>): string[] {
   return [
     `## ${label}`,
@@ -613,7 +634,7 @@ async function main() {
   ])
   const lowConfidenceQaByFile = await readLowConfidenceQaReviews()
 
-  const catalogBySourceFile = new Map(catalogProducts.map((product) => [product.sourceFileName, product]))
+  const catalogBySourceFile = buildCatalogBySourceFile(catalogProducts)
   const sourceByFileName = new Map(discovery.summarySources.map((source) => [source.fileName, source]))
 
   const coveredProductIds = new Set<string>()
@@ -627,7 +648,7 @@ async function main() {
 
   const rows = auditRows
     .map((row) => {
-      const catalogProduct = catalogBySourceFile.get(row.fileName)
+      const catalogProduct = findCatalogProductBySourceFile(catalogBySourceFile, row.fileName)
       const source = sourceByFileName.get(row.fileName)
       const qaReview = lowConfidenceQaByFile.get(row.fileName)
       const productKey = source?.productKey ?? catalogProduct?.id ?? slugify(`${row.insurer}-${row.productName}`)
