@@ -30,12 +30,13 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'age',
     title: 'How old are you?',
     fields: [
-      { name: 'currentAge', label: 'Current age', type: 'number', required: true, validationKey: 'currentAge' },
-      { name: 'retirementAge', label: 'Desired retirement age', type: 'number', required: true, validationKey: 'retirementAge' },
+      { name: 'currentAge', label: 'Current age', type: 'number', required: true, validationKey: 'currentAge', tooltip: 'Your age today. Used to calculate years to retirement and CPF projections.' },
+      { name: 'retirementAge', label: 'Desired retirement age', type: 'number', required: true, validationKey: 'retirementAge', tooltip: 'The age you plan to stop working. Your portfolio must sustain you from this age onward.' },
       {
         name: 'retirementPhase',
         label: 'Retirement phase',
         type: 'select',
+        tooltip: 'Determines CPF withdrawal rules and LIFE payout eligibility based on your current age bracket.',
         options: [
           { value: 'before-55', label: 'Before 55 (pre-CPF LIFE)' },
           { value: '55-to-64', label: '55 to 64 (CPF drawdown phase)' },
@@ -57,11 +58,12 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'income',
     title: 'What do you earn?',
     fields: [
-      { name: 'annualIncome', label: 'Annual income', type: 'currency', required: true, validationKey: 'annualIncome' },
+      { name: 'annualIncome', label: 'Annual income', type: 'currency', required: true, validationKey: 'annualIncome', tooltip: 'Your total yearly employment income before any deductions.' },
       {
         name: 'incomeType',
         label: 'Income basis',
         type: 'select',
+        tooltip: 'Gross = before tax and CPF. Take-home = after deductions. We\'ll estimate gross from take-home if needed.',
         options: [
           { value: 'gross', label: 'Gross (before tax/CPF)' },
           { value: 'take-home', label: 'Take-home (after deductions)' },
@@ -76,7 +78,7 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'expenses',
     title: 'What do you spend?',
     fields: [
-      { name: 'annualExpenses', label: 'Annual expenses', type: 'currency', required: true, validationKey: 'annualExpenses', helperText: 'Include all regular spending: rent, food, transport, utilities, subscriptions. You can break it down later.' },
+      { name: 'annualExpenses', label: 'Annual expenses', type: 'currency', required: true, validationKey: 'annualExpenses', tooltip: 'Total yearly spending including rent, food, transport, utilities, and discretionary.', helperText: 'Include all regular spending: rent, food, transport, utilities, subscriptions. You can break it down later.' },
     ],
   },
   // Screen 4: Savings
@@ -84,7 +86,7 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'savings',
     title: 'What have you saved?',
     fields: [
-      { name: 'liquidNetWorth', label: 'Cash & investments (excl. CPF/property)', type: 'currency', required: true, validationKey: 'liquidNetWorth', helperText: 'Include savings accounts, brokerage, fixed deposits. Exclude CPF and your home — those are tracked separately.' },
+      { name: 'liquidNetWorth', label: 'Cash & investments (excl. CPF/property)', type: 'currency', required: true, validationKey: 'liquidNetWorth', tooltip: 'Cash, savings, investments, and fixed deposits you could access. Excludes CPF and property equity.', helperText: 'Include savings accounts, brokerage, fixed deposits. Exclude CPF and your home — those are tracked separately.' },
     ],
   },
   // Screen 5: Residency
@@ -96,6 +98,7 @@ const SCREENS: (NudgeFlowScreen & {
         name: 'residency',
         label: 'Residency status',
         type: 'select',
+        tooltip: 'Determines CPF contribution rates, tax treatment, and ABSD rates for property.',
         options: [
           { value: 'citizen', label: 'Singapore Citizen' },
           { value: 'pr', label: 'Permanent Resident (PR)' },
@@ -111,8 +114,8 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'cpf',
     title: 'Your CPF',
     fields: [
-      { name: 'cpfKnown', label: 'I know my CPF balances', type: 'toggle', helperText: 'Check my.cpf.gov.sg → My Statement. If you don\'t know, your projection will exclude CPF — you can add it later.' },
-      { name: 'cpfTotal', label: 'Total CPF balance (OA + SA + MA)', type: 'currency', validationKey: 'cpfTotal', showWhen: { field: 'cpfKnown', equals: true }, helperText: 'A rough total is fine. You can break it down by account later.' },
+      { name: 'cpfKnown', label: 'I know my CPF balances', type: 'toggle', tooltip: 'Check my.cpf.gov.sg → My Statement for your balances.', helperText: 'Check my.cpf.gov.sg → My Statement. If you don\'t know, your projection will exclude CPF — you can add it later.' },
+      { name: 'cpfTotal', label: 'Total CPF balance (OA + SA + MA)', type: 'currency', validationKey: 'cpfTotal', tooltip: 'Rough total across OA, SA, and MA. We\'ll split it by age-based heuristics. You can refine per-account later.', showWhen: { field: 'cpfKnown', equals: true }, helperText: 'A rough total is fine. You can break it down by account later.' },
     ],
     skipWhen: { field: 'residency', equals: 'foreigner' },
   },
@@ -125,6 +128,7 @@ const SCREENS: (NudgeFlowScreen & {
         name: 'ownsProperty',
         label: 'Property status',
         type: 'select',
+        tooltip: 'Property equity can be a significant part of your retirement net worth.',
         options: [
           { value: 'owns', label: 'I own property' },
           { value: 'planning', label: 'Planning to buy' },
@@ -143,14 +147,15 @@ const SCREENS: (NudgeFlowScreen & {
         name: 'propertyType',
         label: 'Property type',
         type: 'select',
+        tooltip: 'Affects stamp duty, lease decay (Bala\'s Table for leasehold), and HDB-specific monetization options.',
         options: [
           { value: 'hdb', label: 'HDB' },
           { value: 'condo', label: 'Condo' },
           { value: 'landed', label: 'Landed' },
         ],
       },
-      { name: 'propertyValue', label: 'Estimated current value', type: 'currency', validationKey: 'propertyValue' },
-      { name: 'mortgageBalance', label: 'Outstanding mortgage', type: 'currency', validationKey: 'mortgageBalance' },
+      { name: 'propertyValue', label: 'Estimated current value', type: 'currency', validationKey: 'propertyValue', tooltip: 'Current market value estimate. Check recent transactions on HDB or URA for comparable sales.' },
+      { name: 'mortgageBalance', label: 'Outstanding mortgage', type: 'currency', validationKey: 'mortgageBalance', tooltip: 'Outstanding loan amount. This reduces your net property equity.' },
     ],
     skipWhen: { field: 'ownsProperty', notEquals: 'owns' },
   },
@@ -163,14 +168,15 @@ const SCREENS: (NudgeFlowScreen & {
         name: 'propertyType',
         label: 'Property type',
         type: 'select',
+        tooltip: 'Affects stamp duty, lease decay (Bala\'s Table for leasehold), and HDB-specific monetization options.',
         options: [
           { value: 'hdb', label: 'HDB' },
           { value: 'condo', label: 'Condo' },
           { value: 'landed', label: 'Landed' },
         ],
       },
-      { name: 'purchasePrice', label: 'Expected purchase price', type: 'currency', validationKey: 'purchasePrice' },
-      { name: 'purchaseYearsFromNow', label: 'Years until purchase', type: 'number' },
+      { name: 'purchasePrice', label: 'Expected purchase price', type: 'currency', validationKey: 'purchasePrice', tooltip: 'Expected price of the property you plan to buy.' },
+      { name: 'purchaseYearsFromNow', label: 'Years until purchase', type: 'number', tooltip: 'How many years until you expect to complete the purchase.' },
     ],
     skipWhen: { field: 'ownsProperty', notEquals: 'planning' },
   },
@@ -179,7 +185,7 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'healthcare-toggle',
     title: 'Healthcare planning',
     fields: [
-      { name: 'healthcareEnabled', label: 'Include healthcare costs in projection', type: 'toggle', helperText: 'Healthcare is one of the largest retirement expenses. Including it makes your plan more realistic.' },
+      { name: 'healthcareEnabled', label: 'Include healthcare costs in projection', type: 'toggle', tooltip: 'Healthcare costs grow with age and can significantly impact retirement spending.', helperText: 'Healthcare is one of the largest retirement expenses. Including it makes your plan more realistic.' },
     ],
   },
   // Screen 10: Healthcare details (skip if disabled)
@@ -191,6 +197,7 @@ const SCREENS: (NudgeFlowScreen & {
         name: 'ispTier',
         label: 'Integrated Shield Plan tier',
         type: 'select',
+        tooltip: 'Determines hospital ward class coverage. Higher tiers = higher premiums but lower out-of-pocket costs.',
         helperText: 'Your ISP tier determines hospital ward class coverage and premium costs.',
         options: [
           { value: 'none', label: 'None (MediShield Life only)' },
@@ -208,8 +215,8 @@ const SCREENS: (NudgeFlowScreen & {
     title: "Your partner's details",
     fields: [
       { name: 'partnerName', label: "Partner's name", type: 'text' },
-      { name: 'partnerAge', label: "Partner's current age", type: 'number', required: true, validationKey: 'partnerAge' },
-      { name: 'partnerRetirementAge', label: "Partner's retirement age", type: 'number', required: true, validationKey: 'partnerRetirementAge' },
+      { name: 'partnerAge', label: "Partner's current age", type: 'number', required: true, validationKey: 'partnerAge', tooltip: "Partner's current age." },
+      { name: 'partnerRetirementAge', label: "Partner's retirement age", type: 'number', required: true, validationKey: 'partnerRetirementAge', tooltip: 'The age your partner plans to stop working.' },
     ],
     planTypes: ['couple', 'household'],
   },
@@ -217,7 +224,7 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'partner-income',
     title: "Partner's income",
     fields: [
-      { name: 'partnerIncome', label: 'Annual income', type: 'currency', required: true, validationKey: 'partnerIncome' },
+      { name: 'partnerIncome', label: 'Annual income', type: 'currency', required: true, validationKey: 'partnerIncome', tooltip: "Partner's total yearly employment income." },
       {
         name: 'partnerIncomeType',
         label: 'Income basis',
@@ -235,8 +242,8 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'partner-expenses',
     title: "Partner's expenses & savings",
     fields: [
-      { name: 'partnerExpenses', label: 'Annual personal expenses', type: 'currency', required: true, validationKey: 'partnerExpenses' },
-      { name: 'partnerNetWorth', label: 'Cash & investments', type: 'currency', required: true, validationKey: 'partnerNetWorth' },
+      { name: 'partnerExpenses', label: 'Annual personal expenses', type: 'currency', required: true, validationKey: 'partnerExpenses', tooltip: "Partner's personal annual expenses (not shared household costs)." },
+      { name: 'partnerNetWorth', label: 'Cash & investments', type: 'currency', required: true, validationKey: 'partnerNetWorth', tooltip: "Partner's personal cash and investments (excluding CPF and property)." },
     ],
     planTypes: ['couple', 'household'],
   },
@@ -255,8 +262,8 @@ const SCREENS: (NudgeFlowScreen & {
         ],
         required: true,
       },
-      { name: 'partnerCpfKnown', label: 'Partner knows CPF balance', type: 'toggle', helperText: 'If unknown, the projection will exclude their CPF.' },
-      { name: 'partnerCpfTotal', label: 'Total CPF balance', type: 'currency', validationKey: 'partnerCpfTotal', showWhen: { field: 'partnerCpfKnown', equals: true } },
+      { name: 'partnerCpfKnown', label: 'Partner knows CPF balance', type: 'toggle', tooltip: "Check partner's CPF statement at my.cpf.gov.sg.", helperText: 'If unknown, the projection will exclude their CPF.' },
+      { name: 'partnerCpfTotal', label: 'Total CPF balance', type: 'currency', validationKey: 'partnerCpfTotal', tooltip: "Partner's total CPF across all accounts.", showWhen: { field: 'partnerCpfKnown', equals: true } },
     ],
     planTypes: ['couple', 'household'],
   },
@@ -264,7 +271,7 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'partner-joint',
     title: 'Joint expenses',
     fields: [
-      { name: 'jointMonthlyExpenses', label: 'Additional shared monthly expenses', type: 'currency' },
+      { name: 'jointMonthlyExpenses', label: 'Additional shared monthly expenses', type: 'currency', tooltip: 'Additional shared costs like housing, utilities, and groceries beyond individual expenses.' },
     ],
     planTypes: ['couple', 'household'],
   },
@@ -275,7 +282,7 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'dependents',
     title: 'Do you have dependents?',
     fields: [
-      { name: 'hasDependents', label: 'I have dependents (children, elderly parents, etc.)', type: 'toggle', helperText: 'Children, elderly parents, or anyone you financially support.' },
+      { name: 'hasDependents', label: 'I have dependents (children, elderly parents, etc.)', type: 'toggle', tooltip: 'Children, elderly parents, or others you financially support.', helperText: 'Children, elderly parents, or anyone you financially support.' },
     ],
     planTypes: ['couple', 'household'],
   },

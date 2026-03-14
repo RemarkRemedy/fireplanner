@@ -25,6 +25,8 @@ export interface NudgeField {
   helperText?: string
   /** Field name for validation lookup — maps to validateSetupField. Defaults to `name`. */
   validationKey?: string
+  /** Tooltip text shown via InfoTooltip (i) icon next to the label */
+  tooltip?: string
 }
 
 export interface NudgeFlowScreen {
@@ -81,10 +83,10 @@ const CPF_FLOW: NudgeFlowDefinition = {
       id: 'cpf-accounts',
       title: 'CPF Account Balances',
       fields: [
-        { name: 'cpfOA', label: 'Ordinary Account (OA)', type: 'currency', required: true, validationKey: 'cpfOA' },
-        { name: 'cpfSA', label: 'Special Account (SA)', type: 'currency', required: true, validationKey: 'cpfSA' },
-        { name: 'cpfMA', label: 'MediSave Account (MA)', type: 'currency', required: true, validationKey: 'cpfMA' },
-        { name: 'cpfRA', label: 'Retirement Account (RA)', type: 'currency', validationKey: 'cpfRA' },
+        { name: 'cpfOA', label: 'Ordinary Account (OA)', type: 'currency', required: true, validationKey: 'cpfOA', tooltip: 'Used for housing, education, and investment. Earns 2.5% interest.' },
+        { name: 'cpfSA', label: 'Special Account (SA)', type: 'currency', required: true, validationKey: 'cpfSA', tooltip: 'For retirement. Earns 4% interest. Cannot be withdrawn before 55.' },
+        { name: 'cpfMA', label: 'MediSave Account (MA)', type: 'currency', required: true, validationKey: 'cpfMA', tooltip: 'For healthcare expenses. Capped at Basic Healthcare Sum ($79,000 in 2026).' },
+        { name: 'cpfRA', label: 'Retirement Account (RA)', type: 'currency', validationKey: 'cpfRA', tooltip: 'Created at age 55 from SA and OA transfers. Funds CPF LIFE payouts.' },
       ],
     },
     {
@@ -101,6 +103,7 @@ const CPF_FLOW: NudgeFlowDefinition = {
           label: 'Annual SA/RA top-up amount',
           type: 'currency',
           validationKey: 'annualSaTopUp',
+          tooltip: 'Voluntary top-ups to SA/RA. Tax-deductible up to $8,000/year.',
         },
         {
           name: 'annualMaTopUp',
@@ -173,7 +176,7 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
           ],
           required: true,
         },
-        { name: 'propertyValue', label: 'Current estimated value', type: 'currency', required: true },
+        { name: 'propertyValue', label: 'Current estimated value', type: 'currency', required: true, tooltip: 'Current market value. Check recent HDB or URA transactions.' },
         { name: 'leaseStartYear', label: 'Lease start year (for HDB)', type: 'number' },
         {
           name: 'leaseTenure',
@@ -196,9 +199,9 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
           label: 'Do you have an outstanding mortgage?',
           type: 'toggle',
         },
-        { name: 'mortgageOutstanding', label: 'Outstanding loan amount', type: 'currency' },
-        { name: 'monthlyMortgagePayment', label: 'Monthly repayment', type: 'currency' },
-        { name: 'mortgageRatePercent', label: 'Mortgage interest rate (%)', type: 'percent', validationKey: 'mortgageRatePercent' },
+        { name: 'mortgageOutstanding', label: 'Outstanding loan amount', type: 'currency', tooltip: 'Remaining loan principal.' },
+        { name: 'monthlyMortgagePayment', label: 'Monthly repayment', type: 'currency', tooltip: 'Your monthly mortgage repayment amount.' },
+        { name: 'mortgageRatePercent', label: 'Mortgage interest rate (%)', type: 'percent', validationKey: 'mortgageRatePercent', tooltip: 'Current annual interest rate on your mortgage.' },
         { name: 'mortgageEndYear', label: 'Loan end year', type: 'number' },
       ],
     },
@@ -321,6 +324,7 @@ const HEALTHCARE_FLOW: NudgeFlowDefinition = {
             { value: 'enhanced', label: 'Enhanced (Private hospital)' },
           ],
           required: true,
+          tooltip: 'Basic = Class B1 ward. Standard = Class A ward. Enhanced = private hospital.',
         },
         {
           name: 'hasRider',
@@ -339,6 +343,7 @@ const HEALTHCARE_FLOW: NudgeFlowDefinition = {
           label: 'Current MediSave balance',
           type: 'currency',
           required: true,
+          tooltip: 'Current MediSave (MA) balance. Used for premiums and hospital bills.',
         },
         {
           name: 'mediSaveTopUpAnnual',
@@ -401,6 +406,7 @@ const SALARY_FLOW: NudgeFlowDefinition = {
             { value: 'mom', label: 'MOM benchmark (data-driven by education/age)' },
           ],
           required: true,
+          tooltip: 'Simple = fixed annual growth. Realistic = career phases with promotion jumps. Data-driven = MOM salary benchmarks.',
         },
         { name: 'annualSalaryGrowthPercent', label: 'Annual salary growth rate (%)', type: 'percent' },
       ],
@@ -440,14 +446,14 @@ const SRS_FLOW: NudgeFlowDefinition = {
           type: 'toggle',
           required: true,
         },
-        { name: 'srsBalance', label: 'Current SRS balance', type: 'currency' },
+        { name: 'srsBalance', label: 'Current SRS balance', type: 'currency', tooltip: 'Supplementary Retirement Scheme balance. Contributions are tax-deductible.' },
       ],
     },
     {
       id: 'srs-details',
       title: 'SRS Contribution Details',
       fields: [
-        { name: 'annualSrsContribution', label: 'Annual SRS contribution', type: 'currency', required: true, validationKey: 'annualSrsContribution' },
+        { name: 'annualSrsContribution', label: 'Annual SRS contribution', type: 'currency', required: true, validationKey: 'annualSrsContribution', tooltip: 'Annual SRS contribution. Capped at $15,300 for Singapore citizens/PRs.' },
         {
           name: 'srsInvestmentStrategy',
           label: 'How are SRS funds invested?',
@@ -579,7 +585,7 @@ const PROTECTION_FLOW: NudgeFlowDefinition = {
       id: 'protection-emergency',
       title: 'Emergency Fund',
       fields: [
-        { name: 'emergencyFundBalance', label: 'Emergency fund balance', type: 'currency', required: true },
+        { name: 'emergencyFundBalance', label: 'Emergency fund balance', type: 'currency', required: true, tooltip: 'Cash savings for emergencies. Recommended 3-6 months of expenses.' },
         {
           name: 'emergencyFundTarget',
           label: 'Target emergency fund (months of expenses)',
@@ -614,8 +620,8 @@ const PROTECTION_FLOW: NudgeFlowDefinition = {
       id: 'protection-insurance',
       title: 'Insurance Coverage',
       fields: [
-        { name: 'lifeCoverageAmount', label: 'Life insurance coverage amount', type: 'currency' },
-        { name: 'ciCoverageAmount', label: 'Critical illness coverage amount', type: 'currency' },
+        { name: 'lifeCoverageAmount', label: 'Life insurance coverage amount', type: 'currency', tooltip: 'Total death benefit from term life or whole life insurance.' },
+        { name: 'ciCoverageAmount', label: 'Critical illness coverage amount', type: 'currency', tooltip: 'Critical illness lump sum payout amount.' },
         { name: 'disabilityCoverageMonthly', label: 'Disability income monthly benefit', type: 'currency' },
         {
           name: 'hasTermLife',

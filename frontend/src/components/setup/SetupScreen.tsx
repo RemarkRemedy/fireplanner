@@ -12,6 +12,7 @@ import {
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { PercentInput } from '@/components/shared/PercentInput'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import type { NudgeField, NudgeFlowScreen } from '@/lib/data/nudgeFlows'
 import {
   validateSetupField,
@@ -44,6 +45,7 @@ function FieldRenderer({ field, values, onChange, error }: FieldRendererProps) {
     return (
       <CurrencyInput
         label={field.label}
+        tooltip={field.tooltip}
         value={typeof currentValue === 'number' ? currentValue : 0}
         onChange={(v) => onChange(field.name, v)}
         error={error ?? undefined}
@@ -55,6 +57,7 @@ function FieldRenderer({ field, values, onChange, error }: FieldRendererProps) {
     return (
       <NumberInput
         label={field.label}
+        tooltip={field.tooltip}
         value={typeof currentValue === 'number' ? currentValue : 0}
         onChange={(v) => onChange(field.name, v)}
         integer
@@ -67,6 +70,7 @@ function FieldRenderer({ field, values, onChange, error }: FieldRendererProps) {
     return (
       <PercentInput
         label={field.label}
+        tooltip={field.tooltip}
         value={typeof currentValue === 'number' ? currentValue : 0}
         onChange={(v) => onChange(field.name, v)}
         error={error ?? undefined}
@@ -85,6 +89,7 @@ function FieldRenderer({ field, values, onChange, error }: FieldRendererProps) {
         <Label htmlFor={labelId} className="text-sm cursor-pointer">
           {field.label}
         </Label>
+        {field.tooltip && <InfoTooltip text={field.tooltip} />}
       </div>
     )
   }
@@ -92,9 +97,12 @@ function FieldRenderer({ field, values, onChange, error }: FieldRendererProps) {
   if (field.type === 'select' && field.options) {
     return (
       <div className="flex flex-col gap-1">
-        <Label htmlFor={labelId} className="text-sm">
-          {field.label}
-        </Label>
+        <div className="flex items-center">
+          <Label htmlFor={labelId} className="text-sm">
+            {field.label}
+          </Label>
+          {field.tooltip && <InfoTooltip text={field.tooltip} />}
+        </div>
         <Select
           value={typeof currentValue === 'string' ? currentValue : ''}
           onValueChange={(v) => onChange(field.name, v)}
