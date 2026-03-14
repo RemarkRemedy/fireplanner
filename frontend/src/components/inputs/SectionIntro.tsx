@@ -3,12 +3,17 @@ import { getSectionGuide } from '@/lib/data/fieldGuide'
 import type { SectionId } from '@/lib/household/sectionOrder'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
+import { useAllocationStore } from '@/stores/useAllocationStore'
 
 interface SectionIntroProps {
   sectionId: SectionId
 }
 
-function fillTemplate(template: string, selfAdult: ReturnType<typeof useSelfAdult>): string {
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+function fillTemplate(template: string, selfAdult: ReturnType<typeof useSelfAdult>, allocationTemplate: string): string {
   if (!selfAdult) return template
 
   const cpfTotal =
@@ -27,7 +32,7 @@ function fillTemplate(template: string, selfAdult: ReturnType<typeof useSelfAdul
     .replace('{liquidNetWorth}', selfAdult.liquidNetWorth.toLocaleString())
     .replace('{cpfSummary}', `$${cpfTotal.toLocaleString()} total CPF`)
     .replace('{ispTier}', selfAdult.healthcare.ispTier ?? 'none')
-    .replace('{allocationTemplate}', 'Balanced')
+    .replace('{allocationTemplate}', capitalize(allocationTemplate))
     .replace('{propertyType}', firstProperty?.propertyType ?? 'property')
     .replace(
       '{propertyValue}',
@@ -57,6 +62,7 @@ export function SectionIntro({ sectionId }: SectionIntroProps) {
   const setField = useUIStore((s) => s.setField)
 
   const selfAdult = useSelfAdult()
+  const selectedTemplate = useAllocationStore((s) => s.selectedTemplate) ?? 'balanced'
 
   if (!guide) return null
   if (dismissedSectionIntros.includes(sectionId)) return null
@@ -64,7 +70,7 @@ export function SectionIntro({ sectionId }: SectionIntroProps) {
   const isContextAware = setupCompleted && setupPopulatedSections.includes(sectionId)
 
   const text = isContextAware
-    ? fillTemplate(guide.contextTemplate, selfAdult)
+    ? fillTemplate(guide.contextTemplate, selfAdult, selectedTemplate)
     : guide.coldIntro
 
   function handleDismiss() {

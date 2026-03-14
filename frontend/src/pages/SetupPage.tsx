@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useBlocker } from 'react-router-dom'
 import { SetupScreen, shouldSkipScreen } from '@/components/setup/SetupScreen'
 import { ReviewCheckpoint } from '@/components/setup/ReviewCheckpoint'
 import { useUIStore } from '@/stores/useUIStore'
@@ -14,6 +14,7 @@ import type { HouseholdPlanType } from '@/lib/household/types'
 import type { SectionId } from '@/lib/household/sectionOrder'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { trackEvent } from '@/lib/analytics'
+import { SetupDraftSchema } from '@/lib/validation/setupDraftSchema'
 
 // ---------------------------------------------------------------------------
 // Screen definitions
@@ -576,6 +577,13 @@ export function SetupPage() {
   const handleConfirm = useCallback(() => {
     const draft = draftFromValues(state.values, planType, isRedo)
 
+    // Validate core fields before applying
+    const parseResult = SetupDraftSchema.safeParse(draft)
+    if (!parseResult.success) {
+      console.error('Invalid setup draft:', parseResult.error)
+      return
+    }
+
     // Already-fire pathway: override life stage and retirement age
     if (sectionOrder === 'already-fire') {
       draft.lifeStage = 'post-fire'
@@ -592,7 +600,23 @@ export function SetupPage() {
     navigate('/projection')
   }, [state.values, planType, isRedo, sectionOrder, setUIField, navigate])
 
-  // Abandonment guard for couple flows
+  // SPA navigation guard for couple/household flows with progress
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      planType !== 'individual' &&
+      state.screenIndex > 0 &&
+      currentLocation.pathname !== nextLocation.pathname
+  )
+
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      const confirmed = window.confirm('Are you sure? Your progress will be lost.')
+      if (confirmed) blocker.proceed()
+      else blocker.reset()
+    }
+  }, [blocker])
+
+  // Abandonment guard for couple flows (browser refresh/close)
   useEffect(() => {
     if (planType === 'individual') return
     const handler = (e: BeforeUnloadEvent) => {

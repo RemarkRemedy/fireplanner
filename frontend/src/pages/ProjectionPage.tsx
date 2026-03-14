@@ -111,9 +111,27 @@ export function ProjectionPage() {
   const plan = useHouseholdPlanStore((s) => s.plan)
   const adults = plan.adults
   const isMultiAdult = adults.length > 1
-  const allocation = useAllocationStore()
-  const simulation = useSimulationStore()
-  const activeStrategy = useSimulationStore((s) => s.selectedStrategy)
+  const allocationCurrentWeights = useAllocationStore((s) => s.currentWeights)
+  const allocationTargetWeights = useAllocationStore((s) => s.targetWeights)
+  const allocationReturnOverrides = useAllocationStore((s) => s.returnOverrides)
+  const allocationGlidePathConfig = useAllocationStore((s) => s.glidePathConfig)
+  const allocationValidationErrors = useAllocationStore((s) => s.validationErrors)
+  const allocation = {
+    currentWeights: allocationCurrentWeights,
+    targetWeights: allocationTargetWeights,
+    returnOverrides: allocationReturnOverrides,
+    glidePathConfig: allocationGlidePathConfig,
+    validationErrors: allocationValidationErrors,
+  }
+  const simSelectedStrategy = useSimulationStore((s) => s.selectedStrategy)
+  const simStrategyParams = useSimulationStore((s) => s.strategyParams)
+  const simWithdrawalBasis = useSimulationStore((s) => s.withdrawalBasis)
+  const simulation = {
+    selectedStrategy: simSelectedStrategy,
+    strategyParams: simStrategyParams,
+    withdrawalBasis: simWithdrawalBasis,
+  }
+  const activeStrategy = simSelectedStrategy
   const setSimField = useSimulationStore((s) => s.setField)
 
   const dollarBasis = useUIStore((s) => s.dollarBasis)
