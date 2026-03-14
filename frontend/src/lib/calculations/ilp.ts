@@ -6,6 +6,11 @@ import {
   PRUVANTAGE_PROSPER_ACCIDENTAL_DEATH_RATE_TABLE,
   PRUVANTAGE_PROSPER_DEATH_RATE_TABLE,
 } from '@/lib/data/ilpAssuranceTables'
+import {
+  MANULIFE_PROTECTED_BASE_FLOOR_MULTIPLIER,
+  PRUDENTIAL_ASSURE_II_MULTIPLIERS,
+  PRUDENTIAL_PROSPER_SUM_AT_RISK_MULTIPLIERS,
+} from '@/lib/data/ilpAssuranceConfig'
 import { lookupEecRate } from '@/lib/data/ilpDefaults'
 
 export interface IlpFund {
@@ -278,6 +283,8 @@ export interface IlpPolicyInput {
   catalogSource?: IlpCatalogSource
   catalogWarnings?: string[]
   discountRate: number
+  // Persisted with the ILP policy contract for UI round-tripping and downstream
+  // analysis surfaces even though the current calculator stays nominal.
   inflationRate: number
   alternativeReturn: number
 }
@@ -1336,7 +1343,9 @@ function computePrudentialProsperSumAtRisk(
   midpointRegularPremiumBase: number,
   midpointApplicableValue: number,
 ): number {
-  const multiplier = formula === 'prudential-prosper-accidental-death' ? 1.05 : 1.01
+  const multiplier = formula === 'prudential-prosper-accidental-death'
+    ? PRUDENTIAL_PROSPER_SUM_AT_RISK_MULTIPLIERS.accidentalDeath
+    : PRUDENTIAL_PROSPER_SUM_AT_RISK_MULTIPLIERS.death
   return Math.max(0, Math.max(midpointRegularPremiumBase * multiplier, midpointApplicableValue) - midpointApplicableValue)
 }
 
@@ -1372,7 +1381,7 @@ function computeProtectedBaseSumAtRisk(
           + ((regularPremiumPaidThisYear + supplementaryPremiumPaidThisYear - currentYearApplicableWithdrawals) / 2),
       )
 
-      return Math.max(0, (midpointProtectedBase * 1.01) - midpointApplicableValue)
+      return Math.max(0, (midpointProtectedBase * MANULIFE_PROTECTED_BASE_FLOOR_MULTIPLIER) - midpointApplicableValue)
     }
 
     case 'manulife-manuinvest-duo-death-ti-tpd': {
@@ -1418,8 +1427,11 @@ function computePrudentialAssureIiStateAndRisk(
       sumAssured: Math.max(
         0,
         Math.min(
-          Math.max(endOfYearRegularPremiumBase * 1.03, nextSumAssured + (regularPremiumBaseAtStartOfYear * 0.03)),
-          endOfYearRegularPremiumBase * 1.6,
+          Math.max(
+            endOfYearRegularPremiumBase * PRUDENTIAL_ASSURE_II_MULTIPLIERS.floorRate,
+            nextSumAssured + (regularPremiumBaseAtStartOfYear * PRUDENTIAL_ASSURE_II_MULTIPLIERS.growthRate),
+          ),
+          endOfYearRegularPremiumBase * PRUDENTIAL_ASSURE_II_MULTIPLIERS.capRate,
         ) - currentYearApplicableWithdrawals,
       ),
       wealthAssureValue: Math.max(
@@ -1603,37 +1615,13 @@ function computeAssuranceChargeByAccount(
   return { charges, nextSumAssured, nextWealthAssureValue, nextGrowthFrozen }
 }
 
-function resolveBonusRateFromBonus(
+function resolveTieredBonusRate(
   bonus: Pick<IlpBonusRule, 'rate' | 'tieredRates'>,
+  tierBasis: IlpNormalizedBonusTierBasis,
   annualContribution: number,
   currency: IlpPolicyInput['currency'],
   accountValue?: number,
 ): number {
-  if (bonus.tieredRates && bonus.tieredRates.length > 0) {
-    const matchedTier = bonus.tieredRates.find((tier) => {
-      if (tier.currency !== currency) return false
-      const aboveMin = tier.minAnnualPremium == null || annualContribution >= tier.minAnnualPremium
-      const belowMax = tier.maxAnnualPremium == null || annualContribution <= tier.maxAnnualPremium
-      const aboveAccountMin = tier.minAccountValue == null || (accountValue ?? 0) >= tier.minAccountValue
-      const belowAccountMax = tier.maxAccountValue == null || (accountValue ?? 0) <= tier.maxAccountValue
-      return aboveMin && belowMax && aboveAccountMin && belowAccountMax
-    })
-    if (matchedTier) {
-      return matchedTier.rate
-    }
-  }
-
-  return bonus.rate
-}
-
-function resolveNormalizedBonusRate(
-  normalizedBonus: IlpNormalizedBonusRule,
-  annualContribution: number,
-  currency: IlpPolicyInput['currency'],
-  accountValue?: number,
-): number {
-  const { bonus, tierBasis } = normalizedBonus
-
   if (!bonus.tieredRates || bonus.tieredRates.length === 0 || tierBasis === 'flat') {
     return bonus.rate
   }
@@ -1661,6 +1649,17 @@ function resolveNormalizedBonusRate(
   return matchedTier?.rate ?? bonus.rate
 }
 
+function resolveNormalizedBonusRate(
+  normalizedBonus: IlpNormalizedBonusRule,
+  annualContribution: number,
+  currency: IlpPolicyInput['currency'],
+  accountValue?: number,
+): number {
+  const { bonus, tierBasis } = normalizedBonus
+
+  return resolveTieredBonusRate(bonus, tierBasis, annualContribution, currency, accountValue)
+}
+
 function computeTieredStartupRecoveryCharge(
   normalized: IlpNormalizedPolicyInput,
   rule: IlpEventChargeRule,
@@ -1679,8 +1678,9 @@ function computeTieredStartupRecoveryCharge(
 
   const currentAnnualPremium = getScheduledAnnualPremiumAtMonth(normalized, Math.max(1, event.startPolicyMonth - 1))
   const reducedAnnualPremium = Math.max(0, currentAnnualPremium - reductionAmount)
-  const currentRate = resolveBonusRateFromBonus(startupBonus, currentAnnualPremium, input.currency)
-  const reducedRate = resolveBonusRateFromBonus(startupBonus, reducedAnnualPremium, input.currency)
+  const tierBasis = getBonusTierBasis(startupBonus)
+  const currentRate = resolveTieredBonusRate(startupBonus, tierBasis, currentAnnualPremium, input.currency)
+  const reducedRate = resolveTieredBonusRate(startupBonus, tierBasis, reducedAnnualPremium, input.currency)
   const currentStartupBonusAmount = currentAnnualPremium * currentRate
   const reducedStartupBonusAmount = reducedAnnualPremium * reducedRate
   const monthsPassedSinceInception = Math.max(event.startPolicyMonth - 1, 0)

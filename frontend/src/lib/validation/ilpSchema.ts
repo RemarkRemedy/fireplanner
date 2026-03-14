@@ -198,7 +198,7 @@ export const ilpFundSchema = z.object({
 )
 
 export const ilpAssuranceProfileSchema = z.object({
-  currentAgeNextBirthday: z.number().int().min(1).max(99),
+  currentAgeNextBirthday: z.number().int().min(1).max(120),
   sex: z.enum(['male', 'female']),
   smokerStatus: z.enum(['smoker', 'non-smoker']),
   currentNetRegularPremiumBase: z.number().min(0).max(100_000_000).optional(),
@@ -430,7 +430,15 @@ export const ilpChargeRuleSchema = z.object({
 
     if (index > 0) {
       const previous = tiers[index - 1]
-      const expectedNextMinimum = (previous.maxAnnualisedPremiumsPaid ?? previous.minAnnualisedPremiumsPaid) + 1
+      const previousMaximum = previous.maxAnnualisedPremiumsPaid ?? previous.minAnnualisedPremiumsPaid
+      const expectedNextMinimum = previousMaximum + 1
+      if (tier.minAnnualisedPremiumsPaid <= previousMaximum) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Cumulative-paid premium count tiers must be strictly ordered with no overlaps',
+          path: ['cumulativePaidPremiumConfig', 'countRateSchedule', index, 'minAnnualisedPremiumsPaid'],
+        })
+      }
       if (tier.minAnnualisedPremiumsPaid > expectedNextMinimum) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,

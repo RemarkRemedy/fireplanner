@@ -3678,11 +3678,39 @@ describe('computeNpvAnalysis', () => {
   it('rejects assurance ages above the supported table ceiling', () => {
     expect(() => ilpPolicySchema.parse(makeDefaultPolicy({
       assuranceProfile: {
-        currentAgeNextBirthday: 100,
+        currentAgeNextBirthday: 121,
         sex: 'male',
         smokerStatus: 'non-smoker',
       },
-    }))).toThrow(/99/)
+    }))).toThrow(/120/)
+  })
+
+  it('rejects open-ended policies without a positive postMipYears horizon', () => {
+    expect(() => ilpPolicySchema.parse(makeOpenEndedPolicy({
+      postMipYears: 0,
+    }))).toThrow(/positive review horizon/)
+  })
+
+  it('rejects overlapping cumulative-paid premium count tiers', () => {
+    expect(() => ilpPolicySchema.parse(makeDefaultPolicy({
+      bonuses: [],
+      chargeRules: [{
+        id: 'policy-charge',
+        label: 'Policy Charge',
+        basis: 'cumulative-paid-regular-premium',
+        activeWindow: 'policy-term',
+        appliesTo: ['aua'],
+        rate: 0.12,
+        amount: 0,
+        allocation: 'equal-split',
+        cumulativePaidPremiumConfig: {
+          countRateSchedule: [
+            { minAnnualisedPremiumsPaid: 0, maxAnnualisedPremiumsPaid: 2, rate: 0.12 },
+            { minAnnualisedPremiumsPaid: 2, maxAnnualisedPremiumsPaid: 4, rate: 0.1 },
+          ],
+        },
+      }],
+    }))).toThrow(/no overlaps/)
   })
 })
 

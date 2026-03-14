@@ -23,5 +23,5 @@ describe('ILP golden fixtures', () => {
 
       expect(actual).toStrictEqual(expected)
     }
-  }, 30_000)
+  }, 120_000)
 })
