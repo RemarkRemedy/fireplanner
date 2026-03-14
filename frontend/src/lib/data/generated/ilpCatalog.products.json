@@ -2682,6 +2682,364 @@
     ]
   },
   {
+    "id": "fwd-invest-goal-1",
+    "insurer": "FWD",
+    "productName": "FWD Invest Goal 1",
+    "sourceFileName": "WA_Sum_200501737H_ILP01_SP_May2023.pdf",
+    "sourceChecksumSha256": "b0dda63782c650aa3f00ba04185cf257cfd5d0b0602e92791896e9a2cf354e60",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:fwd-invest-goal-1-zero-single-premium-charge",
+      "branch:fwd-invest-goal-1-initial-account-charge",
+      "branch:fwd-invest-goal-1-zero-partial-withdrawal-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "fwd-invest-goal-1-death-benefit",
+      "fwd-invest-goal-1-multi-life-last-survivor",
+      "fwd-invest-goal-1-plan-charge-single-premium-base",
+      "fwd-invest-goal-1-surrender-charge-single-premium-base",
+      "fwd-invest-goal-1-single-premium-principal-tracking",
+      "fwd-invest-goal-1-withdrawal-minimum-rules",
+      "fwd-invest-goal-1-policy-closure-charge",
+      "fwd-invest-goal-1-currency-change-processing",
+      "fwd-invest-goal-1-change-of-person-insured",
+      "fwd-invest-goal-1-switching-fee-administration",
+      "fwd-invest-goal-1-fund-management-fees"
+    ],
+    "warnings": [
+      "FWD Invest Goal 1 is cataloged as a partial modeled subset in V1. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, and the zero policy-level partial-withdrawal charge through the open-ended single-premium basis, while the committed-single-premium plan charge, surrender charge, protection benefits, and principal-tracking remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-open-ended",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Initial Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and death benefit",
+                "excerpt": "FWD Invest Goal 1 Product summary Note: Please read this product summary before you decide to take up this product. Name of the insurer FWD Singapore Pte. Ltd. Product name FWD Invest Goal 1 Sum insured 105% of policy va"
+              },
+              {
+                "page": 2,
+                "section": "Initial account charge and plan charge",
+                "excerpt": "Initial account charge is payable throughout the policy term and will be Initial account deducted on each policy monthiversary*. charge The initial account charge = (1% p.a. / 12 months) x number of units in the initial "
+              },
+              {
+                "page": 4,
+                "section": "Withdrawal options and minimum account value",
+                "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my policy? Changes to the policy You can withdraw part of your policy value at any time while the policy is still in Withdrawal force. The withdrawal amou"
+              },
+              {
+                "page": 6,
+                "section": "Subscription and redemption illustration",
+                "excerpt": "Illustration of units allocation The following table illustrates the number of units allocated to the ILP sub-fund based on a single premium amount of $1,000 and a notational unit price of $1.00. (A) (B) (C) (D) = (E) (F"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "single-premium-charge",
+            "label": "Single Premium Charge",
+            "basis": "annual-contribution",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "The published units-allocation illustration shows a 0% premium charge on the initial single premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Subscription and redemption illustration",
+                "excerpt": "Illustration of units allocation The following table illustrates the number of units allocated to the ILP sub-fund based on a single premium amount of $1,000 and a notational unit price of $1.00. (A) (B) (C) (D) = (E) (F"
+              }
+            ]
+          },
+          {
+            "id": "initial-account-charge",
+            "label": "Initial Account Charge",
+            "basis": "account-value",
+            "rate": 0.01,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 1.00% p.a. initial account charge deducted monthly from the initial units account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Initial account charge and plan charge",
+                "excerpt": "Initial account charge is payable throughout the policy term and will be Initial account deducted on each policy monthiversary*. charge The initial account charge = (1% p.a. / 12 months) x number of units in the initial "
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "No policy-level partial withdrawal charge is stated; withdrawals redeem units subject to the published minimum account value and transaction size rules."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Withdrawal options and minimum account value",
+                "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my policy? Changes to the policy You can withdraw part of your policy value at any time while the policy is still in Withdrawal force. The withdrawal amou"
+              },
+              {
+                "page": 6,
+                "section": "Subscription and redemption illustration",
+                "excerpt": "Illustration of units allocation The following table illustrates the number of units allocated to the ILP sub-fund based on a single premium amount of $1,000 and a notational unit price of $1.00. (A) (B) (C) (D) = (E) (F"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "FWD Invest Goal 1 (SGD) is cataloged as a partial modeled subset in V1. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, and the zero policy-level partial-withdrawal charge through the open-ended single-premium basis.",
+          "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.",
+          "The withdrawal minimum transaction amount and minimum residual account-value rules remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Death benefit and multi-life last-survivor behavior remain informational only.",
+          "The first-five-policy-years plan charge remains informational only because it is calculated from the committed single premium rather than current account value.",
+          "The first-five-policy-years surrender charge remains informational only because it is calculated from the original single premium rather than current account value.",
+          "Single-premium principal tracking remains informational only in V1.",
+          "Policy closure charge, currency-change processing, change-of-person-insured handling, and reviewable switching-fee administration remain informational only.",
+          "Fund management fees remain informational only because they depend on the selected ILP sub-fund."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and death benefit",
+            "excerpt": "FWD Invest Goal 1 Product summary Note: Please read this product summary before you decide to take up this product. Name of the insurer FWD Singapore Pte. Ltd. Product name FWD Invest Goal 1 Sum insured 105% of policy va"
+          },
+          {
+            "page": 2,
+            "section": "Initial account charge and plan charge",
+            "excerpt": "Initial account charge is payable throughout the policy term and will be Initial account deducted on each policy monthiversary*. charge The initial account charge = (1% p.a. / 12 months) x number of units in the initial "
+          },
+          {
+            "page": 3,
+            "section": "Surrender charge and switching fee",
+            "excerpt": "Surrender charge At any time prior to the 6 policy year, a surrender charge will be levied upon the surrender of the policy. This charge is calculated by multiplying the single premium paid on the effective date by the s"
+          },
+          {
+            "page": 4,
+            "section": "Withdrawal options and minimum account value",
+            "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my policy? Changes to the policy You can withdraw part of your policy value at any time while the policy is still in Withdrawal force. The withdrawal amou"
+          },
+          {
+            "page": 6,
+            "section": "Subscription and redemption illustration",
+            "excerpt": "Illustration of units allocation The following table illustrates the number of units allocated to the ILP sub-fund based on a single premium amount of $1,000 and a notational unit price of $1.00. (A) (B) (C) (D) = (E) (F"
+          }
+        ]
+      },
+      {
+        "id": "usd-open-ended",
+        "currency": "USD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Initial Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and death benefit",
+                "excerpt": "FWD Invest Goal 1 Product summary Note: Please read this product summary before you decide to take up this product. Name of the insurer FWD Singapore Pte. Ltd. Product name FWD Invest Goal 1 Sum insured 105% of policy va"
+              },
+              {
+                "page": 2,
+                "section": "Initial account charge and plan charge",
+                "excerpt": "Initial account charge is payable throughout the policy term and will be Initial account deducted on each policy monthiversary*. charge The initial account charge = (1% p.a. / 12 months) x number of units in the initial "
+              },
+              {
+                "page": 4,
+                "section": "Withdrawal options and minimum account value",
+                "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my policy? Changes to the policy You can withdraw part of your policy value at any time while the policy is still in Withdrawal force. The withdrawal amou"
+              },
+              {
+                "page": 6,
+                "section": "Subscription and redemption illustration",
+                "excerpt": "Illustration of units allocation The following table illustrates the number of units allocated to the ILP sub-fund based on a single premium amount of $1,000 and a notational unit price of $1.00. (A) (B) (C) (D) = (E) (F"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "single-premium-charge",
+            "label": "Single Premium Charge",
+            "basis": "annual-contribution",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "The published units-allocation illustration shows a 0% premium charge on the initial single premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Subscription and redemption illustration",
+                "excerpt": "Illustration of units allocation The following table illustrates the number of units allocated to the ILP sub-fund based on a single premium amount of $1,000 and a notational unit price of $1.00. (A) (B) (C) (D) = (E) (F"
+              }
+            ]
+          },
+          {
+            "id": "initial-account-charge",
+            "label": "Initial Account Charge",
+            "basis": "account-value",
+            "rate": 0.01,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 1.00% p.a. initial account charge deducted monthly from the initial units account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Initial account charge and plan charge",
+                "excerpt": "Initial account charge is payable throughout the policy term and will be Initial account deducted on each policy monthiversary*. charge The initial account charge = (1% p.a. / 12 months) x number of units in the initial "
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "No policy-level partial withdrawal charge is stated; withdrawals redeem units subject to the published minimum account value and transaction size rules."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Withdrawal options and minimum account value",
+                "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my policy? Changes to the policy You can withdraw part of your policy value at any time while the policy is still in Withdrawal force. The withdrawal amou"
+              },
+              {
+                "page": 6,
+                "section": "Subscription and redemption illustration",
+                "excerpt": "Illustration of units allocation The following table illustrates the number of units allocated to the ILP sub-fund based on a single premium amount of $1,000 and a notational unit price of $1.00. (A) (B) (C) (D) = (E) (F"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "FWD Invest Goal 1 (USD) is cataloged as a partial modeled subset in V1. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, and the zero policy-level partial-withdrawal charge through the open-ended single-premium basis.",
+          "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.",
+          "The withdrawal minimum transaction amount and minimum residual account-value rules remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Death benefit and multi-life last-survivor behavior remain informational only.",
+          "The first-five-policy-years plan charge remains informational only because it is calculated from the committed single premium rather than current account value.",
+          "The first-five-policy-years surrender charge remains informational only because it is calculated from the original single premium rather than current account value.",
+          "Single-premium principal tracking remains informational only in V1.",
+          "Policy closure charge, currency-change processing, change-of-person-insured handling, and reviewable switching-fee administration remain informational only.",
+          "Fund management fees remain informational only because they depend on the selected ILP sub-fund."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and death benefit",
+            "excerpt": "FWD Invest Goal 1 Product summary Note: Please read this product summary before you decide to take up this product. Name of the insurer FWD Singapore Pte. Ltd. Product name FWD Invest Goal 1 Sum insured 105% of policy va"
+          },
+          {
+            "page": 2,
+            "section": "Initial account charge and plan charge",
+            "excerpt": "Initial account charge is payable throughout the policy term and will be Initial account deducted on each policy monthiversary*. charge The initial account charge = (1% p.a. / 12 months) x number of units in the initial "
+          },
+          {
+            "page": 3,
+            "section": "Surrender charge and switching fee",
+            "excerpt": "Surrender charge At any time prior to the 6 policy year, a surrender charge will be levied upon the surrender of the policy. This charge is calculated by multiplying the single premium paid on the effective date by the s"
+          },
+          {
+            "page": 4,
+            "section": "Withdrawal options and minimum account value",
+            "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my policy? Changes to the policy You can withdraw part of your policy value at any time while the policy is still in Withdrawal force. The withdrawal amou"
+          },
+          {
+            "page": 6,
+            "section": "Subscription and redemption illustration",
+            "excerpt": "Illustration of units allocation The following table illustrates the number of units allocated to the ILP sub-fund based on a single premium amount of $1,000 and a notational unit price of $1.00. (A) (B) (C) (D) = (E) (F"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "income-invest-flex",
     "insurer": "Income Insurance",
     "productName": "Invest Flex",
