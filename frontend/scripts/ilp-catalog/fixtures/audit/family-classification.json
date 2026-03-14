@@ -4709,9 +4709,9 @@
       ],
       "implementationCohort": "generic",
       "v1SupportBoundary": "supported-after-kernel",
-      "currentCatalogStatus": "not-in-catalog",
-      "economicsStatus": "not-modeled",
-      "parserExists": false,
+      "currentCatalogStatus": "partial",
+      "economicsStatus": "partial-modeled-subset",
+      "parserExists": true,
       "goldenCoverageStatus": "none",
       "kernelWorkstreams": [
         "core-cashflow-kernel"
@@ -4722,14 +4722,30 @@
       "kernelPrerequisites": [
         "core-cashflow-kernel"
       ],
-      "modeledSubsetAlreadyCovered": [],
-      "metadataOnlyBehaviors": [],
+      "modeledSubsetAlreadyCovered": [
+        "branch:astralink-va2-post-mip-regular-allocation",
+        "branch:astralink-va2-policy-fee",
+        "branch:astralink-va2-partial-withdrawal-charge",
+        "branch:astralink-va2-surrender-charge"
+      ],
+      "metadataOnlyBehaviors": [
+        "astralink-va2-investment-bonus",
+        "astralink-va2-loyalty-bonus",
+        "astralink-va2-insurance-cover-charge",
+        "astralink-va2-no-lapse-guarantee",
+        "astralink-va2-premium-holiday-charge",
+        "astralink-va2-premium-holiday-gating",
+        "astralink-va2-protection-benefits",
+        "astralink-va2-distribution-withdrawals",
+        "astralink-va2-flexible-options"
+      ],
       "manualInputRequirements": [],
-      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Unclear\" and gap tags dynamic-charge-model, non-guaranteed-charges, premium-holiday, withdrawal-reduction-charges. Cross-cutting overlays are dynamic-charge, premium-holiday-recovery. No current parser-backed catalog product exists for this source yet. QA override status: confirmed-standard. No hard protection or special-account structure markers were found in the extracted source evidence; the standard-family default remains defensible.",
+      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Unclear\" and gap tags dynamic-charge-model, non-guaranteed-charges, premium-holiday, withdrawal-reduction-charges. Cross-cutting overlays are dynamic-charge, premium-holiday-recovery. Current catalog status is partial with economics status partial-modeled-subset. QA override status: confirmed-standard. No hard protection or special-account structure markers were found in the extracted source evidence; the standard-family default remains defensible.",
       "confidence": 0.9,
       "evidenceRefs": [
         "accountModel:Unclear",
         "bucket:B-extendable",
+        "catalog:income-astralink-va2",
         "cohort:generic",
         "file:VA2_Summary.pdf",
         "gap:dynamic-charge-model",
