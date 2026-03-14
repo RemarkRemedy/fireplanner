@@ -37761,6 +37761,794 @@
     ]
   },
   {
+    "id": "prudential-prulink-investgrowth",
+    "insurer": "Prudential",
+    "productName": "PRULink InvestGrowth",
+    "sourceFileName": "PRULink InvestGrowth Product Summary.pdf",
+    "sourceChecksumSha256": "7620f663027b72682f92c6e7f81db4036c4e90ef9eec9b4312bfb93a760ebede",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:prulink-investgrowth-recurring-premium-charge",
+      "branch:prulink-investgrowth-premium-assurance-charge",
+      "branch:prulink-investgrowth-top-up-charge",
+      "branch:prulink-investgrowth-top-up-assurance-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "prulink-investgrowth-death-benefit",
+      "prulink-investgrowth-recurrent-single-premium-tracking",
+      "prulink-investgrowth-e-top-up-charge",
+      "prulink-investgrowth-withdrawals",
+      "prulink-investgrowth-fund-switching",
+      "prulink-investgrowth-minimum-premium-schedule"
+    ],
+    "warnings": [
+      "PRULink InvestGrowth is cataloged as a partial modeled subset in V1. The parser captures the published recurrent-premium charge and premium-event assurance-charge path for standard premiums and standard top-ups, while e-top-up treatment, withdrawals, and paid-premium tracking remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-open-ended-cash-or-srs",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview",
+                "excerpt": "Nature of Plan: PRULink InvestGrowth is a recurrent single premium investment-linked insurance plan that offers the opportunity to optimize returns on your savings (Cash, Central Provident Fund (\"CPF\") or Supplementary R"
+              },
+              {
+                "page": 2,
+                "section": "Top-ups and withdrawals",
+                "excerpt": "Product Benefit: Death Benefit: If the life assured dies, we pay the higher of (a) or (b): a) 110% of (the total premiums received plus any top-ups less any withdrawals), or b) the value of all the units in your account."
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "premium-charge",
+            "label": "Recurring Premium Charge (Cash / SRS)",
+            "basis": "annual-contribution",
+            "rate": 0.03,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published upfront charge on each recurrent single premium payment.",
+              "Cash and SRS variants use the published 3% premium-charge path."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Charges",
+                "excerpt": "After the Direct Income payments have started, if your main policy is put under trust or is assigned or you become a bankrupt, the Direct Income payments will stop. Any Direct Income payment due that has not been process"
+              }
+            ]
+          },
+          {
+            "id": "assurance-charge-on-premium",
+            "label": "Recurring Premium-based Assurance Charge (Cash / SRS)",
+            "basis": "annual-contribution",
+            "rate": 0.015,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Cash and SRS variants pay the published 1.5% assurance charge on premium events.",
+              "This is modeled as a premium-event charge rather than a sum-at-risk mortality curve."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Charges",
+                "excerpt": "After the Direct Income payments have started, if your main policy is put under trust or is assigned or you become a bankrupt, the Direct Income payments will stop. Any Direct Income payment due that has not been process"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge (Cash / SRS)",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% standard top-up premium charge.",
+              "The reduced e-top-up rate is not modeled automatically and remains metadata-only."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Top-ups and withdrawals",
+                "excerpt": "Product Benefit: Death Benefit: If the life assured dies, we pay the higher of (a) or (b): a) 110% of (the total premiums received plus any top-ups less any withdrawals), or b) the value of all the units in your account."
+              },
+              {
+                "page": 5,
+                "section": "Charges",
+                "excerpt": "After the Direct Income payments have started, if your main policy is put under trust or is assigned or you become a bankrupt, the Direct Income payments will stop. Any Direct Income payment due that has not been process"
+              }
+            ]
+          },
+          {
+            "id": "top-up-assurance-charge",
+            "label": "Top-up Assurance Charge (Cash / SRS)",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.015,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 1.5% assurance charge on standard top-up premiums.",
+              "The reduced e-top-up rate is not modeled automatically and remains metadata-only."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Top-ups and withdrawals",
+                "excerpt": "Product Benefit: Death Benefit: If the life assured dies, we pay the higher of (a) or (b): a) 110% of (the total premiums received plus any top-ups less any withdrawals), or b) the value of all the units in your account."
+              },
+              {
+                "page": 5,
+                "section": "Charges",
+                "excerpt": "After the Direct Income payments have started, if your main policy is put under trust or is assigned or you become a bankrupt, the Direct Income payments will stop. Any Direct Income payment due that has not been process"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "This Cash / SRS variant uses the published 3% premium-charge and 1.5% premium-event assurance-charge path.",
+          "This open-ended product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
+        ],
+        "unsupportedItems": [
+          "Death and terminal-illness benefit formulas remain informational only.",
+          "Recurrent-single-premium paid-premium tracking remains informational only in V1.",
+          "e-top-up reduced premium-charge and assurance-charge treatment remains informational only.",
+          "Withdrawal administration and fund-switching mechanics remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview",
+            "excerpt": "Nature of Plan: PRULink InvestGrowth is a recurrent single premium investment-linked insurance plan that offers the opportunity to optimize returns on your savings (Cash, Central Provident Fund (\"CPF\") or Supplementary R"
+          },
+          {
+            "page": 2,
+            "section": "Top-ups and withdrawals",
+            "excerpt": "Product Benefit: Death Benefit: If the life assured dies, we pay the higher of (a) or (b): a) 110% of (the total premiums received plus any top-ups less any withdrawals), or b) the value of all the units in your account."
+          },
+          {
+            "page": 5,
+            "section": "Charges",
+            "excerpt": "After the Direct Income payments have started, if your main policy is put under trust or is assigned or you become a bankrupt, the Direct Income payments will stop. Any Direct Income payment due that has not been process"
+          }
+        ]
+      },
+      {
+        "id": "sgd-open-ended-cpf",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview",
+                "excerpt": "Nature of Plan: PRULink InvestGrowth is a recurrent single premium investment-linked insurance plan that offers the opportunity to optimize returns on your savings (Cash, Central Provident Fund (\"CPF\") or Supplementary R"
+              },
+              {
+                "page": 2,
+                "section": "Top-ups and withdrawals",
+                "excerpt": "Product Benefit: Death Benefit: If the life assured dies, we pay the higher of (a) or (b): a) 110% of (the total premiums received plus any top-ups less any withdrawals), or b) the value of all the units in your account."
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "premium-charge",
+            "label": "Recurring Premium Charge (CPF)",
+            "basis": "annual-contribution",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published upfront charge on each recurrent single premium payment.",
+              "CPF-funded variants use the published 0% premium-charge path."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Charges",
+                "excerpt": "After the Direct Income payments have started, if your main policy is put under trust or is assigned or you become a bankrupt, the Direct Income payments will stop. Any Direct Income payment due that has not been process"
+              }
+            ]
+          },
+          {
+            "id": "assurance-charge-on-premium",
+            "label": "Recurring Premium-based Assurance Charge (CPF)",
+            "basis": "annual-contribution",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "CPF-funded variants do not pay the published 1.5% assurance charge on premium events.",
+              "This is modeled as a premium-event charge rather than a sum-at-risk mortality curve."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Charges",
+                "excerpt": "After the Direct Income payments have started, if your main policy is put under trust or is assigned or you become a bankrupt, the Direct Income payments will stop. Any Direct Income payment due that has not been process"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge (CPF)",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "CPF-funded variants use the published 0% top-up premium-charge path.",
+              "The reduced e-top-up rate is not modeled automatically and remains metadata-only."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Top-ups and withdrawals",
+                "excerpt": "Product Benefit: Death Benefit: If the life assured dies, we pay the higher of (a) or (b): a) 110% of (the total premiums received plus any top-ups less any withdrawals), or b) the value of all the units in your account."
+              },
+              {
+                "page": 5,
+                "section": "Charges",
+                "excerpt": "After the Direct Income payments have started, if your main policy is put under trust or is assigned or you become a bankrupt, the Direct Income payments will stop. Any Direct Income payment due that has not been process"
+              }
+            ]
+          },
+          {
+            "id": "top-up-assurance-charge",
+            "label": "Top-up Assurance Charge (CPF)",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "CPF-funded variants do not pay the published 1.5% assurance charge on top-ups.",
+              "The reduced e-top-up rate is not modeled automatically and remains metadata-only."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Top-ups and withdrawals",
+                "excerpt": "Product Benefit: Death Benefit: If the life assured dies, we pay the higher of (a) or (b): a) 110% of (the total premiums received plus any top-ups less any withdrawals), or b) the value of all the units in your account."
+              },
+              {
+                "page": 5,
+                "section": "Charges",
+                "excerpt": "After the Direct Income payments have started, if your main policy is put under trust or is assigned or you become a bankrupt, the Direct Income payments will stop. Any Direct Income payment due that has not been process"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "This CPF-funded variant uses the published 0% premium-charge and 0% premium-event assurance-charge path.",
+          "This open-ended product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
+        ],
+        "unsupportedItems": [
+          "Death and terminal-illness benefit formulas remain informational only.",
+          "Recurrent-single-premium paid-premium tracking remains informational only in V1.",
+          "e-top-up reduced premium-charge and assurance-charge treatment remains informational only.",
+          "Withdrawal administration and fund-switching mechanics remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview",
+            "excerpt": "Nature of Plan: PRULink InvestGrowth is a recurrent single premium investment-linked insurance plan that offers the opportunity to optimize returns on your savings (Cash, Central Provident Fund (\"CPF\") or Supplementary R"
+          },
+          {
+            "page": 2,
+            "section": "Top-ups and withdrawals",
+            "excerpt": "Product Benefit: Death Benefit: If the life assured dies, we pay the higher of (a) or (b): a) 110% of (the total premiums received plus any top-ups less any withdrawals), or b) the value of all the units in your account."
+          },
+          {
+            "page": 5,
+            "section": "Charges",
+            "excerpt": "After the Direct Income payments have started, if your main policy is put under trust or is assigned or you become a bankrupt, the Direct Income payments will stop. Any Direct Income payment due that has not been process"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "prudential-prulink-investgrowth-sp",
+    "insurer": "Prudential",
+    "productName": "PRULink InvestGrowth (SP)",
+    "sourceFileName": "PRULink InvestGrowth (SP) Product Summary.pdf",
+    "sourceChecksumSha256": "724f4f893ec2f8f88031b474e60799b4785693021e332f2348a4a7799dbead45",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:prulink-investgrowth-sp-single-premium-charge",
+      "branch:prulink-investgrowth-sp-premium-assurance-charge",
+      "branch:prulink-investgrowth-sp-top-up-charge",
+      "branch:prulink-investgrowth-sp-top-up-assurance-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "prulink-investgrowth-sp-death-benefit",
+      "prulink-investgrowth-sp-single-premium-principal-tracking",
+      "prulink-investgrowth-sp-e-top-up-charge",
+      "prulink-investgrowth-sp-withdrawals",
+      "prulink-investgrowth-sp-direct-income-option",
+      "prulink-investgrowth-sp-fund-switching"
+    ],
+    "warnings": [
+      "PRULink InvestGrowth (SP) is cataloged as a partial modeled subset in V1. The parser captures the published premium-charge and premium-event assurance-charge path for initial and standard top-up premiums, while e-top-up treatment, withdrawals, Direct Income, and single-premium principal tracking remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-open-ended-cash-or-srs",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview",
+                "excerpt": "Nature of Plan: PRULink InvestGrowth (SP) is a single premium investment-linked insurance plan that offers the opportunity to optimize returns on your savings (Cash, Central Provident Fund (\"CPF\") or Supplementary Retire"
+              },
+              {
+                "page": 2,
+                "section": "Top-ups and withdrawals",
+                "excerpt": "2. Top-up your premium You can top-up your premium by paying an additional one-off amount. The minimum top-up amount is $2,000. Top-ups are allowed at any time within the permissible age limits with additional death bene"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "premium-charge",
+            "label": "Single Premium Charge (Cash / SRS)",
+            "basis": "annual-contribution",
+            "rate": 0.03,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published upfront charge on the initial single premium.",
+              "Cash and SRS variants use the published 3% premium-charge path."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Charges",
+                "excerpt": "Charges: The following charges will be levied on the policy where applicable. 1. Premium Charge: The premium charge is an upfront charge that is deducted from premium paid for fees and charges, other than charges for ins"
+              }
+            ]
+          },
+          {
+            "id": "assurance-charge-on-premium",
+            "label": "Premium-based Assurance Charge (Cash / SRS)",
+            "basis": "annual-contribution",
+            "rate": 0.015,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Cash and SRS variants pay the published 1.5% assurance charge on premium events.",
+              "This is modeled as a premium-event charge rather than a sum-at-risk mortality curve."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Charges",
+                "excerpt": "Charges: The following charges will be levied on the policy where applicable. 1. Premium Charge: The premium charge is an upfront charge that is deducted from premium paid for fees and charges, other than charges for ins"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge (Cash / SRS)",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% standard top-up premium charge.",
+              "The reduced e-top-up rate is not modeled automatically and remains metadata-only."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Top-ups and withdrawals",
+                "excerpt": "2. Top-up your premium You can top-up your premium by paying an additional one-off amount. The minimum top-up amount is $2,000. Top-ups are allowed at any time within the permissible age limits with additional death bene"
+              },
+              {
+                "page": 5,
+                "section": "Charges",
+                "excerpt": "Charges: The following charges will be levied on the policy where applicable. 1. Premium Charge: The premium charge is an upfront charge that is deducted from premium paid for fees and charges, other than charges for ins"
+              }
+            ]
+          },
+          {
+            "id": "top-up-assurance-charge",
+            "label": "Top-up Assurance Charge (Cash / SRS)",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.015,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 1.5% assurance charge on standard top-up premiums.",
+              "The reduced e-top-up rate is not modeled automatically and remains metadata-only."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Top-ups and withdrawals",
+                "excerpt": "2. Top-up your premium You can top-up your premium by paying an additional one-off amount. The minimum top-up amount is $2,000. Top-ups are allowed at any time within the permissible age limits with additional death bene"
+              },
+              {
+                "page": 5,
+                "section": "Charges",
+                "excerpt": "Charges: The following charges will be levied on the policy where applicable. 1. Premium Charge: The premium charge is an upfront charge that is deducted from premium paid for fees and charges, other than charges for ins"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "This Cash / SRS variant uses the published 3% premium-charge and 1.5% premium-event assurance-charge path.",
+          "This open-ended product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.",
+          "The Direct Income option is available only for cash-funded policies and remains metadata-only."
+        ],
+        "unsupportedItems": [
+          "Death and terminal-illness benefit formulas remain informational only.",
+          "Single-premium principal tracking remains informational only in V1.",
+          "e-top-up reduced premium-charge and assurance-charge treatment remains informational only.",
+          "Withdrawal administration and fund-switching mechanics remain informational only.",
+          "Direct Income option mechanics remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview",
+            "excerpt": "Nature of Plan: PRULink InvestGrowth (SP) is a single premium investment-linked insurance plan that offers the opportunity to optimize returns on your savings (Cash, Central Provident Fund (\"CPF\") or Supplementary Retire"
+          },
+          {
+            "page": 2,
+            "section": "Top-ups and withdrawals",
+            "excerpt": "2. Top-up your premium You can top-up your premium by paying an additional one-off amount. The minimum top-up amount is $2,000. Top-ups are allowed at any time within the permissible age limits with additional death bene"
+          },
+          {
+            "page": 5,
+            "section": "Charges",
+            "excerpt": "Charges: The following charges will be levied on the policy where applicable. 1. Premium Charge: The premium charge is an upfront charge that is deducted from premium paid for fees and charges, other than charges for ins"
+          },
+          {
+            "page": 3,
+            "section": "Additional option",
+            "excerpt": "Direct Income Option If you bought your policy using cash, that means not using your CPF or SRS monies, you can choose to add this benefit to your policy. We pay a fixed amount (Direct Income) monthly from your policy (M"
+          }
+        ]
+      },
+      {
+        "id": "sgd-open-ended-cpf",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview",
+                "excerpt": "Nature of Plan: PRULink InvestGrowth (SP) is a single premium investment-linked insurance plan that offers the opportunity to optimize returns on your savings (Cash, Central Provident Fund (\"CPF\") or Supplementary Retire"
+              },
+              {
+                "page": 2,
+                "section": "Top-ups and withdrawals",
+                "excerpt": "2. Top-up your premium You can top-up your premium by paying an additional one-off amount. The minimum top-up amount is $2,000. Top-ups are allowed at any time within the permissible age limits with additional death bene"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "premium-charge",
+            "label": "Single Premium Charge (CPF)",
+            "basis": "annual-contribution",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published upfront charge on the initial single premium.",
+              "CPF-funded variants use the published 0% premium-charge path."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Charges",
+                "excerpt": "Charges: The following charges will be levied on the policy where applicable. 1. Premium Charge: The premium charge is an upfront charge that is deducted from premium paid for fees and charges, other than charges for ins"
+              }
+            ]
+          },
+          {
+            "id": "assurance-charge-on-premium",
+            "label": "Premium-based Assurance Charge (CPF)",
+            "basis": "annual-contribution",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "CPF-funded variants do not pay the published 1.5% assurance charge on premium events.",
+              "This is modeled as a premium-event charge rather than a sum-at-risk mortality curve."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Charges",
+                "excerpt": "Charges: The following charges will be levied on the policy where applicable. 1. Premium Charge: The premium charge is an upfront charge that is deducted from premium paid for fees and charges, other than charges for ins"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge (CPF)",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "CPF-funded variants use the published 0% top-up premium-charge path.",
+              "The reduced e-top-up rate is not modeled automatically and remains metadata-only."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Top-ups and withdrawals",
+                "excerpt": "2. Top-up your premium You can top-up your premium by paying an additional one-off amount. The minimum top-up amount is $2,000. Top-ups are allowed at any time within the permissible age limits with additional death bene"
+              },
+              {
+                "page": 5,
+                "section": "Charges",
+                "excerpt": "Charges: The following charges will be levied on the policy where applicable. 1. Premium Charge: The premium charge is an upfront charge that is deducted from premium paid for fees and charges, other than charges for ins"
+              }
+            ]
+          },
+          {
+            "id": "top-up-assurance-charge",
+            "label": "Top-up Assurance Charge (CPF)",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "CPF-funded variants do not pay the published 1.5% assurance charge on top-ups.",
+              "The reduced e-top-up rate is not modeled automatically and remains metadata-only."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Top-ups and withdrawals",
+                "excerpt": "2. Top-up your premium You can top-up your premium by paying an additional one-off amount. The minimum top-up amount is $2,000. Top-ups are allowed at any time within the permissible age limits with additional death bene"
+              },
+              {
+                "page": 5,
+                "section": "Charges",
+                "excerpt": "Charges: The following charges will be levied on the policy where applicable. 1. Premium Charge: The premium charge is an upfront charge that is deducted from premium paid for fees and charges, other than charges for ins"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "This CPF-funded variant uses the published 0% premium-charge and 0% premium-event assurance-charge path.",
+          "This open-ended product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.",
+          "The Direct Income option is available only for cash-funded policies and remains metadata-only."
+        ],
+        "unsupportedItems": [
+          "Death and terminal-illness benefit formulas remain informational only.",
+          "Single-premium principal tracking remains informational only in V1.",
+          "e-top-up reduced premium-charge and assurance-charge treatment remains informational only.",
+          "Withdrawal administration and fund-switching mechanics remain informational only.",
+          "Direct Income option mechanics remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview",
+            "excerpt": "Nature of Plan: PRULink InvestGrowth (SP) is a single premium investment-linked insurance plan that offers the opportunity to optimize returns on your savings (Cash, Central Provident Fund (\"CPF\") or Supplementary Retire"
+          },
+          {
+            "page": 2,
+            "section": "Top-ups and withdrawals",
+            "excerpt": "2. Top-up your premium You can top-up your premium by paying an additional one-off amount. The minimum top-up amount is $2,000. Top-ups are allowed at any time within the permissible age limits with additional death bene"
+          },
+          {
+            "page": 5,
+            "section": "Charges",
+            "excerpt": "Charges: The following charges will be levied on the policy where applicable. 1. Premium Charge: The premium charge is an upfront charge that is deducted from premium paid for fees and charges, other than charges for ins"
+          },
+          {
+            "page": 3,
+            "section": "Additional option",
+            "excerpt": "Direct Income Option If you bought your policy using cash, that means not using your CPF or SRS monies, you can choose to add this benefit to your policy. We pay a fixed amount (Direct Income) monthly from your policy (M"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "prudential-pruvantage-prosper",
     "insurer": "Prudential",
     "productName": "PRUVantage Prosper",
