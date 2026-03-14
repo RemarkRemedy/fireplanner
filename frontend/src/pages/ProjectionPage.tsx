@@ -18,7 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { AlertTriangle } from 'lucide-react'
 import { NWChartView } from '@/components/projection/NWChartView'
 import { Maximize2 } from 'lucide-react'
@@ -47,6 +47,12 @@ import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacy
 import { buildProjectionParams, buildFullProjectionParams } from '@/lib/calculations/projectionParams'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { generateProjection } from '@/lib/calculations/projection'
+import { NudgeSidebar } from '@/components/projection/NudgeSidebar'
+import { NudgeDrawer } from '@/components/projection/NudgeDrawer'
+import { DeltaCard } from '@/components/projection/DeltaCard'
+import { useMetricsSnapshot } from '@/hooks/useMetricsSnapshot'
+import { computeDelta, type DeltaSummary, type MetricsSnapshot } from '@/lib/calculations/metricsSnapshot'
+import { NUDGE_FLOWS, type NudgeFlowId } from '@/lib/data/nudgeFlows'
 
 const STRATEGY_SHORT_LABELS: Record<WithdrawalStrategyType, string> = {
   constant_dollar: '4% Rule',
@@ -65,6 +71,35 @@ const STRATEGY_SHORT_LABELS: Record<WithdrawalStrategyType, string> = {
 
 export function ProjectionPage() {
   usePageMeta({ title: 'Projection — SG FIRE Planner', description: 'See your net worth trajectory from today to retirement and beyond. Tracks portfolio growth, CPF OA/SA/MA balances, income changes, and spending year by year.', path: '/projection' })
+
+  const [drawerFlowId, setDrawerFlowId] = useState<NudgeFlowId | null>(null)
+  const [deltaStack, setDeltaStack] = useState<DeltaSummary[]>([])
+  const location = useLocation()
+  const currentSnapshot = useMetricsSnapshot()
+
+  useEffect(() => {
+    if (location.state?.showDelta) {
+      const stored = sessionStorage.getItem('fireplanner-delta-before')
+      if (stored) {
+        const { fireAge, fireNumber, timestamp } = JSON.parse(stored)
+        // Discard if older than 30 minutes
+        if (Date.now() - timestamp < 30 * 60 * 1000) {
+          const before: MetricsSnapshot = { fireAge, fireNumber }
+          const flowId = location.state.flowId as string
+          const flow = NUDGE_FLOWS.find(f => f.id === flowId)
+          if (flow) {
+            const delta = computeDelta(before, currentSnapshot, flow.label, flow.explanation)
+            setDeltaStack(prev => [delta, ...prev].slice(0, 3))
+          }
+        }
+        sessionStorage.removeItem('fireplanner-delta-before')
+      }
+      // Clear the location state so it doesn't re-trigger on re-render
+      window.history.replaceState({}, '')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Run once on mount
+
   const normalized = useNormalizedLegacyAnalysisContext()
   const { rows: jointRows, summary: jointSummary, hasErrors } = useProjection()
   const { isEligible } = useExpenseTracker()
@@ -480,6 +515,7 @@ export function ProjectionPage() {
   )
 
   return (
+    <div className="md:grid md:grid-cols-[1fr_280px] md:gap-6">
     <div className="space-y-6">
       <div>
         <div className="flex items-start justify-between gap-4">
@@ -779,6 +815,26 @@ export function ProjectionPage() {
           {renderTable('flex-1 min-h-0')}
         </DialogContent>
       </Dialog>
+    </div>
+    <aside className="hidden md:block space-y-4">
+      {deltaStack.map((delta, i) => (
+        <DeltaCard
+          key={i}
+          summary={delta}
+          onDismiss={() => setDeltaStack(prev => prev.filter((_, j) => j !== i))}
+          showMcNote={false}
+        />
+      ))}
+      <NudgeSidebar onOpenDrawer={setDrawerFlowId} />
+    </aside>
+    <NudgeDrawer
+      flowId={drawerFlowId}
+      onClose={() => setDrawerFlowId(null)}
+      onComplete={(delta) => {
+        setDrawerFlowId(null)
+        setDeltaStack(prev => [delta, ...prev].slice(0, 3))
+      }}
+    />
     </div>
   )
 }
