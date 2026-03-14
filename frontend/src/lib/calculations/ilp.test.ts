@@ -1145,6 +1145,49 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[1], 'aua1').bonusCredit).toBeCloseTo(105, 2)
   })
 
+  it('does not let top-ups inflate premium-allocation bonuses', () => {
+    const bonusAccount: IlpAccount = {
+      id: 'bonus',
+      label: 'Bonus Account',
+      feeRate: 0,
+      currentValue: 0,
+      contributionShare: 1,
+      subjectToEec: false,
+      postMipFeeRate: null,
+    }
+    const allocationBonus: IlpBonusRule = {
+      id: 'regular-premium-bonus',
+      type: 'allocation',
+      label: 'Regular Premium Bonus',
+      mode: 'premium-allocation',
+      rate: 0.1,
+      amount: 0,
+      appliesTo: ['bonus'],
+      startPolicyYear: 6,
+      endPolicyYear: null,
+    }
+    const policy = makeDefaultPolicy({
+      monthlyContribution: 100,
+      accounts: [bonusAccount],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [allocationBonus],
+      chargeRules: [],
+      policyEvents: [{
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 61,
+        durationMonths: 1,
+        amount: 1_000,
+        accountId: 'bonus',
+      }],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'bonus').contributionAmount).toBe(2_200)
+    expect(accountRow(result.rows[0], 'bonus').bonusCredit).toBeCloseTo(120, 2)
+  })
+
   it('stops contributions post-MIP and uses postMipFeeRate when provided', () => {
     const policy = makeDefaultPolicy({ postMipYears: 2 })
     const result = projectIlpPolicy(policy, 'mid')
