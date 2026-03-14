@@ -666,6 +666,42 @@ export function SetupPage() {
   const hasDependents = state.values.hasDependents as boolean
   const dependentsList = (state.values.dependentsList as Array<{ name: string; age: number; relationship: string }>) ?? []
 
+  // Build custom children for screens that need compound inputs
+  const customChildren = (() => {
+    if (isIncomeScreen && state.values.hasIncome) {
+      const monthlyInc = (state.values.monthlyIncome as number) ?? 0
+      const incType = (state.values.incomeType as 'take-home' | 'gross') ?? 'take-home'
+      const age = (state.values.currentAge as number) ?? 30
+      const grossMo = incType === 'take-home' ? grossUpFromTakeHome(monthlyInc, age) : monthlyInc
+      const bonus = (state.values.hasBonusAws ? (state.values.bonusMonths as number) : 0) ?? 0
+      return (
+        <MonthlyIncomeInput
+          incomeType={incType}
+          onIncomeTypeChange={(type) => handleChange('incomeType', type)}
+          monthlyIncome={monthlyInc}
+          onMonthlyIncomeChange={(v) => handleChange('monthlyIncome', v)}
+          hasBonusAws={(state.values.hasBonusAws as boolean) ?? false}
+          onHasBonusAwsChange={(v) => handleChange('hasBonusAws', v)}
+          bonusMonths={(state.values.bonusMonths as number) ?? 1}
+          onBonusMonthsChange={(v) => handleChange('bonusMonths', v)}
+          grossMonthly={grossMo}
+          annualIncome={Math.round(grossMo * (12 + bonus))}
+          age={age}
+        />
+      )
+    }
+    if (isExpensesScreen) {
+      return (
+        <MonthlyExpenseInput
+          monthlyExpenses={(state.values.monthlyExpenses as number) ?? 0}
+          onMonthlyExpensesChange={(v) => handleChange('monthlyExpenses', v)}
+          annualExpenses={((state.values.monthlyExpenses as number) ?? 0) * 12}
+        />
+      )
+    }
+    return null
+  })()
+
   return (
     <div className="flex flex-col gap-6">
       <SetupScreen
@@ -679,46 +715,9 @@ export function SetupPage() {
         submitLabel={
           currentActivePosition === totalSteps - 1 ? 'Review your answers' : 'Continue'
         }
-      />
-
-      {/* Custom MonthlyIncomeInput — rendered below SetupScreen when on income screen */}
-      {isIncomeScreen && state.values.hasIncome && (
-        <div className="-mt-2">
-          <MonthlyIncomeInput
-            incomeType={(state.values.incomeType as 'take-home' | 'gross') ?? 'take-home'}
-            onIncomeTypeChange={(type) => handleChange('incomeType', type)}
-            monthlyIncome={(state.values.monthlyIncome as number) ?? 0}
-            onMonthlyIncomeChange={(v) => handleChange('monthlyIncome', v)}
-            hasBonusAws={(state.values.hasBonusAws as boolean) ?? false}
-            onHasBonusAwsChange={(v) => handleChange('hasBonusAws', v)}
-            bonusMonths={(state.values.bonusMonths as number) ?? 1}
-            onBonusMonthsChange={(v) => handleChange('bonusMonths', v)}
-            grossMonthly={
-              (state.values.incomeType === 'take-home'
-                ? grossUpFromTakeHome((state.values.monthlyIncome as number) ?? 0, (state.values.currentAge as number) ?? 30)
-                : (state.values.monthlyIncome as number) ?? 0)
-            }
-            annualIncome={Math.round(
-              (state.values.incomeType === 'take-home'
-                ? grossUpFromTakeHome((state.values.monthlyIncome as number) ?? 0, (state.values.currentAge as number) ?? 30)
-                : (state.values.monthlyIncome as number) ?? 0
-              ) * (12 + ((state.values.hasBonusAws ? (state.values.bonusMonths as number) : 0) ?? 0))
-            )}
-            age={(state.values.currentAge as number) ?? 30}
-          />
-        </div>
-      )}
-
-      {/* Custom MonthlyExpenseInput — rendered below SetupScreen when on expenses screen */}
-      {isExpensesScreen && (
-        <div className="-mt-2">
-          <MonthlyExpenseInput
-            monthlyExpenses={(state.values.monthlyExpenses as number) ?? 0}
-            onMonthlyExpensesChange={(v) => handleChange('monthlyExpenses', v)}
-            annualExpenses={((state.values.monthlyExpenses as number) ?? 0) * 12}
-          />
-        </div>
-      )}
+      >
+        {customChildren}
+      </SetupScreen>
 
       {/* Dynamic dependents list — rendered below SetupScreen when on dependents screen */}
       {isDependentsScreen && hasDependents && (

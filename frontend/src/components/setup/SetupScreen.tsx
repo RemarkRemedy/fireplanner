@@ -28,6 +28,8 @@ interface SetupScreenProps {
   currentStep: number
   totalSteps: number
   submitLabel?: string
+  /** Custom content rendered between fields and buttons */
+  children?: React.ReactNode
 }
 
 interface FieldRendererProps {
@@ -174,6 +176,7 @@ export function SetupScreen({
   currentStep,
   totalSteps,
   submitLabel = 'Continue',
+  children,
 }: SetupScreenProps) {
   const [requiredErrors, setRequiredErrors] = useState<Set<string>>(new Set())
 
@@ -289,6 +292,8 @@ export function SetupScreen({
           )
         })}
       </div>
+
+      {children}
 
       <div className="flex items-center gap-3 pt-2">
         {onBack && (
