@@ -209,6 +209,22 @@ export function templateVariantToPolicySeed(
         }
       : undefined,
     scheduledPayoutAssumption: undefined,
+    distributionSupport: variant.distributionSupport
+      ? {
+          mode: variant.distributionSupport.mode,
+          accountIds: [...variant.distributionSupport.accountIds],
+          defaultMode: variant.distributionSupport.defaultMode,
+          cashPayoutAllowedDuringMip: variant.distributionSupport.cashPayoutAllowedDuringMip,
+          cashPayoutAllowedAfterMip: variant.distributionSupport.cashPayoutAllowedAfterMip,
+          source: variant.distributionSupport.source,
+        }
+      : undefined,
+    distributionAssumption: variant.distributionSupport
+      ? {
+          mode: variant.distributionSupport.defaultMode,
+          source: 'catalog-default',
+        }
+      : undefined,
     policyEvents: [],
     accounts: variant.accounts.map((account) => ({
       id: account.id,
@@ -253,6 +269,9 @@ export function templateVariantToPolicySeed(
         : []),
       ...(variant.scheduledPayoutSupport
         ? ['This product supports scheduled payout-state, but V1 requires a manual payout assumption. No payout schedule is seeded by default.']
+        : []),
+      ...(variant.distributionSupport
+        ? ['This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.']
         : []),
       ...(variant.unsupportedItems ?? []),
     ],

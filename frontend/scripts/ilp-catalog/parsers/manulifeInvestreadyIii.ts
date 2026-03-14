@@ -55,6 +55,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page6 = sourceRef(6, 'COI and administrative charge', snippetNear(document, 6, 'Cost of Insurance', 22))
   const page8 = sourceRef(8, 'Premium shortfall charge table', snippetNear(document, 8, 'Premium Shortfall Charge', 28))
   const page9 = sourceRef(9, 'Top-up premium and flexi options', snippetNear(document, 9, 'Top-up premium', 18))
+  const page12 = sourceRef(12, 'Distribution of dividends', snippetNear(document, 12, 'Distribution of Dividends', 20))
   const page19 = sourceRef(19, 'Appendix A annual COI table', snippetNear(document, 19, 'Annual Cost of Insurance', 22))
 
   const feeRules: IlpTemplateFeeRule[] = [
@@ -125,22 +126,37 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: [],
     feeRules,
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying funds may be reinvested or paid out in cash, subject to the product summary minimum payout amount.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.',
+      ],
+      sourceRefs: [page12],
+    },
     eecTable: [1, 1, 0.75, 0.4, 0.2],
     warnings: [
       'Manulife InvestReady (III) is cataloged as a partial modeled subset in V1. The parser captures the 5 Years Flexi 4 corridor: the published account-value administration charge path, the premium-shortfall charge path before Flexi Start, and the new protected-base COI formula after you enter the insured-life details and current premium bases.',
       'Flexi-start premium variation, welcome / annual-premium / loyalty bonuses, surrender charges, withdrawal charges, and fund-level management charges remain outside the current engine.',
+      'Dividend-paying funds seed reinvestment by default in V1. Cash payout requires a manual annual distribution-yield assumption and the published $40 minimum payout threshold remains informational only.',
     ],
     unsupportedItems: [
       'Welcome Bonus, Annual Premium Bonus, and Loyalty Bonus remain informational only.',
       'Full-surrender and partial-withdrawal charge schedules remain informational only.',
-      'Top-up underwriting and dividend distribution remain informational only.',
+      'Top-up underwriting remains informational only.',
+      'The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.',
       'Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.',
       'Reinstatement underwriting and pre-existing-condition exclusions remain informational only.',
       'Regular premium variation from Flexi Start onwards remains informational only.',
       'The zero top-up-premium charge remains implicit and is not authored as a calculator rule.',
       'Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.',
     ],
-    sourceRefs: [page1, page2, page6, page8, page9, page19],
+    sourceRefs: [page1, page2, page6, page8, page9, page12, page19],
   }
 }
 
@@ -160,6 +176,7 @@ export function parseManulifeInvestreadyIii(context: ParseContext): IlpCatalogPr
       'kernel:protected-base-assurance',
       'branch:manulife-investready-iii-administrative-charge',
       'branch:manulife-investready-iii-premium-shortfall-charge',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'manulife-investready-iii-welcome-bonus',
@@ -168,14 +185,15 @@ export function parseManulifeInvestreadyIii(context: ParseContext): IlpCatalogPr
       'manulife-investready-iii-full-surrender-charge',
       'manulife-investready-iii-partial-withdrawal-charge',
       'manulife-investready-iii-top-up-underwriting',
-      'manulife-investready-iii-dividend-distribution-mode',
+      'manulife-investready-iii-dividend-payout-threshold',
+      'manulife-investready-iii-reinvested-dividend-withdrawals',
       'manulife-investready-iii-benefit-payout-handling',
       'manulife-investready-iii-reinstatement',
       'manulife-investready-iii-flexi-start-premium-variation',
       'manulife-investready-iii-fund-management-charge',
     ],
     warnings: [
-      'Manulife InvestReady (III) is cataloged as a partial modeled subset in V1. The parser captures the 5 Years Flexi 4 corridor: the published 2.50% / 1.00% administration-charge path, the premium-shortfall charge before Flexi Start, and the new protected-base COI formula after you enter the insured-life details and current premium bases, while bonuses, surrender/withdrawal schedules, flexi-start premium variation, benefit payouts, and fund-level charges remain outside the current engine.',
+      'Manulife InvestReady (III) is cataloged as a partial modeled subset in V1. The parser captures the 5 Years Flexi 4 corridor: the published 2.50% / 1.00% administration-charge path, the premium-shortfall charge before Flexi Start, the reinvest-default distribution-mode assumption surface, and the new protected-base COI formula after you enter the insured-life details and current premium bases, while bonuses, surrender/withdrawal schedules, flexi-start premium variation, benefit payouts, and fund-level charges remain outside the current engine.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

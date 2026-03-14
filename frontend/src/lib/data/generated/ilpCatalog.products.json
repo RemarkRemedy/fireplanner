@@ -9078,7 +9078,8 @@
     "modeledEconomics": [
       "kernel:protected-base-assurance",
       "branch:manulife-investready-iii-administrative-charge",
-      "branch:manulife-investready-iii-premium-shortfall-charge"
+      "branch:manulife-investready-iii-premium-shortfall-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "manulife-investready-iii-welcome-bonus",
@@ -9087,14 +9088,15 @@
       "manulife-investready-iii-full-surrender-charge",
       "manulife-investready-iii-partial-withdrawal-charge",
       "manulife-investready-iii-top-up-underwriting",
-      "manulife-investready-iii-dividend-distribution-mode",
+      "manulife-investready-iii-dividend-payout-threshold",
+      "manulife-investready-iii-reinvested-dividend-withdrawals",
       "manulife-investready-iii-benefit-payout-handling",
       "manulife-investready-iii-reinstatement",
       "manulife-investready-iii-flexi-start-premium-variation",
       "manulife-investready-iii-fund-management-charge"
     ],
     "warnings": [
-      "Manulife InvestReady (III) is cataloged as a partial modeled subset in V1. The parser captures the 5 Years Flexi 4 corridor: the published 2.50% / 1.00% administration-charge path, the premium-shortfall charge before Flexi Start, and the new protected-base COI formula after you enter the insured-life details and current premium bases, while bonuses, surrender/withdrawal schedules, flexi-start premium variation, benefit payouts, and fund-level charges remain outside the current engine."
+      "Manulife InvestReady (III) is cataloged as a partial modeled subset in V1. The parser captures the 5 Years Flexi 4 corridor: the published 2.50% / 1.00% administration-charge path, the premium-shortfall charge before Flexi Start, the reinvest-default distribution-mode assumption surface, and the new protected-base COI formula after you enter the insured-life details and current premium bases, while bonuses, surrender/withdrawal schedules, flexi-start premium variation, benefit payouts, and fund-level charges remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -9232,6 +9234,27 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying funds may be reinvested or paid out in cash, subject to the product summary minimum payout amount.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 12,
+              "section": "Distribution of dividends",
+              "excerpt": "12. Distribution of Dividends If you choose to invest in any Fund(s) that pays dividends, you have the option to either reinvest these dividends or to receive payments of these dividends. The frequency of dividend distri"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -9241,12 +9264,14 @@
         ],
         "warnings": [
           "Manulife InvestReady (III) is cataloged as a partial modeled subset in V1. The parser captures the 5 Years Flexi 4 corridor: the published account-value administration charge path, the premium-shortfall charge path before Flexi Start, and the new protected-base COI formula after you enter the insured-life details and current premium bases.",
-          "Flexi-start premium variation, welcome / annual-premium / loyalty bonuses, surrender charges, withdrawal charges, and fund-level management charges remain outside the current engine."
+          "Flexi-start premium variation, welcome / annual-premium / loyalty bonuses, surrender charges, withdrawal charges, and fund-level management charges remain outside the current engine.",
+          "Dividend-paying funds seed reinvestment by default in V1. Cash payout requires a manual annual distribution-yield assumption and the published $40 minimum payout threshold remains informational only."
         ],
         "unsupportedItems": [
           "Welcome Bonus, Annual Premium Bonus, and Loyalty Bonus remain informational only.",
           "Full-surrender and partial-withdrawal charge schedules remain informational only.",
-          "Top-up underwriting and dividend distribution remain informational only.",
+          "Top-up underwriting remains informational only.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
           "Reinstatement underwriting and pre-existing-condition exclusions remain informational only.",
           "Regular premium variation from Flexi Start onwards remains informational only.",
@@ -9278,6 +9303,11 @@
             "page": 9,
             "section": "Top-up premium and flexi options",
             "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
+          },
+          {
+            "page": 12,
+            "section": "Distribution of dividends",
+            "excerpt": "12. Distribution of Dividends If you choose to invest in any Fund(s) that pays dividends, you have the option to either reinvest these dividends or to receive payments of these dividends. The frequency of dividend distri"
           },
           {
             "page": 19,

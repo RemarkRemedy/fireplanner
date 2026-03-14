@@ -4,6 +4,8 @@ import {
   ilpAssuranceProfileSchema,
   ilpBonusRuleSchema,
   ilpChargeRuleSchema,
+  ilpDistributionAssumptionSchema,
+  ilpDistributionSupportSchema,
   ilpFundSchema,
   ilpScheduledPayoutAssumptionSchema,
   ilpScheduledPayoutSupportSchema,
@@ -21,6 +23,8 @@ export const ilpPolicySeedSchema = z.object({
   assuranceProfile: ilpAssuranceProfileSchema.optional(),
   scheduledPayoutSupport: ilpScheduledPayoutSupportSchema.optional(),
   scheduledPayoutAssumption: ilpScheduledPayoutAssumptionSchema.optional(),
+  distributionSupport: ilpDistributionSupportSchema.optional(),
+  distributionAssumption: ilpDistributionAssumptionSchema.optional(),
   policyEvents: z.array(z.object({
     id: z.string().min(1),
     type: z.enum(['premium-holiday', 'partial-withdrawal', 'regular-premium-reduction', 'regular-premium-increase', 'top-up', 'recurring-single-premium', 'recurring-single-premium-resumption', 'assurance-benefit-reduction', 'assurance-benefit-resumption']),
@@ -126,6 +130,24 @@ export const ilpPolicySeedSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'scheduledPayoutSupport.accountId must reference an existing account',
       path: ['scheduledPayoutSupport', 'accountId'],
+    })
+  }
+
+  policy.distributionSupport?.accountIds.forEach((accountId, accountIndex) => {
+    if (!accountIds.has(accountId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'distributionSupport.accountIds must reference existing accounts',
+        path: ['distributionSupport', 'accountIds', accountIndex],
+      })
+    }
+  })
+
+  if (policy.distributionAssumption && !policy.distributionSupport) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'distributionAssumption requires distributionSupport',
+      path: ['distributionAssumption'],
     })
   }
 

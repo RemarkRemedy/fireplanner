@@ -147,6 +147,30 @@ export const ilpScheduledPayoutSupportSchema = z.object({
   source: z.literal('policy-redemption'),
 })
 
+export const ilpDistributionSupportSchema = z.object({
+  mode: z.literal('manual-assumption'),
+  accountIds: z.array(z.string().min(1)).min(1).max(10),
+  defaultMode: z.literal('reinvest'),
+  cashPayoutAllowedDuringMip: z.boolean(),
+  cashPayoutAllowedAfterMip: z.boolean(),
+  source: z.literal('distribution-paying-funds'),
+})
+
+export const ilpDistributionAssumptionSchema = z.discriminatedUnion('mode', [
+  z.object({
+    mode: z.literal('disabled'),
+  }),
+  z.object({
+    mode: z.literal('reinvest'),
+    source: z.enum(['catalog-default', 'manual-assumption']),
+  }),
+  z.object({
+    mode: z.literal('cash-payout'),
+    source: z.literal('manual-assumption'),
+    annualYieldRate: z.number().min(0).max(0.25),
+  }),
+])
+
 export const ilpScheduledPayoutAssumptionSchema = z.discriminatedUnion('mode', [
   z.object({
     mode: z.literal('disabled'),
@@ -568,6 +592,8 @@ export const ilpPolicySchema = z.object({
   assuranceProfile: ilpAssuranceProfileSchema.optional(),
   scheduledPayoutSupport: ilpScheduledPayoutSupportSchema.optional(),
   scheduledPayoutAssumption: ilpScheduledPayoutAssumptionSchema.optional(),
+  distributionSupport: ilpDistributionSupportSchema.optional(),
+  distributionAssumption: ilpDistributionAssumptionSchema.optional(),
   policyEvents: z.array(ilpPolicyEventSchema).max(20).optional(),
   accounts: z.array(ilpAccountSchema).min(1).max(10),
   mipLength: z.number().int().min(5).max(100).nullable().optional(),
@@ -911,6 +937,37 @@ export const ilpPolicySchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'scheduledPayoutSupport.accountId must reference an existing account',
       path: ['scheduledPayoutSupport', 'accountId'],
+    })
+  }
+
+  policy.distributionSupport?.accountIds.forEach((accountId, accountIndex) => {
+    if (!accountIds.includes(accountId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'distributionSupport.accountIds must reference existing accounts',
+        path: ['distributionSupport', 'accountIds', accountIndex],
+      })
+    }
+  })
+
+  if (policy.distributionAssumption && !policy.distributionSupport) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'distributionAssumption requires distributionSupport',
+      path: ['distributionAssumption'],
+    })
+  }
+
+  if (
+    policy.distributionAssumption?.mode === 'cash-payout'
+    && policy.distributionSupport
+    && !policy.distributionSupport.cashPayoutAllowedDuringMip
+    && !policy.distributionSupport.cashPayoutAllowedAfterMip
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'cash-payout distribution assumptions require at least one payout-eligible phase',
+      path: ['distributionAssumption', 'mode'],
     })
   }
 

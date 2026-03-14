@@ -153,6 +153,17 @@ export const ilpTemplateScheduledPayoutSupportSchema = z.object({
   sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
 })
 
+export const ilpTemplateDistributionSupportSchema = z.object({
+  mode: z.literal('manual-assumption'),
+  accountIds: z.array(z.string().min(1)).min(1).max(10),
+  defaultMode: z.literal('reinvest'),
+  cashPayoutAllowedDuringMip: z.boolean(),
+  cashPayoutAllowedAfterMip: z.boolean(),
+  source: z.literal('distribution-paying-funds'),
+  notes: z.array(z.string()).min(1),
+  sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
+})
+
 export const ilpTemplateVariantSchema = z.object({
   id: z.string().min(1),
   currency: z.enum(['SGD', 'USD']),
@@ -164,6 +175,7 @@ export const ilpTemplateVariantSchema = z.object({
   feeRules: z.array(ilpTemplateFeeRuleSchema).max(20),
   eventChargeRules: z.array(ilpTemplateEventChargeRuleSchema).max(20),
   scheduledPayoutSupport: ilpTemplateScheduledPayoutSupportSchema.optional(),
+  distributionSupport: ilpTemplateDistributionSupportSchema.optional(),
   eecTable: z.array(z.number().min(0).max(1)).max(100),
   eecYearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   warnings: z.array(z.string()),
@@ -226,6 +238,18 @@ export const ilpTemplateVariantSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'scheduledPayoutSupport.accountId must reference an existing account',
       path: ['scheduledPayoutSupport', 'accountId'],
+    })
+  }
+
+  if (variant.distributionSupport) {
+    variant.distributionSupport.accountIds.forEach((accountId, accountIndex) => {
+      if (!variant.accounts.some((account) => account.id === accountId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'distributionSupport.accountIds must reference existing accounts',
+          path: ['distributionSupport', 'accountIds', accountIndex],
+        })
+      }
     })
   }
 })

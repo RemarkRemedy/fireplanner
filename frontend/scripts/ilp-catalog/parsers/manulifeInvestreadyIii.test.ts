@@ -29,8 +29,10 @@ describe('parseManulifeInvestreadyIii', () => {
       'kernel:protected-base-assurance',
       'branch:manulife-investready-iii-administrative-charge',
       'branch:manulife-investready-iii-premium-shortfall-charge',
+      'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-welcome-bonus')
+    expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-benefit-payout-handling')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-mip-5-flexi-4'])
 
@@ -59,6 +61,18 @@ describe('parseManulifeInvestreadyIii', () => {
         }),
       }),
     ])
+    expect(variant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('reinvestment by default'),
+      ]),
+      sourceRefs: expect.any(Array),
+    })
     expect(variant?.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'premium-shortfall-charge',
@@ -72,5 +86,6 @@ describe('parseManulifeInvestreadyIii', () => {
       }),
     ])
     expect(variant?.warnings).toContain('Flexi-start premium variation, welcome / annual-premium / loyalty bonuses, surrender charges, withdrawal charges, and fund-level management charges remain outside the current engine.')
+    expect(variant?.warnings).toContain('Dividend-paying funds seed reinvestment by default in V1. Cash payout requires a manual annual distribution-yield assumption and the published $40 minimum payout threshold remains informational only.')
   }, 30_000)
 })

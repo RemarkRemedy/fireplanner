@@ -158,6 +158,17 @@ export interface IlpTemplateScheduledPayoutSupport {
   sourceRefs: IlpCatalogSourceRef[]
 }
 
+export interface IlpTemplateDistributionSupport {
+  mode: 'manual-assumption'
+  accountIds: string[]
+  defaultMode: 'reinvest'
+  cashPayoutAllowedDuringMip: boolean
+  cashPayoutAllowedAfterMip: boolean
+  source: 'distribution-paying-funds'
+  notes: string[]
+  sourceRefs: IlpCatalogSourceRef[]
+}
+
 export interface IlpTemplateVariant {
   id: string
   currency: IlpCatalogCurrency
@@ -169,6 +180,7 @@ export interface IlpTemplateVariant {
   feeRules: IlpTemplateFeeRule[]
   eventChargeRules: IlpTemplateEventChargeRule[]
   scheduledPayoutSupport?: IlpTemplateScheduledPayoutSupport
+  distributionSupport?: IlpTemplateDistributionSupport
   eecTable: number[]
   eecYearBasis?: 'policy-year' | 'premium-year'
   warnings: string[]

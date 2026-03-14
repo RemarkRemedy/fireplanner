@@ -66,6 +66,29 @@ export type IlpScheduledPayoutAssumption =
       annualPayoutAmount: number
     }
 
+export interface IlpDistributionSupport {
+  mode: 'manual-assumption'
+  accountIds: string[]
+  defaultMode: 'reinvest'
+  cashPayoutAllowedDuringMip: boolean
+  cashPayoutAllowedAfterMip: boolean
+  source: 'distribution-paying-funds'
+}
+
+export type IlpDistributionAssumption =
+  | {
+      mode: 'disabled'
+    }
+  | {
+      mode: 'reinvest'
+      source: 'catalog-default' | 'manual-assumption'
+    }
+  | {
+      mode: 'cash-payout'
+      source: 'manual-assumption'
+      annualYieldRate: number
+    }
+
 export interface IlpBonusSuspensionRule {
   trigger: 'premium-holiday' | 'partial-withdrawal' | 'regular-premium-reduction'
   suspensionMonths: number
@@ -240,6 +263,8 @@ export interface IlpPolicyInput {
   assuranceProfile?: IlpAssuranceProfile
   scheduledPayoutSupport?: IlpScheduledPayoutSupport
   scheduledPayoutAssumption?: IlpScheduledPayoutAssumption
+  distributionSupport?: IlpDistributionSupport
+  distributionAssumption?: IlpDistributionAssumption
   policyEvents?: IlpPolicyEvent[]
   accounts: IlpAccount[]
   mipLength?: number | null
@@ -1035,6 +1060,37 @@ function getScheduledPayoutsByAccount(
   return payouts
 }
 
+function getDistributionPayoutsByAccount(
+  normalized: IlpNormalizedPolicyInput,
+  projectionYear: number,
+  openBalances: Map<string, number>,
+): Map<string, number> {
+  const payouts = new Map<string, number>(normalized.input.accounts.map((account) => [account.id, 0]))
+  const distributionSupport = normalized.input.distributionSupport
+  const distributionAssumption = normalized.input.distributionAssumption
+
+  if (!distributionSupport || !distributionAssumption || distributionAssumption.mode !== 'cash-payout') {
+    return payouts
+  }
+
+  const policyYear = normalized.input.currentPolicyYear + projectionYear
+  const payoutAllowed = isPostMipPolicyYear(normalized.input, policyYear)
+    ? distributionSupport.cashPayoutAllowedAfterMip
+    : distributionSupport.cashPayoutAllowedDuringMip
+
+  if (!payoutAllowed) {
+    return payouts
+  }
+
+  for (const accountId of distributionSupport.accountIds) {
+    const openBalance = openBalances.get(accountId) ?? 0
+    if (openBalance <= 0) continue
+    payouts.set(accountId, openBalance * distributionAssumption.annualYieldRate)
+  }
+
+  return payouts
+}
+
 function mergeAccountAmountMaps(
   left: Map<string, number>,
   right: Map<string, number>,
@@ -1072,6 +1128,32 @@ function assertScheduledPayoutConfiguration(input: IlpPolicyInput): void {
     && input.scheduledPayoutSupport.accountId !== input.scheduledPayoutAssumption.accountId
   ) {
     throw new Error(`Scheduled payout assumption account must match scheduled payout support account on policy "${input.name}".`)
+  }
+}
+
+
+function assertDistributionConfiguration(input: IlpPolicyInput): void {
+  const accountIds = new Set(input.accounts.map((account) => account.id))
+
+  if (input.distributionSupport) {
+    for (const accountId of input.distributionSupport.accountIds) {
+      if (!accountIds.has(accountId)) {
+        throw new Error(`Distribution support account "${accountId}" does not exist on policy "${input.name}".`)
+      }
+    }
+  }
+
+  if (input.distributionAssumption && !input.distributionSupport) {
+    throw new Error(`Distribution assumption requires distribution support on policy "${input.name}".`)
+  }
+
+  if (
+    input.distributionAssumption?.mode === 'cash-payout'
+    && input.distributionSupport
+    && !input.distributionSupport.cashPayoutAllowedDuringMip
+    && !input.distributionSupport.cashPayoutAllowedAfterMip
+  ) {
+    throw new Error(`Cash-payout distribution assumption requires at least one payout-eligible phase on policy "${input.name}".`)
   }
 }
 
@@ -2731,6 +2813,7 @@ export function projectIlpPolicy(
 ): IlpProjectionResult {
   assertBeforeMip(input)
   assertScheduledPayoutConfiguration(input)
+  assertDistributionConfiguration(input)
   const normalized = buildNormalizedPolicyInput(input)
 
   const blendedNetReturn = computeBlendedReturn(input.funds, scenario)
@@ -2782,7 +2865,9 @@ export function projectIlpPolicy(
     cumulativePremiums += contributionForYear
     const partialWithdrawalByAccount = getPartialWithdrawalsByAccount(normalized, year)
     const scheduledPayoutByAccount = getScheduledPayoutsByAccount(normalized, year)
-    const withdrawalByAccount = mergeAccountAmountMaps(partialWithdrawalByAccount, scheduledPayoutByAccount)
+    const baseWithdrawalByAccount = mergeAccountAmountMaps(partialWithdrawalByAccount, scheduledPayoutByAccount)
+    const distributionPayoutByAccount = getDistributionPayoutsByAccount(normalized, year, openBalances)
+    const withdrawalByAccount = mergeAccountAmountMaps(baseWithdrawalByAccount, distributionPayoutByAccount)
     const annualWithdrawals = Array.from(withdrawalByAccount.values()).reduce((sum, value) => sum + value, 0)
     const additionalChargeByAccount = computeAdditionalChargeByAccount(
       normalized,
@@ -2829,7 +2914,7 @@ export function projectIlpPolicy(
       regularPremiumPaidThisYear,
       assuranceSupplementaryPremiumBase,
       supplementaryPremiumPaidThisYear,
-      withdrawalByAccount,
+      baseWithdrawalByAccount,
       assuranceSumAssured,
       assuranceWealthAssureValue,
       assuranceGrowthFrozen,
@@ -2903,7 +2988,7 @@ export function projectIlpPolicy(
       cumulativeBonuses: cumulativeBonuses,
     })
 
-    const assuranceWithdrawalsThisYear = sumWithdrawalsForAccounts(withdrawalByAccount, assuranceRelevantAccountIds)
+    const assuranceWithdrawalsThisYear = sumWithdrawalsForAccounts(baseWithdrawalByAccount, assuranceRelevantAccountIds)
     assuranceRegularPremiumBase = Math.max(
       0,
       assuranceRegularPremiumBase + regularPremiumPaidThisYear - assuranceWithdrawalsThisYear,
@@ -2912,8 +2997,8 @@ export function projectIlpPolicy(
       0,
       assuranceSupplementaryPremiumBase + supplementaryPremiumPaidThisYear - (
         normalized.multiAccount.supplementaryPremiumAccountIds.length > 0
-          ? sumWithdrawalsForAccounts(withdrawalByAccount, normalized.multiAccount.supplementaryPremiumAccountIds)
-          : sumWithdrawalsForAccounts(withdrawalByAccount, assuranceRelevantAccountIds)
+          ? sumWithdrawalsForAccounts(baseWithdrawalByAccount, normalized.multiAccount.supplementaryPremiumAccountIds)
+          : sumWithdrawalsForAccounts(baseWithdrawalByAccount, assuranceRelevantAccountIds)
       ),
     )
   }

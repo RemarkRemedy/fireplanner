@@ -430,6 +430,223 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[0], 'policy').grossFee).toBe(0)
   })
 
+
+  it('keeps reinvest-default distribution support on the uninterrupted baseline', () => {
+    const basePolicy = makeOpenEndedPolicy()
+    const distributionPolicy = makeOpenEndedPolicy({
+      distributionSupport: {
+        mode: 'manual-assumption',
+        accountIds: ['policy'],
+        defaultMode: 'reinvest',
+        cashPayoutAllowedDuringMip: true,
+        cashPayoutAllowedAfterMip: true,
+        source: 'distribution-paying-funds',
+      },
+      distributionAssumption: {
+        mode: 'reinvest',
+        source: 'catalog-default',
+      },
+    })
+
+    const baseResult = projectIlpPolicy(basePolicy, 'mid')
+    const distributionResult = projectIlpPolicy(distributionPolicy, 'mid')
+
+    expect(distributionResult.rows).toEqual(baseResult.rows)
+  })
+
+  it('keeps reinvest-default distribution support stable during a missed-premium / premium-free-period year', () => {
+    const policy = makeOpenEndedPolicy({
+      distributionSupport: {
+        mode: 'manual-assumption',
+        accountIds: ['policy'],
+        defaultMode: 'reinvest',
+        cashPayoutAllowedDuringMip: true,
+        cashPayoutAllowedAfterMip: true,
+        source: 'distribution-paying-funds',
+      },
+      distributionAssumption: {
+        mode: 'reinvest',
+        source: 'catalog-default',
+      },
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 13,
+          durationMonths: 12,
+          repayMissedPremiums: false,
+        },
+      ],
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows.map((row) => row.annualContribution)).toEqual([0, 1_200, 1_200])
+    expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 0, 0])
+  })
+
+  it('keeps reinvest-default distribution support stable after premium restart', () => {
+    const policy = makeOpenEndedPolicy({
+      postMipYears: 4,
+      distributionSupport: {
+        mode: 'manual-assumption',
+        accountIds: ['policy'],
+        defaultMode: 'reinvest',
+        cashPayoutAllowedDuringMip: true,
+        cashPayoutAllowedAfterMip: true,
+        source: 'distribution-paying-funds',
+      },
+      distributionAssumption: {
+        mode: 'reinvest',
+        source: 'catalog-default',
+      },
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 13,
+          durationMonths: 12,
+          repayMissedPremiums: false,
+        },
+      ],
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows.slice(0, 4).map((row) => row.annualContribution)).toEqual([0, 1_200, 1_200, 1_200])
+    expect(result.rows.slice(0, 4).map((row) => row.annualWithdrawals)).toEqual([0, 0, 0, 0])
+  })
+
+  it('reduces policy value only after MIP when a cash-payout distribution assumption is supplied', () => {
+    const policy = makeDefaultPolicy({
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 24,
+      currentPolicyYear: 1,
+      mipLength: 2,
+      postMipYears: 2,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 1_000,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      distributionSupport: {
+        mode: 'manual-assumption',
+        accountIds: ['policy'],
+        defaultMode: 'reinvest',
+        cashPayoutAllowedDuringMip: false,
+        cashPayoutAllowedAfterMip: true,
+        source: 'distribution-paying-funds',
+      },
+      distributionAssumption: {
+        mode: 'cash-payout',
+        source: 'manual-assumption',
+        annualYieldRate: 0.1,
+      },
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows.map((row) => row.policyYear)).toEqual([2, 3, 4])
+    expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 100, 90])
+    expect(result.rows.map((row) => accountRow(row, 'policy').close)).toEqual([1_000, 900, 810])
+  })
+
+  it('does not regress scheduled payout support when distribution support is also present', () => {
+    const policy = makeOpenEndedPolicy({
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        source: 'manual-assumption',
+        accountId: 'policy',
+        startPolicyYear: 3,
+        durationYears: 2,
+        annualPayoutAmount: 600,
+      },
+      distributionSupport: {
+        mode: 'manual-assumption',
+        accountIds: ['policy'],
+        defaultMode: 'reinvest',
+        cashPayoutAllowedDuringMip: true,
+        cashPayoutAllowedAfterMip: true,
+        source: 'distribution-paying-funds',
+      },
+      distributionAssumption: {
+        mode: 'reinvest',
+        source: 'catalog-default',
+      },
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 600, 600])
+  })
+
+  it('does not erode the protected premium base when cash distributions are paid from an assured account', () => {
+    const result = projectIlpPolicy(makeOpenEndedPolicy({
+      postMipYears: 4,
+      assuranceProfile: {
+        currentAgeNextBirthday: 24,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 1_200,
+        currentNetSupplementaryPremiumBase: 0,
+      },
+      chargeRules: [
+        {
+          id: 'investready-protection-charge',
+          label: 'Cost of Insurance',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'manulife-investready-iii-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      distributionSupport: {
+        mode: 'manual-assumption',
+        accountIds: ['policy'],
+        defaultMode: 'reinvest',
+        cashPayoutAllowedDuringMip: true,
+        cashPayoutAllowedAfterMip: true,
+        source: 'distribution-paying-funds',
+      },
+      distributionAssumption: {
+        mode: 'cash-payout',
+        source: 'manual-assumption',
+        annualYieldRate: 0.1,
+      },
+    }), 'mid')
+
+    const yearThreeOpen = accountRow(result.rows[1], 'policy').close
+    const yearThreeDistribution = yearThreeOpen * 0.1
+    const yearThreeMidpointApplicableValue = (
+      yearThreeOpen + (yearThreeOpen + 1_200 - yearThreeDistribution)
+    ) / 2
+    const expectedYearThreeGrossFee = (((3_600 + 600) * 1.01) - yearThreeMidpointApplicableValue) * 0.64 / 1000
+
+    expect(accountRow(result.rows[2], 'policy').grossFee).toBeCloseTo(expectedYearThreeGrossFee, 9)
+  })
+
   it('grows protected-base assurance charges under uninterrupted paid-premium flow', () => {
     const result = projectIlpPolicy(makeOpenEndedPolicy({
       postMipYears: 4,
