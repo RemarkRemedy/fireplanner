@@ -18,7 +18,7 @@ export function SummaryCards({ policy, analysis }: SummaryCardsProps) {
       <MetricCard
         label="Total Premiums Paid"
         value={formatIlpCurrency(summary.totalPremiumsPaid, policy.currency)}
-        subtitle="Anchored to MIP end"
+        subtitle="Anchored to the analysis horizon"
       />
       <MetricCard
         label="Total Fees Charged"
@@ -30,7 +30,7 @@ export function SummaryCards({ policy, analysis }: SummaryCardsProps) {
       <MetricCard
         label="Bonuses Received"
         value={formatIlpCurrency(summary.totalBonusesReceived, policy.currency)}
-        subtitle="Credits received by MIP end"
+        subtitle="Credits received by the analysis horizon"
         accent="success"
         variant="elevated"
       />

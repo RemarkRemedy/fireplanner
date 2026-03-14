@@ -12534,6 +12534,269 @@
     ]
   },
   {
+    "id": "great-eastern-great-invest-advantage-sp",
+    "insurer": "Great Eastern",
+    "productName": "GREAT Invest Advantage (SP)",
+    "sourceFileName": "PS(EN)_GREAT Invest Advantage (SP)_(SG)_v3.0.pdf",
+    "sourceChecksumSha256": "d7ec938c59cdedeb50177d4a0cfbd2f661a88cbce257d26e00d7c1dae421b48c",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:great-eastern-gia-sp-single-premium-charge",
+      "branch:great-eastern-gia-sp-top-up-premium-charge",
+      "branch:great-eastern-gia-sp-open-ended-zero-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "great-eastern-gia-sp-death-benefit",
+      "great-eastern-gia-sp-terminal-illness-benefit",
+      "great-eastern-gia-sp-single-premium-principal-tracking",
+      "great-eastern-gia-sp-srs-cpfis-surrender-destination"
+    ],
+    "warnings": [
+      "GREAT Invest Advantage (SP) is cataloged as a partial modeled subset in V1. The parser captures the published premium-charge path, top-up premium charge, and explicit no-surrender-charge structure through the open-ended no-MIP basis, while protection benefits and single-premium principal tracking remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-open-ended-cash-or-srs",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview",
+                "excerpt": "About your plan investment-linked plan (ILP). It is designed to meet your wealth accumulation needs while enjoying insurance coverage. This plan provides coverage for death and terminal illness. This plan gives you acces"
+              },
+              {
+                "page": 2,
+                "section": "Premium charge and top-ups",
+                "excerpt": "A premium charge will be deducted from the single premium or single premium top-up (as the case Premium may be) before the remaining amount is apportioned to create and grant units in each fund selected charge by you. Th"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "single-premium-charge",
+            "label": "Single Premium Charge (Cash / SRS)",
+            "basis": "annual-contribution",
+            "rate": 0.03,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Applies a 3% premium charge to the single premium when paid in cash or through SRS.",
+              "The same published premium-charge table also applies to accepted single premium top-ups."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Premium charge and top-ups",
+                "excerpt": "A premium charge will be deducted from the single premium or single premium top-up (as the case Premium may be) before the remaining amount is apportioned to create and grant units in each fund selected charge by you. Th"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge (Cash / SRS)",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies the published 3% premium charge to accepted single premium top-ups paid in cash or through SRS."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Premium charge and top-ups",
+                "excerpt": "A premium charge will be deducted from the single premium or single premium top-up (as the case Premium may be) before the remaining amount is apportioned to create and grant units in each fund selected charge by you. Th"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "This Cash / SRS variant assumes the published 3% premium-charge path for initial and top-up premiums.",
+          "This open-ended single-premium product uses the new no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
+        ],
+        "unsupportedItems": [
+          "Death and terminal-illness benefit formulas remain informational only.",
+          "Single-premium principal tracking remains informational only in V1.",
+          "Fund-switching and minimum-transaction guards remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview",
+            "excerpt": "About your plan investment-linked plan (ILP). It is designed to meet your wealth accumulation needs while enjoying insurance coverage. This plan provides coverage for death and terminal illness. This plan gives you acces"
+          },
+          {
+            "page": 2,
+            "section": "Premium charge and top-ups",
+            "excerpt": "A premium charge will be deducted from the single premium or single premium top-up (as the case Premium may be) before the remaining amount is apportioned to create and grant units in each fund selected charge by you. Th"
+          },
+          {
+            "page": 3,
+            "section": "Partial and full surrender",
+            "excerpt": "You may make a partial surrender by requesting us to cancel some of the units in the fund(s) you Partial have or stating the amount you wish to surrender, provided the account value of your policy is positive. surrender "
+          }
+        ]
+      },
+      {
+        "id": "sgd-open-ended-cpfis",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview",
+                "excerpt": "About your plan investment-linked plan (ILP). It is designed to meet your wealth accumulation needs while enjoying insurance coverage. This plan provides coverage for death and terminal illness. This plan gives you acces"
+              },
+              {
+                "page": 2,
+                "section": "Premium charge and top-ups",
+                "excerpt": "A premium charge will be deducted from the single premium or single premium top-up (as the case Premium may be) before the remaining amount is apportioned to create and grant units in each fund selected charge by you. Th"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "single-premium-charge",
+            "label": "Single Premium Charge (CPFIS)",
+            "basis": "annual-contribution",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "No premium charge applies when the payment method is CPFIS.",
+              "The same published premium-charge table also applies to accepted single premium top-ups."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Premium charge and top-ups",
+                "excerpt": "A premium charge will be deducted from the single premium or single premium top-up (as the case Premium may be) before the remaining amount is apportioned to create and grant units in each fund selected charge by you. Th"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge (CPFIS)",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "No premium charge applies to accepted top-ups when the payment method is CPFIS."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Premium charge and top-ups",
+                "excerpt": "A premium charge will be deducted from the single premium or single premium top-up (as the case Premium may be) before the remaining amount is apportioned to create and grant units in each fund selected charge by you. Th"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "This CPFIS variant assumes the published 0% premium-charge path for initial and top-up premiums.",
+          "This open-ended single-premium product uses the new no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
+        ],
+        "unsupportedItems": [
+          "Death and terminal-illness benefit formulas remain informational only.",
+          "Single-premium principal tracking remains informational only in V1.",
+          "Fund-switching and minimum-transaction guards remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview",
+            "excerpt": "About your plan investment-linked plan (ILP). It is designed to meet your wealth accumulation needs while enjoying insurance coverage. This plan provides coverage for death and terminal illness. This plan gives you acces"
+          },
+          {
+            "page": 2,
+            "section": "Premium charge and top-ups",
+            "excerpt": "A premium charge will be deducted from the single premium or single premium top-up (as the case Premium may be) before the remaining amount is apportioned to create and grant units in each fund selected charge by you. Th"
+          },
+          {
+            "page": 3,
+            "section": "Partial and full surrender",
+            "excerpt": "You may make a partial surrender by requesting us to cancel some of the units in the fund(s) you Partial have or stating the amount you wish to surrender, provided the account value of your policy is positive. surrender "
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "great-eastern-investment-linked-insurance-plan-2",
     "insurer": "Great Eastern",
     "productName": "Investment-linked Insurance Plan 2",

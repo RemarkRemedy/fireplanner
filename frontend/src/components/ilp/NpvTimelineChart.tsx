@@ -45,7 +45,7 @@ export function NpvTimelineChart({ analyses }: NpvTimelineChartProps) {
       <CardHeader>
         <CardTitle>NPV of Fee Drag by Exit Year</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Lower lines indicate less discounted fee drag. Best-exit markers are chosen from pre-MIP rows only.
+          Lower lines indicate less discounted fee drag. Best-exit markers are chosen from the modeled horizon rows only.
         </p>
       </CardHeader>
       <CardContent>

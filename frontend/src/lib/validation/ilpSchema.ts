@@ -542,12 +542,13 @@ export const ilpPolicySchema = z.object({
   monthsAlreadyPaid: z.number().int().min(0).max(1_200),
   currentPolicyYear: z.number().int().min(1).max(100),
   icpMonths: z.number().int().min(0).max(1_200).optional(),
+  mipBasis: z.enum(['finite', 'open-ended']).optional(),
   assuranceProfile: ilpAssuranceProfileSchema.optional(),
   policyEvents: z.array(ilpPolicyEventSchema).max(20).optional(),
   accounts: z.array(ilpAccountSchema).min(1).max(10),
-  mipLength: z.number().int().min(5).max(100),
+  mipLength: z.number().int().min(5).max(100).nullable().optional(),
   postMipYears: z.number().int().min(0).max(50),
-  eecTable: z.array(z.number().min(0).max(1)).min(1).max(100),
+  eecTable: z.array(z.number().min(0).max(1)).max(100),
   eecYearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   funds: z.array(ilpFundSchema).min(1).max(20),
   bonuses: z.array(ilpBonusRuleSchema).max(20),
@@ -571,6 +572,8 @@ export const ilpPolicySchema = z.object({
   alternativeReturn: z.number().min(-0.1).max(0.3),
 }).superRefine((policy, ctx) => {
   const fundAllocationSum = policy.funds.reduce((sum, fund) => sum + fund.allocation, 0)
+  const mipBasis = policy.mipBasis ?? 'finite'
+
   if (Math.abs(fundAllocationSum - 1) > SUM_TOLERANCE) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -579,11 +582,35 @@ export const ilpPolicySchema = z.object({
     })
   }
 
-  if (policy.currentPolicyYear >= policy.mipLength) {
+  if (mipBasis === 'finite' && policy.mipLength == null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Finite policies must define mipLength',
+      path: ['mipLength'],
+    })
+  }
+
+  if (mipBasis === 'open-ended' && policy.mipLength != null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Open-ended policies must not define mipLength',
+      path: ['mipLength'],
+    })
+  }
+
+  if (mipBasis === 'finite' && policy.mipLength != null && policy.currentPolicyYear >= policy.mipLength) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'Current policy year must be less than MIP length. Mature policies are not supported in V1.',
       path: ['currentPolicyYear'],
+    })
+  }
+
+  if (mipBasis === 'open-ended' && policy.postMipYears < 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Open-ended policies must define a positive review horizon in postMipYears',
+      path: ['postMipYears'],
     })
   }
 
@@ -664,6 +691,14 @@ export const ilpPolicySchema = z.object({
     const hasAfterMipRules = policy.accounts.some((account) => (
       account.contributionRules?.some((rule) => rule.phase === 'after-mip')
     ))
+
+    if (mipBasis === 'open-ended' && hasAfterMipRules) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Open-ended policies cannot define after-mip contributionRules',
+        path: ['accounts'],
+      })
+    }
 
     if (hasAfterMipRules) {
       const afterMipShareSum = policy.accounts.reduce(
@@ -766,6 +801,14 @@ export const ilpPolicySchema = z.object({
   })
 
   policy.chargeRules?.forEach((rule, index) => {
+    if (mipBasis === 'open-ended' && rule.activeWindow === 'after-mip') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Open-ended policies cannot define after-mip charge rules',
+        path: ['chargeRules', index, 'activeWindow'],
+      })
+    }
+
     if (rule.appliesTo.some((accountId) => !validAccountIds.has(accountId))) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -784,6 +827,14 @@ export const ilpPolicySchema = z.object({
   })
 
   policy.eventChargeRules?.forEach((rule, index) => {
+    if (mipBasis === 'open-ended' && rule.activeWindow === 'after-mip') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Open-ended policies cannot define after-mip event charge rules',
+        path: ['eventChargeRules', index, 'activeWindow'],
+      })
+    }
+
     if (rule.appliesTo.some((accountId) => !validAccountIds.has(accountId))) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -823,7 +874,7 @@ export const ilpPolicySchema = z.object({
     }
   })
 
-  if (policy.eecTable.length < policy.mipLength) {
+  if (mipBasis === 'finite' && policy.mipLength != null && policy.eecTable.length < policy.mipLength) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'EEC table must have at least mipLength entries',

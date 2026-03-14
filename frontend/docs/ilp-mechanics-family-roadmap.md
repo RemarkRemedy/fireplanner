@@ -248,7 +248,7 @@ Validated classifier state:
 - `57` supported-after-kernel
 - `29` partial-v1
 
-The immediate execution focus is the approved/staged `payment-history-kernel` slice, with `GBII` as the completed proof parser. After commit, return to parser throughput for the cheapest truthful corridor unlocked by the current kernels.
+The immediate execution focus is the `open-ended-no-mip-kernel` slice. The current Great Eastern parser corridor no longer fails on payment-history first; it now fails because the next viable whole-life products do not publish a finite MIP / surrender-charge horizon and therefore cannot be represented honestly by the existing required `mipLength` contract.
 
 ## Sequencing After QA
 
@@ -260,10 +260,11 @@ The immediate execution focus is the approved/staged `payment-history-kernel` sl
    - bonus-richness kernel
 3. Treat the `payment-history-kernel` first slice as implemented:
    - proof target completed: `GBII`
-   - optional follow-ons only if they still fit the bounded slice after re-review
-4. After the kernel commit lands, return to parser throughput for the cheapest truthful corridor it unlocks.
-5. Current parser-throughput target after the kernel commit:
-   - `Investment-linked Insurance Plan 2` is the next bounded Great Eastern follow-on because its bonus/premium-holiday mechanics now fit the current payment-history slice with an explicit partial boundary on insurance charge and application-gated refund logic.
+   - follow-on proof landed: `Investment-linked Insurance Plan 2`
+4. Treat the `open-ended-no-mip-kernel` as the current bounded slice:
+   - proof target: `GREAT Invest Advantage (SP)`
+   - immediate follow-ons after commit: `GREAT Invest Advantage 2 (SP)` and the adjacent open-ended Great Eastern corridor
+5. After the kernel commit lands, return to parser throughput for the cheapest truthful corridor it unlocks.
 
 ## V1 Boundary
 

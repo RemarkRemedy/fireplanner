@@ -180,6 +180,43 @@ function makeDefaultPolicy(overrides: Partial<IlpPolicyInput> = {}): IlpPolicyIn
   }
 }
 
+function makeOpenEndedPolicy(overrides: Partial<IlpPolicyInput> = {}): IlpPolicyInput {
+  return {
+    id: 'open-ended-policy',
+    name: 'Open-ended Policy',
+    insurer: 'Test Insurer',
+    currency: 'SGD',
+    monthlyContribution: 100,
+    monthsAlreadyPaid: 12,
+    currentPolicyYear: 1,
+    mipBasis: 'open-ended',
+    mipLength: null,
+    postMipYears: 3,
+    accounts: [
+      {
+        id: 'policy',
+        label: 'Policy Account',
+        feeRate: 0,
+        currentValue: 0,
+        contributionShare: 0,
+        subjectToEec: false,
+        postMipFeeRate: null,
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+          { phase: 'after-icp', contributionShare: 1 },
+        ],
+      },
+    ],
+    eecTable: [],
+    funds: [ZERO_RETURN_FUND],
+    bonuses: [],
+    discountRate: DEFAULT_DISCOUNT_RATE,
+    inflationRate: DEFAULT_INFLATION_RATE,
+    alternativeReturn: 0.07,
+    ...overrides,
+  }
+}
+
 function accountRow(
   row: { accounts: IlpAccountYearRow[] },
   accountId: string,
@@ -207,6 +244,62 @@ describe('projectIlpPolicy', () => {
     expect(computeTotalProjectionYears(policy)).toBe(25)
     expect(result.rows).toHaveLength(25)
     expect(result.rows[0].policyYear).toBe(6)
+  })
+
+  it('supports uninterrupted open-ended premium flow without a finite MIP', () => {
+    const policy = makeOpenEndedPolicy()
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(computeTotalProjectionYears(policy)).toBe(3)
+    expect(result.rows).toHaveLength(3)
+    expect(result.rows.map((row) => row.annualContribution)).toEqual([1_200, 1_200, 1_200])
+    expect(result.rows.every((row) => row.eecRate === 0)).toBe(true)
+  })
+
+  it('freezes open-ended premium flow during a missed-premium / premium-free-period event', () => {
+    const policy = makeOpenEndedPolicy({
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 13,
+          durationMonths: 12,
+          repayMissedPremiums: false,
+        },
+      ],
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0].annualContribution).toBe(0)
+    expect(result.rows[1].annualContribution).toBe(1_200)
+  })
+
+  it('resumes open-ended premium flow after premium restart', () => {
+    const policy = makeOpenEndedPolicy({
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 13,
+          durationMonths: 12,
+          repayMissedPremiums: false,
+        },
+      ],
+      postMipYears: 4,
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows.slice(0, 4).map((row) => row.annualContribution)).toEqual([0, 1_200, 1_200, 1_200])
+  })
+
+  it('does not regress finite-MIP contribution cutoff behavior', () => {
+    const policy = makeDefaultPolicy({ postMipYears: 2 })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[24].policyYear).toBe(30)
+    expect(result.rows[25].policyYear).toBe(31)
+    expect(result.rows[24].annualContribution).toBeGreaterThan(0)
+    expect(result.rows[25].annualContribution).toBe(0)
   })
 
   it('uses current balances as year-one opens and routes contributions by contributionShare', () => {
@@ -2773,7 +2866,7 @@ describe('full ILP analysis', () => {
       ],
     })
     const result = analyzeAllPolicies([policyUsd, policySgd])
-    const currencyRow = result.comparison.find((row) => row.metric === 'Net Fee Drag (to MIP)')
+    const currencyRow = result.comparison.find((row) => row.metric === 'Net Fee Drag (to horizon)')
     const percentRow = result.comparison.find((row) => row.metric === 'Fee Drag % of Premiums')
 
     expect(result.policies).toHaveLength(2)
@@ -2802,6 +2895,6 @@ describe('full ILP analysis', () => {
       'policy-2': 'USD',
     })
 
-    expect(comparison.find((row) => row.metric === 'Net Fee Drag (to MIP)')?.lowerIsBetter).toBe(true)
+    expect(comparison.find((row) => row.metric === 'Net Fee Drag (to horizon)')?.lowerIsBetter).toBe(true)
   })
 })

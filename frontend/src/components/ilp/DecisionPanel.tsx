@@ -31,10 +31,10 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
     },
     {
       id: 'hold-to-mip',
-      title: 'Hold to MIP',
+      title: 'Hold to Horizon',
       feeDrag: analysis.npvAnalysis.holdToMip.totalNpvFees,
       primaryValue: `Final value ${formatIlpCurrency(analysis.npvAnalysis.holdToMip.finalValue, policy.currency)}`,
-      detail: `Total contributions ${formatIlpCurrency(analysis.npvAnalysis.holdToMip.totalContributions, policy.currency)} with no EEC at MIP end.`,
+      detail: `Total contributions ${formatIlpCurrency(analysis.npvAnalysis.holdToMip.totalContributions, policy.currency)} by the analysis horizon.`,
     },
   ]
 

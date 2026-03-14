@@ -15,6 +15,7 @@ export const ilpPolicySeedSchema = z.object({
   monthsAlreadyPaid: z.number().int().min(0).max(1_200),
   currentPolicyYear: z.number().int().min(1).max(100),
   icpMonths: z.number().int().min(0).max(1_200).optional(),
+  mipBasis: z.enum(['finite', 'open-ended']).optional(),
   assuranceProfile: ilpAssuranceProfileSchema.optional(),
   policyEvents: z.array(z.object({
     id: z.string().min(1),
@@ -30,9 +31,9 @@ export const ilpPolicySeedSchema = z.object({
     resultingWealthAssureValue: z.number().min(0).max(100_000_000).optional(),
   })).max(20).optional(),
   accounts: z.array(ilpAccountSchema).min(1).max(10),
-  mipLength: z.number().int().min(5).max(100),
+  mipLength: z.number().int().min(5).max(100).nullable().optional(),
   postMipYears: z.number().int().min(0).max(50),
-  eecTable: z.array(z.number().min(0).max(1)).min(1).max(100),
+  eecTable: z.array(z.number().min(0).max(1)).max(100),
   eecYearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   funds: z.array(ilpFundSchema).min(1).max(20),
   bonuses: z.array(ilpBonusRuleSchema).max(20),
@@ -80,6 +81,32 @@ export const ilpPolicySeedSchema = z.object({
   discountRate: z.number().min(0).max(0.3),
   inflationRate: z.number().min(0).max(0.15),
   alternativeReturn: z.number().min(-0.1).max(0.3),
+}).superRefine((policy, ctx) => {
+  const mipBasis = policy.mipBasis ?? 'finite'
+
+  if (mipBasis === 'finite' && policy.mipLength == null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Finite policies must define mipLength',
+      path: ['mipLength'],
+    })
+  }
+
+  if (mipBasis === 'open-ended' && policy.mipLength != null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Open-ended policies must not define mipLength',
+      path: ['mipLength'],
+    })
+  }
+
+  if (mipBasis === 'open-ended' && policy.postMipYears < 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Open-ended policies must define a positive review horizon in postMipYears',
+      path: ['postMipYears'],
+    })
+  }
 })
 
 export type IlpPolicySeed = z.infer<typeof ilpPolicySeedSchema>

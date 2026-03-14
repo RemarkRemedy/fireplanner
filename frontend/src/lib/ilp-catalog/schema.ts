@@ -140,17 +140,69 @@ export const ilpTemplateEventChargeRuleSchema = z.object({
 export const ilpTemplateVariantSchema = z.object({
   id: z.string().min(1),
   currency: z.enum(['SGD', 'USD']),
-  mipLength: z.number().int().min(5).max(100),
+  mipBasis: z.enum(['finite', 'open-ended']).optional(),
+  mipLength: z.number().int().min(5).max(100).nullable().optional(),
   icpMonths: z.number().int().min(1).max(1_200),
   accounts: z.array(ilpTemplateAccountSchema).min(1).max(10),
   bonuses: z.array(ilpTemplateBonusSchema).max(40),
   feeRules: z.array(ilpTemplateFeeRuleSchema).max(20),
   eventChargeRules: z.array(ilpTemplateEventChargeRuleSchema).max(20),
-  eecTable: z.array(z.number().min(0).max(1)).min(1).max(100),
+  eecTable: z.array(z.number().min(0).max(1)).max(100),
   eecYearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   warnings: z.array(z.string()),
   unsupportedItems: z.array(z.string()),
   sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
+}).superRefine((variant, ctx) => {
+  const mipBasis = variant.mipBasis ?? 'finite'
+
+  if (mipBasis === 'finite' && variant.mipLength == null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Finite variants must define mipLength',
+      path: ['mipLength'],
+    })
+  }
+
+  if (mipBasis === 'open-ended' && variant.mipLength != null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Open-ended variants must not define mipLength',
+      path: ['mipLength'],
+    })
+  }
+
+  if (mipBasis === 'open-ended') {
+    variant.accounts.forEach((account, accountIndex) => {
+      const hasAfterMipRule = account.contributionRules.some((rule) => rule.phase === 'after-mip')
+      if (hasAfterMipRule) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Open-ended variants cannot define after-mip contribution rules',
+          path: ['accounts', accountIndex, 'contributionRules'],
+        })
+      }
+    })
+
+    variant.feeRules.forEach((rule, ruleIndex) => {
+      if (rule.activeWindow === 'after-mip') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Open-ended variants cannot define after-mip fee rules',
+          path: ['feeRules', ruleIndex, 'activeWindow'],
+        })
+      }
+    })
+
+    variant.eventChargeRules.forEach((rule, ruleIndex) => {
+      if (rule.activeWindow === 'after-mip') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Open-ended variants cannot define after-mip event charge rules',
+          path: ['eventChargeRules', ruleIndex, 'activeWindow'],
+        })
+      }
+    })
+  }
 })
 
 export const ilpCatalogProductSchema = z.object({

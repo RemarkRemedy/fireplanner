@@ -46,7 +46,8 @@ export interface GoldenPolicyInputSurface {
   currentPolicyYear: number
   icpMonths?: number
   assuranceProfile?: IlpPolicyInput['assuranceProfile']
-  mipLength: number
+  mipBasis?: IlpPolicyInput['mipBasis']
+  mipLength?: number | null
   postMipYears: number
   eecTable: number[]
   discountRate: number
@@ -140,7 +141,8 @@ function normalizePolicyInput(policy: IlpPolicyInput): GoldenPolicyInputSurface 
             : roundCurrency(policy.assuranceProfile.currentNetSupplementaryPremiumBase),
         }
       : undefined,
-    mipLength: policy.mipLength,
+    mipBasis: policy.mipBasis,
+    mipLength: policy.mipLength ?? null,
     postMipYears: policy.postMipYears,
     eecTable: policy.eecTable.map(roundRate),
     discountRate: roundRate(policy.discountRate),

@@ -358,19 +358,21 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
               </>
             )}
             <NumberInput
-              label="MIP Length"
-              value={policy.mipLength}
-              onChange={(value) => updatePolicy(policy.id, { mipLength: value })}
-              integer
-              min={1}
-            />
-            <NumberInput
-              label="Post-MIP Years"
+              label={policy.mipBasis === 'open-ended' ? 'Review Horizon (Years)' : 'Post-MIP Years'}
               value={policy.postMipYears}
               onChange={(value) => updatePolicy(policy.id, { postMipYears: value })}
               integer
-              min={0}
+              min={policy.mipBasis === 'open-ended' ? 1 : 0}
             />
+            {policy.mipBasis !== 'open-ended' && (
+              <NumberInput
+                label="MIP Length"
+                value={policy.mipLength ?? 1}
+                onChange={(value) => updatePolicy(policy.id, { mipLength: value })}
+                integer
+                min={1}
+              />
+            )}
           </AccordionContent>
         </AccordionItem>
 

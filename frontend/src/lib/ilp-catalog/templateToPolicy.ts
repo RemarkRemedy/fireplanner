@@ -14,9 +14,13 @@ const DEFAULT_TEMPLATE_FUND: IlpPolicyInput['funds'][number] = {
 }
 
 function deriveSeedMonthlyContribution(product: IlpCatalogProduct): number {
-  return product.metadataOnlyBehaviors.includes('pruvantage-assure-sp-single-premium-principal-tracking')
+  return product.metadataOnlyBehaviors.some((behavior) => behavior.endsWith('single-premium-principal-tracking'))
     ? 0
     : 350
+}
+
+function deriveSeedPostMipYears(variant: IlpTemplateVariant): number {
+  return variant.mipBasis === 'open-ended' ? 20 : 0
 }
 
 function sameRate(left: number | null, right: number | null): boolean {
@@ -192,6 +196,7 @@ export function templateVariantToPolicySeed(
     monthsAlreadyPaid: 0,
     currentPolicyYear: 1,
     icpMonths: variant.icpMonths,
+    mipBasis: variant.mipBasis,
     assuranceProfile: undefined,
     policyEvents: [],
     accounts: variant.accounts.map((account) => ({
@@ -210,7 +215,7 @@ export function templateVariantToPolicySeed(
         })),
     })),
     mipLength: variant.mipLength,
-    postMipYears: 0,
+    postMipYears: deriveSeedPostMipYears(variant),
     eecTable: [...variant.eecTable],
     eecYearBasis: variant.eecYearBasis,
     funds: [{ ...DEFAULT_TEMPLATE_FUND }],
@@ -232,6 +237,9 @@ export function templateVariantToPolicySeed(
     catalogWarnings: [
       ...product.warnings,
       ...variant.warnings,
+      ...(variant.mipBasis === 'open-ended'
+        ? ['Open-ended products use a default 20-year review horizon in V1; adjust the horizon if you want a different analysis window.']
+        : []),
       ...(variant.unsupportedItems ?? []),
     ],
     discountRate: DEFAULT_DISCOUNT_RATE,

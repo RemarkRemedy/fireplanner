@@ -9,7 +9,9 @@ function titleCaseToken(token: string): string {
 }
 
 function deriveVariantSuffix(variant: IlpTemplateVariant): string | null {
-  const baseId = `${variant.currency.toLowerCase()}-mip-${variant.mipLength}`
+  const baseId = variant.mipBasis === 'open-ended'
+    ? `${variant.currency.toLowerCase()}-open-ended`
+    : `${variant.currency.toLowerCase()}-mip-${variant.mipLength}`
   if (!variant.id.startsWith(baseId)) {
     return null
   }
@@ -26,7 +28,9 @@ function deriveVariantSuffix(variant: IlpTemplateVariant): string | null {
 }
 
 export function formatCatalogVariantLabel(variant: IlpTemplateVariant): string {
-  const baseLabel = `${variant.currency} / MIP ${variant.mipLength}`
+  const baseLabel = variant.mipBasis === 'open-ended'
+    ? `${variant.currency} / Open-ended`
+    : `${variant.currency} / MIP ${variant.mipLength}`
   const suffix = deriveVariantSuffix(variant)
   return suffix ? `${baseLabel} (${suffix})` : baseLabel
 }

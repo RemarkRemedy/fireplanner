@@ -26,7 +26,7 @@ export function OpportunityCostCard({ policy, analysis }: OpportunityCostCardPro
             {formatIlpCurrency(opportunityCost.alternativePortfolioValue, policy.currency)}
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            Versus ILP value at MIP end of {formatIlpCurrency(opportunityCost.ilpValueAtHorizon, policy.currency)}.
+            Versus ILP value at the analysis horizon of {formatIlpCurrency(opportunityCost.ilpValueAtHorizon, policy.currency)}.
             <DeltaBadge value={opportunityCost.difference} format={(value) => formatIlpCurrency(Math.abs(value), policy.currency)} />
           </p>
         </div>
@@ -37,7 +37,7 @@ export function OpportunityCostCard({ policy, analysis }: OpportunityCostCardPro
             {formatIlpCurrency(opportunityCost.atBestExit.alternativeValue, policy.currency)}
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            Exit year {opportunityCost.atBestExit.exitYear} and compare against the same ILP MIP-end value.
+            Exit year {opportunityCost.atBestExit.exitYear} and compare against the same ILP horizon-end value.
             <DeltaBadge value={opportunityCost.atBestExit.difference} format={(value) => formatIlpCurrency(Math.abs(value), policy.currency)} />
           </p>
         </div>

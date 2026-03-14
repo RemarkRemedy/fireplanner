@@ -73,7 +73,9 @@ export function ProjectionTable({ policy, analysis }: ProjectionTableProps) {
             </thead>
             <tbody>
               {projection.rows.map((row, rowIndex) => {
-                const isPostMip = row.policyYear > policy.mipLength
+                const isPostMip = policy.mipBasis !== 'open-ended'
+                  && policy.mipLength != null
+                  && row.policyYear > policy.mipLength
                 const isBestExit = row.year === analysis.npvAnalysis.bestExitYear
                 const isFirstPostMip = rowIndex === mipEndIndex + 1
 

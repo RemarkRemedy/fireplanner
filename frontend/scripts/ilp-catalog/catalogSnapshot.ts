@@ -8,6 +8,7 @@ import { parseHsbcWealthAccelerate } from './parsers/hsbcWealthAccelerate.js'
 import { parseHsbcWealthAbundance } from './parsers/hsbcWealthAbundance.js'
 import { parseHsbcWealthFocus } from './parsers/hsbcWealthFocus.js'
 import { parseHsbcGoalBuilderIi } from './parsers/hsbcGoalBuilderIi.js'
+import { parseGreatEasternInvestAdvantageSp } from './parsers/greatEasternInvestAdvantageSp.js'
 import { parseHsbcWealthHarvest } from './parsers/hsbcWealthHarvest.js'
 import { parseHsbcWealthVoyage } from './parsers/hsbcWealthVoyage.js'
 import { parseGreatEasternInvestmentLinkedInsurancePlan2 } from './parsers/greatEasternInvestmentLinkedInsurancePlan2.js'
@@ -46,6 +47,7 @@ const ETIQA_INVEST_SMART_FLEX_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Inv
 const ETIQA_INVEST_STARTER_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest starter_Product Summary.pdf'
 const ETIQA_INVEST_VISTA_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest vista_Product Summary.pdf'
 const ETIQA_INVEST_WEALTH_PURPOSE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest Wealth Purpose_Product Summary.pdf'
+const GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_SP_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PS(EN)_GREAT Invest Advantage (SP)_(SG)_v3.0.pdf'
 const GREAT_EASTERN_INVESTMENT_LINKED_INSURANCE_PLAN_2_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PS_GEL_Investment Linked Insurance Plan 2_v3.0.pdf'
 const GREAT_EASTERN_WEALTH_ADVANTAGE_4_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PS(EN)_GREAT Wealth Advantage 4_(SG)_v2.0.pdf'
 const HSBC_GOAL_BUILDER_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/GBII_Summary.pdf'
@@ -146,6 +148,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const etiqaInvestVistaChecksum = await sha256(ETIQA_INVEST_VISTA_SOURCE_PATH)
   const etiqaInvestWealthPurposeExtracted = await extractPdfText(ETIQA_INVEST_WEALTH_PURPOSE_SOURCE_PATH)
   const etiqaInvestWealthPurposeChecksum = await sha256(ETIQA_INVEST_WEALTH_PURPOSE_SOURCE_PATH)
+  const greatEasternGreatInvestAdvantageSpExtracted = await extractPdfText(GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_SP_SOURCE_PATH)
+  const greatEasternGreatInvestAdvantageSpChecksum = await sha256(GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_SP_SOURCE_PATH)
   const greatEasternInvestmentLinkedInsurancePlan2Extracted = await extractPdfText(GREAT_EASTERN_INVESTMENT_LINKED_INSURANCE_PLAN_2_SOURCE_PATH)
   const greatEasternInvestmentLinkedInsurancePlan2Checksum = await sha256(GREAT_EASTERN_INVESTMENT_LINKED_INSURANCE_PLAN_2_SOURCE_PATH)
   const greatEasternWealthAdvantage4Extracted = await extractPdfText(GREAT_EASTERN_WEALTH_ADVANTAGE_4_SOURCE_PATH)
@@ -220,6 +224,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseEtiqaInvestWealthPurpose({
       document: etiqaInvestWealthPurposeExtracted,
       sourceChecksumSha256: etiqaInvestWealthPurposeChecksum,
+    }),
+    parseGreatEasternInvestAdvantageSp({
+      document: greatEasternGreatInvestAdvantageSpExtracted,
+      sourceChecksumSha256: greatEasternGreatInvestAdvantageSpChecksum,
     }),
     parseGreatEasternInvestmentLinkedInsurancePlan2({
       document: greatEasternInvestmentLinkedInsurancePlan2Extracted,

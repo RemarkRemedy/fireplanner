@@ -213,10 +213,11 @@ export interface IlpPolicyInput {
   monthsAlreadyPaid: number
   currentPolicyYear: number
   icpMonths?: number
+  mipBasis?: 'finite' | 'open-ended'
   assuranceProfile?: IlpAssuranceProfile
   policyEvents?: IlpPolicyEvent[]
   accounts: IlpAccount[]
-  mipLength: number
+  mipLength?: number | null
   postMipYears: number
   eecTable: number[]
   eecYearBasis?: 'policy-year' | 'premium-year'
@@ -473,8 +474,23 @@ interface IlpNormalizedPolicyInput {
   }
 }
 
+function getMipBasis(input: Pick<IlpPolicyInput, 'mipBasis'>): 'finite' | 'open-ended' {
+  return input.mipBasis ?? 'finite'
+}
+
+function hasFiniteMip(input: Pick<IlpPolicyInput, 'mipBasis' | 'mipLength'>): input is Pick<IlpPolicyInput, 'mipBasis'> & { mipLength: number } {
+  return getMipBasis(input) === 'finite' && input.mipLength != null
+}
+
+function isPostMipPolicyYear(
+  input: Pick<IlpPolicyInput, 'mipBasis' | 'mipLength'>,
+  policyYear: number,
+): boolean {
+  return hasFiniteMip(input) && policyYear > input.mipLength
+}
+
 function assertBeforeMip(input: IlpPolicyInput) {
-  if (input.currentPolicyYear >= input.mipLength) {
+  if (hasFiniteMip(input) && input.currentPolicyYear >= input.mipLength) {
     throw new Error(
       `Cannot analyze ILP policy "${input.name}": current policy year ${input.currentPolicyYear} is already at or past MIP ${input.mipLength}.`,
     )
@@ -749,7 +765,8 @@ function buildNormalizedRegularPremiumState(
 
   for (let policyMonth = 1; policyMonth <= maxPolicyMonth; policyMonth += 1) {
     const policyYear = getPolicyYearForMonth(policyMonth)
-    const regularPremiumIsPayable = policyYear <= normalized.input.mipLength
+    const regularPremiumIsPayable = getMipBasis(normalized.input) === 'open-ended'
+      || (hasFiniteMip(normalized.input) && policyYear <= normalized.input.mipLength)
       || hasAfterMipContributionRules(normalized.input)
     const scheduledMonthlyPremium = regularPremiumIsPayable
       ? getScheduledMonthlyPremiumAtMonth(normalized as IlpNormalizedPolicyInput, policyMonth)
@@ -854,7 +871,7 @@ function buildCashflowYearContext(
   return {
     projectionYear,
     policyYear,
-    isPostMip: policyYear > normalized.input.mipLength,
+    isPostMip: isPostMipPolicyYear(normalized.input, policyYear),
     range,
     premiumHolidayMonths,
     payableMonths: Math.max(0, 12 - premiumHolidayMonths),
@@ -1316,7 +1333,7 @@ function computeAssuranceChargeByAccount(
   const assuranceStateEvents = getAssuranceStateEventsForYear(normalized, projectionYear)
 
   for (const { rule, family, appliesTo, appliesToIds, fallbackAppliesTo } of normalized.assurance.rules) {
-    const isPostMip = policyYear > input.mipLength
+    const isPostMip = isPostMipPolicyYear(input, policyYear)
     const isActive = rule.activeWindow === 'policy-term'
       || (rule.activeWindow === 'during-mip' && !isPostMip)
       || (rule.activeWindow === 'after-mip' && isPostMip)
@@ -1489,7 +1506,7 @@ function computeTieredStartupRecoveryCharge(
   const currentStartupBonusAmount = currentAnnualPremium * currentRate
   const reducedStartupBonusAmount = reducedAnnualPremium * reducedRate
   const monthsPassedSinceInception = Math.max(event.startPolicyMonth - 1, 0)
-  const committedMipMonths = input.mipLength * 12
+  const committedMipMonths = Math.max(1, (hasFiniteMip(input) ? input.mipLength : computeTotalProjectionYears(input)) * 12)
   const remainingFactor = Math.max(0, 1 - (monthsPassedSinceInception / committedMipMonths))
 
   return Math.max(0, currentStartupBonusAmount - reducedStartupBonusAmount) * remainingFactor + rule.amount
@@ -1659,6 +1676,10 @@ function computeBonusCredit(
 }
 
 function getRemainingMipYears(input: IlpPolicyInput): number {
+  if (!hasFiniteMip(input)) {
+    return input.postMipYears
+  }
+
   return Math.max(0, input.mipLength - input.currentPolicyYear)
 }
 
@@ -1688,7 +1709,7 @@ function normalizeRecurringChargeRules(
   context: IlpCashflowYearContext,
 ): IlpNormalizedRecurringChargeRule[] {
   const { input } = normalized
-  const isPostMip = context.policyYear > input.mipLength
+  const isPostMip = isPostMipPolicyYear(input, context.policyYear)
 
   return (input.chargeRules ?? [])
     .filter((rule) => {
@@ -1714,7 +1735,7 @@ function normalizeEventChargeRules(
   projectionYear: number,
 ): IlpNormalizedEventChargeRule[] {
   const context = buildCashflowYearContext(normalized, projectionYear)
-  const isPostMip = context.policyYear > normalized.input.mipLength
+  const isPostMip = isPostMipPolicyYear(normalized.input, context.policyYear)
 
   return (normalized.input.eventChargeRules ?? [])
     .filter((rule) => {
@@ -2406,7 +2427,7 @@ function computeEventChargeByAccount(
 
         case 'premium-reduction-with-startup-recovery': {
           const monthsPassedSinceInception = Math.max(event.startPolicyMonth - 1, 0)
-          const committedMipMonths = input.mipLength * 12
+          const committedMipMonths = Math.max(1, (hasFiniteMip(input) ? input.mipLength : computeTotalProjectionYears(input)) * 12)
           const remainingFactor = Math.max(0, 1 - (monthsPassedSinceInception / committedMipMonths))
           totalCharge = ((event.amount ?? 0) * effectiveRuleRate * remainingFactor) + rule.amount
           break
@@ -2529,15 +2550,25 @@ function computeEventChargeByAccount(
 }
 
 export function computeTotalProjectionYears(input: IlpPolicyInput): number {
-  return getRemainingMipYears(input) + input.postMipYears
+  return getMipBasis(input) === 'open-ended'
+    ? input.postMipYears
+    : getRemainingMipYears(input) + input.postMipYears
 }
 
 export function getMipEndProjectionIndex(input: IlpPolicyInput): number {
-  const remainingMipYears = getRemainingMipYears(input)
-  if (remainingMipYears <= 0) {
-    throw new Error(`Cannot resolve MIP end row for policy "${input.name}" because it is already mature.`)
+  if (hasFiniteMip(input)) {
+    const remainingMipYears = getRemainingMipYears(input)
+    if (remainingMipYears <= 0) {
+      throw new Error(`Cannot resolve MIP end row for policy "${input.name}" because it is already mature.`)
+    }
+    return remainingMipYears - 1
   }
-  return remainingMipYears - 1
+
+  const totalProjectionYears = computeTotalProjectionYears(input)
+  if (totalProjectionYears <= 0) {
+    throw new Error(`Cannot resolve projection end row for policy "${input.name}" because it has no remaining projection horizon.`)
+  }
+  return totalProjectionYears - 1
 }
 
 export function computeBlendedReturn(
@@ -2574,7 +2605,7 @@ export function projectIlpPolicy(
 
   for (let year = 1; year <= totalYears; year += 1) {
     const policyYear = input.currentPolicyYear + year
-    const isPostMip = policyYear > input.mipLength
+    const isPostMip = isPostMipPolicyYear(input, policyYear)
     const scheduledContributionForYear = (isPostMip && !hasAfterMipContributionRules(input))
       ? 0
       : Math.max(0, annualContribution - getRegularPremiumReductionForYear(normalized, year))
@@ -2752,14 +2783,18 @@ export function computeNpvAnalysis(
 ): IlpNpvAnalysis {
   assertBeforeMip(input)
 
-  const remainingMipYears = getRemainingMipYears(input)
-  if (remainingMipYears <= 0) {
+  const optimizationYears = hasFiniteMip(input)
+    ? getRemainingMipYears(input)
+    : computeTotalProjectionYears(input)
+  if (optimizationYears <= 0) {
     throw new Error(
-      `Cannot compute NPV analysis: policy "${input.name}" is already at or past MIP.`,
+      `Cannot compute NPV analysis: policy "${input.name}" has no remaining projection horizon.`,
     )
   }
 
-  const eecRateNow = lookupEecRate(input.currentPolicyYear, input.eecTable)
+  const eecRateNow = getMipBasis(input) === 'open-ended'
+    ? 0
+    : lookupEecRate(input.currentPolicyYear, input.eecTable)
   const totalCurrentValue = input.accounts.reduce((sum, account) => sum + account.currentValue, 0)
   const eecChargeNow = input.accounts
     .filter((account) => account.subjectToEec)
@@ -2800,9 +2835,9 @@ export function computeNpvAnalysis(
     })
   }
 
-  const scanLimit = Math.min(remainingMipYears, futureExitOptions.length)
+  const scanLimit = Math.min(optimizationYears, futureExitOptions.length)
   if (scanLimit <= 0) {
-    throw new Error(`Cannot compute best exit year for policy "${input.name}" because it has no pre-MIP rows.`)
+    throw new Error(`Cannot compute best exit year for policy "${input.name}" because it has no projected rows.`)
   }
 
   let bestIndex = 0
@@ -2836,17 +2871,19 @@ export function computeOpportunityCost(
   projection: IlpProjectionResult,
   npv: IlpNpvAnalysis,
 ): IlpOpportunityCost {
-  const remainingMipYears = getRemainingMipYears(input)
+  const horizonYears = hasFiniteMip(input)
+    ? getRemainingMipYears(input)
+    : computeTotalProjectionYears(input)
   const horizonRow = projection.rows[getMipEndProjectionIndex(input)]
   const ilpValueAtHorizon = horizonRow.combinedValue
   const growthRate = input.alternativeReturn
 
-  let alternativePortfolioValue = npv.surrenderNow.netSurrenderValue * Math.pow(1 + growthRate, remainingMipYears)
+  let alternativePortfolioValue = npv.surrenderNow.netSurrenderValue * Math.pow(1 + growthRate, horizonYears)
   const mipEndIndex = getMipEndProjectionIndex(input)
   const contributionRows = projection.rows.slice(0, mipEndIndex + 1)
 
   for (const row of contributionRows) {
-    alternativePortfolioValue += row.annualContribution * Math.pow(1 + growthRate, remainingMipYears - row.year)
+    alternativePortfolioValue += row.annualContribution * Math.pow(1 + growthRate, horizonYears - row.year)
   }
 
   const bestExit = npv.futureExitOptions.find((option) => option.exitYear === npv.bestExitYear)
@@ -2854,10 +2891,10 @@ export function computeOpportunityCost(
     throw new Error(`Best exit year ${npv.bestExitYear} could not be found for policy "${input.name}".`)
   }
 
-  const yearsAfterBestExit = Math.max(remainingMipYears - bestExit.exitYear, 0)
+  const yearsAfterBestExit = Math.max(horizonYears - bestExit.exitYear, 0)
   let alternativeAtBestExit = bestExit.netSurrenderValue * Math.pow(1 + growthRate, yearsAfterBestExit)
   for (const row of contributionRows.filter((candidate) => candidate.year > bestExit.exitYear)) {
-    alternativeAtBestExit += row.annualContribution * Math.pow(1 + growthRate, remainingMipYears - row.year)
+    alternativeAtBestExit += row.annualContribution * Math.pow(1 + growthRate, horizonYears - row.year)
   }
 
   return {
@@ -2878,7 +2915,9 @@ export function computeSummaryMetrics(
   projection: IlpProjectionResult,
 ): IlpSummaryMetrics {
   const mipEndRow = projection.rows[getMipEndProjectionIndex(input)]
-  const eecRateNow = lookupEecRate(input.currentPolicyYear, input.eecTable)
+  const eecRateNow = getMipBasis(input) === 'open-ended'
+    ? 0
+    : lookupEecRate(input.currentPolicyYear, input.eecTable)
   const totalCurrentValue = input.accounts.reduce((sum, account) => sum + account.currentValue, 0)
   const cancelNowPenalty = input.accounts
     .filter((account) => account.subjectToEec)
@@ -2930,10 +2969,10 @@ export function buildComparisonTable(
   return [
     { metric: 'Insurer', unit: 'text', lowerIsBetter: null, values: valuesFor((analysis) => analysis.insurer || 'Unknown') },
     { metric: 'Projection Horizon', unit: 'years', lowerIsBetter: null, values: valuesFor((analysis) => analysis.projections.mid.rows.length) },
-    { metric: 'Total Premiums Paid (to MIP)', unit: 'currency', lowerIsBetter: currencyRule(true), values: valuesFor((analysis) => analysis.summary.totalPremiumsPaid) },
-    { metric: 'Total Fees Charged (gross, to MIP)', unit: 'currency', lowerIsBetter: currencyRule(true), values: valuesFor((analysis) => analysis.summary.totalFeesCharged) },
-    { metric: 'Bonuses Received (to MIP)', unit: 'currency', lowerIsBetter: currencyRule(false), values: valuesFor((analysis) => analysis.summary.totalBonusesReceived) },
-    { metric: 'Net Fee Drag (to MIP)', unit: 'currency', lowerIsBetter: currencyRule(true), values: valuesFor((analysis) => analysis.summary.netFeeDrag) },
+    { metric: 'Total Premiums Paid (to horizon)', unit: 'currency', lowerIsBetter: currencyRule(true), values: valuesFor((analysis) => analysis.summary.totalPremiumsPaid) },
+    { metric: 'Total Fees Charged (gross, to horizon)', unit: 'currency', lowerIsBetter: currencyRule(true), values: valuesFor((analysis) => analysis.summary.totalFeesCharged) },
+    { metric: 'Bonuses Received (to horizon)', unit: 'currency', lowerIsBetter: currencyRule(false), values: valuesFor((analysis) => analysis.summary.totalBonusesReceived) },
+    { metric: 'Net Fee Drag (to horizon)', unit: 'currency', lowerIsBetter: currencyRule(true), values: valuesFor((analysis) => analysis.summary.netFeeDrag) },
     {
       metric: 'Fee Drag % of Premiums',
       unit: 'percent',
@@ -2949,8 +2988,8 @@ export function buildComparisonTable(
     { metric: 'NPV Fees (Surrender Now)', unit: 'currency', lowerIsBetter: currencyRule(true), values: valuesFor((analysis) => analysis.npvAnalysis.surrenderNow.npvFees) },
     { metric: 'Best Exit Year', unit: 'years', lowerIsBetter: null, values: valuesFor((analysis) => analysis.npvAnalysis.bestExitYear) },
     { metric: 'NPV Fees (Best Exit)', unit: 'currency', lowerIsBetter: currencyRule(true), values: valuesFor((analysis) => analysis.npvAnalysis.bestExitNpvFees) },
-    { metric: 'NPV Fees (Hold to MIP)', unit: 'currency', lowerIsBetter: currencyRule(true), values: valuesFor((analysis) => analysis.npvAnalysis.holdToMip.totalNpvFees) },
-    { metric: 'Final Value (MIP end, mid)', unit: 'currency', lowerIsBetter: currencyRule(false), values: valuesFor((analysis) => analysis.npvAnalysis.holdToMip.finalValue) },
+    { metric: 'NPV Fees (Hold to horizon)', unit: 'currency', lowerIsBetter: currencyRule(true), values: valuesFor((analysis) => analysis.npvAnalysis.holdToMip.totalNpvFees) },
+    { metric: 'Final Value (horizon end, mid)', unit: 'currency', lowerIsBetter: currencyRule(false), values: valuesFor((analysis) => analysis.npvAnalysis.holdToMip.finalValue) },
     { metric: 'Opportunity Cost (vs surrender now)', unit: 'currency', lowerIsBetter: currencyRule(true), values: valuesFor((analysis) => analysis.opportunityCost.difference) },
   ]
 }

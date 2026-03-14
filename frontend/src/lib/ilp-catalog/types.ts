@@ -4,6 +4,7 @@ export type IlpCatalogEconomicsStatus = 'supported' | 'partial-modeled-subset' |
 export type IlpCatalogCurrency = 'SGD' | 'USD'
 export type IlpCatalogSourceDocumentType = 'summary' | 'brochure'
 export type IlpCatalogSourceClass = 'summary' | 'brochure-only'
+export type IlpMipBasis = 'finite' | 'open-ended'
 
 export interface IlpCatalogSourceRef {
   page: number
@@ -145,7 +146,8 @@ export interface IlpTemplateEventChargeRule {
 export interface IlpTemplateVariant {
   id: string
   currency: IlpCatalogCurrency
-  mipLength: number
+  mipBasis?: IlpMipBasis
+  mipLength?: number | null
   icpMonths: number
   accounts: IlpTemplateAccount[]
   bonuses: IlpTemplateBonus[]

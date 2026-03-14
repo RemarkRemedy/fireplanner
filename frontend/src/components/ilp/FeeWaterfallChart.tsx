@@ -12,10 +12,10 @@ interface FeeWaterfallChartProps {
 export function FeeWaterfallChart({ policy, analysis }: FeeWaterfallChartProps) {
   const colors = useChartColors()
   const data = [
-    { label: 'Premiums to MIP', value: analysis.summary.totalPremiumsPaid, fill: colors.primary },
+    { label: 'Premiums to horizon', value: analysis.summary.totalPremiumsPaid, fill: colors.primary },
     { label: 'Gross fees', value: analysis.summary.totalFeesCharged, fill: colors.danger },
     { label: 'Bonus credits', value: analysis.summary.totalBonusesReceived, fill: colors.success },
-    { label: 'Projected value at MIP end', value: analysis.npvAnalysis.holdToMip.finalValue, fill: colors.warning },
+    { label: 'Projected value at horizon end', value: analysis.npvAnalysis.holdToMip.finalValue, fill: colors.warning },
   ]
 
   return (
@@ -23,11 +23,11 @@ export function FeeWaterfallChart({ policy, analysis }: FeeWaterfallChartProps) 
       <CardHeader>
         <CardTitle>Fee Drag Breakdown</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Premiums, gross fees, bonus credits, and projected value at MIP end. Projected value also reflects fund returns, so this is a scale comparison rather than a balancing equation.
+          Premiums, gross fees, bonus credits, and projected value at the analysis horizon. Projected value also reflects fund returns, so this is a scale comparison rather than a balancing equation.
         </p>
       </CardHeader>
       <CardContent>
-        <div className="h-72" role="img" aria-label="Bar chart comparing premiums, fees, bonuses, and projected value at MIP end">
+        <div className="h-72" role="img" aria-label="Bar chart comparing premiums, fees, bonuses, and projected value at the analysis horizon">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} layout="vertical" margin={{ top: 10, right: 24, bottom: 10, left: 24 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />

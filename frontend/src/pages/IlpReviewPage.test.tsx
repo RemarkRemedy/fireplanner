@@ -426,7 +426,7 @@ describe('IlpReviewPage', () => {
     invalidPolicy.id = 'invalid-policy'
     invalidPolicy.name = 'Broken Policy'
     invalidPolicy.insurer = 'Insurer B'
-    invalidPolicy.currentPolicyYear = invalidPolicy.mipLength
+    invalidPolicy.currentPolicyYear = invalidPolicy.mipLength ?? 1
 
     act(() => {
       useIlpStore.setState({
