@@ -3,7 +3,7 @@
 **Date:** 2026-03-14
 **Branch:** `main` (fireplanner)
 **Supersedes:** `2026-03-14-interactive-input-guide-design.md` (stepper-on-accordions approach, abandoned after UX review)
-**Review status:** v3 — fixes applied from 4-reviewer round (code architect, code reviewer, Codex, UX panel)
+**Review status:** v4 — fixes applied from 4-reviewer re-review round
 
 ## Problem
 
@@ -66,9 +66,9 @@ StartPage (pathway choice, plan type, quick estimate)
 
 | Screen | Title | Fields | Notes |
 |--------|-------|--------|-------|
-| 11 | "About your partner" | Name. Current age. Retirement age (if goal-first). | |
+| 11 | "About your partner" | Name. Current age. Retirement age (if goal-first). "Is your partner also a Singapore citizen/PR?" (Citizen / PR / Foreigner). | Supports mixed-residency couples. |
 | 12 | "Partner's finances" | Annual income (gross/take-home). Annual expenses (personal). Liquid net worth. | Same pattern as screens 2-4. |
-| 13 | "Partner's CPF" | Same triage as screen 6. | Only if residency = Citizen/PR. |
+| 13 | "Partner's CPF" | Same triage as screen 6. | Only if partner residency = Citizen/PR. |
 
 **Joint Expenses (if couple/household):**
 
@@ -135,6 +135,10 @@ interface SetupDraft {
   healthcareEnabled: boolean
   ispTier?: 'none' | 'basic' | 'enhanced'
 
+  // Already-FIRE pathway
+  lifeStage?: 'pre-fire' | 'post-fire'           // set for already-fire pathway
+  retirementPhase?: 'before-55' | '55-to-64' | '65-plus'  // CPF life stage picker
+
   // Partner (if couple)
   partner?: {
     name: string
@@ -144,6 +148,7 @@ interface SetupDraft {
     incomeType: 'gross' | 'take-home'
     annualExpenses: number
     liquidNetWorth: number
+    residency: 'citizen' | 'pr' | 'foreigner'    // per-adult, for mixed-residency couples
     cpfKnown: boolean
     cpfTotal?: number
   }
@@ -165,7 +170,7 @@ interface SetupDraft {
 | 35-45 | 55% | 25% | 20% |
 | 45-50 | 50% | 25% | 25% |
 | 50-55 | 40% | 30% | 30% |
-| 55+ (has RA) | Write to RA instead; estimate OA/SA from remaining | | |
+| 55+ (has RA) | 10% OA, 10% SA, 0% MA, 80% RA | (MA contributions stop at 55+; bulk goes to RA for CPF LIFE) |
 
 These are rough allocation ratios, not exact contribution rates. The CPF nudge flow (`/refine/cpf`) replaces them with actual per-account values. The delta card for CPF will show "estimated" vs "actual" distinction.
 
@@ -208,7 +213,15 @@ After `/setup`, the user lands on `/projection`. A sidebar panel (or bottom pane
 
 **Nudge ranking:** Static priority for launch, based on general sensitivity analysis of FIRE calculations. Priority order: CPF > Expenses > Property > Healthcare > Salary > SRS > Goals > Allocation > Protection. Dynamic per-user ranking (compute actual delta) is a future optimization.
 
-**Nudge visibility:** Driven by `useSectionCompletion` data (whether the section has non-default values), NOT solely by `completedNudgeFlows`. If a user fills CPF via InputsPage directly, the CPF nudge disappears because `useSectionCompletion` reports `cpfCustomized: true`. `completedNudgeFlows` is used for analytics and for marking nudges that were explicitly skipped ("not relevant to me") vs simply not yet addressed. Nudges also appear on Dashboard as a persistent "Plan completeness" card.
+**Nudge visibility:** Driven by `useSectionCompletion` data with a setup-awareness layer. The logic:
+
+1. If the section was populated by `/setup` (tracked in `setupPopulatedSections: SectionId[]` in UIStore), the nudge **stays visible** even though `useSectionCompletion` reports "customized". Setup writes estimated/basic data; the nudge flow collects real detail.
+2. If the section was populated by the user on InputsPage or via a nudge flow (not just setup), the nudge disappears. Detected by: section is customized AND section is NOT in `setupPopulatedSections`, OR section is in `completedNudgeFlows`.
+3. `completedNudgeFlows` is also used for analytics and for marking nudges explicitly skipped ("not relevant to me").
+
+This prevents the "setup hides its own nudges" problem: entering a rough CPF total in `/setup` marks `section-cpf` as customized, but the CPF nudge stays visible because `section-cpf` is in `setupPopulatedSections`.
+
+Nudges also appear on Dashboard as a persistent "Plan completeness" card.
 
 ### Nudge Flow Container: Two Tiers
 
@@ -352,13 +365,16 @@ When a nudge flow completes, the user returns to `/projection` and sees a delta 
    ```ts
    function useMetricsSnapshot(): MetricsSnapshot
    // Reads from useDashboardMetrics() and returns { fireAge, fireNumber }
+   // fireNumber uses the same value the Dashboard displays:
+   //   metrics.showProjectionNumber ? (metrics.projectionFireNumber ?? metrics.fireNumber) : metrics.fireNumber
+   // This ensures the delta card's before/after matches what the user sees on Dashboard.
    ```
 
 This split satisfies CLAUDE.md: pure functions in `lib/`, hooks in `hooks/`.
 
 **`monthlyRetirementIncome` handling:** This metric is NOT in `useDashboardMetrics()` today. Rather than adding it to the snapshot infrastructure, it is a **per-nudge-flow display value** sourced from the projection data. Only the CPF nudge flow shows retirement income delta (CPF LIFE payout is the source). Other flows show only FIRE age and FIRE number deltas. The CPF refine page reads CPF LIFE payout from `useProjection()` data directly.
 
-**Before-snapshot persistence for full-page flows:** When a full-page nudge flow opens (`/refine/cpf` etc.), the before-snapshot is captured and stored in `sessionStorage` under key `fireplanner-delta-before`. On completion and redirect back to `/projection`, `ProjectionPage` reads the before-snapshot from `sessionStorage`, computes the delta against current metrics, and renders the delta card. `sessionStorage` is cleared after display. This handles the unmount problem (component state lost on navigation).
+**Before-snapshot persistence for full-page flows:** When a full-page nudge flow opens (`/refine/cpf` etc.), the before-snapshot is captured and stored in `sessionStorage` under key `fireplanner-delta-before` with a timestamp. Writing a new snapshot on flow entry always overwrites any prior stale snapshot. On completion and redirect back to `/projection`, `ProjectionPage` reads the before-snapshot from `sessionStorage`, checks the timestamp (discard if older than 30 minutes), computes the delta against current metrics, and renders the delta card. `sessionStorage` is cleared after display. This handles the unmount problem (component state lost on navigation) and the abandonment problem (stale snapshots from prior incomplete flows).
 
 **Before-snapshot for drawer flows:** Captured in a `useRef` on drawer open. No persistence needed since the drawer renders within `/projection` (no unmount).
 
@@ -451,12 +467,12 @@ The card shows the same nudge ranking logic. It shrinks as the user fills in mor
 | `pages/RefinePropertyPage.tsx` | New: full-page Property nudge flow | Page |
 | `pages/RefineExpensesPage.tsx` | New: full-page Expenses nudge flow | Page |
 | `pages/RefineHealthcarePage.tsx` | New: full-page Healthcare nudge flow | Page |
-| `router.tsx` | Modify: add `/setup` + `/refine/*` routes outside PlannerRouteShell; add minimal SetupLayout | Config |
+| `router.tsx` | Modify: add `/setup` + `/refine/*` routes outside PlannerRouteShell; add minimal SetupLayout; add `/refine/*` catch-all redirect to `/` | Config |
 | `pages/StartPage.tsx` | Modify: remove section toggles AND individual pathway inline forms; route to `/setup` | Page |
 | `pages/InputsPage.tsx` | Modify: add `SectionIntro` as first child of each accordion content | Page |
 | `pages/ProjectionPage.tsx` | Modify: add NudgeSidebar + DeltaCard integration + sessionStorage delta read | Page |
 | `pages/DashboardPage.tsx` | Modify: add PlanCompleteness card | Page |
-| `stores/useUIStore.ts` | Modify: add 3 fields, bump to v12 | Store |
+| `stores/useUIStore.ts` | Modify: add 4 fields (`setupCompleted`, `setupPopulatedSections`, `completedNudgeFlows`, `dismissedSectionIntros`), bump to v12 | Store |
 | `components/household/HouseholdSetupWizard.tsx` | Delete: replaced by `/setup` (same commit as `/setup` registration) | - |
 | `lib/household/__tests__/legacyAuthoringImports.test.ts` | Modify: remove HouseholdSetupWizard references | Test |
 
@@ -466,6 +482,7 @@ The card shows the same nudge ranking logic. It shrinks as the user fills in mor
 
 ```ts
 setupCompleted: boolean              // has user completed /setup at least once?
+setupPopulatedSections: string[]     // SectionIds that were populated by /setup (not by user directly)
 completedNudgeFlows: NudgeFlowId[]   // which nudge flows the user has finished (analytics + skip tracking)
 dismissedSectionIntros: string[]     // which section intros the user closed (SectionId values)
 ```
@@ -473,6 +490,7 @@ dismissedSectionIntros: string[]     // which section intros the user closed (Se
 **Defaults:**
 ```ts
 setupCompleted: false,
+setupPopulatedSections: [],
 completedNudgeFlows: [],
 dismissedSectionIntros: [],
 ```
@@ -483,16 +501,17 @@ dismissedSectionIntros: [],
 ```ts
 if (version < 12) {
   state.setupCompleted = false
+  state.setupPopulatedSections = []
   state.completedNudgeFlows = []
   state.dismissedSectionIntros = []
 }
 ```
 
 **State reset rules:**
-- **New plan creation (fresh StartPage flow):** `setupCompleted` → `false`, `completedNudgeFlows` → `[]`, `dismissedSectionIntros` → `[]`
+- **New plan creation (fresh StartPage flow):** `setupCompleted` → `false`, `setupPopulatedSections` → `[]`, `completedNudgeFlows` → `[]`, `dismissedSectionIntros` → `[]`
 - **JSON scenario import:** same reset as new plan creation
 - **localStorage clear:** user gets `DEFAULT_UI` values (all false/empty)
-- **"Redo setup":** `completedNudgeFlows` → `[]` (nudges re-appear since data may change). `setupCompleted` stays `true`. `dismissedSectionIntros` preserved.
+- **"Redo setup":** `setupPopulatedSections` → `[]`, `completedNudgeFlows` → `[]` (nudges re-appear since data may change). `setupCompleted` stays `true`. `dismissedSectionIntros` reset if pathway or plan type changed, preserved otherwise.
 
 ## NudgeFlowId Mapping
 
@@ -539,10 +558,13 @@ Property and healthcare toggles are **household-level decisions**. Detailed data
 When a returning user clicks "Redo setup" on StartPage:
 
 1. `/setup` screens **pre-populate from the existing household plan** using `hydrateSetupFromPlan()` in `lib/household/setupDraft.ts`. This extracts simplified field values from structured store entries:
+   - `residency`: read from `adult.residencyStatus` (canonical field on `PlanningAdult`, type `'citizen' | 'pr' | 'foreigner'`)
    - `cpfTotal`: sum of `adult.cpf.balances.oa + sa + ma + ra`
    - `propertyValue`: from first `plan.properties` entry
    - `ispTier`: from `adult.healthcare.ispTier`
-   - `residency`: inferred from `cpfEnabled` UIStore flag (no canonical store field exists; if a `residency` field is added to the plan in the future, read from there instead)
+   - `lifeStage`: from `adult.lifeStage`
+   - `retirementPhase`: from `adult.cpf.retirementPhase`
+   - `partner.residency`: from partner adult's `residencyStatus`
    - Income/expenses/net worth: extracted via `extractFinanceDraft()` pattern from existing wizard
 2. The user edits any values they want to change.
 3. On completion, `applySetupDraft()` runs with `isRedo: true`, patching only setup-covered fields. Non-setup fields preserved.
