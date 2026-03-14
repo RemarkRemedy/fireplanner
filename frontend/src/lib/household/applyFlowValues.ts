@@ -405,10 +405,12 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
     }
 
     case 'allocation': {
+      let applied = false
       if (typeof values.allocationTemplate === 'string') {
         const template = toAllocationTemplate(values.allocationTemplate)
         if (template) {
           useAllocationStore.getState().applyTemplate(template)
+          applied = true
         }
       }
 
@@ -423,8 +425,9 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
           ...(typeof values.glidePathEndAge === 'number' ? { endAge: values.glidePathEndAge } : {}),
         }
         allocationState.setGlidePathConfig(updatedConfig)
+        applied = true
       }
-      return true
+      return applied
     }
 
     case 'protection': {

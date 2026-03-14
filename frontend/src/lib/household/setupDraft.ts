@@ -50,7 +50,7 @@ export interface SetupDraft {
   }
   // Joint
   jointMonthlyExpenses?: number
-  dependents?: Array<{ name: string; age: number; relationship: string }>
+  dependents?: Array<{ name: string; age: number | null; relationship: string }>
   // Meta
   isRedo: boolean
 }
@@ -636,7 +636,7 @@ export function hydrateSetupFromPlan(plan: HouseholdPlan): SetupDraft {
   // Dependents
   const dependents: SetupDraft['dependents'] = plan.dependents.map((d) => ({
     name: d.label,
-    age: d.currentAge ?? 0,
+    age: d.currentAge,
     relationship: d.relationship,
   }))
 
