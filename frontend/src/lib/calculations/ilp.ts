@@ -1006,17 +1006,17 @@ function getPartialWithdrawalsByAccount(
 }
 
 function getScheduledPayoutsByAccount(
-  input: IlpPolicyInput,
+  normalized: IlpNormalizedPolicyInput,
   projectionYear: number,
 ): Map<string, number> {
-  const payouts = new Map<string, number>(input.accounts.map((account) => [account.id, 0]))
-  const scheduledPayout = input.scheduledPayoutAssumption
+  const payouts = new Map<string, number>(normalized.input.accounts.map((account) => [account.id, 0]))
+  const scheduledPayout = normalized.input.scheduledPayoutAssumption
 
   if (!scheduledPayout || scheduledPayout.mode !== 'scheduled-redemption') {
     return payouts
   }
 
-  const policyYear = input.currentPolicyYear + projectionYear
+  const policyYear = normalized.input.currentPolicyYear + projectionYear
   const payoutEndPolicyYear = scheduledPayout.startPolicyYear + scheduledPayout.durationYears - 1
   if (policyYear < scheduledPayout.startPolicyYear || policyYear > payoutEndPolicyYear) {
     return payouts
@@ -2718,7 +2718,7 @@ export function projectIlpPolicy(
     const contributionForYear = Array.from(contributionByAccount.values()).reduce((sum, value) => sum + value, 0)
     cumulativePremiums += contributionForYear
     const partialWithdrawalByAccount = getPartialWithdrawalsByAccount(normalized, year)
-    const scheduledPayoutByAccount = getScheduledPayoutsByAccount(input, year)
+    const scheduledPayoutByAccount = getScheduledPayoutsByAccount(normalized, year)
     const withdrawalByAccount = mergeAccountAmountMaps(partialWithdrawalByAccount, scheduledPayoutByAccount)
     const annualWithdrawals = Array.from(withdrawalByAccount.values()).reduce((sum, value) => sum + value, 0)
     const additionalChargeByAccount = computeAdditionalChargeByAccount(

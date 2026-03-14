@@ -1368,6 +1368,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-secure-monthly-income-election')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-single-premium-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-single-premium-principal-tracking')
     expect(seed.monthlyContribution).toBe(0)
     expect(seed.scheduledPayoutSupport).toEqual({
@@ -1376,14 +1377,7 @@ describe('templateVariantToPolicySeed', () => {
       source: 'policy-redemption',
     })
     expect(seed.scheduledPayoutAssumption).toBeUndefined()
-    expect(seed.chargeRules).toEqual([
-      expect.objectContaining({
-        id: 'single-premium-charge',
-        basis: 'annual-contribution',
-        rate: 0.05,
-        appliesTo: ['policy'],
-      }),
-    ])
+    expect(seed.chargeRules).toEqual([])
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
@@ -1394,6 +1388,7 @@ describe('templateVariantToPolicySeed', () => {
       }),
     ])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual payout assumption'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('initial single-premium charge'))).toBe(true)
   })
 
   it('preserves template charge allocation, event activeWindow, and rateSchedule-only fee rules', () => {

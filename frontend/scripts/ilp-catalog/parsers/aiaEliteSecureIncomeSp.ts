@@ -3,7 +3,6 @@ import type {
   IlpCatalogProduct,
   IlpCatalogSourceRef,
   IlpTemplateEventChargeRule,
-  IlpTemplateFeeRule,
   IlpTemplateVariant,
 } from '../../../src/lib/ilp-catalog/types.js'
 import type { ExtractedPdfDocument } from '../pdf/extractPdfText.js'
@@ -37,7 +36,7 @@ function snippetNear(
 
   const lineIndex = page.lines.findIndex((line) => line.text.toLowerCase().includes(keyword.toLowerCase()))
   if (lineIndex === -1) {
-    return page.lines.slice(0, lineWindow).map((line) => line.text).join(' ')
+    return `Approximate excerpt; keyword "${keyword}" not found on page. ${page.lines.slice(0, lineWindow).map((line) => line.text).join(' ')}`
   }
 
   return page.lines.slice(lineIndex, lineIndex + lineWindow).map((line) => line.text).join(' ')
@@ -51,22 +50,6 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page5 = sourceRef(5, 'Top-up premium charge and charge notes', snippetNear(document, 5, 'Top-Up Premium', 18))
   const page6 = sourceRef(6, 'Partial withdrawals and surrender', snippetNear(document, 6, 'Partial Withdrawals', 18))
   const page7 = sourceRef(7, 'Reinstatement and payout continuation', snippetNear(document, 7, 'Reinstatement', 18))
-
-  const feeRules: IlpTemplateFeeRule[] = [
-    {
-      id: 'single-premium-charge',
-      label: 'Single Premium Charge',
-      basis: 'annual-contribution',
-      rate: 0.05,
-      amount: 0,
-      appliesTo: ['policy'],
-      activeWindow: 'policy-term',
-      notes: [
-        'Models the published 5% premium charge deducted from the initial single premium before units are purchased.',
-      ],
-      sourceRefs: [page3, page4],
-    },
-  ]
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
     {
@@ -107,7 +90,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       },
     ],
     bonuses: [],
-    feeRules,
+    feeRules: [],
     eventChargeRules,
     scheduledPayoutSupport: {
       mode: 'manual-assumption',
@@ -120,11 +103,12 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [],
     warnings: [
-      'AIA Elite Secure Income - Single Premium is cataloged as a partial modeled subset in V1. The parser captures the published 5% single-premium charge, 3% top-up premium charge, and scheduled payout capability through the payout-state kernel, while the payout amount remains a manual assumption.',
+      'AIA Elite Secure Income - Single Premium is cataloged as a partial modeled subset in V1. The parser captures the published 3% top-up premium charge and scheduled payout capability through the payout-state kernel, while the initial single-premium charge and payout amount remain manual or informational inputs.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
       'Secure Monthly Income amount, payout age, and payout period selection remain manual-assumption inputs in V1.',
+      'The published 5% charge on the initial single premium remains informational only until V1 supports explicit single-premium seeding.',
       'Single-premium principal tracking remains informational only in V1.',
       'Supplementary charge deductions remain informational only.',
       'Full-surrender and partial-withdrawal charge schedules remain informational only.',
@@ -150,12 +134,12 @@ export function parseAiaEliteSecureIncomeSp(context: ParseContext): IlpCatalogPr
     structureStatus: 'structured',
     economicsStatus: 'partial-modeled-subset',
     modeledEconomics: [
-      'branch:aia-elite-secure-income-sp-single-premium-charge',
       'branch:aia-elite-secure-income-sp-top-up-premium-charge',
       'kernel:scheduled-payout-manual-assumption',
     ],
     metadataOnlyBehaviors: [
       'aia-elite-secure-income-sp-secure-monthly-income-election',
+      'aia-elite-secure-income-sp-single-premium-charge',
       'aia-elite-secure-income-sp-single-premium-principal-tracking',
       'aia-elite-secure-income-sp-supplementary-charge',
       'aia-elite-secure-income-sp-full-surrender-charge',
@@ -168,7 +152,7 @@ export function parseAiaEliteSecureIncomeSp(context: ParseContext): IlpCatalogPr
       'aia-elite-secure-income-sp-no-fund-switching',
     ],
     warnings: [
-      'AIA Elite Secure Income - Single Premium is cataloged as a partial modeled subset in V1. The parser captures the published 5% single-premium charge, 3% top-up premium charge, and scheduled payout capability through the payout-state kernel, while payout selection, single-premium principal tracking, protection benefits, and fund-level charges remain outside the current engine.',
+      'AIA Elite Secure Income - Single Premium is cataloged as a partial modeled subset in V1. The parser captures the published 3% top-up premium charge and scheduled payout capability through the payout-state kernel, while the initial single-premium charge, payout selection, single-premium principal tracking, protection benefits, and fund-level charges remain outside the current engine.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],
