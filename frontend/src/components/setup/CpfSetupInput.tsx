@@ -69,18 +69,20 @@ export function CpfSetupInput({
   onManualChange,
 }: CpfSetupInputProps) {
   return (
-    <div className="flex flex-col gap-4">
-      <PillToggle
-        options={[
-          { label: 'Estimate for me', value: 'estimate' as const },
-          { label: 'I know my balances', value: 'know' as const },
-        ]}
-        value={mode}
-        onChange={onModeChange}
-      />
+    <div className="flex flex-col gap-3">
+      <div>
+        <PillToggle
+          options={[
+            { label: 'Estimate for me', value: 'estimate' as const },
+            { label: 'I know my balances', value: 'know' as const },
+          ]}
+          value={mode}
+          onChange={onModeChange}
+        />
+      </div>
 
       {mode === 'estimate' && (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           <div className="rounded-lg border bg-muted/30 p-4">
             <p className="text-sm text-muted-foreground mb-2">
               Based on your age and income, we estimate:
@@ -130,15 +132,17 @@ export function CpfSetupInput({
       )}
 
       {mode === 'know' && (
-        <div className="flex flex-col gap-4">
-          <PillToggle
-            options={[
-              { label: 'Total', value: 'total' as const },
-              { label: 'By account', value: 'breakdown' as const },
-            ]}
-            value={manual.entryMode}
+        <div className="flex flex-col gap-3">
+          <div>
+            <PillToggle
+              options={[
+                { label: 'Total', value: 'total' as const },
+                { label: 'By account', value: 'breakdown' as const },
+              ]}
+              value={manual.entryMode}
             onChange={(v) => onManualChange({ entryMode: v })}
           />
+          </div>
 
           {manual.entryMode === 'total' && (
             <div className="flex flex-col gap-2">
