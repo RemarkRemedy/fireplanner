@@ -230,7 +230,6 @@ export function SetupScreen({
           if (!f.required) return false
           // Skip hidden fields
           if (f.showWhen && !isFieldVisible(f.showWhen, values)) return false
-          }
           const val = values[f.name]
           return val === undefined || val === null || val === ''
         })
@@ -267,7 +266,6 @@ export function SetupScreen({
         {screen.fields.map((field) => {
           // Field-level conditional visibility
           if (field.showWhen && !isFieldVisible(field.showWhen, values)) return null
-          }
           const validationError = fieldErrors[field.name] ?? null
           return (
           <div key={field.name}>
