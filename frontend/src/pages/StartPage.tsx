@@ -102,6 +102,19 @@ export function StartPage() {
               <Link to="/projection">View projection</Link>
             </Button>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs text-muted-foreground"
+            onClick={() => {
+              if (window.confirm('This will delete your current plan and start fresh. Are you sure?')) {
+                localStorage.clear()
+                window.location.href = '/'
+              }
+            }}
+          >
+            Start fresh (reset all data)
+          </Button>
         </div>
 
         <LandingEmailSection />
