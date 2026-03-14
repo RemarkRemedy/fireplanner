@@ -32,33 +32,15 @@ const SCREENS: (NudgeFlowScreen & {
     fields: [
       { name: 'currentAge', label: 'Current age', type: 'number', required: true, validationKey: 'currentAge', tooltip: 'Your age today. Used to calculate years to retirement and CPF projections.' },
       { name: 'retirementAge', label: 'Desired retirement age', type: 'number', required: true, validationKey: 'retirementAge', tooltip: 'The age you plan to stop working. Your portfolio must sustain you from this age onward.' },
-      {
-        name: 'retirementPhase',
-        label: 'Retirement phase',
-        type: 'select',
-        tooltip: 'Determines CPF withdrawal rules and LIFE payout eligibility based on your current age bracket.',
-        options: [
-          { value: 'before-55', label: 'Before 55 (pre-CPF LIFE)' },
-          { value: '55-to-64', label: '55 to 64 (CPF drawdown phase)' },
-          { value: '65-plus', label: '65 and above (CPF LIFE payouts active)' },
-        ],
-      },
     ],
   },
-  // Screen 2a: Income toggle (already-FIRE pathway: income may be optional)
-  {
-    id: 'income-toggle',
-    title: 'Do you still earn income?',
-    fields: [
-      { name: 'hasIncome', label: 'I still earn employment or business income', type: 'toggle' },
-    ],
-  },
-  // Screen 2b: Income details (skip if hasIncome is false)
+  // Screen 2: Income (toggle + details in one screen)
   {
     id: 'income',
     title: 'What do you earn?',
     fields: [
-      { name: 'annualIncome', label: 'Annual income', type: 'currency', required: true, validationKey: 'annualIncome', tooltip: 'Your total yearly employment income before any deductions.' },
+      { name: 'hasIncome', label: 'I earn employment or business income', type: 'toggle' },
+      { name: 'annualIncome', label: 'Annual income', type: 'currency', required: true, validationKey: 'annualIncome', tooltip: 'Your total yearly employment income before any deductions.', showWhen: { field: 'hasIncome', equals: true } },
       {
         name: 'incomeType',
         label: 'Income basis',
@@ -69,9 +51,9 @@ const SCREENS: (NudgeFlowScreen & {
           { value: 'take-home', label: 'Take-home (after deductions)' },
         ],
         required: true,
+        showWhen: { field: 'hasIncome', equals: true },
       },
     ],
-    skipWhen: { field: 'hasIncome', equals: false },
   },
   // Screen 3: Expenses
   {
@@ -114,8 +96,8 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'cpf',
     title: 'Your CPF',
     fields: [
-      { name: 'cpfKnown', label: 'I know my CPF balances', type: 'toggle', tooltip: 'Check my.cpf.gov.sg → My Statement for your balances.', helperText: 'Check my.cpf.gov.sg → My Statement. If you don\'t know, your projection will exclude CPF — you can add it later.' },
-      { name: 'cpfTotal', label: 'Total CPF balance (OA + SA + MA)', type: 'currency', validationKey: 'cpfTotal', tooltip: 'Rough total across OA, SA, and MA. We\'ll split it by age-based heuristics. You can refine per-account later.', showWhen: { field: 'cpfKnown', equals: true }, helperText: 'A rough total is fine. You can break it down by account later.' },
+      { name: 'cpfKnown', label: 'I know my exact CPF balances', type: 'toggle', helperText: 'If you don\'t know your exact balances, we\'ll estimate based on your age and income. You can refine later.' },
+      { name: 'cpfTotal', label: 'Total CPF balance (OA + SA + MA)', type: 'currency', validationKey: 'cpfTotal', showWhen: { field: 'cpfKnown', equals: true }, helperText: 'Check my.cpf.gov.sg \u2192 My Statement for your balances.' },
     ],
     skipWhen: { field: 'residency', equals: 'foreigner' },
   },
@@ -362,16 +344,34 @@ const INITIAL_VALUES: Record<string, unknown> = {
 
 function draftFromValues(values: Record<string, unknown>, planType: HouseholdPlanType, isRedo: boolean): SetupDraft {
   const hasIncome = values.hasIncome !== false
+  const age = values.currentAge as number
+  const income = hasIncome ? (values.annualIncome as number) : 0
+
+  // M1: Auto-derive retirement phase from age
+  const retirementPhase: 'before-55' | '55-to-64' | '65-plus' =
+    age >= 65 ? '65-plus' : age >= 55 ? '55-to-64' : 'before-55'
+
+  // M4: Estimate CPF if user didn't provide exact balances
+  let cpfKnown = values.cpfKnown as boolean
+  let cpfTotal: number | undefined = values.cpfKnown ? (values.cpfTotal as number) : undefined
+  if (!values.cpfKnown && values.residency !== 'foreigner') {
+    const yearsWorked = Math.max(0, age - 23) // assume started working at 23
+    const annualCpfContribution = income * 0.37 // total CPF rate for under-55
+    const estimatedTotal = yearsWorked * annualCpfContribution * 0.7 // 0.7 factor for withdrawals/housing
+    cpfKnown = true
+    cpfTotal = Math.round(estimatedTotal)
+  }
+
   const draft: SetupDraft = {
-    currentAge: values.currentAge as number,
+    currentAge: age,
     retirementAge: values.retirementAge as number,
-    annualIncome: hasIncome ? (values.annualIncome as number) : 0,
+    annualIncome: income,
     incomeType: hasIncome ? (values.incomeType as 'gross' | 'take-home') : 'gross',
     annualExpenses: values.annualExpenses as number,
     liquidNetWorth: values.liquidNetWorth as number,
     residency: values.residency as 'citizen' | 'pr' | 'foreigner',
-    cpfKnown: values.cpfKnown as boolean,
-    cpfTotal: values.cpfKnown ? (values.cpfTotal as number) : undefined,
+    cpfKnown,
+    cpfTotal,
     ownsProperty: values.ownsProperty as 'owns' | 'planning' | 'no',
     propertyType: values.propertyType as 'hdb' | 'condo' | 'landed' | undefined,
     propertyValue: values.ownsProperty === 'owns' ? (values.propertyValue as number) : undefined,
@@ -381,7 +381,7 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
     healthcareEnabled: values.healthcareEnabled as boolean,
     ispTier: values.healthcareEnabled ? (values.ispTier as 'none' | 'basic' | 'enhanced') : undefined,
     lifeStage: 'pre-fire',
-    retirementPhase: values.retirementPhase as 'before-55' | '55-to-64' | '65-plus' | undefined,
+    retirementPhase,
     isRedo,
   }
 
@@ -558,7 +558,7 @@ export function SetupPage() {
       // Map review category screenIndex to a visible screen. The review
       // checkpoint uses category indices (0=income, 1=expenses, etc.) that
       // don't map 1:1 to SCREENS indices. Find the best matching screen.
-      const targetIds = ['income-toggle', 'expenses', 'cpf', 'property-toggle', 'healthcare-toggle', 'partner-name']
+      const targetIds = ['income', 'expenses', 'cpf', 'property-toggle', 'healthcare-toggle', 'partner-name']
       const targetId = targetIds[screenIndex]
       const targetIndex = visibleScreenDefs.findIndex((s) => s.id === targetId)
       const resolvedIndex = targetIndex !== -1 ? targetIndex : 0

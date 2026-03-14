@@ -49,7 +49,7 @@ function deriveCategories(draft: SetupDraft): ReviewCategory[] {
     key: 'income',
     label: 'Income & savings',
     status: 'provided',
-    detail: `${formatCurrency(draft.annualIncome)}/yr income, ${formatCurrency(draft.liquidNetWorth)} net worth`,
+    detail: `${formatCurrency(draft.annualIncome)}/yr income, ${formatCurrency(draft.liquidNetWorth)} cash & investments`,
     screenIndex: 0,
   })
 
@@ -87,8 +87,8 @@ function deriveCategories(draft: SetupDraft): ReviewCategory[] {
   let propertyStatus: CategoryStatus
   let propertyDetail: string
   if (draft.ownsProperty === 'no') {
-    propertyStatus = 'not-applicable'
-    propertyDetail = 'No property'
+    propertyStatus = 'excluded'
+    propertyDetail = 'No property — not included in projection'
   } else if (draft.ownsProperty === 'owns' && draft.propertyValue != null) {
     propertyStatus = 'provided'
     propertyDetail = `${formatCurrency(draft.propertyValue)} estimated value`
