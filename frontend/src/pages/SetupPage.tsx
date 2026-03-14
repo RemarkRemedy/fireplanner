@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react'
 import { useNavigate, useSearchParams, useBlocker } from 'react-router-dom'
 import { SetupScreen, shouldSkipScreen } from '@/components/setup/SetupScreen'
 import { ReviewCheckpoint } from '@/components/setup/ReviewCheckpoint'
@@ -492,6 +492,7 @@ export function SetupPage() {
   })
 
   const navigate = useNavigate()
+  const [validationError, setValidationError] = useState<string | null>(null)
   const [searchParams] = useSearchParams()
   const planType = (searchParams.get('planType') ?? 'individual') as HouseholdPlanType
   const isRedo = searchParams.get('redo') === 'true'
@@ -580,9 +581,10 @@ export function SetupPage() {
     // Validate core fields before applying
     const parseResult = SetupDraftSchema.safeParse(draft)
     if (!parseResult.success) {
-      console.error('Invalid setup draft:', parseResult.error)
+      setValidationError('Please check your inputs: ' + parseResult.error.issues.map(i => i.message).join(', '))
       return
     }
+    setValidationError(null)
 
     // Already-fire pathway: override life stage and retirement age
     if (sectionOrder === 'already-fire') {
@@ -634,6 +636,7 @@ export function SetupPage() {
         draft={draft}
         onConfirm={handleConfirm}
         onEdit={handleEdit}
+        validationError={validationError}
       />
     )
   }

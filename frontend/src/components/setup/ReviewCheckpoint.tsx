@@ -17,6 +17,7 @@ interface ReviewCheckpointProps {
   draft: SetupDraft
   onConfirm: () => void
   onEdit: (screenIndex: number) => void
+  validationError?: string | null
 }
 
 function formatCurrency(value: number): string {
@@ -140,7 +141,7 @@ function deriveCategories(draft: SetupDraft): ReviewCategory[] {
   return categories
 }
 
-export function ReviewCheckpoint({ draft, onConfirm, onEdit }: ReviewCheckpointProps) {
+export function ReviewCheckpoint({ draft, onConfirm, onEdit, validationError }: ReviewCheckpointProps) {
   const categories = deriveCategories(draft)
 
   return (
@@ -162,21 +163,28 @@ export function ReviewCheckpoint({ draft, onConfirm, onEdit }: ReviewCheckpointP
                   <p className="text-sm font-medium leading-none">{category.label}</p>
                   <p className="text-xs text-muted-foreground mt-1">{category.detail}</p>
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onEdit(category.screenIndex)}
-                  className="shrink-0 text-xs h-7 px-2"
-                >
-                  Edit
-                </Button>
+                {category.status !== 'not-applicable' && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEdit(category.screenIndex)}
+                    className="shrink-0 text-xs h-7 px-2"
+                  >
+                    Edit
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
+      {validationError && (
+        <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+          {validationError}
+        </div>
+      )}
       <Button onClick={onConfirm} className="w-full" size="lg">
         Looks good — See your projection
       </Button>

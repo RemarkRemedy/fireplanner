@@ -56,7 +56,9 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
   // Deferred delta computation: after applyFlowValues updates the store,
   // the snapshot updates on the next render cycle, at which point we compute the delta.
   const onCompleteRef = useRef(onComplete)
-  onCompleteRef.current = onComplete
+  useEffect(() => {
+    onCompleteRef.current = onComplete
+  }, [onComplete])
 
   useEffect(() => {
     if (!pendingCompletion.current) return

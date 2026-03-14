@@ -25,25 +25,24 @@ function fillTemplate(template: string, selfAdult: ReturnType<typeof useSelfAdul
   const firstProperty = selfAdult._firstProperty
 
   return template
-    .replace('{currentAge}', String(selfAdult.currentAge))
-    .replace('{retirementAge}', String(selfAdult.retirementAge))
-    .replace('{annualIncome}', selfAdult.annualIncome.toLocaleString())
-    .replace('{annualExpenses}', selfAdult.annualExpenses.toLocaleString())
-    .replace('{liquidNetWorth}', selfAdult.liquidNetWorth.toLocaleString())
-    .replace('{cpfSummary}', `$${cpfTotal.toLocaleString()} total CPF`)
-    .replace('{ispTier}', selfAdult.healthcare.ispTier ?? 'none')
-    .replace('{allocationTemplate}', capitalize(allocationTemplate))
-    .replace('{propertyType}', firstProperty?.propertyType ?? 'property')
-    .replace(
+    .replaceAll('{currentAge}', String(selfAdult.currentAge))
+    .replaceAll('{retirementAge}', String(selfAdult.retirementAge))
+    .replaceAll('{annualIncome}', selfAdult.annualIncome.toLocaleString())
+    .replaceAll('{annualExpenses}', selfAdult.annualExpenses.toLocaleString())
+    .replaceAll('{liquidNetWorth}', selfAdult.liquidNetWorth.toLocaleString())
+    .replaceAll('{cpfSummary}', `$${cpfTotal.toLocaleString()} total CPF`)
+    .replaceAll('{ispTier}', selfAdult.healthcare.ispTier ?? 'none')
+    .replaceAll('{allocationTemplate}', capitalize(allocationTemplate))
+    .replaceAll('{propertyType}', firstProperty?.propertyType ?? 'property')
+    .replaceAll(
       '{propertyValue}',
       firstProperty ? (firstProperty.existingPropertyValue ?? 0).toLocaleString() : '0'
     )
 }
 
 function useSelfAdult() {
-  const plan = useHouseholdPlanStore((s) => s.plan)
-  const selfAdult = plan.adults.find((a) => a.owner === 'self') ?? plan.adults[0] ?? null
-  const firstProperty = plan.properties[0] ?? null
+  const selfAdult = useHouseholdPlanStore((s) => s.plan.adults.find((a) => a.owner === 'self') ?? s.plan.adults[0] ?? null)
+  const firstProperty = useHouseholdPlanStore((s) => s.plan.properties[0] ?? null)
 
   if (!selfAdult) return null
 

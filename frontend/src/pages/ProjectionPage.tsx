@@ -18,7 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AlertTriangle } from 'lucide-react'
 import { NWChartView } from '@/components/projection/NWChartView'
 import { Maximize2 } from 'lucide-react'
@@ -75,6 +75,7 @@ export function ProjectionPage() {
   const [drawerFlowId, setDrawerFlowId] = useState<NudgeFlowId | null>(null)
   const [deltaStack, setDeltaStack] = useState<DeltaSummary[]>([])
   const location = useLocation()
+  const navigate = useNavigate()
   const currentSnapshot = useMetricsSnapshot()
   const deltaProcessed = useRef(false)
 
@@ -95,7 +96,7 @@ export function ProjectionPage() {
       }
     }
     sessionStorage.removeItem('fireplanner-delta-before')
-    window.history.replaceState({}, '')
+    navigate(location.pathname, { replace: true, state: {} })
   }, [location.state, currentSnapshot])
 
   useEffect(() => {
