@@ -209,7 +209,6 @@ export function SetupScreen({
     for (const field of screen.fields) {
       // Skip hidden fields
       if (field.showWhen && !isFieldVisible(field.showWhen, values)) continue
-      }
       const key = field.validationKey ?? field.name
       const val = values[field.name]
       // Only validate numeric/currency/percent fields that have a value set
