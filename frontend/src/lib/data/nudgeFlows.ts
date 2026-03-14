@@ -170,9 +170,8 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
           type: 'select',
           options: [
             { value: 'hdb', label: 'HDB Flat' },
-            { value: 'condo', label: 'Private Condo' },
+            { value: 'condo', label: 'Private Condo / EC' },
             { value: 'landed', label: 'Landed Property' },
-            { value: 'condo', label: 'Executive Condo' },
           ],
           required: true,
         },
@@ -319,9 +318,9 @@ const HEALTHCARE_FLOW: NudgeFlowDefinition = {
           type: 'select',
           options: [
             { value: 'none', label: 'No ISP (MediShield Life only)' },
-            { value: 'b1', label: 'Class B1 ward' },
-            { value: 'a', label: 'Class A ward' },
-            { value: 'private', label: 'Private hospital' },
+            { value: 'basic', label: 'Basic (Class B1 ward)' },
+            { value: 'standard', label: 'Standard (Class A ward)' },
+            { value: 'enhanced', label: 'Enhanced (Private hospital)' },
           ],
           required: true,
         },
