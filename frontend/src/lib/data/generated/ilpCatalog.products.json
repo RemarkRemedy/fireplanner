@@ -12534,6 +12534,1379 @@
     ]
   },
   {
+    "id": "great-eastern-investment-linked-insurance-plan-2",
+    "insurer": "Great Eastern",
+    "productName": "Investment-linked Insurance Plan 2",
+    "sourceFileName": "PS_GEL_Investment Linked Insurance Plan 2_v3.0.pdf",
+    "sourceChecksumSha256": "791aef9e07900269c9b7f7fc3eb050450974e118da26cf82b55f9640ff880b94",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:great-eastern-ilp2-welcome-bonus",
+      "branch:great-eastern-ilp2-premium-bonus",
+      "branch:great-eastern-ilp2-loyalty-bonus",
+      "branch:great-eastern-ilp2-policy-fee-rate",
+      "branch:great-eastern-ilp2-choice10-fixed-policy-fee",
+      "branch:great-eastern-ilp2-premium-holiday-charge",
+      "branch:great-eastern-ilp2-top-up-premium-charge",
+      "branch:great-eastern-ilp2-partial-withdrawal-charge",
+      "branch:great-eastern-ilp2-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "great-eastern-ilp2-insurance-charge",
+      "great-eastern-ilp2-premium-holiday-charge-refund",
+      "great-eastern-ilp2-tpd-continuation-event",
+      "great-eastern-ilp2-rider-premium-deduction-treatment",
+      "great-eastern-ilp2-choice10-fixed-fee-threshold-transition",
+      "great-eastern-ilp2-change-of-life-assured",
+      "great-eastern-ilp2-automatic-fund-rebalancing-administration"
+    ],
+    "warnings": [
+      "Investment-linked Insurance Plan 2 is cataloged as a partial modeled subset in V1. The parser captures the published bonus path, policy fee, premium-holiday charge, top-up charge, and partial-withdrawal / surrender schedules, while insurance-charge and application-gated refund mechanics remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-10-choice-5",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. Investment-linked Insurance Plan 2 is a regular premium whole of life investment-linked About your plan plan (ILP) designed to meet "
+              },
+              {
+                "page": 5,
+                "section": "Premium holiday charge refund and top-ups",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. When the policy is on premium holiday, we will deduct a premium holiday charge monthly from the account value by cancelling units to"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "welcome-bonus",
+            "type": "allocation",
+            "label": "Welcome Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.15
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": null,
+                "rate": 0.3
+              }
+            ],
+            "notes": [
+              "Applied to each payment of basic regular premium during the first policy year only.",
+              "No Welcome Bonus is paid while the policy is on premium holiday."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Welcome bonus and premium bonus",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. Benefits We will pay the following in one lump sum, if the life assured dies: Death benefit (a) 101% of the total basic regular prem"
+              }
+            ]
+          },
+          {
+            "id": "premium-bonus",
+            "type": "allocation",
+            "label": "Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 6,
+            "endPolicyYear": null,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied to each payment of basic regular premium from the published start year onward.",
+              "Payment ceases when premiums are not paid up to date or when a partial withdrawal occurred in the prior 12 months, and resumes when the published conditions are satisfied again.",
+              "Basic regular premium falling due during premium holiday does not earn Premium Bonus even if later repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Welcome bonus and premium bonus",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. Benefits We will pay the following in one lump sum, if the life assured dies: Death benefit (a) 101% of the total basic regular prem"
+              },
+              {
+                "page": 3,
+                "section": "Premium bonus continuation and loyalty bonus",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. (c) any premiums for all attaching riders will still be payable while the policy remains in force, unless payment has been waived in"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied annually from the end of the 10th policy year onward.",
+              "No Loyalty Bonus is payable for a policy year in which any partial withdrawal occurred."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Premium bonus continuation and loyalty bonus",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. (c) any premiums for all attaching riders will still be payable while the policy remains in force, unless payment has been waived in"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "policy-fee-rate",
+            "label": "Policy Fee",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.007
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Modeled as the published percentage-based monthly policy fee on account value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy fee",
+                "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.5
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the prevailing Annualised Premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium holiday charge",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. conditions are satisfied. Premium bonus will not be payable for basic regular premium falling due during a premium holiday even when"
+              },
+              {
+                "page": 5,
+                "section": "Premium holiday charge refund and top-ups",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. When the policy is on premium holiday, we will deduct a premium holiday charge monthly from the account value by cancelling units to"
+              }
+            ]
+          },
+          {
+            "id": "top-up-premium-charge",
+            "label": "Single Premium Top-up Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies a 3% upfront charge on each accepted single premium top-up.",
+              "Top-ups are not accepted while the policy is on premium holiday, but that administrative gating is not enforced automatically in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium holiday charge refund and top-ups",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. When the policy is on premium holiday, we will deduct a premium holiday charge monthly from the account value by cancelling units to"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to partial withdrawals according to the published policy-year schedule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Partial withdrawal and surrender charges",
+                "excerpt": "partial withdrawal charge from the amount to be withdrawn depending on the policy year partial during which the partial withdrawal occurs and the base plan which you have chosen. The partial withdrawal charge is equal to"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.75,
+          0.6,
+          0.5,
+          0.45,
+          0.4,
+          0.2,
+          0.15,
+          0.05
+        ],
+        "warnings": [
+          "Investment-linked Insurance Plan 2 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
+          "Insurance charge, TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Insurance charge remains informational only.",
+          "Premium-holiday-charge refund remains informational only because the published one-time application, six-month lookback, and accepted-application constraints are not modeled automatically.",
+          "Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. Investment-linked Insurance Plan 2 is a regular premium whole of life investment-linked About your plan plan (ILP) designed to meet "
+          },
+          {
+            "page": 2,
+            "section": "Welcome bonus and premium bonus",
+            "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. Benefits We will pay the following in one lump sum, if the life assured dies: Death benefit (a) 101% of the total basic regular prem"
+          },
+          {
+            "page": 3,
+            "section": "Premium bonus continuation and loyalty bonus",
+            "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. (c) any premiums for all attaching riders will still be payable while the policy remains in force, unless payment has been waived in"
+          },
+          {
+            "page": 4,
+            "section": "Premium holiday charge",
+            "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. conditions are satisfied. Premium bonus will not be payable for basic regular premium falling due during a premium holiday even when"
+          },
+          {
+            "page": 5,
+            "section": "Premium holiday charge refund and top-ups",
+            "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. When the policy is on premium holiday, we will deduct a premium holiday charge monthly from the account value by cancelling units to"
+          },
+          {
+            "page": 8,
+            "section": "Partial withdrawal and surrender charges",
+            "excerpt": "partial withdrawal charge from the amount to be withdrawn depending on the policy year partial during which the partial withdrawal occurs and the base plan which you have chosen. The partial withdrawal charge is equal to"
+          },
+          {
+            "page": 10,
+            "section": "Policy fee",
+            "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-10-choice-10-under-6000",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. Investment-linked Insurance Plan 2 is a regular premium whole of life investment-linked About your plan plan (ILP) designed to meet "
+              },
+              {
+                "page": 5,
+                "section": "Premium holiday charge refund and top-ups",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. When the policy is on premium holiday, we will deduct a premium holiday charge monthly from the account value by cancelling units to"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "welcome-bonus",
+            "type": "allocation",
+            "label": "Welcome Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 2400,
+                "maxAnnualPremium": 3599.99,
+                "rate": 0.05
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 3600,
+                "maxAnnualPremium": 5999.99,
+                "rate": 0.1
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.2
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": null,
+                "rate": 0.4
+              }
+            ],
+            "notes": [
+              "Applied to each payment of basic regular premium during the first policy year only.",
+              "No Welcome Bonus is paid while the policy is on premium holiday."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Welcome bonus and premium bonus",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. Benefits We will pay the following in one lump sum, if the life assured dies: Death benefit (a) 101% of the total basic regular prem"
+              }
+            ]
+          },
+          {
+            "id": "premium-bonus",
+            "type": "allocation",
+            "label": "Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": null,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied to each payment of basic regular premium from the published start year onward.",
+              "Payment ceases when premiums are not paid up to date or when a partial withdrawal occurred in the prior 12 months, and resumes when the published conditions are satisfied again.",
+              "Basic regular premium falling due during premium holiday does not earn Premium Bonus even if later repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Welcome bonus and premium bonus",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. Benefits We will pay the following in one lump sum, if the life assured dies: Death benefit (a) 101% of the total basic regular prem"
+              },
+              {
+                "page": 3,
+                "section": "Premium bonus continuation and loyalty bonus",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. (c) any premiums for all attaching riders will still be payable while the policy remains in force, unless payment has been waived in"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied annually from the end of the 10th policy year onward.",
+              "No Loyalty Bonus is payable for a policy year in which any partial withdrawal occurred."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Premium bonus continuation and loyalty bonus",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. (c) any premiums for all attaching riders will still be payable while the policy remains in force, unless payment has been waived in"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "policy-fee-rate",
+            "label": "Policy Fee",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.007
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Modeled as the published percentage-based monthly policy fee on account value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy fee",
+                "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+              }
+            ]
+          },
+          {
+            "id": "policy-fee-fixed-low-annualised-premium",
+            "label": "Additional Fixed Policy Fee",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "amountSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": null,
+                "amount": 60
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the additional S$5 monthly policy fee for Choice 10 where prevailing Annualised Premium is below S$6,000.",
+              "Use the high-annualised-premium Choice 10 variant instead when prevailing Annualised Premium is at least S$6,000."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy fee",
+                "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.25
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the prevailing Annualised Premium.",
+              "The separate one-time premium-holiday-charge refund application path for Choice 10 remains metadata-only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium holiday charge",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. conditions are satisfied. Premium bonus will not be payable for basic regular premium falling due during a premium holiday even when"
+              },
+              {
+                "page": 5,
+                "section": "Premium holiday charge refund and top-ups",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. When the policy is on premium holiday, we will deduct a premium holiday charge monthly from the account value by cancelling units to"
+              }
+            ]
+          },
+          {
+            "id": "top-up-premium-charge",
+            "label": "Single Premium Top-up Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies a 3% upfront charge on each accepted single premium top-up.",
+              "Top-ups are not accepted while the policy is on premium holiday, but that administrative gating is not enforced automatically in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium holiday charge refund and top-ups",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. When the policy is on premium holiday, we will deduct a premium holiday charge monthly from the account value by cancelling units to"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to partial withdrawals according to the published policy-year schedule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Partial withdrawal and surrender charges",
+                "excerpt": "partial withdrawal charge from the amount to be withdrawn depending on the policy year partial during which the partial withdrawal occurs and the base plan which you have chosen. The partial withdrawal charge is equal to"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.75,
+          0.6,
+          0.5,
+          0.45,
+          0.4,
+          0.2,
+          0.15,
+          0.05
+        ],
+        "warnings": [
+          "Investment-linked Insurance Plan 2 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
+          "Insurance charge, TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1.",
+          "This Choice 10 low-annualised-premium variant assumes the additional S$5 monthly policy fee applies throughout the modeled path unless you manually switch variants after a premium change."
+        ],
+        "unsupportedItems": [
+          "Insurance charge remains informational only.",
+          "Premium-holiday-charge refund remains informational only because the published one-time application, six-month lookback, and accepted-application constraints are not modeled automatically.",
+          "Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only.",
+          "Choice 10 prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. Investment-linked Insurance Plan 2 is a regular premium whole of life investment-linked About your plan plan (ILP) designed to meet "
+          },
+          {
+            "page": 2,
+            "section": "Welcome bonus and premium bonus",
+            "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. Benefits We will pay the following in one lump sum, if the life assured dies: Death benefit (a) 101% of the total basic regular prem"
+          },
+          {
+            "page": 3,
+            "section": "Premium bonus continuation and loyalty bonus",
+            "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. (c) any premiums for all attaching riders will still be payable while the policy remains in force, unless payment has been waived in"
+          },
+          {
+            "page": 4,
+            "section": "Premium holiday charge",
+            "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. conditions are satisfied. Premium bonus will not be payable for basic regular premium falling due during a premium holiday even when"
+          },
+          {
+            "page": 5,
+            "section": "Premium holiday charge refund and top-ups",
+            "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. When the policy is on premium holiday, we will deduct a premium holiday charge monthly from the account value by cancelling units to"
+          },
+          {
+            "page": 8,
+            "section": "Partial withdrawal and surrender charges",
+            "excerpt": "partial withdrawal charge from the amount to be withdrawn depending on the policy year partial during which the partial withdrawal occurs and the base plan which you have chosen. The partial withdrawal charge is equal to"
+          },
+          {
+            "page": 10,
+            "section": "Policy fee",
+            "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-10-choice-10-6000-and-above",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. Investment-linked Insurance Plan 2 is a regular premium whole of life investment-linked About your plan plan (ILP) designed to meet "
+              },
+              {
+                "page": 5,
+                "section": "Premium holiday charge refund and top-ups",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. When the policy is on premium holiday, we will deduct a premium holiday charge monthly from the account value by cancelling units to"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "welcome-bonus",
+            "type": "allocation",
+            "label": "Welcome Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 2400,
+                "maxAnnualPremium": 3599.99,
+                "rate": 0.05
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 3600,
+                "maxAnnualPremium": 5999.99,
+                "rate": 0.1
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.2
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": null,
+                "rate": 0.4
+              }
+            ],
+            "notes": [
+              "Applied to each payment of basic regular premium during the first policy year only.",
+              "No Welcome Bonus is paid while the policy is on premium holiday."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Welcome bonus and premium bonus",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. Benefits We will pay the following in one lump sum, if the life assured dies: Death benefit (a) 101% of the total basic regular prem"
+              }
+            ]
+          },
+          {
+            "id": "premium-bonus",
+            "type": "allocation",
+            "label": "Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": null,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied to each payment of basic regular premium from the published start year onward.",
+              "Payment ceases when premiums are not paid up to date or when a partial withdrawal occurred in the prior 12 months, and resumes when the published conditions are satisfied again.",
+              "Basic regular premium falling due during premium holiday does not earn Premium Bonus even if later repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Welcome bonus and premium bonus",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. Benefits We will pay the following in one lump sum, if the life assured dies: Death benefit (a) 101% of the total basic regular prem"
+              },
+              {
+                "page": 3,
+                "section": "Premium bonus continuation and loyalty bonus",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. (c) any premiums for all attaching riders will still be payable while the policy remains in force, unless payment has been waived in"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied annually from the end of the 10th policy year onward.",
+              "No Loyalty Bonus is payable for a policy year in which any partial withdrawal occurred."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Premium bonus continuation and loyalty bonus",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. (c) any premiums for all attaching riders will still be payable while the policy remains in force, unless payment has been waived in"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "policy-fee-rate",
+            "label": "Policy Fee",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.007
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Modeled as the published percentage-based monthly policy fee on account value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy fee",
+                "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.25
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the prevailing Annualised Premium.",
+              "The separate one-time premium-holiday-charge refund application path for Choice 10 remains metadata-only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium holiday charge",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. conditions are satisfied. Premium bonus will not be payable for basic regular premium falling due during a premium holiday even when"
+              },
+              {
+                "page": 5,
+                "section": "Premium holiday charge refund and top-ups",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. When the policy is on premium holiday, we will deduct a premium holiday charge monthly from the account value by cancelling units to"
+              }
+            ]
+          },
+          {
+            "id": "top-up-premium-charge",
+            "label": "Single Premium Top-up Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies a 3% upfront charge on each accepted single premium top-up.",
+              "Top-ups are not accepted while the policy is on premium holiday, but that administrative gating is not enforced automatically in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium holiday charge refund and top-ups",
+                "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. When the policy is on premium holiday, we will deduct a premium holiday charge monthly from the account value by cancelling units to"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to partial withdrawals according to the published policy-year schedule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Partial withdrawal and surrender charges",
+                "excerpt": "partial withdrawal charge from the amount to be withdrawn depending on the policy year partial during which the partial withdrawal occurs and the base plan which you have chosen. The partial withdrawal charge is equal to"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.75,
+          0.6,
+          0.5,
+          0.45,
+          0.4,
+          0.2,
+          0.15,
+          0.05
+        ],
+        "warnings": [
+          "Investment-linked Insurance Plan 2 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
+          "Insurance charge, TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1.",
+          "This Choice 10 high-annualised-premium variant assumes the additional S$5 monthly policy fee does not apply throughout the modeled path unless you manually switch variants after a premium change."
+        ],
+        "unsupportedItems": [
+          "Insurance charge remains informational only.",
+          "Premium-holiday-charge refund remains informational only because the published one-time application, six-month lookback, and accepted-application constraints are not modeled automatically.",
+          "Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only.",
+          "Choice 10 prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. Investment-linked Insurance Plan 2 is a regular premium whole of life investment-linked About your plan plan (ILP) designed to meet "
+          },
+          {
+            "page": 2,
+            "section": "Welcome bonus and premium bonus",
+            "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. Benefits We will pay the following in one lump sum, if the life assured dies: Death benefit (a) 101% of the total basic regular prem"
+          },
+          {
+            "page": 3,
+            "section": "Premium bonus continuation and loyalty bonus",
+            "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. (c) any premiums for all attaching riders will still be payable while the policy remains in force, unless payment has been waived in"
+          },
+          {
+            "page": 4,
+            "section": "Premium holiday charge",
+            "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. conditions are satisfied. Premium bonus will not be payable for basic regular premium falling due during a premium holiday even when"
+          },
+          {
+            "page": 5,
+            "section": "Premium holiday charge refund and top-ups",
+            "excerpt": "Product Summary INVESTMENT-LINKED INSURANCE PLAN 2 Please keep this copy for reference. When the policy is on premium holiday, we will deduct a premium holiday charge monthly from the account value by cancelling units to"
+          },
+          {
+            "page": 8,
+            "section": "Partial withdrawal and surrender charges",
+            "excerpt": "partial withdrawal charge from the amount to be withdrawn depending on the policy year partial during which the partial withdrawal occurs and the base plan which you have chosen. The partial withdrawal charge is equal to"
+          },
+          {
+            "page": 10,
+            "section": "Policy fee",
+            "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "hsbc-life-goal-builder-ii",
     "insurer": "HSBC Life",
     "productName": "Goal Builder II",

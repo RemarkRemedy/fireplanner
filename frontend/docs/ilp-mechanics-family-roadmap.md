@@ -262,6 +262,8 @@ The immediate execution focus is the approved/staged `payment-history-kernel` sl
    - proof target completed: `GBII`
    - optional follow-ons only if they still fit the bounded slice after re-review
 4. After the kernel commit lands, return to parser throughput for the cheapest truthful corridor it unlocks.
+5. Current parser-throughput target after the kernel commit:
+   - `Investment-linked Insurance Plan 2` is the next bounded Great Eastern follow-on because its bonus/premium-holiday mechanics now fit the current payment-history slice with an explicit partial boundary on insurance charge and application-gated refund logic.
 
 ## V1 Boundary
 
