@@ -1920,6 +1920,373 @@
     ]
   },
   {
+    "id": "aia-platinum-wealth-venture-2",
+    "insurer": "AIA Singapore",
+    "productName": "AIA Platinum Wealth Venture 2.0",
+    "sourceFileName": "WA_Sum_201106386R_PWV2.0_Apr2025.pdf",
+    "sourceChecksumSha256": "95330f136cc7df4fa6ae417e08c4e54d90bd1f980de0325892bb6075d79ca319",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:aia-platinum-wealth-venture-2-zero-regular-premium-charge",
+      "branch:aia-platinum-wealth-venture-2-regular-supplementary-charge",
+      "branch:aia-platinum-wealth-venture-2-top-up-premium-charge",
+      "branch:aia-platinum-wealth-venture-2-premium-holiday-charge",
+      "branch:aia-platinum-wealth-venture-2-partial-withdrawal-charge",
+      "branch:aia-platinum-wealth-venture-2-full-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "aia-platinum-wealth-venture-2-welcome-bonus",
+      "aia-platinum-wealth-venture-2-investment-bonus",
+      "aia-platinum-wealth-venture-2-performance-bonus",
+      "aia-platinum-wealth-venture-2-benefit-charge",
+      "aia-platinum-wealth-venture-2-protection-benefits",
+      "aia-platinum-wealth-venture-2-secondary-insured-option",
+      "aia-platinum-wealth-venture-2-fund-management-charge",
+      "aia-platinum-wealth-venture-2-top-up-eligibility-gating",
+      "aia-platinum-wealth-venture-2-fund-switching-and-dividends",
+      "aia-platinum-wealth-venture-2-reinstatement"
+    ],
+    "warnings": [
+      "AIA Platinum Wealth Venture 2.0 is cataloged as a partial modeled subset in V1. The current parser models the regular-pay 5-year corridor: zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the premium-holiday charge schedule, the 3% top-up premium charge, and the regular-premium withdrawal / surrender charge schedules, while bonuses, protection benefits, secondary-insured options, dividend handling, and fund-level charges remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-5",
+        "currency": "SGD",
+        "mipLength": 5,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Regular Premium Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and bonuses",
+                "excerpt": "Product Summary for AIA Platinum Wealth Venture 2.0 Version 1.0 To help you understand Investment-linked policies better, please refer to ‘ Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at"
+              },
+              {
+                "page": 3,
+                "section": "Regular premium and top-up subscription",
+                "excerpt": "100% of regular premium will be used to purchase regular premium units at bid price in the ILP sub-funds that you have chosen. As an example, the number of units in an ILP sub-fund you will receive based on a regular pre"
+              },
+              {
+                "page": 6,
+                "section": "Top-up and withdrawal effects",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc or regular basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase units in ILP "
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "regular-premium-charge",
+            "label": "Regular Premium Charge",
+            "basis": "annual-contribution",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published zero regular-premium charge corridor: 100% of accepted regular premium purchases regular premium units."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Regular premium and top-up subscription",
+                "excerpt": "100% of regular premium will be used to purchase regular premium units at bid price in the ILP sub-funds that you have chosen. As an example, the number of units in an ILP sub-fund you will receive based on a regular pre"
+              }
+            ]
+          },
+          {
+            "id": "supplementary-charge",
+            "label": "Supplementary Charge",
+            "basis": "account-value",
+            "rate": 0.036,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 7,
+            "notes": [
+              "Models the published 3.60% p.a. charge on Regular Premium Policy Value for the regular-pay corridor.",
+              "Benefit Charge and protection-side sum-at-risk formulas remain outside the current executable slice."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Supplementary Charge and Premium Holiday Charge",
+                "excerpt": "5.2. Supplementary Charge The Supplementary Charge which is equivalent to 3.60% p.a. of the Regular Premium Policy Value will be deducted from your policy on a monthly basis for the first 7 policy years, even during Prem"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-Up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% premium charge on each accepted top-up premium.",
+              "Top-ups are only accepted when regular premiums are fully paid when due, but that gating remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Regular premium and top-up subscription",
+                "excerpt": "100% of regular premium will be used to purchase regular premium units at bid price in the ILP sub-funds that you have chosen. As an example, the number of units in an ILP sub-fund you will receive based on a regular pre"
+              },
+              {
+                "page": 6,
+                "section": "Top-up and withdrawal effects",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc or regular basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase units in ILP "
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "yearBasis": "premium-year",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 4,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the annualised regular premium.",
+              "The charge stops once all outstanding regular premiums are fully repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Supplementary Charge and Premium Holiday Charge",
+                "excerpt": "5.2. Supplementary Charge The Supplementary Charge which is equivalent to 3.60% p.a. of the Regular Premium Policy Value will be deducted from your policy on a monthly basis for the first 7 policy years, even during Prem"
+              },
+              {
+                "page": 7,
+                "section": "Premium holiday continuation",
+                "excerpt": "Premium Holiday. When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements will be deducted by cancellation of units. Your policy will remain on Premium Holiday until yo"
+              },
+              {
+                "page": 8,
+                "section": "Reinstatement and termination",
+                "excerpt": "Approximate excerpt; keyword \"For reinstatement\" not found on page. (ii) suicide or attempted suicide or intentional self-injury or from deliberate exposure to exceptional danger (except in an attempt to save human life)"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1.5
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1.5
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.667
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.429
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.111
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published partial withdrawal charge factor on withdrawn Regular Premium Policy Value.",
+              "The single-premium withdrawal schedule is outside the current regular-pay-only executable slice."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Full Surrender Charge and Partial Withdrawal Charge",
+                "excerpt": "5.5. Full Surrender Charge If you request to surrender your policy, full surrender charge will be deducted from your policy value and any remaining policy value will then be paid out. Full Surrender Charge = Full Surrend"
+              },
+              {
+                "page": 6,
+                "section": "Top-up and withdrawal effects",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc or regular basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase units in ILP "
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          0.6,
+          0.6,
+          0.5,
+          0.4,
+          0.3,
+          0.2,
+          0.1,
+          0
+        ],
+        "warnings": [
+          "AIA Platinum Wealth Venture 2.0 is cataloged as a partial modeled subset in V1. The current parser models the regular-pay 5-year corridor: zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the premium-holiday charge schedule, the 3% top-up premium charge, and the regular-premium withdrawal / surrender charge schedules.",
+          "Welcome Bonus, Investment Bonus, Performance Bonus, Benefit Charge, and Secondary Insured mechanics remain informational only in V1.",
+          "Automatic fund switching, reinvested dividends, and fund-level management charges remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Welcome Bonus, Investment Bonus, and Performance Bonus remain informational only because they credit additional regular-premium units outside the current executable slice.",
+          "Benefit Charge, death benefit floors, accidental death benefit, secondary insured, and other protection-side formulas remain informational only.",
+          "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
+          "Minimum withdrawal amount, minimum post-withdrawal policy value, regular-top-up eligibility while premiums are outstanding, and top-up suspension remain informational only.",
+          "Fund switching, dividend handling, and reinvested dividend top-up units remain informational only.",
+          "Reinstatement and premium-holiday continuation remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and bonuses",
+            "excerpt": "Product Summary for AIA Platinum Wealth Venture 2.0 Version 1.0 To help you understand Investment-linked policies better, please refer to ‘ Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at"
+          },
+          {
+            "page": 2,
+            "section": "Bonuses and maturity benefit",
+            "excerpt": "3.4. Investment Bonus: While this basic policy is in force and provided all regular premiums are paid, we will pay an Investment Bonus th th th th at the beginning of the eighth (8), ninth (9 ), tenth (10 ) and eleventh "
+          },
+          {
+            "page": 3,
+            "section": "Regular premium and top-up subscription",
+            "excerpt": "100% of regular premium will be used to purchase regular premium units at bid price in the ILP sub-funds that you have chosen. As an example, the number of units in an ILP sub-fund you will receive based on a regular pre"
+          },
+          {
+            "page": 4,
+            "section": "Supplementary Charge and Premium Holiday Charge",
+            "excerpt": "5.2. Supplementary Charge The Supplementary Charge which is equivalent to 3.60% p.a. of the Regular Premium Policy Value will be deducted from your policy on a monthly basis for the first 7 policy years, even during Prem"
+          },
+          {
+            "page": 5,
+            "section": "Full Surrender Charge and Partial Withdrawal Charge",
+            "excerpt": "5.5. Full Surrender Charge If you request to surrender your policy, full surrender charge will be deducted from your policy value and any remaining policy value will then be paid out. Full Surrender Charge = Full Surrend"
+          },
+          {
+            "page": 6,
+            "section": "Top-up and withdrawal effects",
+            "excerpt": "You may request to pay additional top-up premium on an ad-hoc or regular basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase units in ILP "
+          },
+          {
+            "page": 7,
+            "section": "Premium holiday continuation",
+            "excerpt": "Premium Holiday. When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements will be deducted by cancellation of units. Your policy will remain on Premium Holiday until yo"
+          },
+          {
+            "page": 8,
+            "section": "Reinstatement and termination",
+            "excerpt": "Approximate excerpt; keyword \"For reinstatement\" not found on page. (ii) suicide or attempted suicide or intentional self-injury or from deliberate exposure to exceptional danger (except in an attempt to save human life)"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "aia-wealth-venture",
     "insurer": "AIA Singapore",
     "productName": "AIA Wealth Venture",
