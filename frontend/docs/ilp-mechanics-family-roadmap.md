@@ -1,6 +1,6 @@
 # ILP Mechanics Family Roadmap
 
-Last updated: 2026-03-13
+Last updated: 2026-03-14
 
 ## Status
 
@@ -191,8 +191,11 @@ Useful for fidelity, but not ahead of cashflow correctness.
 Needed for products whose economically material charges, penalty horizons, or bonus cadence are keyed to Premium Year / payment-history state rather than Policy Year alone.
 
 Current status:
-- spec drafted
-- not implemented yet
+- first vertical slice complete
+- green on:
+  - `npm run type-check`
+  - targeted ILP unit tests
+  - `npm run golden:check`
 
 Current mandatory proof target:
 - `GBII`
@@ -200,6 +203,26 @@ Current mandatory proof target:
 Optional follow-ons after `GBII` is green and re-reviewed:
 - `Investment-linked Insurance Plan 2`
 - `GREAT Life Advantage 4`
+
+Completed in this slice:
+- one normalized Premium Year / payment-history state surface for:
+  - Premium Year freeze / resume
+  - premiums-paid-up-to-date gating
+  - premium-year keyed charges, penalties, and bonus cadence
+- authored bonus cadence support for premium-year keyed recurring bonuses
+- `GBII` proof-parser uplift for:
+  - loyalty-bonus cadence keyed to Premium Year
+  - retained partial boundary on the 24-month supplementary-premium exclusion
+
+Promotion review result:
+- `hsbc-life-goal-builder-ii` remains `partial`
+- payment-history is no longer the primary blocker for `GBII`
+- remaining bounded metadata-only behaviors on `GBII` are now:
+  - loyalty-bonus supplementary-premium exclusion window
+  - dividend payout election
+  - death / terminal-illness payout mechanics
+  - regular-withdrawal behavior
+- next execution after approval/commit should return to parser throughput before opening another kernel
 
 Scope line:
 - add normalized Premium Year / payment-history state
@@ -225,7 +248,7 @@ Validated classifier state:
 - `57` supported-after-kernel
 - `29` partial-v1
 
-The immediate execution focus is the `payment-history-kernel`, with `GBII` as the mandatory proof parser.
+The immediate execution focus is the approved/staged `payment-history-kernel` slice, with `GBII` as the completed proof parser. After commit, return to parser throughput for the cheapest truthful corridor unlocked by the current kernels.
 
 ## Sequencing After QA
 
@@ -235,11 +258,10 @@ The immediate execution focus is the `payment-history-kernel`, with `GBII` as th
    - multi-account structure kernel
    - assurance-charge kernel
    - bonus-richness kernel
-3. Execute the next active kernel workstream:
-   - `payment-history-kernel`
-   - mandatory proof target: `GBII`
-   - optional follow-ons only if they still fit the bounded slice after `GBII` is green
-4. After that kernel is green, return to parser throughput for the cheapest truthful corridor it unlocks.
+3. Treat the `payment-history-kernel` first slice as implemented:
+   - proof target completed: `GBII`
+   - optional follow-ons only if they still fit the bounded slice after re-review
+4. After the kernel commit lands, return to parser throughput for the cheapest truthful corridor it unlocks.
 
 ## V1 Boundary
 

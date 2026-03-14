@@ -642,9 +642,9 @@
       ],
       "implementationCohort": "etiqa-rsp-recovery",
       "v1SupportBoundary": "supported-after-kernel",
-      "currentCatalogStatus": "not-in-catalog",
-      "economicsStatus": "not-modeled",
-      "parserExists": false,
+      "currentCatalogStatus": "partial",
+      "economicsStatus": "partial-modeled-subset",
+      "parserExists": true,
       "goldenCoverageStatus": "none",
       "kernelWorkstreams": [
         "assurance-charge-kernel",
@@ -659,14 +659,31 @@
         "bonus-richness-overlay",
         "core-cashflow-kernel"
       ],
-      "modeledSubsetAlreadyCovered": [],
-      "metadataOnlyBehaviors": [],
+      "modeledSubsetAlreadyCovered": [
+        "branch:etiqa-vista-startup-bonus",
+        "branch:etiqa-vista-special-bonus",
+        "branch:etiqa-vista-loyalty-bonus",
+        "branch:etiqa-vista-policy-charge",
+        "branch:etiqa-vista-top-up-premium-charge",
+        "branch:etiqa-vista-startup-bonus-recovery",
+        "branch:etiqa-vista-partial-withdrawal-charge",
+        "branch:etiqa-vista-surrender-charge"
+      ],
+      "metadataOnlyBehaviors": [
+        "etiqa-vista-premium-free-period-gating",
+        "etiqa-vista-premium-shortfall-charge",
+        "etiqa-vista-free-partial-withdrawal-benefit",
+        "etiqa-vista-insurance-charge",
+        "etiqa-vista-distribution-paying-fund-election",
+        "etiqa-vista-change-of-life-insured"
+      ],
       "manualInputRequirements": [],
-      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Top-up Account + Regular Premium Account\" and gap tags ad-hoc-premium-routing, dynamic-charge-model, free-partial-withdrawal, tiered-bonus, withdrawal-reduction-charges. Cross-cutting overlays are ad-hoc-premium-routing, assurance-charge, bonus-richness, dynamic-charge, premium-holiday-recovery. Implementation cohort is etiqa-rsp-recovery from insurer/product patterning. No current parser-backed catalog product exists for this source yet.",
-      "confidence": 0.84,
+      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Top-up Account + Regular Premium Account\" and gap tags ad-hoc-premium-routing, dynamic-charge-model, free-partial-withdrawal, tiered-bonus, withdrawal-reduction-charges. Cross-cutting overlays are ad-hoc-premium-routing, assurance-charge, bonus-richness, dynamic-charge, premium-holiday-recovery. Implementation cohort is etiqa-rsp-recovery from insurer/product patterning. Current catalog status is partial with economics status partial-modeled-subset.",
+      "confidence": 0.85,
       "evidenceRefs": [
         "accountModel:Top-up Account + Regular Premium Account",
         "bucket:B-extendable",
+        "catalog:etiqa-invest-vista",
         "cohort:etiqa-rsp-recovery",
         "file:EIP_Invest vista_Product Summary.pdf",
         "gap:ad-hoc-premium-routing",
@@ -1119,12 +1136,13 @@
         "branch:goal-builder-ii-welcome-bonus",
         "branch:goal-builder-ii-welcome-bonus-recovery",
         "branch:goal-builder-ii-premium-year-paf",
+        "branch:goal-builder-ii-loyalty-bonus-cadence",
         "branch:goal-builder-ii-top-up-premium-charge",
         "branch:goal-builder-ii-recurrent-single-premium-charge",
         "branch:goal-builder-ii-premium-year-surrender-charge"
       ],
       "metadataOnlyBehaviors": [
-        "goal-builder-ii-loyalty-bonus-cadence",
+        "goal-builder-ii-loyalty-bonus-supplementary-premium-exclusion",
         "goal-builder-ii-death-ti-benefit",
         "goal-builder-ii-dividend-payout-election",
         "goal-builder-ii-regular-withdrawal"

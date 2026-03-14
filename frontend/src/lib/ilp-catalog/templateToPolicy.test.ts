@@ -931,7 +931,8 @@ describe('templateVariantToPolicySeed', () => {
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:goal-builder-ii-premium-year-paf')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('goal-builder-ii-loyalty-bonus-cadence')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:goal-builder-ii-loyalty-bonus-cadence')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('goal-builder-ii-loyalty-bonus-supplementary-premium-exclusion')
     expect(seed.mipLength).toBe(10)
     expect(seed.eecYearBasis).toBe('premium-year')
     expect(seed.accounts).toEqual([
@@ -984,6 +985,14 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({
         id: 'welcome-bonus',
         mode: 'premium-allocation',
+      }),
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        mode: 'annual-rate',
+        yearBasis: 'premium-year',
+        cadenceYears: 2,
+        requiresPremiumsPaidUpToDate: true,
+        rate: 0.01,
       }),
     ])
   })

@@ -40,6 +40,7 @@ export const ilpTemplateBonusSchema = z.object({
   startPolicyYear: z.number().int().min(1).max(100),
   endPolicyYear: z.number().int().min(1).max(100).nullable(),
   yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
+  cadenceYears: z.number().int().min(1).max(100).optional(),
   requiresPremiumsPaidUpToDate: z.boolean().optional(),
   rate: z.number().min(0).max(1).nullable(),
   amount: z.number().min(0).max(100_000_000).nullable(),

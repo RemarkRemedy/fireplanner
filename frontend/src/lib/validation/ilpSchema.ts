@@ -189,6 +189,7 @@ export const ilpBonusRuleSchema = z.object({
   startPolicyYear: z.number().int().min(1).max(100),
   endPolicyYear: z.number().int().min(1).max(100).nullable(),
   yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
+  cadenceYears: z.number().int().min(1).max(100).optional(),
   requiresPremiumsPaidUpToDate: z.boolean().optional(),
   tieredRates: z.array(z.object({
     currency: z.enum(['SGD', 'USD']),

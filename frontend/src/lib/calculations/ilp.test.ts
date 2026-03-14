@@ -2087,6 +2087,52 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[1], 'regular').bonusCredit).toBeGreaterThan(0)
   })
 
+  it('applies cadence-based premium-year bonuses only on the published premium-year intervals', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 9,
+      monthsAlreadyPaid: 108,
+      monthlyContribution: 500,
+      currency: 'SGD',
+      mipLength: 20,
+      postMipYears: 4,
+      funds: [ZERO_RETURN_FUND],
+      accounts: [
+        {
+          id: 'regular',
+          label: 'Regular Premium Account',
+          feeRate: 0,
+          currentValue: 10_000,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+        },
+      ],
+      bonuses: [
+        {
+          id: 'every-two-premium-years',
+          type: 'loyalty',
+          label: 'Every 2 Premium Years',
+          mode: 'annual-rate',
+          rate: 0.01,
+          amount: 0,
+          appliesTo: ['regular'],
+          startPolicyYear: 10,
+          endPolicyYear: 24,
+          yearBasis: 'premium-year',
+          cadenceYears: 2,
+          requiresPremiumsPaidUpToDate: true,
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'regular').bonusCredit).toBeGreaterThan(0)
+    expect(accountRow(result.rows[1], 'regular').bonusCredit).toBe(0)
+    expect(accountRow(result.rows[2], 'regular').bonusCredit).toBeGreaterThan(0)
+    expect(accountRow(result.rows[3], 'regular').bonusCredit).toBe(0)
+  })
+
   it('keeps policy-year based charge schedules unchanged during premium holidays', () => {
     const policy = makeDefaultPolicy({
       currentPolicyYear: 5,

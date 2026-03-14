@@ -45,6 +45,7 @@ export interface IlpTemplateBonus {
   startPolicyYear: number
   endPolicyYear: number | null
   yearBasis?: 'policy-year' | 'premium-year'
+  cadenceYears?: number
   requiresPremiumsPaidUpToDate?: boolean
   rate: number | null
   amount: number | null

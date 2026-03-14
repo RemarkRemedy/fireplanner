@@ -28,11 +28,12 @@ describe('parseHsbcGoalBuilderIi', () => {
       'branch:goal-builder-ii-welcome-bonus',
       'branch:goal-builder-ii-welcome-bonus-recovery',
       'branch:goal-builder-ii-premium-year-paf',
+      'branch:goal-builder-ii-loyalty-bonus-cadence',
       'branch:goal-builder-ii-top-up-premium-charge',
       'branch:goal-builder-ii-recurrent-single-premium-charge',
       'branch:goal-builder-ii-premium-year-surrender-charge',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('goal-builder-ii-loyalty-bonus-cadence')
+    expect(product.metadataOnlyBehaviors).toContain('goal-builder-ii-loyalty-bonus-supplementary-premium-exclusion')
     expect(product.metadataOnlyBehaviors).toContain('goal-builder-ii-dividend-payout-election')
     expect(product.variants).toHaveLength(6)
 
@@ -120,6 +121,14 @@ describe('parseHsbcGoalBuilderIi', () => {
           { currency: 'SGD', minAnnualPremium: 6_000, maxAnnualPremium: 11_999.99, rate: 0.2 },
           { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: null, rate: 0.4 },
         ],
+      }),
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        mode: 'annual-rate',
+        yearBasis: 'premium-year',
+        cadenceYears: 2,
+        requiresPremiumsPaidUpToDate: true,
+        rate: 0.01,
       }),
     ])
     expect(term10?.eecTable).toEqual([1, 1, 0.75, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.1])

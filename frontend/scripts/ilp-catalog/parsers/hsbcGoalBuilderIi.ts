@@ -134,6 +134,29 @@ function buildPafRule(term: MipTerm, page8: IlpCatalogSourceRef): IlpTemplateFee
   }
 }
 
+function buildLoyaltyBonus(page5: IlpCatalogSourceRef): IlpTemplateBonus {
+  return {
+    id: 'loyalty-bonus',
+    type: 'loyalty',
+    label: 'Loyalty Bonus',
+    mode: 'annual-rate',
+    appliesTo: ['policy'],
+    startPolicyYear: 10,
+    endPolicyYear: 24,
+    yearBasis: 'premium-year',
+    cadenceYears: 2,
+    requiresPremiumsPaidUpToDate: true,
+    rate: roundRate(0.01),
+    amount: null,
+    tieredRates: [],
+    notes: [
+      'Credited at the end of Premium Year 10 and every 2 Premium Years thereafter until Premium Year 24 while premiums remain paid up to date.',
+      'The published exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains metadata-only in V1.',
+    ],
+    sourceRefs: [page5],
+  }
+}
+
 function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', term: MipTerm): IlpTemplateVariant {
   const page1 = sourceRef(1, 'Product description', snippetNear(document, 1, 'limited premium payment investment-linked product'))
   const page4 = sourceRef(4, 'Welcome bonus', snippetNear(document, 4, 'Welcome Bonus', 18))
@@ -223,6 +246,7 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
     ],
     bonuses: [
       buildWelcomeBonus(term, currency, page4),
+      buildLoyaltyBonus(page5),
     ],
     feeRules: [
       buildPafRule(term, page8),
@@ -231,12 +255,12 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
     eecTable: [...SURRENDER_CHARGE_BY_TERM[term]],
     eecYearBasis: 'premium-year',
     warnings: [
-      'Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.',
-      'Loyalty Bonus remains informational only in V1 because its every-2-Premium-Year cadence and 24-month top-up exclusion are not yet modeled.',
+      'Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, Loyalty Bonus cadence keyed to Premium Year, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.',
+      'The Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only in V1.',
       'Dividend-paying funds are treated as reinvesting by default in V1. Cash payout elections remain informational only and are not reflected in projected values.',
     ],
     unsupportedItems: [
-      'Loyalty Bonus cadence and top-up exclusion window remain informational only.',
+      'Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only.',
       'Death and terminal illness benefit payout mechanics remain informational only.',
       'Dividend payout election remains informational only.',
       'Automatic paid-up / lapse state is not modeled beyond premium-holiday fee drag.',
@@ -264,18 +288,19 @@ export function parseHsbcGoalBuilderIi({ document, sourceChecksumSha256 }: Parse
       'branch:goal-builder-ii-welcome-bonus',
       'branch:goal-builder-ii-welcome-bonus-recovery',
       'branch:goal-builder-ii-premium-year-paf',
+      'branch:goal-builder-ii-loyalty-bonus-cadence',
       'branch:goal-builder-ii-top-up-premium-charge',
       'branch:goal-builder-ii-recurrent-single-premium-charge',
       'branch:goal-builder-ii-premium-year-surrender-charge',
     ],
     metadataOnlyBehaviors: [
-      'goal-builder-ii-loyalty-bonus-cadence',
+      'goal-builder-ii-loyalty-bonus-supplementary-premium-exclusion',
       'goal-builder-ii-death-ti-benefit',
       'goal-builder-ii-dividend-payout-election',
       'goal-builder-ii-regular-withdrawal',
     ],
     warnings: [
-      'Goal Builder II is a partial modeled subset in V1. Premium-Year-based Product Administration Fee and surrender mechanics are modeled; loyalty bonus cadence, payout election, and death/TI payout mechanics are not.',
+      'Goal Builder II is a partial modeled subset in V1. Premium-Year-based Product Administration Fee, Loyalty Bonus cadence, and surrender mechanics are modeled; the 24-month supplementary-premium exclusion inside the Loyalty Bonus formula, payout election, and death/TI payout mechanics are not.',
     ],
     archived: false,
     variants: TERM_OPTIONS.flatMap((term) => [

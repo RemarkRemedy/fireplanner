@@ -12548,18 +12548,19 @@
       "branch:goal-builder-ii-welcome-bonus",
       "branch:goal-builder-ii-welcome-bonus-recovery",
       "branch:goal-builder-ii-premium-year-paf",
+      "branch:goal-builder-ii-loyalty-bonus-cadence",
       "branch:goal-builder-ii-top-up-premium-charge",
       "branch:goal-builder-ii-recurrent-single-premium-charge",
       "branch:goal-builder-ii-premium-year-surrender-charge"
     ],
     "metadataOnlyBehaviors": [
-      "goal-builder-ii-loyalty-bonus-cadence",
+      "goal-builder-ii-loyalty-bonus-supplementary-premium-exclusion",
       "goal-builder-ii-death-ti-benefit",
       "goal-builder-ii-dividend-payout-election",
       "goal-builder-ii-regular-withdrawal"
     ],
     "warnings": [
-      "Goal Builder II is a partial modeled subset in V1. Premium-Year-based Product Administration Fee and surrender mechanics are modeled; loyalty bonus cadence, payout election, and death/TI payout mechanics are not."
+      "Goal Builder II is a partial modeled subset in V1. Premium-Year-based Product Administration Fee, Loyalty Bonus cadence, and surrender mechanics are modeled; the 24-month supplementary-premium exclusion inside the Loyalty Bonus formula, payout election, and death/TI payout mechanics are not."
     ],
     "archived": false,
     "variants": [
@@ -12642,6 +12643,34 @@
                 "page": 4,
                 "section": "Welcome bonus",
                 "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": 24,
+            "yearBasis": "premium-year",
+            "cadenceYears": 2,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Credited at the end of Premium Year 10 and every 2 Premium Years thereafter until Premium Year 24 while premiums remain paid up to date.",
+              "The published exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains metadata-only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium Year and loyalty bonus",
+                "excerpt": "You will be entitled to a loyalty bonus (“Loyalty Bonus”) at the end of Premium Year 10, and every 2 years thereafter until Premium Year 24 if your Policy is still in force at the relevant time. The Loyalty Bonus is equi"
               }
             ]
           }
@@ -12852,12 +12881,12 @@
         ],
         "eecYearBasis": "premium-year",
         "warnings": [
-          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
-          "Loyalty Bonus remains informational only in V1 because its every-2-Premium-Year cadence and 24-month top-up exclusion are not yet modeled.",
+          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, Loyalty Bonus cadence keyed to Premium Year, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
+          "The Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only in V1.",
           "Dividend-paying funds are treated as reinvesting by default in V1. Cash payout elections remain informational only and are not reflected in projected values."
         ],
         "unsupportedItems": [
-          "Loyalty Bonus cadence and top-up exclusion window remain informational only.",
+          "Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only.",
           "Death and terminal illness benefit payout mechanics remain informational only.",
           "Dividend payout election remains informational only.",
           "Automatic paid-up / lapse state is not modeled beyond premium-holiday fee drag.",
@@ -12982,6 +13011,34 @@
                 "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
               }
             ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": 24,
+            "yearBasis": "premium-year",
+            "cadenceYears": 2,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Credited at the end of Premium Year 10 and every 2 Premium Years thereafter until Premium Year 24 while premiums remain paid up to date.",
+              "The published exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains metadata-only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium Year and loyalty bonus",
+                "excerpt": "You will be entitled to a loyalty bonus (“Loyalty Bonus”) at the end of Premium Year 10, and every 2 years thereafter until Premium Year 24 if your Policy is still in force at the relevant time. The Loyalty Bonus is equi"
+              }
+            ]
           }
         ],
         "feeRules": [
@@ -13190,12 +13247,12 @@
         ],
         "eecYearBasis": "premium-year",
         "warnings": [
-          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
-          "Loyalty Bonus remains informational only in V1 because its every-2-Premium-Year cadence and 24-month top-up exclusion are not yet modeled.",
+          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, Loyalty Bonus cadence keyed to Premium Year, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
+          "The Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only in V1.",
           "Dividend-paying funds are treated as reinvesting by default in V1. Cash payout elections remain informational only and are not reflected in projected values."
         ],
         "unsupportedItems": [
-          "Loyalty Bonus cadence and top-up exclusion window remain informational only.",
+          "Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only.",
           "Death and terminal illness benefit payout mechanics remain informational only.",
           "Dividend payout election remains informational only.",
           "Automatic paid-up / lapse state is not modeled beyond premium-holiday fee drag.",
@@ -13320,6 +13377,34 @@
                 "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
               }
             ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": 24,
+            "yearBasis": "premium-year",
+            "cadenceYears": 2,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Credited at the end of Premium Year 10 and every 2 Premium Years thereafter until Premium Year 24 while premiums remain paid up to date.",
+              "The published exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains metadata-only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium Year and loyalty bonus",
+                "excerpt": "You will be entitled to a loyalty bonus (“Loyalty Bonus”) at the end of Premium Year 10, and every 2 years thereafter until Premium Year 24 if your Policy is still in force at the relevant time. The Loyalty Bonus is equi"
+              }
+            ]
           }
         ],
         "feeRules": [
@@ -13540,12 +13625,12 @@
         ],
         "eecYearBasis": "premium-year",
         "warnings": [
-          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
-          "Loyalty Bonus remains informational only in V1 because its every-2-Premium-Year cadence and 24-month top-up exclusion are not yet modeled.",
+          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, Loyalty Bonus cadence keyed to Premium Year, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
+          "The Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only in V1.",
           "Dividend-paying funds are treated as reinvesting by default in V1. Cash payout elections remain informational only and are not reflected in projected values."
         ],
         "unsupportedItems": [
-          "Loyalty Bonus cadence and top-up exclusion window remain informational only.",
+          "Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only.",
           "Death and terminal illness benefit payout mechanics remain informational only.",
           "Dividend payout election remains informational only.",
           "Automatic paid-up / lapse state is not modeled beyond premium-holiday fee drag.",
@@ -13670,6 +13755,34 @@
                 "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
               }
             ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": 24,
+            "yearBasis": "premium-year",
+            "cadenceYears": 2,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Credited at the end of Premium Year 10 and every 2 Premium Years thereafter until Premium Year 24 while premiums remain paid up to date.",
+              "The published exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains metadata-only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium Year and loyalty bonus",
+                "excerpt": "You will be entitled to a loyalty bonus (“Loyalty Bonus”) at the end of Premium Year 10, and every 2 years thereafter until Premium Year 24 if your Policy is still in force at the relevant time. The Loyalty Bonus is equi"
+              }
+            ]
           }
         ],
         "feeRules": [
@@ -13890,12 +14003,12 @@
         ],
         "eecYearBasis": "premium-year",
         "warnings": [
-          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
-          "Loyalty Bonus remains informational only in V1 because its every-2-Premium-Year cadence and 24-month top-up exclusion are not yet modeled.",
+          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, Loyalty Bonus cadence keyed to Premium Year, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
+          "The Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only in V1.",
           "Dividend-paying funds are treated as reinvesting by default in V1. Cash payout elections remain informational only and are not reflected in projected values."
         ],
         "unsupportedItems": [
-          "Loyalty Bonus cadence and top-up exclusion window remain informational only.",
+          "Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only.",
           "Death and terminal illness benefit payout mechanics remain informational only.",
           "Dividend payout election remains informational only.",
           "Automatic paid-up / lapse state is not modeled beyond premium-holiday fee drag.",
@@ -14020,6 +14133,34 @@
                 "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
               }
             ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": 24,
+            "yearBasis": "premium-year",
+            "cadenceYears": 2,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Credited at the end of Premium Year 10 and every 2 Premium Years thereafter until Premium Year 24 while premiums remain paid up to date.",
+              "The published exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains metadata-only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium Year and loyalty bonus",
+                "excerpt": "You will be entitled to a loyalty bonus (“Loyalty Bonus”) at the end of Premium Year 10, and every 2 years thereafter until Premium Year 24 if your Policy is still in force at the relevant time. The Loyalty Bonus is equi"
+              }
+            ]
           }
         ],
         "feeRules": [
@@ -14270,12 +14411,12 @@
         ],
         "eecYearBasis": "premium-year",
         "warnings": [
-          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
-          "Loyalty Bonus remains informational only in V1 because its every-2-Premium-Year cadence and 24-month top-up exclusion are not yet modeled.",
+          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, Loyalty Bonus cadence keyed to Premium Year, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
+          "The Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only in V1.",
           "Dividend-paying funds are treated as reinvesting by default in V1. Cash payout elections remain informational only and are not reflected in projected values."
         ],
         "unsupportedItems": [
-          "Loyalty Bonus cadence and top-up exclusion window remain informational only.",
+          "Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only.",
           "Death and terminal illness benefit payout mechanics remain informational only.",
           "Dividend payout election remains informational only.",
           "Automatic paid-up / lapse state is not modeled beyond premium-holiday fee drag.",
@@ -14400,6 +14541,34 @@
                 "excerpt": "Welcome Bonus The Policy pays out a Welcome Bonus which is calculated as a percentage of the Premium paid for the first year of the Policy, as stated in the table below: Annualised Premium Welcome Bonus 5-Year 10-Year 15"
               }
             ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": 24,
+            "yearBasis": "premium-year",
+            "cadenceYears": 2,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Credited at the end of Premium Year 10 and every 2 Premium Years thereafter until Premium Year 24 while premiums remain paid up to date.",
+              "The published exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains metadata-only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium Year and loyalty bonus",
+                "excerpt": "You will be entitled to a loyalty bonus (“Loyalty Bonus”) at the end of Premium Year 10, and every 2 years thereafter until Premium Year 24 if your Policy is still in force at the relevant time. The Loyalty Bonus is equi"
+              }
+            ]
           }
         ],
         "feeRules": [
@@ -14650,12 +14819,12 @@
         ],
         "eecYearBasis": "premium-year",
         "warnings": [
-          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
-          "Loyalty Bonus remains informational only in V1 because its every-2-Premium-Year cadence and 24-month top-up exclusion are not yet modeled.",
+          "Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, Loyalty Bonus cadence keyed to Premium Year, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.",
+          "The Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only in V1.",
           "Dividend-paying funds are treated as reinvesting by default in V1. Cash payout elections remain informational only and are not reflected in projected values."
         ],
         "unsupportedItems": [
-          "Loyalty Bonus cadence and top-up exclusion window remain informational only.",
+          "Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only.",
           "Death and terminal illness benefit payout mechanics remain informational only.",
           "Dividend payout election remains informational only.",
           "Automatic paid-up / lapse state is not modeled beyond premium-holiday fee drag.",

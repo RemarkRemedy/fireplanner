@@ -197,6 +197,7 @@ function clonePolicySeedIntoInput(seed: ReturnType<typeof templateVariantToPolic
     bonuses: seed.bonuses.map((bonus) => ({
       ...bonus,
       appliesTo: [...bonus.appliesTo],
+      cadenceYears: bonus.cadenceYears,
       tieredRates: bonus.tieredRates?.map((tier) => ({ ...tier })),
       suspensionRules: bonus.suspensionRules?.map((rule) => ({ ...rule })),
       restorationRules: bonus.restorationRules?.map((rule) => ({ ...rule })),

@@ -156,6 +156,7 @@ function mapTemplateBonus(
     startPolicyYear: bonus.startPolicyYear,
     endPolicyYear: bonus.endPolicyYear,
     yearBasis: bonus.yearBasis,
+    cadenceYears: bonus.cadenceYears,
     requiresPremiumsPaidUpToDate: bonus.requiresPremiumsPaidUpToDate,
     tieredRates: bonus.tieredRates.map((tier) => ({ ...tier })),
     suspensionRules: bonus.suspensionRules?.map((rule) => ({ ...rule })) ?? [

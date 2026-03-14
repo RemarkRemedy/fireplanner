@@ -66,6 +66,7 @@ export interface IlpBonusRule {
   startPolicyYear: number
   endPolicyYear: number | null
   yearBasis?: 'policy-year' | 'premium-year'
+  cadenceYears?: number
   requiresPremiumsPaidUpToDate?: boolean
   tieredRates?: IlpBonusTier[]
   suspensionRules?: IlpBonusSuspensionRule[]
@@ -1550,6 +1551,14 @@ function getBonusReferenceYear(
     : context.policyYear
 }
 
+function isBonusDueForReferenceYear(
+  normalizedBonus: IlpNormalizedBonusRule,
+  referenceYear: number,
+): boolean {
+  const cadenceYears = normalizedBonus.bonus.cadenceYears ?? 1
+  return ((referenceYear - normalizedBonus.bonus.startPolicyYear) % cadenceYears) === 0
+}
+
 function computeRestoredBonusCredit(
   normalizedBonus: IlpNormalizedBonusRule,
   accountId: string,
@@ -1611,6 +1620,7 @@ function computeBonusCredit(
     if (!normalizedBonus.targetAccountIds.includes(accountId)) continue
     if (referenceYear < bonus.startPolicyYear) continue
     if (bonus.endPolicyYear != null && referenceYear > bonus.endPolicyYear) continue
+    if (!isBonusDueForReferenceYear(normalizedBonus, referenceYear)) continue
 
     const splitCount = Math.max(normalizedBonus.targetAccountIds.length, 1)
     const effectiveRate = resolveNormalizedBonusRate(normalizedBonus, annualContribution, currency, accountOpenBalance)
