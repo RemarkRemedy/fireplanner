@@ -110,7 +110,7 @@ export function MonthlyIncomeInput({
               min={0}
               max={6}
               step={0.1}
-              className="w-14 h-7 text-xs border-blue-300"
+              className="w-16 h-7 text-xs border-blue-300"
             />
             <span className="text-xs text-muted-foreground">extra month(s)</span>
           </div>
