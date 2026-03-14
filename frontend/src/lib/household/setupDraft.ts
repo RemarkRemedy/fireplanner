@@ -24,6 +24,7 @@ export interface SetupDraft {
   residency: 'citizen' | 'pr' | 'foreigner'
   cpfKnown: boolean
   cpfTotal?: number
+  cpfBreakdown?: { oa: number; sa: number; ma: number; ra: number }
   ownsProperty: 'owns' | 'planning' | 'no'
   propertyType?: 'hdb' | 'condo' | 'landed'
   propertyValue?: number
@@ -124,9 +125,11 @@ export function applySetupDraft(draft: SetupDraft, planType: HouseholdPlanType):
     cpf: {
       ...selfAdult.cpf,
       retirementPhase: draft.retirementPhase ?? null,
-      ...(draft.cpfKnown && draft.cpfTotal != null
-        ? { balances: splitCpfByAge(draft.cpfTotal, draft.currentAge) }
-        : {}),
+      ...(draft.cpfKnown && draft.cpfBreakdown
+        ? { balances: draft.cpfBreakdown }
+        : draft.cpfKnown && draft.cpfTotal != null
+          ? { balances: splitCpfByAge(draft.cpfTotal, draft.currentAge) }
+          : {}),
     },
   }
   useHouseholdPlanStore.getState().updateAdult(selfAdult.id, adultUpdates)
@@ -650,6 +653,9 @@ export function hydrateSetupFromPlan(plan: HouseholdPlan): SetupDraft {
     residency: self.residencyStatus,
     cpfKnown,
     cpfTotal: cpfKnown ? cpfTotal : undefined,
+    cpfBreakdown: cpfKnown
+      ? { oa: self.cpf.balances.oa, sa: self.cpf.balances.sa, ma: self.cpf.balances.ma, ra: self.cpf.balances.ra }
+      : undefined,
     ownsProperty,
     propertyType,
     propertyValue,

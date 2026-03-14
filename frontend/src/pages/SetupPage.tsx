@@ -16,7 +16,9 @@ import { usePageMeta } from '@/hooks/usePageMeta'
 import { trackEvent } from '@/lib/analytics'
 import { SetupDraftSchema } from '@/lib/validation/setupDraftSchema'
 import { MonthlyIncomeInput, MonthlyExpenseInput } from '@/components/shared/FinancialInputCards'
+import { CpfSetupInput } from '@/components/setup/CpfSetupInput'
 import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
+import { estimateCpfBalances } from '@/lib/calculations/cpf'
 
 // ---------------------------------------------------------------------------
 // Screen definitions
@@ -81,16 +83,8 @@ const SCREENS: (NudgeFlowScreen & {
       },
     ],
   },
-  // Screen 6: CPF (skip if foreigner)
-  {
-    id: 'cpf',
-    title: 'Your CPF',
-    fields: [
-      { name: 'cpfKnown', label: 'I know my CPF balances', type: 'toggle', helperText: 'If you don\'t know, we\'ll estimate based on your age and income. You can refine later on the CPF details page.' },
-      { name: 'cpfTotal', label: 'Total CPF balance (OA + SA + MA)', type: 'currency', validationKey: 'cpfTotal', showWhen: { field: 'cpfKnown', equals: true }, helperText: 'A rough total is fine. You can enter per-account breakdown later.' },
-    ],
-    skipWhen: { field: 'residency', equals: 'foreigner' },
-  },
+  // Screen 6: CPF (skip if foreigner) — custom CpfSetupInput handles all fields
+  { id: 'cpf', title: 'Your CPF', fields: [], skipWhen: { field: 'residency', equals: 'foreigner' } },
   // Screen 7: Property toggle
   {
     id: 'property-toggle',
@@ -304,7 +298,15 @@ const INITIAL_VALUES: Record<string, unknown> = {
   liquidNetWorth: 50000,
   residency: 'citizen',
   cpfKnown: false,
+  cpfMode: 'estimate',
+  cpfEntryMode: 'total',
   cpfTotal: 0,
+  cpfOA: 0,
+  cpfSA: 0,
+  cpfMA: 0,
+  cpfRA: 0,
+  usedOaForMortgage: false,
+  oaMortgageAmount: 0,
   ownsProperty: 'no',
   propertyType: 'condo',
   propertyValue: 0,
@@ -350,15 +352,31 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
   const retirementPhase: 'before-55' | '55-to-64' | '65-plus' =
     age >= 65 ? '65-plus' : age >= 55 ? '55-to-64' : 'before-55'
 
-  // M4: Estimate CPF if user didn't provide exact balances
-  let cpfKnown = values.cpfKnown as boolean
-  let cpfTotal: number | undefined = cpfKnown ? (values.cpfTotal as number) : undefined
-  if (!cpfKnown && values.residency !== 'foreigner') {
-    const yearsWorked = Math.max(0, age - 23)
-    const annualCpfContribution = income * 0.37
-    const estimatedTotal = yearsWorked * annualCpfContribution * 0.7
-    cpfKnown = true
-    cpfTotal = Math.round(estimatedTotal)
+  // CPF: 3 modes — estimate, know/total, know/breakdown
+  let cpfKnown = true
+  let cpfTotal: number | undefined
+  let cpfBreakdown: { oa: number; sa: number; ma: number; ra: number } | undefined
+  const cpfMode = values.cpfMode as 'estimate' | 'know'
+  if (cpfMode === 'estimate' || !cpfMode) {
+    // Estimate mode — recompute using estimateCpfBalances
+    const oaMortgage = values.usedOaForMortgage ? (values.oaMortgageAmount as number) : undefined
+    const estimateResult = estimateCpfBalances(
+      age, income, values.residency as 'citizen' | 'pr' | 'foreigner', undefined, oaMortgage,
+    )
+    cpfTotal = estimateResult.total
+    cpfBreakdown = { oa: estimateResult.oa, sa: estimateResult.sa, ma: estimateResult.ma, ra: estimateResult.ra }
+  } else if ((values.cpfEntryMode as string) === 'breakdown') {
+    // Know/breakdown — use exact user values
+    const oa = (values.cpfOA as number) ?? 0
+    const sa = (values.cpfSA as number) ?? 0
+    const ma = (values.cpfMA as number) ?? 0
+    const ra = (values.cpfRA as number) ?? 0
+    cpfTotal = oa + sa + ma + ra
+    cpfBreakdown = { oa, sa, ma, ra }
+  } else {
+    // Know/total — let applySetupDraft split via heuristic
+    cpfTotal = (values.cpfTotal as number) ?? 0
+    // cpfBreakdown left undefined — applySetupDraft uses splitCpfByAge
   }
 
   const draft: SetupDraft = {
@@ -371,6 +389,7 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
     residency: values.residency as 'citizen' | 'pr' | 'foreigner',
     cpfKnown,
     cpfTotal,
+    cpfBreakdown,
     ownsProperty: values.ownsProperty as 'owns' | 'planning' | 'no',
     propertyType: values.propertyType as 'hdb' | 'condo' | 'landed' | undefined,
     propertyValue: values.ownsProperty === 'owns' ? (values.propertyValue as number) : undefined,
@@ -425,7 +444,15 @@ function hydrateDraftToValues(draft: SetupDraft): Record<string, unknown> {
     liquidNetWorth: draft.liquidNetWorth,
     residency: draft.residency,
     cpfKnown: draft.cpfKnown,
+    cpfMode: (draft.cpfTotal ?? 0) > 0 ? 'know' : 'estimate',
+    cpfEntryMode: draft.cpfBreakdown ? 'breakdown' : 'total',
     cpfTotal: draft.cpfTotal ?? 0,
+    cpfOA: draft.cpfBreakdown?.oa ?? 0,
+    cpfSA: draft.cpfBreakdown?.sa ?? 0,
+    cpfMA: draft.cpfBreakdown?.ma ?? 0,
+    cpfRA: draft.cpfBreakdown?.ra ?? 0,
+    usedOaForMortgage: false,
+    oaMortgageAmount: 0,
     ownsProperty: draft.ownsProperty,
     propertyType: draft.propertyType ?? 'condo',
     propertyValue: draft.propertyValue ?? 0,
@@ -662,9 +689,24 @@ export function SetupPage() {
 
   const isIncomeScreen = currentScreen.id === 'income'
   const isExpensesScreen = currentScreen.id === 'expenses'
+  const isCpfScreen = currentScreen.id === 'cpf'
   const isDependentsScreen = currentScreen.id === 'dependents'
   const hasDependents = state.values.hasDependents as boolean
   const dependentsList = (state.values.dependentsList as Array<{ name: string; age: number; relationship: string }>) ?? []
+
+  // CPF estimate for the setup screen
+  const cpfEstimate = useMemo(() => {
+    if (!isCpfScreen) return null
+    const age = (state.values.currentAge as number) ?? 30
+    const monthlyInc = (state.values.monthlyIncome as number) ?? 0
+    const incType = (state.values.incomeType as 'take-home' | 'gross') ?? 'take-home'
+    const grossMo = incType === 'take-home' ? grossUpFromTakeHome(monthlyInc, age) : monthlyInc
+    const bonus = (state.values.hasBonusAws ? (state.values.bonusMonths as number) : 0) ?? 0
+    const grossAnnual = grossMo * (12 + bonus)
+    const residency = (state.values.residency as 'citizen' | 'pr' | 'foreigner') ?? 'citizen'
+    const oaMortgage = state.values.usedOaForMortgage ? (state.values.oaMortgageAmount as number) : undefined
+    return estimateCpfBalances(age, grossAnnual, residency, undefined, oaMortgage)
+  }, [isCpfScreen, state.values.currentAge, state.values.monthlyIncome, state.values.incomeType, state.values.hasBonusAws, state.values.bonusMonths, state.values.residency, state.values.usedOaForMortgage, state.values.oaMortgageAmount])
 
   // Build custom children for screens that need compound inputs
   const customChildren = (() => {
@@ -696,6 +738,41 @@ export function SetupPage() {
           monthlyExpenses={(state.values.monthlyExpenses as number) ?? 0}
           onMonthlyExpensesChange={(v) => handleChange('monthlyExpenses', v)}
           annualExpenses={((state.values.monthlyExpenses as number) ?? 0) * 12}
+        />
+      )
+    }
+    if (isCpfScreen && cpfEstimate) {
+      return (
+        <CpfSetupInput
+          age={(state.values.currentAge as number) ?? 30}
+          showRA={((state.values.currentAge as number) ?? 30) >= 55}
+          mode={(state.values.cpfMode as 'estimate' | 'know') ?? 'estimate'}
+          onModeChange={(m) => handleChange('cpfMode', m)}
+          estimate={{ total: cpfEstimate.total, split: cpfEstimate }}
+          mortgage={{
+            used: (state.values.usedOaForMortgage as boolean) ?? false,
+            amount: (state.values.oaMortgageAmount as number) ?? 0,
+          }}
+          onMortgageChange={(m) => {
+            handleChange('usedOaForMortgage', m.used)
+            handleChange('oaMortgageAmount', m.amount)
+          }}
+          manual={{
+            entryMode: (state.values.cpfEntryMode as 'total' | 'breakdown') ?? 'total',
+            total: (state.values.cpfTotal as number) ?? 0,
+            oa: (state.values.cpfOA as number) ?? 0,
+            sa: (state.values.cpfSA as number) ?? 0,
+            ma: (state.values.cpfMA as number) ?? 0,
+            ra: (state.values.cpfRA as number) ?? 0,
+          }}
+          onManualChange={(updates) => {
+            if (updates.entryMode !== undefined) handleChange('cpfEntryMode', updates.entryMode)
+            if (updates.total !== undefined) handleChange('cpfTotal', updates.total)
+            if (updates.oa !== undefined) handleChange('cpfOA', updates.oa)
+            if (updates.sa !== undefined) handleChange('cpfSA', updates.sa)
+            if (updates.ma !== undefined) handleChange('cpfMA', updates.ma)
+            if (updates.ra !== undefined) handleChange('cpfRA', updates.ra)
+          }}
         />
       )
     }
