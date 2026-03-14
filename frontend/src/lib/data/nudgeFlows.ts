@@ -45,7 +45,7 @@ export const NUDGE_TO_SECTION: Record<NudgeFlowId, SectionId> = {
   healthcare: 'section-healthcare',
   salary: 'section-income',
   srs: 'section-net-worth',
-  goals: 'section-goals',
+  goals: 'section-expenses',  // goals are inside the combined spending section
   allocation: 'section-allocation',
   protection: 'section-protection',
 }

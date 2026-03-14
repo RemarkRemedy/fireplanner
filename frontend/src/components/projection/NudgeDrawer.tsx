@@ -91,6 +91,27 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
     onCompleteRef.current(delta)
   }, [currentSnapshot])
 
+  // Timeout fallback: if applyFlowValues wrote data but metrics didn't change,
+  // the snapshot-based useEffect above never fires. Force completion after 2s.
+  useEffect(() => {
+    if (!pendingCompletion.current) return
+    const timer = setTimeout(() => {
+      if (!pendingCompletion.current) return
+      const { flowId: id, before } = pendingCompletion.current
+      const flow = NUDGE_FLOWS.find((f) => f.id === id)
+      if (flow) {
+        const delta = computeDelta(before, currentSnapshot, flow.label, flow.explanation)
+        pendingCompletion.current = null
+        beforeSnapshotRef.current = null
+        setStepIndex(0)
+        setValues({})
+        onCompleteRef.current(delta)
+      }
+    }, 2000)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSnapshot])
+
   const flow = flowId !== null ? getNudgeFlow(flowId) : undefined
 
   if (!flow || flowId === null) {
@@ -115,12 +136,14 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
   function handleNext() {
     if (isLastStep) {
       // Apply flow values to the store
-      applyFlowValues(flowId, values)
+      const applied = applyFlowValues(flowId, values)
 
-      // Mark flow as completed in UIStore
-      const completed = useUIStore.getState().completedNudgeFlows
-      if (!completed.includes(flowId)) {
-        setField('completedNudgeFlows', [...completed, flowId])
+      if (applied) {
+        // Mark flow as completed in UIStore
+        const completed = useUIStore.getState().completedNudgeFlows
+        if (!completed.includes(flowId)) {
+          setField('completedNudgeFlows', [...completed, flowId])
+        }
       }
 
       // Store pending completion so the useEffect computes delta after store update

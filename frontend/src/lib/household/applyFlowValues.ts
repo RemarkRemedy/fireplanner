@@ -1,3 +1,16 @@
+/**
+ * Known unmapped fields (no store destination yet):
+ * - Healthcare: hasRider, annualIspPremium, useMediSaveForPremiums, careShieldSupplementPlan, annualCareShieldPremium
+ * - Salary: variablePayPercent, salaryStopYear
+ * - SRS: srsInvestmentStrategy
+ * - Protection: emergencyFundTarget, emergencyFundType, hasTermLife, annualInsurancePremiums
+ * - Property: rentalExpensesPercent, rentalIncomeEndYear
+ * - Expenses: retirementSpendingModel
+ * - Goals: goalCurrentSavings
+ * - Allocation: rebalancingFrequency, glidePathEndTemplate
+ * These are collected for future features. Adding store support requires schema changes.
+ */
+
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { createId } from '@/lib/household/ids'
@@ -41,11 +54,11 @@ function toAllocationTemplate(value: string): Exclude<AllocationTemplate, 'custo
  * Apply the collected values from a nudge flow to the appropriate stores.
  * Shared between RefineFlowPage (full-page flows) and NudgeDrawer (drawer flows).
  */
-export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unknown>): void {
+export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unknown>): boolean {
   const store = useHouseholdPlanStore.getState()
   const plan = store.plan
   const selfAdult = plan.adults.find((a) => a.owner === 'self')
-  if (!selfAdult) return
+  if (!selfAdult) return false
 
   switch (flowId) {
     case 'cpf': {
@@ -86,12 +99,12 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       store.updateAdult(selfAdult.id, {
         cpf: { ...selfAdult.cpf, ...cpfUpdates },
       })
-      break
+      return true
     }
 
     case 'property': {
       const property = plan.properties[0]
-      if (!property) break
+      if (!property) return false
 
       const propertyUpdates: Record<string, unknown> = {}
 
@@ -168,14 +181,14 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       }
 
       store.updateProperty(property.id, propertyUpdates)
-      break
+      return true
     }
 
     case 'expenses': {
       const baseExpense = plan.expenses.find(
         (e) => e.kind === 'base-living' && e.timing.owner === 'self'
       )
-      if (!baseExpense) break
+      if (!baseExpense) return false
 
       const categoryFields = [
         'housingExpenses',
@@ -193,7 +206,13 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       }, 0)
 
       const expenseUpdates: Record<string, unknown> = {}
-      if (total > 0) {
+      // Only overwrite expense total if user filled in at least one category
+      // and the computed sum is meaningful. This avoids understating the total
+      // when only a partial breakdown is provided.
+      const filledCount = categoryFields.filter(
+        (f) => typeof values[f] === 'number' && (values[f] as number) > 0,
+      ).length
+      if (filledCount > 0 && total > 0) {
         // Category values are monthly; convert to annual
         expenseUpdates.amount = total * 12
       }
@@ -226,7 +245,7 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         }
         store.addGoal(goal)
       }
-      break
+      return true
     }
 
     case 'healthcare': {
@@ -261,7 +280,7 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
           },
         })
       }
-      break
+      return true
     }
 
     case 'salary': {
@@ -269,7 +288,7 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       const salaryIncome = plan.income.find(
         (inc) => inc.kind === 'salary-model' && inc.owner === 'self'
       )
-      if (!salaryIncome) break
+      if (!salaryIncome) return false
 
       const incomeUpdates: Record<string, unknown> = {}
 
@@ -301,7 +320,7 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       }
 
       store.updateIncome(salaryIncome.id, incomeUpdates)
-      break
+      return true
     }
 
     case 'srs': {
@@ -325,11 +344,11 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       store.updateAdult(selfAdult.id, {
         srs: srsUpdates,
       })
-      break
+      return true
     }
 
     case 'goals': {
-      if (typeof values.goalName !== 'string' || !values.goalName) break
+      if (typeof values.goalName !== 'string' || !values.goalName) return false
 
       const category = typeof values.goalCategory === 'string'
         ? toGoalCategory(values.goalCategory)
@@ -356,7 +375,7 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       }
 
       store.addGoal(goal)
-      break
+      return true
     }
 
     case 'allocation': {
@@ -379,7 +398,7 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         }
         allocationState.setGlidePathConfig(updatedConfig)
       }
-      break
+      return true
     }
 
     case 'protection': {
@@ -425,10 +444,10 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       if (Object.keys(adultUpdates).length > 0) {
         store.updateAdult(selfAdult.id, adultUpdates)
       }
-      break
+      return true
     }
 
     default:
-      break
+      return false
   }
 }

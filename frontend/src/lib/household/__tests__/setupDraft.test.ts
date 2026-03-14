@@ -571,6 +571,44 @@ describe('hydrateSetupFromPlan', () => {
     const hydrated = hydrateSetupFromPlan(getPlan())
     expect(hydrated.jointMonthlyExpenses).toBe(3_000)
   })
+
+  it('extracts dependents from plan', () => {
+    applySetupDraft(
+      freshCoupleDraft({
+        dependents: [
+          { name: 'Child A', age: 5, relationship: 'child' },
+          { name: 'Parent B', age: 70, relationship: 'parent' },
+        ],
+      }),
+      'couple',
+    )
+    const hydrated = hydrateSetupFromPlan(getPlan())
+    expect(hydrated.dependents).toHaveLength(2)
+    expect(hydrated.dependents![0]).toEqual({ name: 'Child A', age: 5, relationship: 'child' })
+    expect(hydrated.dependents![1]).toEqual({ name: 'Parent B', age: 70, relationship: 'parent' })
+  })
+
+  it('redo with existing dependents preserves them if user does not change them', () => {
+    // Initial setup with dependents
+    applySetupDraft(
+      freshCoupleDraft({
+        dependents: [
+          { name: 'Child A', age: 5, relationship: 'child' },
+        ],
+      }),
+      'couple',
+    )
+    expect(getPlan().dependents).toHaveLength(1)
+
+    // Hydrate and re-apply (simulates redo without changing dependents)
+    const hydrated = hydrateSetupFromPlan(getPlan())
+    expect(hydrated.dependents).toHaveLength(1)
+    applySetupDraft(hydrated, 'couple')
+
+    // Dependents should still be there
+    expect(getPlan().dependents).toHaveLength(1)
+    expect(getPlan().dependents[0].label).toBe('Child A')
+  })
 })
 
 // ---------------------------------------------------------------------------

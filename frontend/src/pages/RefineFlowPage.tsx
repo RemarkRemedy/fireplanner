@@ -29,7 +29,17 @@ export function RefineFlowPage() {
   const flow = flowId ? getNudgeFlow(flowId as NudgeFlowId) : undefined
   const isValid = flowId != null && fullPageIds.includes(flowId as NudgeFlowId) && flow != null
 
-  const [values, setValues] = useState<Record<string, unknown>>({})
+  // Initialize toggle defaults from flow definition so skipWhen logic works
+  const [values, setValues] = useState<Record<string, unknown>>(() => {
+    if (!flow) return {}
+    const defaults: Record<string, unknown> = {}
+    for (const screen of flow.screens) {
+      for (const field of screen.fields) {
+        if (field.type === 'toggle') defaults[field.name] = false
+      }
+    }
+    return defaults
+  })
   const [currentScreenIndex, setCurrentScreenIndex] = useState(0)
 
   // Capture before-snapshot on mount
@@ -78,20 +88,22 @@ export function RefineFlowPage() {
     }
 
     // Final screen: apply values and navigate
-    applyFlowValues(flowId as NudgeFlowId, values)
+    const applied = applyFlowValues(flowId as NudgeFlowId, values)
 
-    // Mark flow as completed in UIStore
-    const uiStore = useUIStore.getState()
-    const completed = uiStore.completedNudgeFlows
-    if (!completed.includes(flowId as NudgeFlowId)) {
-      useUIStore.getState().setField('completedNudgeFlows', [
-        ...completed,
-        flowId as NudgeFlowId,
-      ])
+    if (applied) {
+      // Mark flow as completed in UIStore
+      const uiStore = useUIStore.getState()
+      const completed = uiStore.completedNudgeFlows
+      if (!completed.includes(flowId as NudgeFlowId)) {
+        useUIStore.getState().setField('completedNudgeFlows', [
+          ...completed,
+          flowId as NudgeFlowId,
+        ])
+      }
     }
 
     navigate('/projection', {
-      state: { showDelta: true, flowId },
+      state: { showDelta: applied, flowId },
     })
   }, [flow, flowId, values, currentScreenIndex, navigate])
 

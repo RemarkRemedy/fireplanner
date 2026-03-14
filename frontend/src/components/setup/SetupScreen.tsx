@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -133,11 +133,26 @@ export function SetupScreen({
   totalSteps,
   submitLabel = 'Continue',
 }: SetupScreenProps) {
+  const [requiredErrors, setRequiredErrors] = useState<Set<string>>(new Set())
+
   return (
     <form
       aria-label={screen.title}
       onSubmit={(e) => {
         e.preventDefault()
+        // Validate required fields before advancing
+        const missing = screen.fields.filter(
+          (f) =>
+            f.required &&
+            (values[f.name] === undefined ||
+              values[f.name] === '' ||
+              values[f.name] === 0),
+        )
+        if (missing.length > 0) {
+          setRequiredErrors(new Set(missing.map((f) => f.name)))
+          return
+        }
+        setRequiredErrors(new Set())
         onNext()
       }}
       className="flex flex-col gap-6"
@@ -162,12 +177,16 @@ export function SetupScreen({
 
       <div className="flex flex-col gap-4">
         {screen.fields.map((field) => (
-          <FieldRenderer
-            key={field.name}
-            field={field}
-            values={values}
-            onChange={onChange}
-          />
+          <div key={field.name}>
+            <FieldRenderer
+              field={field}
+              values={values}
+              onChange={onChange}
+            />
+            {requiredErrors.has(field.name) && (
+              <p className="mt-1 text-xs text-destructive">This field is required</p>
+            )}
+          </div>
         ))}
       </div>
 

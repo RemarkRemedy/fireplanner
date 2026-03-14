@@ -637,6 +637,13 @@ export function hydrateSetupFromPlan(plan: HouseholdPlan): SetupDraft {
     ? 'enhanced' // collapse standard → enhanced for simplified wizard
     : (self.healthcare.ispTier as SetupDraft['ispTier'])
 
+  // Dependents
+  const dependents: SetupDraft['dependents'] = plan.dependents.map((d) => ({
+    name: d.label,
+    age: d.currentAge ?? 0,
+    relationship: d.relationship,
+  }))
+
   return {
     currentAge: self.currentAge,
     retirementAge: self.retirementAge,
@@ -659,6 +666,7 @@ export function hydrateSetupFromPlan(plan: HouseholdPlan): SetupDraft {
     retirementPhase: self.cpf.retirementPhase ?? undefined,
     partner,
     jointMonthlyExpenses,
+    dependents: dependents.length > 0 ? dependents : undefined,
     isRedo: true,
   }
 }
