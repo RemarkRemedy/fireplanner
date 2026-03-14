@@ -86,8 +86,8 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'cpf',
     title: 'Your CPF',
     fields: [
-      { name: 'cpfKnown', label: 'I know my exact CPF balances', type: 'toggle', helperText: 'If you don\'t know your exact balances, we\'ll estimate based on your age and income. You can refine later.' },
-      { name: 'cpfTotal', label: 'Total CPF balance (OA + SA + MA)', type: 'currency', validationKey: 'cpfTotal', showWhen: { field: 'cpfKnown', equals: true }, helperText: 'Check my.cpf.gov.sg \u2192 My Statement for your balances.' },
+      { name: 'cpfKnown', label: 'I know my CPF balances', type: 'toggle', helperText: 'If you don\'t know, we\'ll estimate based on your age and income. You can refine later on the CPF details page.' },
+      { name: 'cpfTotal', label: 'Total CPF balance (OA + SA + MA)', type: 'currency', validationKey: 'cpfTotal', showWhen: { field: 'cpfKnown', equals: true }, helperText: 'A rough total is fine. You can enter per-account breakdown later.' },
     ],
     skipWhen: { field: 'residency', equals: 'foreigner' },
   },
@@ -352,11 +352,11 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
 
   // M4: Estimate CPF if user didn't provide exact balances
   let cpfKnown = values.cpfKnown as boolean
-  let cpfTotal: number | undefined = values.cpfKnown ? (values.cpfTotal as number) : undefined
-  if (!values.cpfKnown && values.residency !== 'foreigner') {
-    const yearsWorked = Math.max(0, age - 23) // assume started working at 23
-    const annualCpfContribution = income * 0.37 // total CPF rate for under-55
-    const estimatedTotal = yearsWorked * annualCpfContribution * 0.7 // 0.7 factor for withdrawals/housing
+  let cpfTotal: number | undefined = cpfKnown ? (values.cpfTotal as number) : undefined
+  if (!cpfKnown && values.residency !== 'foreigner') {
+    const yearsWorked = Math.max(0, age - 23)
+    const annualCpfContribution = income * 0.37
+    const estimatedTotal = yearsWorked * annualCpfContribution * 0.7
     cpfKnown = true
     cpfTotal = Math.round(estimatedTotal)
   }
