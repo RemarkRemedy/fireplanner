@@ -1,27 +1,27 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { trackEvent } from '@/lib/analytics'
 import { Toaster } from 'sonner'
-import { HelpCircle } from 'lucide-react'
 import { Sidebar } from './Sidebar'
 import { FireStatsStrip } from './FireStatsStrip'
 import { SaveIndicator } from './SaveIndicator'
-import { HelpPanel } from './HelpPanel'
 import { PlanUrlHandler } from '@/components/shared/PlanUrlHandler'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { Button } from '@/components/ui/button'
 import { useUIStore } from '@/stores/useUIStore'
 import { cn } from '@/lib/utils'
 import { tryUndo } from '@/lib/undo'
 import { BetaBanner } from '@/components/shared/BetaBanner'
 import { DataUpdateBanner } from '@/components/shared/DataUpdateBanner'
-import { MobileShareFab } from '@/components/shared/MobileShareFab'
 import { isCompanionMode } from '@/lib/companion/isCompanionMode'
 import { ExpenseTrackerProvider } from '@/components/email/ExpenseTrackerProvider'
 import { useExpenseTracker } from '@/hooks/useExpenseTracker'
 import { ExpenseTrackerBanner } from '@/components/email/ExpenseTrackerBanner'
 import { useExitIntent } from '@/hooks/useExitIntent'
-import { ExpenseTrackerModal } from '@/components/email/ExpenseTrackerModal'
+
+// Lazy-load components that aren't needed for first paint
+const HelpPanel = lazy(() => import('./HelpPanel').then(m => ({ default: m.HelpPanel })))
+const ExpenseTrackerModal = lazy(() => import('@/components/email/ExpenseTrackerModal').then(m => ({ default: m.ExpenseTrackerModal })))
+const MobileShareFab = lazy(() => import('@/components/shared/MobileShareFab').then(m => ({ default: m.MobileShareFab })))
+const MobileHelpSheet = lazy(() => import('./MobileHelpSheet').then(m => ({ default: m.MobileHelpSheet })))
 
 // Pages that show the stats strip (inputs and analysis pages, not start/reference)
 const STATS_ROUTES = ['/inputs', '/projection', '/withdrawal', '/stress-test', '/dashboard', '/planner', '/health-check']
@@ -182,35 +182,29 @@ export function AppLayout() {
                 </p>
               </footer>
             </main>
-            {isDesktop && helpPanelOpen && <HelpPanel />}
+            {isDesktop && helpPanelOpen && (
+              <Suspense fallback={null}>
+                <HelpPanel />
+              </Suspense>
+            )}
           </div>
           {showStats && isBottom && <FireStatsStrip position="bottom" />}
         </div>
 
         {/* Single modal instance for entire app */}
-        {!companionMode && <ExpenseTrackerModal />}
+        {!companionMode && (
+          <Suspense fallback={null}>
+            <ExpenseTrackerModal />
+          </Suspense>
+        )}
         {!companionMode && <ExitIntentTrigger />}
 
         {/* Mobile FABs: Share + Help */}
         {!isDesktop && (
-          <>
+          <Suspense fallback={null}>
             {!companionMode && <MobileShareFab />}
-            <div className="fixed bottom-16 right-4 z-40 md:hidden">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button size="icon" className="rounded-full shadow-lg h-10 w-10">
-                    <HelpCircle className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="bottom" className="h-[70vh] overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle>Help</SheetTitle>
-                  </SheetHeader>
-                  <HelpPanel mobile />
-                </SheetContent>
-              </Sheet>
-            </div>
-          </>
+            <MobileHelpSheet />
+          </Suspense>
         )}
       </ExpenseTrackerProvider>
     </div>
