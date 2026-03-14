@@ -8,6 +8,7 @@ import { parseAiaEliteSecureIncome5Pay } from './parsers/aiaEliteSecureIncome5Pa
 import { parseAiaEliteSecureIncomeSp } from './parsers/aiaEliteSecureIncomeSp.js'
 import { parseAiaInvestEasyCashSrs } from './parsers/aiaInvestEasyCashSrs.js'
 import { parseAiaInvestEasyCpf } from './parsers/aiaInvestEasyCpf.js'
+import { parseAiaProAchiever3 } from './parsers/aiaProAchiever3.js'
 import { parseAiaPlatinumRetirementElite } from './parsers/aiaPlatinumRetirementElite.js'
 import { parseAiaPlatinumWealthElite2 } from './parsers/aiaPlatinumWealthElite2.js'
 import { parseAiaPlatinumWealthLegacy } from './parsers/aiaPlatinumWealthLegacy.js'
@@ -115,6 +116,7 @@ const PRUDENTIAL_PRUVANTAGE_WEALTH_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PR
 const TOKIO_MARINE_WEALTH_ENHANCER_CPFIS_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UL4_TPDN_CIZ_Summary.pdf'
 const TOKIO_MARINE_WEALTH_MAX_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNZV_TPDN_CIZ_Summary.pdf'
 const TOKIO_MARINE_WEALTH_PRO_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNZS_TPDN_CIZ_Summary.pdf'
+const AIA_PRO_ACHIEVER_3_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_APA3.0_Oct2024.pdf'
 const AIA_ELITE_SECURE_INCOME_5_PAY_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_ESI5P_Jul2025.pdf'
 const AIA_ELITE_SECURE_INCOME_SP_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_ESISP_Jul2025.pdf'
 const AIA_INVEST_EASY_CASH_SRS_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_NonCPFIE_Oct2024.pdf'
@@ -302,6 +304,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const tokioMarineChecksum = await sha256(TOKIO_MARINE_WEALTH_MAX_II_SOURCE_PATH)
   const tokioMarineWealthProExtracted = await extractPdfText(TOKIO_MARINE_WEALTH_PRO_II_SOURCE_PATH)
   const tokioMarineWealthProChecksum = await sha256(TOKIO_MARINE_WEALTH_PRO_II_SOURCE_PATH)
+  const aiaProAchiever3Extracted = await extractPdfText(AIA_PRO_ACHIEVER_3_SOURCE_PATH)
+  const aiaProAchiever3Checksum = await sha256(AIA_PRO_ACHIEVER_3_SOURCE_PATH)
   const brochurePartialProducts = await buildBrochurePartialProducts(discovery.brochureOnlySources)
 
   const products = [
@@ -532,6 +536,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseTokioMarineWealthProIi({
       document: tokioMarineWealthProExtracted,
       sourceChecksumSha256: tokioMarineWealthProChecksum,
+    }),
+    parseAiaProAchiever3({
+      document: aiaProAchiever3Extracted,
+      sourceChecksumSha256: aiaProAchiever3Checksum,
     }),
     ...brochurePartialProducts,
   ]

@@ -1573,6 +1573,56 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current sum insured'))).toBe(true)
   })
 
+  it('maps AIA Pro Achiever 3.0 into a partial seed with premium-year charge schedules', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'aia-pro-achiever-3')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-iip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-pro-achiever-3-regular-premium-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-pro-achiever-3-premium-pass')
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.mipLength).toBe(10)
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'policy',
+      }),
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'regular-premium-charge',
+        basis: 'annual-contribution',
+        yearBasis: 'premium-year',
+        rateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 1, rate: 0.76 },
+          { startPolicyYear: 2, endPolicyYear: 2, rate: 0.51 },
+          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.26 },
+          { startPolicyYear: 4, endPolicyYear: 6, rate: 0.04 },
+          { startPolicyYear: 7, endPolicyYear: null, rate: 0 },
+        ],
+      }),
+    ])
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        basis: 'event-amount',
+        rate: 0.05,
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
+        yearBasis: 'premium-year',
+      }),
+    ])
+  })
+
   it('maps AIA Elite Secure Income - Single Premium into a partial seed with manual scheduled-payout support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'aia-elite-secure-income-single-premium')
