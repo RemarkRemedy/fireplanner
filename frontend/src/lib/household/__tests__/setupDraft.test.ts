@@ -574,6 +574,160 @@ describe('hydrateSetupFromPlan', () => {
 })
 
 // ---------------------------------------------------------------------------
+// Redo clearing logic (C5 fixes)
+// ---------------------------------------------------------------------------
+
+describe('applySetupDraft — redo clearing', () => {
+  beforeEach(() => {
+    useHouseholdPlanStore.getState().reset()
+  })
+
+  it('zeros CPF balances on redo when cpfKnown=false and not foreigner', () => {
+    // First apply with known CPF
+    applySetupDraft(
+      freshIndividualDraft({ cpfKnown: true, cpfTotal: 100_000 }),
+      'individual',
+    )
+    const selfBefore = getSelf()
+    expect(selfBefore.cpf.balances.oa).toBeGreaterThan(0)
+
+    // Redo with cpfKnown=false
+    applySetupDraft(
+      freshIndividualDraft({ cpfKnown: false, residency: 'citizen', isRedo: true }),
+      'individual',
+    )
+
+    const selfAfter = getSelf()
+    expect(selfAfter.cpf.balances).toEqual({ oa: 0, sa: 0, ma: 0, ra: 0 })
+  })
+
+  it('does NOT zero CPF balances on redo for foreigners', () => {
+    // First apply with known CPF as citizen
+    applySetupDraft(
+      freshIndividualDraft({ cpfKnown: true, cpfTotal: 100_000 }),
+      'individual',
+    )
+
+    // Redo as foreigner with cpfKnown=false — should not touch CPF
+    applySetupDraft(
+      freshIndividualDraft({ cpfKnown: false, residency: 'foreigner', isRedo: true }),
+      'individual',
+    )
+
+    const selfAfter = getSelf()
+    // Foreigner path skips CPF zeroing, so balances from initial apply remain
+    const total = selfAfter.cpf.balances.oa + selfAfter.cpf.balances.sa + selfAfter.cpf.balances.ma + selfAfter.cpf.balances.ra
+    expect(total).toBe(100_000)
+  })
+
+  it('removes shared expense on redo when jointMonthlyExpenses is 0', () => {
+    // First apply as couple with joint expenses
+    applySetupDraft(freshCoupleDraft({ jointMonthlyExpenses: 3_000 }), 'couple')
+    const jointBefore = getPlan().expenses.find(
+      (e) => e.owner === 'shared' && e.kind === 'base-living',
+    )
+    expect(jointBefore).toBeDefined()
+
+    // Redo with zero joint expenses
+    applySetupDraft(
+      freshCoupleDraft({ jointMonthlyExpenses: 0, isRedo: true }),
+      'couple',
+    )
+
+    const jointAfter = getPlan().expenses.find(
+      (e) => e.owner === 'shared' && e.kind === 'base-living',
+    )
+    expect(jointAfter).toBeUndefined()
+  })
+
+  it('removes all dependents on redo when dependents array is empty', () => {
+    // First apply with dependents
+    applySetupDraft(
+      freshIndividualDraft({
+        dependents: [
+          { name: 'Alice', age: 5, relationship: 'child' },
+          { name: 'Bob', age: 8, relationship: 'child' },
+        ],
+      }),
+      'individual',
+    )
+    expect(getPlan().dependents.length).toBe(2)
+
+    // Redo with empty dependents
+    applySetupDraft(
+      freshIndividualDraft({ dependents: [], isRedo: true }),
+      'individual',
+    )
+
+    expect(getPlan().dependents.length).toBe(0)
+  })
+
+  it('removes all dependents on redo when dependents is undefined', () => {
+    // First apply with dependents
+    applySetupDraft(
+      freshIndividualDraft({
+        dependents: [{ name: 'Charlie', age: 3, relationship: 'child' }],
+      }),
+      'individual',
+    )
+    expect(getPlan().dependents.length).toBe(1)
+
+    // Redo without dependents field
+    applySetupDraft(
+      freshIndividualDraft({ isRedo: true }),
+      'individual',
+    )
+
+    expect(getPlan().dependents.length).toBe(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// buildPropertyEntry downsizing shape (C3 fix)
+// ---------------------------------------------------------------------------
+
+describe('buildPropertyEntry — downsizing config', () => {
+  beforeEach(() => {
+    useHouseholdPlanStore.getState().reset()
+  })
+
+  it('produces a valid DownsizingConfig shape with correct field names', () => {
+    applySetupDraft(
+      freshIndividualDraft({
+        ownsProperty: 'owns',
+        propertyType: 'condo',
+        propertyValue: 1_000_000,
+        mortgageBalance: 500_000,
+      }),
+      'individual',
+    )
+
+    const property = getPlan().properties.find((p) => p.owner === 'self')
+    expect(property).toBeDefined()
+    const ds = property!.downsizing
+
+    // Verify correct DownsizingConfig fields exist
+    expect(ds.scenario).toBe('none')
+    expect(typeof ds.sellAge).toBe('number')
+    expect(typeof ds.expectedSalePrice).toBe('number')
+    expect(typeof ds.newPropertyCost).toBe('number')
+    expect(typeof ds.newMortgageRate).toBe('number')
+    expect(typeof ds.newMortgageTerm).toBe('number')
+    expect(typeof ds.newLtv).toBe('number')
+    expect(typeof ds.monthlyRent).toBe('number')
+    expect(typeof ds.rentGrowthRate).toBe('number')
+
+    // Verify old incorrect fields are NOT present
+    expect('enabled' in ds).toBe(false)
+    expect('downsizeAge' in ds).toBe(false)
+    expect('newPropertyValue' in ds).toBe(false)
+    expect('newLeaseYears' in ds).toBe(false)
+    expect('transactionCosts' in ds).toBe(false)
+    expect('reinvestPercent' in ds).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
 // Round-trip test
 // ---------------------------------------------------------------------------
 

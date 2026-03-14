@@ -20,7 +20,7 @@ import { trackEvent } from '@/lib/analytics'
 // ---------------------------------------------------------------------------
 
 const SCREENS: (NudgeFlowScreen & {
-  skipWhen?: { field: string; equals: string | boolean }
+  skipWhen?: { field: string; equals?: string | boolean; notEquals?: string | boolean }
   /** Only show for these plan types. Omit to show for all. */
   planTypes?: HouseholdPlanType[]
 })[] = [
@@ -113,7 +113,7 @@ const SCREENS: (NudgeFlowScreen & {
       },
     ],
   },
-  // Screen 8: Property details (skip if no property)
+  // Screen 8a: Property details — current owner (show only when owns)
   {
     id: 'property-details',
     title: 'Your property',
@@ -131,7 +131,27 @@ const SCREENS: (NudgeFlowScreen & {
       { name: 'propertyValue', label: 'Estimated current value', type: 'currency' },
       { name: 'mortgageBalance', label: 'Outstanding mortgage', type: 'currency' },
     ],
-    skipWhen: { field: 'ownsProperty', equals: 'no' },
+    skipWhen: { field: 'ownsProperty', notEquals: 'owns' },
+  },
+  // Screen 8b: Property details — planning to buy (show only when planning)
+  {
+    id: 'property-planning',
+    title: 'Your future property',
+    fields: [
+      {
+        name: 'propertyType',
+        label: 'Property type',
+        type: 'select',
+        options: [
+          { value: 'hdb', label: 'HDB' },
+          { value: 'condo', label: 'Condo' },
+          { value: 'landed', label: 'Landed' },
+        ],
+      },
+      { name: 'purchasePrice', label: 'Expected purchase price', type: 'currency' },
+      { name: 'purchaseYearsFromNow', label: 'Years until purchase', type: 'number' },
+    ],
+    skipWhen: { field: 'ownsProperty', notEquals: 'planning' },
   },
   // Screen 9: Healthcare toggle
   {

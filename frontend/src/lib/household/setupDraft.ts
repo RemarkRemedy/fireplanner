@@ -146,6 +146,16 @@ export function applySetupDraft(draft: SetupDraft, planType: HouseholdPlanType):
   }
   useHouseholdPlanStore.getState().updateAdult(selfAdult.id, adultUpdates)
 
+  // On redo, zero out CPF balances when user says they don't know them (but only for citizens/PRs)
+  if (draft.isRedo && !draft.cpfKnown && draft.residency !== 'foreigner') {
+    const refreshedSelf = useHouseholdPlanStore.getState().plan.adults.find((a) => a.owner === 'self')
+    if (refreshedSelf) {
+      useHouseholdPlanStore.getState().updateAdult(refreshedSelf.id, {
+        cpf: { ...refreshedSelf.cpf, balances: { oa: 0, sa: 0, ma: 0, ra: 0 } },
+      })
+    }
+  }
+
   // --- Update seeded salary-model income entry ---
   const refreshedPlan = useHouseholdPlanStore.getState().plan
   const salaryEntry = refreshedPlan.income.find(
@@ -230,17 +240,26 @@ export function applySetupDraft(draft: SetupDraft, planType: HouseholdPlanType):
         growthModel: 'inflation-linked',
       })
     }
+  } else if (draft.isRedo) {
+    // On redo with zero/undefined joint expenses, remove existing shared expense
+    const existingJoint = useHouseholdPlanStore.getState().plan.expenses.find(
+      (e) => e.owner === 'shared' && e.kind === 'base-living',
+    )
+    if (existingJoint) {
+      useHouseholdPlanStore.getState().removeExpense(existingJoint.id)
+    }
   }
 
   // --- Dependents ---
-  if (draft.dependents && draft.dependents.length > 0) {
-    // On redo, clear existing dependents before re-adding so we don't accumulate duplicates
-    if (draft.isRedo) {
-      const existingDeps = useHouseholdPlanStore.getState().plan.dependents
-      for (const dep of existingDeps) {
-        useHouseholdPlanStore.getState().removeDependent(dep.id)
-      }
+  // On redo, always clear existing dependents first (even if new list is empty)
+  if (draft.isRedo) {
+    const existingDeps = [...useHouseholdPlanStore.getState().plan.dependents]
+    for (const dep of existingDeps) {
+      useHouseholdPlanStore.getState().removeDependent(dep.id)
     }
+  }
+  // Then add from draft
+  if (draft.dependents && draft.dependents.length > 0) {
     for (const dep of draft.dependents) {
       useHouseholdPlanStore.getState().addDependent({
         id: createId('dependent'),
@@ -332,12 +351,15 @@ function buildPropertyEntry(
     existingLeaseYears: 99,
     existingApplyBalaDecay: true,
     downsizing: {
-      enabled: false,
-      downsizeAge: 65,
-      newPropertyValue: 500_000,
-      newLeaseYears: 99,
-      transactionCosts: 0.03,
-      reinvestPercent: 1.0,
+      scenario: 'none',
+      sellAge: 65,
+      expectedSalePrice: 0,
+      newPropertyCost: 0,
+      newMortgageRate: 0.035,
+      newMortgageTerm: 25,
+      newLtv: 0.75,
+      monthlyRent: 0,
+      rentGrowthRate: 0.03,
     },
     hdbFlatType: '4-room',
     hdbMonetizationStrategy: 'none',

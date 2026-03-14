@@ -185,9 +185,13 @@ export function SetupScreen({
 }
 
 export function shouldSkipScreen(
-  screen: { skipWhen?: { field: string; equals: string | boolean } },
+  screen: { skipWhen?: { field: string; equals?: string | boolean; notEquals?: string | boolean } },
   values: Record<string, unknown>,
 ): boolean {
   if (!screen.skipWhen) return false
-  return values[screen.skipWhen.field] === screen.skipWhen.equals
+  const actual = values[screen.skipWhen.field]
+  if (screen.skipWhen.notEquals !== undefined) {
+    return actual !== screen.skipWhen.notEquals
+  }
+  return actual === screen.skipWhen.equals
 }
