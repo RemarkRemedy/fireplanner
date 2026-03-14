@@ -42022,6 +42022,155 @@
     ]
   },
   {
+    "id": "tokio-marine-wealth-enhancer-cpfis",
+    "insurer": "Tokio Marine",
+    "productName": "TM Wealth Enhancer (CPFIS)",
+    "sourceFileName": "TML_UL4_TPDN_CIZ_Summary.pdf",
+    "sourceChecksumSha256": "344fc1b46fadb9022e5ee142046460334f0da6e7f99f4b2a53dc50b15c2d17a9",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:tokio-marine-wealth-enhancer-cpfis-zero-single-premium-charge",
+      "branch:tokio-marine-wealth-enhancer-cpfis-zero-top-up-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "tokio-marine-wealth-enhancer-cpfis-death-benefit",
+      "tokio-marine-wealth-enhancer-cpfis-single-premium-policy-value-tracking",
+      "tokio-marine-wealth-enhancer-cpfis-regular-top-up-premiums",
+      "tokio-marine-wealth-enhancer-cpfis-partial-withdrawal",
+      "tokio-marine-wealth-enhancer-cpfis-full-surrender",
+      "tokio-marine-wealth-enhancer-cpfis-fund-management-fee",
+      "tokio-marine-wealth-enhancer-cpfis-accounting-and-custody-fees",
+      "tokio-marine-wealth-enhancer-cpfis-fund-switching",
+      "tokio-marine-wealth-enhancer-cpfis-lapse-and-termination"
+    ],
+    "warnings": [
+      "TM Wealth Enhancer (CPFIS) is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge single-premium and ad-hoc top-up allocation path for the CPF-funded corridor through the open-ended no-MIP basis, while protection formulas, regular top-up enrollment, withdrawal administration, and fund-level charges remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-open-ended-cpf",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and subscription",
+                "excerpt": "TM Wealth Enhancer is a whole life single premium investment-linked plan that allows you to invest in a range of investment-linked funds while providing protection against death as long as the policy is in force. The pre"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "single-premium-charge",
+            "label": "Single Premium Charge (CPF)",
+            "basis": "annual-contribution",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 100% allocation of the initial CPF-funded single premium with no additional premium charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and subscription",
+                "excerpt": "TM Wealth Enhancer is a whole life single premium investment-linked plan that allows you to invest in a range of investment-linked funds while providing protection against death as long as the policy is in force. The pre"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Ad-Hoc Top-up Premium Charge (CPF)",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 100% allocation of ad-hoc top-up premiums with no additional top-up charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and subscription",
+                "excerpt": "TM Wealth Enhancer is a whole life single premium investment-linked plan that allows you to invest in a range of investment-linked funds while providing protection against death as long as the policy is in force. The pre"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "TM Wealth Enhancer (CPFIS) is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge single-premium and ad-hoc top-up allocation path for the CPF-funded corridor through the open-ended no-MIP basis.",
+          "Administrative charge is not applicable and switching is published as free, but switching behavior itself remains outside the current calculator surface.",
+          "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
+        ],
+        "unsupportedItems": [
+          "Death-benefit protection formulas remain informational only.",
+          "Single-premium and top-up policy-value tracking remain informational only in V1.",
+          "Regular top-up premium enrollment remains informational only in V1.",
+          "Partial-withdrawal and full-surrender administration remain informational only.",
+          "Fund-level management fees and embedded custody or bank charges remain informational only because they are reflected through fund pricing rather than the policy charge surface.",
+          "Fund-switching behavior remains informational only.",
+          "Lapse and termination behavior remains informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan description and subscription",
+            "excerpt": "TM Wealth Enhancer is a whole life single premium investment-linked plan that allows you to invest in a range of investment-linked funds while providing protection against death as long as the policy is in force. The pre"
+          },
+          {
+            "page": 2,
+            "section": "Fees and charges",
+            "excerpt": "Fees and Charges Fund Management Fee The fund management fee for each of the funds is set out in the fund documents available on our website. It is expressed as a percentage of the asset value under the respective funds "
+          },
+          {
+            "page": 3,
+            "section": "Administrative charge and termination",
+            "excerpt": "Administrative Charge Administrative charge is not applicable. Switching Charge There is no charge for fund switch. Right to Vary Fees and Charges We reserve the right to vary any fees and charges, by giving you 30 days "
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "tokio-marine-wealth-max-ii",
     "insurer": "Tokio Marine",
     "productName": "Wealth Max (II)",
