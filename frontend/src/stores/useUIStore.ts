@@ -2,7 +2,10 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { CHANGELOG, DATA_VINTAGE } from '@/lib/data/changelog'
 import type { HouseholdSectionToggles } from '@/lib/household/sectionVisibility'
-import type { SectionOrderKey } from '@/lib/household/sectionOrder'
+import type { SectionId, SectionOrderKey } from '@/lib/household/sectionOrder'
+
+// TODO: Import from '@/lib/data/nudgeFlows' after Task 4 creates it
+type NudgeFlowId = 'cpf' | 'expenses' | 'property' | 'healthcare' | 'salary' | 'srs' | 'goals' | 'allocation' | 'protection'
 
 type StatsPosition = 'bottom' | 'top'
 
@@ -31,6 +34,10 @@ interface UIState {
   contextualNudgeActive: boolean
   /** Transient (not persisted): per-adult simulation view — 'joint' or an adultId string */
   simulationView: 'joint' | string
+  setupCompleted: boolean
+  setupPopulatedSections: SectionId[]
+  completedNudgeFlows: NudgeFlowId[]
+  dismissedSectionIntros: SectionId[]
 }
 
 interface UIActions {
@@ -67,6 +74,10 @@ const DEFAULT_UI: UIState = {
   projectionView: 'joint',
   contextualNudgeActive: false,
   simulationView: 'joint',
+  setupCompleted: false,
+  setupPopulatedSections: [] as SectionId[],
+  completedNudgeFlows: [] as NudgeFlowId[],
+  dismissedSectionIntros: [] as SectionId[],
 }
 
 export const useUIStore = create<UIState & UIActions>()(
@@ -145,7 +156,7 @@ export const useUIStore = create<UIState & UIActions>()(
     }),
     {
       name: 'fireplanner-ui',
-      version: 11,
+      version: 12,
       partialize: (state) => {
         // Exclude transient fields from persistence
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -194,6 +205,12 @@ export const useUIStore = create<UIState & UIActions>()(
         }
         if (version < 11) {
           state.protectionEnabled = false
+        }
+        if (version < 12) {
+          state.setupCompleted = false
+          state.setupPopulatedSections = []
+          state.completedNudgeFlows = []
+          state.dismissedSectionIntros = []
         }
         return state
       },
