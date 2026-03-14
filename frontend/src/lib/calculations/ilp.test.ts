@@ -651,6 +651,44 @@ describe('projectIlpPolicy', () => {
     expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 600, 600])
   })
 
+  it('caps scheduled payouts at the available account balance', () => {
+    const result = projectIlpPolicy(makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 1,
+      accounts: [{
+        id: 'policy',
+        label: 'Policy Account',
+        feeRate: 0,
+        currentValue: 50,
+        contributionShare: 0,
+        subjectToEec: false,
+        postMipFeeRate: null,
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+          { phase: 'after-icp', contributionShare: 1 },
+        ],
+      }],
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        source: 'manual-assumption',
+        accountId: 'policy',
+        startPolicyYear: 2,
+        durationYears: 1,
+        annualPayoutAmount: 600,
+      },
+    }), 'mid')
+
+    expect(result.rows[0].annualWithdrawals).toBe(50)
+    expect(accountRow(result.rows[0], 'policy').withdrawalAmount).toBe(50)
+    expect(accountRow(result.rows[0], 'policy').close).toBe(0)
+  })
+
   it('does not erode the protected premium base when cash distributions are paid from an assured account', () => {
     const result = projectIlpPolicy(makeOpenEndedPolicy({
       postMipYears: 4,
@@ -701,6 +739,64 @@ describe('projectIlpPolicy', () => {
     const expectedYearThreeGrossFee = (((3_600 + 600) * 1.01) - yearThreeMidpointApplicableValue) * 0.64 / 1000
 
     expect(accountRow(result.rows[2], 'policy').grossFee).toBeCloseTo(expectedYearThreeGrossFee, 9)
+  })
+
+  it('clamps provisional closes before protected-base assurance sum-at-risk math', () => {
+    const result = projectIlpPolicy(makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 1,
+      accounts: [{
+        id: 'policy',
+        label: 'Policy Account',
+        feeRate: 0,
+        currentValue: 100,
+        contributionShare: 0,
+        subjectToEec: false,
+        postMipFeeRate: null,
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+          { phase: 'after-icp', contributionShare: 1 },
+        ],
+      }],
+      assuranceProfile: {
+        currentAgeNextBirthday: 98,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 200,
+        currentNetSupplementaryPremiumBase: 0,
+      },
+      chargeRules: [
+        {
+          id: 'startup-charge',
+          label: 'Startup Charge',
+          basis: 'fixed-annual',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 400,
+          allocation: 'equal-split',
+        },
+        {
+          id: 'investready-protection-charge',
+          label: 'Cost of Insurance',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'manulife-investready-iii-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 120,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    }), 'mid')
+
+    expect(accountRow(result.rows[0], 'policy').grossFee).toBeCloseTo(449.551696, 5)
+    expect(accountRow(result.rows[0], 'policy').close).toBe(0)
   })
 
   it('grows protected-base assurance charges under uninterrupted paid-premium flow', () => {

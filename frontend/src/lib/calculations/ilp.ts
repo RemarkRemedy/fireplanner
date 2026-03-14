@@ -412,6 +412,10 @@ interface IlpAssuranceStateResult {
 type IlpRecurringContributionPhase = Extract<IlpContributionRule['phase'], 'during-icp' | 'after-icp' | 'after-mip'>
 type IlpProjectionYearRange = IlpCashflowYearContext['range']
 
+function assertNever(value: never): never {
+  throw new Error(`Unhandled case: ${String(value)}`)
+}
+
 interface IlpCashflowYearContext {
   projectionYear: number
   policyYear: number
@@ -1273,6 +1277,8 @@ function getAssuranceFormulaFamily(
       return 'protected-base-paid-premium-floor'
     case 'manulife-manuinvest-duo-death-ti-tpd':
       return 'protected-base-sum-assured'
+    default:
+      return assertNever(config.formula)
   }
 }
 
@@ -1302,6 +1308,8 @@ function resolveAssuranceRate(
       return MANULIFE_INVESTREADY_III_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0
     case 'manulife-manuinvest-duo-death-ti-tpd':
       return MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE[riskClass][ageIndex] ?? 0
+    default:
+      return assertNever(rule.assuranceConfig.formula)
   }
 }
 
@@ -1374,6 +1382,8 @@ function computeProtectedBaseSumAtRisk(
       )
       return Math.max(0, midpointProtectedBase - midpointApplicableValue)
     }
+    default:
+      return assertNever(formula)
   }
 }
 
@@ -2817,11 +2827,8 @@ export function projectIlpPolicy(
     const contributionForYear = Array.from(contributionByAccount.values()).reduce((sum, value) => sum + value, 0)
     cumulativePremiums += contributionForYear
     const partialWithdrawalByAccount = getPartialWithdrawalsByAccount(normalized, context.range)
-    const scheduledPayoutByAccount = getScheduledPayoutsByAccount(normalized, policyYear)
-    const baseWithdrawalByAccount = mergeAccountAmountMaps(partialWithdrawalByAccount, scheduledPayoutByAccount)
+    const requestedScheduledPayoutByAccount = getScheduledPayoutsByAccount(normalized, policyYear)
     const distributionPayoutByAccount = getDistributionPayoutsByAccount(normalized, year, openBalances)
-    const withdrawalByAccount = mergeAccountAmountMaps(baseWithdrawalByAccount, distributionPayoutByAccount)
-    const annualWithdrawals = Array.from(withdrawalByAccount.values()).reduce((sum, value) => sum + value, 0)
     const additionalChargeByAccount = computeAdditionalChargeByAccount(
       normalized,
       context,
@@ -2830,6 +2837,8 @@ export function projectIlpPolicy(
     )
     const eventChargeByAccount = computeEventChargeByAccount(normalized, context, premiumHolidayRepaymentEvents, openBalances)
     const bonusCreditByAccount = new Map<string, number>()
+    const scheduledPayoutByAccount = new Map<string, number>(input.accounts.map((account) => [account.id, 0]))
+    const baseWithdrawalByAccount = new Map<string, number>(input.accounts.map((account) => [account.id, 0]))
 
     for (const account of input.accounts) {
       bonusCreditByAccount.set(
@@ -2857,13 +2866,29 @@ export function projectIlpPolicy(
       const extraCharges = (additionalChargeByAccount.get(account.id) ?? 0) + (eventChargeByAccount.get(account.id) ?? 0)
       const accountContribution = contributionByAccount.get(account.id) ?? 0
       const bonusCredit = bonusCreditByAccount.get(account.id) ?? 0
-      const withdrawalAmount = withdrawalByAccount.get(account.id) ?? 0
-      const closeBeforeAssurance = (open - (baseGrossFee + extraCharges - bonusCredit)) * (1 + blendedNetReturn)
-        + accountContribution
-        - withdrawalAmount
+      const partialWithdrawalAmount = partialWithdrawalByAccount.get(account.id) ?? 0
+      const requestedScheduledPayout = requestedScheduledPayoutByAccount.get(account.id) ?? 0
+      const availableBeforeBaseWithdrawals = Math.max(
+        0,
+        (open - (baseGrossFee + extraCharges - bonusCredit)) * (1 + blendedNetReturn) + accountContribution,
+      )
+      const scheduledPayoutAmount = Math.min(
+        requestedScheduledPayout,
+        Math.max(availableBeforeBaseWithdrawals - partialWithdrawalAmount, 0),
+      )
+      const baseWithdrawalAmount = partialWithdrawalAmount + scheduledPayoutAmount
+      const distributionPayoutAmount = distributionPayoutByAccount.get(account.id) ?? 0
+      const withdrawalAmount = baseWithdrawalAmount + distributionPayoutAmount
+      const closeBeforeAssurance = availableBeforeBaseWithdrawals - withdrawalAmount
 
-      provisionalCloseByAccount.set(account.id, closeBeforeAssurance)
+      scheduledPayoutByAccount.set(account.id, scheduledPayoutAmount)
+      baseWithdrawalByAccount.set(account.id, baseWithdrawalAmount)
+
+      provisionalCloseByAccount.set(account.id, Math.max(0, closeBeforeAssurance))
     }
+
+    const withdrawalByAccount = mergeAccountAmountMaps(baseWithdrawalByAccount, distributionPayoutByAccount)
+    const annualWithdrawals = Array.from(withdrawalByAccount.values()).reduce((sum, value) => sum + value, 0)
 
     const assuranceChargeResult = computeAssuranceChargeByAccount(
       normalized,

@@ -86,7 +86,12 @@ function parseRateTableRowsNonSmokerFirst(rows: string): IlpAssuranceRateTable {
     const maleSmoker = Number(matches[2])
     const femaleNonSmoker = Number(matches[3])
     const femaleSmoker = Number(matches[4])
-    const ageIndex = Math.max(age, 1) - 1
+
+    if (age <= 0) {
+      continue
+    }
+
+    const ageIndex = age - 1
 
     table['male-smoker'][ageIndex] = maleSmoker
     table['male-non-smoker'][ageIndex] = maleNonSmoker
