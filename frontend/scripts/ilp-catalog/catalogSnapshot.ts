@@ -28,6 +28,7 @@ import { parseIncomeInvestFlex } from './parsers/incomeInvestFlex.js'
 import { parseIncomeAstralinkVa2 } from './parsers/incomeAstralinkVa2.js'
 import { parseIncomeInvestFlexTriVantage } from './parsers/incomeInvestFlexTriVantage.js'
 import { parseIncomeInvestFlexVantage } from './parsers/incomeInvestFlexVantage.js'
+import { parseIncomeLegacyFlexSolitaire } from './parsers/incomeLegacyFlexSolitaire.js'
 import { parseIncomeSnackInvestment } from './parsers/incomeSnackInvestment.js'
 import { parseIncomeWealthLinkGl3 } from './parsers/incomeWealthLinkGl3.js'
 import { parseManulifeManulinkInvestorIi } from './parsers/manulifeManulinkInvestorIi.js'
@@ -62,6 +63,7 @@ const INCOME_INVEST_FLEX_SOURCE_PATH = '/Users/tj/Downloads/pdfs/VS1_Summary.pdf
 const INCOME_ASTRALINK_VA2_SOURCE_PATH = '/Users/tj/Downloads/pdfs/VA2_Summary.pdf'
 const INCOME_INVEST_FLEX_TRIVANTAGE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/VS3_Summary.pdf'
 const INCOME_INVEST_FLEX_VANTAGE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/VS2_Summary.pdf'
+const INCOME_LEGACY_FLEX_SOLITAIRE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/VA3R_VA3S_Summary.pdf'
 const INCOME_WEALTHLINK_GL3_SOURCE_PATH = '/Users/tj/Downloads/pdfs/GL3_Summary.pdf'
 const INCOME_SNACK_INVESTMENT_SOURCE_PATH = '/Users/tj/Downloads/pdfs/SNACKIV_Summary.pdf'
 const MANULIFE_MANULINK_INVESTOR_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_MI2_ILP_PdtSum.pdf'
@@ -192,6 +194,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const incomeInvestFlexTriVantageChecksum = await sha256(INCOME_INVEST_FLEX_TRIVANTAGE_SOURCE_PATH)
   const incomeInvestFlexVantageExtracted = await extractPdfText(INCOME_INVEST_FLEX_VANTAGE_SOURCE_PATH)
   const incomeInvestFlexVantageChecksum = await sha256(INCOME_INVEST_FLEX_VANTAGE_SOURCE_PATH)
+  const incomeLegacyFlexSolitaireExtracted = await extractPdfText(INCOME_LEGACY_FLEX_SOLITAIRE_SOURCE_PATH)
+  const incomeLegacyFlexSolitaireChecksum = await sha256(INCOME_LEGACY_FLEX_SOLITAIRE_SOURCE_PATH)
   const incomeWealthLinkGl3Extracted = await extractPdfText(INCOME_WEALTHLINK_GL3_SOURCE_PATH)
   const incomeWealthLinkGl3Checksum = await sha256(INCOME_WEALTHLINK_GL3_SOURCE_PATH)
   const incomeSnackInvestmentExtracted = await extractPdfText(INCOME_SNACK_INVESTMENT_SOURCE_PATH)
@@ -312,6 +316,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseIncomeInvestFlexVantage({
       document: incomeInvestFlexVantageExtracted,
       sourceChecksumSha256: incomeInvestFlexVantageChecksum,
+    }),
+    parseIncomeLegacyFlexSolitaire({
+      document: incomeLegacyFlexSolitaireExtracted,
+      sourceChecksumSha256: incomeLegacyFlexSolitaireChecksum,
     }),
     parseIncomeWealthLinkGl3({
       document: incomeWealthLinkGl3Extracted,

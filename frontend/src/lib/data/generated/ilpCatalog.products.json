@@ -7141,6 +7141,783 @@
     ]
   },
   {
+    "id": "income-legacy-flex-solitaire",
+    "insurer": "Income Insurance",
+    "productName": "Legacy Flex Solitaire (VA3S / VA3R)",
+    "sourceFileName": "VA3R_VA3S_Summary.pdf",
+    "sourceChecksumSha256": "c35fd32f003b4b9e460f2b7778f30f7ac4ebe077c8d09c713df8462ca73d8d14",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:income-legacy-flex-solitaire-regular-premium-charge",
+      "branch:income-legacy-flex-solitaire-top-up-premium-charge",
+      "branch:income-legacy-flex-solitaire-premium-holiday-charge",
+      "branch:income-legacy-flex-solitaire-appendix-2-withdrawal-and-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "income-legacy-flex-solitaire-single-premium-corridor",
+      "income-legacy-flex-solitaire-loyalty-bonus",
+      "income-legacy-flex-solitaire-policy-fee",
+      "income-legacy-flex-solitaire-insurance-cover-charge",
+      "income-legacy-flex-solitaire-no-lapse-guarantee",
+      "income-legacy-flex-solitaire-future-premium-option",
+      "income-legacy-flex-solitaire-withdrawal-access-option",
+      "income-legacy-flex-solitaire-retirement-and-distribution-options",
+      "income-legacy-flex-solitaire-secondary-insured-and-bequest-option",
+      "income-legacy-flex-solitaire-top-up-account-first-12-month-charge-window",
+      "income-legacy-flex-solitaire-fund-level-annual-management-fee",
+      "income-legacy-flex-solitaire-fund-switching-and-suspension",
+      "income-legacy-flex-solitaire-protection-benefits"
+    ],
+    "warnings": [
+      "Legacy Flex Solitaire (VA3S / VA3R) is cataloged as a partial modeled subset in V1. The current parser models only the regular-premium 5-year and 10-year corridors: premium-year regular premium charges, top-up premium charge, premium-holiday charge, and premium-account Appendix 2 withdrawal / surrender charges. The single-premium corridor, loyalty bonus, policy fee, protection-side charges, No Lapse Guarantee, and top-up-account first-12-month charge timing remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-regular-mip-5",
+        "currency": "SGD",
+        "mipLength": 5,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "premium",
+            "label": "Premium Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "premium",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "premium",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Policy description and product structure",
+                "excerpt": "Legacy Flex Solitaire is a whole life investment-linked plan (ILP) that provides protection and investment opportunities. You can choose either single premium or regular premium for this plan. If your policy is a regular"
+              },
+              {
+                "page": 12,
+                "section": "Subscription of premium and top-up units",
+                "excerpt": "100% of your regular premium less any premium charge will be placed into the premium account and used to buy units (at bid price) in the ILP sub-funds you have chosen."
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty bonus, top-ups, and future premium option",
+                "excerpt": "Approximate excerpt; keyword \"We will provide an annual loyalty bonus\" not found on page. Version 1.26 Your policy must meet all the following conditions to receive the loyalty bonus: • This policy must not have ended wh"
+              },
+              {
+                "page": 12,
+                "section": "Subscription of premium and top-up units",
+                "excerpt": "100% of your regular premium less any premium charge will be placed into the premium account and used to buy units (at bid price) in the ILP sub-funds you have chosen."
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "regular-premium-charge",
+            "label": "Regular Premium Charge",
+            "basis": "annual-contribution",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "premium"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.28
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.23
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.14
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.07
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.05
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published regular premium charge schedule by accepted regular-premium year for the regular-premium corridors only.",
+              "The separate single-premium corridor remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Premium charge schedule and policy fee",
+                "excerpt": "7.1 Premium Charge You must pay a premium charge based on a percentage of your premium(s). For single premium policy: 4% of single premium For regular premium policy: Regular premiums paid for Minimum Investment Period ("
+              },
+              {
+                "page": 12,
+                "section": "Subscription of premium and top-up units",
+                "excerpt": "100% of your regular premium less any premium charge will be placed into the premium account and used to buy units (at bid price) in the ILP sub-funds you have chosen."
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% premium charge on each accepted top-up premium allocated into the top-up account.",
+              "Top-ups are blocked during premium holiday, but that acceptance gating remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty bonus, top-ups, and future premium option",
+                "excerpt": "Approximate excerpt; keyword \"We will provide an annual loyalty bonus\" not found on page. Version 1.26 Your policy must meet all the following conditions to receive the loyalty bonus: • This policy must not have ended wh"
+              },
+              {
+                "page": 9,
+                "section": "Premium charge schedule and policy fee",
+                "excerpt": "7.1 Premium Charge You must pay a premium charge based on a percentage of your premium(s). For single premium policy: 4% of single premium For regular premium policy: Regular premiums paid for Minimum Investment Period ("
+              },
+              {
+                "page": 12,
+                "section": "Subscription of premium and top-up units",
+                "excerpt": "100% of your regular premium less any premium charge will be placed into the premium account and used to buy units (at bid price) in the ILP sub-funds you have chosen."
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "premium"
+            ],
+            "fallbackAppliesTo": [
+              "topup"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.9
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.2
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published monthly premium holiday charge on annualised regular premium during the selected minimum investment period.",
+              "The charge is taken from the premium account first and falls back to the top-up account if the premium account is insufficient."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Partial withdrawal and premium holiday mechanics",
+                "excerpt": "7.7 Partial Withdrawal Charge During the MIP, we will apply a partial withdrawal charge for each partial withdrawal of the units in your ILP sub-fund(s) you make. The partial withdrawal charge will be taken from the acco"
+              },
+              {
+                "page": 25,
+                "section": "Appendix 2 surrender, partial withdrawal, and premium holiday charges",
+                "excerpt": "Appendix 2 – Surrender Charge, Partial Withdrawal Charge and Premium Holiday Charge The table below shows the percentage to be applied for charges. • For full surrender and partial withdrawal, the percentage is applied t"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "premium"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.9
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.2
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published Appendix 2 charge factor on partial withdrawals from the premium account during the selected minimum investment period.",
+              "Top-up-account withdrawals after 12 months are charge-free, but first-12-month top-up-account withdrawal charges remain informational only in V1.",
+              "Withdrawal access option withdrawals remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Partial withdrawal and premium holiday mechanics",
+                "excerpt": "7.7 Partial Withdrawal Charge During the MIP, we will apply a partial withdrawal charge for each partial withdrawal of the units in your ILP sub-fund(s) you make. The partial withdrawal charge will be taken from the acco"
+              },
+              {
+                "page": 25,
+                "section": "Appendix 2 surrender, partial withdrawal, and premium holiday charges",
+                "excerpt": "Appendix 2 – Surrender Charge, Partial Withdrawal Charge and Premium Holiday Charge The table below shows the percentage to be applied for charges. • For full surrender and partial withdrawal, the percentage is applied t"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          0.9,
+          0.8,
+          0.6,
+          0.4,
+          0.2
+        ],
+        "warnings": [
+          "Legacy Flex Solitaire is modeled as a partial regular-premium subset in V1 for the 5-year MIP corridor. The parser captures the premium-year regular premium charge schedule, top-up premium charge, premium-holiday charge, and premium-account Appendix 2 partial-withdrawal / surrender charge schedule.",
+          "Single-premium charging, loyalty bonus, policy fee, insurance cover charge, No Lapse Guarantee, and top-up-account first-12-month charge timing remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Single-premium corridor remains informational only in V1, including the 4% single-premium charge and the single-premium Appendix 2 charge schedule.",
+          "Loyalty Bonus remains informational only because the current runtime does not distinguish chargeable premium-account withdrawals from top-up-account or withdrawal-access withdrawals for bonus suspension.",
+          "Policy fee remains informational only because it depends on policy-entry sum assured and original insured entry age.",
+          "Insurance cover charge and all protection-benefit formulas remain informational only because they depend on sum at risk plus insured-life inputs.",
+          "No Lapse Guarantee debt carry and termination behavior remain informational only.",
+          "Future Premium Option and recurring top-up enrollment remain informational only.",
+          "Withdrawal Access Option and retirement/distribution payout elections remain informational only.",
+          "Fund-level annual management fees, fund switching, and suspension of dealings remain informational only.",
+          "Top-up-account withdrawals and surrenders within the first 12 months remain informational only because the current executable slice treats the top-up account as charge-free throughout."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Policy description and product structure",
+            "excerpt": "Legacy Flex Solitaire is a whole life investment-linked plan (ILP) that provides protection and investment opportunities. You can choose either single premium or regular premium for this plan. If your policy is a regular"
+          },
+          {
+            "page": 2,
+            "section": "Loyalty bonus, top-ups, and future premium option",
+            "excerpt": "Approximate excerpt; keyword \"We will provide an annual loyalty bonus\" not found on page. Version 1.26 Your policy must meet all the following conditions to receive the loyalty bonus: • This policy must not have ended wh"
+          },
+          {
+            "page": 9,
+            "section": "Premium charge schedule and policy fee",
+            "excerpt": "7.1 Premium Charge You must pay a premium charge based on a percentage of your premium(s). For single premium policy: 4% of single premium For regular premium policy: Regular premiums paid for Minimum Investment Period ("
+          },
+          {
+            "page": 11,
+            "section": "Partial withdrawal and premium holiday mechanics",
+            "excerpt": "7.7 Partial Withdrawal Charge During the MIP, we will apply a partial withdrawal charge for each partial withdrawal of the units in your ILP sub-fund(s) you make. The partial withdrawal charge will be taken from the acco"
+          },
+          {
+            "page": 12,
+            "section": "Subscription of premium and top-up units",
+            "excerpt": "100% of your regular premium less any premium charge will be placed into the premium account and used to buy units (at bid price) in the ILP sub-funds you have chosen."
+          },
+          {
+            "page": 25,
+            "section": "Appendix 2 surrender, partial withdrawal, and premium holiday charges",
+            "excerpt": "Appendix 2 – Surrender Charge, Partial Withdrawal Charge and Premium Holiday Charge The table below shows the percentage to be applied for charges. • For full surrender and partial withdrawal, the percentage is applied t"
+          }
+        ]
+      },
+      {
+        "id": "sgd-regular-mip-10",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "premium",
+            "label": "Premium Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "premium",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "premium",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Policy description and product structure",
+                "excerpt": "Legacy Flex Solitaire is a whole life investment-linked plan (ILP) that provides protection and investment opportunities. You can choose either single premium or regular premium for this plan. If your policy is a regular"
+              },
+              {
+                "page": 12,
+                "section": "Subscription of premium and top-up units",
+                "excerpt": "100% of your regular premium less any premium charge will be placed into the premium account and used to buy units (at bid price) in the ILP sub-funds you have chosen."
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty bonus, top-ups, and future premium option",
+                "excerpt": "Approximate excerpt; keyword \"We will provide an annual loyalty bonus\" not found on page. Version 1.26 Your policy must meet all the following conditions to receive the loyalty bonus: • This policy must not have ended wh"
+              },
+              {
+                "page": 12,
+                "section": "Subscription of premium and top-up units",
+                "excerpt": "100% of your regular premium less any premium charge will be placed into the premium account and used to buy units (at bid price) in the ILP sub-funds you have chosen."
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "regular-premium-charge",
+            "label": "Regular Premium Charge",
+            "basis": "annual-contribution",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "premium"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.26
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.045
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.03
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.03
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.03
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.03
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.03
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published regular premium charge schedule by accepted regular-premium year for the regular-premium corridors only.",
+              "The separate single-premium corridor remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Premium charge schedule and policy fee",
+                "excerpt": "7.1 Premium Charge You must pay a premium charge based on a percentage of your premium(s). For single premium policy: 4% of single premium For regular premium policy: Regular premiums paid for Minimum Investment Period ("
+              },
+              {
+                "page": 12,
+                "section": "Subscription of premium and top-up units",
+                "excerpt": "100% of your regular premium less any premium charge will be placed into the premium account and used to buy units (at bid price) in the ILP sub-funds you have chosen."
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% premium charge on each accepted top-up premium allocated into the top-up account.",
+              "Top-ups are blocked during premium holiday, but that acceptance gating remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty bonus, top-ups, and future premium option",
+                "excerpt": "Approximate excerpt; keyword \"We will provide an annual loyalty bonus\" not found on page. Version 1.26 Your policy must meet all the following conditions to receive the loyalty bonus: • This policy must not have ended wh"
+              },
+              {
+                "page": 9,
+                "section": "Premium charge schedule and policy fee",
+                "excerpt": "7.1 Premium Charge You must pay a premium charge based on a percentage of your premium(s). For single premium policy: 4% of single premium For regular premium policy: Regular premiums paid for Minimum Investment Period ("
+              },
+              {
+                "page": 12,
+                "section": "Subscription of premium and top-up units",
+                "excerpt": "100% of your regular premium less any premium charge will be placed into the premium account and used to buy units (at bid price) in the ILP sub-funds you have chosen."
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "premium"
+            ],
+            "fallbackAppliesTo": [
+              "topup"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.9
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.7
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.55
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.2
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published monthly premium holiday charge on annualised regular premium during the selected minimum investment period.",
+              "The charge is taken from the premium account first and falls back to the top-up account if the premium account is insufficient."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Partial withdrawal and premium holiday mechanics",
+                "excerpt": "7.7 Partial Withdrawal Charge During the MIP, we will apply a partial withdrawal charge for each partial withdrawal of the units in your ILP sub-fund(s) you make. The partial withdrawal charge will be taken from the acco"
+              },
+              {
+                "page": 25,
+                "section": "Appendix 2 surrender, partial withdrawal, and premium holiday charges",
+                "excerpt": "Appendix 2 – Surrender Charge, Partial Withdrawal Charge and Premium Holiday Charge The table below shows the percentage to be applied for charges. • For full surrender and partial withdrawal, the percentage is applied t"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "premium"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.9
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.7
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.55
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.2
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published Appendix 2 charge factor on partial withdrawals from the premium account during the selected minimum investment period.",
+              "Top-up-account withdrawals after 12 months are charge-free, but first-12-month top-up-account withdrawal charges remain informational only in V1.",
+              "Withdrawal access option withdrawals remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Partial withdrawal and premium holiday mechanics",
+                "excerpt": "7.7 Partial Withdrawal Charge During the MIP, we will apply a partial withdrawal charge for each partial withdrawal of the units in your ILP sub-fund(s) you make. The partial withdrawal charge will be taken from the acco"
+              },
+              {
+                "page": 25,
+                "section": "Appendix 2 surrender, partial withdrawal, and premium holiday charges",
+                "excerpt": "Appendix 2 – Surrender Charge, Partial Withdrawal Charge and Premium Holiday Charge The table below shows the percentage to be applied for charges. • For full surrender and partial withdrawal, the percentage is applied t"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          0.9,
+          0.8,
+          0.7,
+          0.6,
+          0.55,
+          0.5,
+          0.45,
+          0.4,
+          0.3,
+          0.2
+        ],
+        "warnings": [
+          "Legacy Flex Solitaire is modeled as a partial regular-premium subset in V1 for the 10-year MIP corridor. The parser captures the premium-year regular premium charge schedule, top-up premium charge, premium-holiday charge, and premium-account Appendix 2 partial-withdrawal / surrender charge schedule.",
+          "Single-premium charging, loyalty bonus, policy fee, insurance cover charge, No Lapse Guarantee, and top-up-account first-12-month charge timing remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Single-premium corridor remains informational only in V1, including the 4% single-premium charge and the single-premium Appendix 2 charge schedule.",
+          "Loyalty Bonus remains informational only because the current runtime does not distinguish chargeable premium-account withdrawals from top-up-account or withdrawal-access withdrawals for bonus suspension.",
+          "Policy fee remains informational only because it depends on policy-entry sum assured and original insured entry age.",
+          "Insurance cover charge and all protection-benefit formulas remain informational only because they depend on sum at risk plus insured-life inputs.",
+          "No Lapse Guarantee debt carry and termination behavior remain informational only.",
+          "Future Premium Option and recurring top-up enrollment remain informational only.",
+          "Withdrawal Access Option and retirement/distribution payout elections remain informational only.",
+          "Fund-level annual management fees, fund switching, and suspension of dealings remain informational only.",
+          "Top-up-account withdrawals and surrenders within the first 12 months remain informational only because the current executable slice treats the top-up account as charge-free throughout."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Policy description and product structure",
+            "excerpt": "Legacy Flex Solitaire is a whole life investment-linked plan (ILP) that provides protection and investment opportunities. You can choose either single premium or regular premium for this plan. If your policy is a regular"
+          },
+          {
+            "page": 2,
+            "section": "Loyalty bonus, top-ups, and future premium option",
+            "excerpt": "Approximate excerpt; keyword \"We will provide an annual loyalty bonus\" not found on page. Version 1.26 Your policy must meet all the following conditions to receive the loyalty bonus: • This policy must not have ended wh"
+          },
+          {
+            "page": 9,
+            "section": "Premium charge schedule and policy fee",
+            "excerpt": "7.1 Premium Charge You must pay a premium charge based on a percentage of your premium(s). For single premium policy: 4% of single premium For regular premium policy: Regular premiums paid for Minimum Investment Period ("
+          },
+          {
+            "page": 11,
+            "section": "Partial withdrawal and premium holiday mechanics",
+            "excerpt": "7.7 Partial Withdrawal Charge During the MIP, we will apply a partial withdrawal charge for each partial withdrawal of the units in your ILP sub-fund(s) you make. The partial withdrawal charge will be taken from the acco"
+          },
+          {
+            "page": 12,
+            "section": "Subscription of premium and top-up units",
+            "excerpt": "100% of your regular premium less any premium charge will be placed into the premium account and used to buy units (at bid price) in the ILP sub-funds you have chosen."
+          },
+          {
+            "page": 25,
+            "section": "Appendix 2 surrender, partial withdrawal, and premium holiday charges",
+            "excerpt": "Appendix 2 – Surrender Charge, Partial Withdrawal Charge and Premium Holiday Charge The table below shows the percentage to be applied for charges. • For full surrender and partial withdrawal, the percentage is applied t"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "income-wealthlink-gl3",
     "insurer": "Income Insurance",
     "productName": "WealthLink (GL3)",
