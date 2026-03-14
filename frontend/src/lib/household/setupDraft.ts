@@ -385,8 +385,8 @@ function applyPartnerDraft(draft: SetupDraft, selfAdultTemplate: PlanningAdult):
       insuranceDeathCoverage: 0,
       insuranceCICoverage: 0,
       insuranceDisabilityMonthly: 0,
-      funeralCosts: 0,
-      ciRecoveryYears: 0,
+      funeralCosts: 15_000,
+      ciRecoveryYears: 5,
       healthcare: {
         enabled: false,
         mediShieldLifeEnabled: true,

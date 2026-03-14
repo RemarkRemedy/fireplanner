@@ -813,3 +813,41 @@ describe('round-trip: apply → hydrate → re-apply', () => {
     expect(property!.existingPropertyValue).toBe(500_000)
   })
 })
+
+// ---------------------------------------------------------------------------
+// Regression: applySetupDraft must produce plans that pass projection validation
+// ---------------------------------------------------------------------------
+
+describe('applySetupDraft — projection validation regression', () => {
+  beforeEach(() => {
+    useHouseholdPlanStore.getState().reset()
+  })
+
+  it('individual fresh draft → hasValidationErrors === false', () => {
+    applySetupDraft(freshIndividualDraft(), 'individual')
+    const state = useHouseholdPlanStore.getState()
+    expect(state.hasValidationErrors).toBe(false)
+    expect(Object.keys(state.validationErrors)).toHaveLength(0)
+  })
+
+  it('couple fresh draft → hasValidationErrors === false', () => {
+    applySetupDraft(freshCoupleDraft(), 'couple')
+    const state = useHouseholdPlanStore.getState()
+    expect(state.hasValidationErrors).toBe(false)
+    expect(Object.keys(state.validationErrors)).toHaveLength(0)
+  })
+
+  it('couple draft → partner ciRecoveryYears is a valid default (1-10)', () => {
+    applySetupDraft(freshCoupleDraft(), 'couple')
+    const partner = getPartner()!
+    expect(partner.ciRecoveryYears).toBeGreaterThanOrEqual(1)
+    expect(partner.ciRecoveryYears).toBeLessThanOrEqual(10)
+  })
+
+  it('couple draft → partner funeralCosts uses canonical default', () => {
+    applySetupDraft(freshCoupleDraft(), 'couple')
+    const partner = getPartner()!
+    // Should use the same default as fromLegacyIndividual (15_000)
+    expect(partner.funeralCosts).toBe(15_000)
+  })
+})
