@@ -133,64 +133,39 @@ export function CpfSetupInput({
 
       {mode === 'know' && (
         <div className="flex flex-col gap-3">
-          <div>
-            <PillToggle
-              options={[
-                { label: 'Total', value: 'total' as const },
-                { label: 'By account', value: 'breakdown' as const },
-              ]}
-              value={manual.entryMode}
-            onChange={(v) => onManualChange({ entryMode: v })}
+          <p className="text-xs text-muted-foreground">
+            Check my.cpf.gov.sg → My Statement. If you only know the total, enter it under OA.
+          </p>
+          <CurrencyInput
+            label="Ordinary Account (OA)"
+            value={manual.oa}
+            onChange={(v) => onManualChange({ oa: v })}
+            tooltip="Used for housing, education, and investment. Earns 2.5% interest."
           />
-          </div>
-
-          {manual.entryMode === 'total' && (
-            <div className="flex flex-col gap-2">
-              <CurrencyInput
-                label="Total CPF balance"
-                value={manual.total}
-                onChange={(v) => onManualChange({ total: v })}
-              />
-              <p className="text-xs text-muted-foreground">
-                We'll split it by age-based heuristics.
-              </p>
-            </div>
-          )}
-
-          {manual.entryMode === 'breakdown' && (
-            <div className="flex flex-col gap-3">
-              <CurrencyInput
-                label="Ordinary Account (OA)"
-                value={manual.oa}
-                onChange={(v) => onManualChange({ oa: v })}
-                tooltip="Used for housing, education, and investment. Earns 2.5% interest."
-              />
-              <CurrencyInput
-                label="Special Account (SA)"
-                value={manual.sa}
-                onChange={(v) => onManualChange({ sa: v })}
-                tooltip="For retirement. Earns 4% interest."
-              />
-              <CurrencyInput
-                label="MediSave Account (MA)"
-                value={manual.ma}
-                onChange={(v) => onManualChange({ ma: v })}
-                tooltip={`For healthcare. Capped at BHS ($${MEDISAVE_BHS.toLocaleString()} in 2026).`}
-                error={
-                  manual.ma > MEDISAVE_BHS
-                    ? `MediSave cannot exceed the BHS of $${MEDISAVE_BHS.toLocaleString()}`
-                    : undefined
-                }
-              />
-              {showRA && (
-                <CurrencyInput
-                  label="Retirement Account (RA)"
-                  value={manual.ra}
-                  onChange={(v) => onManualChange({ ra: v })}
-                  tooltip="Created at age 55."
-                />
-              )}
-            </div>
+          <CurrencyInput
+            label="Special Account (SA)"
+            value={manual.sa}
+            onChange={(v) => onManualChange({ sa: v })}
+            tooltip="For retirement. Earns 4% interest."
+          />
+          <CurrencyInput
+            label="MediSave Account (MA)"
+            value={manual.ma}
+            onChange={(v) => onManualChange({ ma: v })}
+            tooltip={`For healthcare. Capped at BHS ($${MEDISAVE_BHS.toLocaleString()} in 2026).`}
+            error={
+              manual.ma > MEDISAVE_BHS
+                ? `MediSave cannot exceed the BHS of $${MEDISAVE_BHS.toLocaleString()}`
+                : undefined
+            }
+          />
+          {showRA && (
+            <CurrencyInput
+              label="Retirement Account (RA)"
+              value={manual.ra}
+              onChange={(v) => onManualChange({ ra: v })}
+              tooltip="Created at age 55 from SA and OA transfers."
+            />
           )}
         </div>
       )}

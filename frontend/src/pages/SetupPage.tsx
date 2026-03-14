@@ -365,18 +365,14 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
     )
     cpfTotal = estimateResult.total
     cpfBreakdown = { oa: estimateResult.oa, sa: estimateResult.sa, ma: estimateResult.ma, ra: estimateResult.ra }
-  } else if ((values.cpfEntryMode as string) === 'breakdown') {
-    // Know/breakdown — use exact user values
+  } else {
+    // Know mode — always breakdown (sub-toggle removed)
     const oa = (values.cpfOA as number) ?? 0
     const sa = (values.cpfSA as number) ?? 0
     const ma = (values.cpfMA as number) ?? 0
     const ra = (values.cpfRA as number) ?? 0
     cpfTotal = oa + sa + ma + ra
     cpfBreakdown = { oa, sa, ma, ra }
-  } else {
-    // Know/total — let applySetupDraft split via heuristic
-    cpfTotal = (values.cpfTotal as number) ?? 0
-    // cpfBreakdown left undefined — applySetupDraft uses splitCpfByAge
   }
 
   const draft: SetupDraft = {
@@ -758,8 +754,8 @@ export function SetupPage() {
             handleChange('oaMortgageAmount', m.amount)
           }}
           manual={{
-            entryMode: (state.values.cpfEntryMode as 'total' | 'breakdown') ?? 'total',
-            total: (state.values.cpfTotal as number) ?? 0,
+            entryMode: 'breakdown',
+            total: 0,
             oa: (state.values.cpfOA as number) ?? 0,
             sa: (state.values.cpfSA as number) ?? 0,
             ma: (state.values.cpfMA as number) ?? 0,
