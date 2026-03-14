@@ -4,8 +4,7 @@ import { CHANGELOG, DATA_VINTAGE } from '@/lib/data/changelog'
 import type { HouseholdSectionToggles } from '@/lib/household/sectionVisibility'
 import type { SectionId, SectionOrderKey } from '@/lib/household/sectionOrder'
 
-// TODO: Import from '@/lib/data/nudgeFlows' after Task 4 creates it
-type NudgeFlowId = 'cpf' | 'expenses' | 'property' | 'healthcare' | 'salary' | 'srs' | 'goals' | 'allocation' | 'protection'
+import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
 
 type StatsPosition = 'bottom' | 'top'
 
