@@ -221,6 +221,12 @@ export const CPF_HEURISTIC_SPLIT: { maxAge: number; oa: number; sa: number; ma: 
 // Used by the setup wizard when user enters take-home salary
 export const SG_GROSS_UP_FACTOR = 0.85
 
+/** Retention factor for CPF estimates — accounts for interest partially offsetting housing/education withdrawals */
+export const CPF_ESTIMATE_RETENTION_FACTOR = 0.7
+
+/** Default work start age for CPF estimates (accounts for NS + university) */
+export const CPF_WORK_START_AGE = 25
+
 export function getCpfRatesForAge(
   age: number,
   residencyStatus: ResidencyStatus = 'citizen',
