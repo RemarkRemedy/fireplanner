@@ -21,6 +21,7 @@ export function usePlanCompleteness(): CompletenessRow[] {
   const cpfEnabled = useUIStore((s) => s.cpfEnabled)
   const propertyEnabled = useUIStore((s) => s.propertyEnabled)
   const healthcareEnabled = useUIStore((s) => s.healthcareEnabled)
+  const protectionEnabled = useUIStore((s) => s.protectionEnabled)
 
   return useMemo(() => {
     // Map flowId to its section toggle (only some flows have toggles)
@@ -28,6 +29,7 @@ export function usePlanCompleteness(): CompletenessRow[] {
       cpf: !cpfEnabled,
       property: !propertyEnabled,
       healthcare: !healthcareEnabled,
+      protection: !protectionEnabled,
     }
 
     return NUDGE_PRIORITY.map(flowId => {
@@ -66,5 +68,5 @@ export function usePlanCompleteness(): CompletenessRow[] {
 
       return { flowId, label: flow.label, status, detail, actionLabel }
     })
-  }, [sections, setupPopulatedSections, completedNudgeFlows, cpfEnabled, propertyEnabled, healthcareEnabled])
+  }, [sections, setupPopulatedSections, completedNudgeFlows, cpfEnabled, propertyEnabled, healthcareEnabled, protectionEnabled])
 }

@@ -170,9 +170,9 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
           type: 'select',
           options: [
             { value: 'hdb', label: 'HDB Flat' },
-            { value: 'private-condo', label: 'Private Condo' },
+            { value: 'condo', label: 'Private Condo' },
             { value: 'landed', label: 'Landed Property' },
-            { value: 'ec', label: 'Executive Condo (EC)' },
+            { value: 'condo', label: 'Executive Condo' },
           ],
           required: true,
         },

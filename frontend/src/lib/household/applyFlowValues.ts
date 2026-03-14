@@ -3,7 +3,7 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { createId } from '@/lib/household/ids'
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
 import type { HouseholdCpfConfig, GoalItem } from '@/lib/household/types'
-import type { AllocationTemplate, DownsizingConfig, GoalCategory, GrowthModel, HealthcareConfig } from '@/lib/types'
+import type { AllocationTemplate, DownsizingConfig, GoalCategory, GrowthModel, HealthcareConfig, SalaryModel } from '@/lib/types'
 
 /**
  * Maps a nudge flow's goalCategory option value to a valid GoalCategory.
@@ -169,6 +169,30 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       }
 
       store.updateExpense(baseExpense.id, expenseUpdates)
+
+      // Create a goal if large future expenses were provided
+      if (values.hasLargeGoals === true && typeof values.goalName === 'string' && values.goalName) {
+        const targetYear = typeof values.goalYear === 'number' ? values.goalYear : new Date().getFullYear() + 5
+        const targetAge = selfAdult.currentAge + (targetYear - new Date().getFullYear())
+
+        const goal: GoalItem = {
+          id: createId('goal'),
+          owner: 'self',
+          label: values.goalName,
+          kind: 'financial-goal',
+          timing: {
+            kind: 'single-age',
+            owner: 'self',
+            age: targetAge,
+          },
+          amount: typeof values.goalAmount === 'number' ? values.goalAmount : 0,
+          durationYears: 1,
+          priority: 'important',
+          inflationAdjusted: true,
+          category: 'other',
+        }
+        store.addGoal(goal)
+      }
       break
     }
 
@@ -183,6 +207,9 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       }
       if (typeof values.careShieldEnrolled === 'boolean') {
         healthcareUpdates.careShieldLifeEnabled = values.careShieldEnrolled
+      }
+      if (typeof values.mediSaveTopUpAnnual === 'number') {
+        healthcareUpdates.mediSaveTopUpAnnual = values.mediSaveTopUpAnnual
       }
 
       store.updateAdult(selfAdult.id, {
@@ -201,11 +228,27 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       const incomeUpdates: Record<string, unknown> = {}
 
       if (typeof values.salaryModel === 'string') {
-        incomeUpdates.growthModel = values.salaryModel as GrowthModel
-        incomeUpdates.salaryModel = values.salaryModel
+        // Map nudge flow option values to SalaryModel domain values
+        const salaryModelMap: Record<string, SalaryModel> = {
+          simple: 'simple',
+          realistic: 'realistic',
+          mom: 'data-driven',
+        }
+        const mappedSalaryModel = salaryModelMap[values.salaryModel]
+        if (mappedSalaryModel) {
+          incomeUpdates.salaryModel = mappedSalaryModel
+          // All salary models use 'fixed' growthModel — the salary model itself handles growth
+          incomeUpdates.growthModel = 'fixed' as GrowthModel
+        }
       }
       if (typeof values.annualSalaryGrowthPercent === 'number') {
-        incomeUpdates.growthRate = values.annualSalaryGrowthPercent
+        // Only apply growth rate when salary model is 'simple' (flat growth)
+        const effectiveModel = typeof values.salaryModel === 'string'
+          ? (values.salaryModel === 'mom' ? 'data-driven' : values.salaryModel)
+          : salaryIncome.salaryModel
+        if (effectiveModel === 'simple') {
+          incomeUpdates.growthRate = values.annualSalaryGrowthPercent
+        }
       }
       if (typeof values.annualBonusMonths === 'number') {
         incomeUpdates.bonusMonths = values.annualBonusMonths

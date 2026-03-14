@@ -393,6 +393,15 @@ function applyPartnerDraft(draft: SetupDraft, selfAdultTemplate: PlanningAdult):
       liquidNetWorth: partner.liquidNetWorth,
       residencyStatus: partner.residency,
       lifeEvents: [],
+      // Zero out financial fields inherited from self to avoid double-counting
+      cashSavings: 0,
+      nonMortgageDebtTotal: 0,
+      nonMortgageDebtMonthlyPayment: 0,
+      insuranceDeathCoverage: 0,
+      insuranceCICoverage: 0,
+      insuranceDisabilityMonthly: 0,
+      funeralCosts: 0,
+      ciRecoveryYears: 0,
       taxProfile: {
         ...structuredClone(selfAdultTemplate.taxProfile),
         reliefBasisAge: partner.currentAge,
