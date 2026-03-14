@@ -523,6 +523,116 @@ describe('household adapter seam: CPF merge strategies', () => {
   })
 })
 
+describe('household adapter seam: healthcare outlay aggregation', () => {
+  it('sums both adults healthcare into healthcareCashOutlayByYear', () => {
+    const plan = makeTwoAdultFixture()
+    // Enable healthcare for both adults with different ISP tiers
+    plan.adults[0].healthcare = {
+      ...plan.adults[0].healthcare,
+      enabled: true,
+      mediShieldLifeEnabled: true,
+      ispTier: 'none',
+      careShieldLifeEnabled: false,
+      oopBaseAmount: 500,
+      oopModel: 'fixed',
+      oopInflationRate: 0,
+      oopReferenceAge: plan.adults[0].currentAge,
+      mediSaveTopUpAnnual: 0,
+    }
+    plan.adults[1].healthcare = {
+      ...plan.adults[1].healthcare,
+      enabled: true,
+      mediShieldLifeEnabled: true,
+      ispTier: 'enhanced',
+      careShieldLifeEnabled: false,
+      oopBaseAmount: 1_000,
+      oopModel: 'fixed',
+      oopInflationRate: 0,
+      oopReferenceAge: plan.adults[1].currentAge,
+      mediSaveTopUpAnnual: 0,
+    }
+
+    const compiled = compileHouseholdPlan(plan)
+    const result = buildHouseholdRuntimeLegacyInputs(plan, compiled)
+
+    // Joint mode must produce a healthcareCashOutlayByYear array
+    expect(result.healthcareCashOutlayByYear).toBeDefined()
+    expect(result.healthcareCashOutlayByYear!.length).toBeGreaterThan(0)
+
+    // The array must equal the compiler's row-level totals (which sum both adults)
+    for (let i = 0; i < Math.min(5, result.healthcareCashOutlayByYear!.length); i++) {
+      expect(result.healthcareCashOutlayByYear![i]).toBe(compiled.rows[i].healthcareCashOutlay)
+    }
+
+    // Combined total must exceed what adult-0 alone would produce (oopBaseAmount: 500).
+    // This pins the test to actual multi-adult aggregation — not just adapter-copies-compiler.
+    expect(result.healthcareCashOutlayByYear![0]).toBeGreaterThan(500)
+
+    // Partner has ISP enhanced, so verify the compiler's per-adult breakdown exists
+    const partnerHealthcare = compiled.healthcareByAdultId?.['adult-chloe']
+    expect(partnerHealthcare).toBeDefined()
+    const partnerHasNonZero = partnerHealthcare?.cashOutlayByYear.some((v) => v > 0)
+    expect(partnerHasNonZero).toBe(true)
+  })
+
+  it('healthcareCashOutlayByYear is undefined for single-adult plans', () => {
+    const plan = makeTwoAdultFixture()
+    // Convert to single-adult by removing partner
+    plan.planType = 'individual'
+    plan.adults = [plan.adults[0]]
+    plan.income = plan.income.filter((i) => i.owner !== 'partner')
+    plan.expenses = plan.expenses.filter((e) => e.owner !== 'partner')
+    plan.goals = []
+
+    const compiled = compileHouseholdPlan(plan)
+    const result = buildHouseholdRuntimeLegacyInputs(plan, compiled)
+
+    // Single-adult plans use healthcareConfig directly, not the override array
+    expect(result.healthcareCashOutlayByYear).toBeUndefined()
+  })
+})
+
+describe('household adapter seam: expense base fallback (RC1 regression guard)', () => {
+  it('uses referenceAdult.annualExpenses when no base-living items are active at year 0', () => {
+    const plan = makeTwoAdultFixture()
+    // Move all base-living expenses to start in the future
+    for (const expense of plan.expenses) {
+      if (expense.kind === 'base-living') {
+        expense.timing = {
+          kind: 'age-range',
+          owner: 'self',
+          startAge: plan.adults[0].currentAge + 5,
+          endAge: null,
+        }
+      }
+    }
+
+    const compiled = compileHouseholdPlan(plan)
+    const result = buildHouseholdRuntimeLegacyInputs(plan, compiled)
+
+    // The fallback should use referenceAdult.annualExpenses, NOT retirementExpenseBase.
+    // retirementExpenseBase includes healthcare, parentSupport, dependents, and property
+    // costs — using it as annualExpenses would double-count those in projection.ts.
+    // The reference adult's annualExpenses is the raw per-adult expense field.
+    expect(result.profile.annualExpenses).toBe(plan.adults[0].annualExpenses)
+
+    // The unconditional .toBe() above is the complete regression guard.
+    // If RC1 regresses, annualExpenses would equal retirementExpenseBase (which
+    // includes healthcare + parent support), not the raw per-adult field.
+  })
+
+  it('uses active base-living sum when base-living items are active at year 0', () => {
+    const plan = makeTwoAdultFixture()
+    // Default fixture has base-living starting at currentAge — should be active
+
+    const compiled = compileHouseholdPlan(plan)
+    const result = buildHouseholdRuntimeLegacyInputs(plan, compiled)
+
+    // $4,000/month = $48,000/year from makeTwoAdultFixture's base-living
+    expect(result.profile.annualExpenses).toBe(48_000)
+  })
+})
+
 describe('household adapter seam: fields not consumed in joint path', () => {
   it('momEducation/momAdjustment on merged IncomeState are not used by joint projection', () => {
     const plan = makeTwoAdultFixture()
