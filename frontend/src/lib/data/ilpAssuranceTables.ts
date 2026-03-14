@@ -442,6 +442,8 @@ const MANULIFE_INVESTREADY_III_DEATH_TI_ROWS = `
 99 354.483 372.45 327.42 341.602
 `
 
+// WA_MID01_PdtSum.pdf (Sep 2025), Appendix A, preserves a published dip at age 70
+// before the rate curve resumes increasing at age 71. Keep the source values as-is.
 const MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_ROWS = `
 0 0.7200 0.7200 0.5400 0.5400
 1 0.7200 0.7200 0.5400 0.5400

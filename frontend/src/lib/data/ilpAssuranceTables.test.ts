@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   HSBC_FLEXI_DEATH_TI_RATE_TABLE,
+  MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE,
   PRUVANTAGE_ASSURE_II_COMBINED_RATE_TABLE,
   PRUVANTAGE_PROSPER_ACCIDENTAL_DEATH_RATE_TABLE,
   PRUVANTAGE_PROSPER_DEATH_RATE_TABLE,
@@ -32,5 +33,17 @@ describe('ilpAssuranceTables', () => {
     expect(HSBC_FLEXI_DEATH_TI_RATE_TABLE['male-non-smoker'][29]).toBe(0.86)
     expect(HSBC_FLEXI_DEATH_TI_RATE_TABLE['female-smoker'][69]).toBe(11.9)
     expect(HSBC_FLEXI_DEATH_TI_RATE_TABLE['female-non-smoker'][98]).toBe(431.31)
+  })
+
+  it('preserves the published ManuInvest Duo age-70 dip from Appendix A', () => {
+    expect(MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE['male-non-smoker'][68]).toBe(22.6596)
+    expect(MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE['male-non-smoker'][69]).toBe(20.897)
+    expect(MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE['male-non-smoker'][70]).toBe(22.755)
+    expect(MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE['male-non-smoker'][69]).toBeLessThan(
+      MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE['male-non-smoker'][68],
+    )
+    expect(MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE['male-non-smoker'][70]).toBeGreaterThan(
+      MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE['male-non-smoker'][69],
+    )
   })
 })
