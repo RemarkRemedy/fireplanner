@@ -1,0 +1,272 @@
+import path from 'node:path'
+import type {
+  IlpCatalogProduct,
+  IlpCatalogSourceRef,
+  IlpTemplateEventChargeRule,
+  IlpTemplateFeeRule,
+  IlpTemplateVariant,
+} from '../../../src/lib/ilp-catalog/types.js'
+import type { ExtractedPdfDocument } from '../pdf/extractPdfText.js'
+
+interface ParseContext {
+  document: ExtractedPdfDocument
+  sourceChecksumSha256: string
+}
+
+const REGULAR_PREMIUM_CHARGE_SCHEDULE = [
+  { startPolicyYear: 1, endPolicyYear: 1, rate: 0.3 },
+  { startPolicyYear: 2, endPolicyYear: 2, rate: 0.2 },
+  { startPolicyYear: 3, endPolicyYear: 3, rate: 0.1 },
+  { startPolicyYear: 4, endPolicyYear: null, rate: 0 },
+] as const
+
+const PREMIUM_HOLIDAY_CHARGE_SCHEDULE = [
+  { startPolicyYear: 1, endPolicyYear: 4, rate: 0.35 },
+  { startPolicyYear: 5, endPolicyYear: null, rate: 0 },
+] as const
+
+const FULL_SURRENDER_CHARGE_SCHEDULE = [
+  0.5,
+  0.45,
+  0.4,
+  0.35,
+  0.3,
+  0.25,
+  0.2,
+  0.15,
+  0.1,
+  0.05,
+  0,
+] as const
+
+const PARTIAL_WITHDRAWAL_CHARGE_SCHEDULE = [
+  1,
+  0.818,
+  0.667,
+  0.538,
+  0.429,
+  0.333,
+  0.25,
+  0.176,
+  0.111,
+  0.053,
+  0,
+] as const
+
+function normalizeWhitespace(text: string): string {
+  return text.replace(/\s+/g, ' ').trim()
+}
+
+function roundRate(value: number): number {
+  return Number(value.toFixed(6))
+}
+
+function sourceRef(page: number, section: string, excerpt: string): IlpCatalogSourceRef {
+  const normalizedExcerpt = normalizeWhitespace(excerpt)
+  return {
+    page,
+    section,
+    excerpt: (normalizedExcerpt || `${section} excerpt unavailable`).slice(0, 220),
+  }
+}
+
+function snippetNear(
+  document: ExtractedPdfDocument,
+  pageNumber: number,
+  keyword: string,
+  lineWindow = 12,
+): string {
+  const page = document.pages.find((candidate) => candidate.pageNumber === pageNumber)
+  if (!page) return ''
+
+  const lineIndex = page.lines.findIndex((line) => line.text.toLowerCase().includes(keyword.toLowerCase()))
+  if (lineIndex === -1) {
+    return `Approximate excerpt; keyword "${keyword}" not found on page. ${page.lines.slice(0, lineWindow).map((line) => line.text).join(' ')}`
+  }
+
+  return page.lines.slice(lineIndex, lineIndex + lineWindow).map((line) => line.text).join(' ')
+}
+
+function buildRateSchedule(values: readonly number[]): Array<{ startPolicyYear: number, endPolicyYear: number | null, rate: number }> {
+  return values.map((rate, index) => ({
+    startPolicyYear: index + 1,
+    endPolicyYear: index + 1,
+    rate: roundRate(rate),
+  }))
+}
+
+function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
+  const page1 = sourceRef(1, 'Plan overview and Secure Monthly Income', snippetNear(document, 1, 'Secure Monthly Income', 18))
+  const page2 = sourceRef(2, 'Secure payout conditions and Target Monthly Income', snippetNear(document, 2, 'The conditions to be satisfied before Secure Monthly Income is payable', 18))
+  const page3 = sourceRef(3, 'Regular premium and top-up subscription', snippetNear(document, 3, '100% of Regular Premium less Premium Charge', 18))
+  const page4 = sourceRef(4, 'Premium Charge and Supplementary Charge', snippetNear(document, 4, 'Premium Charge', 20))
+  const page5 = sourceRef(5, 'Premium Holiday Charge and Full Surrender Charge', snippetNear(document, 5, 'Premium Holiday Charge', 18))
+  const page6 = sourceRef(5, 'Partial Withdrawal Charge and top-up effects', snippetNear(document, 5, 'Partial Withdrawal Charge', 20))
+  const page7 = sourceRef(8, 'Partial withdrawal effects and reinstatement', snippetNear(document, 8, 'Reinstatement', 20))
+
+  const feeRules: IlpTemplateFeeRule[] = [
+    {
+      id: 'regular-premium-charge',
+      label: 'Regular Premium Charge',
+      basis: 'annual-contribution',
+      yearBasis: 'premium-year',
+      rate: 0,
+      amount: 0,
+      appliesTo: ['policy'],
+      rateSchedule: REGULAR_PREMIUM_CHARGE_SCHEDULE.map((tier) => ({ ...tier })),
+      activeWindow: 'policy-term',
+      notes: [
+        'Models the published regular premium charge schedule by accepted premium count.',
+        'If premiums were missed or the policy was reinstated, the charge resumes from the band immediately after the last accepted regular premium.',
+      ],
+      sourceRefs: [page3, page4],
+    },
+  ]
+
+  const eventChargeRules: IlpTemplateEventChargeRule[] = [
+    {
+      id: 'top-up-premium-charge',
+      label: 'Top-Up Premium Charge',
+      trigger: 'top-up',
+      basis: 'event-amount',
+      appliesTo: ['policy'],
+      rate: 0.03,
+      amount: 0,
+      activeWindow: 'policy-term',
+      allocation: 'equal-split',
+      notes: [
+        'Models the published 3% premium charge on each accepted top-up premium.',
+        'Top-ups do not change the Secure Monthly Income or Secure Payout Period.',
+      ],
+      sourceRefs: [page3, page4, page6],
+    },
+    {
+      id: 'premium-holiday-charge',
+      label: 'Premium Holiday Charge',
+      trigger: 'premium-holiday',
+      basis: 'annual-premium-with-overlap-months',
+      yearBasis: 'premium-year',
+      appliesTo: ['policy'],
+      rate: 0,
+      rateSchedule: PREMIUM_HOLIDAY_CHARGE_SCHEDULE.map((tier) => ({ ...tier })),
+      amount: 0,
+      activeWindow: 'policy-term',
+      allocation: 'pro-rata-by-value',
+      notes: [
+        'Charged monthly during premium holiday based on the annualised regular premium.',
+        'The charge stops once all outstanding premiums are fully repaid.',
+      ],
+      sourceRefs: [page5, page7],
+    },
+    {
+      id: 'partial-withdrawal-charge',
+      label: 'Partial Withdrawal Charge',
+      trigger: 'partial-withdrawal',
+      basis: 'event-amount',
+      appliesTo: ['policy'],
+      rate: 0,
+      rateSchedule: buildRateSchedule(PARTIAL_WITHDRAWAL_CHARGE_SCHEDULE),
+      amount: 0,
+      activeWindow: 'policy-term',
+      allocation: 'equal-split',
+      notes: [
+        'Models the published policy-year partial withdrawal charge factor on withdrawn regular premium policy value.',
+        'Partial withdrawals from regular premium units or bonus units affect Secure Monthly Income and Power-up Bonus, but those downstream effects remain informational only in V1.',
+      ],
+      sourceRefs: [page6, page7],
+    },
+  ]
+
+  return {
+    id: 'sgd-mip-5',
+    currency: 'SGD',
+    mipLength: 5,
+    icpMonths: 1,
+    accounts: [
+      {
+        id: 'policy',
+        label: 'Policy Account',
+        feeRate: null,
+        postMipFeeRate: null,
+        subjectToEec: true,
+        contributionRules: [
+          { phase: 'during-icp', targetAccountId: 'policy', contributionShare: 1 },
+          { phase: 'after-icp', targetAccountId: 'policy', contributionShare: 1 },
+          { phase: 'top-up', targetAccountId: 'policy', contributionShare: 1 },
+        ],
+        sourceRefs: [page1, page3, page6],
+      },
+    ],
+    bonuses: [],
+    feeRules,
+    eventChargeRules,
+    scheduledPayoutSupport: {
+      mode: 'manual-assumption',
+      accountId: 'policy',
+      source: 'policy-redemption',
+      notes: [
+        'Monthly Income after the selected payout age is paid via redemption of policy units, with Secure Monthly Income during the Secure Payout Period and Target Monthly Income thereafter.',
+      ],
+      sourceRefs: [page1, page2, page7],
+    },
+    eecTable: [...FULL_SURRENDER_CHARGE_SCHEDULE],
+    warnings: [
+      'AIA Elite Secure Income - 5 Pay is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, the 3% top-up premium charge, the premium-holiday charge schedule, the full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel.',
+      'Secure Monthly Income eligibility depends on no premium holiday, no regular-premium-unit or bonus-unit withdrawal, and no prior reinstatement, so payout selection and payout-state gating remain manual or informational inputs in V1.',
+      'Supplementary charge rates are only stated in the policy illustration and therefore remain informational only in V1.',
+    ],
+    unsupportedItems: [
+      'Secure Monthly Income amount, payout age, and payout period selection remain manual-assumption inputs in V1.',
+      'Secure Monthly Income versus Target Monthly Income gating remains informational only, including payout opt-out, reinvested-unit handling, and resumption after payout suspension.',
+      'Power-up Bonus remains informational only because it depends on a withdrawal-adjustment factor after policy year 5.',
+      'Supplementary charge remains informational only because the annual rate is only stated in the policy illustration.',
+      'Death, accidental death, and terminal illness benefit formulas remain informational only.',
+      'Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.',
+      'Minimum withdrawal amount, minimum post-withdrawal policy value, and top-up eligibility while premiums are outstanding remain informational only.',
+      'Reinstatement effects on payout-state are only partially represented; the post-reinstatement shift to Target Monthly Income remains informational only.',
+      'Fund switching remains informational only because it is not allowed under the product terms.',
+    ],
+    sourceRefs: [page1, page2, page3, page4, page5, page6, page7],
+  }
+}
+
+export function parseAiaEliteSecureIncome5Pay({ document, sourceChecksumSha256 }: ParseContext): IlpCatalogProduct {
+  return {
+    id: 'aia-elite-secure-income-5-pay',
+    insurer: 'AIA Singapore',
+    productName: 'AIA Elite Secure Income - 5 Pay',
+    sourceFileName: path.basename(document.filePath),
+    sourceChecksumSha256,
+    sourceDocumentType: 'summary',
+    sourceClass: 'summary',
+    supportStatus: 'partial',
+    structureStatus: 'structured',
+    economicsStatus: 'partial-modeled-subset',
+    modeledEconomics: [
+      'branch:aia-elite-secure-income-5p-premium-year-premium-charge',
+      'branch:aia-elite-secure-income-5p-top-up-premium-charge',
+      'branch:aia-elite-secure-income-5p-premium-holiday-charge',
+      'branch:aia-elite-secure-income-5p-partial-withdrawal-charge',
+      'branch:aia-elite-secure-income-5p-full-surrender-charge',
+      'kernel:scheduled-payout-manual-assumption',
+    ],
+    metadataOnlyBehaviors: [
+      'aia-elite-secure-income-5p-secure-monthly-income-election',
+      'aia-elite-secure-income-5p-secure-monthly-income-gating',
+      'aia-elite-secure-income-5p-power-up-bonus',
+      'aia-elite-secure-income-5p-supplementary-charge',
+      'aia-elite-secure-income-5p-death-benefit',
+      'aia-elite-secure-income-5p-accidental-death-benefit',
+      'aia-elite-secure-income-5p-terminal-illness-benefit',
+      'aia-elite-secure-income-5p-fund-management-charge',
+      'aia-elite-secure-income-5p-withdrawal-eligibility-gating',
+      'aia-elite-secure-income-5p-reinstatement-target-income',
+      'aia-elite-secure-income-5p-no-fund-switching',
+    ],
+    warnings: [
+      'AIA Elite Secure Income - 5 Pay is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, the 3% top-up premium charge, the premium-holiday charge schedule, the full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel, while payout-election logic, Power-up Bonus, supplementary charge, protection benefits, and fund-level charges remain outside the current engine.',
+    ],
+    archived: false,
+    variants: [buildVariant(document)],
+  }
+}

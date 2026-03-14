@@ -1517,6 +1517,68 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('initial single-premium charge'))).toBe(true)
   })
 
+  it('maps AIA Elite Secure Income - 5 Pay into a partial seed with payout support and premium-history charges', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'aia-elite-secure-income-5-pay')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-5')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-elite-secure-income-5p-secure-monthly-income-gating')
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.mipLength).toBe(5)
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      accountId: 'policy',
+      source: 'policy-redemption',
+    })
+    expect(seed.scheduledPayoutAssumption).toBeUndefined()
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'regular-premium-charge',
+        basis: 'annual-contribution',
+        yearBasis: 'premium-year',
+        rateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 1, rate: 0.3 },
+          { startPolicyYear: 2, endPolicyYear: 2, rate: 0.2 },
+          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.1 },
+          { startPolicyYear: 4, endPolicyYear: null, rate: 0 },
+        ],
+      }),
+    ])
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        basis: 'event-amount',
+        rate: 0.03,
+      }),
+      expect.objectContaining({
+        id: 'premium-holiday-charge',
+        trigger: 'premium-holiday',
+        basis: 'annual-premium-with-overlap-months',
+        yearBasis: 'premium-year',
+        rateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 4, rate: 0.35 },
+          { startPolicyYear: 5, endPolicyYear: null, rate: 0 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
+      }),
+    ])
+    expect(seed.eecTable).toEqual([0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05, 0])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual payout assumption'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('Power-up Bonus'))).toBe(true)
+  })
+
   it('preserves template charge allocation, event activeWindow, and rateSchedule-only fee rules', () => {
     const manifest: IlpCatalogManifest = {
       generatedAt: '2026-03-13T00:00:00.000Z',

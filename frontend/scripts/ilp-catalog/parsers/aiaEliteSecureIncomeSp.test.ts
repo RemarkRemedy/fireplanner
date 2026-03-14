@@ -122,7 +122,7 @@ describe('parseAiaEliteSecureIncomeSp', () => {
     expect(variant.accounts).toEqual([
       expect.objectContaining({
         id: 'policy',
-        feeRate: 0,
+        feeRate: null,
         subjectToEec: false,
       }),
     ])

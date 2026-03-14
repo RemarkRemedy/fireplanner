@@ -79,7 +79,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       {
         id: 'policy',
         label: 'Policy Account',
-        feeRate: 0,
+        feeRate: null,
         postMipFeeRate: null,
         subjectToEec: false,
         contributionRules: [

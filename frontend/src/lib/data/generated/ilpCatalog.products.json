@@ -1,5 +1,401 @@
 [
   {
+    "id": "aia-elite-secure-income-5-pay",
+    "insurer": "AIA Singapore",
+    "productName": "AIA Elite Secure Income - 5 Pay",
+    "sourceFileName": "WA_Sum_201106386R_ESI5P_Jul2025.pdf",
+    "sourceChecksumSha256": "264a80efc89a514b5a50e32937e8af55ef9e74b745474a0a3d47132ff7f858e3",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:aia-elite-secure-income-5p-premium-year-premium-charge",
+      "branch:aia-elite-secure-income-5p-top-up-premium-charge",
+      "branch:aia-elite-secure-income-5p-premium-holiday-charge",
+      "branch:aia-elite-secure-income-5p-partial-withdrawal-charge",
+      "branch:aia-elite-secure-income-5p-full-surrender-charge",
+      "kernel:scheduled-payout-manual-assumption"
+    ],
+    "metadataOnlyBehaviors": [
+      "aia-elite-secure-income-5p-secure-monthly-income-election",
+      "aia-elite-secure-income-5p-secure-monthly-income-gating",
+      "aia-elite-secure-income-5p-power-up-bonus",
+      "aia-elite-secure-income-5p-supplementary-charge",
+      "aia-elite-secure-income-5p-death-benefit",
+      "aia-elite-secure-income-5p-accidental-death-benefit",
+      "aia-elite-secure-income-5p-terminal-illness-benefit",
+      "aia-elite-secure-income-5p-fund-management-charge",
+      "aia-elite-secure-income-5p-withdrawal-eligibility-gating",
+      "aia-elite-secure-income-5p-reinstatement-target-income",
+      "aia-elite-secure-income-5p-no-fund-switching"
+    ],
+    "warnings": [
+      "AIA Elite Secure Income - 5 Pay is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, the 3% top-up premium charge, the premium-holiday charge schedule, the full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel, while payout-election logic, Power-up Bonus, supplementary charge, protection benefits, and fund-level charges remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-5",
+        "currency": "SGD",
+        "mipLength": 5,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and Secure Monthly Income",
+                "excerpt": "wealth creation needs towards retirement. It provides Secure Monthly Income up to at least 100% of total premiums paid (excluding top-up premium) invested. You can choose your Monthly Income that you wish to receive from"
+              },
+              {
+                "page": 3,
+                "section": "Regular premium and top-up subscription",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. AIA Singapore Private Limited (Reg. No. 201106386R) 1 Robinson Road, AIA T"
+              },
+              {
+                "page": 5,
+                "section": "Partial Withdrawal Charge and top-up effects",
+                "excerpt": "5.5. Partial Withdrawal Charge If you requested for partial withdrawal, a partial withdrawal charge will be charged to your policy by the cancellation of units. Regular Premium Units Partial Withdrawal Charge = Partial W"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "regular-premium-charge",
+            "label": "Regular Premium Charge",
+            "basis": "annual-contribution",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published regular premium charge schedule by accepted premium count.",
+              "If premiums were missed or the policy was reinstated, the charge resumes from the band immediately after the last accepted regular premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Regular premium and top-up subscription",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. AIA Singapore Private Limited (Reg. No. 201106386R) 1 Robinson Road, AIA T"
+              },
+              {
+                "page": 4,
+                "section": "Premium Charge and Supplementary Charge",
+                "excerpt": "(Premium - Premium Charge) ÷ Bid Price = Units Amount First policy ($10,000 - 30% x $10,000) ÷ $1.00 = 7,000 year Second ($10,000 - 20% x $10,000) ÷ $1.00 = 8,000 policy year If you did not pay regular premium on the pre"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-Up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% premium charge on each accepted top-up premium.",
+              "Top-ups do not change the Secure Monthly Income or Secure Payout Period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Regular premium and top-up subscription",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. AIA Singapore Private Limited (Reg. No. 201106386R) 1 Robinson Road, AIA T"
+              },
+              {
+                "page": 4,
+                "section": "Premium Charge and Supplementary Charge",
+                "excerpt": "(Premium - Premium Charge) ÷ Bid Price = Units Amount First policy ($10,000 - 30% x $10,000) ÷ $1.00 = 7,000 year Second ($10,000 - 20% x $10,000) ÷ $1.00 = 8,000 policy year If you did not pay regular premium on the pre"
+              },
+              {
+                "page": 5,
+                "section": "Partial Withdrawal Charge and top-up effects",
+                "excerpt": "5.5. Partial Withdrawal Charge If you requested for partial withdrawal, a partial withdrawal charge will be charged to your policy by the cancellation of units. Regular Premium Units Partial Withdrawal Charge = Partial W"
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "yearBasis": "premium-year",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 4,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the annualised regular premium.",
+              "The charge stops once all outstanding premiums are fully repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium Holiday Charge and Full Surrender Charge",
+                "excerpt": "Premium Holiday Charge = Premium Holiday Charge Annual Rate/12 x Annualised Regular Premium Number of Regular Premiums paid to and accepted by us Premium Holiday Charge Annual Semi-annual Quarterly Monthly Annual Rate 1 "
+              },
+              {
+                "page": 8,
+                "section": "Partial withdrawal effects and reinstatement",
+                "excerpt": "7.3. Reinstatement Unless your policy has been terminated as described in paragraphs (i), (ii), (iii), or (v) of section 7.4, the policy may be reinstated within 5 years from the date that the policy is lapsed, subject t"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.818
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.667
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.538
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.429
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.333
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.176
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.111
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.053
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published policy-year partial withdrawal charge factor on withdrawn regular premium policy value.",
+              "Partial withdrawals from regular premium units or bonus units affect Secure Monthly Income and Power-up Bonus, but those downstream effects remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Partial Withdrawal Charge and top-up effects",
+                "excerpt": "5.5. Partial Withdrawal Charge If you requested for partial withdrawal, a partial withdrawal charge will be charged to your policy by the cancellation of units. Regular Premium Units Partial Withdrawal Charge = Partial W"
+              },
+              {
+                "page": 8,
+                "section": "Partial withdrawal effects and reinstatement",
+                "excerpt": "7.3. Reinstatement Unless your policy has been terminated as described in paragraphs (i), (ii), (iii), or (v) of section 7.4, the policy may be reinstated within 5 years from the date that the policy is lapsed, subject t"
+              }
+            ]
+          }
+        ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "policy",
+          "source": "policy-redemption",
+          "notes": [
+            "Monthly Income after the selected payout age is paid via redemption of policy units, with Secure Monthly Income during the Secure Payout Period and Target Monthly Income thereafter."
+          ],
+          "sourceRefs": [
+            {
+              "page": 1,
+              "section": "Plan overview and Secure Monthly Income",
+              "excerpt": "wealth creation needs towards retirement. It provides Secure Monthly Income up to at least 100% of total premiums paid (excluding top-up premium) invested. You can choose your Monthly Income that you wish to receive from"
+            },
+            {
+              "page": 2,
+              "section": "Secure payout conditions and Target Monthly Income",
+              "excerpt": "The conditions to be satisfied before Secure Monthly Income is payable are: (a) the policy is in force and Premium Holiday has never been activated; (b) no partial withdrawal has been made from regular premium units and "
+            },
+            {
+              "page": 8,
+              "section": "Partial withdrawal effects and reinstatement",
+              "excerpt": "7.3. Reinstatement Unless your policy has been terminated as described in paragraphs (i), (ii), (iii), or (v) of section 7.4, the policy may be reinstated within 5 years from the date that the policy is lapsed, subject t"
+            }
+          ]
+        },
+        "eecTable": [
+          0.5,
+          0.45,
+          0.4,
+          0.35,
+          0.3,
+          0.25,
+          0.2,
+          0.15,
+          0.1,
+          0.05,
+          0
+        ],
+        "warnings": [
+          "AIA Elite Secure Income - 5 Pay is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, the 3% top-up premium charge, the premium-holiday charge schedule, the full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel.",
+          "Secure Monthly Income eligibility depends on no premium holiday, no regular-premium-unit or bonus-unit withdrawal, and no prior reinstatement, so payout selection and payout-state gating remain manual or informational inputs in V1.",
+          "Supplementary charge rates are only stated in the policy illustration and therefore remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Secure Monthly Income amount, payout age, and payout period selection remain manual-assumption inputs in V1.",
+          "Secure Monthly Income versus Target Monthly Income gating remains informational only, including payout opt-out, reinvested-unit handling, and resumption after payout suspension.",
+          "Power-up Bonus remains informational only because it depends on a withdrawal-adjustment factor after policy year 5.",
+          "Supplementary charge remains informational only because the annual rate is only stated in the policy illustration.",
+          "Death, accidental death, and terminal illness benefit formulas remain informational only.",
+          "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
+          "Minimum withdrawal amount, minimum post-withdrawal policy value, and top-up eligibility while premiums are outstanding remain informational only.",
+          "Reinstatement effects on payout-state are only partially represented; the post-reinstatement shift to Target Monthly Income remains informational only.",
+          "Fund switching remains informational only because it is not allowed under the product terms."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and Secure Monthly Income",
+            "excerpt": "wealth creation needs towards retirement. It provides Secure Monthly Income up to at least 100% of total premiums paid (excluding top-up premium) invested. You can choose your Monthly Income that you wish to receive from"
+          },
+          {
+            "page": 2,
+            "section": "Secure payout conditions and Target Monthly Income",
+            "excerpt": "The conditions to be satisfied before Secure Monthly Income is payable are: (a) the policy is in force and Premium Holiday has never been activated; (b) no partial withdrawal has been made from regular premium units and "
+          },
+          {
+            "page": 3,
+            "section": "Regular premium and top-up subscription",
+            "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. AIA Singapore Private Limited (Reg. No. 201106386R) 1 Robinson Road, AIA T"
+          },
+          {
+            "page": 4,
+            "section": "Premium Charge and Supplementary Charge",
+            "excerpt": "(Premium - Premium Charge) ÷ Bid Price = Units Amount First policy ($10,000 - 30% x $10,000) ÷ $1.00 = 7,000 year Second ($10,000 - 20% x $10,000) ÷ $1.00 = 8,000 policy year If you did not pay regular premium on the pre"
+          },
+          {
+            "page": 5,
+            "section": "Premium Holiday Charge and Full Surrender Charge",
+            "excerpt": "Premium Holiday Charge = Premium Holiday Charge Annual Rate/12 x Annualised Regular Premium Number of Regular Premiums paid to and accepted by us Premium Holiday Charge Annual Semi-annual Quarterly Monthly Annual Rate 1 "
+          },
+          {
+            "page": 5,
+            "section": "Partial Withdrawal Charge and top-up effects",
+            "excerpt": "5.5. Partial Withdrawal Charge If you requested for partial withdrawal, a partial withdrawal charge will be charged to your policy by the cancellation of units. Regular Premium Units Partial Withdrawal Charge = Partial W"
+          },
+          {
+            "page": 8,
+            "section": "Partial withdrawal effects and reinstatement",
+            "excerpt": "7.3. Reinstatement Unless your policy has been terminated as described in paragraphs (i), (ii), (iii), or (v) of section 7.4, the policy may be reinstated within 5 years from the date that the policy is lapsed, subject t"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "aia-elite-secure-income-single-premium",
     "insurer": "AIA Singapore",
     "productName": "AIA Elite Secure Income - Single Premium",
@@ -43,7 +439,7 @@
           {
             "id": "policy",
             "label": "Policy Account",
-            "feeRate": 0,
+            "feeRate": null,
             "postMipFeeRate": null,
             "subjectToEec": false,
             "contributionRules": [
