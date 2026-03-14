@@ -196,7 +196,7 @@ export function applySetupDraft(draft: SetupDraft, planType: HouseholdPlanType):
   }
 
   // --- Property ---
-  applyPropertyDraft(draft, refreshedPlan)
+  applyPropertyDraft(draft)
 
   // --- Partner (couple plans) ---
   if (draft.partner) {
@@ -233,7 +233,14 @@ export function applySetupDraft(draft: SetupDraft, planType: HouseholdPlanType):
   }
 
   // --- Dependents ---
-  if (draft.dependents && draft.dependents.length > 0 && !draft.isRedo) {
+  if (draft.dependents && draft.dependents.length > 0) {
+    // On redo, clear existing dependents before re-adding so we don't accumulate duplicates
+    if (draft.isRedo) {
+      const existingDeps = useHouseholdPlanStore.getState().plan.dependents
+      for (const dep of existingDeps) {
+        useHouseholdPlanStore.getState().removeDependent(dep.id)
+      }
+    }
     for (const dep of draft.dependents) {
       useHouseholdPlanStore.getState().addDependent({
         id: createId('dependent'),
@@ -252,7 +259,7 @@ export function applySetupDraft(draft: SetupDraft, planType: HouseholdPlanType):
 // Property sub-routine
 // ---------------------------------------------------------------------------
 
-function applyPropertyDraft(draft: SetupDraft, _currentPlan: HouseholdPlan): void {
+function applyPropertyDraft(draft: SetupDraft): void {
   // Re-read plan to get latest state (previous updates may have changed it)
   const plan = useHouseholdPlanStore.getState().plan
   const existingProperty = plan.properties.find((p) => p.owner === 'self')
@@ -459,9 +466,14 @@ function applyPartnerDraft(draft: SetupDraft, selfAdultTemplate: PlanningAdult):
         e.owner === 'partner' &&
         e.timing.kind === 'age-range',
     )
-    if (partnerSalary) {
+    if (partnerSalary && partnerSalary.timing.kind === 'age-range') {
       useHouseholdPlanStore.getState().updateIncome(partnerSalary.id, {
         annualAmount: partnerGross,
+        timing: {
+          ...partnerSalary.timing,
+          startAge: partner.currentAge,
+          endAge: partner.retirementAge,
+        },
       })
     }
 

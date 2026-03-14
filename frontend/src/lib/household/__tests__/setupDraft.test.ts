@@ -92,6 +92,14 @@ describe('splitCpfByAge', () => {
     const result = splitCpfByAge(0, 30)
     expect(result).toEqual({ oa: 0, sa: 0, ma: 0, ra: 0 })
   })
+
+  it('sum of components equals input for non-round total (age 30, 99999)', () => {
+    const result = splitCpfByAge(99_999, 30)
+    // Each component is Math.round(total * fraction); sum may differ by at most 2 due to rounding
+    const sum = result.oa + result.sa + result.ma + result.ra
+    // Verify sum is within 2 of the input (acceptable rounding tolerance)
+    expect(Math.abs(sum - 99_999)).toBeLessThanOrEqual(2)
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -346,6 +354,40 @@ describe('applySetupDraft — couple plan', () => {
     // Age 28 → under-35 bracket: 60/20/20
     expect(partner.cpf.balances).toEqual({ oa: 48_000, sa: 16_000, ma: 16_000, ra: 0 })
   })
+
+  it('updates partner salary timing when partner age changes on redo', () => {
+    // Fresh couple setup
+    applySetupDraft(freshCoupleDraft(), 'couple')
+
+    // Redo with different partner age and retirement age
+    applySetupDraft(
+      freshCoupleDraft({
+        partner: {
+          name: 'Jane',
+          currentAge: 32,
+          retirementAge: 62,
+          annualIncome: 60_000,
+          incomeType: 'gross',
+          annualExpenses: 24_000,
+          liquidNetWorth: 50_000,
+          residency: 'citizen',
+          cpfKnown: false,
+        },
+        isRedo: true,
+      }),
+      'couple',
+    )
+
+    const partnerSalary = getPlan().income.find(
+      (e) => e.kind === 'salary-model' && e.owner === 'partner',
+    )
+    expect(partnerSalary).toBeDefined()
+    expect(partnerSalary!.timing.kind).toBe('age-range')
+    if (partnerSalary!.timing.kind === 'age-range') {
+      expect(partnerSalary!.timing.startAge).toBe(32)
+      expect(partnerSalary!.timing.endAge).toBe(62)
+    }
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -425,6 +467,36 @@ describe('applySetupDraft — redo path', () => {
       (e) => e.kind === 'base-living' && e.owner === 'self',
     )
     expect(expense!.amount).toBe(48_000)
+  })
+
+  it('updates dependents on redo with different dependents', () => {
+    // First apply with one dependent
+    applySetupDraft(
+      freshIndividualDraft({
+        dependents: [{ name: 'Alice', age: 5, relationship: 'child' }],
+      }),
+      'individual',
+    )
+    expect(getPlan().dependents.length).toBe(1)
+    expect(getPlan().dependents[0].label).toBe('Alice')
+
+    // Redo with different dependents
+    applySetupDraft(
+      freshIndividualDraft({
+        dependents: [
+          { name: 'Bob', age: 8, relationship: 'child' },
+          { name: 'Carol', age: 3, relationship: 'child' },
+        ],
+        isRedo: true,
+      }),
+      'individual',
+    )
+
+    const deps = getPlan().dependents
+    expect(deps.length).toBe(2)
+    expect(deps.map((d) => d.label)).toContain('Bob')
+    expect(deps.map((d) => d.label)).toContain('Carol')
+    expect(deps.map((d) => d.label)).not.toContain('Alice')
   })
 })
 
