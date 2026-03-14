@@ -27256,6 +27256,198 @@
     ]
   },
   {
+    "id": "hsbc-life-wealth-invest-cpf",
+    "insurer": "HSBC Life",
+    "productName": "HSBC Life Wealth Invest (CPF)",
+    "sourceFileName": "HSBC Life Wealth Invest (CPF) Product Summary.pdf",
+    "sourceChecksumSha256": "6edd37a2561fcb995efc1fd314720009e02a8f5a468dddbc0bbc69400d312114",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:hsbc-life-wealth-invest-cpf-zero-single-premium-charge",
+      "branch:hsbc-life-wealth-invest-cpf-zero-top-up-charge",
+      "branch:hsbc-life-wealth-invest-cpf-zero-redemption-fee"
+    ],
+    "metadataOnlyBehaviors": [
+      "hsbc-life-wealth-invest-cpf-death-benefit",
+      "hsbc-life-wealth-invest-cpf-terminal-illness-benefit",
+      "hsbc-life-wealth-invest-cpf-single-premium-principal-tracking",
+      "hsbc-life-wealth-invest-cpf-recurring-single-premium",
+      "hsbc-life-wealth-invest-cpf-fund-management-charge",
+      "hsbc-life-wealth-invest-cpf-additional-ilp-sub-fund-charges",
+      "hsbc-life-wealth-invest-cpf-switching-eligibility-constraints",
+      "hsbc-life-wealth-invest-cpf-free-look-refund",
+      "hsbc-life-wealth-invest-cpf-termination"
+    ],
+    "warnings": [
+      "HSBC Life Wealth Invest (CPF) is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge single-premium, approved top-up, and nil-redemption-fee withdrawal path for the CPF corridor through the open-ended no-MIP basis, while protection formulas, recurring-single-premium handling, and fund-level charges remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-open-ended-cpf",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Subscription and premium types",
+                "excerpt": "8.3 Premium (single, recurring and top-up) Policyholders can choose to pay for their selected premium by monies from their CPF Ordinary or Special Accounts. (a) Single Premium The minimum initial investment amount is S$1"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "single-premium-charge",
+            "label": "Single Premium Charge (CPF)",
+            "basis": "annual-contribution",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 100% allocation of the initial single premium into units with no policy-level premium deduction."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Subscription and premium types",
+                "excerpt": "8.3 Premium (single, recurring and top-up) Policyholders can choose to pay for their selected premium by monies from their CPF Ordinary or Special Accounts. (a) Single Premium The minimum initial investment amount is S$1"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge (CPF)",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 100% allocation of approved top-up premiums into units with no policy-level top-up deduction."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Subscription and premium types",
+                "excerpt": "8.3 Premium (single, recurring and top-up) Policyholders can choose to pay for their selected premium by monies from their CPF Ordinary or Special Accounts. (a) Single Premium The minimum initial investment amount is S$1"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the currently nil redemption-fee path for partial redemptions."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Fees and charges",
+                "excerpt": "Redemption Fee Currently nil. We reserve the right to impose a redemption fee in its discretion from time to time by giving the Policyholder one (1) month’s prior written notice. Switching Fee between Currently nil. We r"
+              },
+              {
+                "page": 8,
+                "section": "Redemption of units",
+                "excerpt": "otherwise. Redemption requests are also subject to the minimum partial redemption amount set out below. Minimum Amounts Minimum Holding Amount for this Policy* S$10,000 Minimum Partial Redemption Amount* S$1,000 *We rese"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "HSBC Life Wealth Invest (CPF) is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge single-premium, approved top-up, and nil-redemption-fee withdrawal path for the CPF corridor through the open-ended no-MIP basis.",
+          "Switching fees are currently nil, but switching behavior and CPF eligibility constraints remain outside the current calculator surface.",
+          "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
+        ],
+        "unsupportedItems": [
+          "Death and terminal-illness benefit formulas remain informational only.",
+          "Single-premium principal tracking remains informational only in V1.",
+          "Recurring single premium enrollment, cadence, and failed-deduction handling remain informational only.",
+          "Fund-level management charges and additional ILP-sub-fund charges remain informational only because they depend on the selected fund mix and are not a single product-level rate.",
+          "Switching administration and CPF fund-eligibility constraints remain informational only.",
+          "Termination and free-look refund behavior remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 3,
+            "section": "Benefits",
+            "excerpt": "1.2.1 Death Benefit In the event of death of the Life Assured during the Policy term while the Policy is in force, the Death Benefit payable will be the higher of 101% of total Premiums (Initial Single Premium plus Top-U"
+          },
+          {
+            "page": 5,
+            "section": "Fees and charges",
+            "excerpt": "Redemption Fee Currently nil. We reserve the right to impose a redemption fee in its discretion from time to time by giving the Policyholder one (1) month’s prior written notice. Switching Fee between Currently nil. We r"
+          },
+          {
+            "page": 6,
+            "section": "Subscription and premium types",
+            "excerpt": "8.3 Premium (single, recurring and top-up) Policyholders can choose to pay for their selected premium by monies from their CPF Ordinary or Special Accounts. (a) Single Premium The minimum initial investment amount is S$1"
+          },
+          {
+            "page": 8,
+            "section": "Redemption of units",
+            "excerpt": "otherwise. Redemption requests are also subject to the minimum partial redemption amount set out below. Minimum Amounts Minimum Holding Amount for this Policy* S$10,000 Minimum Partial Redemption Amount* S$1,000 *We rese"
+          },
+          {
+            "page": 11,
+            "section": "Switching of units",
+            "excerpt": "11. SWITCHING OF UNITS Where Units have been issued, the Policyholders (unless otherwise provided by Us) may switch all or any of the Units of one ILP Sub-Fund s (the “ Original Fund ”) to Units of another ILP Sub- Fund "
+          },
+          {
+            "page": 14,
+            "section": "Key policy provisions",
+            "excerpt": "(b) Free-look Period We will give You a period of fourteen (14) days from the date You receive this Policy (“Free - Look Period”) to review it. If Your Policy is delivered by post or email, it is considered to have been "
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "hsbc-life-wealth-voyage",
     "insurer": "HSBC Life",
     "productName": "Wealth Voyage",

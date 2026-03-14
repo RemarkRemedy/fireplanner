@@ -1633,9 +1633,9 @@
       ],
       "implementationCohort": "hsbc-premium-base-recovery",
       "v1SupportBoundary": "supported-after-kernel",
-      "currentCatalogStatus": "not-in-catalog",
-      "economicsStatus": "not-modeled",
-      "parserExists": false,
+      "currentCatalogStatus": "partial",
+      "economicsStatus": "partial-modeled-subset",
+      "parserExists": true,
       "goldenCoverageStatus": "none",
       "kernelWorkstreams": [
         "assurance-charge-kernel",
@@ -1648,14 +1648,29 @@
         "assurance-charge-overlay",
         "core-cashflow-kernel"
       ],
-      "modeledSubsetAlreadyCovered": [],
-      "metadataOnlyBehaviors": [],
+      "modeledSubsetAlreadyCovered": [
+        "branch:hsbc-life-wealth-invest-cpf-zero-single-premium-charge",
+        "branch:hsbc-life-wealth-invest-cpf-zero-top-up-charge",
+        "branch:hsbc-life-wealth-invest-cpf-zero-redemption-fee"
+      ],
+      "metadataOnlyBehaviors": [
+        "hsbc-life-wealth-invest-cpf-death-benefit",
+        "hsbc-life-wealth-invest-cpf-terminal-illness-benefit",
+        "hsbc-life-wealth-invest-cpf-single-premium-principal-tracking",
+        "hsbc-life-wealth-invest-cpf-recurring-single-premium",
+        "hsbc-life-wealth-invest-cpf-fund-management-charge",
+        "hsbc-life-wealth-invest-cpf-additional-ilp-sub-fund-charges",
+        "hsbc-life-wealth-invest-cpf-switching-eligibility-constraints",
+        "hsbc-life-wealth-invest-cpf-free-look-refund",
+        "hsbc-life-wealth-invest-cpf-termination"
+      ],
       "manualInputRequirements": [],
-      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Unclear\" and gap tags ad-hoc-premium-routing, dynamic-charge-model, non-guaranteed-charges. Cross-cutting overlays are ad-hoc-premium-routing, assurance-charge, dynamic-charge. Implementation cohort is hsbc-premium-base-recovery from insurer/product patterning. No current parser-backed catalog product exists for this source yet. QA override status: confirmed-standard. No hard protection or special-account structure markers were found in the extracted source evidence; the standard-family default remains defensible.",
+      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Unclear\" and gap tags ad-hoc-premium-routing, dynamic-charge-model, non-guaranteed-charges. Cross-cutting overlays are ad-hoc-premium-routing, assurance-charge, dynamic-charge. Implementation cohort is hsbc-premium-base-recovery from insurer/product patterning. Current catalog status is partial with economics status partial-modeled-subset. QA override status: confirmed-standard. No hard protection or special-account structure markers were found in the extracted source evidence; the standard-family default remains defensible.",
       "confidence": 0.9,
       "evidenceRefs": [
         "accountModel:Unclear",
         "bucket:B-extendable",
+        "catalog:hsbc-life-wealth-invest-cpf",
         "cohort:hsbc-premium-base-recovery",
         "file:HSBC Life Wealth Invest (CPF) Product Summary.pdf",
         "gap:ad-hoc-premium-routing",
