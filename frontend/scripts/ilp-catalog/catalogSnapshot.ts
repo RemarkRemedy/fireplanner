@@ -8,6 +8,7 @@ import { parseAiaEliteSecureIncome5Pay } from './parsers/aiaEliteSecureIncome5Pa
 import { parseAiaEliteSecureIncomeSp } from './parsers/aiaEliteSecureIncomeSp.js'
 import { parseAiaInvestEasyCashSrs } from './parsers/aiaInvestEasyCashSrs.js'
 import { parseAiaInvestEasyCpf } from './parsers/aiaInvestEasyCpf.js'
+import { parseAiaProLifetimeProtectorIi } from './parsers/aiaProLifetimeProtectorIi.js'
 import { parseAiaProAchiever3 } from './parsers/aiaProAchiever3.js'
 import { parseAiaPlatinumRetirementElite } from './parsers/aiaPlatinumRetirementElite.js'
 import { parseAiaPlatinumWealthElite2 } from './parsers/aiaPlatinumWealthElite2.js'
@@ -138,6 +139,7 @@ const AIA_ELITE_SECURE_INCOME_5_PAY_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_S
 const AIA_ELITE_SECURE_INCOME_SP_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_ESISP_Jul2025.pdf'
 const AIA_INVEST_EASY_CASH_SRS_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_NonCPFIE_Oct2024.pdf'
 const AIA_INVEST_EASY_CPF_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_CPFIE_Oct2024.pdf'
+const AIA_PRO_LIFETIME_PROTECTOR_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_PLP(II)_Oct2024.pdf'
 const AIA_PLATINUM_RETIREMENT_ELITE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_PRE_Jul2025.pdf'
 const AIA_PLATINUM_WEALTH_ELITE_2_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_PWE2.0_Jul2025.pdf'
 const AIA_PLATINUM_WEALTH_LEGACY_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_PWL_Jul2025.pdf'
@@ -216,6 +218,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const aiaInvestEasyCashSrsChecksum = await sha256(AIA_INVEST_EASY_CASH_SRS_SOURCE_PATH)
   const aiaInvestEasyCpfExtracted = await extractPdfText(AIA_INVEST_EASY_CPF_SOURCE_PATH)
   const aiaInvestEasyCpfChecksum = await sha256(AIA_INVEST_EASY_CPF_SOURCE_PATH)
+  const aiaProLifetimeProtectorIiExtracted = await extractPdfText(AIA_PRO_LIFETIME_PROTECTOR_II_SOURCE_PATH)
+  const aiaProLifetimeProtectorIiChecksum = await sha256(AIA_PRO_LIFETIME_PROTECTOR_II_SOURCE_PATH)
   const aiaPlatinumRetirementEliteExtracted = await extractPdfText(AIA_PLATINUM_RETIREMENT_ELITE_SOURCE_PATH)
   const aiaPlatinumRetirementEliteChecksum = await sha256(AIA_PLATINUM_RETIREMENT_ELITE_SOURCE_PATH)
   const aiaPlatinumWealthElite2Extracted = await extractPdfText(AIA_PLATINUM_WEALTH_ELITE_2_SOURCE_PATH)
@@ -360,6 +364,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseAiaInvestEasyCpf({
       document: aiaInvestEasyCpfExtracted,
       sourceChecksumSha256: aiaInvestEasyCpfChecksum,
+    }),
+    parseAiaProLifetimeProtectorIi({
+      document: aiaProLifetimeProtectorIiExtracted,
+      sourceChecksumSha256: aiaProLifetimeProtectorIiChecksum,
     }),
     parseAiaPlatinumRetirementElite({
       document: aiaPlatinumRetirementEliteExtracted,

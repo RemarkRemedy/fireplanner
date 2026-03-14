@@ -923,6 +923,332 @@
     ]
   },
   {
+    "id": "aia-pro-lifetime-protector-ii",
+    "insurer": "AIA Singapore",
+    "productName": "AIA Pro Lifetime Protector (II)",
+    "sourceFileName": "WA_Sum_201106386R_PLP(II)_Oct2024.pdf",
+    "sourceChecksumSha256": "ed058dd59d88bb448fe852ee7c5966d58151b35c540bee94a038929a4fbb73be",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:aia-pro-lifetime-protector-ii-regular-premium-charge",
+      "branch:aia-pro-lifetime-protector-ii-special-bonus",
+      "branch:aia-pro-lifetime-protector-ii-policy-fee",
+      "branch:aia-pro-lifetime-protector-ii-top-up-premium-charge",
+      "branch:aia-pro-lifetime-protector-ii-zero-partial-withdrawal-charge",
+      "branch:aia-pro-lifetime-protector-ii-full-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "aia-pro-lifetime-protector-ii-premium-holiday-charge-fixed-monthly",
+      "aia-pro-lifetime-protector-ii-benefit-charge-plus-option",
+      "aia-pro-lifetime-protector-ii-benefit-charge-max-option",
+      "aia-pro-lifetime-protector-ii-death-benefit-plus-option",
+      "aia-pro-lifetime-protector-ii-death-benefit-max-option",
+      "aia-pro-lifetime-protector-ii-no-lapse-privilege",
+      "aia-pro-lifetime-protector-ii-partial-withdrawal-eligibility-gate",
+      "aia-pro-lifetime-protector-ii-top-up-eligibility-gate",
+      "aia-pro-lifetime-protector-ii-insured-amount-variation",
+      "aia-pro-lifetime-protector-ii-milestone-event-increase-option",
+      "aia-pro-lifetime-protector-ii-regular-premium-variation",
+      "aia-pro-lifetime-protector-ii-premium-frequency-change",
+      "aia-pro-lifetime-protector-ii-aia-vitality-powerup-dollar",
+      "aia-pro-lifetime-protector-ii-optional-riders",
+      "aia-pro-lifetime-protector-ii-fund-switching-and-rebalancing",
+      "aia-pro-lifetime-protector-ii-fund-management-charge",
+      "aia-pro-lifetime-protector-ii-reinstatement",
+      "aia-pro-lifetime-protector-ii-termination-limits"
+    ],
+    "warnings": [
+      "AIA Pro Lifetime Protector (II) is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, the year-10-onward Special Bonus, the fixed S$5 monthly policy fee, the 5% top-up premium charge, the nil policy-level partial-withdrawal charge path, and the first-two-policy-years full-surrender charge schedule, while the fixed monthly premium-holiday charge, benefit-charge curve, death-benefit options, and no-lapse mechanics remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-open-ended-regular-pay",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and death benefit options",
+                "excerpt": "Product Summary for AIA Pro Lifetime Protector (II) Version 2.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at "
+              },
+              {
+                "page": 3,
+                "section": "Regular premium, top-up, and charge schedules",
+                "excerpt": "Number of Full Regular Premiums paid to and accepted by us Premium Charge Annual Semi-annual Quarterly Monthly (% of Regular Premium) st st nd st th st th 1 1 – 2 1 – 4 1 – 12 80% nd rd th th th th th 2 3 – 4 5 – 8 13 – "
+              },
+              {
+                "page": 5,
+                "section": "Top-up, full surrender, and partial withdrawal",
+                "excerpt": "Approximate excerpt; keyword \"Partial Withdrawal\" not found on page. 6. Policy Options and Flexibilities 6.1. Vary Insured Amount You can enjoy the flexibility to vary your insured amount at any time. Depending on the am"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "special-bonus",
+            "type": "allocation",
+            "label": "Special Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": null,
+            "yearBasis": "premium-year",
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published additional 2% of regular premiums from the 10th annual / 19th semi-annual / 37th quarterly / 109th monthly paid premium onward.",
+              "Premium-year timing follows accepted full regular premiums; premium-holiday and reinstatement timing effects remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Special Bonus and maturity",
+                "excerpt": "Approximate excerpt; keyword \"Special Bonus\" not found on page. 3.2. Option to Increase Insured Amount upon Milestone Events: You may increase the Insured Amount under your basic policy without full underwriting on the I"
+              },
+              {
+                "page": 3,
+                "section": "Regular premium, top-up, and charge schedules",
+                "excerpt": "Number of Full Regular Premiums paid to and accepted by us Premium Charge Annual Semi-annual Quarterly Monthly (% of Regular Premium) st st nd st th st th 1 1 – 2 1 – 4 1 – 12 80% nd rd th th th th th 2 3 – 4 5 – 8 13 – "
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "regular-premium-charge",
+            "label": "Regular Premium Charge",
+            "basis": "annual-contribution",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.55
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published regular-premium charge schedule by accepted full regular-premium count.",
+              "When premiums resume after premium holiday or reinstatement, the premium charge continues from the band immediately after the last accepted regular premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Regular premium, top-up, and charge schedules",
+                "excerpt": "Number of Full Regular Premiums paid to and accepted by us Premium Charge Annual Semi-annual Quarterly Monthly (% of Regular Premium) st st nd st th st th 1 1 – 2 1 – 4 1 – 12 80% nd rd th th th th th 2 3 – 4 5 – 8 13 – "
+              },
+              {
+                "page": 4,
+                "section": "Policy flexibility and premium variation",
+                "excerpt": "Approximate excerpt; keyword \"Vary Regular Premium\" not found on page. 5.2. Premium Holiday Charge For Premium Holiday during first 2 policy years, a Premium Holiday Charge of S$50 will be charged on monthly basis. This "
+              }
+            ]
+          },
+          {
+            "id": "policy-fee",
+            "label": "Policy Fee",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "amountSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": null,
+                "amount": 60
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published S$5 monthly policy fee as a fixed S$60 annual drag."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Regular premium, top-up, and charge schedules",
+                "excerpt": "Number of Full Regular Premiums paid to and accepted by us Premium Charge Annual Semi-annual Quarterly Monthly (% of Regular Premium) st st nd st th st th 1 1 – 2 1 – 4 1 – 12 80% nd rd th th th th th 2 3 – 4 5 – 8 13 – "
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-Up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 5% premium charge on each accepted ad-hoc top-up premium.",
+              "Top-ups are only accepted while regular premiums are fully paid when due, but that eligibility gate remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Regular premium, top-up, and charge schedules",
+                "excerpt": "Number of Full Regular Premiums paid to and accepted by us Premium Charge Annual Semi-annual Quarterly Monthly (% of Regular Premium) st st nd st th st th 1 1 – 2 1 – 4 1 – 12 80% nd rd th th th th th 2 3 – 4 5 – 8 13 – "
+              },
+              {
+                "page": 5,
+                "section": "Top-up, full surrender, and partial withdrawal",
+                "excerpt": "Approximate excerpt; keyword \"Partial Withdrawal\" not found on page. 6. Policy Options and Flexibilities 6.1. Vary Insured Amount You can enjoy the flexibility to vary your insured amount at any time. Depending on the am"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "No policy-level partial withdrawal charge is stated in the summary.",
+              "Partial withdrawals are only available after the end of the second policy year and remain subject to minimum-withdrawal and minimum-residual-value rules that stay informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Top-up, full surrender, and partial withdrawal",
+                "excerpt": "Approximate excerpt; keyword \"Partial Withdrawal\" not found on page. 6. Policy Options and Flexibilities 6.1. Vary Insured Amount You can enjoy the flexibility to vary your insured amount at any time. Depending on the am"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          0.75,
+          0.5,
+          0
+        ],
+        "warnings": [
+          "AIA Pro Lifetime Protector (II) is cataloged as a partial modeled subset in V1. The parser captures the published premium-year regular premium charge schedule, the 2% Special Bonus from premium year 10 onward, the fixed S$5 monthly policy fee, the 5% top-up premium charge, the nil policy-level partial-withdrawal charge path, and the first-two-policy-years full-surrender charge schedule through the open-ended regular-premium basis.",
+          "The fixed S$50 monthly premium-holiday charge, AIA Appendix A benefit-charge curve, death-benefit option differences, and no-lapse privilege remain outside the current executable slice."
+        ],
+        "unsupportedItems": [
+          "The S$50 monthly premium-holiday charge in the first two policy years remains informational only because the current event kernel does not author fixed-per-month premium-holiday deductions.",
+          "Benefit Charge remains informational only because the current assurance kernel does not yet include the AIA Appendix A rate table and its insurer-specific discount overlays.",
+          "Plus versus Max death-benefit payout handling remains informational only beyond the modeled charge surface.",
+          "No Lapse Privilege debt carry and post-depletion fee accrual remain informational only.",
+          "Partial-withdrawal eligibility timing, minimum withdrawal amount, and minimum residual policy-value rules remain informational only.",
+          "Insured-amount variation, milestone-event increase option, regular-premium variation, and premium-frequency change handling remain informational only.",
+          "AIA Vitality PowerUp Dollar, optional riders, fund switching, automatic fund switching, automatic fund re-balancing, and fund-level management charges remain informational only.",
+          "Reinstatement underwriting and termination-side protection payouts remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and death benefit options",
+            "excerpt": "Product Summary for AIA Pro Lifetime Protector (II) Version 2.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at "
+          },
+          {
+            "page": 2,
+            "section": "Special Bonus and maturity",
+            "excerpt": "Approximate excerpt; keyword \"Special Bonus\" not found on page. 3.2. Option to Increase Insured Amount upon Milestone Events: You may increase the Insured Amount under your basic policy without full underwriting on the I"
+          },
+          {
+            "page": 3,
+            "section": "Regular premium, top-up, and charge schedules",
+            "excerpt": "Number of Full Regular Premiums paid to and accepted by us Premium Charge Annual Semi-annual Quarterly Monthly (% of Regular Premium) st st nd st th st th 1 1 – 2 1 – 4 1 – 12 80% nd rd th th th th th 2 3 – 4 5 – 8 13 – "
+          },
+          {
+            "page": 4,
+            "section": "Policy flexibility and premium variation",
+            "excerpt": "Approximate excerpt; keyword \"Vary Regular Premium\" not found on page. 5.2. Premium Holiday Charge For Premium Holiday during first 2 policy years, a Premium Holiday Charge of S$50 will be charged on monthly basis. This "
+          },
+          {
+            "page": 5,
+            "section": "Top-up, full surrender, and partial withdrawal",
+            "excerpt": "Approximate excerpt; keyword \"Partial Withdrawal\" not found on page. 6. Policy Options and Flexibilities 6.1. Vary Insured Amount You can enjoy the flexibility to vary your insured amount at any time. Depending on the am"
+          },
+          {
+            "page": 6,
+            "section": "Premium holiday and no lapse privilege",
+            "excerpt": "Approximate excerpt; keyword \"No Lapse Privilege\" not found on page. 6.3. Top-Up You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top"
+          },
+          {
+            "page": 12,
+            "section": "Appendix A annual benefit charge schedule",
+            "excerpt": "Approximate excerpt; keyword \"APPENDIX A\" not found on page. • This product summary does not form a part of any contract of insurance. It is intended only to be a simplified description of the product features applicable"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "aia-platinum-retirement-elite",
     "insurer": "AIA Singapore",
     "productName": "AIA Platinum Retirement Elite",
