@@ -1,0 +1,163 @@
+import path from 'node:path'
+import type {
+  IlpCatalogProduct,
+  IlpCatalogSourceRef,
+  IlpTemplateEventChargeRule,
+  IlpTemplateFeeRule,
+  IlpTemplateVariant,
+} from '../../../src/lib/ilp-catalog/types.js'
+import type { ExtractedPdfDocument } from '../pdf/extractPdfText.js'
+
+interface ParseContext {
+  document: ExtractedPdfDocument
+  sourceChecksumSha256: string
+}
+
+type PaymentMode = 'cash-or-srs' | 'cpfis'
+
+function normalizeWhitespace(text: string): string {
+  return text.replace(/\s+/g, ' ').trim()
+}
+
+function sourceRef(page: number, section: string, excerpt: string): IlpCatalogSourceRef {
+  const normalizedExcerpt = normalizeWhitespace(excerpt)
+  return {
+    page,
+    section,
+    excerpt: (normalizedExcerpt || `${section} excerpt unavailable`).slice(0, 220),
+  }
+}
+
+function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword: string, lineWindow = 8): string {
+  const page = document.pages.find((candidate) => candidate.pageNumber === pageNumber)
+  if (!page) return ''
+
+  const lineIndex = page.lines.findIndex((line) => line.text.toLowerCase().includes(keyword.toLowerCase()))
+  if (lineIndex === -1) {
+    return page.lines.slice(0, lineWindow).map((line) => line.text).join(' ')
+  }
+
+  return page.lines.slice(lineIndex, lineIndex + lineWindow).map((line) => line.text).join(' ')
+}
+
+function buildVariant(
+  document: ExtractedPdfDocument,
+  paymentMode: PaymentMode,
+): IlpTemplateVariant {
+  const premiumChargeRate = paymentMode === 'cpfis' ? 0 : 0.03
+  const page1 = sourceRef(1, 'Plan overview', snippetNear(document, 1, 'About your plan'))
+  const page2 = sourceRef(2, 'Premium charge', snippetNear(document, 2, 'Premium charge', 18))
+  const page3 = sourceRef(3, 'Top-ups and surrender', snippetNear(document, 3, 'Single premium top-ups', 18))
+
+  const feeRules: IlpTemplateFeeRule[] = [
+    {
+      id: 'recurrent-single-premium-charge',
+      label: paymentMode === 'cpfis' ? 'Recurring Premium Charge (CPFIS)' : 'Recurring Premium Charge (Cash / SRS)',
+      basis: 'annual-contribution',
+      rate: premiumChargeRate,
+      amount: 0,
+      appliesTo: ['policy'],
+      activeWindow: 'policy-term',
+      notes: [
+        paymentMode === 'cpfis'
+          ? 'No premium charge applies when recurrent single premiums are paid through CPFIS.'
+          : 'Applies a 3% premium charge to recurrent single premiums when paid in cash or through SRS.',
+        'The same published premium-charge table also applies to accepted single premium top-ups.',
+      ],
+      sourceRefs: [page2],
+    },
+  ]
+
+  const eventChargeRules: IlpTemplateEventChargeRule[] = [
+    {
+      id: 'top-up-premium-charge',
+      label: paymentMode === 'cpfis' ? 'Top-up Premium Charge (CPFIS)' : 'Top-up Premium Charge (Cash / SRS)',
+      trigger: 'top-up',
+      basis: 'event-amount',
+      appliesTo: ['policy'],
+      rate: premiumChargeRate,
+      amount: 0,
+      activeWindow: 'policy-term',
+      allocation: 'equal-split',
+      notes: [
+        paymentMode === 'cpfis'
+          ? 'No premium charge applies to accepted top-ups when the payment method is CPFIS.'
+          : 'Applies the published 3% premium charge to accepted single premium top-ups paid in cash or through SRS.',
+      ],
+      sourceRefs: [page2],
+    },
+  ]
+
+  return {
+    id: paymentMode === 'cpfis' ? 'sgd-open-ended-cpfis' : 'sgd-open-ended-cash-or-srs',
+    currency: 'SGD',
+    mipBasis: 'open-ended',
+    mipLength: null,
+    icpMonths: 1,
+    accounts: [
+      {
+        id: 'policy',
+        label: 'Policy Account',
+        feeRate: 0,
+        postMipFeeRate: null,
+        subjectToEec: false,
+        contributionRules: [
+          { phase: 'during-icp', targetAccountId: 'policy', contributionShare: 1 },
+          { phase: 'after-icp', targetAccountId: 'policy', contributionShare: 1 },
+          { phase: 'top-up', targetAccountId: 'policy', contributionShare: 1 },
+        ],
+        sourceRefs: [page1, page2, page3],
+      },
+    ],
+    bonuses: [],
+    feeRules,
+    eventChargeRules,
+    eecTable: [],
+    warnings: [
+      paymentMode === 'cpfis'
+        ? 'This CPFIS variant assumes the published 0% premium-charge path for recurrent premiums and top-ups.'
+        : 'This Cash / SRS variant assumes the published 3% premium-charge path for recurrent premiums and top-ups.',
+      'This open-ended recurrent-single-premium product uses the no-MIP basis; ongoing premiums continue until the user changes them or the review horizon ends.',
+    ],
+    unsupportedItems: [
+      'Death and terminal-illness benefit formulas remain informational only.',
+      'Recurrent-single-premium principal tracking remains informational only in V1.',
+      'Fund-switching and minimum-transaction guards remain informational only.',
+    ],
+    sourceRefs: [page1, page2, page3],
+  }
+}
+
+export function parseGreatEasternInvestAdvantageRsp(context: ParseContext): IlpCatalogProduct {
+  return {
+    id: 'great-eastern-great-invest-advantage-rsp',
+    insurer: 'Great Eastern',
+    productName: 'GREAT Invest Advantage (RSP)',
+    sourceFileName: path.basename(context.document.filePath),
+    sourceChecksumSha256: context.sourceChecksumSha256,
+    sourceDocumentType: 'summary',
+    sourceClass: 'summary',
+    supportStatus: 'partial',
+    structureStatus: 'structured',
+    economicsStatus: 'partial-modeled-subset',
+    modeledEconomics: [
+      'branch:great-eastern-gia-rsp-recurrent-single-premium-charge',
+      'branch:great-eastern-gia-rsp-top-up-premium-charge',
+      'branch:great-eastern-gia-rsp-open-ended-zero-surrender-charge',
+    ],
+    metadataOnlyBehaviors: [
+      'great-eastern-gia-rsp-death-benefit',
+      'great-eastern-gia-rsp-terminal-illness-benefit',
+      'great-eastern-gia-rsp-recurrent-single-premium-principal-tracking',
+      'great-eastern-gia-rsp-srs-cpfis-surrender-destination',
+    ],
+    warnings: [
+      'GREAT Invest Advantage (RSP) is cataloged as a partial modeled subset in V1. The parser captures the published recurrent-premium charge path, top-up premium charge, and explicit no-surrender-charge structure through the open-ended no-MIP basis, while protection benefits and paid-premium tracking remain outside the current engine.',
+    ],
+    archived: false,
+    variants: [
+      buildVariant(context.document, 'cash-or-srs'),
+      buildVariant(context.document, 'cpfis'),
+    ],
+  }
+}

@@ -14,7 +14,10 @@ const DEFAULT_TEMPLATE_FUND: IlpPolicyInput['funds'][number] = {
 }
 
 function deriveSeedMonthlyContribution(product: IlpCatalogProduct): number {
-  return product.metadataOnlyBehaviors.some((behavior) => behavior.endsWith('single-premium-principal-tracking'))
+  return product.metadataOnlyBehaviors.some((behavior) => (
+    behavior.endsWith('single-premium-principal-tracking')
+    && !behavior.endsWith('recurrent-single-premium-principal-tracking')
+  ))
     ? 0
     : 350
 }

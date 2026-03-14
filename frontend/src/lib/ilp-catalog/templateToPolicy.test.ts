@@ -669,6 +669,87 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('default 20-year review horizon'))).toBe(true)
   })
 
+  it('maps GREAT Invest Advantage 2 (SP) into an open-ended partial single-premium seed', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'great-eastern-great-invest-advantage-2-sp')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-cash-or-srs')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('GREAT Invest Advantage 2 (SP) (SGD / Open-ended (Cash Or Srs))')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-gia2-sp-single-premium-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-gia2-sp-single-premium-principal-tracking')
+    expect(seed.mipBasis).toBe('open-ended')
+    expect(seed.mipLength).toBeNull()
+    expect(seed.postMipYears).toBe(20)
+    expect(seed.monthlyContribution).toBe(0)
+    expect(seed.eecTable).toEqual([])
+    expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
+      { phase: 'during-icp', contributionShare: 1 },
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'single-premium-charge',
+        basis: 'annual-contribution',
+        rate: 0.03,
+      }),
+    ])
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        rate: 0.03,
+      }),
+    ])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('default 20-year review horizon'))).toBe(true)
+  })
+
+  it('maps GREAT Invest Advantage (RSP) into an open-ended partial recurrent-premium seed', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'great-eastern-great-invest-advantage-rsp')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-cash-or-srs')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('GREAT Invest Advantage (RSP) (SGD / Open-ended (Cash Or Srs))')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-gia-rsp-recurrent-single-premium-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-gia-rsp-recurrent-single-premium-principal-tracking')
+    expect(seed.mipBasis).toBe('open-ended')
+    expect(seed.mipLength).toBeNull()
+    expect(seed.postMipYears).toBe(20)
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.eecTable).toEqual([])
+    expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
+      { phase: 'during-icp', contributionShare: 1 },
+      { phase: 'after-icp', contributionShare: 1 },
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'recurrent-single-premium-charge',
+        basis: 'annual-contribution',
+        rate: 0.03,
+      }),
+    ])
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        rate: 0.03,
+      }),
+    ])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('default 20-year review horizon'))).toBe(true)
+  })
+
   it('maps Invest flex wealth II into a partial seed with cumulative-paid policy charges and top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-flex-wealth-ii')

@@ -8,6 +8,9 @@ import { parseHsbcWealthAccelerate } from './parsers/hsbcWealthAccelerate.js'
 import { parseHsbcWealthAbundance } from './parsers/hsbcWealthAbundance.js'
 import { parseHsbcWealthFocus } from './parsers/hsbcWealthFocus.js'
 import { parseHsbcGoalBuilderIi } from './parsers/hsbcGoalBuilderIi.js'
+import { parseGreatEasternInvestAdvantage2Rsp } from './parsers/greatEasternInvestAdvantage2Rsp.js'
+import { parseGreatEasternInvestAdvantage2Sp } from './parsers/greatEasternInvestAdvantage2Sp.js'
+import { parseGreatEasternInvestAdvantageRsp } from './parsers/greatEasternInvestAdvantageRsp.js'
 import { parseGreatEasternInvestAdvantageSp } from './parsers/greatEasternInvestAdvantageSp.js'
 import { parseHsbcWealthHarvest } from './parsers/hsbcWealthHarvest.js'
 import { parseHsbcWealthVoyage } from './parsers/hsbcWealthVoyage.js'
@@ -47,6 +50,9 @@ const ETIQA_INVEST_SMART_FLEX_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Inv
 const ETIQA_INVEST_STARTER_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest starter_Product Summary.pdf'
 const ETIQA_INVEST_VISTA_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest vista_Product Summary.pdf'
 const ETIQA_INVEST_WEALTH_PURPOSE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest Wealth Purpose_Product Summary.pdf'
+const GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_2_RSP_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PS(EN)_GREAT Invest Advantage2(RSP)_v2.0.pdf'
+const GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_2_SP_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PS(EN)_GREAT Invest Advantage 2 (SP)_(SG)_v2.0.pdf'
+const GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_RSP_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PS(EN)_GREAT Invest Advantage (RSP)_(SG)_v3.0.pdf'
 const GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_SP_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PS(EN)_GREAT Invest Advantage (SP)_(SG)_v3.0.pdf'
 const GREAT_EASTERN_INVESTMENT_LINKED_INSURANCE_PLAN_2_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PS_GEL_Investment Linked Insurance Plan 2_v3.0.pdf'
 const GREAT_EASTERN_WEALTH_ADVANTAGE_4_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PS(EN)_GREAT Wealth Advantage 4_(SG)_v2.0.pdf'
@@ -148,6 +154,12 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const etiqaInvestVistaChecksum = await sha256(ETIQA_INVEST_VISTA_SOURCE_PATH)
   const etiqaInvestWealthPurposeExtracted = await extractPdfText(ETIQA_INVEST_WEALTH_PURPOSE_SOURCE_PATH)
   const etiqaInvestWealthPurposeChecksum = await sha256(ETIQA_INVEST_WEALTH_PURPOSE_SOURCE_PATH)
+  const greatEasternGreatInvestAdvantage2RspExtracted = await extractPdfText(GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_2_RSP_SOURCE_PATH)
+  const greatEasternGreatInvestAdvantage2RspChecksum = await sha256(GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_2_RSP_SOURCE_PATH)
+  const greatEasternGreatInvestAdvantage2SpExtracted = await extractPdfText(GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_2_SP_SOURCE_PATH)
+  const greatEasternGreatInvestAdvantage2SpChecksum = await sha256(GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_2_SP_SOURCE_PATH)
+  const greatEasternGreatInvestAdvantageRspExtracted = await extractPdfText(GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_RSP_SOURCE_PATH)
+  const greatEasternGreatInvestAdvantageRspChecksum = await sha256(GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_RSP_SOURCE_PATH)
   const greatEasternGreatInvestAdvantageSpExtracted = await extractPdfText(GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_SP_SOURCE_PATH)
   const greatEasternGreatInvestAdvantageSpChecksum = await sha256(GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_SP_SOURCE_PATH)
   const greatEasternInvestmentLinkedInsurancePlan2Extracted = await extractPdfText(GREAT_EASTERN_INVESTMENT_LINKED_INSURANCE_PLAN_2_SOURCE_PATH)
@@ -224,6 +236,18 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseEtiqaInvestWealthPurpose({
       document: etiqaInvestWealthPurposeExtracted,
       sourceChecksumSha256: etiqaInvestWealthPurposeChecksum,
+    }),
+    parseGreatEasternInvestAdvantage2Rsp({
+      document: greatEasternGreatInvestAdvantage2RspExtracted,
+      sourceChecksumSha256: greatEasternGreatInvestAdvantage2RspChecksum,
+    }),
+    parseGreatEasternInvestAdvantage2Sp({
+      document: greatEasternGreatInvestAdvantage2SpExtracted,
+      sourceChecksumSha256: greatEasternGreatInvestAdvantage2SpChecksum,
+    }),
+    parseGreatEasternInvestAdvantageRsp({
+      document: greatEasternGreatInvestAdvantageRspExtracted,
+      sourceChecksumSha256: greatEasternGreatInvestAdvantageRspChecksum,
     }),
     parseGreatEasternInvestAdvantageSp({
       document: greatEasternGreatInvestAdvantageSpExtracted,
