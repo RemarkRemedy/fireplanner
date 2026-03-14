@@ -3008,6 +3008,363 @@
     ]
   },
   {
+    "id": "fwd-invest-flexi-vii",
+    "insurer": "FWD Singapore",
+    "productName": "FWD Invest Flexi VII",
+    "sourceFileName": "FWD Invest Flexi VII Product Summary.pdf",
+    "sourceChecksumSha256": "3d8af7e4638b9d7b2820916ff4ae92284be53210108ab74e6726c965eb1cf359",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:fwd-invest-flexi-vii-initial-account-charge",
+      "branch:fwd-invest-flexi-vii-top-up-premium-charge",
+      "branch:fwd-invest-flexi-vii-initial-account-redemption-fee",
+      "branch:fwd-invest-flexi-vii-initial-account-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "fwd-invest-flexi-vii-premium-shortfall-charge",
+      "fwd-invest-flexi-vii-premium-pause-waiver",
+      "fwd-invest-flexi-vii-support-benefit-waiver-and-refund",
+      "fwd-invest-flexi-vii-insurance-charge",
+      "fwd-invest-flexi-vii-booster-bonus",
+      "fwd-invest-flexi-vii-annual-premium-bonus",
+      "fwd-invest-flexi-vii-loyalty-bonus",
+      "fwd-invest-flexi-vii-repayment-bonus-restoration",
+      "fwd-invest-flexi-vii-top-up-repayment-waterfall",
+      "fwd-invest-flexi-vii-regular-premium-reduction-and-restoration",
+      "fwd-invest-flexi-vii-withdrawal-eligibility-gates",
+      "fwd-invest-flexi-vii-policy-closure-charge",
+      "fwd-invest-flexi-vii-change-of-person-insured",
+      "fwd-invest-flexi-vii-fund-switching",
+      "fwd-invest-flexi-vii-fund-level-charges"
+    ],
+    "warnings": [
+      "FWD Invest Flexi VII is cataloged as a partial modeled subset in V1. The current parser covers the published charge surfaces that fit the existing two-account and surrender kernels.",
+      "Premium shortfall / Premium Pause Waiver behavior, bonuses, insurance charge, repayment waterfalls, and broader withdrawal / premium-flexibility behavior remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-10",
+        "currency": "SGD",
+        "mipBasis": "finite",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "initial",
+            "label": "Initial Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and death benefit",
+                "excerpt": "FWD Invest Flexi VII Product Summary Note: Please read this Product Summary before you decide to take up this product. Name of the insurer FWD Singapore Pte. Ltd. Product name FWD Invest Flexi VII If the Person Insured d"
+              },
+              {
+                "page": 5,
+                "section": "Regular premium and missed-premium behavior",
+                "excerpt": "Regular Premium During the Premium Payment Term, you need to pay your Regular Premium by the premium due date based on your chosen premium payment frequency. During the Minimum Investment Term: i) a premium shortfall cha"
+              },
+              {
+                "page": 7,
+                "section": "Initial account charge and premium shortfall charge",
+                "excerpt": "Initial account charge is payable throughout the Policy Term and will be deducted on each Policy 5 Monthiversary. Initial account charge in Policy Year N = 2.4% p.a. Annualised Regular Premium x x N committed at Effectiv"
+              },
+              {
+                "page": 12,
+                "section": "Withdrawal rules and minimum account value",
+                "excerpt": "You can withdraw part of your Policy Value while the Policy is still in force. Withdrawals are allowed as per the following rules: During Minimum Investment Term After Minimum During the first From Policy Year 3 Investme"
+              }
+            ]
+          },
+          {
+            "id": "accumulation",
+            "label": "Accumulation Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Regular premium and missed-premium behavior",
+                "excerpt": "Regular Premium During the Premium Payment Term, you need to pay your Regular Premium by the premium due date based on your chosen premium payment frequency. During the Minimum Investment Term: i) a premium shortfall cha"
+              },
+              {
+                "page": 6,
+                "section": "Top-up premium and initial account charge",
+                "excerpt": "Top-up premium From Policy Year 2 onwards, you can apply to pay a top-up premium to grow your investment faster. A top-up premium is an unscheduled, additional premium payment to your Policy. All top-up premiums are firs"
+              },
+              {
+                "page": 12,
+                "section": "Withdrawal rules and minimum account value",
+                "excerpt": "You can withdraw part of your Policy Value while the Policy is still in force. Withdrawals are allowed as per the following rules: During Minimum Investment Term After Minimum During the first From Policy Year 3 Investme"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "initial-account-charge",
+            "label": "Initial Account Charge",
+            "basis": "premium-base-mip-multiplier",
+            "yearBasis": "policy-year",
+            "rate": 0.024,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": true,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 9,
+                  "mode": "policy-year"
+                },
+                {
+                  "startPolicyYear": 10,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 10
+                }
+              ]
+            },
+            "appliesTo": [
+              "initial"
+            ],
+            "fallbackAppliesTo": [
+              "accumulation"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published monthly initial-account charge throughout the policy term.",
+              "The charge stays anchored to the commencement-date annualised regular premium and therefore does not reduce after non-payment or premium reduction.",
+              "If the initial units account is insufficient, the remaining deduction falls back to the accumulation units account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Top-up premium and initial account charge",
+                "excerpt": "Top-up premium From Policy Year 2 onwards, you can apply to pay a top-up premium to grow your investment faster. A top-up premium is an unscheduled, additional premium payment to your Policy. All top-up premiums are firs"
+              },
+              {
+                "page": 7,
+                "section": "Initial account charge and premium shortfall charge",
+                "excerpt": "Initial account charge is payable throughout the Policy Term and will be deducted on each Policy 5 Monthiversary. Initial account charge in Policy Year N = 2.4% p.a. Annualised Regular Premium x x N committed at Effectiv"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 5% premium charge on each accepted top-up premium.",
+              "Top-up repayment precedence, year-2 eligibility, and the total top-up cap remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Top-up premium and initial account charge",
+                "excerpt": "Top-up premium From Policy Year 2 onwards, you can apply to pay a top-up premium to grow your investment faster. A top-up premium is an unscheduled, additional premium payment to your Policy. All top-up premiums are firs"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium charge",
+                "excerpt": "Premium charge For each top-up premium, we will apply a charge of 5% before using the remaining amount to buy (top-up premium) Units in your desired ILP sub-funds. FWD Invest Flexi VII Product Summary v1.0 E&OE 10 Feb 20"
+              }
+            ]
+          },
+          {
+            "id": "initial-account-redemption-fee",
+            "label": "Initial Account Redemption Fee",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "initial"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.68
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.58
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.55
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.07
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published initial-units-account redemption fee schedule during the 10-year minimum investment term.",
+              "Accumulation-units-account withdrawals remain charge-free in the published summary.",
+              "The first-two-policy-year lockout, minimum withdrawal amount, and minimum account-value rules remain informational only."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Premium shortfall and redemption fee",
+                "excerpt": "shortfall period, as shown in the table below, a premium shortfall charge will be deducted on each Policy Monthiversary after the end of the grace period for the missed premium. Premium shortfall charge period Policy Yea"
+              },
+              {
+                "page": 12,
+                "section": "Withdrawal rules and minimum account value",
+                "excerpt": "You can withdraw part of your Policy Value while the Policy is still in force. Withdrawals are allowed as per the following rules: During Minimum Investment Term After Minimum During the first From Policy Year 3 Investme"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.8,
+          0.68,
+          0.58,
+          0.55,
+          0.45,
+          0.3,
+          0.15,
+          0.07
+        ],
+        "warnings": [
+          "FWD Invest Flexi VII (SGD / 10-year minimum investment term) is cataloged as a partial modeled subset in V1. The parser captures the published fixed-premium-base initial account charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.",
+          "Premium shortfall charge remains informational only because the automatic 12-month Premium Pause Waiver cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.",
+          "Booster Bonus, Annual Premium Bonus, Loyalty Bonus, insurance charge, repayment waterfalls, and withdrawal eligibility gates remain outside the current engine."
+        ],
+        "unsupportedItems": [
+          "Premium shortfall charge remains informational only because the automatic 12-month Premium Pause Waiver on missed premiums is not modeled exactly in V1.",
+          "Support Benefit approvals and premium-shortfall-charge refund / waiver behavior remain informational only.",
+          "Booster Bonus, Annual Premium Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.",
+          "Insurance charge remains informational only because the attained-age / sex / smoker Appendix B rate table is not yet wired for this FWD protection formula.",
+          "Top-up repayment precedence for missed premiums, prior withdrawals, and prior regular-premium reductions remains informational only.",
+          "Regular-premium reduction and restoration mechanics from policy year 8 onward remain informational only.",
+          "Initial-units-account withdrawal lockout in the first two policy years, minimum withdrawal requirements, minimum account-value gates, and regular-withdrawal elections remain informational only.",
+          "Policy closure charge, change-of-person-insured handling, switching-fee review rights, and fund-level management charges remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and death benefit",
+            "excerpt": "FWD Invest Flexi VII Product Summary Note: Please read this Product Summary before you decide to take up this product. Name of the insurer FWD Singapore Pte. Ltd. Product name FWD Invest Flexi VII If the Person Insured d"
+          },
+          {
+            "page": 3,
+            "section": "Bonus overview and support benefits",
+            "excerpt": "The Booster Bonus will be allocated to the ILP sub-funds in the same proportion as defined by your chosen investment allocation. We will buy Units in those ILP sub-funds at the Unit Price on the next 2 Pricing Day follow"
+          },
+          {
+            "page": 5,
+            "section": "Regular premium and missed-premium behavior",
+            "excerpt": "Regular Premium During the Premium Payment Term, you need to pay your Regular Premium by the premium due date based on your chosen premium payment frequency. During the Minimum Investment Term: i) a premium shortfall cha"
+          },
+          {
+            "page": 6,
+            "section": "Top-up premium and initial account charge",
+            "excerpt": "Top-up premium From Policy Year 2 onwards, you can apply to pay a top-up premium to grow your investment faster. A top-up premium is an unscheduled, additional premium payment to your Policy. All top-up premiums are firs"
+          },
+          {
+            "page": 7,
+            "section": "Initial account charge and premium shortfall charge",
+            "excerpt": "Initial account charge is payable throughout the Policy Term and will be deducted on each Policy 5 Monthiversary. Initial account charge in Policy Year N = 2.4% p.a. Annualised Regular Premium x x N committed at Effectiv"
+          },
+          {
+            "page": 8,
+            "section": "Top-up premium charge",
+            "excerpt": "Premium charge For each top-up premium, we will apply a charge of 5% before using the remaining amount to buy (top-up premium) Units in your desired ILP sub-funds. FWD Invest Flexi VII Product Summary v1.0 E&OE 10 Feb 20"
+          },
+          {
+            "page": 9,
+            "section": "Premium shortfall and redemption fee",
+            "excerpt": "shortfall period, as shown in the table below, a premium shortfall charge will be deducted on each Policy Monthiversary after the end of the grace period for the missed premium. Premium shortfall charge period Policy Yea"
+          },
+          {
+            "page": 10,
+            "section": "Surrender charge",
+            "excerpt": "Celebrate living fwd.com.sg Fees and charges This charge will be deducted by taking Units from your initial units account. It will be calculated in the applicable Policy Currency and will thereafter be proportionately al"
+          },
+          {
+            "page": 12,
+            "section": "Withdrawal rules and minimum account value",
+            "excerpt": "You can withdraw part of your Policy Value while the Policy is still in force. Withdrawals are allowed as per the following rules: During Minimum Investment Term After Minimum During the first From Policy Year 3 Investme"
+          },
+          {
+            "page": 13,
+            "section": "Regular withdrawal and change of person insured",
+            "excerpt": "Regular withdrawal Partial withdrawal (only applicable after (one-off withdrawal) Minimum Investment Term) You can choose a regular amount to be paid You can choose an amount to you monthly, quarterly, half-yearly or you"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "fwd-invest-first-horizon",
     "insurer": "FWD Singapore",
     "productName": "FWD Invest First Horizon",
