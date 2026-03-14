@@ -19,6 +19,10 @@ export interface NudgeField {
   type: 'text' | 'number' | 'currency' | 'percent' | 'select' | 'toggle'
   options?: Array<{ value: string; label: string }>
   required?: boolean
+  /** Only show this field when another field has this value */
+  showWhen?: { field: string; equals: boolean | string }
+  /** Helper text shown below the field */
+  helperText?: string
 }
 
 export interface NudgeFlowScreen {

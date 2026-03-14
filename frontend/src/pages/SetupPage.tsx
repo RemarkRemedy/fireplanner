@@ -76,7 +76,7 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'expenses',
     title: 'What do you spend?',
     fields: [
-      { name: 'annualExpenses', label: 'Annual expenses', type: 'currency', required: true },
+      { name: 'annualExpenses', label: 'Annual expenses', type: 'currency', required: true, helperText: 'Include all regular spending: rent, food, transport, utilities, subscriptions. You can break it down later.' },
     ],
   },
   // Screen 4: Savings
@@ -84,7 +84,7 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'savings',
     title: 'What have you saved?',
     fields: [
-      { name: 'liquidNetWorth', label: 'Cash & investments (excl. CPF/property)', type: 'currency', required: true },
+      { name: 'liquidNetWorth', label: 'Cash & investments (excl. CPF/property)', type: 'currency', required: true, helperText: 'Include savings accounts, brokerage, fixed deposits. Exclude CPF and your home — those are tracked separately.' },
     ],
   },
   // Screen 5: Residency
@@ -102,6 +102,7 @@ const SCREENS: (NudgeFlowScreen & {
           { value: 'foreigner', label: 'Foreigner' },
         ],
         required: true,
+        helperText: 'This determines CPF eligibility and tax treatment.',
       },
     ],
   },
@@ -110,8 +111,8 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'cpf',
     title: 'Your CPF',
     fields: [
-      { name: 'cpfKnown', label: 'I know my CPF balances', type: 'toggle' },
-      { name: 'cpfTotal', label: 'Total CPF balance (OA + SA + MA)', type: 'currency' },
+      { name: 'cpfKnown', label: 'I know my CPF balances', type: 'toggle', helperText: 'Check my.cpf.gov.sg → My Statement. If you don\'t know, your projection will exclude CPF — you can add it later.' },
+      { name: 'cpfTotal', label: 'Total CPF balance (OA + SA + MA)', type: 'currency', showWhen: { field: 'cpfKnown', equals: true }, helperText: 'A rough total is fine. You can break it down by account later.' },
     ],
     skipWhen: { field: 'residency', equals: 'foreigner' },
   },
@@ -178,7 +179,7 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'healthcare-toggle',
     title: 'Healthcare planning',
     fields: [
-      { name: 'healthcareEnabled', label: 'Include healthcare costs in projection', type: 'toggle' },
+      { name: 'healthcareEnabled', label: 'Include healthcare costs in projection', type: 'toggle', helperText: 'Healthcare is one of the largest retirement expenses. Including it makes your plan more realistic.' },
     ],
   },
   // Screen 10: Healthcare details (skip if disabled)
@@ -190,10 +191,12 @@ const SCREENS: (NudgeFlowScreen & {
         name: 'ispTier',
         label: 'Integrated Shield Plan tier',
         type: 'select',
+        helperText: 'Your ISP tier determines hospital ward class coverage and premium costs.',
         options: [
           { value: 'none', label: 'None (MediShield Life only)' },
-          { value: 'basic', label: 'Basic' },
-          { value: 'enhanced', label: 'Enhanced' },
+          { value: 'basic', label: 'Basic (Class B1 ward)' },
+          { value: 'standard', label: 'Standard (Class A ward)' },
+          { value: 'enhanced', label: 'Enhanced (Private hospital)' },
         ],
       },
     ],
@@ -252,8 +255,8 @@ const SCREENS: (NudgeFlowScreen & {
         ],
         required: true,
       },
-      { name: 'partnerCpfKnown', label: 'Partner knows CPF balance', type: 'toggle' },
-      { name: 'partnerCpfTotal', label: 'Total CPF balance', type: 'currency' },
+      { name: 'partnerCpfKnown', label: 'Partner knows CPF balance', type: 'toggle', helperText: 'If unknown, the projection will exclude their CPF.' },
+      { name: 'partnerCpfTotal', label: 'Total CPF balance', type: 'currency', showWhen: { field: 'partnerCpfKnown', equals: true } },
     ],
     planTypes: ['couple', 'household'],
   },

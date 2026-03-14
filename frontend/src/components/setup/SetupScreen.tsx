@@ -174,7 +174,13 @@ export function SetupScreen({
       <h2 className="text-xl font-semibold">{screen.title}</h2>
 
       <div className="flex flex-col gap-4">
-        {screen.fields.map((field) => (
+        {screen.fields.map((field) => {
+          // Field-level conditional visibility
+          if (field.showWhen) {
+            const depVal = values[field.showWhen.field]
+            if (depVal !== field.showWhen.equals) return null
+          }
+          return (
           <div key={field.name}>
             <FieldRenderer
               field={field}
@@ -189,11 +195,15 @@ export function SetupScreen({
                 onChange(name, value)
               }}
             />
+            {field.helperText && (
+              <p className="mt-1 text-xs text-muted-foreground">{field.helperText}</p>
+            )}
             {requiredErrors.has(field.name) && (
               <p className="mt-1 text-xs text-destructive">This field is required</p>
             )}
           </div>
-        ))}
+          )
+        })}
       </div>
 
       <div className="flex items-center gap-3 pt-2">
