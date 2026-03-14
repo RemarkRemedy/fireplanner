@@ -542,8 +542,8 @@ export function ProjectionPage() {
   )
 
   return (
-    <div className="md:grid md:grid-cols-[1fr_280px] md:gap-6">
-    <div className="space-y-6">
+    <div className="md:grid md:grid-cols-[minmax(0,1fr)_280px] md:gap-6">
+    <div className="min-w-0 space-y-6">
       {/* Delta cards — visible on all viewports */}
       {deltaStack.length > 0 && (
         <div className="space-y-2">
