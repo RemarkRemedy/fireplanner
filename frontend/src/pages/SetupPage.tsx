@@ -15,6 +15,8 @@ import type { SectionId } from '@/lib/household/sectionOrder'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { trackEvent } from '@/lib/analytics'
 import { SetupDraftSchema } from '@/lib/validation/setupDraftSchema'
+import { MonthlyIncomeInput, MonthlyExpenseInput } from '@/components/shared/FinancialInputCards'
+import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
 
 // ---------------------------------------------------------------------------
 // Screen definitions
@@ -40,19 +42,7 @@ const SCREENS: (NudgeFlowScreen & {
     title: 'What do you earn?',
     fields: [
       { name: 'hasIncome', label: 'I earn employment or business income', type: 'toggle' },
-      { name: 'annualIncome', label: 'Annual income', type: 'currency', required: true, validationKey: 'annualIncome', tooltip: 'Your total yearly employment income before any deductions.', showWhen: { field: 'hasIncome', equals: true } },
-      {
-        name: 'incomeType',
-        label: 'Income basis',
-        type: 'select',
-        tooltip: 'Gross = before tax and CPF. Take-home = after deductions. We\'ll estimate gross from take-home if needed.',
-        options: [
-          { value: 'gross', label: 'Gross (before tax/CPF)' },
-          { value: 'take-home', label: 'Take-home (after deductions)' },
-        ],
-        required: true,
-        showWhen: { field: 'hasIncome', equals: true },
-      },
+      // Income details rendered as custom MonthlyIncomeInput below SetupScreen (see render)
     ],
   },
   // Screen 3: Expenses
@@ -60,7 +50,7 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'expenses',
     title: 'What do you spend?',
     fields: [
-      { name: 'annualExpenses', label: 'Annual expenses', type: 'currency', required: true, validationKey: 'annualExpenses', tooltip: 'Total yearly spending including rent, food, transport, utilities, and discretionary.', helperText: 'Include all regular spending: rent, food, transport, utilities, subscriptions. You can break it down later.' },
+      // Expenses rendered as custom MonthlyExpenseInput below SetupScreen (see render)
     ],
   },
   // Screen 4: Savings
@@ -306,9 +296,11 @@ const INITIAL_VALUES: Record<string, unknown> = {
   retirementAge: 55,
   retirementPhase: 'before-55',
   hasIncome: true,
-  annualIncome: 72000,
-  incomeType: 'gross',
-  annualExpenses: 48000,
+  incomeType: 'take-home' as 'take-home' | 'gross',
+  monthlyIncome: 4800,
+  hasBonusAws: false,
+  bonusMonths: 1,
+  monthlyExpenses: 2500,
   liquidNetWorth: 50000,
   residency: 'citizen',
   cpfKnown: false,
@@ -345,7 +337,14 @@ const INITIAL_VALUES: Record<string, unknown> = {
 function draftFromValues(values: Record<string, unknown>, planType: HouseholdPlanType, isRedo: boolean): SetupDraft {
   const hasIncome = values.hasIncome !== false
   const age = values.currentAge as number
-  const income = hasIncome ? (values.annualIncome as number) : 0
+  const monthlyIncome = hasIncome ? (values.monthlyIncome as number) : 0
+  const incomeType = (values.incomeType as 'take-home' | 'gross') ?? 'take-home'
+  const bonusMonths = (values.hasBonusAws ? (values.bonusMonths as number) : 0) ?? 0
+  // grossUpFromTakeHome handles the take-home → gross conversion
+  const grossMonthly = incomeType === 'take-home'
+    ? grossUpFromTakeHome(monthlyIncome, age)
+    : monthlyIncome
+  const income = Math.round(grossMonthly * (12 + bonusMonths))
 
   // M1: Auto-derive retirement phase from age
   const retirementPhase: 'before-55' | '55-to-64' | '65-plus' =
@@ -366,8 +365,8 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
     currentAge: age,
     retirementAge: values.retirementAge as number,
     annualIncome: income,
-    incomeType: hasIncome ? (values.incomeType as 'gross' | 'take-home') : 'gross',
-    annualExpenses: values.annualExpenses as number,
+    incomeType: 'gross', // always gross — take-home conversion done above via grossUpFromTakeHome
+    annualExpenses: (values.monthlyExpenses as number) * 12,
     liquidNetWorth: values.liquidNetWorth as number,
     residency: values.residency as 'citizen' | 'pr' | 'foreigner',
     cpfKnown,
@@ -418,9 +417,11 @@ function hydrateDraftToValues(draft: SetupDraft): Record<string, unknown> {
     retirementAge: draft.retirementAge,
     retirementPhase: draft.retirementPhase ?? 'before-55',
     hasIncome: draft.annualIncome > 0,
-    annualIncome: draft.annualIncome,
-    incomeType: draft.incomeType,
-    annualExpenses: draft.annualExpenses,
+    incomeType: draft.incomeType === 'take-home' ? 'take-home' : 'gross',
+    monthlyIncome: Math.round(draft.annualIncome / 12),
+    hasBonusAws: false,
+    bonusMonths: 1,
+    monthlyExpenses: Math.round(draft.annualExpenses / 12),
     liquidNetWorth: draft.liquidNetWorth,
     residency: draft.residency,
     cpfKnown: draft.cpfKnown,
@@ -659,6 +660,8 @@ export function SetupPage() {
 
   const isFirstScreen = currentActivePosition === 0
 
+  const isIncomeScreen = currentScreen.id === 'income'
+  const isExpensesScreen = currentScreen.id === 'expenses'
   const isDependentsScreen = currentScreen.id === 'dependents'
   const hasDependents = state.values.hasDependents as boolean
   const dependentsList = (state.values.dependentsList as Array<{ name: string; age: number; relationship: string }>) ?? []
@@ -677,6 +680,45 @@ export function SetupPage() {
           currentActivePosition === totalSteps - 1 ? 'Review your answers' : 'Continue'
         }
       />
+
+      {/* Custom MonthlyIncomeInput — rendered below SetupScreen when on income screen */}
+      {isIncomeScreen && state.values.hasIncome && (
+        <div className="-mt-2">
+          <MonthlyIncomeInput
+            incomeType={(state.values.incomeType as 'take-home' | 'gross') ?? 'take-home'}
+            onIncomeTypeChange={(type) => handleChange('incomeType', type)}
+            monthlyIncome={(state.values.monthlyIncome as number) ?? 0}
+            onMonthlyIncomeChange={(v) => handleChange('monthlyIncome', v)}
+            hasBonusAws={(state.values.hasBonusAws as boolean) ?? false}
+            onHasBonusAwsChange={(v) => handleChange('hasBonusAws', v)}
+            bonusMonths={(state.values.bonusMonths as number) ?? 1}
+            onBonusMonthsChange={(v) => handleChange('bonusMonths', v)}
+            grossMonthly={
+              (state.values.incomeType === 'take-home'
+                ? grossUpFromTakeHome((state.values.monthlyIncome as number) ?? 0, (state.values.currentAge as number) ?? 30)
+                : (state.values.monthlyIncome as number) ?? 0)
+            }
+            annualIncome={Math.round(
+              (state.values.incomeType === 'take-home'
+                ? grossUpFromTakeHome((state.values.monthlyIncome as number) ?? 0, (state.values.currentAge as number) ?? 30)
+                : (state.values.monthlyIncome as number) ?? 0
+              ) * (12 + ((state.values.hasBonusAws ? (state.values.bonusMonths as number) : 0) ?? 0))
+            )}
+            age={(state.values.currentAge as number) ?? 30}
+          />
+        </div>
+      )}
+
+      {/* Custom MonthlyExpenseInput — rendered below SetupScreen when on expenses screen */}
+      {isExpensesScreen && (
+        <div className="-mt-2">
+          <MonthlyExpenseInput
+            monthlyExpenses={(state.values.monthlyExpenses as number) ?? 0}
+            onMonthlyExpensesChange={(v) => handleChange('monthlyExpenses', v)}
+            annualExpenses={((state.values.monthlyExpenses as number) ?? 0) * 12}
+          />
+        </div>
+      )}
 
       {/* Dynamic dependents list — rendered below SetupScreen when on dependents screen */}
       {isDependentsScreen && hasDependents && (

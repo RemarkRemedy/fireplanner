@@ -94,6 +94,32 @@ function FieldRenderer({ field, values, onChange, error }: FieldRendererProps) {
     )
   }
 
+  if (field.type === 'pill' && field.options) {
+    return (
+      <div className="flex flex-col gap-1">
+        {field.label && (
+          <Label className="text-sm">{field.label}</Label>
+        )}
+        <div className="inline-flex rounded-lg border p-0.5 bg-muted/50">
+          {field.options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
+                currentValue === opt.value
+                  ? 'bg-background shadow-sm font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => onChange(field.name, opt.value)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   if (field.type === 'select' && field.options) {
     return (
       <div className="flex flex-col gap-1">
