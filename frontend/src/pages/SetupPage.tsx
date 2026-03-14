@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useNavigate, useSearchParams, useBlocker } from 'react-router-dom'
 import { SetupScreen, shouldSkipScreen } from '@/components/setup/SetupScreen'
 import { ReviewCheckpoint } from '@/components/setup/ReviewCheckpoint'
