@@ -19439,6 +19439,244 @@
     ]
   },
   {
+    "id": "great-eastern-prestige-legacy-advantage",
+    "insurer": "Great Eastern",
+    "productName": "Prestige Legacy Advantage",
+    "sourceFileName": "PS(EN)_Prestige Legacy Advantage_(SG)_v2.0.pdf",
+    "sourceChecksumSha256": "822a8524102778d6b9fa00619fee1207db9a2dbb8f263ad145aeafac8583de66",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:great-eastern-pla-single-premium-charge",
+      "branch:great-eastern-pla-top-up-premium-charge",
+      "branch:great-eastern-pla-withdrawal-charge",
+      "branch:great-eastern-pla-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "great-eastern-pla-single-premium-principal-tracking",
+      "great-eastern-pla-policy-fee",
+      "great-eastern-pla-insurance-charge",
+      "great-eastern-pla-current-sum-assured-tracking",
+      "great-eastern-pla-death-and-terminal-illness-benefits",
+      "great-eastern-pla-non-lapse-privilege",
+      "great-eastern-pla-free-partial-withdrawal-annual-limit",
+      "great-eastern-pla-fund-level-fees",
+      "great-eastern-pla-sum-assured-reduction",
+      "great-eastern-pla-fund-switching"
+    ],
+    "warnings": [
+      "Prestige Legacy Advantage is cataloged as a partial modeled subset in V1. The parser captures the initial single-premium charge, single-premium top-up charge, and the first-five-policy-year withdrawal / surrender charge schedule, while non-lapse privilege, free-withdrawal limits, policy fee, insurance charge, and protection-side benefit formulas remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-5-single-premium",
+        "currency": "SGD",
+        "mipLength": 5,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and single premium structure",
+                "excerpt": "Prestige Legacy Advantage is a single premium whole of life investment-linked plan (ILP) About your plan designed to meet your investment and protection needs. It provides financial protection against death and terminal "
+              },
+              {
+                "page": 3,
+                "section": "Partial withdrawal, free withdrawal facility, and surrender mechanics",
+                "excerpt": "Approximate excerpt; keyword \"Partial withdrawal & free partial withdrawal facility\" not found on page. Product Summary Prestige Legacy Advantage Please keep this copy for reference. When the non-lapse privilege ceases a"
+              },
+              {
+                "page": 4,
+                "section": "Policy fee and premium charge",
+                "excerpt": "We will deduct a policy fee for the first 5 policy years, which is a percentage of the basic sum Policy fee assured on a monthly basis from the commencement of the policy by cancelling units on a proportionate basis in t"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "single-premium-charge",
+            "label": "Single Premium Charge",
+            "basis": "annual-contribution",
+            "rate": 0.05,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 5% premium charge deducted from the initial single premium at policy issue."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and single premium structure",
+                "excerpt": "Prestige Legacy Advantage is a single premium whole of life investment-linked plan (ILP) About your plan designed to meet your investment and protection needs. It provides financial protection against death and terminal "
+              },
+              {
+                "page": 4,
+                "section": "Policy fee and premium charge",
+                "excerpt": "We will deduct a policy fee for the first 5 policy years, which is a percentage of the basic sum Policy fee assured on a monthly basis from the commencement of the policy by cancelling units on a proportionate basis in t"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "single-premium-top-up-charge",
+            "label": "Single Premium Top-up Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% premium charge deducted from each accepted single-premium top-up."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Partial withdrawal, free withdrawal facility, and surrender mechanics",
+                "excerpt": "Approximate excerpt; keyword \"Partial withdrawal & free partial withdrawal facility\" not found on page. Product Summary Prestige Legacy Advantage Please keep this copy for reference. When the non-lapse privilege ceases a"
+              },
+              {
+                "page": 4,
+                "section": "Policy fee and premium charge",
+                "excerpt": "We will deduct a policy fee for the first 5 policy years, which is a percentage of the basic sum Policy fee assured on a monthly basis from the commencement of the policy by cancelling units on a proportionate basis in t"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.17
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.14
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.11
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.07
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.04
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published policy-year partial withdrawal charge schedule during the first five policy years.",
+              "The free 5% annual partial-withdrawal allowance from policy year 11 onward remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Partial withdrawal, free withdrawal facility, and surrender mechanics",
+                "excerpt": "Approximate excerpt; keyword \"Partial withdrawal & free partial withdrawal facility\" not found on page. Product Summary Prestige Legacy Advantage Please keep this copy for reference. When the non-lapse privilege ceases a"
+              },
+              {
+                "page": 5,
+                "section": "Partial withdrawal charge, surrender charge, and insurance charge",
+                "excerpt": "partial withdrawal charge from the amount to be withdrawn. The partial withdrawal charge is equal to the amount to be withdrawn multiplied by a percentage which corresponds to the withdrawal policy year during which you "
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          0.17,
+          0.14,
+          0.11,
+          0.07,
+          0.04
+        ],
+        "warnings": [
+          "Prestige Legacy Advantage is modeled as a partial single-premium subset in V1. The parser captures the initial single-premium charge, single-premium top-up charge, and the first-five-policy-year withdrawal / surrender charge schedule.",
+          "Free partial withdrawal allowances, non-lapse privilege, policy fee, insurance charge, and death-benefit sum-assured tracking remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Single-premium principal tracking remains informational only in V1.",
+          "Policy fee remains informational only because it depends on entry-age and basic-sum-assured tables.",
+          "Insurance charge remains informational only because it depends on attained age, gender, smoker status, region, underwriting class, and net sum assured.",
+          "Death and terminal illness benefit formulas remain informational only, including current sum assured adjustments after withdrawals and top-ups.",
+          "Non-lapse privilege debt carry and lapse/reinstatement behavior remain informational only.",
+          "The free 5% partial withdrawal annual limit from policy year 11 onward remains informational only.",
+          "Fund-level management and custodian fees remain informational only.",
+          "Sum assured reductions and fund switching remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and single premium structure",
+            "excerpt": "Prestige Legacy Advantage is a single premium whole of life investment-linked plan (ILP) About your plan designed to meet your investment and protection needs. It provides financial protection against death and terminal "
+          },
+          {
+            "page": 3,
+            "section": "Partial withdrawal, free withdrawal facility, and surrender mechanics",
+            "excerpt": "Approximate excerpt; keyword \"Partial withdrawal & free partial withdrawal facility\" not found on page. Product Summary Prestige Legacy Advantage Please keep this copy for reference. When the non-lapse privilege ceases a"
+          },
+          {
+            "page": 4,
+            "section": "Policy fee and premium charge",
+            "excerpt": "We will deduct a policy fee for the first 5 policy years, which is a percentage of the basic sum Policy fee assured on a monthly basis from the commencement of the policy by cancelling units on a proportionate basis in t"
+          },
+          {
+            "page": 5,
+            "section": "Partial withdrawal charge, surrender charge, and insurance charge",
+            "excerpt": "partial withdrawal charge from the amount to be withdrawn. The partial withdrawal charge is equal to the amount to be withdrawn multiplied by a percentage which corresponds to the withdrawal policy year during which you "
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "great-eastern-investment-linked-insurance-plan-2",
     "insurer": "Great Eastern",
     "productName": "Investment-linked Insurance Plan 2",
