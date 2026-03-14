@@ -430,6 +430,316 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[0], 'policy').grossFee).toBe(0)
   })
 
+  it('grows protected-base assurance charges under uninterrupted paid-premium flow', () => {
+    const result = projectIlpPolicy(makeOpenEndedPolicy({
+      postMipYears: 4,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 1_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 1_200,
+        currentNetSupplementaryPremiumBase: 0,
+      },
+      chargeRules: [
+        {
+          id: 'investready-protection-charge',
+          label: 'Cost of Insurance',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'manulife-investready-iii-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    }), 'mid')
+
+    const yearOneFee = accountRow(result.rows[0], 'policy').grossFee
+    const yearTwoFee = accountRow(result.rows[1], 'policy').grossFee
+
+    expect(yearOneFee).toBeGreaterThan(0)
+    expect(yearTwoFee).toBeGreaterThan(yearOneFee)
+  })
+
+  it('freezes protected-base assurance growth during a missed-premium / premium-free-period year', () => {
+    const buildPolicy = (policyEvents?: IlpPolicyInput['policyEvents']) => makeOpenEndedPolicy({
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 1_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 1_200,
+        currentNetSupplementaryPremiumBase: 0,
+      },
+      chargeRules: [
+        {
+          id: 'investready-protection-charge',
+          label: 'Cost of Insurance',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'manulife-investready-iii-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      policyEvents,
+    })
+
+    const baseline = projectIlpPolicy(buildPolicy(), 'mid')
+    const frozen = projectIlpPolicy(buildPolicy([
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 13,
+        durationMonths: 12,
+        repayMissedPremiums: false,
+      },
+    ]), 'mid')
+
+    expect(frozen.rows[0].annualContribution).toBe(0)
+    expect(accountRow(frozen.rows[0], 'policy').grossFee).toBeLessThan(accountRow(baseline.rows[0], 'policy').grossFee)
+  })
+
+  it('resumes protected-base assurance growth after premium restart', () => {
+    const result = projectIlpPolicy(makeOpenEndedPolicy({
+      postMipYears: 4,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 1_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 1_200,
+        currentNetSupplementaryPremiumBase: 0,
+      },
+      chargeRules: [
+        {
+          id: 'investready-protection-charge',
+          label: 'Cost of Insurance',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'manulife-investready-iii-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 13,
+          durationMonths: 12,
+          repayMissedPremiums: false,
+        },
+      ],
+    }), 'mid')
+
+    const frozenYearFee = accountRow(result.rows[0], 'policy').grossFee
+    const resumedYearFee = accountRow(result.rows[1], 'policy').grossFee
+
+    expect(result.rows[0].annualContribution).toBe(0)
+    expect(result.rows[1].annualContribution).toBe(1_200)
+    expect(resumedYearFee).toBeGreaterThan(frozenYearFee)
+  })
+
+  it('supports sum-assured protected-base assurance formulas without regressing existing assurance families', () => {
+    const duoResult = projectIlpPolicy(makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 1_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 10_000,
+      },
+      chargeRules: [
+        {
+          id: 'manuinvest-duo-protection-charge',
+          label: 'Cost of Insurance',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'manulife-manuinvest-duo-death-ti-tpd',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    }), 'mid')
+
+    expect(accountRow(duoResult.rows[0], 'policy').grossFee).toBeCloseTo(10.2924, 4)
+
+    const prudentialResult = projectIlpPolicy(makeDefaultPolicy({
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 120,
+      currentPolicyYear: 10,
+      accounts: PRUDENTIAL_PROSPER_ACCOUNTS,
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'prosper-death',
+          label: 'Assurance Charge (Death)',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['growth', 'flex'],
+          fallbackAppliesTo: ['additional'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'prudential-prosper-death',
+            monthlyModalFactor: 0.0834,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+        {
+          id: 'prosper-accidental-death',
+          label: 'Assurance Charge (Accidental Death)',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['growth', 'flex'],
+          fallbackAppliesTo: ['additional'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'prudential-prosper-accidental-death',
+            monthlyModalFactor: 0.0834,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 50,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 100_000,
+      },
+    }), 'mid')
+
+    const hsbcResult = projectIlpPolicy(makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 120,
+      currentPolicyYear: 10,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Value',
+          feeRate: 0,
+          currentValue: 30_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 30,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentBasicSumAssured: 100_000,
+        currentNetSupplementaryPremiumBase: 20_000,
+      },
+      chargeRules: [
+        {
+          id: 'flexi-choice-death-ti',
+          label: 'Death / TI COI',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'hsbc-flexi-choice-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    }), 'mid')
+
+    expect(accountRow(prudentialResult.rows[0], 'growth').grossFee).toBeCloseTo(2.071656, 6)
+    expect(accountRow(hsbcResult.rows[0], 'policy').grossFee).toBeCloseTo(77.4, 6)
+  })
+
   it('does not regress finite-MIP contribution cutoff behavior', () => {
     const policy = makeDefaultPolicy({ postMipYears: 2 })
     const result = projectIlpPolicy(policy, 'mid')

@@ -71,7 +71,14 @@ export interface IlpTemplateFeeRule {
   rate: number | null
   amount?: number | null
   assuranceConfig?: {
-    formula: 'prudential-prosper-death' | 'prudential-prosper-accidental-death' | 'prudential-assure-ii-combined'
+    formula:
+      | 'prudential-prosper-death'
+      | 'prudential-prosper-accidental-death'
+      | 'prudential-assure-ii-combined'
+      | 'hsbc-flexi-choice-death-ti'
+      | 'hsbc-flexi-max-death-ti'
+      | 'manulife-investready-iii-death-ti'
+      | 'manulife-manuinvest-duo-death-ti-tpd'
     monthlyModalFactor: number
     maxAgeNextBirthday?: number
   }

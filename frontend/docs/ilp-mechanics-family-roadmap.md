@@ -47,7 +47,7 @@ The planning model has three layers:
 ## Current Baseline
 
 - Summary corpus baseline: `92`
-- Current catalog products: `9`
+- Current catalog products: `56`
 - Current `supported` products: `6`
 - Structural family counts from the classifier:
   - `58` standard 2-account core cashflow
@@ -125,7 +125,7 @@ Promotion review result:
 Needed where insurance / assurance charges materially affect economics.
 
 Current status:
-- first vertical slice complete
+- protected-base assurance slice complete
 - green on:
   - `npm run type-check`
   - targeted ILP unit tests
@@ -136,9 +136,12 @@ Completed in this slice:
   - `prudential-pruvantage-prosper`
   - `prudential-pruvantage-assure-ii`
   - bounded `hsbc-life-flexi-protector` death / TI COI
+  - paid-premium-floor protected-base COI formulas such as `Manulife InvestReady (III)`
+  - sum-assured protected-base COI formulas such as `ManuInvest Duo`
 - unified normalized assurance profile + state-event seam
 - preserved Prudential fallback deduction order
 - bounded non-catalog golden proof for HSBC Flexi Choice vs Max death / TI charges
+- protected-base assurance proof coverage for uninterrupted payments, premium-holiday freeze, premium restart, and no regression of the existing assurance families
 
 Promotion review result:
 - the assurance kernel is no longer the primary blocker for:
@@ -149,6 +152,10 @@ Promotion review result:
   - distribution-mode assumptions
   - broader protection-state / ownership mechanics
   - parser/catalog expansion where no safe public product entry exists yet
+
+Immediate parser follow-ons after this slice:
+- `manulife-manuinvest-duo`
+- `GREAT Life Advantage 4` if it still fits without widening into non-lapse debt / continuation state
 
 ### 4. Bonus-richness kernel
 
@@ -248,7 +255,7 @@ Validated classifier state:
 - `57` supported-after-kernel
 - `29` partial-v1
 
-The immediate execution focus is the `payout-state-kernel` slice. Parser throughput continued until the next three viable AIA-coded candidates all failed on the same missing mechanic: scheduled income payouts that redeem policy units over time and therefore require an explicit manual payout assumption surface.
+The immediate execution focus is parser throughput on products unlocked by the protected-base assurance slice. Parser throughput hit the shared-blocker trigger on `Manulife InvestReady (III)`, `ManuInvest Duo`, and `GREAT Life Advantage 4`, which required one bounded protected-base assurance extension inside the assurance-charge kernel. That slice is now implemented and the loop should return to the cheapest honest parser candidates it unlocks.
 
 ## Sequencing After QA
 
@@ -264,10 +271,13 @@ The immediate execution focus is the `payout-state-kernel` slice. Parser through
 4. Treat the `open-ended-no-mip-kernel` as implemented:
    - proof target: `GREAT Invest Advantage (SP)`
    - immediate follow-ons after commit: `GREAT Invest Advantage 2 (SP)` and the adjacent open-ended Great Eastern corridor
-5. Treat the `payout-state-kernel` as the current bounded slice:
+5. Treat the `payout-state-kernel` as implemented:
    - proof target: `AIA Elite Secure Income - Single Premium`
    - immediate follow-ons after commit: `AIA Elite Secure Income - 5 Pay` and `AIA Platinum Retirement Elite`
-6. After the kernel commit lands, return to parser throughput for the cheapest truthful corridor it unlocks.
+6. Treat the protected-base assurance slice inside the `assurance-charge-kernel` as implemented:
+   - proof target: `Manulife InvestReady (III)`
+   - immediate follow-ons after commit: `ManuInvest Duo` and `GREAT Life Advantage 4` if they still fit without widening into broader protection-state logic
+7. After the kernel commit lands, return to parser throughput for the cheapest truthful corridor it unlocks.
 
 ## V1 Boundary
 

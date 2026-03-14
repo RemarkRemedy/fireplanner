@@ -1,5 +1,7 @@
 import {
   HSBC_FLEXI_DEATH_TI_RATE_TABLE,
+  MANULIFE_INVESTREADY_III_DEATH_TI_RATE_TABLE,
+  MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE,
   PRUVANTAGE_ASSURE_II_COMBINED_RATE_TABLE,
   PRUVANTAGE_PROSPER_ACCIDENTAL_DEATH_RATE_TABLE,
   PRUVANTAGE_PROSPER_DEATH_RATE_TABLE,
@@ -119,6 +121,8 @@ export interface IlpAssuranceChargeConfig {
     | 'prudential-assure-ii-combined'
     | 'hsbc-flexi-choice-death-ti'
     | 'hsbc-flexi-max-death-ti'
+    | 'manulife-investready-iii-death-ti'
+    | 'manulife-manuinvest-duo-death-ti-tpd'
   monthlyModalFactor: number
   maxAgeNextBirthday?: number
 }
@@ -418,7 +422,12 @@ interface IlpNormalizedEventChargeRule {
   events: Array<IlpPolicyEvent | IlpSyntheticEvent>
 }
 
-type IlpAssuranceFormulaFamily = 'prudential-prosper' | 'prudential-assure-ii' | 'hsbc-flexi'
+type IlpAssuranceFormulaFamily =
+  | 'prudential-prosper'
+  | 'prudential-assure-ii'
+  | 'hsbc-flexi'
+  | 'protected-base-paid-premium-floor'
+  | 'protected-base-sum-assured'
 
 interface IlpNormalizedAssuranceRule {
   rule: IlpChargeRule & { assuranceConfig: IlpAssuranceChargeConfig }
@@ -1238,6 +1247,10 @@ function getAssuranceFormulaFamily(
     case 'hsbc-flexi-choice-death-ti':
     case 'hsbc-flexi-max-death-ti':
       return 'hsbc-flexi'
+    case 'manulife-investready-iii-death-ti':
+      return 'protected-base-paid-premium-floor'
+    case 'manulife-manuinvest-duo-death-ti-tpd':
+      return 'protected-base-sum-assured'
   }
 }
 
@@ -1263,6 +1276,10 @@ function resolveAssuranceRate(
     case 'hsbc-flexi-choice-death-ti':
     case 'hsbc-flexi-max-death-ti':
       return HSBC_FLEXI_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0
+    case 'manulife-investready-iii-death-ti':
+      return MANULIFE_INVESTREADY_III_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0
+    case 'manulife-manuinvest-duo-death-ti-tpd':
+      return MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE[riskClass][ageIndex] ?? 0
   }
 }
 
@@ -1304,6 +1321,38 @@ function computeHsbcFlexiSumAtRisk(
   }
 
   return Math.max(0, (profile.currentBasicSumAssured ?? 0) + midpointSupplementaryPremiumBase - midpointApplicableValue)
+}
+
+function computeProtectedBaseSumAtRisk(
+  formula: Extract<IlpAssuranceChargeConfig['formula'], 'manulife-investready-iii-death-ti' | 'manulife-manuinvest-duo-death-ti-tpd'>,
+  regularPremiumBaseAtStartOfYear: number,
+  regularPremiumPaidThisYear: number,
+  supplementaryPremiumBaseAtStartOfYear: number,
+  supplementaryPremiumPaidThisYear: number,
+  currentYearApplicableWithdrawals: number,
+  midpointApplicableValue: number,
+  sumAssuredAtStartOfYear: number | undefined,
+): number {
+  switch (formula) {
+    case 'manulife-investready-iii-death-ti': {
+      const midpointProtectedBase = Math.max(
+        0,
+        regularPremiumBaseAtStartOfYear
+          + supplementaryPremiumBaseAtStartOfYear
+          + ((regularPremiumPaidThisYear + supplementaryPremiumPaidThisYear - currentYearApplicableWithdrawals) / 2),
+      )
+
+      return Math.max(0, (midpointProtectedBase * 1.01) - midpointApplicableValue)
+    }
+
+    case 'manulife-manuinvest-duo-death-ti-tpd': {
+      const midpointProtectedBase = Math.max(
+        0,
+        (sumAssuredAtStartOfYear ?? 0) - (currentYearApplicableWithdrawals / 2),
+      )
+      return Math.max(0, midpointProtectedBase - midpointApplicableValue)
+    }
+  }
 }
 
 function computePrudentialAssureIiStateAndRisk(
@@ -1484,6 +1533,20 @@ function computeAssuranceChargeByAccount(
         nextGrowthFrozen = assureIiState.nextGrowthFrozen
         break
       }
+
+      case 'protected-base-paid-premium-floor':
+      case 'protected-base-sum-assured':
+        sumAtRisk = computeProtectedBaseSumAtRisk(
+          rule.assuranceConfig.formula as Extract<IlpAssuranceChargeConfig['formula'], 'manulife-investready-iii-death-ti' | 'manulife-manuinvest-duo-death-ti-tpd'>,
+          regularPremiumBaseAtStartOfYear,
+          regularPremiumPaidThisYear,
+          supplementaryPremiumBaseAtStartOfYear,
+          supplementaryPremiumPaidThisYear,
+          currentYearApplicableWithdrawals,
+          midpointApplicableValue,
+          sumAssuredAtStartOfYear,
+        )
+        break
     }
 
     const annualizedCharge = resolveAssuranceRate(rule, ageNextBirthday, profile) / 1000

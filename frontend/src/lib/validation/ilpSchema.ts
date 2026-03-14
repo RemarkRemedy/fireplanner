@@ -266,6 +266,8 @@ export const ilpChargeRuleSchema = z.object({
       'prudential-assure-ii-combined',
       'hsbc-flexi-choice-death-ti',
       'hsbc-flexi-max-death-ti',
+      'manulife-investready-iii-death-ti',
+      'manulife-manuinvest-duo-death-ti-tpd',
     ]),
     monthlyModalFactor: z.number().min(0).max(1),
     maxAgeNextBirthday: z.number().int().min(1).max(120).optional(),
