@@ -16,6 +16,7 @@ import { parseHsbcWealthAbundance } from './parsers/hsbcWealthAbundance.js'
 import { parseHsbcWealthFocus } from './parsers/hsbcWealthFocus.js'
 import { parseHsbcGoalBuilderIi } from './parsers/hsbcGoalBuilderIi.js'
 import { parseHsbcWealthInvestCpf } from './parsers/hsbcWealthInvestCpf.js'
+import { parseHsbcWealthInvestCashSrs } from './parsers/hsbcWealthInvestCashSrs.js'
 import { parseGreatEasternInvestAdvantage2Rsp } from './parsers/greatEasternInvestAdvantage2Rsp.js'
 import { parseGreatEasternInvestAdvantage2Sp } from './parsers/greatEasternInvestAdvantage2Sp.js'
 import { parseGreatEasternInvestAdvantageRsp } from './parsers/greatEasternInvestAdvantageRsp.js'
@@ -92,6 +93,7 @@ const HSBC_WEALTH_FOCUS_FLEXI_3_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WF PS v1
 const HSBC_WEALTH_FOCUS_FLEXI_5_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WF PS v1.51_MIP10Flexi5.pdf'
 const HSBC_WEALTH_HARVEST_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Harvest Product Summary.pdf'
 const HSBC_WEALTH_INVEST_CPF_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Invest (CPF) Product Summary.pdf'
+const HSBC_WEALTH_INVEST_CASH_SRS_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Invest (Cash_SRS) PS.pdf'
 const HSBC_WEALTH_VOYAGE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Voyage Product Summary.pdf'
 const PRUDENTIAL_PRUVANTAGE_ASSURE_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRUVantage Assure II Product Summary.pdf'
 const PRUDENTIAL_PRUVANTAGE_ASSURE_SP_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRUVantage Assure (SP) Product Summary.pdf'
@@ -252,6 +254,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const hsbcHarvestChecksum = await sha256(HSBC_WEALTH_HARVEST_SOURCE_PATH)
   const hsbcWealthInvestCpfExtracted = await extractPdfText(HSBC_WEALTH_INVEST_CPF_SOURCE_PATH)
   const hsbcWealthInvestCpfChecksum = await sha256(HSBC_WEALTH_INVEST_CPF_SOURCE_PATH)
+  const hsbcWealthInvestCashSrsExtracted = await extractPdfText(HSBC_WEALTH_INVEST_CASH_SRS_SOURCE_PATH)
+  const hsbcWealthInvestCashSrsChecksum = await sha256(HSBC_WEALTH_INVEST_CASH_SRS_SOURCE_PATH)
   const hsbcVoyageExtracted = await extractPdfText(HSBC_WEALTH_VOYAGE_SOURCE_PATH)
   const hsbcVoyageChecksum = await sha256(HSBC_WEALTH_VOYAGE_SOURCE_PATH)
   const prudentialExtracted = await extractPdfText(PRUDENTIAL_PRUVANTAGE_WEALTH_II_SOURCE_PATH)
@@ -432,6 +436,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseHsbcWealthInvestCpf({
       document: hsbcWealthInvestCpfExtracted,
       sourceChecksumSha256: hsbcWealthInvestCpfChecksum,
+    }),
+    parseHsbcWealthInvestCashSrs({
+      document: hsbcWealthInvestCashSrsExtracted,
+      sourceChecksumSha256: hsbcWealthInvestCashSrsChecksum,
     }),
     parseHsbcWealthVoyage({
       document: hsbcVoyageExtracted,

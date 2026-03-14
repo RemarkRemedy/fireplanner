@@ -31862,6 +31862,198 @@
     ]
   },
   {
+    "id": "hsbc-life-wealth-invest-cash-srs",
+    "insurer": "HSBC Life",
+    "productName": "HSBC Life Wealth Invest (Cash/SRS)",
+    "sourceFileName": "HSBC Life Wealth Invest (Cash_SRS) PS.pdf",
+    "sourceChecksumSha256": "e87a0db22efd64e76fba20032aeaebc8a4c045857050dea71d221ad0fb54b15d",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:hsbc-life-wealth-invest-cash-srs-max-single-premium-charge",
+      "branch:hsbc-life-wealth-invest-cash-srs-max-top-up-charge",
+      "branch:hsbc-life-wealth-invest-cash-srs-zero-redemption-fee"
+    ],
+    "metadataOnlyBehaviors": [
+      "hsbc-life-wealth-invest-cash-srs-death-benefit",
+      "hsbc-life-wealth-invest-cash-srs-terminal-illness-benefit",
+      "hsbc-life-wealth-invest-cash-srs-single-premium-principal-tracking",
+      "hsbc-life-wealth-invest-cash-srs-recurring-single-premium",
+      "hsbc-life-wealth-invest-cash-srs-fund-management-charge",
+      "hsbc-life-wealth-invest-cash-srs-additional-ilp-sub-fund-charges",
+      "hsbc-life-wealth-invest-cash-srs-dividend-and-switching-options",
+      "hsbc-life-wealth-invest-cash-srs-free-look-refund",
+      "hsbc-life-wealth-invest-cash-srs-termination"
+    ],
+    "warnings": [
+      "HSBC Life Wealth Invest (Cash/SRS) is cataloged as a partial modeled subset in V1. The parser captures the published up-to-5% premium-charge corridor for initial single premiums and top-ups plus the nil-redemption-fee withdrawal path for the Cash/SRS corridor through the open-ended no-MIP basis, while protection formulas, dividend payout handling, recurring-single-premium handling, single-premium principal tracking, and fund-level charges remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-open-ended-cash-srs",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Subscription and premium types",
+                "excerpt": "Dividend distributions are not guaranteed and can be made out of the income, capital gains and/or capital of the ILP Sub-Fund. Dividend policies vary depending on the ILP Sub-Fund. The issuance of dividends remains at th"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "single-premium-charge",
+            "label": "Single Premium Charge (Cash/SRS)",
+            "basis": "annual-contribution",
+            "rate": 0.05,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published up-to-5% premium-charge corridor applied after allocating the initial single premium into units for the Cash/SRS corridor."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Subscription and premium types",
+                "excerpt": "Dividend distributions are not guaranteed and can be made out of the income, capital gains and/or capital of the ILP Sub-Fund. Dividend policies vary depending on the ILP Sub-Fund. The issuance of dividends remains at th"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge (Cash/SRS)",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published up-to-5% premium-charge corridor applied after allocating each approved top-up premium into units for the Cash/SRS corridor."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Subscription and premium types",
+                "excerpt": "Dividend distributions are not guaranteed and can be made out of the income, capital gains and/or capital of the ILP Sub-Fund. Dividend policies vary depending on the ILP Sub-Fund. The issuance of dividends remains at th"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the currently nil redemption-fee path for partial redemptions."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Fees and charges",
+                "excerpt": "Redemption Fee Currently nil. We reserve the right to impose a redemption fee in its discretion from time to time by giving the Policyholder one (1) month’s prior written notice. Switching Fee between Currently nil. We r"
+              },
+              {
+                "page": 8,
+                "section": "Redemption of units",
+                "excerpt": "a Dealing Day or on a day which is not a Dealing Day, such payment will be taken to have been received on the next Dealing Day. We and the authorised financial advisers reserve the right to revise the cut-off time in res"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "HSBC Life Wealth Invest (Cash/SRS) is cataloged as a partial modeled subset in V1. The parser captures the published up-to-5% premium-charge corridor for initial single premiums and top-ups plus the nil-redemption-fee withdrawal path for the Cash/SRS corridor through the open-ended no-MIP basis.",
+          "Switching fees are currently nil, but dividend payout elections, switching behavior, and SRS eligibility constraints remain outside the current calculator surface.",
+          "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
+        ],
+        "unsupportedItems": [
+          "Death and terminal-illness benefit formulas remain informational only, including the 101% of total premiums principal-style floor.",
+          "Single-premium principal tracking remains informational only in V1.",
+          "Recurring single premium enrollment, cadence, and failed-deduction handling remain informational only.",
+          "Fund-level management charges and additional ILP-sub-fund charges remain informational only because they depend on the selected fund mix and are not a single product-level rate.",
+          "Dividend payout elections, switching administration, and SRS eligibility constraints remain informational only.",
+          "Termination and free-look refund behavior remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 3,
+            "section": "Benefits",
+            "excerpt": "1.2.1 Death Benefit In the event of death of the Life Assured during the Policy term while the Policy is in force, the Death Benefit payable is will be the higher of 101% of total Premiums (Initial Single Premium plus To"
+          },
+          {
+            "page": 5,
+            "section": "Fees and charges",
+            "excerpt": "Redemption Fee Currently nil. We reserve the right to impose a redemption fee in its discretion from time to time by giving the Policyholder one (1) month’s prior written notice. Switching Fee between Currently nil. We r"
+          },
+          {
+            "page": 6,
+            "section": "Subscription and premium types",
+            "excerpt": "Dividend distributions are not guaranteed and can be made out of the income, capital gains and/or capital of the ILP Sub-Fund. Dividend policies vary depending on the ILP Sub-Fund. The issuance of dividends remains at th"
+          },
+          {
+            "page": 8,
+            "section": "Redemption of units",
+            "excerpt": "a Dealing Day or on a day which is not a Dealing Day, such payment will be taken to have been received on the next Dealing Day. We and the authorised financial advisers reserve the right to revise the cut-off time in res"
+          },
+          {
+            "page": 11,
+            "section": "Switching of units",
+            "excerpt": "10. INVESTMENT 10.1 Investment Option The allocation, crediting, cancellation, switching or other dealings of Units as described in this Policy are notional in nature and are solely for the purpose of this Policy, includ"
+          },
+          {
+            "page": 14,
+            "section": "Key policy provisions",
+            "excerpt": "14. PERFORMANCE AND BENCHMARK The performance and benchmark against which the performance of an ILP Sub-Fund is measured are set out in the relevant section of the Fund Information Booklet. 15. EXPENSE RATIO The expense "
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "hsbc-life-wealth-voyage",
     "insurer": "HSBC Life",
     "productName": "Wealth Voyage",
