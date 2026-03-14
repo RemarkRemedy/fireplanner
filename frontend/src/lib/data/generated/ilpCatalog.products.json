@@ -13907,6 +13907,2424 @@
     ]
   },
   {
+    "id": "great-eastern-wealth-advantage-4",
+    "insurer": "Great Eastern",
+    "productName": "GREAT Wealth Advantage 4",
+    "sourceFileName": "PS(EN)_GREAT Wealth Advantage 4_(SG)_v2.0.pdf",
+    "sourceChecksumSha256": "97c31141588f51c7e3201c4709cf191cb3beb33e5d33dd9410021d33eba72d2b",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:great-eastern-wa4-welcome-bonus",
+      "branch:great-eastern-wa4-premium-bonus",
+      "branch:great-eastern-wa4-loyalty-bonus",
+      "branch:great-eastern-wa4-policy-fee-rate",
+      "branch:great-eastern-wa4-fixed-policy-fee",
+      "branch:great-eastern-wa4-premium-holiday-charge",
+      "branch:great-eastern-wa4-top-up-premium-charge",
+      "branch:great-eastern-wa4-partial-withdrawal-charge",
+      "branch:great-eastern-wa4-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "great-eastern-wa4-insurance-charge",
+      "great-eastern-wa4-premium-holiday-charge-refund",
+      "great-eastern-wa4-tpd-continuation-event",
+      "great-eastern-wa4-rider-premium-deduction-treatment",
+      "great-eastern-wa4-fixed-fee-threshold-transition",
+      "great-eastern-wa4-change-of-life-assured",
+      "great-eastern-wa4-automatic-fund-rebalancing-administration"
+    ],
+    "warnings": [
+      "GREAT Wealth Advantage 4 is cataloged as a partial modeled subset in V1. The parser captures the published bonus path, policy fee, premium-holiday charge, top-up charge, and partial-withdrawal / surrender schedules, while insurance-charge and application-gated refund mechanics remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-10-choice-5",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. GREAT Wealth Advantage 4 is a regular premium whole of life investment-linked plan (ILP) About your plan designed to meet your wealth accumula"
+              },
+              {
+                "page": 6,
+                "section": "Single premium top-ups",
+                "excerpt": "You can make single premium top-ups to your policy provided that: Single (a) the single premium top-up is made after the inception of your policy; and premium top- (b) all basic regular premium and premium for all cash-p"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "welcome-bonus",
+            "type": "allocation",
+            "label": "Welcome Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.15
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": null,
+                "rate": 0.3
+              }
+            ],
+            "notes": [
+              "Applied to each payment of basic regular premium during the first policy year only.",
+              "No Welcome Bonus is paid while the policy is on premium holiday."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Welcome bonus and premium bonus",
+                "excerpt": "year, we will pay a welcome bonus as set out below depending on the base plan you choose. bonus Percentage of each payment of basic regular premium st Where the Annual for the 1 policy year to be paid as Welcome Bonus 2 "
+              }
+            ]
+          },
+          {
+            "id": "premium-bonus",
+            "type": "allocation",
+            "label": "Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 6,
+            "endPolicyYear": null,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied to each payment of basic regular premium from the published start year onward.",
+              "Payment ceases when premiums are not paid up to date or when a partial withdrawal occurred in the prior 12 months, and resumes when the published conditions are satisfied again.",
+              "Basic regular premium falling due during premium holiday does not earn Premium Bonus even if later repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Welcome bonus and premium bonus",
+                "excerpt": "year, we will pay a welcome bonus as set out below depending on the base plan you choose. bonus Percentage of each payment of basic regular premium st Where the Annual for the 1 policy year to be paid as Welcome Bonus 2 "
+              },
+              {
+                "page": 4,
+                "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+                "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied annually from the end of the 10th policy year onward.",
+              "No Loyalty Bonus is payable for a policy year in which any partial withdrawal occurred."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+                "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "policy-fee-rate",
+            "label": "Policy Fee",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.007
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Modeled as the published percentage-based monthly policy fee on account value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy fee",
+                "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.5
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the prevailing Annualised Premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+                "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+              },
+              {
+                "page": 5,
+                "section": "Premium holiday charge refund",
+                "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. Flexible options The policy will be regarded to be on premium holiday if the basic regular premium due is Premium unpaid after the grace perio"
+              }
+            ]
+          },
+          {
+            "id": "top-up-premium-charge",
+            "label": "Single Premium Top-up Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies a 3% upfront charge on each accepted single premium top-up.",
+              "Top-ups are not accepted while the policy is on premium holiday, but that administrative gating is not enforced automatically in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Single premium top-ups",
+                "excerpt": "You can make single premium top-ups to your policy provided that: Single (a) the single premium top-up is made after the inception of your policy; and premium top- (b) all basic regular premium and premium for all cash-p"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to partial withdrawals according to the published policy-year schedule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Partial withdrawal and surrender charges",
+                "excerpt": "partial withdrawal charge from the amount to be withdrawn depending on the policy year partial during which the partial withdrawal occurs and the base plan which you have chosen. The partial withdrawal charge is equal to"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.75,
+          0.6,
+          0.5,
+          0.45,
+          0.4,
+          0.2,
+          0.15,
+          0.05
+        ],
+        "warnings": [
+          "GREAT Wealth Advantage 4 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
+          "Insurance charge, TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "Insurance charge remains informational only.",
+          "Premium-holiday-charge refund remains informational only because the published one-time application, six-month lookback, and accepted-application constraints are not modeled automatically.",
+          "Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. GREAT Wealth Advantage 4 is a regular premium whole of life investment-linked plan (ILP) About your plan designed to meet your wealth accumula"
+          },
+          {
+            "page": 3,
+            "section": "Welcome bonus and premium bonus",
+            "excerpt": "year, we will pay a welcome bonus as set out below depending on the base plan you choose. bonus Percentage of each payment of basic regular premium st Where the Annual for the 1 policy year to be paid as Welcome Bonus 2 "
+          },
+          {
+            "page": 4,
+            "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+            "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+          },
+          {
+            "page": 5,
+            "section": "Premium holiday charge refund",
+            "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. Flexible options The policy will be regarded to be on premium holiday if the basic regular premium due is Premium unpaid after the grace perio"
+          },
+          {
+            "page": 6,
+            "section": "Single premium top-ups",
+            "excerpt": "You can make single premium top-ups to your policy provided that: Single (a) the single premium top-up is made after the inception of your policy; and premium top- (b) all basic regular premium and premium for all cash-p"
+          },
+          {
+            "page": 8,
+            "section": "Partial withdrawal and surrender charges",
+            "excerpt": "partial withdrawal charge from the amount to be withdrawn depending on the policy year partial during which the partial withdrawal occurs and the base plan which you have chosen. The partial withdrawal charge is equal to"
+          },
+          {
+            "page": 10,
+            "section": "Policy fee",
+            "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-10-choice-10-under-6000",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. GREAT Wealth Advantage 4 is a regular premium whole of life investment-linked plan (ILP) About your plan designed to meet your wealth accumula"
+              },
+              {
+                "page": 6,
+                "section": "Single premium top-ups",
+                "excerpt": "You can make single premium top-ups to your policy provided that: Single (a) the single premium top-up is made after the inception of your policy; and premium top- (b) all basic regular premium and premium for all cash-p"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "welcome-bonus",
+            "type": "allocation",
+            "label": "Welcome Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 2400,
+                "maxAnnualPremium": 3599.99,
+                "rate": 0.05
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 3600,
+                "maxAnnualPremium": 5999.99,
+                "rate": 0.1
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.2
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": null,
+                "rate": 0.4
+              }
+            ],
+            "notes": [
+              "Applied to each payment of basic regular premium during the first policy year only.",
+              "No Welcome Bonus is paid while the policy is on premium holiday."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Welcome bonus and premium bonus",
+                "excerpt": "year, we will pay a welcome bonus as set out below depending on the base plan you choose. bonus Percentage of each payment of basic regular premium st Where the Annual for the 1 policy year to be paid as Welcome Bonus 2 "
+              }
+            ]
+          },
+          {
+            "id": "premium-bonus",
+            "type": "allocation",
+            "label": "Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": null,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied to each payment of basic regular premium from the published start year onward.",
+              "Payment ceases when premiums are not paid up to date or when a partial withdrawal occurred in the prior 12 months, and resumes when the published conditions are satisfied again.",
+              "Basic regular premium falling due during premium holiday does not earn Premium Bonus even if later repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Welcome bonus and premium bonus",
+                "excerpt": "year, we will pay a welcome bonus as set out below depending on the base plan you choose. bonus Percentage of each payment of basic regular premium st Where the Annual for the 1 policy year to be paid as Welcome Bonus 2 "
+              },
+              {
+                "page": 4,
+                "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+                "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied annually from the end of the 10th policy year onward.",
+              "No Loyalty Bonus is payable for a policy year in which any partial withdrawal occurred."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+                "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "policy-fee-rate",
+            "label": "Policy Fee",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.007
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Modeled as the published percentage-based monthly policy fee on account value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy fee",
+                "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+              }
+            ]
+          },
+          {
+            "id": "policy-fee-fixed-low-annualised-premium",
+            "label": "Additional Fixed Policy Fee",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "amountSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": null,
+                "amount": 60
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the additional S$5 monthly policy fee for Choice 10 / Choice 15 where prevailing Annualised Premium is below S$6,000.",
+              "Use the matching high-annualised-premium variant instead when prevailing Annualised Premium is at least S$6,000."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy fee",
+                "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.25
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the prevailing Annualised Premium.",
+              "The separate one-time premium-holiday-charge refund application path remains metadata-only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+                "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+              },
+              {
+                "page": 5,
+                "section": "Premium holiday charge refund",
+                "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. Flexible options The policy will be regarded to be on premium holiday if the basic regular premium due is Premium unpaid after the grace perio"
+              }
+            ]
+          },
+          {
+            "id": "top-up-premium-charge",
+            "label": "Single Premium Top-up Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies a 3% upfront charge on each accepted single premium top-up.",
+              "Top-ups are not accepted while the policy is on premium holiday, but that administrative gating is not enforced automatically in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Single premium top-ups",
+                "excerpt": "You can make single premium top-ups to your policy provided that: Single (a) the single premium top-up is made after the inception of your policy; and premium top- (b) all basic regular premium and premium for all cash-p"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to partial withdrawals according to the published policy-year schedule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Partial withdrawal and surrender charges",
+                "excerpt": "partial withdrawal charge from the amount to be withdrawn depending on the policy year partial during which the partial withdrawal occurs and the base plan which you have chosen. The partial withdrawal charge is equal to"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.75,
+          0.6,
+          0.5,
+          0.45,
+          0.4,
+          0.2,
+          0.15,
+          0.05
+        ],
+        "warnings": [
+          "GREAT Wealth Advantage 4 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
+          "Insurance charge, TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1.",
+          "This low-annualised-premium variant assumes the additional S$5 monthly policy fee applies throughout the modeled path unless you manually switch variants after a premium change."
+        ],
+        "unsupportedItems": [
+          "Insurance charge remains informational only.",
+          "Premium-holiday-charge refund remains informational only because the published one-time application, six-month lookback, and accepted-application constraints are not modeled automatically.",
+          "Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only.",
+          "Prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. GREAT Wealth Advantage 4 is a regular premium whole of life investment-linked plan (ILP) About your plan designed to meet your wealth accumula"
+          },
+          {
+            "page": 3,
+            "section": "Welcome bonus and premium bonus",
+            "excerpt": "year, we will pay a welcome bonus as set out below depending on the base plan you choose. bonus Percentage of each payment of basic regular premium st Where the Annual for the 1 policy year to be paid as Welcome Bonus 2 "
+          },
+          {
+            "page": 4,
+            "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+            "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+          },
+          {
+            "page": 5,
+            "section": "Premium holiday charge refund",
+            "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. Flexible options The policy will be regarded to be on premium holiday if the basic regular premium due is Premium unpaid after the grace perio"
+          },
+          {
+            "page": 6,
+            "section": "Single premium top-ups",
+            "excerpt": "You can make single premium top-ups to your policy provided that: Single (a) the single premium top-up is made after the inception of your policy; and premium top- (b) all basic regular premium and premium for all cash-p"
+          },
+          {
+            "page": 8,
+            "section": "Partial withdrawal and surrender charges",
+            "excerpt": "partial withdrawal charge from the amount to be withdrawn depending on the policy year partial during which the partial withdrawal occurs and the base plan which you have chosen. The partial withdrawal charge is equal to"
+          },
+          {
+            "page": 10,
+            "section": "Policy fee",
+            "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-10-choice-10-6000-and-above",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. GREAT Wealth Advantage 4 is a regular premium whole of life investment-linked plan (ILP) About your plan designed to meet your wealth accumula"
+              },
+              {
+                "page": 6,
+                "section": "Single premium top-ups",
+                "excerpt": "You can make single premium top-ups to your policy provided that: Single (a) the single premium top-up is made after the inception of your policy; and premium top- (b) all basic regular premium and premium for all cash-p"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "welcome-bonus",
+            "type": "allocation",
+            "label": "Welcome Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 2400,
+                "maxAnnualPremium": 3599.99,
+                "rate": 0.05
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 3600,
+                "maxAnnualPremium": 5999.99,
+                "rate": 0.1
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.2
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": null,
+                "rate": 0.4
+              }
+            ],
+            "notes": [
+              "Applied to each payment of basic regular premium during the first policy year only.",
+              "No Welcome Bonus is paid while the policy is on premium holiday."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Welcome bonus and premium bonus",
+                "excerpt": "year, we will pay a welcome bonus as set out below depending on the base plan you choose. bonus Percentage of each payment of basic regular premium st Where the Annual for the 1 policy year to be paid as Welcome Bonus 2 "
+              }
+            ]
+          },
+          {
+            "id": "premium-bonus",
+            "type": "allocation",
+            "label": "Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": null,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied to each payment of basic regular premium from the published start year onward.",
+              "Payment ceases when premiums are not paid up to date or when a partial withdrawal occurred in the prior 12 months, and resumes when the published conditions are satisfied again.",
+              "Basic regular premium falling due during premium holiday does not earn Premium Bonus even if later repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Welcome bonus and premium bonus",
+                "excerpt": "year, we will pay a welcome bonus as set out below depending on the base plan you choose. bonus Percentage of each payment of basic regular premium st Where the Annual for the 1 policy year to be paid as Welcome Bonus 2 "
+              },
+              {
+                "page": 4,
+                "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+                "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied annually from the end of the 10th policy year onward.",
+              "No Loyalty Bonus is payable for a policy year in which any partial withdrawal occurred."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+                "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "policy-fee-rate",
+            "label": "Policy Fee",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.007
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Modeled as the published percentage-based monthly policy fee on account value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy fee",
+                "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.25
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the prevailing Annualised Premium.",
+              "The separate one-time premium-holiday-charge refund application path remains metadata-only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+                "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+              },
+              {
+                "page": 5,
+                "section": "Premium holiday charge refund",
+                "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. Flexible options The policy will be regarded to be on premium holiday if the basic regular premium due is Premium unpaid after the grace perio"
+              }
+            ]
+          },
+          {
+            "id": "top-up-premium-charge",
+            "label": "Single Premium Top-up Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies a 3% upfront charge on each accepted single premium top-up.",
+              "Top-ups are not accepted while the policy is on premium holiday, but that administrative gating is not enforced automatically in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Single premium top-ups",
+                "excerpt": "You can make single premium top-ups to your policy provided that: Single (a) the single premium top-up is made after the inception of your policy; and premium top- (b) all basic regular premium and premium for all cash-p"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to partial withdrawals according to the published policy-year schedule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Partial withdrawal and surrender charges",
+                "excerpt": "partial withdrawal charge from the amount to be withdrawn depending on the policy year partial during which the partial withdrawal occurs and the base plan which you have chosen. The partial withdrawal charge is equal to"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.75,
+          0.6,
+          0.5,
+          0.45,
+          0.4,
+          0.2,
+          0.15,
+          0.05
+        ],
+        "warnings": [
+          "GREAT Wealth Advantage 4 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
+          "Insurance charge, TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1.",
+          "This high-annualised-premium variant assumes the additional S$5 monthly policy fee does not apply throughout the modeled path unless you manually switch variants after a premium change."
+        ],
+        "unsupportedItems": [
+          "Insurance charge remains informational only.",
+          "Premium-holiday-charge refund remains informational only because the published one-time application, six-month lookback, and accepted-application constraints are not modeled automatically.",
+          "Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only.",
+          "Prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. GREAT Wealth Advantage 4 is a regular premium whole of life investment-linked plan (ILP) About your plan designed to meet your wealth accumula"
+          },
+          {
+            "page": 3,
+            "section": "Welcome bonus and premium bonus",
+            "excerpt": "year, we will pay a welcome bonus as set out below depending on the base plan you choose. bonus Percentage of each payment of basic regular premium st Where the Annual for the 1 policy year to be paid as Welcome Bonus 2 "
+          },
+          {
+            "page": 4,
+            "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+            "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+          },
+          {
+            "page": 5,
+            "section": "Premium holiday charge refund",
+            "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. Flexible options The policy will be regarded to be on premium holiday if the basic regular premium due is Premium unpaid after the grace perio"
+          },
+          {
+            "page": 6,
+            "section": "Single premium top-ups",
+            "excerpt": "You can make single premium top-ups to your policy provided that: Single (a) the single premium top-up is made after the inception of your policy; and premium top- (b) all basic regular premium and premium for all cash-p"
+          },
+          {
+            "page": 8,
+            "section": "Partial withdrawal and surrender charges",
+            "excerpt": "partial withdrawal charge from the amount to be withdrawn depending on the policy year partial during which the partial withdrawal occurs and the base plan which you have chosen. The partial withdrawal charge is equal to"
+          },
+          {
+            "page": 10,
+            "section": "Policy fee",
+            "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-15-choice-15-under-6000",
+        "currency": "SGD",
+        "mipLength": 15,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. GREAT Wealth Advantage 4 is a regular premium whole of life investment-linked plan (ILP) About your plan designed to meet your wealth accumula"
+              },
+              {
+                "page": 6,
+                "section": "Single premium top-ups",
+                "excerpt": "You can make single premium top-ups to your policy provided that: Single (a) the single premium top-up is made after the inception of your policy; and premium top- (b) all basic regular premium and premium for all cash-p"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "welcome-bonus",
+            "type": "allocation",
+            "label": "Welcome Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 1200,
+                "maxAnnualPremium": 2399.99,
+                "rate": 0.075
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 2400,
+                "maxAnnualPremium": 3599.99,
+                "rate": 0.15
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 3600,
+                "maxAnnualPremium": 5999.99,
+                "rate": 0.25
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.3
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": null,
+                "rate": 0.55
+              }
+            ],
+            "notes": [
+              "Applied to each payment of basic regular premium during the first policy year only.",
+              "No Welcome Bonus is paid while the policy is on premium holiday."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Welcome bonus and premium bonus",
+                "excerpt": "year, we will pay a welcome bonus as set out below depending on the base plan you choose. bonus Percentage of each payment of basic regular premium st Where the Annual for the 1 policy year to be paid as Welcome Bonus 2 "
+              }
+            ]
+          },
+          {
+            "id": "premium-bonus",
+            "type": "allocation",
+            "label": "Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 16,
+            "endPolicyYear": null,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied to each payment of basic regular premium from the published start year onward.",
+              "Payment ceases when premiums are not paid up to date or when a partial withdrawal occurred in the prior 12 months, and resumes when the published conditions are satisfied again.",
+              "Basic regular premium falling due during premium holiday does not earn Premium Bonus even if later repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Welcome bonus and premium bonus",
+                "excerpt": "year, we will pay a welcome bonus as set out below depending on the base plan you choose. bonus Percentage of each payment of basic regular premium st Where the Annual for the 1 policy year to be paid as Welcome Bonus 2 "
+              },
+              {
+                "page": 4,
+                "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+                "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 15,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied annually from the end of the 15th policy year onward.",
+              "No Loyalty Bonus is payable for a policy year in which any partial withdrawal occurred."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+                "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "policy-fee-rate",
+            "label": "Policy Fee",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 15,
+                "rate": 0.015
+              },
+              {
+                "startPolicyYear": 16,
+                "endPolicyYear": null,
+                "rate": 0.007
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Modeled as the published percentage-based monthly policy fee on account value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy fee",
+                "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+              }
+            ]
+          },
+          {
+            "id": "policy-fee-fixed-low-annualised-premium",
+            "label": "Additional Fixed Policy Fee",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "amountSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": null,
+                "amount": 60
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the additional S$5 monthly policy fee for Choice 10 / Choice 15 where prevailing Annualised Premium is below S$6,000.",
+              "Use the matching high-annualised-premium variant instead when prevailing Annualised Premium is at least S$6,000."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy fee",
+                "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.2
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the prevailing Annualised Premium.",
+              "The separate one-time premium-holiday-charge refund application path remains metadata-only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+                "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+              },
+              {
+                "page": 5,
+                "section": "Premium holiday charge refund",
+                "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. Flexible options The policy will be regarded to be on premium holiday if the basic regular premium due is Premium unpaid after the grace perio"
+              }
+            ]
+          },
+          {
+            "id": "top-up-premium-charge",
+            "label": "Single Premium Top-up Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies a 3% upfront charge on each accepted single premium top-up.",
+              "Top-ups are not accepted while the policy is on premium holiday, but that administrative gating is not enforced automatically in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Single premium top-ups",
+                "excerpt": "You can make single premium top-ups to your policy provided that: Single (a) the single premium top-up is made after the inception of your policy; and premium top- (b) all basic regular premium and premium for all cash-p"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.07
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.07
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to partial withdrawals according to the published policy-year schedule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Partial withdrawal and surrender charges",
+                "excerpt": "partial withdrawal charge from the amount to be withdrawn depending on the policy year partial during which the partial withdrawal occurs and the base plan which you have chosen. The partial withdrawal charge is equal to"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.8,
+          0.6,
+          0.5,
+          0.5,
+          0.45,
+          0.3,
+          0.25,
+          0.15,
+          0.1,
+          0.08,
+          0.08,
+          0.07,
+          0.07
+        ],
+        "warnings": [
+          "GREAT Wealth Advantage 4 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
+          "Insurance charge, TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1.",
+          "This low-annualised-premium variant assumes the additional S$5 monthly policy fee applies throughout the modeled path unless you manually switch variants after a premium change."
+        ],
+        "unsupportedItems": [
+          "Insurance charge remains informational only.",
+          "Premium-holiday-charge refund remains informational only because the published one-time application, six-month lookback, and accepted-application constraints are not modeled automatically.",
+          "Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only.",
+          "Prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. GREAT Wealth Advantage 4 is a regular premium whole of life investment-linked plan (ILP) About your plan designed to meet your wealth accumula"
+          },
+          {
+            "page": 3,
+            "section": "Welcome bonus and premium bonus",
+            "excerpt": "year, we will pay a welcome bonus as set out below depending on the base plan you choose. bonus Percentage of each payment of basic regular premium st Where the Annual for the 1 policy year to be paid as Welcome Bonus 2 "
+          },
+          {
+            "page": 4,
+            "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+            "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+          },
+          {
+            "page": 5,
+            "section": "Premium holiday charge refund",
+            "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. Flexible options The policy will be regarded to be on premium holiday if the basic regular premium due is Premium unpaid after the grace perio"
+          },
+          {
+            "page": 6,
+            "section": "Single premium top-ups",
+            "excerpt": "You can make single premium top-ups to your policy provided that: Single (a) the single premium top-up is made after the inception of your policy; and premium top- (b) all basic regular premium and premium for all cash-p"
+          },
+          {
+            "page": 8,
+            "section": "Partial withdrawal and surrender charges",
+            "excerpt": "partial withdrawal charge from the amount to be withdrawn depending on the policy year partial during which the partial withdrawal occurs and the base plan which you have chosen. The partial withdrawal charge is equal to"
+          },
+          {
+            "page": 10,
+            "section": "Policy fee",
+            "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-15-choice-15-6000-and-above",
+        "currency": "SGD",
+        "mipLength": 15,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description",
+                "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. GREAT Wealth Advantage 4 is a regular premium whole of life investment-linked plan (ILP) About your plan designed to meet your wealth accumula"
+              },
+              {
+                "page": 6,
+                "section": "Single premium top-ups",
+                "excerpt": "You can make single premium top-ups to your policy provided that: Single (a) the single premium top-up is made after the inception of your policy; and premium top- (b) all basic regular premium and premium for all cash-p"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "welcome-bonus",
+            "type": "allocation",
+            "label": "Welcome Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 1200,
+                "maxAnnualPremium": 2399.99,
+                "rate": 0.075
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 2400,
+                "maxAnnualPremium": 3599.99,
+                "rate": 0.15
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 3600,
+                "maxAnnualPremium": 5999.99,
+                "rate": 0.25
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 6000,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.3
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": null,
+                "rate": 0.55
+              }
+            ],
+            "notes": [
+              "Applied to each payment of basic regular premium during the first policy year only.",
+              "No Welcome Bonus is paid while the policy is on premium holiday."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Welcome bonus and premium bonus",
+                "excerpt": "year, we will pay a welcome bonus as set out below depending on the base plan you choose. bonus Percentage of each payment of basic regular premium st Where the Annual for the 1 policy year to be paid as Welcome Bonus 2 "
+              }
+            ]
+          },
+          {
+            "id": "premium-bonus",
+            "type": "allocation",
+            "label": "Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 16,
+            "endPolicyYear": null,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied to each payment of basic regular premium from the published start year onward.",
+              "Payment ceases when premiums are not paid up to date or when a partial withdrawal occurred in the prior 12 months, and resumes when the published conditions are satisfied again.",
+              "Basic regular premium falling due during premium holiday does not earn Premium Bonus even if later repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Welcome bonus and premium bonus",
+                "excerpt": "year, we will pay a welcome bonus as set out below depending on the base plan you choose. bonus Percentage of each payment of basic regular premium st Where the Annual for the 1 policy year to be paid as Welcome Bonus 2 "
+              },
+              {
+                "page": 4,
+                "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+                "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 15,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied annually from the end of the 15th policy year onward.",
+              "No Loyalty Bonus is payable for a policy year in which any partial withdrawal occurred."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+                "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "policy-fee-rate",
+            "label": "Policy Fee",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 15,
+                "rate": 0.015
+              },
+              {
+                "startPolicyYear": 16,
+                "endPolicyYear": null,
+                "rate": 0.007
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Modeled as the published percentage-based monthly policy fee on account value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy fee",
+                "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.2
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the prevailing Annualised Premium.",
+              "The separate one-time premium-holiday-charge refund application path remains metadata-only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+                "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+              },
+              {
+                "page": 5,
+                "section": "Premium holiday charge refund",
+                "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. Flexible options The policy will be regarded to be on premium holiday if the basic regular premium due is Premium unpaid after the grace perio"
+              }
+            ]
+          },
+          {
+            "id": "top-up-premium-charge",
+            "label": "Single Premium Top-up Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies a 3% upfront charge on each accepted single premium top-up.",
+              "Top-ups are not accepted while the policy is on premium holiday, but that administrative gating is not enforced automatically in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Single premium top-ups",
+                "excerpt": "You can make single premium top-ups to your policy provided that: Single (a) the single premium top-up is made after the inception of your policy; and premium top- (b) all basic regular premium and premium for all cash-p"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.07
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.07
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to partial withdrawals according to the published policy-year schedule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Partial withdrawal and surrender charges",
+                "excerpt": "partial withdrawal charge from the amount to be withdrawn depending on the policy year partial during which the partial withdrawal occurs and the base plan which you have chosen. The partial withdrawal charge is equal to"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.8,
+          0.6,
+          0.5,
+          0.5,
+          0.45,
+          0.3,
+          0.25,
+          0.15,
+          0.1,
+          0.08,
+          0.08,
+          0.07,
+          0.07
+        ],
+        "warnings": [
+          "GREAT Wealth Advantage 4 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
+          "Insurance charge, TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1.",
+          "This high-annualised-premium variant assumes the additional S$5 monthly policy fee does not apply throughout the modeled path unless you manually switch variants after a premium change."
+        ],
+        "unsupportedItems": [
+          "Insurance charge remains informational only.",
+          "Premium-holiday-charge refund remains informational only because the published one-time application, six-month lookback, and accepted-application constraints are not modeled automatically.",
+          "Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only.",
+          "Prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description",
+            "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. GREAT Wealth Advantage 4 is a regular premium whole of life investment-linked plan (ILP) About your plan designed to meet your wealth accumula"
+          },
+          {
+            "page": 3,
+            "section": "Welcome bonus and premium bonus",
+            "excerpt": "year, we will pay a welcome bonus as set out below depending on the base plan you choose. bonus Percentage of each payment of basic regular premium st Where the Annual for the 1 policy year to be paid as Welcome Bonus 2 "
+          },
+          {
+            "page": 4,
+            "section": "Premium bonus continuation, loyalty bonus, and premium holiday",
+            "excerpt": "We will pay a loyalty bonus equivalent to 0.30% of the account value as at the end of each Loyalty bonus policy year annually from the end of the policy year (“Loyalty Bonus Determination Date”) stipulated below dependin"
+          },
+          {
+            "page": 5,
+            "section": "Premium holiday charge refund",
+            "excerpt": "Product Summary GREAT WEALTH ADVANTAGE 4 Please keep this copy for reference. Flexible options The policy will be regarded to be on premium holiday if the basic regular premium due is Premium unpaid after the grace perio"
+          },
+          {
+            "page": 6,
+            "section": "Single premium top-ups",
+            "excerpt": "You can make single premium top-ups to your policy provided that: Single (a) the single premium top-up is made after the inception of your policy; and premium top- (b) all basic regular premium and premium for all cash-p"
+          },
+          {
+            "page": 8,
+            "section": "Partial withdrawal and surrender charges",
+            "excerpt": "partial withdrawal charge from the amount to be withdrawn depending on the policy year partial during which the partial withdrawal occurs and the base plan which you have chosen. The partial withdrawal charge is equal to"
+          },
+          {
+            "page": 10,
+            "section": "Policy fee",
+            "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "hsbc-life-goal-builder-ii",
     "insurer": "HSBC Life",
     "productName": "Goal Builder II",
