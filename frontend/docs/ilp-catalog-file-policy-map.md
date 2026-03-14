@@ -92,8 +92,8 @@ Summary sources: 92
 | WA_Sum_201106386R_NonCPFIE_Oct2024.pdf | AIA Invest Easy (Cash/SRS) |
 | WA_Sum_201106386R_PLP(II)_Oct2024.pdf | AIA Singapore Private Limited (Reg. No. 201106386R) ("we, our, us, AIA Singapore") |
 | WA_Sum_201106386R_PRE_Jul2025.pdf | AIA Platinum Retirement Elite |
-| WA_Sum_201106386R_PWE2.0_Jul2025.pdf | AIA Singapore Private Limited (Reg. No. 201106386R) ("we, our, us, AIA Singapore") |
-| WA_Sum_201106386R_PWL_Jul2025.pdf | AIA Singapore Private Limited (Reg. No. 201106386R) ("we, our, us, AIA Singapore") |
+| WA_Sum_201106386R_PWE2.0_Jul2025.pdf | AIA Platinum Wealth Elite 2.0 |
+| WA_Sum_201106386R_PWL_Jul2025.pdf | AIA Platinum Wealth Legacy |
 | WA_Sum_201106386R_PWV2.0_Apr2025.pdf | AIA Singapore Private Limited (Reg. No. 201106386R) ("we, our, us, AIA Singapore") |
 | WF PS v1.51_MIP10Flexi1.pdf | WF v1.51 MIP10Flexi1 |
 | WF PS v1.51_MIP10Flexi3.pdf | WF v1.51 MIP10Flexi3 |

@@ -1633,6 +1633,82 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('single-pay corridor'))).toBe(true)
   })
 
+  it('maps AIA Platinum Wealth Elite 2.0 into a regular-pay partial seed', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'aia-platinum-wealth-elite-2')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-5')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-wealth-elite-2-no-lapse-privilege')
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.mipLength).toBe(5)
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'regular-premium-charge',
+        basis: 'annual-contribution',
+        yearBasis: 'premium-year',
+      }),
+    ])
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        rate: 0.03,
+      }),
+      expect.objectContaining({
+        id: 'premium-holiday-charge',
+        trigger: 'premium-holiday',
+        basis: 'annual-premium-with-overlap-months',
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+      }),
+    ])
+    expect(seed.eecTable).toEqual([0.5, 0.4, 0.3, 0.2, 0.1, 0])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-term extension'))).toBe(true)
+  })
+
+  it('maps AIA Platinum Wealth Legacy into a regular-pay partial seed', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'aia-platinum-wealth-legacy')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-5')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-wealth-legacy-partial-withdrawal-surrender-charge')
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.mipLength).toBe(5)
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'regular-premium-charge',
+        basis: 'annual-contribution',
+        yearBasis: 'premium-year',
+      }),
+    ])
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        rate: 0.03,
+      }),
+      expect.objectContaining({
+        id: 'premium-holiday-charge',
+        trigger: 'premium-holiday',
+        basis: 'annual-premium-with-overlap-months',
+      }),
+    ])
+    expect(seed.eecTable).toEqual([])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('post-year-10 treatment'))).toBe(true)
+  })
+
   it('preserves template charge allocation, event activeWindow, and rateSchedule-only fee rules', () => {
     const manifest: IlpCatalogManifest = {
       generatedAt: '2026-03-13T00:00:00.000Z',

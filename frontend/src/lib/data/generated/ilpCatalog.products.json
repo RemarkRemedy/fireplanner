@@ -1326,6 +1326,600 @@
     ]
   },
   {
+    "id": "aia-platinum-wealth-elite-2",
+    "insurer": "AIA Singapore",
+    "productName": "AIA Platinum Wealth Elite 2.0",
+    "sourceFileName": "WA_Sum_201106386R_PWE2.0_Jul2025.pdf",
+    "sourceChecksumSha256": "85761c30ddc55fdf58de8ce78cc13e3d3980cd9067be5f0670a197a2fadb0011",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:aia-platinum-wealth-elite-2-regular-premium-charge",
+      "branch:aia-platinum-wealth-elite-2-top-up-premium-charge",
+      "branch:aia-platinum-wealth-elite-2-premium-holiday-charge",
+      "branch:aia-platinum-wealth-elite-2-partial-withdrawal-charge",
+      "branch:aia-platinum-wealth-elite-2-full-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "aia-platinum-wealth-elite-2-single-premium-corridor",
+      "aia-platinum-wealth-elite-2-premium-term-extension",
+      "aia-platinum-wealth-elite-2-administration-charge",
+      "aia-platinum-wealth-elite-2-insurance-risk-charge",
+      "aia-platinum-wealth-elite-2-free-legacy-cover",
+      "aia-platinum-wealth-elite-2-no-lapse-privilege",
+      "aia-platinum-wealth-elite-2-income-withdrawal-privilege",
+      "aia-platinum-wealth-elite-2-protection-benefits",
+      "aia-platinum-wealth-elite-2-fund-management-charge",
+      "aia-platinum-wealth-elite-2-change-of-insured-and-layering",
+      "aia-platinum-wealth-elite-2-vitality-bonus",
+      "aia-platinum-wealth-elite-2-fund-switching-and-rebalancing"
+    ],
+    "warnings": [
+      "AIA Platinum Wealth Elite 2.0 is cataloged as a partial modeled subset in V1. The parser models only the SGD cash regular-pay 5-year corridor: premium-year regular premium charges, the 3% top-up premium charge, the premium-holiday charge schedule, and the regular-premium withdrawal / surrender charge schedules, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, and protection-side benefits remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-5",
+        "currency": "SGD",
+        "mipLength": 5,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Regular Premium Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and product structure",
+                "excerpt": "Product Summary for Platinum Wealth Elite 2.0 Version 2.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.ai"
+              },
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "regular-premium-charge",
+            "label": "Regular Premium Charge",
+            "basis": "annual-contribution",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.06
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published regular premium charge schedule for the regular-pay 5-year corridor only.",
+              "If regular premiums are missed and later resumed, the charge schedule continues from the rate band immediately after the last accepted premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% premium charge deducted from each accepted ad hoc top-up premium.",
+              "The gating that regular premiums must be current before ad hoc top-ups are accepted remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "yearBasis": "premium-year",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 4,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the annualised regular premium.",
+              "The charge stops once all outstanding regular premiums are fully repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium holiday and surrender mechanics",
+                "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+              },
+              {
+                "page": 9,
+                "section": "Premium holiday continuation and non-payment",
+                "excerpt": "When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements (if any) will be deducted by cancellation of units. Your policy will remain on Premium Holiday until you resume"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.667
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.429
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.111
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published partial withdrawal charge factor on withdrawn regular-premium policy value.",
+              "Single-premium and top-up withdrawal behavior remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium holiday and surrender mechanics",
+                "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          0.5,
+          0.4,
+          0.3,
+          0.2,
+          0.1,
+          0
+        ],
+        "warnings": [
+          "AIA Platinum Wealth Elite 2.0 is cataloged as a partial modeled subset in V1. The parser models only the SGD cash regular-pay 5-year corridor: premium-year regular premium charges, the 3% top-up premium charge, the premium-holiday charge schedule, and the regular-premium withdrawal / surrender charge schedules, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, and protection-side benefits remain outside the current engine.",
+          "The current executable slice intentionally excludes the optional extension of the regular premium term beyond five years."
+        ],
+        "unsupportedItems": [
+          "Single-pay corridor and the 5% single-premium charge remain informational only in V1.",
+          "Optional extension of the regular premium term beyond five years remains informational only in V1.",
+          "Administration charge remains informational only because it depends on issue-age and change-of-insured layering state.",
+          "Insurance Risk Charge, Free Legacy Cover, and No Lapse Privilege debt accrual remain informational only.",
+          "Income Withdrawal Privilege, vitality-linked bonuses, and change-of-insured effects remain informational only.",
+          "Death, terminal illness, and other protection-side benefit formulas remain informational only.",
+          "Fund-level management charges, fund switching, and automatic fund re-balancing remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and product structure",
+            "excerpt": "Product Summary for Platinum Wealth Elite 2.0 Version 2.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.ai"
+          },
+          {
+            "page": 4,
+            "section": "Regular premium and top-up allocation",
+            "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+          },
+          {
+            "page": 4,
+            "section": "Premium charge and charge schedule",
+            "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+          },
+          {
+            "page": 5,
+            "section": "Premium holiday and surrender mechanics",
+            "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+          },
+          {
+            "page": 8,
+            "section": "Top-up premium mechanics",
+            "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+          },
+          {
+            "page": 9,
+            "section": "Premium holiday continuation and non-payment",
+            "excerpt": "When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements (if any) will be deducted by cancellation of units. Your policy will remain on Premium Holiday until you resume"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "aia-platinum-wealth-legacy",
+    "insurer": "AIA Singapore",
+    "productName": "AIA Platinum Wealth Legacy",
+    "sourceFileName": "WA_Sum_201106386R_PWL_Jul2025.pdf",
+    "sourceChecksumSha256": "31a90090e9fc499c5128b2f452803a534f8b7e4e97e352b0b9b94bdceca7af55",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:aia-platinum-wealth-legacy-regular-premium-charge",
+      "branch:aia-platinum-wealth-legacy-top-up-premium-charge",
+      "branch:aia-platinum-wealth-legacy-premium-holiday-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "aia-platinum-wealth-legacy-single-premium-corridor",
+      "aia-platinum-wealth-legacy-partial-withdrawal-surrender-charge",
+      "aia-platinum-wealth-legacy-administration-charge",
+      "aia-platinum-wealth-legacy-insurance-risk-charge",
+      "aia-platinum-wealth-legacy-no-lapse-privilege",
+      "aia-platinum-wealth-legacy-expiry-age-election",
+      "aia-platinum-wealth-legacy-protection-benefits",
+      "aia-platinum-wealth-legacy-fund-management-charge",
+      "aia-platinum-wealth-legacy-layering-and-adjusted-partial-withdrawal",
+      "aia-platinum-wealth-legacy-no-fund-switching"
+    ],
+    "warnings": [
+      "AIA Platinum Wealth Legacy is cataloged as a partial modeled subset in V1. The parser models only the cash regular-pay 5-year corridor: premium-year regular premium charges, the 3% top-up premium charge, and the premium-holiday charge schedule, while the single-pay corridor, partial-withdrawal / surrender schedule, administration charge, insurance risk charge, no-lapse mechanics, and protection-side benefits remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-5",
+        "currency": "SGD",
+        "mipLength": 5,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Regular Premium Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and product structure",
+                "excerpt": "Product Summary for AIA Platinum Wealth Legacy Version 4.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.a"
+              },
+              {
+                "page": 3,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "Approximate excerpt; keyword \"100% of Regular Premium less Premium Charge\" not found on page. Regular Number of (Premium - Premium Charge) ÷ Bid Price = Units Amount First policy ($10,000 - 36% x $10,000) ÷ $1.00 = 6,400"
+              },
+              {
+                "page": 6,
+                "section": "Top-up premium mechanics",
+                "excerpt": "6.2. Top-Up Premium Policyholder can avoid the policy lapsing by topping up additional premium. Top-ups can be either paid on an ad hoc basis or regularly. Top ups increase the Policy Value but they do not affect the Ins"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "regular-premium-charge",
+            "label": "Regular Premium Charge",
+            "basis": "annual-contribution",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.36
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.18
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.04
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published regular premium charge schedule for the regular-pay 5-year corridor only.",
+              "If regular premiums are missed and later resumed, the charge schedule continues from the rate band immediately after the last accepted premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "Approximate excerpt; keyword \"100% of Regular Premium less Premium Charge\" not found on page. Regular Number of (Premium - Premium Charge) ÷ Bid Price = Units Amount First policy ($10,000 - 36% x $10,000) ÷ $1.00 = 6,400"
+              },
+              {
+                "page": 3,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "(Premium - Premium Charge) ÷ Bid Price = Units Amount First policy ($10,000 - 36% x $10,000) ÷ $1.00 = 6,400 year Second ($10,000 - 18% x $10,000) ÷ $1.00 = 8,200 policy year If you did not pay regular premium on the pre"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% premium charge deducted from each accepted ad hoc top-up premium.",
+              "The gating that regular premiums must be current before ad hoc top-ups are accepted remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "Approximate excerpt; keyword \"100% of Regular Premium less Premium Charge\" not found on page. Regular Number of (Premium - Premium Charge) ÷ Bid Price = Units Amount First policy ($10,000 - 36% x $10,000) ÷ $1.00 = 6,400"
+              },
+              {
+                "page": 6,
+                "section": "Top-up premium mechanics",
+                "excerpt": "6.2. Top-Up Premium Policyholder can avoid the policy lapsing by topping up additional premium. Top-ups can be either paid on an ad hoc basis or regularly. Top ups increase the Policy Value but they do not affect the Ins"
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "yearBasis": "premium-year",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 4,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the annualised regular premium.",
+              "The charge stops once all outstanding regular premiums are fully repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium holiday and surrender mechanics",
+                "excerpt": "5.4. Premium Holiday Charge (applicable to Regular Premium only) If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the premium p"
+              },
+              {
+                "page": 7,
+                "section": "Premium holiday continuation and non-payment",
+                "excerpt": "Premium Holiday. When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements will be deducted by cancellation of units. Your policy will remain on Premium Holiday until yo"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "AIA Platinum Wealth Legacy is cataloged as a partial modeled subset in V1. The parser models only the cash regular-pay 5-year corridor: premium-year regular premium charges, the 3% top-up premium charge, and the premium-holiday charge schedule, while the single-pay corridor, partial-withdrawal / surrender schedule, administration charge, insurance risk charge, no-lapse mechanics, and protection-side benefits remain outside the current engine.",
+          "The published partial-withdrawal / surrender table is left informational only because the summary shows policy years 1 to 10 but does not state the post-year-10 treatment explicitly."
+        ],
+        "unsupportedItems": [
+          "Single-pay corridor and the 5% single-premium charge remain informational only in V1.",
+          "Published partial-withdrawal / surrender charge tables remain informational only because the summary does not state the post-year-10 treatment explicitly.",
+          "Administration charge remains informational only because the applicable rates live in the policy illustration rather than the product summary.",
+          "Insurance Risk Charge, No Lapse Privilege, and expiry-age election mechanics remain informational only.",
+          "Adjusted partial withdrawal, layer creation from insured-amount changes, and minimum-insured-amount gating remain informational only.",
+          "Death, terminal illness, and other protection-side benefit formulas remain informational only.",
+          "Fund-level management charges and no-fund-switching constraints remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and product structure",
+            "excerpt": "Product Summary for AIA Platinum Wealth Legacy Version 4.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.a"
+          },
+          {
+            "page": 3,
+            "section": "Regular premium and top-up allocation",
+            "excerpt": "Approximate excerpt; keyword \"100% of Regular Premium less Premium Charge\" not found on page. Regular Number of (Premium - Premium Charge) ÷ Bid Price = Units Amount First policy ($10,000 - 36% x $10,000) ÷ $1.00 = 6,400"
+          },
+          {
+            "page": 3,
+            "section": "Premium charge and charge schedule",
+            "excerpt": "(Premium - Premium Charge) ÷ Bid Price = Units Amount First policy ($10,000 - 36% x $10,000) ÷ $1.00 = 6,400 year Second ($10,000 - 18% x $10,000) ÷ $1.00 = 8,200 policy year If you did not pay regular premium on the pre"
+          },
+          {
+            "page": 4,
+            "section": "Premium holiday and surrender mechanics",
+            "excerpt": "5.4. Premium Holiday Charge (applicable to Regular Premium only) If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the premium p"
+          },
+          {
+            "page": 6,
+            "section": "Top-up premium mechanics",
+            "excerpt": "6.2. Top-Up Premium Policyholder can avoid the policy lapsing by topping up additional premium. Top-ups can be either paid on an ad hoc basis or regularly. Top ups increase the Policy Value but they do not affect the Ins"
+          },
+          {
+            "page": 7,
+            "section": "Premium holiday continuation and non-payment",
+            "excerpt": "Premium Holiday. When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements will be deducted by cancellation of units. Your policy will remain on Premium Holiday until yo"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "income-invest-flex",
     "insurer": "Income Insurance",
     "productName": "Invest Flex",
