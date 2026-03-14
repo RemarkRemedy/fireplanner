@@ -167,6 +167,19 @@ function FieldRenderer({ field, values, onChange, error }: FieldRendererProps) {
   )
 }
 
+/** Check if a field should be visible based on showWhen condition */
+function isFieldVisible(
+  showWhen: NudgeField['showWhen'],
+  values: Record<string, unknown>
+): boolean {
+  if (!showWhen) return true
+  const depVal = values[showWhen.field]
+  if (showWhen.greaterThanOrEqual !== undefined) {
+    return typeof depVal === 'number' && depVal >= showWhen.greaterThanOrEqual
+  }
+  return depVal === showWhen.equals
+}
+
 export function SetupScreen({
   screen,
   values,
@@ -195,9 +208,7 @@ export function SetupScreen({
     const errors: Record<string, string | null> = {}
     for (const field of screen.fields) {
       // Skip hidden fields
-      if (field.showWhen) {
-        const depVal = values[field.showWhen.field]
-        if (depVal !== field.showWhen.equals) continue
+      if (field.showWhen && !isFieldVisible(field.showWhen, values)) continue
       }
       const key = field.validationKey ?? field.name
       const val = values[field.name]
@@ -219,9 +230,7 @@ export function SetupScreen({
         const missing = screen.fields.filter((f) => {
           if (!f.required) return false
           // Skip hidden fields
-          if (f.showWhen) {
-            const depVal = values[f.showWhen.field]
-            if (depVal !== f.showWhen.equals) return false
+          if (f.showWhen && !isFieldVisible(f.showWhen, values)) return false
           }
           const val = values[f.name]
           return val === undefined || val === null || val === ''
@@ -258,9 +267,7 @@ export function SetupScreen({
       <div className="flex flex-col gap-4">
         {screen.fields.map((field) => {
           // Field-level conditional visibility
-          if (field.showWhen) {
-            const depVal = values[field.showWhen.field]
-            if (depVal !== field.showWhen.equals) return null
+          if (field.showWhen && !isFieldVisible(field.showWhen, values)) return null
           }
           const validationError = fieldErrors[field.name] ?? null
           return (
@@ -282,7 +289,7 @@ export function SetupScreen({
             {field.helperText && !validationError && (
               <p className="mt-1 text-xs text-muted-foreground">{field.helperText}</p>
             )}
-            {validationError && (
+            {validationError && !['currency', 'number', 'percent'].includes(field.type) && (
               <p className="mt-1 text-xs text-destructive">{validationError}</p>
             )}
             {requiredErrors.has(field.name) && !validationError && (

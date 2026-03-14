@@ -29,10 +29,13 @@ export function RefineFlowPage() {
   const flow = flowId ? getNudgeFlow(flowId as NudgeFlowId) : undefined
   const isValid = flowId != null && fullPageIds.includes(flowId as NudgeFlowId) && flow != null
 
-  // Initialize toggle defaults from flow definition so skipWhen logic works
+  // Initialize toggle defaults + seed context values (age) for showWhen logic
   const [values, setValues] = useState<Record<string, unknown>>(() => {
     if (!flow) return {}
     const defaults: Record<string, unknown> = {}
+    // Seed currentAge from the plan store for age-conditional fields (e.g., RA hidden when < 55)
+    const selfAdult = useHouseholdPlanStore.getState().plan.adults.find(a => a.owner === 'self')
+    if (selfAdult) defaults.currentAge = selfAdult.currentAge
     for (const screen of flow.screens) {
       for (const field of screen.fields) {
         if (field.type === 'toggle') defaults[field.name] = false
