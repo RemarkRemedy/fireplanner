@@ -2845,6 +2845,7 @@ export function projectIlpPolicy(
       input.accounts.map((account) => [account.id, previousClose.get(account.id) ?? account.currentValue]),
     )
     const contributionByAccount = resolveContributionByAccount(normalized, year, scheduledContributionForYear)
+    const regularContributionByAccount = new Map(contributionByAccount)
     const repaymentContributionByAccount = getPremiumHolidayRepaymentContributionByAccount(normalized, year)
     const regularPremiumPaidThisYear = Array.from(contributionByAccount.values()).reduce((sum, value) => sum + value, 0)
       + Array.from(repaymentContributionByAccount.values()).reduce((sum, value) => sum + value, 0)
@@ -2874,7 +2875,7 @@ export function projectIlpPolicy(
       year,
       context,
       openBalances,
-      contributionByAccount,
+      regularContributionByAccount,
     )
     const eventChargeByAccount = computeEventChargeByAccount(normalized, year, openBalances)
     const provisionalCloseByAccount = new Map<string, number>()

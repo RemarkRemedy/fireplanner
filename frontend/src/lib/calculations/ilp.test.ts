@@ -1811,6 +1811,56 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[1], 'aua').grossFee).toBeCloseTo(60, 2)
   })
 
+  it('excludes top-up flows from annual-contribution charge rules', () => {
+    const policy = makeDefaultPolicy({
+      monthsAlreadyPaid: 0,
+      monthlyContribution: 100,
+      accounts: [
+        { ...IUA_ACCOUNT, currentValue: 0, feeRate: 0, postMipFeeRate: 0, contributionShare: 0 },
+        {
+          ...AUA_ACCOUNT,
+          currentValue: 0,
+          feeRate: 0,
+          postMipFeeRate: 0,
+          contributionShare: 1,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'policy-charge',
+          label: 'Policy Charge',
+          basis: 'annual-contribution',
+          activeWindow: 'policy-term',
+          appliesTo: ['aua'],
+          rate: 0.05,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+      policyEvents: [
+        {
+          id: 'top-up-1',
+          type: 'top-up',
+          startPolicyMonth: 3,
+          durationMonths: 1,
+          amount: 1_500,
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0].annualContribution).toBe(2_700)
+    expect(accountRow(result.rows[0], 'aua').contributionAmount).toBe(2_700)
+    expect(accountRow(result.rows[0], 'aua').grossFee).toBeCloseTo(60, 2)
+  })
+
   it('uses fixed-annual amount tiers and falls back to secondary accounts when primary balances are exhausted', () => {
     const policy = makeDefaultPolicy({
       currentPolicyYear: 4,
