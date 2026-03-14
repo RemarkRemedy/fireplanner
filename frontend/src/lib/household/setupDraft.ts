@@ -490,6 +490,16 @@ function applyPartnerDraft(draft: SetupDraft, selfAdultTemplate: PlanningAdult):
       },
     })
 
+    // On redo, zero out partner CPF balances when user says they don't know them (but only for citizens/PRs)
+    if (!partner.cpfKnown && partner.residency !== 'foreigner') {
+      const refreshedPartner = useHouseholdPlanStore.getState().plan.adults.find((a) => a.owner === 'partner')
+      if (refreshedPartner) {
+        useHouseholdPlanStore.getState().updateAdult(refreshedPartner.id, {
+          cpf: { ...refreshedPartner.cpf, balances: { oa: 0, sa: 0, ma: 0, ra: 0 } },
+        })
+      }
+    }
+
     // Update partner salary
     const partnerSalary = existingPlan.income.find(
       (e) =>

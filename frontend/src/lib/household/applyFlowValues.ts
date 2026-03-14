@@ -78,6 +78,11 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         cpfUpdates.cpfisEnabled = values.hasCpfis
       }
 
+      // Toggle-off: clear top-ups when user says they don't make voluntary top-ups
+      if (values.hasCpfTopUps === false) {
+        cpfUpdates.annualTopUps = { oa: 0, sa: 0, ma: 0 }
+      }
+
       store.updateAdult(selfAdult.id, {
         cpf: { ...selfAdult.cpf, ...cpfUpdates },
       })
@@ -142,6 +147,24 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
           downsizing.newPropertyCost = values.replacementPropertyCost
         }
         propertyUpdates.downsizing = downsizing
+      }
+
+      // Toggle-off: reset downsizing when user says no
+      if (values.planToDownsize === false) {
+        propertyUpdates.downsizing = { ...property.downsizing, scenario: 'none' as const }
+      }
+
+      // Toggle-off: clear mortgage fields when user says no mortgage
+      if (values.hasMortgage === false) {
+        propertyUpdates.existingMortgageBalance = 0
+        propertyUpdates.existingMonthlyPayment = 0
+        propertyUpdates.existingMortgageRate = 0
+        propertyUpdates.existingMortgageRemainingYears = 0
+      }
+
+      // Toggle-off: clear rental yield when user says no rental income
+      if (values.hasRentalIncome === false) {
+        propertyUpdates.rentalYield = 0
       }
 
       store.updateProperty(property.id, propertyUpdates)
@@ -284,6 +307,11 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
     case 'srs': {
       const srsUpdates: Partial<typeof selfAdult.srs> = { ...selfAdult.srs }
 
+      // Toggle-off: zero out SRS contribution when user says they don't contribute
+      if (values.contributeToSrs === false) {
+        srsUpdates.annualContribution = 0
+      }
+
       if (typeof values.srsBalance === 'number') {
         srsUpdates.balance = values.srsBalance
       }
@@ -375,6 +403,12 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       }, 0)
       if (totalDebt > 0 || values.hasOutstandingDebt === true) {
         adultUpdates.nonMortgageDebtTotal = totalDebt
+      }
+
+      // Toggle-off: clear debt fields when user says no outstanding debt
+      if (values.hasOutstandingDebt === false) {
+        adultUpdates.nonMortgageDebtTotal = 0
+        adultUpdates.nonMortgageDebtMonthlyPayment = 0
       }
 
       // Insurance fields

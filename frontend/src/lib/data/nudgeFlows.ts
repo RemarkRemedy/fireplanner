@@ -135,16 +135,6 @@ const CPF_FLOW: NudgeFlowDefinition = {
           label: 'Do you invest through CPFIS?',
           type: 'toggle',
         },
-        {
-          name: 'cpfisOABalance',
-          label: 'CPFIS-OA invested amount',
-          type: 'currency',
-        },
-        {
-          name: 'cpfisSABalance',
-          label: 'CPFIS-SA invested amount',
-          type: 'currency',
-        },
       ],
       skipWhen: { field: 'hasCpfis', equals: false },
     },
