@@ -19,7 +19,13 @@ describe('normalized analysis parity surfaces', () => {
     (scenario) => {
       const actual = buildGoldenScenarioActual({ inputs: scenario.inputs })
       const approved = APPROVED_GOLDEN_OUTPUTS[scenario.id]
-      const retirementAge = LEGACY_PARITY_FIXTURES[scenario.inputs.fixtureKey].profile.retirementAge
+      // For legacy scenarios, use the fixture's retirementAge directly.
+      // For joint scenarios, use the compiler's blended household retirementAge
+      // from the approved SR params (adults[0].retirementAge would be wrong —
+      // the household compiler blends both adults' retirement ages).
+      const retirementAge = scenario.inputs.fixtureKey
+        ? LEGACY_PARITY_FIXTURES[scenario.inputs.fixtureKey].profile.retirementAge
+        : APPROVED_SEQUENCE_RISK_PARAM_PARITY_OUTPUTS[scenario.id].retirementAge
 
       expectSemanticClose(
         {
