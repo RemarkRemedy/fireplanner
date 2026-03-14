@@ -23,6 +23,7 @@ import {
   DEFAULT_IUA_FEE_RATE,
   EEC_PRESET_MIP_30,
 } from '@/lib/data/ilpDefaults'
+import { ilpPolicySeedSchema } from '@/lib/ilp-catalog/policySeedSchema'
 import { ilpPolicySchema } from '@/lib/validation/ilpSchema'
 
 const FUNDSMITH: IlpFund = {
@@ -59,6 +60,15 @@ const ZERO_RETURN_FUND: IlpFund = {
   grossReturnLow: 0,
   grossReturnMid: 0,
   grossReturnHigh: 0,
+}
+
+const TEN_PERCENT_RETURN_FUND: IlpFund = {
+  name: 'Ten Percent Return Test Fund',
+  allocation: 1,
+  ocf: 0,
+  grossReturnLow: 0.1,
+  grossReturnMid: 0.1,
+  grossReturnHigh: 0.1,
 }
 
 const IUA_ACCOUNT: IlpAccount = {
@@ -560,6 +570,52 @@ describe('projectIlpPolicy', () => {
     expect(result.rows.map((row) => row.policyYear)).toEqual([2, 3, 4])
     expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 100, 90])
     expect(result.rows.map((row) => accountRow(row, 'policy').close)).toEqual([1_000, 900, 810])
+  })
+
+  it('deducts cash-payout distributions after growth when the fund has a positive return', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 24,
+      currentPolicyYear: 1,
+      mipLength: 2,
+      postMipYears: 2,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 1_000,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [TEN_PERCENT_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      distributionSupport: {
+        mode: 'manual-assumption',
+        accountIds: ['policy'],
+        defaultMode: 'reinvest',
+        cashPayoutAllowedDuringMip: false,
+        cashPayoutAllowedAfterMip: true,
+        source: 'distribution-paying-funds',
+      },
+      distributionAssumption: {
+        mode: 'cash-payout',
+        source: 'manual-assumption',
+        annualYieldRate: 0.1,
+      },
+    }), 'mid')
+
+    expect(result.rows.map((row) => row.policyYear)).toEqual([2, 3, 4])
+    expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 110, 110])
+    expect(result.rows.map((row) => accountRow(row, 'policy').close)).toEqual([1_100, 1_100, 1_100])
   })
 
   it('does not regress scheduled payout support when distribution support is also present', () => {
@@ -3410,6 +3466,24 @@ describe('computeNpvAnalysis', () => {
     expect(npv.holdToMip.totalContributions).toBe(projection.rows[24].cumulativePremiums)
     expect(npv.holdToMip.totalNpvFees).toBeCloseTo(npv.futureExitOptions[24].totalNpvFees, 2)
     expect(npv.holdToMip.totalNpvFees).toBeGreaterThan(npv.holdToMip.npvGrossFees - npv.holdToMip.npvBonuses)
+  })
+
+  it('rejects impossible cash-payout distribution assumptions at seed-schema time', () => {
+    expect(() => ilpPolicySeedSchema.parse(makeDefaultPolicy({
+      distributionSupport: {
+        mode: 'manual-assumption',
+        accountIds: ['aua'],
+        defaultMode: 'reinvest',
+        cashPayoutAllowedDuringMip: false,
+        cashPayoutAllowedAfterMip: false,
+        source: 'distribution-paying-funds',
+      },
+      distributionAssumption: {
+        mode: 'cash-payout',
+        source: 'manual-assumption',
+        annualYieldRate: 0.4,
+      },
+    }))).toThrow(/payout-eligible phase/)
   })
 
   it('rejects assurance ages above the supported table ceiling', () => {

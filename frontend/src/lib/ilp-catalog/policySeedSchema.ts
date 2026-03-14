@@ -152,6 +152,19 @@ export const ilpPolicySeedSchema = z.object({
   }
 
   if (
+    policy.distributionAssumption?.mode === 'cash-payout'
+    && policy.distributionSupport
+    && !policy.distributionSupport.cashPayoutAllowedDuringMip
+    && !policy.distributionSupport.cashPayoutAllowedAfterMip
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'cash-payout distribution assumptions require at least one payout-eligible phase',
+      path: ['distributionAssumption', 'mode'],
+    })
+  }
+
+  if (
     policy.scheduledPayoutAssumption?.mode === 'scheduled-redemption'
     && !accountIds.has(policy.scheduledPayoutAssumption.accountId)
   ) {

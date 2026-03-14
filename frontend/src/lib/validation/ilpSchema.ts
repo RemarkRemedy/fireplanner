@@ -167,7 +167,7 @@ export const ilpDistributionAssumptionSchema = z.discriminatedUnion('mode', [
   z.object({
     mode: z.literal('cash-payout'),
     source: z.literal('manual-assumption'),
-    annualYieldRate: z.number().min(0).max(0.25),
+    annualYieldRate: z.number().min(0).max(1),
   }),
 ])
 
