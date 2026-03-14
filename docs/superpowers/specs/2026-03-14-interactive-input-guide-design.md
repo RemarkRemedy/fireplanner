@@ -2,6 +2,7 @@
 
 **Date:** 2026-03-14
 **Branch:** `main` (fireplanner)
+**Review status:** v2 — fixes applied from 3-agent + Codex review
 
 ## Problem
 
@@ -13,13 +14,13 @@ Make the InputsPage feel guided and approachable for first-time users while pres
 
 ## Design Overview
 
-Three layered patterns, each independent but complementary:
+Two patterns shipped in Phase 1, with a third deferred:
 
-- **Pattern A: Rich Field Tooltips** — every field gets a detailed, Singapore-contextualized tooltip
 - **Pattern B: Section Intros** — each section gets a collapsible explainer block
 - **Pattern C: Guided Stepper** — a progress bar + one-section-at-a-time flow for new plans
+- **Pattern A: Rich Field Tooltips** — deferred to Phase 2 (requires shared input API changes; see Deferred section)
 
-All three read from a single data file (`lib/data/fieldGuide.ts`) so content is maintained in one place and reusable if we later upgrade to a per-question Approach 3.
+Both B and C read from a single data file (`lib/data/fieldGuide.ts`) so content is maintained in one place and reusable if we later upgrade to per-question Approach 3 or add field-level tooltips.
 
 ---
 
@@ -27,27 +28,12 @@ All three read from a single data file (`lib/data/fieldGuide.ts`) so content is 
 
 ### Data Layer: `lib/data/fieldGuide.ts`
 
-A single pure-data file with two maps:
-
-**Per-field entries** keyed by a `FieldGuideId` string using dot-path convention from the household plan structure (e.g., `adult.currentAge`, `adult.retirementAge`, `assumptions.fire.swr`, `income.annualAmount`, `expense.amount`, `property.existingPropertyValue`). For collection entity fields, use the entity prefix without an ID (e.g., `income.annualAmount` not `income.abc123.annualAmount`).
+A pure-data file with section guide entries keyed by `RenderedSectionId`:
 
 ```ts
-interface FieldGuideEntry {
-  id: string
-  label: string
-  tooltip: string                // 1-sentence hover summary
-  detail?: string                // 2-3 sentence deeper explanation
-  example?: string               // concrete example with numbers
-  whyItMatters?: string          // how this field affects FIRE calculations
-  source?: string                // data source label (e.g., "CPF Board")
-  sourceUrl?: string             // link to official source
-  formula?: string               // formula notation if applicable
-}
-```
+import type { SectionId } from '@/lib/household/sectionOrder'
 
-**Per-section entries** keyed by the 9 rendered `SectionId` values (excluding `section-goals` and `section-healthcare`, which are sub-sections of Expenses and do not get standalone intros):
-
-```ts
+/** The 9 sections that render as standalone accordions on InputsPage. */
 type RenderedSectionId = Exclude<SectionId, 'section-goals' | 'section-healthcare'>
 
 interface SectionGuideEntry {
@@ -57,24 +43,13 @@ interface SectionGuideEntry {
   whatToHave: string             // what documents/info to have handy
   timeEstimate: string           // e.g., "3-5 min"
 }
+
+export const SECTION_GUIDE: Record<RenderedSectionId, SectionGuideEntry> = { ... }
 ```
 
-Singapore-specific reference values (MOM salary benchmarks, CPF rates, tax brackets) are imported from existing `lib/data/` files, not hardcoded in tooltip strings.
+Also exports a `getSectionGuide(id: RenderedSectionId): SectionGuideEntry | undefined` accessor for clean lookups.
 
-Fields without a `fieldGuide` entry keep their existing tooltip behavior. Migration is incremental.
-
-### Pattern A: Rich Field Tooltips
-
-**New component:** `<FieldTooltip fieldId="adult.retirementAge" />`
-
-Wraps the existing `InfoTooltip` component. On hover/tap:
-- Shows the `tooltip` one-liner (same as current behavior)
-- Adds an expandable "Learn more" section with `detail`, `example`, `whyItMatters`
-- Preserves existing `formula`, `source`, `sourceUrl` support
-
-The component looks up the `fieldGuide` map by ID. If no entry exists, falls back to rendering a plain `InfoTooltip` with whatever `text` prop was passed (backwards compatible).
-
-**Mobile:** Uses the existing `Popover` path from `InfoTooltip` (already mobile-aware). The "Learn more" expandable works within the popover.
+Singapore-specific reference values (MOM salary benchmarks, CPF rates, tax brackets) are imported from existing `lib/data/` files, not hardcoded in guide strings.
 
 ### Pattern B: Section Intros
 
@@ -83,11 +58,14 @@ The component looks up the `fieldGuide` map by ID. If no entry exists, falls bac
 Rendered as the first child inside each `HouseholdPrototypeSection` accordion content area:
 - Shows `intro` text, `whatToHave` list, and `timeEstimate` badge
 - Styled as a subtle card (muted background, small text)
+- **Null guard:** if `SECTION_GUIDE[sectionId]` is undefined, renders nothing (not even the card wrapper)
 
 **Visibility behavior:**
 - **Guided stepper mode:** shown by default (expanded)
-- **Accordion mode (returning users):** collapsed by default, expandable via a small `?` icon button in the section header
-- **Dismissible:** once closed, stays closed for that section. Stored in UIStore as `dismissedSectionIntros: SectionId[]`, similar to existing `dismissedNudges`
+- **Accordion mode:** shown at the top of accordion content if not dismissed. Has its own "dismiss" close button (small X) within the card.
+- **Dismissible:** once closed, stays closed for that section. Stored in UIStore as `dismissedSectionIntros: RenderedSectionId[]`, similar to existing `dismissedNudges`
+
+**No `HouseholdPrototypeSection` API change needed.** The intro is always a child of accordion content, never in the header. Dismiss control lives inside the `SectionIntro` card itself.
 
 **Relationship to existing section nudges:** Nudges (`useSectionNudge`) are data-driven contextual tips (e.g., "SRS could save you $X"). Section intros are static explainers about what the section is. They coexist: intro at the top, nudges inline where relevant.
 
@@ -97,91 +75,151 @@ Rendered as the first child inside each `HouseholdPrototypeSection` accordion co
 
 A wrapper rendered at the top of InputsPage that orchestrates the one-section-at-a-time flow.
 
+#### Visible Sections
+
+The stepper computes its own `visibleSections` list by filtering `SECTION_ORDERINGS[sectionOrder]` against active feature flags (`cpfEnabled`, `propertyEnabled`, `protectionEnabled`, `healthcareEnabled`). This is the single source of truth for step count, progress, and navigation. It does NOT use `useSectionCompletion.totalSections` (which is 11, including sub-sections).
+
 #### Progress Bar
 
 Horizontal step indicator at the top of InputsPage:
-- Shows all sections in the user's pathway order (from `SECTION_ORDERINGS[sectionOrder]`)
-- Each step displays: abbreviated section name, completion icon (empty circle / spinner / green check)
+- Shows all `visibleSections` in the user's pathway order
+- Each step displays: abbreviated section name, status icon:
+  - Empty circle = unreviewed
+  - Checkmark = reviewed (user clicked Continue or Skip)
+  - Green filled dot = customized (has non-default values, from `useSectionCompletion`)
+  - Red circle = has validation errors
 - Current section highlighted with active styling
 - Clickable: user can jump to any section (not locked)
 - Responsive: on mobile, shows current step number + total (e.g., "Step 3 of 9") with left/right arrows
 
-Only shows rendered sections (the 9 from `SECTION_ORDERINGS`, not `section-goals` or `section-healthcare` which are sub-sections of Expenses). Conditional sections (CPF, Protection, Property) only appear if their feature flag is enabled in UIStore.
-
 #### Section Navigation
 
 - Only the current section's accordion is expanded; others are collapsed
-- **"Continue" button** at the bottom of each section → collapses current, opens next incomplete section
+- **"Continue" button** at the bottom of each section → marks section as reviewed, opens next unreviewed section
 - **"Back" button** → opens previous section
-- **"Skip for now" link** next to Continue → advances without requiring completion
+- **"Skip for now" link** next to Continue → marks as reviewed, advances without requiring changes
 - Keyboard: Enter on Continue, Escape to go Back (optional enhancement)
 
-The stepper uses the new `collapseAllExcept` action on UIStore to atomically control which section is open. It doesn't replace the accordion system: it orchestrates which sections are open.
+**Continue on last section:** When the user is on the last section:
+- If all sections are reviewed → show the completion card
+- If some sections are still unreviewed → wrap around to the first unreviewed section (with a subtle "Revisiting earlier sections" label)
 
-**Accordion click behavior in stepper mode:** If the user clicks an accordion header to manually expand a different section, the stepper updates `guidedCurrentStep` to match that section's index. This keeps stepper state and accordion state in sync. The stepper observes `collapsedSections` changes and reconciles: if exactly one section is expanded, `guidedCurrentStep` follows it.
+#### Data Flow: Stepper Owns Section State (Unidirectional)
 
-**Continue on last section:** When the user is on the last section in the ordering and clicks Continue:
-- If all sections are complete → show the completion card
-- If some sections are still incomplete → wrap around to the first incomplete section (with a subtle "Revisiting earlier sections" label in the progress bar)
+**The stepper is the single source of truth for which section is active in stepper mode.** This eliminates bidirectional sync between `guidedActiveSectionId` and `collapsedSections`.
+
+Flow:
+1. Stepper stores `guidedActiveSectionId: RenderedSectionId | null` in UIStore
+2. When `guidedActiveSectionId` changes, stepper calls `collapseAllExcept(guidedActiveSectionId, visibleSections)` to update accordion state
+3. When user clicks an accordion header in stepper mode, `HouseholdPrototypeSection`'s `toggleSection` is intercepted: instead of toggling `collapsedSections` directly, it sets `guidedActiveSectionId` to the clicked section (which triggers step 2)
+4. In accordion mode (`guidedStepperActive: false`), `toggleSection` works normally with no interception
+
+This is strictly unidirectional: `guidedActiveSectionId` → `collapsedSections`. Never the reverse.
+
+**Feature flag toggle mid-flow:** When `visibleSections` changes (user enables/disables CPF, Property, etc.), the stepper re-runs `collapseAllExcept` with the updated list. If the current `guidedActiveSectionId` was removed from `visibleSections`, fall back to the first unreviewed visible section.
+
+#### Reviewed vs Complete: Two Separate Concepts
+
+The stepper needs to track "has the user seen this section?" separately from "has the user changed values from defaults?" These are different:
+
+- **Reviewed** (`reviewedSections` in UIStore): the user clicked Continue or Skip on this section. Means they've seen it and made a conscious choice, even if they accepted defaults.
+- **Customized** (`useSectionCompletion.isComplete`): the section has non-default values. A section can be customized but not reviewed (user imported a plan), or reviewed but not customized (user accepted defaults).
+
+The progress bar shows both states. The "next section" logic uses `reviewedSections`. The "all done" completion card appears when all `visibleSections` are in `reviewedSections`.
 
 #### State (UIStore additions)
 
+New fields in `UIState` interface AND `DEFAULT_UI`:
+
 ```ts
-guidedStepperActive: boolean    // is stepper mode on?
-guidedCurrentStep: number       // index into the filtered section ordering
-dismissedSectionIntros: string[]  // which section intros the user closed (SectionId values)
+// UIState additions
+guidedStepperActive: boolean              // is stepper mode on?
+guidedActiveSectionId: RenderedSectionId | null  // current section in stepper mode
+reviewedSections: RenderedSectionId[]     // sections the user has reviewed (Continue/Skip)
+dismissedSectionIntros: RenderedSectionId[]  // which section intros the user closed
+
+// DEFAULT_UI additions
+guidedStepperActive: true,                // new users start in guided mode
+guidedActiveSectionId: null,              // stepper sets this on first render
+reviewedSections: [],
+dismissedSectionIntros: [],
 ```
 
 **Persistence behavior:**
-- `guidedStepperActive`: **persisted** — survives page reloads so returning users stay in their chosen mode
-- `guidedCurrentStep`: **persisted** — users resume where they left off after closing the tab
-- `dismissedSectionIntros`: **persisted** — dismissed intros stay dismissed across sessions
+- `guidedStepperActive`: **persisted** — survives page reloads
+- `guidedActiveSectionId`: **persisted** — users resume where they left off
+- `reviewedSections`: **persisted** — reviewed state survives across sessions
+- `dismissedSectionIntros`: **persisted** — dismissed intros stay dismissed
 
-All three are included in the `partialize` output (i.e., NOT excluded like `contextualNudgeActive`).
+All four are included in the `partialize` output (i.e., NOT excluded). The existing `partialize` exclusion list (`contextualNudgeActive`, `quickModeActive`, `simulationView`) remains unchanged.
 
-**UIStore migration:** Bump `version` from 11 to 12. Add migration block:
+**New actions in UIActions:**
+
+```ts
+collapseAllExcept: (sectionId: string, allSectionIds: string[]) => void
+markSectionReviewed: (sectionId: RenderedSectionId) => void
+dismissSectionIntro: (sectionId: RenderedSectionId) => void
+```
+
+**UIStore migration:** Bump `version` from 11 to 12:
 ```ts
 if (version < 12) {
-  state.guidedStepperActive = true
-  state.guidedCurrentStep = 0
+  state.guidedStepperActive = false  // existing users keep accordion mode
+  state.guidedActiveSectionId = null
+  state.reviewedSections = []
   state.dismissedSectionIntros = []
 }
 ```
 
-**New action:** Add `collapseAllExcept(sectionId: string, allSectionIds: string[])` to UIActions for atomic section switching:
-```ts
-collapseAllExcept: (sectionId, allSectionIds) =>
-  set({ collapsedSections: allSectionIds.filter(id => id !== sectionId) })
-```
+Note: migration sets `guidedStepperActive: false` for existing users (not `true`). Only fresh installs get `true` from `DEFAULT_UI`. This avoids re-onboarding power users. A dismissable "Try guided mode?" banner is shown to existing users on first visit after upgrade.
 
 #### Defaults and Transitions
 
-**"New plan" detection:** Uses the `DEFAULT_UI` default value. `guidedStepperActive` defaults to `true` in `DEFAULT_UI`. For existing users, the version 12 migration also sets it to `true` (giving them the guided experience once). After the user completes all sections or manually toggles to accordion mode, `guidedStepperActive` is set to `false` and persisted. A user who clears localStorage gets the stepper again, which is the correct behavior (fresh start).
+- **Fresh localStorage (new user):** `guidedStepperActive: true` from `DEFAULT_UI`, stepper sets `guidedActiveSectionId` to first visible section on mount
+- **Existing user (migration from v11):** `guidedStepperActive: false`, accordion view. Dismissable banner offers guided mode.
+- **User toggle:** "Guide me" / "Show all sections" toggle in InputsPage header. Persisted immediately.
+- **Exiting stepper mode:** When `guidedStepperActive` transitions from `true` to `false`, reset `collapsedSections` to `[]` (expand all) so the user doesn't land in accordion mode with 8 collapsed sections.
+- **All sections reviewed:** Show a completion card with CTAs to `/projection`, `/dashboard`, or `/stress-test`. Does NOT auto-deactivate stepper — user can review sections, toggle mode manually, or navigate away.
 
-- **Fresh localStorage (new user):** `guidedStepperActive: true` from `DEFAULT_UI`, start at step 0
-- **Existing user (migration from v11):** `guidedStepperActive: true` from migration, start at step 0. If their sections are already complete, the completion card shows immediately and sets `guidedStepperActive: false`.
-- **User toggle:** a "Guide me" / "Show all sections" toggle in the InputsPage header switches between modes at any time. Persisted immediately.
-- **Auto-transition:** when all rendered sections have `isComplete: true` (from `useSectionCompletion`), show a completion card with CTAs to `/projection` or `/dashboard`. Sets `guidedStepperActive: false` so subsequent visits use accordion mode.
+#### Sidebar Integration
+
+`useActiveSection` uses IntersectionObserver to detect which section is in the viewport. In stepper mode, collapsed sections have near-zero height, making scroll detection unreliable.
+
+**Branch point: `useActiveSection` hook.** When `guidedStepperActive` is `true`, the hook returns `guidedActiveSectionId` from UIStore instead of the observer-detected section. `useActiveSection` already reads UIStore (for feature flags), so this is a natural extension. When `guidedStepperActive` is `false`, the existing observer logic runs unchanged.
+
+This covers both Sidebar and HelpPanel, which both consume `useActiveSection`.
 
 #### What stays the same
 
 - All section content components are unchanged
-- `HouseholdPrototypeSection` accordion behavior preserved
+- `HouseholdPrototypeSection` accordion rendering preserved (stepper controls it via store actions)
 - Pathway ordering (`sectionOrder`) drives step order
-- `useSectionCompletion` provides completion state (no new completion logic)
-- `useActiveSection` scroll tracking: in stepper mode, the Sidebar reads `guidedCurrentStep` from UIStore instead of scroll-detected section (since collapsed sections have near-zero height, scroll detection would be unreliable). In accordion mode, scroll detection works as before.
+- `useSectionCompletion` provides customization state (separate from reviewed state)
+- Existing `toggleSection` and `expandSection` actions remain (used in accordion mode)
 
 ---
 
 ## Approach 3 Upgrade Path
 
 If we later want per-question stepper (TurboTax full depth):
-- `fieldGuide.ts` content carries over directly (it's already per-field)
+- `fieldGuide.ts` section content carries over directly
+- Add per-field entries to `fieldGuide.ts` (the `FieldGuideEntry` interface is designed for this)
 - `GuidedStepper` component becomes the orchestrator for field-group rendering
-- Progress bar, step state, and completion tracking all reuse
+- Progress bar, step state, and review tracking all reuse
 - Only the rendering layer changes: "one accordion at a time" → "one field group at a time"
 
-The data and state layers are designed to support this without rework.
+## Deferred: Pattern A (Rich Field Tooltips) — Phase 2
+
+Field-level tooltips are deferred because:
+
+1. **Shared input API gap:** `NumberInput`, `CurrencyInput`, and `PercentInput` accept `tooltip?: string`, not a guide ID or custom tooltip node. Adding `FieldTooltip` requires changing the shared input interface.
+2. **Desktop interaction model:** The current `InfoTooltip` uses Radix `Tooltip` (hover-triggered, non-interactive). An expandable "Learn more" section needs Radix `Popover` or `HoverCard` on desktop, which is a different component path.
+3. **Content authoring:** 50-80+ field entries is a significant effort that should follow the stepper UX, not gate it.
+
+**Phase 2 scope (future):**
+- Extend shared inputs to accept `fieldGuideId?: string` prop
+- Create `FieldTooltip` component using `Popover` (click-triggered) on both desktop and mobile for interactive "Learn more" content
+- Add per-field entries to `fieldGuide.ts` incrementally (4 sections first: Personal, Income, Expenses, FIRE Settings)
 
 ---
 
@@ -189,14 +227,14 @@ The data and state layers are designed to support this without rework.
 
 | File | Change | Type |
 |------|--------|------|
-| `lib/data/fieldGuide.ts` | New: field + section guide data | Data |
-| `components/shared/FieldTooltip.tsx` | New: rich tooltip wrapper | Component |
+| `lib/data/fieldGuide.ts` | New: section guide data + accessor | Data |
 | `components/inputs/SectionIntro.tsx` | New: section intro card | Component |
 | `components/inputs/GuidedStepper.tsx` | New: progress bar + nav buttons | Component |
-| `pages/InputsPage.tsx` | Modify: integrate stepper, section intros | Page |
-| `stores/useUIStore.ts` | Modify: add stepper state fields | Store |
-| `components/shared/InfoTooltip.tsx` | No change (FieldTooltip wraps it) | - |
-| `hooks/useSectionCompletion.ts` | No change (stepper reads it) | - |
+| `pages/InputsPage.tsx` | Modify: integrate stepper, section intros, mode toggle, stepper intercept for toggleSection | Page |
+| `stores/useUIStore.ts` | Modify: add 4 state fields, 3 actions, bump to v12 | Store |
+| `hooks/useActiveSection.ts` | Modify: stepper-mode branch (return `guidedActiveSectionId` when active) | Hook |
+| `components/shared/InfoTooltip.tsx` | No change | - |
+| `hooks/useSectionCompletion.ts` | No change | - |
 
 ## Accessibility
 
@@ -206,12 +244,6 @@ The data and state layers are designed to support this without rework.
 - Section intros use `role="note"` for screen reader clarity
 - Completion status icons have `aria-label` text (e.g., "Complete", "Needs review", "Has errors")
 
-## Content Authoring Strategy
-
-The `fieldGuide.ts` data file will be large (50-80+ field entries across 9 sections). Writing quality tooltips, examples, and "why it matters" content is a significant authoring effort.
-
-**Incremental approach:** Ship with the 4 highest-impact sections first: Personal, Income, Expenses, FIRE Settings. These cover the fields most new users struggle with. Backfill remaining sections (Net Worth, CPF, Property, Allocation, Protection) in a follow-up pass. Fields without guide entries keep their existing tooltip behavior.
-
 ## Non-Goals
 
 - No LLM-powered guidance (the AI panel already handles that)
@@ -219,23 +251,31 @@ The `fieldGuide.ts` data file will be large (50-80+ field entries across 9 secti
 - No changes to StartPage or other routes
 - No per-question breakdown (Approach 3) in this iteration
 - No animated page transitions between steps
-- No changes to the section content components themselves (just wrapping)
+- No changes to section content components themselves
+- No field-level tooltips (deferred to Phase 2)
 
 ## Edge Cases
 
-- **Conditional sections (CPF, Protection, Property):** The stepper filters the section ordering to only include sections whose feature flags are enabled. If a user enables CPF mid-flow, the section appears in the progress bar at its pathway-defined position.
-- **All sections already complete on first visit:** Can happen if user went through `HouseholdSetupWizard` (couple/household plans pre-fill data). Show the completion card immediately with option to review sections.
-- **User toggles from stepper to accordion mid-flow:** Current step is preserved. Toggling back resumes from where they left off.
-- **Section has validation errors:** The progress bar shows an error icon (red) instead of a green check. The Continue button still works (errors don't block progress; the user can come back).
+- **Conditional sections (CPF, Protection, Property):** `visibleSections` filters by feature flags. If a user enables CPF mid-flow, the section appears in the progress bar at its pathway-defined position and `collapseAllExcept` re-runs.
+- **Feature flag toggle removes current section:** If the user disables the section they're currently on, `guidedActiveSectionId` falls back to the first unreviewed visible section.
+- **All sections already reviewed on first visit:** Can happen if user went through `HouseholdSetupWizard`. Show the completion card immediately with option to re-review sections.
+- **Section has validation errors:** Progress bar shows error icon (red). Continue still works (errors don't block progress).
 - **Mobile viewport:** Progress bar collapses to "Step N of M" with arrow buttons. Section intros stay full-width.
+- **Existing InputsPage footer card:** The stepper completion card is shown above the existing footer card in stepper mode. In accordion mode, only the existing footer card renders (no duplication).
+- **`guidedActiveSectionId` out-of-bounds:** If the persisted section ID is no longer in `visibleSections` (e.g., CPF disabled since last visit), fall back to the first unreviewed visible section.
 
 ## Testing
 
-- Stepper activates for new plans, deactivates for loaded plans
+- Stepper activates for new users (fresh localStorage), not for existing users (migration)
 - Progress bar reflects correct section ordering per pathway
-- Continue/Back navigate correctly, Skip advances without completion
+- Continue marks section as reviewed and advances to next unreviewed
+- Skip marks section as reviewed without requiring changes
+- Back navigates to previous section
 - Section intros show/hide based on mode and dismissal state
-- FieldTooltip falls back gracefully for fields without guide entries
 - Conditional sections appear/disappear in stepper when toggled
-- Completion card shows when all sections are done
-- Mode toggle preserves current step position
+- Completion card shows when all visible sections are reviewed
+- Mode toggle resets `collapsedSections` to `[]` when switching to accordion
+- Accordion click in stepper mode updates `guidedActiveSectionId`
+- `useActiveSection` returns `guidedActiveSectionId` in stepper mode, observer value in accordion mode
+- `SectionIntro` renders nothing for sections without guide entries
+- Banner shown to existing v11→v12 users offering guided mode
