@@ -4967,9 +4967,9 @@
       ],
       "implementationCohort": "aia-ilp-generic",
       "v1SupportBoundary": "supported-after-kernel",
-      "currentCatalogStatus": "not-in-catalog",
-      "economicsStatus": "not-modeled",
-      "parserExists": false,
+      "currentCatalogStatus": "partial",
+      "economicsStatus": "partial-modeled-subset",
+      "parserExists": true,
       "goldenCoverageStatus": "none",
       "kernelWorkstreams": [
         "core-cashflow-kernel"
@@ -4980,14 +4980,30 @@
       "kernelPrerequisites": [
         "core-cashflow-kernel"
       ],
-      "modeledSubsetAlreadyCovered": [],
-      "metadataOnlyBehaviors": [],
+      "modeledSubsetAlreadyCovered": [
+        "branch:manulink-investor-ii-single-premium-charge",
+        "branch:manulink-investor-ii-top-up-premium-charge"
+      ],
+      "metadataOnlyBehaviors": [
+        "manulink-investor-ii-death-benefit",
+        "manulink-investor-ii-terminal-illness-benefit",
+        "manulink-investor-ii-single-premium-principal-tracking",
+        "manulink-investor-ii-cpf-funding-route",
+        "manulink-investor-ii-srs-recurring-single-premium-option",
+        "manulink-investor-ii-partial-withdrawal",
+        "manulink-investor-ii-full-surrender",
+        "manulink-investor-ii-fund-management-fee",
+        "manulink-investor-ii-fund-switching",
+        "manulink-investor-ii-dividend-distribution-mode",
+        "manulink-investor-ii-lapse-and-termination"
+      ],
       "manualInputRequirements": [],
-      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Unclear\" and gap tags ad-hoc-premium-routing, non-guaranteed-charges. Cross-cutting overlays are ad-hoc-premium-routing, dynamic-charge. Implementation cohort is aia-ilp-generic from insurer/product patterning. No current parser-backed catalog product exists for this source yet. QA override status: confirmed-standard. No hard protection or special-account structure markers were found in the extracted source evidence; the standard-family default remains defensible.",
+      "classificationRationale": "Primary family is standard-2-account-core-cashflow based on account model \"Unclear\" and gap tags ad-hoc-premium-routing, non-guaranteed-charges. Cross-cutting overlays are ad-hoc-premium-routing, dynamic-charge. Implementation cohort is aia-ilp-generic from insurer/product patterning. Current catalog status is partial with economics status partial-modeled-subset. QA override status: confirmed-standard. No hard protection or special-account structure markers were found in the extracted source evidence; the standard-family default remains defensible.",
       "confidence": 0.9,
       "evidenceRefs": [
         "accountModel:Unclear",
         "bucket:B-extendable",
+        "catalog:manulife-manulink-investor-ii",
         "cohort:aia-ilp-generic",
         "file:WA_MI2_ILP_PdtSum.pdf",
         "gap:ad-hoc-premium-routing",
