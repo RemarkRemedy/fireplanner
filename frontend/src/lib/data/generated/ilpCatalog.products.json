@@ -12521,6 +12521,225 @@
     ]
   },
   {
+    "id": "etiqa-tiq-invest",
+    "insurer": "Etiqa",
+    "productName": "Tiq Invest",
+    "sourceFileName": "EIP_Tiq_Invest_Summary.pdf",
+    "sourceChecksumSha256": "415bea8480937eae3df7199f635fd079d48c816e0c2a6f844ef439757d6f0969",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:etiqa-tiq-invest-zero-single-premium-charge",
+      "branch:etiqa-tiq-invest-management-charge",
+      "branch:etiqa-tiq-invest-zero-top-up-charge",
+      "branch:etiqa-tiq-invest-zero-partial-withdrawal-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "etiqa-tiq-invest-death-benefit",
+      "etiqa-tiq-invest-terminal-illness-benefit",
+      "etiqa-tiq-invest-single-premium-principal-tracking",
+      "etiqa-tiq-invest-recurring-top-up-enrollment",
+      "etiqa-tiq-invest-fund-switching",
+      "etiqa-tiq-invest-grace-period-reinstatement"
+    ],
+    "warnings": [
+      "Tiq Invest is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial subscription, zero-charge top-up and withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis, while protection benefits and principal-tracking remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-open-ended",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview",
+                "excerpt": "Nature and Objective of Plan This is a single Premium investment-linked insurance plan that is designed to meet Your wealth accumulation needs. It matures on the Policy anniversary immediately before the Life insured att"
+              },
+              {
+                "page": 6,
+                "section": "Management charge and top-ups",
+                "excerpt": "Management Charge Fee Management Charge Fee is a fee that We charge for the management of Your policy. We will deduct a management charge fee of 0.75% per annum of the Account value at the beginning of each Policy month "
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "single-premium-charge",
+            "label": "Single Premium Charge",
+            "basis": "annual-contribution",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "The published purchase illustration shows no fees and charges on the initial single premium subscription."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Illustrative zero transaction charges",
+                "excerpt": "There is no fees & charges incurred upon the withdrawal of the Packaged fund. ** The actual issue price of units will fluctuate according to the market performance. Page 5 of 11"
+              }
+            ]
+          },
+          {
+            "id": "management-charge-fee",
+            "label": "Management Charge Fee",
+            "basis": "account-value",
+            "rate": 0.0075,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Deducted monthly from account value from policy commencement while the policy remains in force."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Management charge and top-ups",
+                "excerpt": "Management Charge Fee Management Charge Fee is a fee that We charge for the management of Your policy. We will deduct a management charge fee of 0.75% per annum of the Account value at the beginning of each Policy month "
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "The published subscription example states no fees and charges apply to top-ups."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Illustrative zero transaction charges",
+                "excerpt": "There is no fees & charges incurred upon the withdrawal of the Packaged fund. ** The actual issue price of units will fluctuate according to the market performance. Page 5 of 11"
+              },
+              {
+                "page": 6,
+                "section": "Management charge and top-ups",
+                "excerpt": "Management Charge Fee Management Charge Fee is a fee that We charge for the management of Your policy. We will deduct a management charge fee of 0.75% per annum of the Account value at the beginning of each Policy month "
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "The published redemption example states no fees and charges apply on withdrawals."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Surrender and maturity benefits",
+                "excerpt": "You may surrender Your policy in full or partially through partial withdrawal(s). Upon full surrender, We will pay the surrender Benefit in one lump sum which is equivalent to the Account value, less any amounts owing to"
+              },
+              {
+                "page": 5,
+                "section": "Illustrative zero transaction charges",
+                "excerpt": "There is no fees & charges incurred upon the withdrawal of the Packaged fund. ** The actual issue price of units will fluctuate according to the market performance. Page 5 of 11"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "Tiq Invest is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial subscription, zero-charge top-up and withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis.",
+          "There is no insurance charge imposed on this policy.",
+          "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
+        ],
+        "unsupportedItems": [
+          "Death and terminal-illness benefit formulas remain informational only.",
+          "Single-premium principal tracking remains informational only in V1.",
+          "Recurring top-up enrollment and grace-period funding remain informational only.",
+          "Fund-switching administration remains informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview",
+            "excerpt": "Nature and Objective of Plan This is a single Premium investment-linked insurance plan that is designed to meet Your wealth accumulation needs. It matures on the Policy anniversary immediately before the Life insured att"
+          },
+          {
+            "page": 2,
+            "section": "Surrender and maturity benefits",
+            "excerpt": "You may surrender Your policy in full or partially through partial withdrawal(s). Upon full surrender, We will pay the surrender Benefit in one lump sum which is equivalent to the Account value, less any amounts owing to"
+          },
+          {
+            "page": 5,
+            "section": "Illustrative zero transaction charges",
+            "excerpt": "There is no fees & charges incurred upon the withdrawal of the Packaged fund. ** The actual issue price of units will fluctuate according to the market performance. Page 5 of 11"
+          },
+          {
+            "page": 6,
+            "section": "Management charge and top-ups",
+            "excerpt": "Management Charge Fee Management Charge Fee is a fee that We charge for the management of Your policy. We will deduct a management charge fee of 0.75% per annum of the Account value at the beginning of each Policy month "
+          },
+          {
+            "page": 7,
+            "section": "Fund switching",
+            "excerpt": "Fund Switching While the policy is in force, You are entitled to an unlimited number of Packaged fund switches. Currently, We do not impose any charge for fund switches. Each policyholder can only have 1 Packaged fund at"
+          },
+          {
+            "page": 9,
+            "section": "Grace period and reinstatement",
+            "excerpt": "Other Material Information Premium This is a single Premium policy. The minimum single Premium required is S $1,000 while the maximum single Premium is capped at S$200,000. Minimum ILP Sub-Fund Size There is no minimum I"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "etiqa-invest-wealth-purpose",
     "insurer": "Etiqa",
     "productName": "Invest Wealth Purpose",

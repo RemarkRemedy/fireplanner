@@ -26,6 +26,7 @@ import { parseEtiqaInvestSmartFlexIi } from './parsers/etiqaInvestSmartFlexIi.js
 import { parseEtiqaInvestSmartVista } from './parsers/etiqaInvestSmartVista.js'
 import { parseEtiqaInvestStarter } from './parsers/etiqaInvestStarter.js'
 import { parseEtiqaInvestVista } from './parsers/etiqaInvestVista.js'
+import { parseEtiqaTiqInvest } from './parsers/etiqaTiqInvest.js'
 import { parseEtiqaInvestWealthPurpose } from './parsers/etiqaInvestWealthPurpose.js'
 import { parsePrudentialPruVantageAssureII } from './parsers/prudentialPruVantageAssureII.js'
 import { parsePrudentialPruVantageAssureSp } from './parsers/prudentialPruVantageAssureSp.js'
@@ -51,6 +52,7 @@ const ETIQA_INVEST_SMART_FLEX_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Inv
 const ETIQA_INVEST_SMART_VISTA_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest Smart Vista_Product Summary.pdf'
 const ETIQA_INVEST_STARTER_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest starter_Product Summary.pdf'
 const ETIQA_INVEST_VISTA_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest vista_Product Summary.pdf'
+const ETIQA_TIQ_INVEST_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Tiq_Invest_Summary.pdf'
 const ETIQA_INVEST_WEALTH_PURPOSE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest Wealth Purpose_Product Summary.pdf'
 const GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_2_RSP_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PS(EN)_GREAT Invest Advantage2(RSP)_v2.0.pdf'
 const GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_2_SP_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PS(EN)_GREAT Invest Advantage 2 (SP)_(SG)_v2.0.pdf'
@@ -156,6 +158,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const etiqaInvestStarterChecksum = await sha256(ETIQA_INVEST_STARTER_SOURCE_PATH)
   const etiqaInvestVistaExtracted = await extractPdfText(ETIQA_INVEST_VISTA_SOURCE_PATH)
   const etiqaInvestVistaChecksum = await sha256(ETIQA_INVEST_VISTA_SOURCE_PATH)
+  const etiqaTiqInvestExtracted = await extractPdfText(ETIQA_TIQ_INVEST_SOURCE_PATH)
+  const etiqaTiqInvestChecksum = await sha256(ETIQA_TIQ_INVEST_SOURCE_PATH)
   const etiqaInvestWealthPurposeExtracted = await extractPdfText(ETIQA_INVEST_WEALTH_PURPOSE_SOURCE_PATH)
   const etiqaInvestWealthPurposeChecksum = await sha256(ETIQA_INVEST_WEALTH_PURPOSE_SOURCE_PATH)
   const greatEasternGreatInvestAdvantage2RspExtracted = await extractPdfText(GREAT_EASTERN_GREAT_INVEST_ADVANTAGE_2_RSP_SOURCE_PATH)
@@ -240,6 +244,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseEtiqaInvestVista({
       document: etiqaInvestVistaExtracted,
       sourceChecksumSha256: etiqaInvestVistaChecksum,
+    }),
+    parseEtiqaTiqInvest({
+      document: etiqaTiqInvestExtracted,
+      sourceChecksumSha256: etiqaTiqInvestChecksum,
     }),
     parseEtiqaInvestWealthPurpose({
       document: etiqaInvestWealthPurposeExtracted,
