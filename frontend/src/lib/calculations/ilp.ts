@@ -45,6 +45,25 @@ export interface IlpPolicyEvent {
   resultingWealthAssureValue?: number
 }
 
+export interface IlpScheduledPayoutSupport {
+  mode: 'manual-assumption'
+  accountId: string
+  source: 'policy-redemption'
+}
+
+export type IlpScheduledPayoutAssumption =
+  | {
+      mode: 'disabled'
+    }
+  | {
+      mode: 'scheduled-redemption'
+      source: 'manual-assumption'
+      accountId: string
+      startPolicyYear: number
+      durationYears: number
+      annualPayoutAmount: number
+    }
+
 export interface IlpBonusSuspensionRule {
   trigger: 'premium-holiday' | 'partial-withdrawal' | 'regular-premium-reduction'
   suspensionMonths: number
@@ -215,6 +234,8 @@ export interface IlpPolicyInput {
   icpMonths?: number
   mipBasis?: 'finite' | 'open-ended'
   assuranceProfile?: IlpAssuranceProfile
+  scheduledPayoutSupport?: IlpScheduledPayoutSupport
+  scheduledPayoutAssumption?: IlpScheduledPayoutAssumption
   policyEvents?: IlpPolicyEvent[]
   accounts: IlpAccount[]
   mipLength?: number | null
@@ -982,6 +1003,67 @@ function getPartialWithdrawalsByAccount(
   }
 
   return withdrawals
+}
+
+function getScheduledPayoutsByAccount(
+  input: IlpPolicyInput,
+  projectionYear: number,
+): Map<string, number> {
+  const payouts = new Map<string, number>(input.accounts.map((account) => [account.id, 0]))
+  const scheduledPayout = input.scheduledPayoutAssumption
+
+  if (!scheduledPayout || scheduledPayout.mode !== 'scheduled-redemption') {
+    return payouts
+  }
+
+  const policyYear = input.currentPolicyYear + projectionYear
+  const payoutEndPolicyYear = scheduledPayout.startPolicyYear + scheduledPayout.durationYears - 1
+  if (policyYear < scheduledPayout.startPolicyYear || policyYear > payoutEndPolicyYear) {
+    return payouts
+  }
+
+  payouts.set(scheduledPayout.accountId, scheduledPayout.annualPayoutAmount)
+  return payouts
+}
+
+function mergeAccountAmountMaps(
+  left: Map<string, number>,
+  right: Map<string, number>,
+): Map<string, number> {
+  const merged = new Map(left)
+
+  for (const [accountId, amount] of right.entries()) {
+    merged.set(accountId, (merged.get(accountId) ?? 0) + amount)
+  }
+
+  return merged
+}
+
+function assertScheduledPayoutConfiguration(input: IlpPolicyInput): void {
+  const accountIds = new Set(input.accounts.map((account) => account.id))
+
+  if (input.scheduledPayoutSupport && !accountIds.has(input.scheduledPayoutSupport.accountId)) {
+    throw new Error(`Scheduled payout support account "${input.scheduledPayoutSupport.accountId}" does not exist on policy "${input.name}".`)
+  }
+
+  if (input.scheduledPayoutAssumption && !input.scheduledPayoutSupport) {
+    throw new Error(`Scheduled payout assumption requires scheduled payout support on policy "${input.name}".`)
+  }
+
+  if (
+    input.scheduledPayoutAssumption?.mode === 'scheduled-redemption'
+    && !accountIds.has(input.scheduledPayoutAssumption.accountId)
+  ) {
+    throw new Error(`Scheduled payout assumption account "${input.scheduledPayoutAssumption.accountId}" does not exist on policy "${input.name}".`)
+  }
+
+  if (
+    input.scheduledPayoutSupport
+    && input.scheduledPayoutAssumption?.mode === 'scheduled-redemption'
+    && input.scheduledPayoutSupport.accountId !== input.scheduledPayoutAssumption.accountId
+  ) {
+    throw new Error(`Scheduled payout assumption account must match scheduled payout support account on policy "${input.name}".`)
+  }
 }
 
 function getAnnualPremiumReductionAtMonth(
@@ -2585,6 +2667,7 @@ export function projectIlpPolicy(
   scenario: ReturnScenario,
 ): IlpProjectionResult {
   assertBeforeMip(input)
+  assertScheduledPayoutConfiguration(input)
   const normalized = buildNormalizedPolicyInput(input)
 
   const blendedNetReturn = computeBlendedReturn(input.funds, scenario)
@@ -2634,7 +2717,9 @@ export function projectIlpPolicy(
       + Array.from(recurringSinglePremiumContributionByAccount.values()).reduce((sum, value) => sum + value, 0)
     const contributionForYear = Array.from(contributionByAccount.values()).reduce((sum, value) => sum + value, 0)
     cumulativePremiums += contributionForYear
-    const withdrawalByAccount = getPartialWithdrawalsByAccount(normalized, year)
+    const partialWithdrawalByAccount = getPartialWithdrawalsByAccount(normalized, year)
+    const scheduledPayoutByAccount = getScheduledPayoutsByAccount(input, year)
+    const withdrawalByAccount = mergeAccountAmountMaps(partialWithdrawalByAccount, scheduledPayoutByAccount)
     const annualWithdrawals = Array.from(withdrawalByAccount.values()).reduce((sum, value) => sum + value, 0)
     const additionalChargeByAccount = computeAdditionalChargeByAccount(
       normalized,

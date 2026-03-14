@@ -292,6 +292,144 @@ describe('projectIlpPolicy', () => {
     expect(result.rows.slice(0, 4).map((row) => row.annualContribution)).toEqual([0, 1_200, 1_200, 1_200])
   })
 
+  it('keeps payout-capable open-ended policies on the uninterrupted baseline until a manual payout assumption is supplied', () => {
+    const policy = makeOpenEndedPolicy({
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'disabled',
+      },
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows.map((row) => row.annualContribution)).toEqual([1_200, 1_200, 1_200])
+    expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 0, 0])
+  })
+
+  it('freezes payout-capable premium flow during a missed-premium / premium-free-period event', () => {
+    const policy = makeOpenEndedPolicy({
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        source: 'manual-assumption',
+        accountId: 'policy',
+        startPolicyYear: 3,
+        durationYears: 2,
+        annualPayoutAmount: 600,
+      },
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 13,
+          durationMonths: 12,
+          repayMissedPremiums: false,
+        },
+      ],
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows.map((row) => row.policyYear)).toEqual([2, 3, 4])
+    expect(result.rows.map((row) => row.annualContribution)).toEqual([0, 1_200, 1_200])
+    expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 600, 600])
+    expect(accountRow(result.rows[1], 'policy').withdrawalAmount).toBe(600)
+  })
+
+  it('resumes payout-capable premium flow after premium restart and stops scheduled payout after its configured duration', () => {
+    const policy = makeOpenEndedPolicy({
+      postMipYears: 4,
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        source: 'manual-assumption',
+        accountId: 'policy',
+        startPolicyYear: 3,
+        durationYears: 2,
+        annualPayoutAmount: 500,
+      },
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 13,
+          durationMonths: 12,
+          repayMissedPremiums: false,
+        },
+      ],
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows.map((row) => row.policyYear)).toEqual([2, 3, 4, 5])
+    expect(result.rows.map((row) => row.annualContribution)).toEqual([0, 1_200, 1_200, 1_200])
+    expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 500, 500, 0])
+    expect(accountRow(result.rows[3], 'policy').withdrawalAmount).toBe(0)
+  })
+
+  it('keeps scheduled payout redemptions out of partial-withdrawal event charges', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 120,
+      currentPolicyYear: 1,
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        source: 'manual-assumption',
+        accountId: 'policy',
+        startPolicyYear: 2,
+        durationYears: 1,
+        annualPayoutAmount: 150,
+      },
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 1_000,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'partial-withdrawal-charge',
+          label: 'Partial Withdrawal Charge',
+          trigger: 'partial-withdrawal',
+          basis: 'event-amount',
+          appliesTo: ['policy'],
+          rate: 0.25,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+      bonuses: [],
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0].annualWithdrawals).toBe(150)
+    expect(accountRow(result.rows[0], 'policy').withdrawalAmount).toBe(150)
+    expect(accountRow(result.rows[0], 'policy').grossFee).toBe(0)
+  })
+
   it('does not regress finite-MIP contribution cutoff behavior', () => {
     const policy = makeDefaultPolicy({ postMipYears: 2 })
     const result = projectIlpPolicy(policy, 'mid')

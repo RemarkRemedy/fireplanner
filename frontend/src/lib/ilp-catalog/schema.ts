@@ -137,6 +137,14 @@ export const ilpTemplateEventChargeRuleSchema = z.object({
   sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
 })
 
+export const ilpTemplateScheduledPayoutSupportSchema = z.object({
+  mode: z.literal('manual-assumption'),
+  accountId: z.string().min(1),
+  source: z.literal('policy-redemption'),
+  notes: z.array(z.string()).min(1),
+  sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
+})
+
 export const ilpTemplateVariantSchema = z.object({
   id: z.string().min(1),
   currency: z.enum(['SGD', 'USD']),
@@ -147,6 +155,7 @@ export const ilpTemplateVariantSchema = z.object({
   bonuses: z.array(ilpTemplateBonusSchema).max(40),
   feeRules: z.array(ilpTemplateFeeRuleSchema).max(20),
   eventChargeRules: z.array(ilpTemplateEventChargeRuleSchema).max(20),
+  scheduledPayoutSupport: ilpTemplateScheduledPayoutSupportSchema.optional(),
   eecTable: z.array(z.number().min(0).max(1)).max(100),
   eecYearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   warnings: z.array(z.string()),
@@ -201,6 +210,14 @@ export const ilpTemplateVariantSchema = z.object({
           path: ['eventChargeRules', ruleIndex, 'activeWindow'],
         })
       }
+    })
+  }
+
+  if (variant.scheduledPayoutSupport && !variant.accounts.some((account) => account.id === variant.scheduledPayoutSupport?.accountId)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'scheduledPayoutSupport.accountId must reference an existing account',
+      path: ['scheduledPayoutSupport', 'accountId'],
     })
   }
 })

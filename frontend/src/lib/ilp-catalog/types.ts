@@ -143,6 +143,14 @@ export interface IlpTemplateEventChargeRule {
   sourceRefs: IlpCatalogSourceRef[]
 }
 
+export interface IlpTemplateScheduledPayoutSupport {
+  mode: 'manual-assumption'
+  accountId: string
+  source: 'policy-redemption'
+  notes: string[]
+  sourceRefs: IlpCatalogSourceRef[]
+}
+
 export interface IlpTemplateVariant {
   id: string
   currency: IlpCatalogCurrency
@@ -153,6 +161,7 @@ export interface IlpTemplateVariant {
   bonuses: IlpTemplateBonus[]
   feeRules: IlpTemplateFeeRule[]
   eventChargeRules: IlpTemplateEventChargeRule[]
+  scheduledPayoutSupport?: IlpTemplateScheduledPayoutSupport
   eecTable: number[]
   eecYearBasis?: 'policy-year' | 'premium-year'
   warnings: string[]

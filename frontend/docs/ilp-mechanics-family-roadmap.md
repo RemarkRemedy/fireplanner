@@ -248,7 +248,7 @@ Validated classifier state:
 - `57` supported-after-kernel
 - `29` partial-v1
 
-The immediate execution focus is the `open-ended-no-mip-kernel` slice. The current Great Eastern parser corridor no longer fails on payment-history first; it now fails because the next viable whole-life products do not publish a finite MIP / surrender-charge horizon and therefore cannot be represented honestly by the existing required `mipLength` contract.
+The immediate execution focus is the `payout-state-kernel` slice. Parser throughput continued until the next three viable AIA-coded candidates all failed on the same missing mechanic: scheduled income payouts that redeem policy units over time and therefore require an explicit manual payout assumption surface.
 
 ## Sequencing After QA
 
@@ -261,10 +261,13 @@ The immediate execution focus is the `open-ended-no-mip-kernel` slice. The curre
 3. Treat the `payment-history-kernel` first slice as implemented:
    - proof target completed: `GBII`
    - follow-on proof landed: `Investment-linked Insurance Plan 2`
-4. Treat the `open-ended-no-mip-kernel` as the current bounded slice:
+4. Treat the `open-ended-no-mip-kernel` as implemented:
    - proof target: `GREAT Invest Advantage (SP)`
    - immediate follow-ons after commit: `GREAT Invest Advantage 2 (SP)` and the adjacent open-ended Great Eastern corridor
-5. After the kernel commit lands, return to parser throughput for the cheapest truthful corridor it unlocks.
+5. Treat the `payout-state-kernel` as the current bounded slice:
+   - proof target: `AIA Elite Secure Income - Single Premium`
+   - immediate follow-ons after commit: `AIA Elite Secure Income - 5 Pay` and `AIA Platinum Retirement Elite`
+6. After the kernel commit lands, return to parser throughput for the cheapest truthful corridor it unlocks.
 
 ## V1 Boundary
 

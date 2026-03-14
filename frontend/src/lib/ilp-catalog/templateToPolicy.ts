@@ -201,6 +201,14 @@ export function templateVariantToPolicySeed(
     icpMonths: variant.icpMonths,
     mipBasis: variant.mipBasis,
     assuranceProfile: undefined,
+    scheduledPayoutSupport: variant.scheduledPayoutSupport
+      ? {
+          mode: variant.scheduledPayoutSupport.mode,
+          accountId: variant.scheduledPayoutSupport.accountId,
+          source: variant.scheduledPayoutSupport.source,
+        }
+      : undefined,
+    scheduledPayoutAssumption: undefined,
     policyEvents: [],
     accounts: variant.accounts.map((account) => ({
       id: account.id,
@@ -242,6 +250,9 @@ export function templateVariantToPolicySeed(
       ...variant.warnings,
       ...(variant.mipBasis === 'open-ended'
         ? ['Open-ended products use a default 20-year review horizon in V1; adjust the horizon if you want a different analysis window.']
+        : []),
+      ...(variant.scheduledPayoutSupport
+        ? ['This product supports scheduled payout-state, but V1 requires a manual payout assumption. No payout schedule is seeded by default.']
         : []),
       ...(variant.unsupportedItems ?? []),
     ],

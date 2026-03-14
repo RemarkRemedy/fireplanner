@@ -141,6 +141,26 @@ export const ilpPolicyEventSchema = z.object({
   }
 })
 
+export const ilpScheduledPayoutSupportSchema = z.object({
+  mode: z.literal('manual-assumption'),
+  accountId: z.string().min(1),
+  source: z.literal('policy-redemption'),
+})
+
+export const ilpScheduledPayoutAssumptionSchema = z.discriminatedUnion('mode', [
+  z.object({
+    mode: z.literal('disabled'),
+  }),
+  z.object({
+    mode: z.literal('scheduled-redemption'),
+    source: z.literal('manual-assumption'),
+    accountId: z.string().min(1),
+    startPolicyYear: z.number().int().min(1).max(100),
+    durationYears: z.number().int().min(1).max(100),
+    annualPayoutAmount: z.number().min(0).max(100_000_000),
+  }),
+])
+
 export const ilpFundSchema = z.object({
   name: z.string().min(1),
   allocation: z.number().min(0).max(1),
@@ -544,6 +564,8 @@ export const ilpPolicySchema = z.object({
   icpMonths: z.number().int().min(0).max(1_200).optional(),
   mipBasis: z.enum(['finite', 'open-ended']).optional(),
   assuranceProfile: ilpAssuranceProfileSchema.optional(),
+  scheduledPayoutSupport: ilpScheduledPayoutSupportSchema.optional(),
+  scheduledPayoutAssumption: ilpScheduledPayoutAssumptionSchema.optional(),
   policyEvents: z.array(ilpPolicyEventSchema).max(20).optional(),
   accounts: z.array(ilpAccountSchema).min(1).max(10),
   mipLength: z.number().int().min(5).max(100).nullable().optional(),
@@ -879,6 +901,45 @@ export const ilpPolicySchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'EEC table must have at least mipLength entries',
       path: ['eecTable'],
+    })
+  }
+
+  if (policy.scheduledPayoutSupport && !accountIds.includes(policy.scheduledPayoutSupport.accountId)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'scheduledPayoutSupport.accountId must reference an existing account',
+      path: ['scheduledPayoutSupport', 'accountId'],
+    })
+  }
+
+  if (
+    policy.scheduledPayoutAssumption?.mode === 'scheduled-redemption'
+    && !accountIds.includes(policy.scheduledPayoutAssumption.accountId)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'scheduledPayoutAssumption.accountId must reference an existing account',
+      path: ['scheduledPayoutAssumption', 'accountId'],
+    })
+  }
+
+  if (policy.scheduledPayoutAssumption && !policy.scheduledPayoutSupport) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'scheduledPayoutAssumption requires scheduledPayoutSupport',
+      path: ['scheduledPayoutAssumption'],
+    })
+  }
+
+  if (
+    policy.scheduledPayoutSupport
+    && policy.scheduledPayoutAssumption?.mode === 'scheduled-redemption'
+    && policy.scheduledPayoutSupport.accountId !== policy.scheduledPayoutAssumption.accountId
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'scheduledPayoutAssumption.accountId must match scheduledPayoutSupport.accountId',
+      path: ['scheduledPayoutAssumption', 'accountId'],
     })
   }
 })
