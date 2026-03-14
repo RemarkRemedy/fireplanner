@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import {
   useReactTable,
@@ -76,29 +76,33 @@ export function ProjectionPage() {
   const [deltaStack, setDeltaStack] = useState<DeltaSummary[]>([])
   const location = useLocation()
   const currentSnapshot = useMetricsSnapshot()
+  const deltaProcessed = useRef(false)
 
   useEffect(() => {
-    if (location.state?.showDelta) {
-      const stored = sessionStorage.getItem('fireplanner-delta-before')
-      if (stored) {
-        const { fireAge, fireNumber, timestamp } = JSON.parse(stored)
-        // Discard if older than 30 minutes
-        if (Date.now() - timestamp < 30 * 60 * 1000) {
-          const before: MetricsSnapshot = { fireAge, fireNumber }
-          const flowId = location.state.flowId as string
-          const flow = NUDGE_FLOWS.find(f => f.id === flowId)
-          if (flow) {
-            const delta = computeDelta(before, currentSnapshot, flow.label, flow.explanation)
-            setDeltaStack(prev => [delta, ...prev].slice(0, 3))
-          }
-        }
-        sessionStorage.removeItem('fireplanner-delta-before')
+    if (deltaProcessed.current || !location.state?.showDelta) return
+    const stored = sessionStorage.getItem('fireplanner-delta-before')
+    if (!stored) return
+    if (currentSnapshot.fireAge === null && currentSnapshot.fireNumber === null) return
+
+    deltaProcessed.current = true
+    const { fireAge, fireNumber, timestamp } = JSON.parse(stored)
+    if (Date.now() - timestamp < 30 * 60 * 1000) {
+      const before: MetricsSnapshot = { fireAge, fireNumber }
+      const flow = NUDGE_FLOWS.find(f => f.id === location.state.flowId)
+      if (flow) {
+        const delta = computeDelta(before, currentSnapshot, flow.label, flow.explanation)
+        setDeltaStack(prev => [delta, ...prev].slice(0, 3))
       }
-      // Clear the location state so it doesn't re-trigger on re-render
-      window.history.replaceState({}, '')
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Run once on mount
+    sessionStorage.removeItem('fireplanner-delta-before')
+    window.history.replaceState({}, '')
+  }, [location.state, currentSnapshot])
+
+  useEffect(() => {
+    if (!location.state?.showDelta) {
+      deltaProcessed.current = false
+    }
+  }, [location.state])
 
   const normalized = useNormalizedLegacyAnalysisContext()
   const { rows: jointRows, summary: jointSummary, hasErrors } = useProjection()
@@ -517,6 +521,19 @@ export function ProjectionPage() {
   return (
     <div className="md:grid md:grid-cols-[1fr_280px] md:gap-6">
     <div className="space-y-6">
+      {/* Delta cards — visible on all viewports */}
+      {deltaStack.length > 0 && (
+        <div className="space-y-2">
+          {deltaStack.map((delta, i) => (
+            <DeltaCard
+              key={i}
+              summary={delta}
+              onDismiss={() => setDeltaStack(prev => prev.filter((_, j) => j !== i))}
+              showMcNote={false}
+            />
+          ))}
+        </div>
+      )}
       <div>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -795,6 +812,11 @@ export function ProjectionPage() {
 
       {isEligible && rows && rows.length > 0 && <ExpenseTrackerCard />}
 
+      {/* Mobile nudge section */}
+      <div className="md:hidden mt-6">
+        <NudgeSidebar onOpenDrawer={setDrawerFlowId} />
+      </div>
+
       <Dialog open={expanded} onOpenChange={setExpanded}>
         <DialogContent className="max-w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-4">
           <DialogHeader className="shrink-0">
@@ -817,14 +839,6 @@ export function ProjectionPage() {
       </Dialog>
     </div>
     <aside className="hidden md:block space-y-4">
-      {deltaStack.map((delta, i) => (
-        <DeltaCard
-          key={i}
-          summary={delta}
-          onDismiss={() => setDeltaStack(prev => prev.filter((_, j) => j !== i))}
-          showMcNote={false}
-        />
-      ))}
       <NudgeSidebar onOpenDrawer={setDrawerFlowId} />
     </aside>
     <NudgeDrawer
