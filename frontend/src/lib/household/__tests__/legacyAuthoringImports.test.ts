@@ -11,15 +11,6 @@ const SRC_ROOT = path.resolve(FRONTEND_ROOT, 'src')
 const ALLOWED_IMPORTERS = [
   path.resolve(FRONTEND_ROOT, 'src/lib/household/fromLegacyIndividual.ts'),
   path.resolve(FRONTEND_ROOT, 'src/lib/storeRegistry.ts'),
-  // StartPage imports DEFAULT_PROFILE constant (not a store subscription) for
-  // canonical default values used in the onboarding calculator.
-  path.resolve(FRONTEND_ROOT, 'src/pages/StartPage.tsx'),
-  // HouseholdSetupWizard imports DEFAULT_PROFILE constant (not a store subscription)
-  // for FIRE preview calculations in the couple/household onboarding wizard.
-  path.resolve(FRONTEND_ROOT, 'src/components/household/HouseholdSetupWizard.tsx'),
-  // monteCarloParamParity is a parity test helper that assembles normalized
-  // snapshots from legacy defaults; it is intentionally not a runtime importer.
-  path.resolve(FRONTEND_ROOT, 'src/test-helpers/monteCarloParamParity.ts'),
 ].sort()
 const LEGACY_STORE_IMPORT_PATTERN = /from\s+['"][^'"]*use(Profile|Income|Property)Store['"]/m
 

@@ -2,6 +2,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { createBrowserRouter, Navigate, Link } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { SetupLayout } from '@/components/setup/SetupLayout'
 import { isCompanionMode } from '@/lib/companion/isCompanionMode'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 import { deriveHouseholdSectionToggles } from '@/lib/household/sectionVisibility'
@@ -9,6 +10,8 @@ import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
 
 const StartPage = lazy(() => import('@/pages/StartPage').then(m => ({ default: m.StartPage })))
+const SetupPage = lazy(() => import('@/pages/SetupPage').then(m => ({ default: m.SetupPage })))
+const RefineFlowPage = lazy(() => import('@/pages/RefineFlowPage').then(m => ({ default: m.RefineFlowPage })))
 const InputsPage = lazy(() => import('@/pages/InputsPage').then(m => ({ default: m.InputsPage })))
 const ProjectionPage = lazy(() => import('@/pages/ProjectionPage').then(m => ({ default: m.ProjectionPage })))
 const WithdrawalPage = lazy(() => import('@/pages/WithdrawalPage').then(m => ({ default: m.WithdrawalPage })))
@@ -85,6 +88,16 @@ function PlannerRouteShell() {
 const routerBasename = isCompanionMode() ? '/planner' : undefined
 
 export const router = createBrowserRouter([
+  // Guided setup + refine routes (outside PlannerRouteShell)
+  {
+    element: <SetupLayout />,
+    children: [
+      { path: '/setup', element: page(SetupPage) },
+      { path: '/refine/:flowId', element: page(RefineFlowPage) },
+      { path: '/refine/*', element: <Navigate to="/" replace /> },
+    ],
+  },
+  // Main app routes (inside PlannerRouteShell)
   {
     element: <PlannerRouteShell />,
     children: [
