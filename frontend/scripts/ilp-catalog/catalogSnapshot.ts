@@ -42,6 +42,8 @@ import { parseManulifeInvestreadyIii } from './parsers/manulifeInvestreadyIii.js
 import { parseManulifeInvestreadyIiiSep2025 } from './parsers/manulifeInvestreadyIiiSep2025.js'
 import { parseManulifeManuinvestDuo } from './parsers/manulifeManuinvestDuo.js'
 import { parseManulifeManulinkInvestorIi } from './parsers/manulifeManulinkInvestorIi.js'
+import { parseManulifeSmartRetireIncome } from './parsers/manulifeSmartRetireIncome.js'
+import { parseManulifeSmartRetireSum } from './parsers/manulifeSmartRetireSum.js'
 import { parseEtiqaInvestFlexPrimeIi } from './parsers/etiqaInvestFlexPrimeIi.js'
 import { parseEtiqaInvestFlexPro } from './parsers/etiqaInvestFlexPro.js'
 import { parseEtiqaInvestFlexWealthIi } from './parsers/etiqaInvestFlexWealthIi.js'
@@ -83,6 +85,8 @@ const MANULIFE_INVESTREADY_III_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_MIR03_
 const MANULIFE_INVESTREADY_III_SEP_2025_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_MIRP_PdtSum.pdf'
 const MANULIFE_MANUINVEST_DUO_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_MID01_PdtSum.pdf'
 const MANULIFE_MANULINK_INVESTOR_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_MI2_ILP_PdtSum.pdf'
+const MANULIFE_SMARTRETIRE_INCOME_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_MSRI5_PdtSum.pdf'
+const MANULIFE_SMARTRETIRE_SUM_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_MSRS5_PdtSum.pdf'
 const ETIQA_INVEST_FLEX_PRIME_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest flex prime II_Product Summary.pdf'
 const ETIQA_INVEST_FLEX_PRO_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest flex pro_Product Summary.pdf'
 const ETIQA_INVEST_FLEX_WEALTH_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest flex wealth II_Product Summary.pdf'
@@ -238,6 +242,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const manulifeManuinvestDuoChecksum = await sha256(MANULIFE_MANUINVEST_DUO_SOURCE_PATH)
   const manulifeManulinkInvestorIiExtracted = await extractPdfText(MANULIFE_MANULINK_INVESTOR_II_SOURCE_PATH)
   const manulifeManulinkInvestorIiChecksum = await sha256(MANULIFE_MANULINK_INVESTOR_II_SOURCE_PATH)
+  const manulifeSmartRetireIncomeExtracted = await extractPdfText(MANULIFE_SMARTRETIRE_INCOME_SOURCE_PATH)
+  const manulifeSmartRetireIncomeChecksum = await sha256(MANULIFE_SMARTRETIRE_INCOME_SOURCE_PATH)
+  const manulifeSmartRetireSumExtracted = await extractPdfText(MANULIFE_SMARTRETIRE_SUM_SOURCE_PATH)
+  const manulifeSmartRetireSumChecksum = await sha256(MANULIFE_SMARTRETIRE_SUM_SOURCE_PATH)
   const etiqaInvestFlexPrimeIiExtracted = await extractPdfText(ETIQA_INVEST_FLEX_PRIME_II_SOURCE_PATH)
   const etiqaInvestFlexPrimeIiChecksum = await sha256(ETIQA_INVEST_FLEX_PRIME_II_SOURCE_PATH)
   const etiqaInvestFlexProExtracted = await extractPdfText(ETIQA_INVEST_FLEX_PRO_SOURCE_PATH)
@@ -404,6 +412,14 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseManulifeManulinkInvestorIi({
       document: manulifeManulinkInvestorIiExtracted,
       sourceChecksumSha256: manulifeManulinkInvestorIiChecksum,
+    }),
+    parseManulifeSmartRetireIncome({
+      document: manulifeSmartRetireIncomeExtracted,
+      sourceChecksumSha256: manulifeSmartRetireIncomeChecksum,
+    }),
+    parseManulifeSmartRetireSum({
+      document: manulifeSmartRetireSumExtracted,
+      sourceChecksumSha256: manulifeSmartRetireSumChecksum,
     }),
     parseEtiqaInvestFlexPrimeIi({
       document: etiqaInvestFlexPrimeIiExtracted,

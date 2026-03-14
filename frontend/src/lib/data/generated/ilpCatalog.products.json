@@ -11739,6 +11739,1883 @@
     ]
   },
   {
+    "id": "manulife-smartretire-v-income",
+    "insurer": "Manulife Singapore",
+    "productName": "Manulife SmartRetire (V) - Income",
+    "sourceFileName": "WA_MSRI5_PdtSum.pdf",
+    "sourceChecksumSha256": "f5d6e9710f3c4ef5caa47245a64b7d5dd2d5bb8f369dad02ea6ab17e4eaf29bc",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:manulife-smartretire-v-administrative-charge",
+      "branch:manulife-smartretire-v-withdrawal-and-surrender-charge",
+      "branch:manulife-smartretire-v-premium-shortfall-charge",
+      "branch:manulife-smartretire-v-zero-top-up-charge",
+      "kernel:scheduled-payout-manual-assumption",
+      "kernel:distribution-mode-assumption"
+    ],
+    "metadataOnlyBehaviors": [
+      "manulife-smartretire-v-income-death-benefit",
+      "manulife-smartretire-v-income-waiver-of-premium-benefit",
+      "manulife-smartretire-v-income-coi-refund",
+      "manulife-smartretire-v-income-welcome-bonus",
+      "manulife-smartretire-v-income-loyalty-bonus",
+      "manulife-smartretire-v-income-flexi-start-premium-variation",
+      "manulife-smartretire-v-income-reinstatement",
+      "manulife-smartretire-v-income-dividend-payout-threshold",
+      "manulife-smartretire-v-income-reinvested-dividend-withdrawal",
+      "manulife-smartretire-v-income-fund-management-charge",
+      "manulife-smartretire-v-income-fund-switching-and-redirection"
+    ],
+    "warnings": [
+      "Manulife SmartRetire (V) - Income is cataloged as a partial modeled subset in V1. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface, while hybrid COI mechanics, TPD waiver, COI refund, bonuses, and fund-level charges remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-8-flexi-3",
+        "currency": "SGD",
+        "mipLength": 8,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.025,
+            "postMipFeeRate": 0.0075,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Period of 10, 15, 20, 25 or 30 years and the Target Retirement Income that you wish to receive during the Target Retirement Period. It does not offer any guarantee that your selected Target Retirement Income over the Tar"
+              },
+              {
+                "page": 5,
+                "section": "Administrative charge and surrender charge",
+                "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium and policy options",
+                "excerpt": "2. Top-up Premium Top-up premium is premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. Ea"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published prevailing 0% top-up charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Top-up premium and policy options",
+                "excerpt": "2. Top-up Premium Top-up premium is premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. Ea"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge",
+            "label": "Premium Shortfall Charge",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.6
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Models the published monthly premium shortfall charge before Flexi Start for the 8 Years Flexi 3 corridor.",
+              "Use a premium-holiday event to represent missed regular premiums after the grace period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Period of 10, 15, 20, 25 or 30 years and the Target Retirement Income that you wish to receive during the Target Retirement Period. It does not offer any guarantee that your selected Target Retirement Income over the Tar"
+              },
+              {
+                "page": 6,
+                "section": "Partial withdrawal charge and premium shortfall charge",
+                "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) 3. Surrender Charge Surrender charge applies if you request for full surrender during the MIP. The surrender charge will"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published MIP partial-withdrawal charge schedule for the 8 Years Flexi 3 corridor.",
+              "Regular retirement-income payouts remain a separate payout-state path and do not use this ad hoc withdrawal charge rule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Administrative charge and surrender charge",
+                "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+              },
+              {
+                "page": 6,
+                "section": "Partial withdrawal charge and premium shortfall charge",
+                "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) 3. Surrender Charge Surrender charge applies if you request for full surrender during the MIP. The surrender charge will"
+              }
+            ]
+          }
+        ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "policy",
+          "source": "policy-redemption",
+          "notes": [
+            "Target Retirement Income is paid monthly by selling policy units from the selected retirement age until the end of the selected retirement period, if there is sufficient account value."
+          ],
+          "sourceRefs": [
+            {
+              "page": 3,
+              "section": "Target retirement income and minimum premium",
+              "excerpt": "4. Payment of Target Retirement Income Starting from your selected Target Retirement Age up to the end of the Target Retirement Period, the Target Retirement Income will be payable monthly on the policy monthiversary, if"
+            }
+          ]
+        },
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying funds may be reinvested or paid out in cash, subject to the product summary minimum payout amount.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 9,
+              "section": "Distribution of dividend",
+              "excerpt": "11. Distribution of Dividend If you choose to invest in any Fund(s) that pays dividends, you have the option to either reinvest or to receive payments of these dividends. The frequency of dividend distribution of the Fun"
+            }
+          ]
+        },
+        "eecTable": [
+          1,
+          1,
+          0.6,
+          0.5,
+          0.4,
+          0.3,
+          0.2,
+          0.1,
+          0
+        ],
+        "warnings": [
+          "8 Years Flexi 3 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface.",
+          "Hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, bonuses, flexi-start premium variation, and fund-level management charges remain outside the current engine.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+        ],
+        "unsupportedItems": [
+          "Death-benefit formulas and monthly COI deductions remain informational only because they switch from a 105%-of-paid-premium floor during MIP to a fixed basic-sum-insured corridor during accumulation and then stop at the target retirement age.",
+          "Waiver of Premium benefit on TPD and its separate COI table remain informational only.",
+          "Refund of Cost of Insurance at target retirement age remains informational only.",
+          "Welcome Bonus and Loyalty Bonus remain informational only.",
+          "Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.",
+          "Lapsing / reinstatement effects and benefit-payout handling remain informational only.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Fund-level management charges, fund switching, premium redirection, and automatic fund rebalancing remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description and death benefit",
+            "excerpt": "Period of 10, 15, 20, 25 or 30 years and the Target Retirement Income that you wish to receive during the Target Retirement Period. It does not offer any guarantee that your selected Target Retirement Income over the Tar"
+          },
+          {
+            "page": 3,
+            "section": "Target retirement income and minimum premium",
+            "excerpt": "4. Payment of Target Retirement Income Starting from your selected Target Retirement Age up to the end of the Target Retirement Period, the Target Retirement Income will be payable monthly on the policy monthiversary, if"
+          },
+          {
+            "page": 5,
+            "section": "Administrative charge and surrender charge",
+            "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+          },
+          {
+            "page": 6,
+            "section": "Partial withdrawal charge and premium shortfall charge",
+            "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) 3. Surrender Charge Surrender charge applies if you request for full surrender during the MIP. The surrender charge will"
+          },
+          {
+            "page": 8,
+            "section": "Top-up premium and policy options",
+            "excerpt": "2. Top-up Premium Top-up premium is premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. Ea"
+          },
+          {
+            "page": 9,
+            "section": "Distribution of dividend",
+            "excerpt": "11. Distribution of Dividend If you choose to invest in any Fund(s) that pays dividends, you have the option to either reinvest or to receive payments of these dividends. The frequency of dividend distribution of the Fun"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-8-flexi-5",
+        "currency": "SGD",
+        "mipLength": 8,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.025,
+            "postMipFeeRate": 0.0075,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Period of 10, 15, 20, 25 or 30 years and the Target Retirement Income that you wish to receive during the Target Retirement Period. It does not offer any guarantee that your selected Target Retirement Income over the Tar"
+              },
+              {
+                "page": 5,
+                "section": "Administrative charge and surrender charge",
+                "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium and policy options",
+                "excerpt": "2. Top-up Premium Top-up premium is premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. Ea"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published prevailing 0% top-up charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Top-up premium and policy options",
+                "excerpt": "2. Top-up Premium Top-up premium is premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. Ea"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge",
+            "label": "Premium Shortfall Charge",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.4
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Models the published monthly premium shortfall charge before Flexi Start for the 8 Years Flexi 5 corridor.",
+              "Use a premium-holiday event to represent missed regular premiums after the grace period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Period of 10, 15, 20, 25 or 30 years and the Target Retirement Income that you wish to receive during the Target Retirement Period. It does not offer any guarantee that your selected Target Retirement Income over the Tar"
+              },
+              {
+                "page": 6,
+                "section": "Partial withdrawal charge and premium shortfall charge",
+                "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) 3. Surrender Charge Surrender charge applies if you request for full surrender during the MIP. The surrender charge will"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published MIP partial-withdrawal charge schedule for the 8 Years Flexi 5 corridor.",
+              "Regular retirement-income payouts remain a separate payout-state path and do not use this ad hoc withdrawal charge rule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Administrative charge and surrender charge",
+                "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+              },
+              {
+                "page": 6,
+                "section": "Partial withdrawal charge and premium shortfall charge",
+                "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) 3. Surrender Charge Surrender charge applies if you request for full surrender during the MIP. The surrender charge will"
+              }
+            ]
+          }
+        ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "policy",
+          "source": "policy-redemption",
+          "notes": [
+            "Target Retirement Income is paid monthly by selling policy units from the selected retirement age until the end of the selected retirement period, if there is sufficient account value."
+          ],
+          "sourceRefs": [
+            {
+              "page": 3,
+              "section": "Target retirement income and minimum premium",
+              "excerpt": "4. Payment of Target Retirement Income Starting from your selected Target Retirement Age up to the end of the Target Retirement Period, the Target Retirement Income will be payable monthly on the policy monthiversary, if"
+            }
+          ]
+        },
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying funds may be reinvested or paid out in cash, subject to the product summary minimum payout amount.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 9,
+              "section": "Distribution of dividend",
+              "excerpt": "11. Distribution of Dividend If you choose to invest in any Fund(s) that pays dividends, you have the option to either reinvest or to receive payments of these dividends. The frequency of dividend distribution of the Fun"
+            }
+          ]
+        },
+        "eecTable": [
+          1,
+          1,
+          0.6,
+          0.5,
+          0.4,
+          0.3,
+          0.2,
+          0.1,
+          0
+        ],
+        "warnings": [
+          "8 Years Flexi 5 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface.",
+          "Hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, bonuses, flexi-start premium variation, and fund-level management charges remain outside the current engine.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+        ],
+        "unsupportedItems": [
+          "Death-benefit formulas and monthly COI deductions remain informational only because they switch from a 105%-of-paid-premium floor during MIP to a fixed basic-sum-insured corridor during accumulation and then stop at the target retirement age.",
+          "Waiver of Premium benefit on TPD and its separate COI table remain informational only.",
+          "Refund of Cost of Insurance at target retirement age remains informational only.",
+          "Welcome Bonus and Loyalty Bonus remain informational only.",
+          "Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.",
+          "Lapsing / reinstatement effects and benefit-payout handling remain informational only.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Fund-level management charges, fund switching, premium redirection, and automatic fund rebalancing remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description and death benefit",
+            "excerpt": "Period of 10, 15, 20, 25 or 30 years and the Target Retirement Income that you wish to receive during the Target Retirement Period. It does not offer any guarantee that your selected Target Retirement Income over the Tar"
+          },
+          {
+            "page": 3,
+            "section": "Target retirement income and minimum premium",
+            "excerpt": "4. Payment of Target Retirement Income Starting from your selected Target Retirement Age up to the end of the Target Retirement Period, the Target Retirement Income will be payable monthly on the policy monthiversary, if"
+          },
+          {
+            "page": 5,
+            "section": "Administrative charge and surrender charge",
+            "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+          },
+          {
+            "page": 6,
+            "section": "Partial withdrawal charge and premium shortfall charge",
+            "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) 3. Surrender Charge Surrender charge applies if you request for full surrender during the MIP. The surrender charge will"
+          },
+          {
+            "page": 8,
+            "section": "Top-up premium and policy options",
+            "excerpt": "2. Top-up Premium Top-up premium is premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. Ea"
+          },
+          {
+            "page": 9,
+            "section": "Distribution of dividend",
+            "excerpt": "11. Distribution of Dividend If you choose to invest in any Fund(s) that pays dividends, you have the option to either reinvest or to receive payments of these dividends. The frequency of dividend distribution of the Fun"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-12-flexi-8",
+        "currency": "SGD",
+        "mipLength": 12,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.025,
+            "postMipFeeRate": 0.0075,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Period of 10, 15, 20, 25 or 30 years and the Target Retirement Income that you wish to receive during the Target Retirement Period. It does not offer any guarantee that your selected Target Retirement Income over the Tar"
+              },
+              {
+                "page": 5,
+                "section": "Administrative charge and surrender charge",
+                "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium and policy options",
+                "excerpt": "2. Top-up Premium Top-up premium is premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. Ea"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published prevailing 0% top-up charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Top-up premium and policy options",
+                "excerpt": "2. Top-up Premium Top-up premium is premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. Ea"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge",
+            "label": "Premium Shortfall Charge",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.7
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.3
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Models the published monthly premium shortfall charge before Flexi Start for the 12 Years Flexi 8 corridor.",
+              "Use a premium-holiday event to represent missed regular premiums after the grace period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Period of 10, 15, 20, 25 or 30 years and the Target Retirement Income that you wish to receive during the Target Retirement Period. It does not offer any guarantee that your selected Target Retirement Income over the Tar"
+              },
+              {
+                "page": 6,
+                "section": "Partial withdrawal charge and premium shortfall charge",
+                "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) 3. Surrender Charge Surrender charge applies if you request for full surrender during the MIP. The surrender charge will"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.7
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published MIP partial-withdrawal charge schedule for the 12 Years Flexi 8 corridor.",
+              "Regular retirement-income payouts remain a separate payout-state path and do not use this ad hoc withdrawal charge rule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Administrative charge and surrender charge",
+                "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+              },
+              {
+                "page": 6,
+                "section": "Partial withdrawal charge and premium shortfall charge",
+                "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) 3. Surrender Charge Surrender charge applies if you request for full surrender during the MIP. The surrender charge will"
+              }
+            ]
+          }
+        ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "policy",
+          "source": "policy-redemption",
+          "notes": [
+            "Target Retirement Income is paid monthly by selling policy units from the selected retirement age until the end of the selected retirement period, if there is sufficient account value."
+          ],
+          "sourceRefs": [
+            {
+              "page": 3,
+              "section": "Target retirement income and minimum premium",
+              "excerpt": "4. Payment of Target Retirement Income Starting from your selected Target Retirement Age up to the end of the Target Retirement Period, the Target Retirement Income will be payable monthly on the policy monthiversary, if"
+            }
+          ]
+        },
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying funds may be reinvested or paid out in cash, subject to the product summary minimum payout amount.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 9,
+              "section": "Distribution of dividend",
+              "excerpt": "11. Distribution of Dividend If you choose to invest in any Fund(s) that pays dividends, you have the option to either reinvest or to receive payments of these dividends. The frequency of dividend distribution of the Fun"
+            }
+          ]
+        },
+        "eecTable": [
+          1,
+          1,
+          0.8,
+          0.7,
+          0.6,
+          0.5,
+          0.4,
+          0.3,
+          0.25,
+          0.2,
+          0.15,
+          0.1,
+          0
+        ],
+        "warnings": [
+          "12 Years Flexi 8 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface.",
+          "Hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, bonuses, flexi-start premium variation, and fund-level management charges remain outside the current engine.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+        ],
+        "unsupportedItems": [
+          "Death-benefit formulas and monthly COI deductions remain informational only because they switch from a 105%-of-paid-premium floor during MIP to a fixed basic-sum-insured corridor during accumulation and then stop at the target retirement age.",
+          "Waiver of Premium benefit on TPD and its separate COI table remain informational only.",
+          "Refund of Cost of Insurance at target retirement age remains informational only.",
+          "Welcome Bonus and Loyalty Bonus remain informational only.",
+          "Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.",
+          "Lapsing / reinstatement effects and benefit-payout handling remain informational only.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Fund-level management charges, fund switching, premium redirection, and automatic fund rebalancing remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description and death benefit",
+            "excerpt": "Period of 10, 15, 20, 25 or 30 years and the Target Retirement Income that you wish to receive during the Target Retirement Period. It does not offer any guarantee that your selected Target Retirement Income over the Tar"
+          },
+          {
+            "page": 3,
+            "section": "Target retirement income and minimum premium",
+            "excerpt": "4. Payment of Target Retirement Income Starting from your selected Target Retirement Age up to the end of the Target Retirement Period, the Target Retirement Income will be payable monthly on the policy monthiversary, if"
+          },
+          {
+            "page": 5,
+            "section": "Administrative charge and surrender charge",
+            "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+          },
+          {
+            "page": 6,
+            "section": "Partial withdrawal charge and premium shortfall charge",
+            "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) 3. Surrender Charge Surrender charge applies if you request for full surrender during the MIP. The surrender charge will"
+          },
+          {
+            "page": 8,
+            "section": "Top-up premium and policy options",
+            "excerpt": "2. Top-up Premium Top-up premium is premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. Ea"
+          },
+          {
+            "page": 9,
+            "section": "Distribution of dividend",
+            "excerpt": "11. Distribution of Dividend If you choose to invest in any Fund(s) that pays dividends, you have the option to either reinvest or to receive payments of these dividends. The frequency of dividend distribution of the Fun"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "manulife-smartretire-v-sum",
+    "insurer": "Manulife Singapore",
+    "productName": "Manulife SmartRetire (V) - Sum",
+    "sourceFileName": "WA_MSRS5_PdtSum.pdf",
+    "sourceChecksumSha256": "998280d6a066fc9eac4095a652dd02484d29b63fb0a0d0281f3a101447a8940d",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:manulife-smartretire-v-administrative-charge",
+      "branch:manulife-smartretire-v-withdrawal-and-surrender-charge",
+      "branch:manulife-smartretire-v-premium-shortfall-charge",
+      "branch:manulife-smartretire-v-zero-top-up-charge",
+      "kernel:distribution-mode-assumption"
+    ],
+    "metadataOnlyBehaviors": [
+      "manulife-smartretire-v-sum-target-retirement-sum-withdrawal",
+      "manulife-smartretire-v-sum-regular-income-drawdown",
+      "manulife-smartretire-v-sum-death-benefit",
+      "manulife-smartretire-v-sum-waiver-of-premium-benefit",
+      "manulife-smartretire-v-sum-coi-refund",
+      "manulife-smartretire-v-sum-welcome-bonus",
+      "manulife-smartretire-v-sum-loyalty-bonus",
+      "manulife-smartretire-v-sum-flexi-start-premium-variation",
+      "manulife-smartretire-v-sum-reinstatement",
+      "manulife-smartretire-v-sum-dividend-payout-threshold",
+      "manulife-smartretire-v-sum-reinvested-dividend-withdrawal",
+      "manulife-smartretire-v-sum-fund-management-charge",
+      "manulife-smartretire-v-sum-fund-switching-and-redirection"
+    ],
+    "warnings": [
+      "Manulife SmartRetire (V) - Sum is cataloged as a partial modeled subset in V1. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface, while retirement-sum withdrawal handling, optional drawdown elections, hybrid COI mechanics, TPD waiver, COI refund, bonuses, and fund-level charges remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-8-flexi-3",
+        "currency": "SGD",
+        "mipLength": 8,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.025,
+            "postMipFeeRate": 0.0075,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Retirement Sum. It does not offer any guarantee that your selected Target Retirement Sum will be achieved. It is dependent on the actual fund(s) performances meeting the illustrated investment rate of return. 100% of the"
+              },
+              {
+                "page": 5,
+                "section": "Administrative charge and surrender charge",
+                "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+              },
+              {
+                "page": 8,
+                "section": "Regular income drawdown and policy options",
+                "excerpt": "6. Regular Income Drawdown You may apply to receive regular withdrawal from the policy on a monthly, quarterly, semi-annual or annual basis on or after the Target Retirement Age by submitting a written request to us. Any"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published prevailing 0% top-up charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Regular income drawdown and policy options",
+                "excerpt": "6. Regular Income Drawdown You may apply to receive regular withdrawal from the policy on a monthly, quarterly, semi-annual or annual basis on or after the Target Retirement Age by submitting a written request to us. Any"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge",
+            "label": "Premium Shortfall Charge",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.6
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Models the published monthly premium shortfall charge before Flexi Start for the 8 Years Flexi 3 corridor.",
+              "Use a premium-holiday event to represent missed regular premiums after the grace period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Retirement Sum. It does not offer any guarantee that your selected Target Retirement Sum will be achieved. It is dependent on the actual fund(s) performances meeting the illustrated investment rate of return. 100% of the"
+              },
+              {
+                "page": 6,
+                "section": "Partial withdrawal charge and premium shortfall charge",
+                "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) surrender charge and any other amount mentioned under “Policy Options” section on full surrender, will be paid to you. I"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published MIP partial-withdrawal charge schedule for the 8 Years Flexi 3 corridor."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Administrative charge and surrender charge",
+                "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+              },
+              {
+                "page": 6,
+                "section": "Partial withdrawal charge and premium shortfall charge",
+                "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) surrender charge and any other amount mentioned under “Policy Options” section on full surrender, will be paid to you. I"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying funds may be reinvested or paid out in cash, subject to the product summary minimum payout amount.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 9,
+              "section": "Distribution of dividend",
+              "excerpt": "12. Distribution of Dividend If you choose to invest in any Fund(s) that pays dividends, you have the option to either reinvest or to receive payments of these dividends. The frequency of dividend distribution of the Fun"
+            }
+          ]
+        },
+        "eecTable": [
+          1,
+          1,
+          0.6,
+          0.5,
+          0.4,
+          0.3,
+          0.2,
+          0.1,
+          0
+        ],
+        "warnings": [
+          "8 Years Flexi 3 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
+          "Target Retirement Sum withdrawal, optional regular-income drawdown elections, hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, bonuses, and fund-level management charges remain outside the current engine.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+        ],
+        "unsupportedItems": [
+          "Target Retirement Sum withdrawal remains informational only and should be represented manually with withdrawal events if needed.",
+          "Optional regular-income drawdown elections remain informational only.",
+          "Death-benefit formulas and monthly COI deductions remain informational only because they switch from a 105%-of-paid-premium floor during MIP to a fixed basic-sum-insured corridor during accumulation and then stop at the target retirement age.",
+          "Waiver of Premium benefit on TPD and its separate COI table remain informational only.",
+          "Refund of Cost of Insurance at target retirement age remains informational only.",
+          "Welcome Bonus and Loyalty Bonus remain informational only.",
+          "Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.",
+          "Lapsing / reinstatement effects and benefit-payout handling remain informational only.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Fund-level management charges, fund switching, premium redirection, and automatic fund rebalancing remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description and death benefit",
+            "excerpt": "Retirement Sum. It does not offer any guarantee that your selected Target Retirement Sum will be achieved. It is dependent on the actual fund(s) performances meeting the illustrated investment rate of return. 100% of the"
+          },
+          {
+            "page": 3,
+            "section": "Target retirement sum and minimum premium",
+            "excerpt": "4. Payment of Target Retirement Sum You may request to withdraw the Target Retirement Sum on or after the Target Retirement Age. If the account value is fully withdrawn due to the withdrawal of the Target Retirement Sum,"
+          },
+          {
+            "page": 5,
+            "section": "Administrative charge and surrender charge",
+            "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+          },
+          {
+            "page": 6,
+            "section": "Partial withdrawal charge and premium shortfall charge",
+            "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) surrender charge and any other amount mentioned under “Policy Options” section on full surrender, will be paid to you. I"
+          },
+          {
+            "page": 8,
+            "section": "Regular income drawdown and policy options",
+            "excerpt": "6. Regular Income Drawdown You may apply to receive regular withdrawal from the policy on a monthly, quarterly, semi-annual or annual basis on or after the Target Retirement Age by submitting a written request to us. Any"
+          },
+          {
+            "page": 9,
+            "section": "Distribution of dividend",
+            "excerpt": "12. Distribution of Dividend If you choose to invest in any Fund(s) that pays dividends, you have the option to either reinvest or to receive payments of these dividends. The frequency of dividend distribution of the Fun"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-8-flexi-5",
+        "currency": "SGD",
+        "mipLength": 8,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.025,
+            "postMipFeeRate": 0.0075,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Retirement Sum. It does not offer any guarantee that your selected Target Retirement Sum will be achieved. It is dependent on the actual fund(s) performances meeting the illustrated investment rate of return. 100% of the"
+              },
+              {
+                "page": 5,
+                "section": "Administrative charge and surrender charge",
+                "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+              },
+              {
+                "page": 8,
+                "section": "Regular income drawdown and policy options",
+                "excerpt": "6. Regular Income Drawdown You may apply to receive regular withdrawal from the policy on a monthly, quarterly, semi-annual or annual basis on or after the Target Retirement Age by submitting a written request to us. Any"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published prevailing 0% top-up charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Regular income drawdown and policy options",
+                "excerpt": "6. Regular Income Drawdown You may apply to receive regular withdrawal from the policy on a monthly, quarterly, semi-annual or annual basis on or after the Target Retirement Age by submitting a written request to us. Any"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge",
+            "label": "Premium Shortfall Charge",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.4
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Models the published monthly premium shortfall charge before Flexi Start for the 8 Years Flexi 5 corridor.",
+              "Use a premium-holiday event to represent missed regular premiums after the grace period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Retirement Sum. It does not offer any guarantee that your selected Target Retirement Sum will be achieved. It is dependent on the actual fund(s) performances meeting the illustrated investment rate of return. 100% of the"
+              },
+              {
+                "page": 6,
+                "section": "Partial withdrawal charge and premium shortfall charge",
+                "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) surrender charge and any other amount mentioned under “Policy Options” section on full surrender, will be paid to you. I"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published MIP partial-withdrawal charge schedule for the 8 Years Flexi 5 corridor."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Administrative charge and surrender charge",
+                "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+              },
+              {
+                "page": 6,
+                "section": "Partial withdrawal charge and premium shortfall charge",
+                "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) surrender charge and any other amount mentioned under “Policy Options” section on full surrender, will be paid to you. I"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying funds may be reinvested or paid out in cash, subject to the product summary minimum payout amount.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 9,
+              "section": "Distribution of dividend",
+              "excerpt": "12. Distribution of Dividend If you choose to invest in any Fund(s) that pays dividends, you have the option to either reinvest or to receive payments of these dividends. The frequency of dividend distribution of the Fun"
+            }
+          ]
+        },
+        "eecTable": [
+          1,
+          1,
+          0.6,
+          0.5,
+          0.4,
+          0.3,
+          0.2,
+          0.1,
+          0
+        ],
+        "warnings": [
+          "8 Years Flexi 5 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
+          "Target Retirement Sum withdrawal, optional regular-income drawdown elections, hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, bonuses, and fund-level management charges remain outside the current engine.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+        ],
+        "unsupportedItems": [
+          "Target Retirement Sum withdrawal remains informational only and should be represented manually with withdrawal events if needed.",
+          "Optional regular-income drawdown elections remain informational only.",
+          "Death-benefit formulas and monthly COI deductions remain informational only because they switch from a 105%-of-paid-premium floor during MIP to a fixed basic-sum-insured corridor during accumulation and then stop at the target retirement age.",
+          "Waiver of Premium benefit on TPD and its separate COI table remain informational only.",
+          "Refund of Cost of Insurance at target retirement age remains informational only.",
+          "Welcome Bonus and Loyalty Bonus remain informational only.",
+          "Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.",
+          "Lapsing / reinstatement effects and benefit-payout handling remain informational only.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Fund-level management charges, fund switching, premium redirection, and automatic fund rebalancing remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description and death benefit",
+            "excerpt": "Retirement Sum. It does not offer any guarantee that your selected Target Retirement Sum will be achieved. It is dependent on the actual fund(s) performances meeting the illustrated investment rate of return. 100% of the"
+          },
+          {
+            "page": 3,
+            "section": "Target retirement sum and minimum premium",
+            "excerpt": "4. Payment of Target Retirement Sum You may request to withdraw the Target Retirement Sum on or after the Target Retirement Age. If the account value is fully withdrawn due to the withdrawal of the Target Retirement Sum,"
+          },
+          {
+            "page": 5,
+            "section": "Administrative charge and surrender charge",
+            "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+          },
+          {
+            "page": 6,
+            "section": "Partial withdrawal charge and premium shortfall charge",
+            "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) surrender charge and any other amount mentioned under “Policy Options” section on full surrender, will be paid to you. I"
+          },
+          {
+            "page": 8,
+            "section": "Regular income drawdown and policy options",
+            "excerpt": "6. Regular Income Drawdown You may apply to receive regular withdrawal from the policy on a monthly, quarterly, semi-annual or annual basis on or after the Target Retirement Age by submitting a written request to us. Any"
+          },
+          {
+            "page": 9,
+            "section": "Distribution of dividend",
+            "excerpt": "12. Distribution of Dividend If you choose to invest in any Fund(s) that pays dividends, you have the option to either reinvest or to receive payments of these dividends. The frequency of dividend distribution of the Fun"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-12-flexi-8",
+        "currency": "SGD",
+        "mipLength": 12,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.025,
+            "postMipFeeRate": 0.0075,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Retirement Sum. It does not offer any guarantee that your selected Target Retirement Sum will be achieved. It is dependent on the actual fund(s) performances meeting the illustrated investment rate of return. 100% of the"
+              },
+              {
+                "page": 5,
+                "section": "Administrative charge and surrender charge",
+                "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+              },
+              {
+                "page": 8,
+                "section": "Regular income drawdown and policy options",
+                "excerpt": "6. Regular Income Drawdown You may apply to receive regular withdrawal from the policy on a monthly, quarterly, semi-annual or annual basis on or after the Target Retirement Age by submitting a written request to us. Any"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published prevailing 0% top-up charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Regular income drawdown and policy options",
+                "excerpt": "6. Regular Income Drawdown You may apply to receive regular withdrawal from the policy on a monthly, quarterly, semi-annual or annual basis on or after the Target Retirement Age by submitting a written request to us. Any"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge",
+            "label": "Premium Shortfall Charge",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.7
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.3
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Models the published monthly premium shortfall charge before Flexi Start for the 12 Years Flexi 8 corridor.",
+              "Use a premium-holiday event to represent missed regular premiums after the grace period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Retirement Sum. It does not offer any guarantee that your selected Target Retirement Sum will be achieved. It is dependent on the actual fund(s) performances meeting the illustrated investment rate of return. 100% of the"
+              },
+              {
+                "page": 6,
+                "section": "Partial withdrawal charge and premium shortfall charge",
+                "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) surrender charge and any other amount mentioned under “Policy Options” section on full surrender, will be paid to you. I"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.7
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published MIP partial-withdrawal charge schedule for the 12 Years Flexi 8 corridor."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Administrative charge and surrender charge",
+                "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+              },
+              {
+                "page": 6,
+                "section": "Partial withdrawal charge and premium shortfall charge",
+                "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) surrender charge and any other amount mentioned under “Policy Options” section on full surrender, will be paid to you. I"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying funds may be reinvested or paid out in cash, subject to the product summary minimum payout amount.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 9,
+              "section": "Distribution of dividend",
+              "excerpt": "12. Distribution of Dividend If you choose to invest in any Fund(s) that pays dividends, you have the option to either reinvest or to receive payments of these dividends. The frequency of dividend distribution of the Fun"
+            }
+          ]
+        },
+        "eecTable": [
+          1,
+          1,
+          0.8,
+          0.7,
+          0.6,
+          0.5,
+          0.4,
+          0.3,
+          0.25,
+          0.2,
+          0.15,
+          0.1,
+          0
+        ],
+        "warnings": [
+          "12 Years Flexi 8 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
+          "Target Retirement Sum withdrawal, optional regular-income drawdown elections, hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, bonuses, and fund-level management charges remain outside the current engine.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+        ],
+        "unsupportedItems": [
+          "Target Retirement Sum withdrawal remains informational only and should be represented manually with withdrawal events if needed.",
+          "Optional regular-income drawdown elections remain informational only.",
+          "Death-benefit formulas and monthly COI deductions remain informational only because they switch from a 105%-of-paid-premium floor during MIP to a fixed basic-sum-insured corridor during accumulation and then stop at the target retirement age.",
+          "Waiver of Premium benefit on TPD and its separate COI table remain informational only.",
+          "Refund of Cost of Insurance at target retirement age remains informational only.",
+          "Welcome Bonus and Loyalty Bonus remain informational only.",
+          "Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.",
+          "Lapsing / reinstatement effects and benefit-payout handling remain informational only.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Fund-level management charges, fund switching, premium redirection, and automatic fund rebalancing remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description and death benefit",
+            "excerpt": "Retirement Sum. It does not offer any guarantee that your selected Target Retirement Sum will be achieved. It is dependent on the actual fund(s) performances meeting the illustrated investment rate of return. 100% of the"
+          },
+          {
+            "page": 3,
+            "section": "Target retirement sum and minimum premium",
+            "excerpt": "4. Payment of Target Retirement Sum You may request to withdraw the Target Retirement Sum on or after the Target Retirement Age. If the account value is fully withdrawn due to the withdrawal of the Target Retirement Sum,"
+          },
+          {
+            "page": 5,
+            "section": "Administrative charge and surrender charge",
+            "excerpt": "A. Administrative Charge An administrative charge is applicable to the account value and is charged on each policy monthiversary through cancelling of units from the Fund(s) during the policy term. The administrative cha"
+          },
+          {
+            "page": 6,
+            "section": "Partial withdrawal charge and premium shortfall charge",
+            "excerpt": "Approximate excerpt; keyword \"Premium Shortfall Charge\" not found on page. Manulife SmartRetire (V) surrender charge and any other amount mentioned under “Policy Options” section on full surrender, will be paid to you. I"
+          },
+          {
+            "page": 8,
+            "section": "Regular income drawdown and policy options",
+            "excerpt": "6. Regular Income Drawdown You may apply to receive regular withdrawal from the policy on a monthly, quarterly, semi-annual or annual basis on or after the Target Retirement Age by submitting a written request to us. Any"
+          },
+          {
+            "page": 9,
+            "section": "Distribution of dividend",
+            "excerpt": "12. Distribution of Dividend If you choose to invest in any Fund(s) that pays dividends, you have the option to either reinvest or to receive payments of these dividends. The frequency of dividend distribution of the Fun"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "etiqa-invest-flex-prime-ii",
     "insurer": "Etiqa",
     "productName": "Invest flex prime II",
