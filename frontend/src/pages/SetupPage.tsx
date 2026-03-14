@@ -269,24 +269,13 @@ const SCREENS: (NudgeFlowScreen & {
     planTypes: ['couple', 'household'],
   },
   // Screen 15: Dependents (couple/household only)
+  // This screen uses a custom renderer — the static fields are just the toggle.
+  // The dynamic dependent list is handled by SetupPage's DependentsList component.
   {
     id: 'dependents',
     title: 'Do you have dependents?',
     fields: [
-      { name: 'hasDependents', label: 'I have dependents (children, elderly parents, etc.)', type: 'toggle' },
-      { name: 'dependent1Name', label: "Dependent's name", type: 'text' },
-      { name: 'dependent1Age', label: "Dependent's age", type: 'number' },
-      {
-        name: 'dependent1Relationship',
-        label: 'Relationship',
-        type: 'select',
-        options: [
-          { value: 'child', label: 'Child' },
-          { value: 'parent', label: 'Parent' },
-          { value: 'sibling', label: 'Sibling' },
-          { value: 'other', label: 'Other' },
-        ],
-      },
+      { name: 'hasDependents', label: 'I have dependents (children, elderly parents, etc.)', type: 'toggle', helperText: 'Children, elderly parents, or anyone you financially support.' },
     ],
     planTypes: ['couple', 'household'],
   },
@@ -357,9 +346,7 @@ const INITIAL_VALUES: Record<string, unknown> = {
   jointMonthlyExpenses: 0,
   // Dependents defaults
   hasDependents: false,
-  dependent1Name: '',
-  dependent1Age: 0,
-  dependent1Relationship: 'child',
+  dependentsList: [] as Array<{ name: string; age: number; relationship: string }>,
 }
 
 // ---------------------------------------------------------------------------
@@ -408,11 +395,9 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
 
     // Dependents (screen 15)
     if (values.hasDependents) {
-      const dep1Name = values.dependent1Name as string
-      const dep1Age = values.dependent1Age as number
-      const dep1Rel = values.dependent1Relationship as string
-      if (dep1Name || dep1Age > 0) {
-        draft.dependents = [{ name: dep1Name, age: dep1Age, relationship: dep1Rel }]
+      const list = values.dependentsList as Array<{ name: string; age: number; relationship: string }> | undefined
+      if (list && list.length > 0) {
+        draft.dependents = list.filter(d => d.name || d.age > 0)
       }
     }
   }
@@ -585,6 +570,8 @@ export function SetupPage() {
     [visibleScreenDefs, activeScreenIndices],
   )
 
+  const completingRef = useRef(false)
+
   const handleConfirm = useCallback(() => {
     const draft = draftFromValues(state.values, planType, isRedo)
 
@@ -608,13 +595,17 @@ export function SetupPage() {
     setUIField('setupCompleted', true)
     setUIField('setupPopulatedSections', derivePopulatedSections(state.values))
 
+    // Disable blocker before navigating
+    completingRef.current = true
     trackEvent('setup_completed', { planType, isRedo, pathway: sectionOrder })
     navigate('/projection')
   }, [state.values, planType, isRedo, sectionOrder, setUIField, navigate])
 
   // SPA navigation guard for couple/household flows with progress
+  // Disabled when completing setup (navigating to /projection intentionally)
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
+      !completingRef.current &&
       planType !== 'individual' &&
       state.screenIndex > 0 &&
       currentLocation.pathname !== nextLocation.pathname
@@ -661,18 +652,102 @@ export function SetupPage() {
 
   const isFirstScreen = currentActivePosition === 0
 
+  const isDependentsScreen = currentScreen.id === 'dependents'
+  const hasDependents = state.values.hasDependents as boolean
+  const dependentsList = (state.values.dependentsList as Array<{ name: string; age: number; relationship: string }>) ?? []
+
   return (
-    <SetupScreen
-      screen={currentScreen}
-      values={state.values}
-      onChange={handleChange}
-      onNext={handleNext}
-      onBack={isFirstScreen ? undefined : handleBack}
-      currentStep={currentActivePosition + 1}
-      totalSteps={totalSteps}
-      submitLabel={
-        currentActivePosition === totalSteps - 1 ? 'Review your answers' : 'Continue'
-      }
-    />
+    <div className="flex flex-col gap-6">
+      <SetupScreen
+        screen={currentScreen}
+        values={state.values}
+        onChange={handleChange}
+        onNext={handleNext}
+        onBack={isFirstScreen ? undefined : handleBack}
+        currentStep={currentActivePosition + 1}
+        totalSteps={totalSteps}
+        submitLabel={
+          currentActivePosition === totalSteps - 1 ? 'Review your answers' : 'Continue'
+        }
+      />
+
+      {/* Dynamic dependents list — rendered below SetupScreen when on dependents screen */}
+      {isDependentsScreen && hasDependents && (
+        <div className="flex flex-col gap-4 -mt-2">
+          {dependentsList.map((dep, i) => (
+            <div key={i} className="rounded-lg border p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Dependent {i + 1}</p>
+                <button
+                  type="button"
+                  className="text-xs text-destructive hover:underline"
+                  onClick={() => {
+                    const updated = dependentsList.filter((_, j) => j !== i)
+                    handleChange('dependentsList', updated)
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm">Name</label>
+                <input
+                  type="text"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                  value={dep.name}
+                  onChange={(e) => {
+                    const updated = [...dependentsList]
+                    updated[i] = { ...dep, name: e.target.value }
+                    handleChange('dependentsList', updated)
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm">Age</label>
+                <input
+                  type="number"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                  value={dep.age}
+                  onChange={(e) => {
+                    const updated = [...dependentsList]
+                    updated[i] = { ...dep, age: parseInt(e.target.value) || 0 }
+                    handleChange('dependentsList', updated)
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm">Relationship</label>
+                <select
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                  value={dep.relationship}
+                  onChange={(e) => {
+                    const updated = [...dependentsList]
+                    updated[i] = { ...dep, relationship: e.target.value }
+                    handleChange('dependentsList', updated)
+                  }}
+                >
+                  <option value="child">Child</option>
+                  <option value="parent">Parent</option>
+                  <option value="sibling">Sibling</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="w-full rounded-md border border-dashed border-muted-foreground/40 py-2 text-sm text-muted-foreground hover:bg-muted/50"
+            onClick={() => {
+              handleChange('dependentsList', [
+                ...dependentsList,
+                { name: '', age: 0, relationship: 'child' },
+              ])
+            }}
+          >
+            + Add dependent
+          </button>
+        </div>
+      )}
+    </div>
   )
 }

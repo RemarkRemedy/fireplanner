@@ -157,11 +157,11 @@ export function ReviewCheckpoint({ draft, onConfirm, onEdit, validationError }: 
         {categories.map((category) => (
           <Card key={category.key}>
             <CardContent className="pt-4">
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-3">
                 <StatusIcon status={category.status} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium leading-none">{category.label}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{category.detail}</p>
+                  <p className="text-sm font-medium">{category.label}</p>
+                  <p className="text-xs text-muted-foreground">{category.detail}</p>
                 </div>
                 {category.status !== 'not-applicable' && (
                   <Button
