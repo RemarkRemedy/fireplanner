@@ -1,11 +1,11 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 
-const STANDARD_FONT_DATA_URL = `${pathToFileURL(
-  path.resolve(import.meta.dirname, '../../../node_modules/pdfjs-dist/standard_fonts'),
-).href}/`
+const STANDARD_FONT_DATA_PATH = `${path.resolve(
+  import.meta.dirname,
+  '../../../node_modules/pdfjs-dist/standard_fonts',
+)}${path.sep}`
 
 export interface ExtractedPdfLine {
   y: number
@@ -85,7 +85,7 @@ export async function extractPdfText(filePath: string): Promise<ExtractedPdfDocu
     data,
     useWorkerFetch: false,
     isEvalSupported: false,
-    standardFontDataUrl: STANDARD_FONT_DATA_URL,
+    standardFontDataUrl: STANDARD_FONT_DATA_PATH,
   })
   const pdf = await loadingTask.promise
   const pages: ExtractedPdfPage[] = []
