@@ -77,7 +77,7 @@ const CPF_AGE_SPLIT: CpfAgeBracket[] = [
   { maxAge: 34, oa: 0.60, sa: 0.20, ma: 0.20, ra: 0 },
   { maxAge: 45, oa: 0.55, sa: 0.25, ma: 0.20, ra: 0 },
   { maxAge: 50, oa: 0.50, sa: 0.25, ma: 0.25, ra: 0 },
-  { maxAge: 55, oa: 0.40, sa: 0.30, ma: 0.30, ra: 0 },
+  { maxAge: 54, oa: 0.40, sa: 0.30, ma: 0.30, ra: 0 },
   { maxAge: Infinity, oa: 0.10, sa: 0.10, ma: 0, ra: 0.80 },
 ]
 

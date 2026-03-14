@@ -90,6 +90,16 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
 
       const propertyUpdates: Record<string, unknown> = {}
 
+      if (typeof values.propertyType === 'string') {
+        propertyUpdates.propertyType = values.propertyType
+      }
+      if (typeof values.leaseTenure === 'string') {
+        // 'freehold' maps to 999 years; numeric strings map directly
+        const leaseYears = values.leaseTenure === 'freehold' ? 999 : parseInt(values.leaseTenure as string, 10)
+        if (!isNaN(leaseYears)) {
+          propertyUpdates.existingLeaseYears = leaseYears
+        }
+      }
       if (typeof values.propertyValue === 'number') {
         propertyUpdates.existingPropertyValue = values.propertyValue
       }
@@ -215,6 +225,19 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       store.updateAdult(selfAdult.id, {
         healthcare: healthcareUpdates as HealthcareConfig,
       })
+
+      // mediSaveBalance maps to CPF MA balance (MediSave is the MA account)
+      if (typeof values.mediSaveBalance === 'number') {
+        store.updateAdult(selfAdult.id, {
+          cpf: {
+            ...selfAdult.cpf,
+            balances: {
+              ...selfAdult.cpf.balances,
+              ma: values.mediSaveBalance,
+            },
+          },
+        })
+      }
       break
     }
 
@@ -314,6 +337,19 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         if (template) {
           useAllocationStore.getState().applyTemplate(template)
         }
+      }
+
+      // Wire glide path config fields
+      if (typeof values.enableGlidePath === 'boolean') {
+        const allocationState = useAllocationStore.getState()
+        const currentGlidePathConfig = allocationState.glidePathConfig
+        const updatedConfig = {
+          ...currentGlidePathConfig,
+          enabled: values.enableGlidePath,
+          ...(typeof values.glidePathStartAge === 'number' ? { startAge: values.glidePathStartAge } : {}),
+          ...(typeof values.glidePathEndAge === 'number' ? { endAge: values.glidePathEndAge } : {}),
+        }
+        allocationState.setGlidePathConfig(updatedConfig)
       }
       break
     }

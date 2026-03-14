@@ -18,11 +18,29 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
   const currentSnapshot = useMetricsSnapshot()
   const beforeSnapshotRef = useRef<MetricsSnapshot | null>(null)
   const pendingCompletion = useRef<{ flowId: NudgeFlowId; before: MetricsSnapshot } | null>(null)
+  const drawerRef = useRef<HTMLDivElement>(null)
 
   const [stepIndex, setStepIndex] = useState(0)
   const [values, setValues] = useState<Record<string, unknown>>({})
 
   const setField = useUIStore((s) => s.setField)
+
+  // Escape key handler to close drawer
+  useEffect(() => {
+    if (!flowId) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [flowId, onClose])
+
+  // Focus drawer panel when it opens
+  useEffect(() => {
+    if (flowId && drawerRef.current) {
+      drawerRef.current.focus()
+    }
+  }, [flowId])
 
   // Capture before-snapshot and reset state when drawer opens or flowId changes
   useEffect(() => {
@@ -134,7 +152,7 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
       />
 
       {/* Panel */}
-      <div className="relative ml-auto flex h-full w-full max-w-md flex-col bg-background shadow-xl">
+      <div ref={drawerRef} tabIndex={-1} className="relative ml-auto flex h-full w-full max-w-md flex-col bg-background shadow-xl outline-none">
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
           <div>

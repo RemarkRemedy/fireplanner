@@ -83,10 +83,13 @@ export function ProjectionPage() {
     if (deltaProcessed.current || !location.state?.showDelta) return
     const stored = sessionStorage.getItem('fireplanner-delta-before')
     if (!stored) return
-    if (currentSnapshot.fireAge === null && currentSnapshot.fireNumber === null) return
+
+    const { fireAge, fireNumber, timestamp } = JSON.parse(stored) as { fireAge: number | null; fireNumber: number | null; timestamp: number }
+    const beforeHasData = fireAge !== null || fireNumber !== null
+    const afterHasData = currentSnapshot.fireAge !== null || currentSnapshot.fireNumber !== null
+    if (!beforeHasData && !afterHasData) return // no data at all, skip
 
     deltaProcessed.current = true
-    const { fireAge, fireNumber, timestamp } = JSON.parse(stored)
     if (Date.now() - timestamp < 30 * 60 * 1000) {
       const before: MetricsSnapshot = { fireAge, fireNumber }
       const flow = NUDGE_FLOWS.find(f => f.id === location.state.flowId)
@@ -127,6 +130,7 @@ export function ProjectionPage() {
   const simSelectedStrategy = useSimulationStore((s) => s.selectedStrategy)
   const simStrategyParams = useSimulationStore((s) => s.strategyParams)
   const simWithdrawalBasis = useSimulationStore((s) => s.withdrawalBasis)
+  const hasRunMC = useSimulationStore((s) => s.lastMCSuccessRate !== null)
   const simulation = {
     selectedStrategy: simSelectedStrategy,
     strategyParams: simStrategyParams,
@@ -548,7 +552,7 @@ export function ProjectionPage() {
               key={i}
               summary={delta}
               onDismiss={() => setDeltaStack(prev => prev.filter((_, j) => j !== i))}
-              showMcNote={false}
+              showMcNote={hasRunMC}
             />
           ))}
         </div>

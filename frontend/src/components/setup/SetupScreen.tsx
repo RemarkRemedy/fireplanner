@@ -149,6 +149,7 @@ export function SetupScreen({
           </span>
         </div>
         <progress
+          aria-label="Setup progress"
           value={currentStep}
           max={totalSteps}
           aria-valuenow={currentStep}

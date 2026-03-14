@@ -565,14 +565,21 @@ export function SetupPage() {
       // don't map 1:1 to SCREENS indices. Find the best matching screen.
       const targetIds = ['income-toggle', 'expenses', 'cpf', 'property-toggle', 'healthcare-toggle', 'partner-name']
       const targetId = targetIds[screenIndex]
-      const matchIdx = visibleScreenDefs.findIndex((s) => s.id === targetId)
-      if (matchIdx !== -1) {
-        dispatch({ type: 'GO_TO', index: matchIdx })
+      const targetIndex = visibleScreenDefs.findIndex((s) => s.id === targetId)
+      const resolvedIndex = targetIndex !== -1 ? targetIndex : 0
+
+      // Walk back to the nearest non-skipped screen to avoid landing on a skipped screen
+      let safeIndex = resolvedIndex
+      while (safeIndex >= 0 && !activeScreenIndices.includes(safeIndex)) {
+        safeIndex--
+      }
+      if (safeIndex >= 0) {
+        dispatch({ type: 'GO_TO', index: safeIndex })
       } else {
-        dispatch({ type: 'GO_TO', index: 0 })
+        dispatch({ type: 'GO_TO', index: activeScreenIndices[0] ?? 0 })
       }
     },
-    [visibleScreenDefs],
+    [visibleScreenDefs, activeScreenIndices],
   )
 
   const handleConfirm = useCallback(() => {
@@ -623,6 +630,7 @@ export function SetupPage() {
     if (planType === 'individual') return
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault()
+      e.returnValue = '' // Required by Chrome/Firefox
     }
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)
