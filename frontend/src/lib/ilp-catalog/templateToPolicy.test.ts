@@ -1529,6 +1529,50 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current premium bases'))).toBe(true)
   })
 
+  it('maps ManuInvest Duo into a partial seed with protected-base assurance support', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'manulife-manuinvest-duo')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manuinvest-duo-premium-flexibility-benefit')
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.mipLength).toBe(10)
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'policy',
+        feeRate: 0.05,
+        postMipFeeRate: 0.01,
+      }),
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'cost-of-insurance',
+        basis: 'assurance-sum-at-risk',
+        assuranceConfig: expect.objectContaining({
+          formula: 'manulife-manuinvest-duo-death-ti-tpd',
+          monthlyModalFactor: 1 / 12,
+        }),
+        requiresManualInput: true,
+      }),
+    ])
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        basis: 'event-amount',
+        rate: 0,
+      }),
+    ])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('current sum insured'))).toBe(true)
+  })
+
   it('maps AIA Elite Secure Income - Single Premium into a partial seed with manual scheduled-payout support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'aia-elite-secure-income-single-premium')

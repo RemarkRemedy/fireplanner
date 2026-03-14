@@ -9289,6 +9289,196 @@
     ]
   },
   {
+    "id": "manulife-manuinvest-duo",
+    "insurer": "Manulife Singapore",
+    "productName": "ManuInvest Duo",
+    "sourceFileName": "WA_MID01_PdtSum.pdf",
+    "sourceChecksumSha256": "2f0ce16b099d6acfab82b1392cfec23eb5df34bea32a0ab29fd52ed42fffa1ae",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "kernel:protected-base-assurance",
+      "branch:manuinvest-duo-administrative-charge",
+      "branch:manuinvest-duo-zero-top-up-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "manuinvest-duo-welcome-bonus",
+      "manuinvest-duo-loyalty-bonus",
+      "manuinvest-duo-premium-shortfall-charge",
+      "manuinvest-duo-premium-flexibility-benefit",
+      "manuinvest-duo-partial-withdrawal-charge",
+      "manuinvest-duo-surrender-charge",
+      "manuinvest-duo-benefit-payout-handling",
+      "manuinvest-duo-fund-management-charge",
+      "manuinvest-duo-fund-switching-and-redirection",
+      "manuinvest-duo-sum-insured-change",
+      "manuinvest-duo-life-insured-change"
+    ],
+    "warnings": [
+      "ManuInvest Duo is cataloged as a partial modeled subset in V1. The parser captures the published 10-year MIP administration-charge path, the protected-base death / TI / TPD cost-of-insurance formula after you enter insured-life details and current sum insured, and the prevailing 0% top-up charge, while bonus mechanics, premium-flexibility shortfall behavior, withdrawal / surrender charges, and fund-level charges remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-10",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.05,
+            "postMipFeeRate": 0.01,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "ManuInvest Duo is a regular-premium investment-linked plan that is designed to give you the dual benefits of insurance cover and investment opportunities. It also gives you the flexibility to choose your own protection c"
+              },
+              {
+                "page": 5,
+                "section": "COI and administrative charge",
+                "excerpt": "1. Cost of Insurance The cost of insurance is levied on the policy on a monthly basis by cancelling units of your fund(s) to provide for the insurance coverage. The cost of insurance is based on the attained age, gender,"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium option",
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of a regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. "
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "cost-of-insurance",
+            "label": "Cost of Insurance (Death / TI / TPD)",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "manulife-manuinvest-duo-death-ti-tpd",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details plus the current sum insured before the calculator can model the annualised cost of insurance.",
+              "Models the published death / terminal illness / TPD NAAR formula of [sum insured less partial withdrawals] less account value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "ManuInvest Duo is a regular-premium investment-linked plan that is designed to give you the dual benefits of insurance cover and investment opportunities. It also gives you the flexibility to choose your own protection c"
+              },
+              {
+                "page": 5,
+                "section": "COI and administrative charge",
+                "excerpt": "1. Cost of Insurance The cost of insurance is levied on the policy on a monthly basis by cancelling units of your fund(s) to provide for the insurance coverage. The cost of insurance is based on the attained age, gender,"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published prevailing 0% top-up charge for the selected 10-year MIP corridor."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Top-up premium option",
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of a regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. "
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "ManuInvest Duo is cataloged as a partial modeled subset in V1. The parser captures the 10-year MIP corridor: the published 5.00% / 1.00% administration-charge path, the protected-base cost-of-insurance formula after you enter insured-life details and current sum insured, and the prevailing 0% top-up charge.",
+          "Premium shortfall charging remains metadata-only because Premium Flexibility Benefit waives the published shortfall charge up to a cumulative missed-premium limit that the current event kernel does not yet track.",
+          "Welcome Bonus, Loyalty Bonus, surrender / partial-withdrawal charges, and fund-level management charges remain outside the current engine."
+        ],
+        "unsupportedItems": [
+          "Death, terminal-illness, and TPD benefit payout handling remain informational only beyond the modeled cost-of-insurance deduction.",
+          "Welcome Bonus and Loyalty Bonus remain informational only.",
+          "Premium shortfall charge and Premium Flexibility Benefit remain informational only because they depend on a cumulative missed-premium allowance ledger.",
+          "Full-surrender and partial-withdrawal charge schedules remain informational only, including the S$50 withdrawal-floor rule and withdrawal-flexibility threshold.",
+          "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
+          "Fund-switching, premium redirection, automatic rebalancing, and payment-mode changes remain informational only.",
+          "Change-of-sum-insured and change-of-life-insured options remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description and death benefit",
+            "excerpt": "ManuInvest Duo is a regular-premium investment-linked plan that is designed to give you the dual benefits of insurance cover and investment opportunities. It also gives you the flexibility to choose your own protection c"
+          },
+          {
+            "page": 5,
+            "section": "COI and administrative charge",
+            "excerpt": "1. Cost of Insurance The cost of insurance is levied on the policy on a monthly basis by cancelling units of your fund(s) to provide for the insurance coverage. The cost of insurance is based on the attained age, gender,"
+          },
+          {
+            "page": 7,
+            "section": "Premium shortfall charge and management charge",
+            "excerpt": "5. Premium Shortfall Charge If you miss paying regular basic premium during the Minimum Investment Period, we will apply a premium shortfall charge on a monthly basis starting from the first working day after the end of "
+          },
+          {
+            "page": 8,
+            "section": "Top-up premium option",
+            "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of a regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. "
+          },
+          {
+            "page": 9,
+            "section": "Premium Flexibility Benefit and withdrawals",
+            "excerpt": "6. Premium Flexibility Benefit th Starting from 6 policy year until the end of Minimum Investment Period, Premium Flexibility Benefit will be activated automatically when regular premium is not paid within the grace peri"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "manulife-manulink-investor-ii",
     "insurer": "Manulife Singapore",
     "productName": "Manulink Investor (II)",

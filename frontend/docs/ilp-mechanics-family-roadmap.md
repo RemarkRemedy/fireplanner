@@ -47,7 +47,7 @@ The planning model has three layers:
 ## Current Baseline
 
 - Summary corpus baseline: `92`
-- Current catalog products: `56`
+- Current catalog products: `57`
 - Current `supported` products: `6`
 - Structural family counts from the classifier:
   - `58` standard 2-account core cashflow
