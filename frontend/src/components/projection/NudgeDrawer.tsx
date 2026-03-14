@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { SetupScreen, shouldSkipScreen } from '@/components/setup/SetupScreen'
-import { getNudgeFlow } from '@/lib/data/nudgeFlows'
+import { getNudgeFlow, NUDGE_FLOWS } from '@/lib/data/nudgeFlows'
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
 import { computeDelta } from '@/lib/calculations/metricsSnapshot'
 import type { DeltaSummary, MetricsSnapshot } from '@/lib/calculations/metricsSnapshot'
 import { useMetricsSnapshot } from '@/hooks/useMetricsSnapshot'
 import { useUIStore } from '@/stores/useUIStore'
+import { applyFlowValues } from '@/lib/household/applyFlowValues'
 
 interface NudgeDrawerProps {
   flowId: NudgeFlowId | null
@@ -16,11 +17,11 @@ interface NudgeDrawerProps {
 export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
   const currentSnapshot = useMetricsSnapshot()
   const beforeSnapshotRef = useRef<MetricsSnapshot | null>(null)
+  const pendingCompletion = useRef<{ flowId: NudgeFlowId; before: MetricsSnapshot } | null>(null)
 
   const [stepIndex, setStepIndex] = useState(0)
   const [values, setValues] = useState<Record<string, unknown>>({})
 
-  const completedNudgeFlows = useUIStore((s) => s.completedNudgeFlows)
   const setField = useUIStore((s) => s.setField)
 
   // Capture before-snapshot and reset state when drawer opens or flowId changes
@@ -28,22 +29,53 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
     if (flowId !== null) {
       beforeSnapshotRef.current = currentSnapshot
       setStepIndex(0)
-      setValues({})
+
+      // Seed toggle fields with explicit false so skipWhen logic works
+      const flow = NUDGE_FLOWS.find((f) => f.id === flowId)
+      if (flow) {
+        const defaults: Record<string, unknown> = {}
+        for (const screen of flow.screens) {
+          for (const field of screen.fields) {
+            if (field.type === 'toggle') defaults[field.name] = false
+          }
+        }
+        setValues(defaults)
+      } else {
+        setValues({})
+      }
     } else {
       // Drawer closed: reset
       beforeSnapshotRef.current = null
       setStepIndex(0)
       setValues({})
     }
-    // currentSnapshot intentionally excluded — only capture on open
+    // currentSnapshot intentionally excluded -- only capture on open
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flowId])
+
+  // Deferred delta computation: after applyFlowValues updates the store,
+  // the snapshot updates on the next render cycle, at which point we compute the delta.
+  const onCompleteRef = useRef(onComplete)
+  onCompleteRef.current = onComplete
+
+  useEffect(() => {
+    if (!pendingCompletion.current) return
+    const { flowId: completedId, before } = pendingCompletion.current
+    const flow = NUDGE_FLOWS.find((f) => f.id === completedId)
+    if (!flow) return
+    const delta = computeDelta(before, currentSnapshot, flow.label, flow.explanation)
+    pendingCompletion.current = null
+    beforeSnapshotRef.current = null
+    setStepIndex(0)
+    setValues({})
+    onCompleteRef.current(delta)
+  }, [currentSnapshot])
 
   const flow = flowId !== null ? getNudgeFlow(flowId) : undefined
 
   if (!flow || flowId === null) {
     if (flowId === null) return null
-    // flowId set but no matching flow — close gracefully
+    // flowId set but no matching flow -- close gracefully
     return null
   }
 
@@ -62,27 +94,17 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
 
   function handleNext() {
     if (isLastStep) {
-      // TODO: Apply flow-specific values to household plan store.
-      // Task 11 will implement the full `applyFlowValues` pattern that both
-      // drawer and full-page flows share. Insert call here:
-      //   applyFlowValues(flowId, values)
+      // Apply flow values to the store
+      applyFlowValues(flowId, values)
 
       // Mark flow as completed in UIStore
-      if (!completedNudgeFlows.includes(flowId)) {
-        setField('completedNudgeFlows', [...completedNudgeFlows, flowId])
+      const completed = useUIStore.getState().completedNudgeFlows
+      if (!completed.includes(flowId)) {
+        setField('completedNudgeFlows', [...completed, flowId])
       }
 
-      // Compute delta
-      const after = currentSnapshot
-      const before = beforeSnapshotRef.current ?? after
-      const delta = computeDelta(before, after, flow.label, flow.explanation)
-
-      // Reset local state
-      setStepIndex(0)
-      setValues({})
-      beforeSnapshotRef.current = null
-
-      onComplete(delta)
+      // Store pending completion so the useEffect computes delta after store update
+      pendingCompletion.current = { flowId, before: beforeSnapshotRef.current! }
     } else {
       setStepIndex((prev) => prev + 1)
     }
