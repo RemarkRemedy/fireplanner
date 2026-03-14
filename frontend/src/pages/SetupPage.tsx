@@ -31,9 +31,27 @@ const SCREENS: (NudgeFlowScreen & {
     fields: [
       { name: 'currentAge', label: 'Current age', type: 'number', required: true },
       { name: 'retirementAge', label: 'Desired retirement age', type: 'number', required: true },
+      {
+        name: 'retirementPhase',
+        label: 'Retirement phase',
+        type: 'select',
+        options: [
+          { value: 'before-55', label: 'Before 55 (pre-CPF LIFE)' },
+          { value: '55-to-64', label: '55 to 64 (CPF drawdown phase)' },
+          { value: '65-plus', label: '65 and above (CPF LIFE payouts active)' },
+        ],
+      },
     ],
   },
-  // Screen 2: Income
+  // Screen 2a: Income toggle (already-FIRE pathway: income may be optional)
+  {
+    id: 'income-toggle',
+    title: 'Do you still earn income?',
+    fields: [
+      { name: 'hasIncome', label: 'I still earn employment or business income', type: 'toggle' },
+    ],
+  },
+  // Screen 2b: Income details (skip if hasIncome is false)
   {
     id: 'income',
     title: 'What do you earn?',
@@ -50,6 +68,7 @@ const SCREENS: (NudgeFlowScreen & {
         required: true,
       },
     ],
+    skipWhen: { field: 'hasIncome', equals: false },
   },
   // Screen 3: Expenses
   {
@@ -245,6 +264,28 @@ const SCREENS: (NudgeFlowScreen & {
     ],
     planTypes: ['couple', 'household'],
   },
+  // Screen 15: Dependents (couple/household only)
+  {
+    id: 'dependents',
+    title: 'Do you have dependents?',
+    fields: [
+      { name: 'hasDependents', label: 'I have dependents (children, elderly parents, etc.)', type: 'toggle' },
+      { name: 'dependent1Name', label: "Dependent's name", type: 'text' },
+      { name: 'dependent1Age', label: "Dependent's age", type: 'number' },
+      {
+        name: 'dependent1Relationship',
+        label: 'Relationship',
+        type: 'select',
+        options: [
+          { value: 'child', label: 'Child' },
+          { value: 'parent', label: 'Parent' },
+          { value: 'sibling', label: 'Sibling' },
+          { value: 'other', label: 'Other' },
+        ],
+      },
+    ],
+    planTypes: ['couple', 'household'],
+  },
 ]
 
 // ---------------------------------------------------------------------------
@@ -281,6 +322,8 @@ function setupReducer(state: SetupState, action: SetupAction): SetupState {
 const INITIAL_VALUES: Record<string, unknown> = {
   currentAge: 30,
   retirementAge: 55,
+  retirementPhase: 'before-55',
+  hasIncome: true,
   annualIncome: 72000,
   incomeType: 'gross',
   annualExpenses: 48000,
@@ -308,6 +351,11 @@ const INITIAL_VALUES: Record<string, unknown> = {
   partnerCpfKnown: false,
   partnerCpfTotal: 0,
   jointMonthlyExpenses: 0,
+  // Dependents defaults
+  hasDependents: false,
+  dependent1Name: '',
+  dependent1Age: 0,
+  dependent1Relationship: 'child',
 }
 
 // ---------------------------------------------------------------------------
@@ -315,11 +363,12 @@ const INITIAL_VALUES: Record<string, unknown> = {
 // ---------------------------------------------------------------------------
 
 function draftFromValues(values: Record<string, unknown>, planType: HouseholdPlanType, isRedo: boolean): SetupDraft {
+  const hasIncome = values.hasIncome !== false
   const draft: SetupDraft = {
     currentAge: values.currentAge as number,
     retirementAge: values.retirementAge as number,
-    annualIncome: values.annualIncome as number,
-    incomeType: values.incomeType as 'gross' | 'take-home',
+    annualIncome: hasIncome ? (values.annualIncome as number) : 0,
+    incomeType: hasIncome ? (values.incomeType as 'gross' | 'take-home') : 'gross',
     annualExpenses: values.annualExpenses as number,
     liquidNetWorth: values.liquidNetWorth as number,
     residency: values.residency as 'citizen' | 'pr' | 'foreigner',
@@ -334,6 +383,7 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
     healthcareEnabled: values.healthcareEnabled as boolean,
     ispTier: values.healthcareEnabled ? (values.ispTier as 'none' | 'basic' | 'enhanced') : undefined,
     lifeStage: 'pre-fire',
+    retirementPhase: values.retirementPhase as 'before-55' | '55-to-64' | '65-plus' | undefined,
     isRedo,
   }
 
@@ -351,6 +401,16 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
       cpfTotal: values.partnerCpfKnown ? (values.partnerCpfTotal as number) : undefined,
     }
     draft.jointMonthlyExpenses = values.jointMonthlyExpenses as number
+
+    // Dependents (screen 15)
+    if (values.hasDependents) {
+      const dep1Name = values.dependent1Name as string
+      const dep1Age = values.dependent1Age as number
+      const dep1Rel = values.dependent1Relationship as string
+      if (dep1Name || dep1Age > 0) {
+        draft.dependents = [{ name: dep1Name, age: dep1Age, relationship: dep1Rel }]
+      }
+    }
   }
 
   return draft
@@ -360,6 +420,8 @@ function hydrateDraftToValues(draft: SetupDraft): Record<string, unknown> {
   const values: Record<string, unknown> = {
     currentAge: draft.currentAge,
     retirementAge: draft.retirementAge,
+    retirementPhase: draft.retirementPhase ?? 'before-55',
+    hasIncome: draft.annualIncome > 0,
     annualIncome: draft.annualIncome,
     incomeType: draft.incomeType,
     annualExpenses: draft.annualExpenses,
@@ -499,7 +561,7 @@ export function SetupPage() {
       // Map review category screenIndex to a visible screen. The review
       // checkpoint uses category indices (0=income, 1=expenses, etc.) that
       // don't map 1:1 to SCREENS indices. Find the best matching screen.
-      const targetIds = ['income', 'expenses', 'cpf', 'property-toggle', 'healthcare-toggle', 'partner-name']
+      const targetIds = ['income-toggle', 'expenses', 'cpf', 'property-toggle', 'healthcare-toggle', 'partner-name']
       const targetId = targetIds[screenIndex]
       const matchIdx = visibleScreenDefs.findIndex((s) => s.id === targetId)
       if (matchIdx !== -1) {
