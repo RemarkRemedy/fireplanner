@@ -88,14 +88,14 @@ function makePartner(base: PlanningAdult): PlanningAdult {
 
 const NO_DOWNSIZING: DownsizingConfig = {
   scenario: 'none',
-  targetAge: 65,
-  targetPropertyType: 'condo',
-  targetPurchasePrice: 0,
-  targetLeaseYears: 99,
-  renovationCosts: 0,
-  targetAppreciationRate: 0.02,
-  targetRentalYield: 0,
-  reinvestPercent: 0.8,
+  sellAge: 65,
+  expectedSalePrice: 0,
+  newPropertyCost: 0,
+  newMortgageRate: 0,
+  newMortgageTerm: 25,
+  newLtv: 0,
+  monthlyRent: 0,
+  rentGrowthRate: 0,
 }
 
 function makeProperty(overrides: Partial<PropertyPlan> = {}): PropertyPlan {
@@ -444,7 +444,7 @@ describe('useHealthCheckInputs', () => {
           timing: { kind: 'age-range', owner: 'partner', startAge: 33, endAge: null },
           annualAmount: 84_000,
           growthRate: 0.03,
-          growthModel: 'nominal',
+          growthModel: 'fixed',
           taxTreatment: 'taxable',
           isCpfApplicable: true,
           isActive: true,
