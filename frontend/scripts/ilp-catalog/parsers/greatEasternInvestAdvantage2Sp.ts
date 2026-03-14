@@ -3,7 +3,6 @@ import type {
   IlpCatalogProduct,
   IlpCatalogSourceRef,
   IlpTemplateEventChargeRule,
-  IlpTemplateFeeRule,
   IlpTemplateVariant,
 } from '../../../src/lib/ilp-catalog/types.js'
 import type { ExtractedPdfDocument } from '../pdf/extractPdfText.js'
@@ -42,23 +41,6 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page1 = sourceRef(1, 'Plan overview', snippetNear(document, 1, 'About your plan'))
   const page2 = sourceRef(2, 'Premium charge and top-ups', snippetNear(document, 2, 'Premium charge', 18))
   const page3 = sourceRef(3, 'Partial and full surrender', snippetNear(document, 3, 'Partial surrender', 18))
-
-  const feeRules: IlpTemplateFeeRule[] = [
-    {
-      id: 'single-premium-charge',
-      label: 'Single Premium Charge (Cash / SRS)',
-      basis: 'annual-contribution',
-      rate: 0.03,
-      amount: 0,
-      appliesTo: ['policy'],
-      activeWindow: 'policy-term',
-      notes: [
-        'Applies a 3% premium charge to the single premium when paid in cash or through SRS.',
-        'The same published premium-charge table also applies to accepted single premium top-ups.',
-      ],
-      sourceRefs: [page2],
-    },
-  ]
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
     {
@@ -99,14 +81,15 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       },
     ],
     bonuses: [],
-    feeRules,
+    feeRules: [],
     eventChargeRules,
     eecTable: [],
     warnings: [
-      'This Cash / SRS variant assumes the published 3% premium-charge path for initial and top-up premiums.',
+      'This Cash / SRS variant keeps the initial 3% single-premium charge metadata-only because the current engine does not yet model one-time deductions from the initial single premium before unit creation, while accepted top-up premiums continue to use the executable event charge surface.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
+      'Initial single-premium charge remains informational only because the current engine does not yet model one-time deductions from the initial single premium before unit creation.',
       'Death and terminal-illness benefit formulas remain informational only.',
       'Single-premium principal tracking remains informational only in V1.',
       'Fund-switching and minimum-transaction guards remain informational only.',
@@ -128,18 +111,18 @@ export function parseGreatEasternInvestAdvantage2Sp(context: ParseContext): IlpC
     structureStatus: 'structured',
     economicsStatus: 'partial-modeled-subset',
     modeledEconomics: [
-      'branch:great-eastern-gia2-sp-single-premium-charge',
       'branch:great-eastern-gia2-sp-top-up-premium-charge',
       'branch:great-eastern-gia2-sp-open-ended-zero-surrender-charge',
     ],
     metadataOnlyBehaviors: [
+      'great-eastern-gia2-sp-initial-single-premium-charge',
       'great-eastern-gia2-sp-death-benefit',
       'great-eastern-gia2-sp-terminal-illness-benefit',
       'great-eastern-gia2-sp-single-premium-principal-tracking',
       'great-eastern-gia2-sp-srs-surrender-destination',
     ],
     warnings: [
-      'GREAT Invest Advantage 2 (SP) is cataloged as a partial modeled subset in V1. The parser captures the published premium-charge path, top-up premium charge, and explicit no-surrender-charge structure through the open-ended no-MIP basis, while protection benefits and single-premium principal tracking remain outside the current engine.',
+      'GREAT Invest Advantage 2 (SP) is cataloged as a partial modeled subset in V1. The parser captures the published top-up premium charge and explicit no-surrender-charge structure through the open-ended no-MIP basis, while the initial single-premium charge, protection benefits, and single-premium principal tracking remain outside the current engine.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

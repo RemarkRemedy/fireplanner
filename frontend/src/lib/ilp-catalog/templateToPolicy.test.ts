@@ -641,7 +641,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.name).toBe('GREAT Invest Advantage (SP) (SGD / Open-ended (Cash Or Srs))')
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
-    expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-gia-sp-single-premium-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-gia-sp-initial-single-premium-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-gia-sp-single-premium-principal-tracking')
     expect(seed.mipBasis).toBe('open-ended')
     expect(seed.mipLength).toBeNull()
@@ -652,13 +652,7 @@ describe('templateVariantToPolicySeed', () => {
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'top-up', contributionShare: 1 },
     ])
-    expect(seed.chargeRules).toEqual([
-      expect.objectContaining({
-        id: 'single-premium-charge',
-        basis: 'annual-contribution',
-        rate: 0.03,
-      }),
-    ])
+    expect(seed.chargeRules).toEqual([])
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
@@ -681,7 +675,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.name).toBe('GREAT Invest Advantage 2 (SP) (SGD / Open-ended (Cash Or Srs))')
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
-    expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-gia2-sp-single-premium-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-gia2-sp-initial-single-premium-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-gia2-sp-single-premium-principal-tracking')
     expect(seed.mipBasis).toBe('open-ended')
     expect(seed.mipLength).toBeNull()
@@ -692,13 +686,7 @@ describe('templateVariantToPolicySeed', () => {
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'top-up', contributionShare: 1 },
     ])
-    expect(seed.chargeRules).toEqual([
-      expect.objectContaining({
-        id: 'single-premium-charge',
-        basis: 'annual-contribution',
-        rate: 0.03,
-      }),
-    ])
+    expect(seed.chargeRules).toEqual([])
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
