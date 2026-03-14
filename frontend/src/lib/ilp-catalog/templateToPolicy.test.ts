@@ -1579,6 +1579,60 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Power-up Bonus'))).toBe(true)
   })
 
+  it('maps AIA Platinum Retirement Elite into a regular-pay partial seed with payout support', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'aia-platinum-retirement-elite')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-5')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-retirement-elite-single-premium-corridor')
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.mipLength).toBe(5)
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      accountId: 'policy',
+      source: 'policy-redemption',
+    })
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'regular-premium-charge',
+        basis: 'annual-contribution',
+        yearBasis: 'premium-year',
+      }),
+      expect.objectContaining({
+        id: 'supplementary-charge',
+        basis: 'account-value',
+        rate: 0.025,
+        startPolicyYear: 1,
+        endPolicyYear: 5,
+      }),
+    ])
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        rate: 0.03,
+      }),
+      expect.objectContaining({
+        id: 'premium-holiday-charge',
+        trigger: 'premium-holiday',
+        basis: 'annual-premium-with-overlap-months',
+        yearBasis: 'premium-year',
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+      }),
+    ])
+    expect(seed.eecTable).toEqual([0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05, 0])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('single-pay corridor'))).toBe(true)
+  })
+
   it('preserves template charge allocation, event activeWindow, and rateSchedule-only fee rules', () => {
     const manifest: IlpCatalogManifest = {
       generatedAt: '2026-03-13T00:00:00.000Z',

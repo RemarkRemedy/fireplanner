@@ -923,6 +923,409 @@
     ]
   },
   {
+    "id": "aia-platinum-retirement-elite",
+    "insurer": "AIA Singapore",
+    "productName": "AIA Platinum Retirement Elite",
+    "sourceFileName": "WA_Sum_201106386R_PRE_Jul2025.pdf",
+    "sourceChecksumSha256": "ab73f3fecb51e15e8dfaa265131bd9c8ab3f36be868336d37b52193b84abc624",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:aia-platinum-retirement-elite-regular-premium-charge",
+      "branch:aia-platinum-retirement-elite-regular-supplementary-charge",
+      "branch:aia-platinum-retirement-elite-top-up-premium-charge",
+      "branch:aia-platinum-retirement-elite-premium-holiday-charge",
+      "branch:aia-platinum-retirement-elite-partial-withdrawal-charge",
+      "branch:aia-platinum-retirement-elite-full-surrender-charge",
+      "kernel:scheduled-payout-manual-assumption"
+    ],
+    "metadataOnlyBehaviors": [
+      "aia-platinum-retirement-elite-monthly-retirement-income-election",
+      "aia-platinum-retirement-elite-stepped-up-income-option",
+      "aia-platinum-retirement-elite-power-up-bonus",
+      "aia-platinum-retirement-elite-single-premium-corridor",
+      "aia-platinum-retirement-elite-protection-benefits",
+      "aia-platinum-retirement-elite-fund-management-charge",
+      "aia-platinum-retirement-elite-top-up-eligibility-gating",
+      "aia-platinum-retirement-elite-fund-switching",
+      "aia-platinum-retirement-elite-reinstatement-and-payout-continuity"
+    ],
+    "warnings": [
+      "AIA Platinum Retirement Elite is cataloged as a partial modeled subset in V1. The current parser models only the regular-pay 5-year corridor: premium-year regular premium charges, the 2.50% p.a. regular-premium supplementary charge, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and scheduled payout capability through the payout-state kernel, while the single-pay corridor, payout-election logic, bonuses, protection benefits, and fund-level charges remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-5",
+        "currency": "SGD",
+        "mipLength": 5,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Regular Premium Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and Target Monthly Retirement Income",
+                "excerpt": "You can choose your Target Monthly Retirement Income that you wish to receive from the Target Retirement Age over the Target Payout Period. You can also choose to receive an increasing Target Monthly Retirement Income vi"
+              },
+              {
+                "page": 3,
+                "section": "Regular premium and top-up subscription",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 5,
+                "section": "Top-up and withdrawal effects",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "regular-premium-charge",
+            "label": "Regular Premium Charge",
+            "basis": "annual-contribution",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published regular premium charge schedule by accepted premium count.",
+              "If premiums were missed and later resumed, the regular premium charge continues from the band immediately after the last accepted regular premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Regular premium and top-up subscription",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              }
+            ]
+          },
+          {
+            "id": "supplementary-charge",
+            "label": "Supplementary Charge",
+            "basis": "account-value",
+            "rate": 0.025,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 5,
+            "notes": [
+              "Models the published 2.50% p.a. charge on Regular Premium Policy Value for the regular-pay corridor.",
+              "The separate 0.50% p.a. single-premium supplementary charge remains outside the current executable slice."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Supplementary Charge and Premium Holiday Charge",
+                "excerpt": "Approximate excerpt; keyword \"Supplementary Charge\" not found on page. Regular Premium Policy Value will be deducted from your policy on a monthly basis for first 5 policy year, even during Premium Holiday. 5.3. Premium "
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-Up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% premium charge on each accepted top-up premium.",
+              "Top-ups are only accepted when regular premiums are fully paid when due, but that gating remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Regular premium and top-up subscription",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 5,
+                "section": "Top-up and withdrawal effects",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "yearBasis": "premium-year",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 4,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the annualised regular premium.",
+              "The charge stops once all outstanding regular premiums are fully repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Supplementary Charge and Premium Holiday Charge",
+                "excerpt": "Approximate excerpt; keyword \"Supplementary Charge\" not found on page. Regular Premium Policy Value will be deducted from your policy on a monthly basis for first 5 policy year, even during Premium Holiday. 5.3. Premium "
+              },
+              {
+                "page": 7,
+                "section": "Premium holiday and reinstatement",
+                "excerpt": "For reinstatement, you are required to back-pay all outstanding past regular premiums that were due. 7.4. Supplementary Retirement Scheme (SRS) If you bought your policy using your SRS funds, your policy is subject to th"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.818
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.667
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.538
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.429
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.333
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.176
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.111
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.053
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published partial withdrawal charge factor on withdrawn Regular Premium Policy Value.",
+              "The single-premium withdrawal schedule is outside the current regular-pay-only executable slice."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Full Surrender Charge and Partial Withdrawal Charge",
+                "excerpt": "5.4. Full Surrender Charge If you request to surrender your policy, full surrender charge will be deducted from your policy value and any remaining policy value will then be paid out. Single Premium Units Full Surrender "
+              },
+              {
+                "page": 5,
+                "section": "Top-up and withdrawal effects",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          }
+        ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "policy",
+          "source": "policy-redemption",
+          "notes": [
+            "Target Monthly Retirement Income after the selected retirement age is paid by redeeming units from policy value."
+          ],
+          "sourceRefs": [
+            {
+              "page": 1,
+              "section": "Plan overview and Target Monthly Retirement Income",
+              "excerpt": "You can choose your Target Monthly Retirement Income that you wish to receive from the Target Retirement Age over the Target Payout Period. You can also choose to receive an increasing Target Monthly Retirement Income vi"
+            },
+            {
+              "page": 2,
+              "section": "Monthly Retirement Income and Power-up Bonus",
+              "excerpt": "Target Monthly Retirement Income until the policy value fall to zero and in this case, the policy will be terminated. Our final payment could be less than the Target Monthly Retirement Income. Any increment in Target Mon"
+            }
+          ]
+        },
+        "eecTable": [
+          0.5,
+          0.45,
+          0.4,
+          0.35,
+          0.3,
+          0.25,
+          0.2,
+          0.15,
+          0.1,
+          0.05,
+          0
+        ],
+        "warnings": [
+          "AIA Platinum Retirement Elite is cataloged as a partial modeled subset in V1. The current parser models only the regular-pay 5-year corridor: premium-year regular premium charges, the 2.50% p.a. regular-premium supplementary charge, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and scheduled payout capability through the payout-state kernel.",
+          "Target Monthly Retirement Income amount, payout-age selection, payout-period selection, and stepped-up-income election remain manual or informational inputs in V1.",
+          "The single-pay corridor, including 5% initial premium charge, 0.50% p.a. single-premium supplementary charge, and single-premium withdrawal / surrender charge schedules, remains outside the current executable slice."
+        ],
+        "unsupportedItems": [
+          "Target Monthly Retirement Income amount, Target Retirement Age, Target Payout Period, and Stepped-up Income Option remain manual-assumption inputs in V1.",
+          "Power-up Bonus remains informational only because it depends on a withdrawal-adjustment factor and separately documented single-premium versus regular-premium policy values.",
+          "Single-pay and SRS single-premium corridors remain informational only in V1, including the 5% single-premium charge and single-premium withdrawal / surrender charge schedules.",
+          "Death, accidental death, and terminal illness benefit formulas remain informational only.",
+          "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
+          "Minimum withdrawal amount, minimum post-withdrawal policy value, top-up eligibility while premiums are outstanding, and top-up suspension remain informational only.",
+          "Fund switching mechanics remain informational only.",
+          "Reinstatement and premium-holiday effects on payout continuity remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and Target Monthly Retirement Income",
+            "excerpt": "You can choose your Target Monthly Retirement Income that you wish to receive from the Target Retirement Age over the Target Payout Period. You can also choose to receive an increasing Target Monthly Retirement Income vi"
+          },
+          {
+            "page": 2,
+            "section": "Monthly Retirement Income and Power-up Bonus",
+            "excerpt": "Target Monthly Retirement Income until the policy value fall to zero and in this case, the policy will be terminated. Our final payment could be less than the Target Monthly Retirement Income. Any increment in Target Mon"
+          },
+          {
+            "page": 3,
+            "section": "Regular premium and top-up subscription",
+            "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+          },
+          {
+            "page": 4,
+            "section": "Supplementary Charge and Premium Holiday Charge",
+            "excerpt": "Approximate excerpt; keyword \"Supplementary Charge\" not found on page. Regular Premium Policy Value will be deducted from your policy on a monthly basis for first 5 policy year, even during Premium Holiday. 5.3. Premium "
+          },
+          {
+            "page": 4,
+            "section": "Full Surrender Charge and Partial Withdrawal Charge",
+            "excerpt": "5.4. Full Surrender Charge If you request to surrender your policy, full surrender charge will be deducted from your policy value and any remaining policy value will then be paid out. Single Premium Units Full Surrender "
+          },
+          {
+            "page": 5,
+            "section": "Top-up and withdrawal effects",
+            "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+          },
+          {
+            "page": 7,
+            "section": "Premium holiday and reinstatement",
+            "excerpt": "For reinstatement, you are required to back-pay all outstanding past regular premiums that were due. 7.4. Supplementary Retirement Scheme (SRS) If you bought your policy using your SRS funds, your policy is subject to th"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "income-invest-flex",
     "insurer": "Income Insurance",
     "productName": "Invest Flex",
