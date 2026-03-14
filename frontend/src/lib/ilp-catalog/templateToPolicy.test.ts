@@ -844,6 +844,72 @@ describe('templateVariantToPolicySeed', () => {
     )
   })
 
+  it('maps Prestige Portfolio into a partial seed with quote-driven manual-input charges', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'great-eastern-prestige-portfolio')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-regular-pay-cash')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('Prestige Portfolio (SGD / Open-ended (Regular Pay Cash))')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-prestige-portfolio-premium-charge-manual-input')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-prestige-portfolio-wrap-fee-manual-input')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-single-premium-corridor')
+    expect(seed.mipBasis).toBe('open-ended')
+    expect(seed.mipLength).toBeNull()
+    expect(seed.postMipYears).toBe(20)
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.eecTable).toEqual([])
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'policy',
+        feeRate: 0.002,
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+          { phase: 'after-icp', contributionShare: 1 },
+          { phase: 'top-up', contributionShare: 1 },
+        ],
+      }),
+    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'premium-charge',
+          basis: 'annual-contribution',
+          rate: 0,
+          requiresManualInput: true,
+        }),
+        expect.objectContaining({
+          id: 'wrap-fee',
+          basis: 'account-value',
+          rate: 0,
+          requiresManualInput: true,
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          trigger: 'top-up',
+          rate: 0,
+          requiresManualInput: true,
+        }),
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          trigger: 'partial-withdrawal',
+          rate: 0,
+        }),
+      ]),
+    )
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('issued policy illustration'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('Open-ended products use a default 20-year review horizon'))).toBe(true)
+  })
+
   it('maps Invest Wealth Purpose into a partial seed with cumulative-paid policy charges and top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-wealth-purpose')

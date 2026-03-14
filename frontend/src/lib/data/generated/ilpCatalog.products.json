@@ -26311,6 +26311,454 @@
     ]
   },
   {
+    "id": "great-eastern-prestige-portfolio",
+    "insurer": "Great Eastern",
+    "productName": "Prestige Portfolio",
+    "sourceFileName": "PS(EN)_Prestige Portfolio_(SG)_v5.0.pdf",
+    "sourceChecksumSha256": "d9d09c3a42205774214ff63353b07da3ede1312d02b5eabca33ebb9ba66001a4",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:great-eastern-prestige-portfolio-premium-charge-manual-input",
+      "branch:great-eastern-prestige-portfolio-wrap-fee-manual-input",
+      "branch:great-eastern-prestige-portfolio-policy-fee",
+      "branch:great-eastern-prestige-portfolio-top-up-premium-charge-manual-input",
+      "branch:great-eastern-prestige-portfolio-partial-withdrawal-zero-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "great-eastern-prestige-portfolio-single-premium-corridor",
+      "great-eastern-prestige-portfolio-regular-premium-surrender-deductions",
+      "great-eastern-prestige-portfolio-death-and-accidental-death-benefits",
+      "great-eastern-prestige-portfolio-basic-sum-assured-state",
+      "great-eastern-prestige-portfolio-srs-return-destination",
+      "great-eastern-prestige-portfolio-fund-switching",
+      "great-eastern-prestige-portfolio-minimum-transaction-guards",
+      "great-eastern-prestige-portfolio-post-issue-fee-changes",
+      "great-eastern-prestige-portfolio-fund-level-fees"
+    ],
+    "warnings": [
+      "Prestige Portfolio is cataloged as a partial modeled subset in V1. The parser currently covers only the recurring-pay corridors that fit the existing seed model: regular premium (cash) and recurrent single premium (SRS).",
+      "Quoted premium-charge and wrap-fee percentages remain manual inputs, while single-premium handling, protection-side benefits, and regular-premium surrender deductions remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-open-ended-regular-pay-cash",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.002,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Benefits and premium types",
+                "excerpt": "You have 3 options for premium type: Premium type (i) Regular premium – Cash only (ii) Recurrent single premium – SRS only and frequency (iii) Single premium – Cash and SRS only The minimum single premium is S$20,000. Th"
+              },
+              {
+                "page": 3,
+                "section": "Premium charge, wrap fee, and policy fee",
+                "excerpt": "After the policy start date, if you wish to change the percentage of the premium charge (up to a maximum of 5%), you must request this through your financial representative. (b) Wrap fee We will deduct the monthly wrap f"
+              },
+              {
+                "page": 4,
+                "section": "Top-ups, withdrawals, and surrender",
+                "excerpt": "Product Summary Prestige Portfolio Please keep this copy for reference. You can request to switch all or any of the units of one fund to other fund(s) available Fund switching in the policy. For any fund switch, ▪ the mi"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "premium-charge",
+            "label": "Premium Charge",
+            "basis": "annual-contribution",
+            "rate": 0,
+            "amount": 0,
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Enter the actual regular premium premium-charge percentage from the issued policy illustration before trusting the projection.",
+              "The product summary publishes only the configurable cap: up to 3% at policy start, and requestable up to 5% after issue."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Premium charge, wrap fee, and policy fee",
+                "excerpt": "After the policy start date, if you wish to change the percentage of the premium charge (up to a maximum of 5%), you must request this through your financial representative. (b) Wrap fee We will deduct the monthly wrap f"
+              }
+            ]
+          },
+          {
+            "id": "wrap-fee",
+            "label": "Wrap Fee",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": 0,
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Enter the actual quoted wrap-fee percentage before trusting the projection.",
+              "The product summary publishes only the configurable cap: up to 1.5% p.a. at policy start, and requestable up to 2% p.a. after issue."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Premium charge, wrap fee, and policy fee",
+                "excerpt": "After the policy start date, if you wish to change the percentage of the premium charge (up to a maximum of 5%), you must request this through your financial representative. (b) Wrap fee We will deduct the monthly wrap f"
+              }
+            ]
+          },
+          {
+            "id": "policy-fee",
+            "label": "Policy Fee",
+            "basis": "account-value",
+            "rate": 0.002,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 0.2% p.a. policy fee deducted monthly from total investment value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Premium charge, wrap fee, and policy fee",
+                "excerpt": "After the policy start date, if you wish to change the percentage of the premium charge (up to a maximum of 5%), you must request this through your financial representative. (b) Wrap fee We will deduct the monthly wrap f"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Investment Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "requiresManualInput": true,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Enter the actual top-up premium-charge percentage from the issued policy illustration before trusting any top-up scenario.",
+              "The summary states that the premium charge also applies to each accepted investment top-up."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Premium charge, wrap fee, and policy fee",
+                "excerpt": "After the policy start date, if you wish to change the percentage of the premium charge (up to a maximum of 5%), you must request this through your financial representative. (b) Wrap fee We will deduct the monthly wrap f"
+              },
+              {
+                "page": 4,
+                "section": "Top-ups, withdrawals, and surrender",
+                "excerpt": "Product Summary Prestige Portfolio Please keep this copy for reference. You can request to switch all or any of the units of one fund to other fund(s) available Fund switching in the policy. For any fund switch, ▪ the mi"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published no-stated-charge partial-withdrawal path at the policy level.",
+              "Minimum withdrawal and remaining-fund value thresholds remain informational only."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Top-ups, withdrawals, and surrender",
+                "excerpt": "Product Summary Prestige Portfolio Please keep this copy for reference. You can request to switch all or any of the units of one fund to other fund(s) available Fund switching in the policy. For any fund switch, ▪ the mi"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "Prestige Portfolio (Regular Premium / Cash) is cataloged as a partial modeled subset in V1. The parser captures the quote-driven premium-charge surface through manual input, the quote-driven wrap-fee surface through manual input, the published 0.2% p.a. policy fee, the quote-driven top-up premium-charge surface through manual input, and the nil policy-level partial-withdrawal charge path through the open-ended basis.",
+          "Enter the actual premium-charge and wrap-fee percentages from the issued policy illustration before trusting the analysis."
+        ],
+        "unsupportedItems": [
+          "Single-premium corridor remains informational only in this parser slice.",
+          "Death-benefit and accidental-death-benefit payout handling remain informational only, including basic-sum-assured state tracking for recurrent single premium.",
+          "Regular-premium early-surrender deductions remain informational only because they are shown only in the policy illustration rather than as a published fixed catalog schedule.",
+          "SRS return-destination handling on withdrawals and surrender remains informational only.",
+          "Fund switching, premium-apportionment changes, and minimum-transaction guards remain informational only.",
+          "Post-issue fee changes, newly introduced fees, and fund-level charges remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 2,
+            "section": "Benefits and premium types",
+            "excerpt": "You have 3 options for premium type: Premium type (i) Regular premium – Cash only (ii) Recurrent single premium – SRS only and frequency (iii) Single premium – Cash and SRS only The minimum single premium is S$20,000. Th"
+          },
+          {
+            "page": 3,
+            "section": "Premium charge, wrap fee, and policy fee",
+            "excerpt": "After the policy start date, if you wish to change the percentage of the premium charge (up to a maximum of 5%), you must request this through your financial representative. (b) Wrap fee We will deduct the monthly wrap f"
+          },
+          {
+            "page": 4,
+            "section": "Top-ups, withdrawals, and surrender",
+            "excerpt": "Product Summary Prestige Portfolio Please keep this copy for reference. You can request to switch all or any of the units of one fund to other fund(s) available Fund switching in the policy. For any fund switch, ▪ the mi"
+          }
+        ]
+      },
+      {
+        "id": "sgd-open-ended-recurrent-single-premium-srs",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.002,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Benefits and premium types",
+                "excerpt": "You have 3 options for premium type: Premium type (i) Regular premium – Cash only (ii) Recurrent single premium – SRS only and frequency (iii) Single premium – Cash and SRS only The minimum single premium is S$20,000. Th"
+              },
+              {
+                "page": 3,
+                "section": "Premium charge, wrap fee, and policy fee",
+                "excerpt": "After the policy start date, if you wish to change the percentage of the premium charge (up to a maximum of 5%), you must request this through your financial representative. (b) Wrap fee We will deduct the monthly wrap f"
+              },
+              {
+                "page": 4,
+                "section": "Top-ups, withdrawals, and surrender",
+                "excerpt": "Product Summary Prestige Portfolio Please keep this copy for reference. You can request to switch all or any of the units of one fund to other fund(s) available Fund switching in the policy. For any fund switch, ▪ the mi"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "premium-charge",
+            "label": "Premium Charge",
+            "basis": "annual-contribution",
+            "rate": 0,
+            "amount": 0,
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Enter the actual recurrent single premium premium-charge percentage from the issued product quotation before trusting the projection.",
+              "The product summary publishes only the configurable cap: up to 3% at policy start, and requestable up to 5% after issue."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Premium charge, wrap fee, and policy fee",
+                "excerpt": "After the policy start date, if you wish to change the percentage of the premium charge (up to a maximum of 5%), you must request this through your financial representative. (b) Wrap fee We will deduct the monthly wrap f"
+              }
+            ]
+          },
+          {
+            "id": "wrap-fee",
+            "label": "Wrap Fee",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": 0,
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Enter the actual quoted wrap-fee percentage before trusting the projection.",
+              "The product summary publishes only the configurable cap: up to 1.5% p.a. at policy start, and requestable up to 2% p.a. after issue."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Premium charge, wrap fee, and policy fee",
+                "excerpt": "After the policy start date, if you wish to change the percentage of the premium charge (up to a maximum of 5%), you must request this through your financial representative. (b) Wrap fee We will deduct the monthly wrap f"
+              }
+            ]
+          },
+          {
+            "id": "policy-fee",
+            "label": "Policy Fee",
+            "basis": "account-value",
+            "rate": 0.002,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 0.2% p.a. policy fee deducted monthly from total investment value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Premium charge, wrap fee, and policy fee",
+                "excerpt": "After the policy start date, if you wish to change the percentage of the premium charge (up to a maximum of 5%), you must request this through your financial representative. (b) Wrap fee We will deduct the monthly wrap f"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Investment Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "requiresManualInput": true,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Enter the actual top-up premium-charge percentage from the issued product quotation before trusting any top-up scenario.",
+              "The summary states that the premium charge also applies to each accepted investment top-up."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Premium charge, wrap fee, and policy fee",
+                "excerpt": "After the policy start date, if you wish to change the percentage of the premium charge (up to a maximum of 5%), you must request this through your financial representative. (b) Wrap fee We will deduct the monthly wrap f"
+              },
+              {
+                "page": 4,
+                "section": "Top-ups, withdrawals, and surrender",
+                "excerpt": "Product Summary Prestige Portfolio Please keep this copy for reference. You can request to switch all or any of the units of one fund to other fund(s) available Fund switching in the policy. For any fund switch, ▪ the mi"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published no-stated-charge partial-withdrawal path at the policy level.",
+              "Minimum withdrawal and remaining-fund value thresholds remain informational only."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Top-ups, withdrawals, and surrender",
+                "excerpt": "Product Summary Prestige Portfolio Please keep this copy for reference. You can request to switch all or any of the units of one fund to other fund(s) available Fund switching in the policy. For any fund switch, ▪ the mi"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "Prestige Portfolio (Recurrent Single Premium / SRS) is cataloged as a partial modeled subset in V1. The parser captures the quote-driven premium-charge surface through manual input, the quote-driven wrap-fee surface through manual input, the published 0.2% p.a. policy fee, the quote-driven top-up premium-charge surface through manual input, and the nil policy-level partial-withdrawal charge path through the open-ended basis.",
+          "Enter the actual premium-charge and wrap-fee percentages from the issued product quotation before trusting the analysis."
+        ],
+        "unsupportedItems": [
+          "Single-premium corridor remains informational only in this parser slice.",
+          "Death-benefit and accidental-death-benefit payout handling remain informational only, including basic-sum-assured state tracking for recurrent single premium.",
+          "SRS return-destination handling on withdrawals and surrender remains informational only.",
+          "Fund switching, premium-apportionment changes, and minimum-transaction guards remain informational only.",
+          "Post-issue fee changes, newly introduced fees, and fund-level charges remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 2,
+            "section": "Benefits and premium types",
+            "excerpt": "You have 3 options for premium type: Premium type (i) Regular premium – Cash only (ii) Recurrent single premium – SRS only and frequency (iii) Single premium – Cash and SRS only The minimum single premium is S$20,000. Th"
+          },
+          {
+            "page": 3,
+            "section": "Premium charge, wrap fee, and policy fee",
+            "excerpt": "After the policy start date, if you wish to change the percentage of the premium charge (up to a maximum of 5%), you must request this through your financial representative. (b) Wrap fee We will deduct the monthly wrap f"
+          },
+          {
+            "page": 4,
+            "section": "Top-ups, withdrawals, and surrender",
+            "excerpt": "Product Summary Prestige Portfolio Please keep this copy for reference. You can request to switch all or any of the units of one fund to other fund(s) available Fund switching in the policy. For any fund switch, ▪ the mi"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "great-eastern-investment-linked-insurance-plan-2",
     "insurer": "Great Eastern",
     "productName": "Investment-linked Insurance Plan 2",
