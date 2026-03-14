@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useUIStore } from '@/stores/useUIStore'
-import { HOUSEHOLD_PLAN_STORAGE_KEY } from '@/stores/useHouseholdPlanStore'
+import { HOUSEHOLD_PLAN_STORAGE_KEY, useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { Target, TrendingUp, CheckCircle, ArrowRight, Info, RotateCcw } from 'lucide-react'
 import type { HouseholdPlanType } from '@/lib/household/types'
 import { PlanTypeSelector } from '@/components/household/PlanTypeSelector'
@@ -45,8 +45,11 @@ export function StartPage() {
   const navigate = useNavigate()
   const setUIField = useUIStore((s) => s.setField)
   const setupCompleted = useUIStore((s) => s.setupCompleted)
+  const existingPlanType = useHouseholdPlanStore((s) => s.plan.planType)
 
-  const [selectedPlanType, setSelectedPlanType] = useState<HouseholdPlanType>('individual')
+  const [selectedPlanType, setSelectedPlanType] = useState<HouseholdPlanType>(
+    setupCompleted ? existingPlanType : 'individual'
+  )
   const [householdPlannerEnabled] = useState(() => isHouseholdPlannerV1Enabled())
 
   // Check if returning user (has saved profile in localStorage)
