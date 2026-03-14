@@ -270,16 +270,8 @@ const EXPENSES_FLOW: NudgeFlowDefinition = {
           label: 'Expected spending in retirement vs. now (%)',
           type: 'percent',
           required: true,
-        },
-        {
-          name: 'retirementSpendingModel',
-          label: 'Spending pattern in retirement',
-          type: 'select',
-          options: [
-            { value: 'flat', label: 'Flat (constant real spending)' },
-            { value: 'smile', label: 'Smile curve (high-low-high)' },
-            { value: 'declining', label: 'Declining (reduce over time)' },
-          ],
+          tooltip: '100% = same spending as now. Most retirees spend 70-80% (no commute, paid-off mortgage). Some spend more early in retirement (travel).',
+          helperText: 'Enter 100 to keep current spending. Enter 80 if you expect to spend 20% less.',
         },
       ],
     },

@@ -42,6 +42,8 @@ export function RefineFlowPage() {
         if (field.type === 'toggle') defaults[field.name] = false
       }
     }
+    // Seed specific sensible defaults
+    if (defaults.retirementSpendingRatio === undefined) defaults.retirementSpendingRatio = 100
     return defaults
   })
   const [currentScreenIndex, setCurrentScreenIndex] = useState(0)
