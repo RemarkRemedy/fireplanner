@@ -4,6 +4,8 @@ import path from 'node:path'
 import { ilpCatalogManifestSchema, ilpCatalogProductsSchema } from '../../src/lib/ilp-catalog/schema.js'
 import type { IlpCatalogManifest, IlpCatalogProduct } from '../../src/lib/ilp-catalog/types.js'
 import { analyzeStructuredEconomics, discoverManualCatalogSources } from './discovery.js'
+import { parseAiaInvestEasyCashSrs } from './parsers/aiaInvestEasyCashSrs.js'
+import { parseAiaInvestEasyCpf } from './parsers/aiaInvestEasyCpf.js'
 import { parseHsbcWealthAccelerate } from './parsers/hsbcWealthAccelerate.js'
 import { parseHsbcWealthAbundance } from './parsers/hsbcWealthAbundance.js'
 import { parseHsbcWealthFocus } from './parsers/hsbcWealthFocus.js'
@@ -88,6 +90,8 @@ const PRUDENTIAL_PRUVANTAGE_WEALTH_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PR
 const TOKIO_MARINE_WEALTH_ENHANCER_CPFIS_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UL4_TPDN_CIZ_Summary.pdf'
 const TOKIO_MARINE_WEALTH_MAX_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNZV_TPDN_CIZ_Summary.pdf'
 const TOKIO_MARINE_WEALTH_PRO_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNZS_TPDN_CIZ_Summary.pdf'
+const AIA_INVEST_EASY_CASH_SRS_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_NonCPFIE_Oct2024.pdf'
+const AIA_INVEST_EASY_CPF_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_201106386R_CPFIE_Oct2024.pdf'
 
 export interface IlpCatalogSnapshot {
   manifest: IlpCatalogManifest
@@ -152,6 +156,10 @@ async function buildBrochurePartialProducts(
 
 export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const discovery = await discoverManualCatalogSources()
+  const aiaInvestEasyCashSrsExtracted = await extractPdfText(AIA_INVEST_EASY_CASH_SRS_SOURCE_PATH)
+  const aiaInvestEasyCashSrsChecksum = await sha256(AIA_INVEST_EASY_CASH_SRS_SOURCE_PATH)
+  const aiaInvestEasyCpfExtracted = await extractPdfText(AIA_INVEST_EASY_CPF_SOURCE_PATH)
+  const aiaInvestEasyCpfChecksum = await sha256(AIA_INVEST_EASY_CPF_SOURCE_PATH)
   const incomeInvestFlexExtracted = await extractPdfText(INCOME_INVEST_FLEX_SOURCE_PATH)
   const incomeInvestFlexChecksum = await sha256(INCOME_INVEST_FLEX_SOURCE_PATH)
   const incomeInvestFlexTriVantageExtracted = await extractPdfText(INCOME_INVEST_FLEX_TRIVANTAGE_SOURCE_PATH)
@@ -233,6 +241,14 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const brochurePartialProducts = await buildBrochurePartialProducts(discovery.brochureOnlySources)
 
   const products = [
+    parseAiaInvestEasyCashSrs({
+      document: aiaInvestEasyCashSrsExtracted,
+      sourceChecksumSha256: aiaInvestEasyCashSrsChecksum,
+    }),
+    parseAiaInvestEasyCpf({
+      document: aiaInvestEasyCpfExtracted,
+      sourceChecksumSha256: aiaInvestEasyCpfChecksum,
+    }),
     parseIncomeInvestFlex({
       document: incomeInvestFlexExtracted,
       sourceChecksumSha256: incomeInvestFlexChecksum,

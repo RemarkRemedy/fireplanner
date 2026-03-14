@@ -86,10 +86,10 @@ Summary sources: 92
 | WA_Sum_200501737H_ILP05_RP_Feb2024.pdf | Sum insured 105% of Policy Value |
 | WA_Sum_201106386R_APA3.0_Oct2024.pdf | AIA Singapore Private Limited (Reg. No. 201106386R) ("we, our, us, AIA Singapore") |
 | WA_Sum_201106386R_AWV_Jan2026.pdf | AIA Singapore Private Limited (Reg. No. 201106386R) ("we, our, us, AIA Singapore") |
-| WA_Sum_201106386R_CPFIE_Oct2024.pdf | AIA Singapore Private Limited (Reg. No. 201106386R) ("we, our, us, AIA Singapore") |
+| WA_Sum_201106386R_CPFIE_Oct2024.pdf | AIA Invest Easy (CPF) |
 | WA_Sum_201106386R_ESI5P_Jul2025.pdf | AIA Singapore Private Limited (Reg. No. 201106386R) ("we, our, us, AIA Singapore") |
 | WA_Sum_201106386R_ESISP_Jul2025.pdf | AIA Singapore Private Limited (Reg. No. 201106386R) ("we, our, us, AIA Singapore") |
-| WA_Sum_201106386R_NonCPFIE_Oct2024.pdf | AIA Singapore Private Limited (Reg. No. 201106386R) ("we, our, us, AIA Singapore") |
+| WA_Sum_201106386R_NonCPFIE_Oct2024.pdf | AIA Invest Easy (Cash/SRS) |
 | WA_Sum_201106386R_PLP(II)_Oct2024.pdf | AIA Singapore Private Limited (Reg. No. 201106386R) ("we, our, us, AIA Singapore") |
 | WA_Sum_201106386R_PRE_Jul2025.pdf | AIA Singapore Private Limited (Reg. No. 201106386R) ("we, our, us, AIA Singapore") |
 | WA_Sum_201106386R_PWE2.0_Jul2025.pdf | AIA Singapore Private Limited (Reg. No. 201106386R) ("we, our, us, AIA Singapore") |
@@ -98,4 +98,3 @@ Summary sources: 92
 | WF PS v1.51_MIP10Flexi1.pdf | WF v1.51 MIP10Flexi1 |
 | WF PS v1.51_MIP10Flexi3.pdf | WF v1.51 MIP10Flexi3 |
 | WF PS v1.51_MIP10Flexi5.pdf | WF v1.51 MIP10Flexi5 |
-

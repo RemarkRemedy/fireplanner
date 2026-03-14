@@ -1,5 +1,346 @@
 [
   {
+    "id": "aia-invest-easy-cash-srs",
+    "insurer": "AIA Singapore",
+    "productName": "AIA Invest Easy (Cash/SRS)",
+    "sourceFileName": "WA_Sum_201106386R_NonCPFIE_Oct2024.pdf",
+    "sourceChecksumSha256": "c374994180d77eb2792a5e37fa428053d8dce557765674d54b2df7a1a127badb",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:aia-invest-easy-cash-srs-three-percent-single-premium-charge",
+      "branch:aia-invest-easy-cash-srs-three-percent-top-up-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "aia-invest-easy-cash-srs-death-benefit",
+      "aia-invest-easy-cash-srs-first-year-accidental-death-benefit",
+      "aia-invest-easy-cash-srs-maturity-benefit",
+      "aia-invest-easy-cash-srs-partial-withdrawal",
+      "aia-invest-easy-cash-srs-full-surrender",
+      "aia-invest-easy-cash-srs-fund-switching",
+      "aia-invest-easy-cash-srs-automatic-fund-rebalancing",
+      "aia-invest-easy-cash-srs-fund-management-charge",
+      "aia-invest-easy-cash-srs-free-look-refund",
+      "aia-invest-easy-cash-srs-top-up-age-limit"
+    ],
+    "warnings": [
+      "AIA Invest Easy (Cash/SRS) is cataloged as a partial modeled subset in V1. The parser captures the published 3% single-premium and 3% top-up premium charges for the Cash/SRS corridor through the open-ended no-MIP basis, while protection benefits, withdrawals, switching, and fund-level charges remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-open-ended-cash-srs",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and benefits",
+                "excerpt": "Product Summary for AIA Invest Easy (Cash/SRS) Version 3.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.a"
+              },
+              {
+                "page": 2,
+                "section": "Subscription and policy options",
+                "excerpt": "5. Fees and Charges (a) Premium Charge We will deduct Premium Charge from Single Premium and Top-Up Premium (if any). Premium Charge = 3% of Single Premium and 3% of each Top-Up Premium ➢ As an example, the number of uni"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "single-premium-charge",
+            "label": "Single Premium Charge",
+            "basis": "annual-contribution",
+            "rate": 0.03,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published upfront 3% premium charge on the initial single premium subscription."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and benefits",
+                "excerpt": "Product Summary for AIA Invest Easy (Cash/SRS) Version 3.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.a"
+              },
+              {
+                "page": 2,
+                "section": "Subscription and policy options",
+                "excerpt": "5. Fees and Charges (a) Premium Charge We will deduct Premium Charge from Single Premium and Top-Up Premium (if any). Premium Charge = 3% of Single Premium and 3% of each Top-Up Premium ➢ As an example, the number of uni"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published upfront 3% premium charge on each top-up premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and benefits",
+                "excerpt": "Product Summary for AIA Invest Easy (Cash/SRS) Version 3.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.a"
+              },
+              {
+                "page": 2,
+                "section": "Subscription and policy options",
+                "excerpt": "5. Fees and Charges (a) Premium Charge We will deduct Premium Charge from Single Premium and Top-Up Premium (if any). Premium Charge = 3% of Single Premium and 3% of each Top-Up Premium ➢ As an example, the number of uni"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "The parser captures the published 3% single-premium and 3% top-up premium charges for the Cash/SRS corridor through the open-ended no-MIP basis, while protection benefits, withdrawals, switching, and fund-level charges remain outside the current engine.",
+          "Cash/SRS funding keeps the same product shell but uses a different premium-charge corridor from the CPF version.",
+          "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
+        ],
+        "unsupportedItems": [
+          "Death and first-year accidental death benefit formulas remain informational only.",
+          "Maturity benefit at insured age 100 remains informational only.",
+          "Partial-withdrawal and full-surrender administration remain informational only.",
+          "Fund-switching and automatic fund re-balancing remain informational only.",
+          "Fund-level management charges remain informational only because they depend on the selected fund mix rather than a single product-level rate.",
+          "Free-look refund behavior remains informational only.",
+          "Top-up age-limit handling remains informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan description and benefits",
+            "excerpt": "Product Summary for AIA Invest Easy (Cash/SRS) Version 3.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.a"
+          },
+          {
+            "page": 2,
+            "section": "Subscription and policy options",
+            "excerpt": "5. Fees and Charges (a) Premium Charge We will deduct Premium Charge from Single Premium and Top-Up Premium (if any). Premium Charge = 3% of Single Premium and 3% of each Top-Up Premium ➢ As an example, the number of uni"
+          },
+          {
+            "page": 3,
+            "section": "Fund switching and free-look",
+            "excerpt": "7. Other Material Information (Product) (a) Free-look Period After purchasing a life insurance policy, you have 14 days free-look period starting from the day you receive your policy documents to review the documents car"
+          },
+          {
+            "page": 4,
+            "section": "Exclusions and available funds",
+            "excerpt": "8. Other Material Information (Funds) (a) Available ILP Sub-Funds Please refer to AIA Investment Fund Product Summary for the details on available ILP sub-funds. The risks specific to the ILP sub-funds are set out in the"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "aia-invest-easy-cpf",
+    "insurer": "AIA Singapore",
+    "productName": "AIA Invest Easy (CPF)",
+    "sourceFileName": "WA_Sum_201106386R_CPFIE_Oct2024.pdf",
+    "sourceChecksumSha256": "6344c40cef093d9323b93d07cf3ae694e0606712b1fcf3d265a248271cf998cb",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:aia-invest-easy-cpf-zero-single-premium-charge",
+      "branch:aia-invest-easy-cpf-zero-top-up-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "aia-invest-easy-cpf-death-benefit",
+      "aia-invest-easy-cpf-first-year-accidental-death-benefit",
+      "aia-invest-easy-cpf-maturity-benefit",
+      "aia-invest-easy-cpf-partial-withdrawal",
+      "aia-invest-easy-cpf-full-surrender",
+      "aia-invest-easy-cpf-fund-switching",
+      "aia-invest-easy-cpf-automatic-fund-rebalancing",
+      "aia-invest-easy-cpf-fund-management-charge",
+      "aia-invest-easy-cpf-free-look-refund",
+      "aia-invest-easy-cpf-cpf-fund-eligibility",
+      "aia-invest-easy-cpf-top-up-age-limit"
+    ],
+    "warnings": [
+      "AIA Invest Easy (CPF) is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge single-premium and top-up allocation path for the CPF-funded corridor through the open-ended no-MIP basis, while protection benefits, withdrawals, switching, and fund-level charges remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-open-ended-cpf",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and benefits",
+                "excerpt": "Product Summary for AIA Invest Easy (CPF) Version 4.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.aia.co"
+              },
+              {
+                "page": 2,
+                "section": "Subscription and policy options",
+                "excerpt": "5. Fees and Charges Fund Management Charge The fees and charges payable through deduction from the net asset value of each ILP sub-fund are set out in the AIA Investment Fund Product Summary. 6. Policy Options and Flexib"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "single-premium-charge",
+            "label": "Single Premium Charge",
+            "basis": "annual-contribution",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 100% allocation of the initial single premium into units with no policy-level premium deduction."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and benefits",
+                "excerpt": "Product Summary for AIA Invest Easy (CPF) Version 4.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.aia.co"
+              },
+              {
+                "page": 2,
+                "section": "Subscription and policy options",
+                "excerpt": "5. Fees and Charges Fund Management Charge The fees and charges payable through deduction from the net asset value of each ILP sub-fund are set out in the AIA Investment Fund Product Summary. 6. Policy Options and Flexib"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 100% allocation of top-up premiums into units with no policy-level top-up deduction."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and benefits",
+                "excerpt": "Product Summary for AIA Invest Easy (CPF) Version 4.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.aia.co"
+              },
+              {
+                "page": 2,
+                "section": "Subscription and policy options",
+                "excerpt": "5. Fees and Charges Fund Management Charge The fees and charges payable through deduction from the net asset value of each ILP sub-fund are set out in the AIA Investment Fund Product Summary. 6. Policy Options and Flexib"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "The parser captures the published zero-charge single-premium and top-up allocation path for the CPF-funded corridor through the open-ended no-MIP basis, while protection benefits, withdrawals, switching, and fund-level charges remain outside the current engine.",
+          "Fund access is limited to CPFIS-eligible ILP sub-funds.",
+          "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
+        ],
+        "unsupportedItems": [
+          "Death and first-year accidental death benefit formulas remain informational only.",
+          "Maturity benefit at insured age 100 remains informational only.",
+          "Partial-withdrawal and full-surrender administration remain informational only.",
+          "Fund-switching and automatic fund re-balancing remain informational only.",
+          "Fund-level management charges remain informational only because they depend on the selected fund mix rather than a single product-level rate.",
+          "Free-look refund behavior remains informational only.",
+          "CPF-eligible fund restrictions and top-up age-limit handling remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan description and benefits",
+            "excerpt": "Product Summary for AIA Invest Easy (CPF) Version 4.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.aia.co"
+          },
+          {
+            "page": 2,
+            "section": "Subscription and policy options",
+            "excerpt": "5. Fees and Charges Fund Management Charge The fees and charges payable through deduction from the net asset value of each ILP sub-fund are set out in the AIA Investment Fund Product Summary. 6. Policy Options and Flexib"
+          },
+          {
+            "page": 3,
+            "section": "Fund switching and free-look",
+            "excerpt": "7. Other Material Information (Product) (a) Free-look Period After purchasing a life insurance policy, you have 14 days free-look period starting from the day you receive your policy documents to review the documents car"
+          },
+          {
+            "page": 4,
+            "section": "Exclusions and available funds",
+            "excerpt": "8. Other Material Information (Funds) (a) Available ILP Sub-Funds You may invest only in the ILP sub -funds, which are included under the Central Provident Fund Investment Scheme (“CPFIS”). Please refer to AIA Investment"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "income-invest-flex",
     "insurer": "Income Insurance",
     "productName": "Invest Flex",
