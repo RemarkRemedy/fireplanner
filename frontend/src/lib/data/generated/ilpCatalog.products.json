@@ -9895,6 +9895,1494 @@
     ]
   },
   {
+    "id": "manulife-investready-iii-sep-2025",
+    "insurer": "Manulife Singapore",
+    "productName": "Manulife InvestReady (III)",
+    "sourceFileName": "WA_MIRP_PdtSum.pdf",
+    "sourceChecksumSha256": "7aaa348327691d832506b466830475c907b259dc5b53a2c589317768d0eb5b45",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "kernel:protected-base-assurance",
+      "branch:manulife-investready-iii-administrative-charge",
+      "branch:manulife-investready-iii-premium-shortfall-charge",
+      "branch:manulife-investready-iii-zero-top-up-charge",
+      "kernel:distribution-mode-assumption"
+    ],
+    "metadataOnlyBehaviors": [
+      "manulife-investready-iii-policy-fee",
+      "manulife-investready-iii-welcome-bonus",
+      "manulife-investready-iii-annual-premium-bonus",
+      "manulife-investready-iii-loyalty-bonus",
+      "manulife-investready-iii-step-up-booster-bonus",
+      "manulife-investready-iii-full-surrender-charge",
+      "manulife-investready-iii-partial-withdrawal-charge",
+      "manulife-investready-iii-life-stage-partial-withdrawal",
+      "manulife-investready-iii-dividend-payout-threshold",
+      "manulife-investready-iii-reinvested-dividend-withdrawals",
+      "manulife-investready-iii-benefit-payout-handling",
+      "manulife-investready-iii-fund-management-charge",
+      "manulife-investready-iii-fund-switching-and-redirection",
+      "manulife-investready-iii-reinstatement"
+    ],
+    "warnings": [
+      "Manulife InvestReady (III) Sep-2025 summary cohort is cataloged as a separate partial modeled subset in V1. The parser captures the published administration-charge path, the 101% paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface, while policy-fee thresholds, bonus mechanics, withdrawal / surrender schedules, and fund-level charges remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-5-flexi-4-sep-2025",
+        "currency": "SGD",
+        "mipLength": 5,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.025,
+            "postMipFeeRate": 0.01,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 6,
+                "section": "COI, administrative charge, and policy fee",
+                "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+              },
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "cost-of-insurance",
+            "label": "Cost of Insurance (Death / TI)",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "manulife-investready-iii-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details plus the current net regular premium base and current net top-up premium base before the calculator can model the annualised COI.",
+              "Models the published 101% paid-premium floor net-amount-at-risk formula for death and terminal illness benefit, including top-up premiums and withdrawals."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 6,
+                "section": "COI, administrative charge, and policy fee",
+                "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+              },
+              {
+                "page": 20,
+                "section": "Appendix A annual COI table",
+                "excerpt": "Annual Cost of Insurance for Death Benefit and Terminal Illness Benefit (per $1,000 Net Amount At Risk) Attained Age Male Female Non-Smoker Smoker Non-Smoker Smoker 51 2.437 4.991 1.691 4.114 52 2.734 5.652 1.854 4.52 53"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published prevailing 0% top-up charge for this cohort."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge",
+            "label": "Premium Shortfall Charge",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.4
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Models the published monthly premium shortfall charge before Flexi Start for the 5 Years Flexi 4 corridor.",
+              "Use a premium-holiday event to represent missed regular premiums after the grace period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": false,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "During MIP, dividend-paying funds are compulsory to be reinvested.",
+            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 12,
+              "section": "Distribution of dividends",
+              "excerpt": "13. Distribution of Dividends During MIP, there is no option to receive the dividend. If you invested into a dividend paying Fund, any dividend payout will automatically be reinvested into the Fund from which it is paid."
+            }
+          ]
+        },
+        "eecTable": [],
+        "warnings": [
+          "5 Years Flexi 4 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, all bonus mechanics, surrender / partial-withdrawal charge schedules, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+        ],
+        "unsupportedItems": [
+          "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
+          "Welcome Bonus, Annual Premium Bonus, Loyalty Bonus, and Step-up Booster Bonus remain informational only.",
+          "Full-surrender and partial-withdrawal charge schedules remain informational only, including the life-stage partial-withdrawal waiver corridor.",
+          "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
+          "Fund switching, premium redirection, automatic fund rebalancing, and change-of-mode-of-payment options remain informational only.",
+          "Reinstatement underwriting and pre-existing-condition exclusions remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description and death benefit",
+            "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+          },
+          {
+            "page": 4,
+            "section": "Bonuses",
+            "excerpt": "C. Loyalty Bonus Loyalty Bonus will be given during the policy term starting from the policy anniversary immediately after the end of the MIP and every policy anniversary thereafter, in the form of additional units based"
+          },
+          {
+            "page": 6,
+            "section": "COI, administrative charge, and policy fee",
+            "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+          },
+          {
+            "page": 9,
+            "section": "Top-up premium and policy options",
+            "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+          },
+          {
+            "page": 12,
+            "section": "Distribution of dividends",
+            "excerpt": "13. Distribution of Dividends During MIP, there is no option to receive the dividend. If you invested into a dividend paying Fund, any dividend payout will automatically be reinvested into the Fund from which it is paid."
+          },
+          {
+            "page": 20,
+            "section": "Appendix A annual COI table",
+            "excerpt": "Annual Cost of Insurance for Death Benefit and Terminal Illness Benefit (per $1,000 Net Amount At Risk) Attained Age Male Female Non-Smoker Smoker Non-Smoker Smoker 51 2.437 4.991 1.691 4.114 52 2.734 5.652 1.854 4.52 53"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-7-flexi-5-sep-2025",
+        "currency": "SGD",
+        "mipLength": 7,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.025,
+            "postMipFeeRate": 0.01,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 6,
+                "section": "COI, administrative charge, and policy fee",
+                "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+              },
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "cost-of-insurance",
+            "label": "Cost of Insurance (Death / TI)",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "manulife-investready-iii-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details plus the current net regular premium base and current net top-up premium base before the calculator can model the annualised COI.",
+              "Models the published 101% paid-premium floor net-amount-at-risk formula for death and terminal illness benefit, including top-up premiums and withdrawals."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 6,
+                "section": "COI, administrative charge, and policy fee",
+                "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+              },
+              {
+                "page": 20,
+                "section": "Appendix A annual COI table",
+                "excerpt": "Annual Cost of Insurance for Death Benefit and Terminal Illness Benefit (per $1,000 Net Amount At Risk) Attained Age Male Female Non-Smoker Smoker Non-Smoker Smoker 51 2.437 4.991 1.691 4.114 52 2.734 5.652 1.854 4.52 53"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published prevailing 0% top-up charge for this cohort."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge",
+            "label": "Premium Shortfall Charge",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.77
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.2
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Models the published monthly premium shortfall charge before Flexi Start for the 7 Years Flexi 5 corridor.",
+              "Use a premium-holiday event to represent missed regular premiums after the grace period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": false,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "During MIP, dividend-paying funds are compulsory to be reinvested.",
+            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 12,
+              "section": "Distribution of dividends",
+              "excerpt": "13. Distribution of Dividends During MIP, there is no option to receive the dividend. If you invested into a dividend paying Fund, any dividend payout will automatically be reinvested into the Fund from which it is paid."
+            }
+          ]
+        },
+        "eecTable": [],
+        "warnings": [
+          "7 Years Flexi 5 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, all bonus mechanics, surrender / partial-withdrawal charge schedules, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+        ],
+        "unsupportedItems": [
+          "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
+          "Welcome Bonus, Annual Premium Bonus, Loyalty Bonus, and Step-up Booster Bonus remain informational only.",
+          "Full-surrender and partial-withdrawal charge schedules remain informational only, including the life-stage partial-withdrawal waiver corridor.",
+          "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
+          "Fund switching, premium redirection, automatic fund rebalancing, and change-of-mode-of-payment options remain informational only.",
+          "Reinstatement underwriting and pre-existing-condition exclusions remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description and death benefit",
+            "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+          },
+          {
+            "page": 4,
+            "section": "Bonuses",
+            "excerpt": "C. Loyalty Bonus Loyalty Bonus will be given during the policy term starting from the policy anniversary immediately after the end of the MIP and every policy anniversary thereafter, in the form of additional units based"
+          },
+          {
+            "page": 6,
+            "section": "COI, administrative charge, and policy fee",
+            "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+          },
+          {
+            "page": 9,
+            "section": "Top-up premium and policy options",
+            "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+          },
+          {
+            "page": 12,
+            "section": "Distribution of dividends",
+            "excerpt": "13. Distribution of Dividends During MIP, there is no option to receive the dividend. If you invested into a dividend paying Fund, any dividend payout will automatically be reinvested into the Fund from which it is paid."
+          },
+          {
+            "page": 20,
+            "section": "Appendix A annual COI table",
+            "excerpt": "Annual Cost of Insurance for Death Benefit and Terminal Illness Benefit (per $1,000 Net Amount At Risk) Attained Age Male Female Non-Smoker Smoker Non-Smoker Smoker 51 2.437 4.991 1.691 4.114 52 2.734 5.652 1.854 4.52 53"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-10-flexi-3-sep-2025",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.025,
+            "postMipFeeRate": 0.007,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 6,
+                "section": "COI, administrative charge, and policy fee",
+                "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+              },
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "cost-of-insurance",
+            "label": "Cost of Insurance (Death / TI)",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "manulife-investready-iii-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details plus the current net regular premium base and current net top-up premium base before the calculator can model the annualised COI.",
+              "Models the published 101% paid-premium floor net-amount-at-risk formula for death and terminal illness benefit, including top-up premiums and withdrawals."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 6,
+                "section": "COI, administrative charge, and policy fee",
+                "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+              },
+              {
+                "page": 20,
+                "section": "Appendix A annual COI table",
+                "excerpt": "Annual Cost of Insurance for Death Benefit and Terminal Illness Benefit (per $1,000 Net Amount At Risk) Attained Age Male Female Non-Smoker Smoker Non-Smoker Smoker 51 2.437 4.991 1.691 4.114 52 2.734 5.652 1.854 4.52 53"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published prevailing 0% top-up charge for this cohort."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge",
+            "label": "Premium Shortfall Charge",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.79
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Models the published monthly premium shortfall charge before Flexi Start for the 10 Years Flexi 3 corridor.",
+              "Use a premium-holiday event to represent missed regular premiums after the grace period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": false,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "During MIP, dividend-paying funds are compulsory to be reinvested.",
+            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 12,
+              "section": "Distribution of dividends",
+              "excerpt": "13. Distribution of Dividends During MIP, there is no option to receive the dividend. If you invested into a dividend paying Fund, any dividend payout will automatically be reinvested into the Fund from which it is paid."
+            }
+          ]
+        },
+        "eecTable": [],
+        "warnings": [
+          "10 Years Flexi 3 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, all bonus mechanics, surrender / partial-withdrawal charge schedules, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+        ],
+        "unsupportedItems": [
+          "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
+          "Welcome Bonus, Annual Premium Bonus, Loyalty Bonus, and Step-up Booster Bonus remain informational only.",
+          "Full-surrender and partial-withdrawal charge schedules remain informational only, including the life-stage partial-withdrawal waiver corridor.",
+          "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
+          "Fund switching, premium redirection, automatic fund rebalancing, and change-of-mode-of-payment options remain informational only.",
+          "Reinstatement underwriting and pre-existing-condition exclusions remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description and death benefit",
+            "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+          },
+          {
+            "page": 4,
+            "section": "Bonuses",
+            "excerpt": "C. Loyalty Bonus Loyalty Bonus will be given during the policy term starting from the policy anniversary immediately after the end of the MIP and every policy anniversary thereafter, in the form of additional units based"
+          },
+          {
+            "page": 6,
+            "section": "COI, administrative charge, and policy fee",
+            "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+          },
+          {
+            "page": 9,
+            "section": "Top-up premium and policy options",
+            "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+          },
+          {
+            "page": 12,
+            "section": "Distribution of dividends",
+            "excerpt": "13. Distribution of Dividends During MIP, there is no option to receive the dividend. If you invested into a dividend paying Fund, any dividend payout will automatically be reinvested into the Fund from which it is paid."
+          },
+          {
+            "page": 20,
+            "section": "Appendix A annual COI table",
+            "excerpt": "Annual Cost of Insurance for Death Benefit and Terminal Illness Benefit (per $1,000 Net Amount At Risk) Attained Age Male Female Non-Smoker Smoker Non-Smoker Smoker 51 2.437 4.991 1.691 4.114 52 2.734 5.652 1.854 4.52 53"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-10-flexi-5-sep-2025",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.025,
+            "postMipFeeRate": 0.007,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 6,
+                "section": "COI, administrative charge, and policy fee",
+                "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+              },
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "cost-of-insurance",
+            "label": "Cost of Insurance (Death / TI)",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "manulife-investready-iii-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details plus the current net regular premium base and current net top-up premium base before the calculator can model the annualised COI.",
+              "Models the published 101% paid-premium floor net-amount-at-risk formula for death and terminal illness benefit, including top-up premiums and withdrawals."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 6,
+                "section": "COI, administrative charge, and policy fee",
+                "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+              },
+              {
+                "page": 20,
+                "section": "Appendix A annual COI table",
+                "excerpt": "Annual Cost of Insurance for Death Benefit and Terminal Illness Benefit (per $1,000 Net Amount At Risk) Attained Age Male Female Non-Smoker Smoker Non-Smoker Smoker 51 2.437 4.991 1.691 4.114 52 2.734 5.652 1.854 4.52 53"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published prevailing 0% top-up charge for this cohort."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge",
+            "label": "Premium Shortfall Charge",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.79
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Models the published monthly premium shortfall charge before Flexi Start for the 10 Years Flexi 5 corridor.",
+              "Use a premium-holiday event to represent missed regular premiums after the grace period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": false,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "During MIP, dividend-paying funds are compulsory to be reinvested.",
+            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 12,
+              "section": "Distribution of dividends",
+              "excerpt": "13. Distribution of Dividends During MIP, there is no option to receive the dividend. If you invested into a dividend paying Fund, any dividend payout will automatically be reinvested into the Fund from which it is paid."
+            }
+          ]
+        },
+        "eecTable": [],
+        "warnings": [
+          "10 Years Flexi 5 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, all bonus mechanics, surrender / partial-withdrawal charge schedules, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+        ],
+        "unsupportedItems": [
+          "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
+          "Welcome Bonus, Annual Premium Bonus, Loyalty Bonus, and Step-up Booster Bonus remain informational only.",
+          "Full-surrender and partial-withdrawal charge schedules remain informational only, including the life-stage partial-withdrawal waiver corridor.",
+          "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
+          "Fund switching, premium redirection, automatic fund rebalancing, and change-of-mode-of-payment options remain informational only.",
+          "Reinstatement underwriting and pre-existing-condition exclusions remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description and death benefit",
+            "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+          },
+          {
+            "page": 4,
+            "section": "Bonuses",
+            "excerpt": "C. Loyalty Bonus Loyalty Bonus will be given during the policy term starting from the policy anniversary immediately after the end of the MIP and every policy anniversary thereafter, in the form of additional units based"
+          },
+          {
+            "page": 6,
+            "section": "COI, administrative charge, and policy fee",
+            "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+          },
+          {
+            "page": 9,
+            "section": "Top-up premium and policy options",
+            "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+          },
+          {
+            "page": 12,
+            "section": "Distribution of dividends",
+            "excerpt": "13. Distribution of Dividends During MIP, there is no option to receive the dividend. If you invested into a dividend paying Fund, any dividend payout will automatically be reinvested into the Fund from which it is paid."
+          },
+          {
+            "page": 20,
+            "section": "Appendix A annual COI table",
+            "excerpt": "Annual Cost of Insurance for Death Benefit and Terminal Illness Benefit (per $1,000 Net Amount At Risk) Attained Age Male Female Non-Smoker Smoker Non-Smoker Smoker 51 2.437 4.991 1.691 4.114 52 2.734 5.652 1.854 4.52 53"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-10-flexi-8-sep-2025",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.025,
+            "postMipFeeRate": 0.007,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 6,
+                "section": "COI, administrative charge, and policy fee",
+                "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+              },
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "cost-of-insurance",
+            "label": "Cost of Insurance (Death / TI)",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "manulife-investready-iii-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details plus the current net regular premium base and current net top-up premium base before the calculator can model the annualised COI.",
+              "Models the published 101% paid-premium floor net-amount-at-risk formula for death and terminal illness benefit, including top-up premiums and withdrawals."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 6,
+                "section": "COI, administrative charge, and policy fee",
+                "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+              },
+              {
+                "page": 20,
+                "section": "Appendix A annual COI table",
+                "excerpt": "Annual Cost of Insurance for Death Benefit and Terminal Illness Benefit (per $1,000 Net Amount At Risk) Attained Age Male Female Non-Smoker Smoker Non-Smoker Smoker 51 2.437 4.991 1.691 4.114 52 2.734 5.652 1.854 4.52 53"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published prevailing 0% top-up charge for this cohort."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge",
+            "label": "Premium Shortfall Charge",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.79
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.47
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.44
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.21
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Models the published monthly premium shortfall charge before Flexi Start for the 10 Years Flexi 8 corridor.",
+              "Use a premium-holiday event to represent missed regular premiums after the grace period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": false,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "During MIP, dividend-paying funds are compulsory to be reinvested.",
+            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 12,
+              "section": "Distribution of dividends",
+              "excerpt": "13. Distribution of Dividends During MIP, there is no option to receive the dividend. If you invested into a dividend paying Fund, any dividend payout will automatically be reinvested into the Fund from which it is paid."
+            }
+          ]
+        },
+        "eecTable": [],
+        "warnings": [
+          "10 Years Flexi 8 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, all bonus mechanics, surrender / partial-withdrawal charge schedules, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+        ],
+        "unsupportedItems": [
+          "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
+          "Welcome Bonus, Annual Premium Bonus, Loyalty Bonus, and Step-up Booster Bonus remain informational only.",
+          "Full-surrender and partial-withdrawal charge schedules remain informational only, including the life-stage partial-withdrawal waiver corridor.",
+          "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
+          "Fund switching, premium redirection, automatic fund rebalancing, and change-of-mode-of-payment options remain informational only.",
+          "Reinstatement underwriting and pre-existing-condition exclusions remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description and death benefit",
+            "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+          },
+          {
+            "page": 4,
+            "section": "Bonuses",
+            "excerpt": "C. Loyalty Bonus Loyalty Bonus will be given during the policy term starting from the policy anniversary immediately after the end of the MIP and every policy anniversary thereafter, in the form of additional units based"
+          },
+          {
+            "page": 6,
+            "section": "COI, administrative charge, and policy fee",
+            "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+          },
+          {
+            "page": 9,
+            "section": "Top-up premium and policy options",
+            "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+          },
+          {
+            "page": 12,
+            "section": "Distribution of dividends",
+            "excerpt": "13. Distribution of Dividends During MIP, there is no option to receive the dividend. If you invested into a dividend paying Fund, any dividend payout will automatically be reinvested into the Fund from which it is paid."
+          },
+          {
+            "page": 20,
+            "section": "Appendix A annual COI table",
+            "excerpt": "Annual Cost of Insurance for Death Benefit and Terminal Illness Benefit (per $1,000 Net Amount At Risk) Attained Age Male Female Non-Smoker Smoker Non-Smoker Smoker 51 2.437 4.991 1.691 4.114 52 2.734 5.652 1.854 4.52 53"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-13-flexi-10-sep-2025",
+        "currency": "SGD",
+        "mipLength": 13,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.025,
+            "postMipFeeRate": 0.007,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 6,
+                "section": "COI, administrative charge, and policy fee",
+                "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+              },
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "cost-of-insurance",
+            "label": "Cost of Insurance (Death / TI)",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "manulife-investready-iii-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details plus the current net regular premium base and current net top-up premium base before the calculator can model the annualised COI.",
+              "Models the published 101% paid-premium floor net-amount-at-risk formula for death and terminal illness benefit, including top-up premiums and withdrawals."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 6,
+                "section": "COI, administrative charge, and policy fee",
+                "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+              },
+              {
+                "page": 20,
+                "section": "Appendix A annual COI table",
+                "excerpt": "Annual Cost of Insurance for Death Benefit and Terminal Illness Benefit (per $1,000 Net Amount At Risk) Attained Age Male Female Non-Smoker Smoker Non-Smoker Smoker 51 2.437 4.991 1.691 4.114 52 2.734 5.652 1.854 4.52 53"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published prevailing 0% top-up charge for this cohort."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge",
+            "label": "Premium Shortfall Charge",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.81
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.63
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.53
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.49
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.46
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.27
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.22
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.14
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Models the published monthly premium shortfall charge before Flexi Start for the 13 Years Flexi 10 corridor.",
+              "Use a premium-holiday event to represent missed regular premiums after the grace period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+              },
+              {
+                "page": 9,
+                "section": "Top-up premium and policy options",
+                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": false,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "During MIP, dividend-paying funds are compulsory to be reinvested.",
+            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 12,
+              "section": "Distribution of dividends",
+              "excerpt": "13. Distribution of Dividends During MIP, there is no option to receive the dividend. If you invested into a dividend paying Fund, any dividend payout will automatically be reinvested into the Fund from which it is paid."
+            }
+          ]
+        },
+        "eecTable": [],
+        "warnings": [
+          "13 Years Flexi 10 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, all bonus mechanics, surrender / partial-withdrawal charge schedules, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+        ],
+        "unsupportedItems": [
+          "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
+          "Welcome Bonus, Annual Premium Bonus, Loyalty Bonus, and Step-up Booster Bonus remain informational only.",
+          "Full-surrender and partial-withdrawal charge schedules remain informational only, including the life-stage partial-withdrawal waiver corridor.",
+          "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
+          "Fund switching, premium redirection, automatic fund rebalancing, and change-of-mode-of-payment options remain informational only.",
+          "Reinstatement underwriting and pre-existing-condition exclusions remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description and death benefit",
+            "excerpt": "Manulife InvestReady (III) Product Summary Details of Product Provider Manulife (Singapore) Pte. Ltd. (we, our, us) (registration number 198002116D) is the product provider and underwriter for this policy. This policy is"
+          },
+          {
+            "page": 4,
+            "section": "Bonuses",
+            "excerpt": "C. Loyalty Bonus Loyalty Bonus will be given during the policy term starting from the policy anniversary immediately after the end of the MIP and every policy anniversary thereafter, in the form of additional units based"
+          },
+          {
+            "page": 6,
+            "section": "COI, administrative charge, and policy fee",
+            "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+          },
+          {
+            "page": 9,
+            "section": "Top-up premium and policy options",
+            "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+          },
+          {
+            "page": 12,
+            "section": "Distribution of dividends",
+            "excerpt": "13. Distribution of Dividends During MIP, there is no option to receive the dividend. If you invested into a dividend paying Fund, any dividend payout will automatically be reinvested into the Fund from which it is paid."
+          },
+          {
+            "page": 20,
+            "section": "Appendix A annual COI table",
+            "excerpt": "Annual Cost of Insurance for Death Benefit and Terminal Illness Benefit (per $1,000 Net Amount At Risk) Attained Age Male Female Non-Smoker Smoker Non-Smoker Smoker 51 2.437 4.991 1.691 4.114 52 2.734 5.652 1.854 4.52 53"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "manulife-manuinvest-duo",
     "insurer": "Manulife Singapore",
     "productName": "ManuInvest Duo",
