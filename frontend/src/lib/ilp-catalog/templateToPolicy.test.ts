@@ -910,6 +910,76 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Open-ended products use a default 20-year review horizon'))).toBe(true)
   })
 
+  it('maps FWD Invest First Horizon into a finite-MIP multi-account partial seed', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'fwd-invest-first-horizon')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-20')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('FWD Invest First Horizon (SGD / MIP 20)')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-first-horizon-initial-account-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('fwd-invest-first-horizon-premium-shortfall-charge')
+    expect(seed.mipLength).toBe(20)
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'initial',
+        subjectToEec: true,
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+          { phase: 'after-icp', contributionShare: 1 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'accumulation',
+        subjectToEec: false,
+        contributionRules: [
+          { phase: 'top-up', contributionShare: 1 },
+        ],
+      }),
+    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'initial-account-charge',
+          basis: 'premium-base-mip-multiplier',
+          premiumBaseConfig: expect.objectContaining({
+            useHigherOfCommencementAndPrevailing: true,
+            multiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 19, mode: 'policy-year' },
+              { startPolicyYear: 20, endPolicyYear: null, mode: 'fixed', multiplier: 20 },
+            ],
+          }),
+          fallbackAppliesTo: ['accumulation'],
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          appliesTo: ['accumulation'],
+          rate: 0.05,
+        }),
+        expect.objectContaining({
+          id: 'premium-reduction-charge',
+          basis: 'annual-reduction-with-active-months',
+          fallbackAppliesTo: ['accumulation'],
+        }),
+        expect.objectContaining({
+          id: 'initial-account-redemption-fee',
+          appliesTo: ['initial'],
+        }),
+      ]),
+    )
+    expect(seed.eecTable).toHaveLength(20)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('Premium Pause Waiver'))).toBe(true)
+  })
+
   it('maps Invest Wealth Purpose into a partial seed with cumulative-paid policy charges and top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-wealth-purpose')

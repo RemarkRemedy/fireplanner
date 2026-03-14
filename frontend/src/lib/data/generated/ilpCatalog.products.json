@@ -3008,6 +3008,813 @@
     ]
   },
   {
+    "id": "fwd-invest-first-horizon",
+    "insurer": "FWD Singapore",
+    "productName": "FWD Invest First Horizon",
+    "sourceFileName": "FWD Invest First Horizon Product Summary.pdf",
+    "sourceChecksumSha256": "9ec7820da2ffb126f0fd97d9c1b6247bcd7bb3b82950f2f656514dba8c279018",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:fwd-invest-first-horizon-initial-account-charge",
+      "branch:fwd-invest-first-horizon-premium-reduction-charge",
+      "branch:fwd-invest-first-horizon-top-up-premium-charge",
+      "branch:fwd-invest-first-horizon-initial-account-redemption-fee",
+      "branch:fwd-invest-first-horizon-initial-account-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "fwd-invest-first-horizon-premium-shortfall-charge",
+      "fwd-invest-first-horizon-premium-pause-waiver",
+      "fwd-invest-first-horizon-support-benefit-waiver",
+      "fwd-invest-first-horizon-insurance-charge",
+      "fwd-invest-first-horizon-booster-bonus",
+      "fwd-invest-first-horizon-annual-premium-bonus",
+      "fwd-invest-first-horizon-loyalty-bonus",
+      "fwd-invest-first-horizon-repayment-bonus-restoration",
+      "fwd-invest-first-horizon-top-up-repayment-waterfall",
+      "fwd-invest-first-horizon-withdrawal-eligibility-gates",
+      "fwd-invest-first-horizon-top-up-eligibility-and-cap",
+      "fwd-invest-first-horizon-policy-closure-charge",
+      "fwd-invest-first-horizon-change-of-person-insured",
+      "fwd-invest-first-horizon-fund-switching",
+      "fwd-invest-first-horizon-fund-level-charges"
+    ],
+    "warnings": [
+      "FWD Invest First Horizon is cataloged as a partial modeled subset in V1. The parser currently covers the published 20-year and 25-year regular-premium corridors that fit the current charge and surrender kernels.",
+      "Premium shortfall / Premium Pause Waiver behavior, bonus mechanics, insurance charge, repayment waterfalls, and withdrawal eligibility gates remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-20",
+        "currency": "SGD",
+        "mipBasis": "finite",
+        "mipLength": 20,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "initial",
+            "label": "Initial Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and death benefit",
+                "excerpt": "FWD Invest First Horizon Product Summary Note: Please read this Product Summary before you decide to take up this product. Name of the insurer FWD Singapore Pte. Ltd. Product name FWD Invest First Horizon If the Person I"
+              },
+              {
+                "page": 7,
+                "section": "Missed regular premium and Premium Pause Waiver",
+                "excerpt": "During Policy Year 3 Your Policy will continue. If you miss your Regular Premium, a premium shortfall charge will be imposed, unless the Support Benefit has been exercised. We will continue to deduct other applicable fee"
+              },
+              {
+                "page": 9,
+                "section": "Initial account charge and insurance charge",
+                "excerpt": "Initial account charge is payable throughout the Policy Term and will be deducted on each Policy 5 Monthiversary. Initial account charge in Policy Year N = A% p.a. (based on selected Premium Payment Annualised Regular Pr"
+              },
+              {
+                "page": 16,
+                "section": "Withdrawal rules and partial withdrawal limits",
+                "excerpt": "You can withdraw part of your Policy Value while the Policy is still in force. Withdrawals are allowed as per the following rules: During Premium Payment Term After Premium During the first From Policy Year 3 Payment Ter"
+              }
+            ]
+          },
+          {
+            "id": "accumulation",
+            "label": "Accumulation Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Missed regular premium and Premium Pause Waiver",
+                "excerpt": "During Policy Year 3 Your Policy will continue. If you miss your Regular Premium, a premium shortfall charge will be imposed, unless the Support Benefit has been exercised. We will continue to deduct other applicable fee"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium",
+                "excerpt": "Top-up premium From Policy Year 2 onwards, you can apply to pay a top-up premium to grow your investment faster. A top-up premium is an unscheduled, additional premium payment to your Policy. All top-up premiums are firs"
+              },
+              {
+                "page": 16,
+                "section": "Withdrawal rules and partial withdrawal limits",
+                "excerpt": "You can withdraw part of your Policy Value while the Policy is still in force. Withdrawals are allowed as per the following rules: During Premium Payment Term After Premium During the first From Policy Year 3 Payment Ter"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "initial-account-charge",
+            "label": "Initial Account Charge",
+            "basis": "premium-base-mip-multiplier",
+            "yearBasis": "policy-year",
+            "rate": 0,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": true,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 19,
+                  "mode": "policy-year"
+                },
+                {
+                  "startPolicyYear": 20,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 20
+                }
+              ]
+            },
+            "appliesTo": [
+              "initial"
+            ],
+            "fallbackAppliesTo": [
+              "accumulation"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 9,
+                "rate": 0.038
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": null,
+                "rate": 0.012
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published monthly initial-account charge for the 20-year premium-payment-term corridor.",
+              "The charge remains anchored to the commencement-date annualised regular premium and therefore does not reduce after premium reductions or missed premiums.",
+              "If the initial units account is insufficient, the remaining deduction falls back to the accumulation units account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Initial account charge and insurance charge",
+                "excerpt": "Initial account charge is payable throughout the Policy Term and will be deducted on each Policy 5 Monthiversary. Initial account charge in Policy Year N = A% p.a. (based on selected Premium Payment Annualised Regular Pr"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 5% premium charge on each accepted top-up premium.",
+              "The year-2 eligibility gate, repayment waterfall, and total top-up cap remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Top-up premium",
+                "excerpt": "Top-up premium From Policy Year 2 onwards, you can apply to pay a top-up premium to grow your investment faster. A top-up premium is an unscheduled, additional premium payment to your Policy. All top-up premiums are firs"
+              },
+              {
+                "page": 10,
+                "section": "Top-up premium charge",
+                "excerpt": "Premium charge For each top-up premium, we will apply a charge of 5% before using the remaining amount to buy (top-up premium) Units in your desired ILP sub-funds. FWD Invest First Horizon Product Summary v2.0 E&OE 5 Feb"
+              }
+            ]
+          },
+          {
+            "id": "premium-reduction-charge",
+            "label": "Premium Reduction Charge",
+            "trigger": "regular-premium-reduction",
+            "basis": "annual-reduction-with-active-months",
+            "appliesTo": [
+              "initial"
+            ],
+            "fallbackAppliesTo": [
+              "accumulation"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.85
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.68
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.56
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.48
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.42
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.37
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.32
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published monthly premium-reduction charge for the 20-year premium-payment-term corridor.",
+              "The charge applies to the reduction from the commencement-date annualised regular premium until you restore the original premium or the charge period ends.",
+              "Support Benefit waiver approval remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 12,
+                "section": "Premium reduction charge",
+                "excerpt": "selected Premium Payment Term, a premium reduction charge will be deducted on each Policy Monthiversary after the reduction of Regular Premium take effect. Premium Payment Term 20 years 25 years Policy Year Policy Year P"
+              }
+            ]
+          },
+          {
+            "id": "initial-account-redemption-fee",
+            "label": "Initial Account Redemption Fee",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "initial"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 9,
+                "rate": 0.1
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published initial-units-account redemption fee schedule for the 20-year premium-payment-term corridor.",
+              "Withdrawals from the accumulation units account are charge-free under the published summary.",
+              "The first-two-policy-year no-withdrawal gate, partial-withdrawal limit, and minimum account-value rules remain informational only."
+            ],
+            "sourceRefs": [
+              {
+                "page": 13,
+                "section": "Policy closure charge and redemption fee",
+                "excerpt": "Celebrate living fwd.com.sg Fees and charges Premium Reduction charge rate (D% p.a.) Policy Year Premium Payment Term 20 years 25 years 1 2 3 85% 98% 4 68% 80% 5 56% 67% 6 48% 58% 7 42% 52% 8 37% 47% Premium 9 32% 43% re"
+              },
+              {
+                "page": 16,
+                "section": "Withdrawal rules and partial withdrawal limits",
+                "excerpt": "You can withdraw part of your Policy Value while the Policy is still in force. Withdrawals are allowed as per the following rules: During Premium Payment Term After Premium During the first From Policy Year 3 Payment Ter"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.85,
+          0.68,
+          0.56,
+          0.48,
+          0.42,
+          0.37,
+          0.32,
+          0.22,
+          0.21,
+          0.2,
+          0.19,
+          0.18,
+          0.17,
+          0.15,
+          0.11,
+          0.1,
+          0.08,
+          0.06
+        ],
+        "warnings": [
+          "FWD Invest First Horizon (20-year premium payment term) is cataloged as a partial modeled subset in V1. The parser captures the published fixed-premium-base initial account charge, the premium-reduction charge schedule, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.",
+          "Premium shortfall charge remains informational only because the automatic 24-month Premium Pause Waiver cannot be expressed exactly in the current event kernel without miscounting year-3 missed premiums.",
+          "Booster Bonus, Annual Premium Bonus, Loyalty Bonus, insurance charge, repayment waterfalls, and withdrawal-eligibility gates remain outside the current engine."
+        ],
+        "unsupportedItems": [
+          "Premium shortfall charge remains informational only because the automatic 24-month Premium Pause Waiver starts only from policy year 4 and is not modeled exactly in V1.",
+          "Policy year 3 non-payment behavior, Support Benefit approvals, and Premium Pause Waiver month accounting remain informational only.",
+          "Booster Bonus, Annual Premium Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.",
+          "Insurance charge remains informational only because the attained-age / sex / smoker Appendix B rate table is not yet wired for this FWD protection formula.",
+          "Top-up repayment precedence for missed premiums, prior withdrawals, and prior premium reductions remains informational only.",
+          "Top-up eligibility from policy year 2, total top-up cap, minimum top-up amount, and minimum withdrawal requirements remain informational only.",
+          "Initial-units-account withdrawal lockout in the first two policy years, the 50%-minus-prior-withdrawals partial-withdrawal limit, and minimum account-value gates remain informational only.",
+          "Policy closure charge, switching fee review rights, fund management charges, change-of-person-insured handling, and fund-level transaction deferrals remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and death benefit",
+            "excerpt": "FWD Invest First Horizon Product Summary Note: Please read this Product Summary before you decide to take up this product. Name of the insurer FWD Singapore Pte. Ltd. Product name FWD Invest First Horizon If the Person I"
+          },
+          {
+            "page": 7,
+            "section": "Missed regular premium and Premium Pause Waiver",
+            "excerpt": "During Policy Year 3 Your Policy will continue. If you miss your Regular Premium, a premium shortfall charge will be imposed, unless the Support Benefit has been exercised. We will continue to deduct other applicable fee"
+          },
+          {
+            "page": 8,
+            "section": "Top-up premium",
+            "excerpt": "Top-up premium From Policy Year 2 onwards, you can apply to pay a top-up premium to grow your investment faster. A top-up premium is an unscheduled, additional premium payment to your Policy. All top-up premiums are firs"
+          },
+          {
+            "page": 9,
+            "section": "Initial account charge and insurance charge",
+            "excerpt": "Initial account charge is payable throughout the Policy Term and will be deducted on each Policy 5 Monthiversary. Initial account charge in Policy Year N = A% p.a. (based on selected Premium Payment Annualised Regular Pr"
+          },
+          {
+            "page": 10,
+            "section": "Top-up premium charge",
+            "excerpt": "Premium charge For each top-up premium, we will apply a charge of 5% before using the remaining amount to buy (top-up premium) Units in your desired ILP sub-funds. FWD Invest First Horizon Product Summary v2.0 E&OE 5 Feb"
+          },
+          {
+            "page": 11,
+            "section": "Premium shortfall charge",
+            "excerpt": "Premium Payment Term, a premium shortfall charge will be deducted on each Policy Monthiversary after the end of the grace period for the missed premium. Premium Payment Term 20 years 25 years Policy Year Policy Year Prem"
+          },
+          {
+            "page": 12,
+            "section": "Premium reduction charge",
+            "excerpt": "selected Premium Payment Term, a premium reduction charge will be deducted on each Policy Monthiversary after the reduction of Regular Premium take effect. Premium Payment Term 20 years 25 years Policy Year Policy Year P"
+          },
+          {
+            "page": 13,
+            "section": "Policy closure charge and redemption fee",
+            "excerpt": "Celebrate living fwd.com.sg Fees and charges Premium Reduction charge rate (D% p.a.) Policy Year Premium Payment Term 20 years 25 years 1 2 3 85% 98% 4 68% 80% 5 56% 67% 6 48% 58% 7 42% 52% 8 37% 47% Premium 9 32% 43% re"
+          },
+          {
+            "page": 14,
+            "section": "Surrender charge",
+            "excerpt": "At any time during the Premium Payment Term, a surrender charge will be levied upon the surrender of the Policy. This charge is calculated by multiplying the initial units account value by the applicable surrender charge"
+          },
+          {
+            "page": 16,
+            "section": "Withdrawal rules and partial withdrawal limits",
+            "excerpt": "You can withdraw part of your Policy Value while the Policy is still in force. Withdrawals are allowed as per the following rules: During Premium Payment Term After Premium During the first From Policy Year 3 Payment Ter"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-25",
+        "currency": "SGD",
+        "mipBasis": "finite",
+        "mipLength": 25,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "initial",
+            "label": "Initial Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and death benefit",
+                "excerpt": "FWD Invest First Horizon Product Summary Note: Please read this Product Summary before you decide to take up this product. Name of the insurer FWD Singapore Pte. Ltd. Product name FWD Invest First Horizon If the Person I"
+              },
+              {
+                "page": 7,
+                "section": "Missed regular premium and Premium Pause Waiver",
+                "excerpt": "During Policy Year 3 Your Policy will continue. If you miss your Regular Premium, a premium shortfall charge will be imposed, unless the Support Benefit has been exercised. We will continue to deduct other applicable fee"
+              },
+              {
+                "page": 9,
+                "section": "Initial account charge and insurance charge",
+                "excerpt": "Initial account charge is payable throughout the Policy Term and will be deducted on each Policy 5 Monthiversary. Initial account charge in Policy Year N = A% p.a. (based on selected Premium Payment Annualised Regular Pr"
+              },
+              {
+                "page": 16,
+                "section": "Withdrawal rules and partial withdrawal limits",
+                "excerpt": "You can withdraw part of your Policy Value while the Policy is still in force. Withdrawals are allowed as per the following rules: During Premium Payment Term After Premium During the first From Policy Year 3 Payment Ter"
+              }
+            ]
+          },
+          {
+            "id": "accumulation",
+            "label": "Accumulation Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Missed regular premium and Premium Pause Waiver",
+                "excerpt": "During Policy Year 3 Your Policy will continue. If you miss your Regular Premium, a premium shortfall charge will be imposed, unless the Support Benefit has been exercised. We will continue to deduct other applicable fee"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium",
+                "excerpt": "Top-up premium From Policy Year 2 onwards, you can apply to pay a top-up premium to grow your investment faster. A top-up premium is an unscheduled, additional premium payment to your Policy. All top-up premiums are firs"
+              },
+              {
+                "page": 16,
+                "section": "Withdrawal rules and partial withdrawal limits",
+                "excerpt": "You can withdraw part of your Policy Value while the Policy is still in force. Withdrawals are allowed as per the following rules: During Premium Payment Term After Premium During the first From Policy Year 3 Payment Ter"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "initial-account-charge",
+            "label": "Initial Account Charge",
+            "basis": "premium-base-mip-multiplier",
+            "yearBasis": "policy-year",
+            "rate": 0,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": true,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 24,
+                  "mode": "policy-year"
+                },
+                {
+                  "startPolicyYear": 25,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 25
+                }
+              ]
+            },
+            "appliesTo": [
+              "initial"
+            ],
+            "fallbackAppliesTo": [
+              "accumulation"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.035
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.01
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published monthly initial-account charge for the 25-year premium-payment-term corridor.",
+              "The charge remains anchored to the commencement-date annualised regular premium and therefore does not reduce after premium reductions or missed premiums.",
+              "If the initial units account is insufficient, the remaining deduction falls back to the accumulation units account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Initial account charge and insurance charge",
+                "excerpt": "Initial account charge is payable throughout the Policy Term and will be deducted on each Policy 5 Monthiversary. Initial account charge in Policy Year N = A% p.a. (based on selected Premium Payment Annualised Regular Pr"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 5% premium charge on each accepted top-up premium.",
+              "The year-2 eligibility gate, repayment waterfall, and total top-up cap remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Top-up premium",
+                "excerpt": "Top-up premium From Policy Year 2 onwards, you can apply to pay a top-up premium to grow your investment faster. A top-up premium is an unscheduled, additional premium payment to your Policy. All top-up premiums are firs"
+              },
+              {
+                "page": 10,
+                "section": "Top-up premium charge",
+                "excerpt": "Premium charge For each top-up premium, we will apply a charge of 5% before using the remaining amount to buy (top-up premium) Units in your desired ILP sub-funds. FWD Invest First Horizon Product Summary v2.0 E&OE 5 Feb"
+              }
+            ]
+          },
+          {
+            "id": "premium-reduction-charge",
+            "label": "Premium Reduction Charge",
+            "trigger": "regular-premium-reduction",
+            "basis": "annual-reduction-with-active-months",
+            "appliesTo": [
+              "initial"
+            ],
+            "fallbackAppliesTo": [
+              "accumulation"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.98
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.67
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.58
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.52
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.47
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.43
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.34
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published monthly premium-reduction charge for the 25-year premium-payment-term corridor.",
+              "The charge applies to the reduction from the commencement-date annualised regular premium until you restore the original premium or the charge period ends.",
+              "Support Benefit waiver approval remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 12,
+                "section": "Premium reduction charge",
+                "excerpt": "selected Premium Payment Term, a premium reduction charge will be deducted on each Policy Monthiversary after the reduction of Regular Premium take effect. Premium Payment Term 20 years 25 years Policy Year Policy Year P"
+              }
+            ]
+          },
+          {
+            "id": "initial-account-redemption-fee",
+            "label": "Initial Account Redemption Fee",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "initial"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 10,
+                "rate": 0.1
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published initial-units-account redemption fee schedule for the 25-year premium-payment-term corridor.",
+              "Withdrawals from the accumulation units account are charge-free under the published summary.",
+              "The first-two-policy-year no-withdrawal gate, partial-withdrawal limit, and minimum account-value rules remain informational only."
+            ],
+            "sourceRefs": [
+              {
+                "page": 13,
+                "section": "Policy closure charge and redemption fee",
+                "excerpt": "Celebrate living fwd.com.sg Fees and charges Premium Reduction charge rate (D% p.a.) Policy Year Premium Payment Term 20 years 25 years 1 2 3 85% 98% 4 68% 80% 5 56% 67% 6 48% 58% 7 42% 52% 8 37% 47% Premium 9 32% 43% re"
+              },
+              {
+                "page": 16,
+                "section": "Withdrawal rules and partial withdrawal limits",
+                "excerpt": "You can withdraw part of your Policy Value while the Policy is still in force. Withdrawals are allowed as per the following rules: During Premium Payment Term After Premium During the first From Policy Year 3 Payment Ter"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.98,
+          0.8,
+          0.67,
+          0.58,
+          0.52,
+          0.47,
+          0.43,
+          0.34,
+          0.33,
+          0.32,
+          0.29,
+          0.27,
+          0.26,
+          0.25,
+          0.23,
+          0.17,
+          0.11,
+          0.11,
+          0.1,
+          0.1,
+          0.09,
+          0.07,
+          0.05
+        ],
+        "warnings": [
+          "FWD Invest First Horizon (25-year premium payment term) is cataloged as a partial modeled subset in V1. The parser captures the published fixed-premium-base initial account charge, the premium-reduction charge schedule, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.",
+          "Premium shortfall charge remains informational only because the automatic 24-month Premium Pause Waiver cannot be expressed exactly in the current event kernel without miscounting year-3 missed premiums.",
+          "Booster Bonus, Annual Premium Bonus, Loyalty Bonus, insurance charge, repayment waterfalls, and withdrawal-eligibility gates remain outside the current engine."
+        ],
+        "unsupportedItems": [
+          "Premium shortfall charge remains informational only because the automatic 24-month Premium Pause Waiver starts only from policy year 4 and is not modeled exactly in V1.",
+          "Policy year 3 non-payment behavior, Support Benefit approvals, and Premium Pause Waiver month accounting remain informational only.",
+          "Booster Bonus, Annual Premium Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.",
+          "Insurance charge remains informational only because the attained-age / sex / smoker Appendix B rate table is not yet wired for this FWD protection formula.",
+          "Top-up repayment precedence for missed premiums, prior withdrawals, and prior premium reductions remains informational only.",
+          "Top-up eligibility from policy year 2, total top-up cap, minimum top-up amount, and minimum withdrawal requirements remain informational only.",
+          "Initial-units-account withdrawal lockout in the first two policy years, the 50%-minus-prior-withdrawals partial-withdrawal limit, and minimum account-value gates remain informational only.",
+          "Policy closure charge, switching fee review rights, fund management charges, change-of-person-insured handling, and fund-level transaction deferrals remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and death benefit",
+            "excerpt": "FWD Invest First Horizon Product Summary Note: Please read this Product Summary before you decide to take up this product. Name of the insurer FWD Singapore Pte. Ltd. Product name FWD Invest First Horizon If the Person I"
+          },
+          {
+            "page": 7,
+            "section": "Missed regular premium and Premium Pause Waiver",
+            "excerpt": "During Policy Year 3 Your Policy will continue. If you miss your Regular Premium, a premium shortfall charge will be imposed, unless the Support Benefit has been exercised. We will continue to deduct other applicable fee"
+          },
+          {
+            "page": 8,
+            "section": "Top-up premium",
+            "excerpt": "Top-up premium From Policy Year 2 onwards, you can apply to pay a top-up premium to grow your investment faster. A top-up premium is an unscheduled, additional premium payment to your Policy. All top-up premiums are firs"
+          },
+          {
+            "page": 9,
+            "section": "Initial account charge and insurance charge",
+            "excerpt": "Initial account charge is payable throughout the Policy Term and will be deducted on each Policy 5 Monthiversary. Initial account charge in Policy Year N = A% p.a. (based on selected Premium Payment Annualised Regular Pr"
+          },
+          {
+            "page": 10,
+            "section": "Top-up premium charge",
+            "excerpt": "Premium charge For each top-up premium, we will apply a charge of 5% before using the remaining amount to buy (top-up premium) Units in your desired ILP sub-funds. FWD Invest First Horizon Product Summary v2.0 E&OE 5 Feb"
+          },
+          {
+            "page": 11,
+            "section": "Premium shortfall charge",
+            "excerpt": "Premium Payment Term, a premium shortfall charge will be deducted on each Policy Monthiversary after the end of the grace period for the missed premium. Premium Payment Term 20 years 25 years Policy Year Policy Year Prem"
+          },
+          {
+            "page": 12,
+            "section": "Premium reduction charge",
+            "excerpt": "selected Premium Payment Term, a premium reduction charge will be deducted on each Policy Monthiversary after the reduction of Regular Premium take effect. Premium Payment Term 20 years 25 years Policy Year Policy Year P"
+          },
+          {
+            "page": 13,
+            "section": "Policy closure charge and redemption fee",
+            "excerpt": "Celebrate living fwd.com.sg Fees and charges Premium Reduction charge rate (D% p.a.) Policy Year Premium Payment Term 20 years 25 years 1 2 3 85% 98% 4 68% 80% 5 56% 67% 6 48% 58% 7 42% 52% 8 37% 47% Premium 9 32% 43% re"
+          },
+          {
+            "page": 14,
+            "section": "Surrender charge",
+            "excerpt": "At any time during the Premium Payment Term, a surrender charge will be levied upon the surrender of the Policy. This charge is calculated by multiplying the initial units account value by the applicable surrender charge"
+          },
+          {
+            "page": 16,
+            "section": "Withdrawal rules and partial withdrawal limits",
+            "excerpt": "You can withdraw part of your Policy Value while the Policy is still in force. Withdrawals are allowed as per the following rules: During Premium Payment Term After Premium During the first From Policy Year 3 Payment Ter"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "fwd-invest-goal-1",
     "insurer": "FWD",
     "productName": "FWD Invest Goal 1",
