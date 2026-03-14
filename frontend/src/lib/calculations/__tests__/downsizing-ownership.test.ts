@@ -441,5 +441,62 @@ describe('downsizing ownership scaling: deterministic projection path', () => {
   })
 })
 
+describe('couple plan downsizing ownership scaling', () => {
+  it('scales downsizing equity injection by ownership percent in couple plan', () => {
+    // Build a couple plan with shared property at 100% and 50% ownership
+    const fullPlan = makeDownsizingFixture(1.0)
+    const halfPlan = makeDownsizingFixture(0.5)
+
+    // Convert both to couple plans by adding a partner adult
+    for (const plan of [fullPlan, halfPlan]) {
+      plan.planType = 'couple'
+      const partner: PlanningAdult = {
+        ...structuredClone(plan.adults[0]),
+        id: 'adult-partner',
+        owner: 'partner',
+        displayName: 'Partner',
+        maritalStatus: 'married',
+        currentAge: 30,
+        retirementAge: 55,
+        lifeExpectancy: 85,
+        annualIncome: 60_000,
+        liquidNetWorth: 100_000,
+      }
+      plan.adults.push(partner)
+      plan.income.push({
+        id: 'income-partner',
+        owner: 'partner',
+        label: 'Partner Salary',
+        kind: 'salary-model',
+        timing: { kind: 'age-range', owner: 'partner', startAge: 30, endAge: 55 },
+        annualAmount: 60_000,
+        growthRate: 0.03,
+        growthModel: 'fixed',
+        taxTreatment: 'taxable',
+        isCpfApplicable: true,
+        isActive: true,
+        streamType: 'employment',
+        salaryModel: 'simple',
+        bonusMonths: 2,
+        employerCpfEnabled: true,
+      })
+    }
+
+    const fullCompiled = compileHouseholdPlan(fullPlan)
+    const halfCompiled = compileHouseholdPlan(halfPlan)
+
+    // Find the downsizing portfolio adjustment by kind
+    const fullAdj = fullCompiled.portfolioAdjustments.find((a) => a.kind === 'downsizing')
+    const halfAdj = halfCompiled.portfolioAdjustments.find((a) => a.kind === 'downsizing')
+
+    expect(fullAdj).toBeDefined()
+    expect(halfAdj).toBeDefined()
+    // 50% ownership should produce roughly half the equity injection
+    const ratio = halfAdj!.amount / fullAdj!.amount
+    expect(ratio).toBeGreaterThan(0.4)
+    expect(ratio).toBeLessThan(0.6)
+  })
+})
+
 // Export the fixture for use by downstream tests (Task 3 projection path)
 export { makeDownsizingFixture }
