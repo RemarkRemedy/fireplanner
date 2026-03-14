@@ -616,6 +616,7 @@ describe('buildSingleAdultPlanSlice', () => {
       const result = buildSingleAdultPlanSlice(plan, 'adult-chloe')
       const chloeIncome = result!.slice.income.find((e) => e.id === 'income-chloe-salary')
       const timing = chloeIncome!.timing
+      expect(timing.kind).toBe('age-range')
       if (timing.kind === 'age-range') {
         expect(timing.endAge).toBeNull()
       }
@@ -628,6 +629,7 @@ describe('buildSingleAdultPlanSlice', () => {
       const result = buildSingleAdultPlanSlice(plan, 'adult-tj')
       const sharedExpense = result!.slice.expenses.find((e) => e.id === 'expense-shared-household')
       const timing = sharedExpense!.timing
+      expect(timing.kind).toBe('age-range')
       if (timing.kind === 'age-range') {
         expect(timing.endAge).toBeNull()
       }

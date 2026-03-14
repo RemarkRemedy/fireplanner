@@ -1013,6 +1013,13 @@ describe('validateHouseholdPlan', () => {
       expect(getError(errors, 'expense', 'exp-1', 'owner')).toBeUndefined()
     })
 
+    it('rejects negative annualAmount on income', () => {
+      const errors = validateHouseholdPlan(makeValidPlan({
+        income: [makeValidIncome({ annualAmount: -1 })],
+      }))
+      expect(getError(errors, 'income', 'inc-1', 'annualAmount')).toBeDefined()
+    })
+
     it('rejects empty label on property', () => {
       const errors = validateHouseholdPlan(makeValidPlan({
         properties: [makeValidProperty({ label: '' })],
