@@ -39,6 +39,7 @@ import { parseManulifeManulinkInvestorIi } from './parsers/manulifeManulinkInves
 import { parseEtiqaInvestFlexPrimeIi } from './parsers/etiqaInvestFlexPrimeIi.js'
 import { parseEtiqaInvestFlexPro } from './parsers/etiqaInvestFlexPro.js'
 import { parseEtiqaInvestFlexWealthIi } from './parsers/etiqaInvestFlexWealthIi.js'
+import { parseEtiqaDashPetPlus } from './parsers/etiqaDashPetPlus.js'
 import { parseEtiqaInvestSmartFlexIi } from './parsers/etiqaInvestSmartFlexIi.js'
 import { parseEtiqaInvestSmartVista } from './parsers/etiqaInvestSmartVista.js'
 import { parseEtiqaInvestStarter } from './parsers/etiqaInvestStarter.js'
@@ -75,6 +76,7 @@ const MANULIFE_MANULINK_INVESTOR_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_M
 const ETIQA_INVEST_FLEX_PRIME_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest flex prime II_Product Summary.pdf'
 const ETIQA_INVEST_FLEX_PRO_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest flex pro_Product Summary.pdf'
 const ETIQA_INVEST_FLEX_WEALTH_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest flex wealth II_Product Summary.pdf'
+const ETIQA_DASH_PET_PLUS_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Dash PET Plus_Summary.pdf'
 const ETIQA_INVEST_SMART_FLEX_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest smart flex II_Product Summary.pdf'
 const ETIQA_INVEST_SMART_VISTA_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest Smart Vista_Product Summary.pdf'
 const ETIQA_INVEST_STARTER_SOURCE_PATH = '/Users/tj/Downloads/pdfs/EIP_Invest starter_Product Summary.pdf'
@@ -222,6 +224,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const etiqaInvestFlexProChecksum = await sha256(ETIQA_INVEST_FLEX_PRO_SOURCE_PATH)
   const etiqaInvestFlexWealthIiExtracted = await extractPdfText(ETIQA_INVEST_FLEX_WEALTH_II_SOURCE_PATH)
   const etiqaInvestFlexWealthIiChecksum = await sha256(ETIQA_INVEST_FLEX_WEALTH_II_SOURCE_PATH)
+  const etiqaDashPetPlusExtracted = await extractPdfText(ETIQA_DASH_PET_PLUS_SOURCE_PATH)
+  const etiqaDashPetPlusChecksum = await sha256(ETIQA_DASH_PET_PLUS_SOURCE_PATH)
   const etiqaInvestSmartFlexIiExtracted = await extractPdfText(ETIQA_INVEST_SMART_FLEX_II_SOURCE_PATH)
   const etiqaInvestSmartFlexIiChecksum = await sha256(ETIQA_INVEST_SMART_FLEX_II_SOURCE_PATH)
   const etiqaInvestSmartVistaExtracted = await extractPdfText(ETIQA_INVEST_SMART_VISTA_SOURCE_PATH)
@@ -372,6 +376,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseEtiqaInvestFlexWealthIi({
       document: etiqaInvestFlexWealthIiExtracted,
       sourceChecksumSha256: etiqaInvestFlexWealthIiChecksum,
+    }),
+    parseEtiqaDashPetPlus({
+      document: etiqaDashPetPlusExtracted,
+      sourceChecksumSha256: etiqaDashPetPlusChecksum,
     }),
     parseEtiqaInvestSmartFlexIi({
       document: etiqaInvestSmartFlexIiExtracted,

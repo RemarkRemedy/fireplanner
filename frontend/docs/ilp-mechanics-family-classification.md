@@ -77,7 +77,7 @@ Corpus size: 92
 
 | File | Primary family | Overlays | Cohort | Boundary | Kernel tier | Remaining blocker tier | Catalog status | Golden coverage |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| EIP_Dash PET Plus_Summary.pdf | `standard-2-account-core-cashflow` | assurance-charge, distribution-mode, dynamic-charge | `generic` | `supported-after-kernel` | `2-3-workstreams` | `1-workstream` | `not-in-catalog` | `none` |
+| EIP_Dash PET Plus_Summary.pdf | `standard-2-account-core-cashflow` | assurance-charge, distribution-mode, dynamic-charge | `generic` | `supported-after-kernel` | `2-3-workstreams` | `1-workstream` | `partial` | `none` |
 | EIP_Invest flex prime II_Product Summary.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, assurance-charge, bonus-richness, dynamic-charge, premium-holiday-recovery | `etiqa-rsp-recovery` | `supported-after-kernel` | `2-3-workstreams` | `0-workstreams` | `partial` | `none` |
 | EIP_Invest flex pro_Product Summary.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, assurance-charge, bonus-richness, dynamic-charge, premium-holiday-recovery | `etiqa-rsp-recovery` | `supported-after-kernel` | `2-3-workstreams` | `0-workstreams` | `partial` | `none` |
 | EIP_Invest flex wealth II_Product Summary.pdf | `standard-2-account-core-cashflow` | ad-hoc-premium-routing, assurance-charge, bonus-richness, dynamic-charge, premium-holiday-recovery | `etiqa-rsp-recovery` | `supported-after-kernel` | `2-3-workstreams` | `0-workstreams` | `partial` | `none` |

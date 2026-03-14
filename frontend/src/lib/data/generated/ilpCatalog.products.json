@@ -13459,6 +13459,246 @@
     ]
   },
   {
+    "id": "etiqa-dash-pet-plus",
+    "insurer": "Etiqa",
+    "productName": "Dash PET Plus",
+    "sourceFileName": "EIP_Dash PET Plus_Summary.pdf",
+    "sourceChecksumSha256": "50b36fa1e6b819ee0c58252e39f01ea75eda85a8cc6b0949e5d78e08a5f2b4cc",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:etiqa-dash-pet-plus-zero-single-premium-charge",
+      "branch:etiqa-dash-pet-plus-management-charge",
+      "branch:etiqa-dash-pet-plus-zero-top-up-charge",
+      "branch:etiqa-dash-pet-plus-zero-partial-withdrawal-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "etiqa-dash-pet-plus-death-benefit",
+      "etiqa-dash-pet-plus-terminal-illness-benefit",
+      "etiqa-dash-pet-plus-yearly-renewability",
+      "etiqa-dash-pet-plus-basic-policy-dependency",
+      "etiqa-dash-pet-plus-paynow-transfer-charge",
+      "etiqa-dash-pet-plus-fund-management-fee",
+      "etiqa-dash-pet-plus-dividend-handling",
+      "etiqa-dash-pet-plus-automatic-portfolio-rebalancing",
+      "etiqa-dash-pet-plus-grace-period-top-up-funding",
+      "etiqa-dash-pet-plus-free-look"
+    ],
+    "warnings": [
+      "Dash PET Plus is cataloged as a partial modeled subset in V1. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, and the 0.75% annual management charge through the open-ended rider basis, while protection formulas, yearly renewability, basic-policy dependency, and payout-method fees remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-open-ended-rider",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Rider Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium allocation and rider account value",
+                "excerpt": "100% of the single Premium paid and 100% of the Top-up(s) for this rider will be invested into Your selected Portfolio fund. The Premium shall be invested according to the respective ILP sub-funds allocation. Minimum Rid"
+              },
+              {
+                "page": 8,
+                "section": "Top-up and fund switching",
+                "excerpt": "Top-up (Ad-hoc / Recurring) While the rider is in force, You can make a recurring or ad-hoc Top-up immediately after the rider issue date, subject to Our approval. Ad-hoc Top-up can be made either via deduction from the "
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "single-premium-charge",
+            "label": "Single Premium Charge",
+            "basis": "annual-contribution",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "The published subscription illustration states no fees and charges are incurred for the initial rider single premium purchase."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium allocation and rider account value",
+                "excerpt": "100% of the single Premium paid and 100% of the Top-up(s) for this rider will be invested into Your selected Portfolio fund. The Premium shall be invested according to the respective ILP sub-funds allocation. Minimum Rid"
+              },
+              {
+                "page": 6,
+                "section": "Zero-charge subscription and redemption illustration",
+                "excerpt": "There is no fees and charges incurred for the purchase of the Portfolio fund. *The actual issue price of units will fluctuate according to the market performance. The calculation indicated also applies to Top-up(s). Page"
+              }
+            ]
+          },
+          {
+            "id": "management-charge",
+            "label": "Management Charge",
+            "basis": "account-value",
+            "rate": 0.0075,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Deducted monthly from rider account value while the rider remains in force."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Management charge and fund management fee",
+                "excerpt": "Calculation of Redemption Proceeds The following example illustrates how the redemption works assuming You plan to withdraw S$1,000 from Your Portfolio fund. ILP No. of Units ILP Sub- Amount to Unit Units Fees & Balance "
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "The published subscription illustration states no fees and charges are incurred for top-ups."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Zero-charge subscription and redemption illustration",
+                "excerpt": "There is no fees and charges incurred for the purchase of the Portfolio fund. *The actual issue price of units will fluctuate according to the market performance. The calculation indicated also applies to Top-up(s). Page"
+              },
+              {
+                "page": 8,
+                "section": "Top-up and fund switching",
+                "excerpt": "Top-up (Ad-hoc / Recurring) While the rider is in force, You can make a recurring or ad-hoc Top-up immediately after the rider issue date, subject to Our approval. Ad-hoc Top-up can be made either via deduction from the "
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "The published redemption illustration states no fees and charges are incurred upon withdrawal of the portfolio fund.",
+              "PayNow transfer fees remain informational only because they depend on the payout option rather than the rider ledger itself."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Surrender and partial withdrawal options",
+                "excerpt": "of any partial withdrawal(s) from the rider; less any amounts owing to Us. When We make this payment, the rider ends. Rider account value is the value of all the units in Your rider less any applicable fees and charges. "
+              },
+              {
+                "page": 6,
+                "section": "Zero-charge subscription and redemption illustration",
+                "excerpt": "There is no fees and charges incurred for the purchase of the Portfolio fund. *The actual issue price of units will fluctuate according to the market performance. The calculation indicated also applies to Top-up(s). Page"
+              }
+            ]
+          }
+        ],
+        "eecTable": [],
+        "warnings": [
+          "Dash PET Plus is cataloged as a partial modeled subset in V1. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, and the 0.75% annual management charge through the open-ended rider basis.",
+          "This is a yearly renewable rider attached to a basic policy; rider renewability and basic-policy dependency remain informational only in V1.",
+          "This open-ended rider product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
+        ],
+        "unsupportedItems": [
+          "Death benefit, terminal-illness benefit, and the 105% premium floor remain informational only.",
+          "Yearly renewability, basic-policy attachment gating, and unilateral rider termination notice remain informational only.",
+          "PayNow transfer charges remain informational only because they depend on payout method rather than the rider ledger.",
+          "Fund-level management fees remain informational only because they depend on the selected ILP sub-fund.",
+          "Dividend elections, automatic portfolio rebalancing, grace-period funding, and free-look handling remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Rider overview and benefits",
+            "excerpt": "This is a yearly renewable, optional single Premium investment-linked insurance rider that is designed to meet Your wealth accumulation needs. This rider will renew yearly as long as the Basic policy remains in force til"
+          },
+          {
+            "page": 2,
+            "section": "Surrender and partial withdrawal options",
+            "excerpt": "of any partial withdrawal(s) from the rider; less any amounts owing to Us. When We make this payment, the rider ends. Rider account value is the value of all the units in Your rider less any applicable fees and charges. "
+          },
+          {
+            "page": 3,
+            "section": "Yearly renewability and maturity",
+            "excerpt": "Yearly Renewability This is a yearly renewable rider and the policy term is 1 year. At the end of 1 year policy term, this rider will be renewed automatically from the renewal date for another 1 year at the same conditio"
+          },
+          {
+            "page": 4,
+            "section": "Premium allocation and rider account value",
+            "excerpt": "100% of the single Premium paid and 100% of the Top-up(s) for this rider will be invested into Your selected Portfolio fund. The Premium shall be invested according to the respective ILP sub-funds allocation. Minimum Rid"
+          },
+          {
+            "page": 6,
+            "section": "Zero-charge subscription and redemption illustration",
+            "excerpt": "There is no fees and charges incurred for the purchase of the Portfolio fund. *The actual issue price of units will fluctuate according to the market performance. The calculation indicated also applies to Top-up(s). Page"
+          },
+          {
+            "page": 7,
+            "section": "Management charge and fund management fee",
+            "excerpt": "Calculation of Redemption Proceeds The following example illustrates how the redemption works assuming You plan to withdraw S$1,000 from Your Portfolio fund. ILP No. of Units ILP Sub- Amount to Unit Units Fees & Balance "
+          },
+          {
+            "page": 8,
+            "section": "Top-up and fund switching",
+            "excerpt": "Top-up (Ad-hoc / Recurring) While the rider is in force, You can make a recurring or ad-hoc Top-up immediately after the rider issue date, subject to Our approval. Ad-hoc Top-up can be made either via deduction from the "
+          },
+          {
+            "page": 9,
+            "section": "Free look and grace period",
+            "excerpt": "Top-up of Portfolio fund will be processed according to the respective ILP sub-funds allocation. Fund Switching While the rider is in force, You are entitled to an unlimited time of Portfolio fund switches. Currently, We"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "etiqa-invest-smart-flex-ii",
     "insurer": "Etiqa",
     "productName": "Invest smart flex II",
