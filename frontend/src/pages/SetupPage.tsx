@@ -661,6 +661,19 @@ export function SetupPage() {
     return () => window.removeEventListener('beforeunload', handler)
   }, [planType])
 
+  // CPF estimate — must be above all early returns (React hooks rule)
+  const cpfEstimate = useMemo(() => {
+    const age = (state.values.currentAge as number) ?? 30
+    const monthlyInc = (state.values.monthlyIncome as number) ?? 0
+    const incType = (state.values.incomeType as 'take-home' | 'gross') ?? 'take-home'
+    const grossMo = incType === 'take-home' ? grossUpFromTakeHome(monthlyInc, age) : monthlyInc
+    const bonus = (state.values.hasBonusAws ? (state.values.bonusMonths as number) : 0) ?? 0
+    const grossAnnual = grossMo * (12 + bonus)
+    const residency = (state.values.residency as 'citizen' | 'pr' | 'foreigner') ?? 'citizen'
+    const oaMortgage = state.values.usedOaForMortgage ? (state.values.oaMortgageAmount as number) : undefined
+    return estimateCpfBalances(age, grossAnnual, residency, undefined, oaMortgage)
+  }, [state.values.currentAge, state.values.monthlyIncome, state.values.incomeType, state.values.hasBonusAws, state.values.bonusMonths, state.values.residency, state.values.usedOaForMortgage, state.values.oaMortgageAmount])
+
   // Review screen
   if (isReview) {
     const draft = draftFromValues(state.values, planType, isRedo)
@@ -689,20 +702,6 @@ export function SetupPage() {
   const isDependentsScreen = currentScreen.id === 'dependents'
   const hasDependents = state.values.hasDependents as boolean
   const dependentsList = (state.values.dependentsList as Array<{ name: string; age: number; relationship: string }>) ?? []
-
-  // CPF estimate for the setup screen
-  const cpfEstimate = useMemo(() => {
-    if (!isCpfScreen) return null
-    const age = (state.values.currentAge as number) ?? 30
-    const monthlyInc = (state.values.monthlyIncome as number) ?? 0
-    const incType = (state.values.incomeType as 'take-home' | 'gross') ?? 'take-home'
-    const grossMo = incType === 'take-home' ? grossUpFromTakeHome(monthlyInc, age) : monthlyInc
-    const bonus = (state.values.hasBonusAws ? (state.values.bonusMonths as number) : 0) ?? 0
-    const grossAnnual = grossMo * (12 + bonus)
-    const residency = (state.values.residency as 'citizen' | 'pr' | 'foreigner') ?? 'citizen'
-    const oaMortgage = state.values.usedOaForMortgage ? (state.values.oaMortgageAmount as number) : undefined
-    return estimateCpfBalances(age, grossAnnual, residency, undefined, oaMortgage)
-  }, [isCpfScreen, state.values.currentAge, state.values.monthlyIncome, state.values.incomeType, state.values.hasBonusAws, state.values.bonusMonths, state.values.residency, state.values.usedOaForMortgage, state.values.oaMortgageAmount])
 
   // Build custom children for screens that need compound inputs
   const customChildren = (() => {
@@ -737,7 +736,7 @@ export function SetupPage() {
         />
       )
     }
-    if (isCpfScreen && cpfEstimate) {
+    if (isCpfScreen) {
       return (
         <CpfSetupInput
           age={(state.values.currentAge as number) ?? 30}
