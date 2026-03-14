@@ -6,6 +6,7 @@ import type {
 } from './types'
 import { createId } from './ids'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { CPF_HEURISTIC_SPLIT, SG_GROSS_UP_FACTOR } from '@/lib/data/cpfRates'
 
 // ---------------------------------------------------------------------------
 // SetupDraft — flat structure for /setup wizard answers
@@ -65,24 +66,8 @@ export interface CpfSplit {
   ra: number
 }
 
-interface CpfAgeBracket {
-  maxAge: number // inclusive upper bound (Infinity for last bucket)
-  oa: number
-  sa: number
-  ma: number
-  ra: number
-}
-
-const CPF_AGE_SPLIT: CpfAgeBracket[] = [
-  { maxAge: 34, oa: 0.60, sa: 0.20, ma: 0.20, ra: 0 },
-  { maxAge: 45, oa: 0.55, sa: 0.25, ma: 0.20, ra: 0 },
-  { maxAge: 50, oa: 0.50, sa: 0.25, ma: 0.25, ra: 0 },
-  { maxAge: 54, oa: 0.40, sa: 0.30, ma: 0.30, ra: 0 },
-  { maxAge: Infinity, oa: 0.10, sa: 0.10, ma: 0, ra: 0.80 },
-]
-
 export function splitCpfByAge(total: number, age: number): CpfSplit {
-  const bracket = CPF_AGE_SPLIT.find((b) => age <= b.maxAge) ?? CPF_AGE_SPLIT[CPF_AGE_SPLIT.length - 1]
+  const bracket = CPF_HEURISTIC_SPLIT.find((b) => age <= b.maxAge) ?? CPF_HEURISTIC_SPLIT[CPF_HEURISTIC_SPLIT.length - 1]
   return {
     oa: Math.round(total * bracket.oa),
     sa: Math.round(total * bracket.sa),
@@ -95,9 +80,9 @@ export function splitCpfByAge(total: number, age: number): CpfSplit {
 // Gross-up heuristic for take-home → gross conversion
 // ---------------------------------------------------------------------------
 
-/** Rough SG heuristic: gross ~ takeHome / 0.85 (covers CPF employee + avg tax) */
+/** Rough SG heuristic: gross ~ takeHome / SG_GROSS_UP_FACTOR (covers CPF employee + avg tax) */
 function estimateGross(takeHome: number): number {
-  return Math.round(takeHome / 0.85)
+  return Math.round(takeHome / SG_GROSS_UP_FACTOR)
 }
 
 function resolveGrossIncome(annualIncome: number, incomeType: 'gross' | 'take-home'): number {
@@ -335,7 +320,7 @@ function buildPropertyEntry(
     rentalYield: 0.03,
     mortgageRate: 0.035,
     mortgageTerm: 25,
-    ltv: 0.75,
+    ltv: 0.75, // MAS LTV limit for residential property (75% for first property)
     purchaseYearsFromNow: 0,
     residencyForAbsd: 'citizen',
     propertyCount: 0,
@@ -402,6 +387,17 @@ function applyPartnerDraft(draft: SetupDraft, selfAdultTemplate: PlanningAdult):
       insuranceDisabilityMonthly: 0,
       funeralCosts: 0,
       ciRecoveryYears: 0,
+      healthcare: {
+        enabled: false,
+        mediShieldLifeEnabled: true,
+        ispTier: 'none' as const,
+        careShieldLifeEnabled: false,
+        oopBaseAmount: 0,
+        oopModel: 'fixed' as const,
+        oopInflationRate: 0.03,
+        oopReferenceAge: partner.currentAge,
+        mediSaveTopUpAnnual: 0,
+      },
       taxProfile: {
         ...structuredClone(selfAdultTemplate.taxProfile),
         reliefBasisAge: partner.currentAge,

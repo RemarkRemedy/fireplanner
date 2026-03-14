@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { X } from 'lucide-react'
 import { SetupScreen, shouldSkipScreen } from '@/components/setup/SetupScreen'
 import { getNudgeFlow, NUDGE_FLOWS } from '@/lib/data/nudgeFlows'
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
@@ -144,10 +145,14 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
         if (!completed.includes(flowId)) {
           setField('completedNudgeFlows', [...completed, flowId])
         }
-      }
 
-      // Store pending completion so the useEffect computes delta after store update
-      pendingCompletion.current = { flowId, before: beforeSnapshotRef.current! }
+        // Store pending completion so the useEffect computes delta after store update
+        pendingCompletion.current = { flowId, before: beforeSnapshotRef.current! }
+      } else {
+        console.warn(`[NudgeDrawer] applyFlowValues returned false for flow "${flowId}"`)
+        onClose()
+        return
+      }
     } else {
       setStepIndex((prev) => prev + 1)
     }
@@ -188,21 +193,7 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
             className="ml-4 rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             onClick={onClose}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 

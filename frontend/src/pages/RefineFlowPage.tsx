@@ -100,6 +100,8 @@ export function RefineFlowPage() {
           flowId as NudgeFlowId,
         ])
       }
+    } else {
+      console.warn(`[RefineFlowPage] applyFlowValues returned false for flow "${flowId}"`)
     }
 
     navigate('/projection', {

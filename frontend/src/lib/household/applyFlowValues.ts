@@ -16,7 +16,8 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { createId } from '@/lib/household/ids'
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
 import type { HouseholdCpfConfig, GoalItem } from '@/lib/household/types'
-import type { AllocationTemplate, DownsizingConfig, GoalCategory, GrowthModel, HealthcareConfig, SalaryModel } from '@/lib/types'
+import type { AllocationTemplate, DownsizingConfig, GoalCategory, GrowthModel, HealthcareConfig, IspTierOption, PropertyType, SalaryModel } from '@/lib/types'
+import type { ExpenseItem, IncomeSource, PlanningAdult, PropertyPlan } from '@/lib/household/types'
 
 /**
  * Maps a nudge flow's goalCategory option value to a valid GoalCategory.
@@ -41,6 +42,23 @@ function toGoalCategory(value: string): GoalCategory {
  * Maps a nudge flow allocation template option to a valid AllocationTemplate (excluding 'custom').
  * 'cpf-heavy' is not a recognised template; falls back to 'balanced'.
  */
+function toIspTier(val: unknown): IspTierOption | null {
+  const valid: IspTierOption[] = ['none', 'basic', 'standard', 'enhanced']
+  return typeof val === 'string' && valid.includes(val as IspTierOption) ? val as IspTierOption : null
+}
+
+function toCpfLifePlan(val: unknown): HouseholdCpfConfig['lifePlan'] | null {
+  const valid: HouseholdCpfConfig['lifePlan'][] = ['basic', 'standard', 'escalating']
+  return typeof val === 'string' && valid.includes(val as HouseholdCpfConfig['lifePlan'])
+    ? val as HouseholdCpfConfig['lifePlan']
+    : null
+}
+
+function toPropertyType(val: unknown): PropertyType | null {
+  const valid: PropertyType[] = ['hdb', 'condo', 'landed']
+  return typeof val === 'string' && valid.includes(val as PropertyType) ? val as PropertyType : null
+}
+
 function toAllocationTemplate(value: string): Exclude<AllocationTemplate, 'custom'> | null {
   const valid: Record<string, Exclude<AllocationTemplate, 'custom'>> = {
     conservative: 'conservative',
@@ -82,7 +100,8 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       }
 
       if (typeof values.cpfLifePlan === 'string') {
-        cpfUpdates.lifePlan = values.cpfLifePlan as HouseholdCpfConfig['lifePlan']
+        const plan = toCpfLifePlan(values.cpfLifePlan)
+        if (plan) cpfUpdates.lifePlan = plan
       }
       if (typeof values.cpfPayoutStartAge === 'number') {
         cpfUpdates.lifeStartAge = values.cpfPayoutStartAge
@@ -106,10 +125,12 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       const property = plan.properties[0]
       if (!property) return false
 
-      const propertyUpdates: Record<string, unknown> = {}
+      const currentYear = new Date().getFullYear()
+      const propertyUpdates: Partial<PropertyPlan> = {}
 
       if (typeof values.propertyType === 'string') {
-        propertyUpdates.propertyType = values.propertyType
+        const pt = toPropertyType(values.propertyType)
+        if (pt) propertyUpdates.propertyType = pt
       }
       if (typeof values.leaseTenure === 'string') {
         // 'freehold' maps to 999 years; numeric strings map directly
@@ -131,7 +152,6 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         propertyUpdates.existingMortgageRate = values.mortgageRatePercent
       }
       if (typeof values.mortgageEndYear === 'number') {
-        const currentYear = new Date().getFullYear()
         const remainingYears = Math.max(0, values.mortgageEndYear - currentYear)
         propertyUpdates.existingMortgageRemainingYears = remainingYears
       }
@@ -152,7 +172,6 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
           scenario: 'sell-and-downsize',
         }
         if (typeof values.downsizeYear === 'number') {
-          const currentYear = new Date().getFullYear()
           const selfAge = selfAdult.currentAge
           downsizing.sellAge = selfAge + (values.downsizeYear - currentYear)
         }
@@ -205,14 +224,14 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         return sum + (typeof val === 'number' && val > 0 ? val : 0)
       }, 0)
 
-      const expenseUpdates: Record<string, unknown> = {}
+      const expenseUpdates: Partial<ExpenseItem> = {}
       // Only overwrite expense total if user filled in at least one category
       // and the computed sum is meaningful. This avoids understating the total
       // when only a partial breakdown is provided.
       const filledCount = categoryFields.filter(
         (f) => typeof values[f] === 'number' && (values[f] as number) > 0,
       ).length
-      if (filledCount > 0 && total > 0) {
+      if (filledCount >= 2 && total > 0) {
         // Category values are monthly; convert to annual
         expenseUpdates.amount = total * 12
       }
@@ -224,8 +243,9 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
 
       // Create a goal if large future expenses were provided
       if (values.hasLargeGoals === true && typeof values.goalName === 'string' && values.goalName) {
-        const targetYear = typeof values.goalYear === 'number' ? values.goalYear : new Date().getFullYear() + 5
-        const targetAge = selfAdult.currentAge + (targetYear - new Date().getFullYear())
+        const currentYear = new Date().getFullYear()
+        const targetYear = typeof values.goalYear === 'number' ? values.goalYear : currentYear + 5
+        const targetAge = selfAdult.currentAge + (targetYear - currentYear)
 
         const goal: GoalItem = {
           id: createId('goal'),
@@ -255,7 +275,8 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       }
 
       if (typeof values.ispTier === 'string') {
-        healthcareUpdates.ispTier = values.ispTier as HealthcareConfig['ispTier']
+        const tier = toIspTier(values.ispTier)
+        if (tier) healthcareUpdates.ispTier = tier
       }
       if (typeof values.careShieldEnrolled === 'boolean') {
         healthcareUpdates.careShieldLifeEnabled = values.careShieldEnrolled
@@ -290,7 +311,7 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       )
       if (!salaryIncome) return false
 
-      const incomeUpdates: Record<string, unknown> = {}
+      const incomeUpdates: Partial<IncomeSource> = {}
 
       if (typeof values.salaryModel === 'string') {
         // Map nudge flow option values to SalaryModel domain values
@@ -326,19 +347,23 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
     case 'srs': {
       const srsUpdates: Partial<typeof selfAdult.srs> = { ...selfAdult.srs }
 
-      // Toggle-off: zero out SRS contribution when user says they don't contribute
-      if (values.contributeToSrs === false) {
-        srsUpdates.annualContribution = 0
-      }
-
       if (typeof values.srsBalance === 'number') {
         srsUpdates.balance = values.srsBalance
       }
-      if (typeof values.annualSrsContribution === 'number') {
-        srsUpdates.annualContribution = values.annualSrsContribution
+
+      // Only set contribution values if the toggle is not explicitly off
+      if (values.contributeToSrs !== false) {
+        if (typeof values.annualSrsContribution === 'number') {
+          srsUpdates.annualContribution = values.annualSrsContribution
+        }
+        if (typeof values.srsWithdrawalStartAge === 'number') {
+          srsUpdates.drawdownStartAge = values.srsWithdrawalStartAge
+        }
       }
-      if (typeof values.srsWithdrawalStartAge === 'number') {
-        srsUpdates.drawdownStartAge = values.srsWithdrawalStartAge
+
+      // Toggle-off: zero out SRS contribution when user says they don't contribute
+      if (values.contributeToSrs === false) {
+        srsUpdates.annualContribution = 0
       }
 
       store.updateAdult(selfAdult.id, {
@@ -354,8 +379,9 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         ? toGoalCategory(values.goalCategory)
         : 'other'
 
-      const targetYear = typeof values.goalTargetYear === 'number' ? values.goalTargetYear : new Date().getFullYear() + 5
-      const targetAge = selfAdult.currentAge + (targetYear - new Date().getFullYear())
+      const currentYear = new Date().getFullYear()
+      const targetYear = typeof values.goalTargetYear === 'number' ? values.goalTargetYear : currentYear + 5
+      const targetAge = selfAdult.currentAge + (targetYear - currentYear)
 
       const goal: GoalItem = {
         id: createId('goal'),
@@ -402,7 +428,7 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
     }
 
     case 'protection': {
-      const adultUpdates: Record<string, unknown> = {}
+      const adultUpdates: Partial<PlanningAdult> = {}
 
       if (typeof values.emergencyFundBalance === 'number') {
         adultUpdates.cashSavings = values.emergencyFundBalance

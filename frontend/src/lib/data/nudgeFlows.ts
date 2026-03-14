@@ -25,7 +25,7 @@ export interface NudgeFlowScreen {
   id: string
   title: string
   fields: NudgeField[]
-  skipWhen?: { field: string; equals: string | boolean }
+  skipWhen?: { field: string; equals?: string | boolean; notEquals?: string | boolean }
 }
 
 export interface NudgeFlowDefinition {
@@ -517,7 +517,6 @@ const ALLOCATION_FLOW: NudgeFlowDefinition = {
             { value: 'conservative', label: 'Conservative (30/70 equity/bonds)' },
             { value: 'balanced', label: 'Balanced (60/40 equity/bonds)' },
             { value: 'aggressive', label: 'Aggressive (80/20 equity/bonds)' },
-            { value: 'cpf-heavy', label: 'CPF Heavy (includes large CPF allocation)' },
             { value: 'custom', label: 'Custom (I will set weights manually)' },
           ],
           required: true,

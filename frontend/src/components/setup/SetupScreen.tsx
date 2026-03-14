@@ -141,13 +141,11 @@ export function SetupScreen({
       onSubmit={(e) => {
         e.preventDefault()
         // Validate required fields before advancing
-        const missing = screen.fields.filter(
-          (f) =>
-            f.required &&
-            (values[f.name] === undefined ||
-              values[f.name] === '' ||
-              values[f.name] === 0),
-        )
+        const missing = screen.fields.filter((f) => {
+          if (!f.required) return false
+          const val = values[f.name]
+          return val === undefined || val === null || val === ''
+        })
         if (missing.length > 0) {
           setRequiredErrors(new Set(missing.map((f) => f.name)))
           return
@@ -181,7 +179,15 @@ export function SetupScreen({
             <FieldRenderer
               field={field}
               values={values}
-              onChange={onChange}
+              onChange={(name, value) => {
+                setRequiredErrors((prev) => {
+                  if (!prev.has(name)) return prev
+                  const next = new Set(prev)
+                  next.delete(name)
+                  return next
+                })
+                onChange(name, value)
+              }}
             />
             {requiredErrors.has(field.name) && (
               <p className="mt-1 text-xs text-destructive">This field is required</p>
