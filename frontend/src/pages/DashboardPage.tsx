@@ -9,6 +9,7 @@ import { OneMoreYearPanel } from '@/components/dashboard/OneMoreYearPanel'
 import { CashFlowPanel } from '@/components/dashboard/CashFlowPanel'
 import { RiskDashboard } from '@/components/dashboard/RiskDashboard'
 import { EmptyDashboardState } from '@/components/dashboard/EmptyDashboardState'
+import { PlanCompleteness } from '@/components/dashboard/PlanCompleteness'
 import { StrategyCard } from '@/components/dashboard/StrategyCard'
 import { PassiveIncomePanel } from '@/components/dashboard/PassiveIncomePanel'
 import { TrajectoryPanel } from '@/components/dashboard/TrajectoryPanel'
@@ -66,6 +67,8 @@ export function DashboardPage() {
           Your financial independence snapshot. All metrics are computed from your profile, income, and allocation settings.
         </p>
       </div>
+
+      <PlanCompleteness />
 
       {!isEmpty && uncustomized.length > 0 && (
         <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-3">
