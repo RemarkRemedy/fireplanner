@@ -63024,6 +63024,576 @@
     ]
   },
   {
+    "id": "tokio-marine-wealth-builder-atfuture",
+    "insurer": "Tokio Marine",
+    "productName": "Wealth Builder@Future",
+    "sourceFileName": "TML_UNZL_TPDN_CIN_Summary.pdf",
+    "sourceChecksumSha256": "9fc4c9312e60046c05bf4b5ad6ab06e92fe80a8bc01d7ad90d2bc83f057e923a",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "tokio-regular-premium-routing-to-accumulation-account",
+      "tokio-initial-bonus-tiered-premium-allocation",
+      "tokio-premium-bonus",
+      "tokio-power-up-bonus",
+      "tokio-loyalty-bonus",
+      "tokio-policy-charge-on-accumulation-account",
+      "tokio-top-up-routing",
+      "tokio-recurring-single-premium-routing",
+      "tokio-recurring-single-premium-manual-resumption-after-premium-holiday",
+      "tokio-top-up-premium-charge",
+      "tokio-recurring-single-premium-charge",
+      "tokio-accumulation-account-surrender-charge",
+      "tokio-accumulation-partial-withdrawal-charge",
+      "tokio-premium-shortfall-charge-non-payment"
+    ],
+    "metadataOnlyBehaviors": [
+      "tokio-wealth-builder-atfuture-advanced-death-benefit-and-life-benefit-rider",
+      "tokio-wealth-builder-atfuture-monthly-protection-charge",
+      "tokio-wealth-builder-atfuture-dividend-distribution-election",
+      "tokio-wealth-builder-atfuture-credit-card-charge",
+      "tokio-wealth-builder-atfuture-life-replacement-option"
+    ],
+    "warnings": [
+      "Structured extraction validated against the Wealth Builder@Future product summary text layer.",
+      "Wealth Builder@Future is modeled as the SGD / MIP 10 corridor with a published 2.50% policy charge during the minimum investment period and a 0.60% policy charge thereafter.",
+      "Premium bonus, power-up bonus, and loyalty bonus retain the published paid-up and no-withdrawal eligibility gates as manual review assumptions.",
+      "Recurring single premium stays blocked after a premium-holiday event until regular premium resumes at the commencement-date amount."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-10",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "accumulation",
+            "label": "Accumulation Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular Premium Routing / Reduction",
+                "excerpt": "100% of the regular premium paid will be used to purchase units in accordance with your latest investment allocation instructions for the policy. Accumulation Units Account: Regular premium will be used to purchase units"
+              },
+              {
+                "page": 9,
+                "section": "Policy Charge / MPC",
+                "excerpt": "Policy Charge While the policy is in-force, a policy charge will be deducted monthly in advance on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the n"
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium / Top-up Premium",
+                "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. In the event of reduction in regular premium, the Accum"
+              },
+              {
+                "page": 6,
+                "section": "Non-payment / Partial Withdrawal",
+                "excerpt": "If there is any non-payment of regular premium, you may be allowed to resume paying recurring single premium only if the regular premium payment has resumed and the annualised regular premium amount is equivalent to what"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "initial-bonus",
+            "type": "allocation",
+            "label": "Initial Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 9599.99,
+                "rate": 0.2
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 9600,
+                "maxAnnualPremium": null,
+                "rate": 0.25
+              }
+            ],
+            "notes": [
+              "Tier is based on the published SGD annualised regular premium band for Wealth Builder@Future.",
+              "Allocated to the Accumulation Units Account in the first policy year."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Initial Bonus / Premium Bonus",
+                "excerpt": "Initial Bonus st While the policy is in force, an initial bonus will be paid in the first (1) policy year upon receipt of each regular premium to boost your investment. Initial bonus will be paid in accordance with the f"
+              }
+            ]
+          },
+          {
+            "id": "premium-bonus-policy-years-6-20",
+            "type": "custom",
+            "label": "Premium Bonus (Policy Years 6-20)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 6,
+            "endPolicyYear": 20,
+            "rate": 0.0008,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual premium bonus on the Accumulation Units Account value from the end of policy year 6 to the end of policy year 20.",
+              "The source document conditions payment on all regular premiums due in the prior 12 months being paid and no withdrawals from the Accumulation Units Account in the prior 12 months; those gates remain manual review assumptions in this partial template."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Initial Bonus / Premium Bonus",
+                "excerpt": "Initial Bonus st While the policy is in force, an initial bonus will be paid in the first (1) policy year upon receipt of each regular premium to boost your investment. Initial bonus will be paid in accordance with the f"
+              }
+            ]
+          },
+          {
+            "id": "premium-bonus-after-policy-year-20",
+            "type": "custom",
+            "label": "Premium Bonus (After Policy Year 20)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 21,
+            "endPolicyYear": null,
+            "rate": 0.0015,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual premium bonus on the Accumulation Units Account value from the end of policy year 21 onward.",
+              "The source document conditions payment on all regular premiums due in the prior 12 months being paid and no withdrawals from the Accumulation Units Account in the prior 12 months; those gates remain manual review assumptions in this partial template."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Initial Bonus / Premium Bonus",
+                "excerpt": "Initial Bonus st While the policy is in force, an initial bonus will be paid in the first (1) policy year upon receipt of each regular premium to boost your investment. Initial bonus will be paid in accordance with the f"
+              }
+            ]
+          },
+          {
+            "id": "power-up-bonus",
+            "type": "power-up",
+            "label": "Power-up Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": 10,
+            "rate": 0.013,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual power-up bonus on the Accumulation Units Account value at the end of the minimum investment period only.",
+              "The source document conditions payment on no partial withdrawal from the Accumulation Units Account in the prior 12 months; that gate remains a manual review assumption in this partial template."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Power-up Bonus / Loyalty Bonus",
+                "excerpt": "Power-up Bonus While this policy is in force, we will pay a power-up bonus at the end of the minimum investment period only, provided that there has been no partial withdrawal made from the Accumulation Units Account wit"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": null,
+            "rate": 0.005,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual loyalty bonus on the Accumulation Units Account value from the end of policy year 11 onward.",
+              "The source document conditions payment on no withdrawals from the Accumulation Units Account in the prior 12 months; that gate remains a manual review assumption in this partial template."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Power-up Bonus / Loyalty Bonus",
+                "excerpt": "Power-up Bonus While this policy is in force, we will pay a power-up bonus at the end of the minimum investment period only, provided that there has been no partial withdrawal made from the Accumulation Units Account wit"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "policy-charge-during-mip",
+            "label": "Policy Charge",
+            "basis": "account-value",
+            "rate": 0.025,
+            "amount": 0,
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup"
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published monthly policy charge during the minimum investment period as 2.50% p.a. of the Accumulation Units Account value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Policy Charge",
+                "excerpt": "Policy Charge While the policy is in-force, a policy charge will be deducted monthly in advance on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the n"
+              }
+            ]
+          },
+          {
+            "id": "policy-charge-after-mip",
+            "label": "Policy Charge",
+            "basis": "account-value",
+            "rate": 0.006,
+            "amount": 0,
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup"
+            ],
+            "activeWindow": "after-mip",
+            "notes": [
+              "Models the published monthly policy charge after the minimum investment period as 0.60% p.a. of the Accumulation Units Account value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Policy Charge",
+                "excerpt": "Policy Charge While the policy is in-force, a policy charge will be deducted monthly in advance on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the n"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each top-up premium allocation to the Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium / Top-up Premium",
+                "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. In the event of reduction in regular premium, the Accum"
+              },
+              {
+                "page": 9,
+                "section": "Policy Charge / MPC",
+                "excerpt": "Policy Charge While the policy is in-force, a policy charge will be deducted monthly in advance on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the n"
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurring Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each recurring single premium allocation to the Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium / Top-up Premium",
+                "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. In the event of reduction in regular premium, the Accum"
+              },
+              {
+                "page": 9,
+                "section": "Policy Charge / MPC",
+                "excerpt": "Policy Charge While the policy is in-force, a policy charge will be deducted monthly in advance on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the n"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies only to partial withdrawals from the Accumulation Units Account during the minimum investment period.",
+              "Partial withdrawals from the Accumulation Units Account are not allowed in the first two policy years."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Non-payment / Partial Withdrawal",
+                "excerpt": "If there is any non-payment of regular premium, you may be allowed to resume paying recurring single premium only if the regular premium payment has resumed and the annualised regular premium amount is equivalent to what"
+              },
+              {
+                "page": 9,
+                "section": "Policy Charge / MPC",
+                "excerpt": "Policy Charge While the policy is in-force, a policy charge will be deducted monthly in advance on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the n"
+              },
+              {
+                "page": 15,
+                "section": "Appendix A Charges",
+                "excerpt": "SURRENDER CHARGE Policy Year Surrender Charge 1 100% 2 100% 3 80% 4 60% 5 50% 6 45% 7 40% 8 20% 9 15% 10 3% PARTIAL WITHDRAWAL CHARGE Policy Year Partial Withdrawal Charge 1 Not applicable as Partial Withdrawal is not al"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge-non-payment",
+            "label": "Premium Shortfall Charge (Non-payment)",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.79
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published monthly premium shortfall charge when regular premium is not paid after the grace period during policy years 3 to 5.",
+              "Deduct from Accumulation Units Account first, then Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Non-payment / Partial Withdrawal",
+                "excerpt": "If there is any non-payment of regular premium, you may be allowed to resume paying recurring single premium only if the regular premium payment has resumed and the annualised regular premium amount is equivalent to what"
+              },
+              {
+                "page": 10,
+                "section": "Premium Shortfall Charge",
+                "excerpt": "Premium Shortfall Charge A premium shortfall charge will be levied monthly during the Premium Shortfall Charge Period when there is non- payment of regular premium at the expiry of the grace period. The premium shortfall"
+              },
+              {
+                "page": 15,
+                "section": "Appendix A Charges",
+                "excerpt": "SURRENDER CHARGE Policy Year Surrender Charge 1 100% 2 100% 3 80% 4 60% 5 50% 6 45% 7 40% 8 20% 9 15% 10 3% PARTIAL WITHDRAWAL CHARGE Policy Year Partial Withdrawal Charge 1 Not applicable as Partial Withdrawal is not al"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.8,
+          0.6,
+          0.5,
+          0.45,
+          0.4,
+          0.2,
+          0.15,
+          0.03
+        ],
+        "warnings": [
+          "This partial template models the SGD / MIP 10 corridor only.",
+          "This partial template models regular-premium routing to the Accumulation Units Account, top-up routing, recurring single premium routing, the published premium-bonus windows, the end-of-MIP power-up bonus, the loyalty-bonus tail, a 2.50% account-value policy charge during the minimum investment period, a 0.60% account-value policy charge thereafter, and the published surrender, partial-withdrawal, and premium-shortfall charge schedules.",
+          "Premium bonus, power-up bonus, and loyalty bonus are modeled at the published rate windows, but their paid-up and no-withdrawal eligibility gates remain manual review assumptions.",
+          "Recurring single premium stays blocked after a premium-holiday event until regular premium resumes at the commencement-date amount."
+        ],
+        "unsupportedItems": [
+          "Advanced death benefit handling, Life Benefit Rider, monthly protection charge, dividend distribution election, credit-card charge, life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan Description",
+            "excerpt": "PRODUCT SUMMARY − Wealth Builder@Future In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description Wealth Builder@Future is a non-participating, whole life, r"
+          },
+          {
+            "page": 2,
+            "section": "Initial Bonus / Premium Bonus",
+            "excerpt": "Initial Bonus st While the policy is in force, an initial bonus will be paid in the first (1) policy year upon receipt of each regular premium to boost your investment. Initial bonus will be paid in accordance with the f"
+          },
+          {
+            "page": 3,
+            "section": "Power-up Bonus / Loyalty Bonus",
+            "excerpt": "Power-up Bonus While this policy is in force, we will pay a power-up bonus at the end of the minimum investment period only, provided that there has been no partial withdrawal made from the Accumulation Units Account wit"
+          },
+          {
+            "page": 4,
+            "section": "Regular Premium Routing / Reduction",
+            "excerpt": "100% of the regular premium paid will be used to purchase units in accordance with your latest investment allocation instructions for the policy. Accumulation Units Account: Regular premium will be used to purchase units"
+          },
+          {
+            "page": 5,
+            "section": "Recurring Single Premium / Top-up Premium",
+            "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. In the event of reduction in regular premium, the Accum"
+          },
+          {
+            "page": 6,
+            "section": "Non-payment / Partial Withdrawal",
+            "excerpt": "If there is any non-payment of regular premium, you may be allowed to resume paying recurring single premium only if the regular premium payment has resumed and the annualised regular premium amount is equivalent to what"
+          },
+          {
+            "page": 7,
+            "section": "Regular Withdrawal / Full Surrender",
+            "excerpt": "Regular Withdrawal You may request to withdraw regularly from the Accumulation Units Account and Top-up Units Account after the minimum investment period while the policy is in force. You can request to withdraw on an an"
+          },
+          {
+            "page": 8,
+            "section": "Dividend Distribution",
+            "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+          },
+          {
+            "page": 9,
+            "section": "Policy Charge / MPC",
+            "excerpt": "Policy Charge While the policy is in-force, a policy charge will be deducted monthly in advance on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the n"
+          },
+          {
+            "page": 10,
+            "section": "Premium Shortfall Charge",
+            "excerpt": "Premium Shortfall Charge A premium shortfall charge will be levied monthly during the Premium Shortfall Charge Period when there is non- payment of regular premium at the expiry of the grace period. The premium shortfall"
+          },
+          {
+            "page": 15,
+            "section": "Appendix A Charges",
+            "excerpt": "SURRENDER CHARGE Policy Year Surrender Charge 1 100% 2 100% 3 80% 4 60% 5 50% 6 45% 7 40% 8 20% 9 15% 10 3% PARTIAL WITHDRAWAL CHARGE Policy Year Partial Withdrawal Charge 1 Not applicable as Partial Withdrawal is not al"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "tokio-marine-wealth-max-ii",
     "insurer": "Tokio Marine",
     "productName": "Wealth Max (II)",

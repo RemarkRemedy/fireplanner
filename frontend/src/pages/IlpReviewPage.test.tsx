@@ -470,6 +470,29 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Loyalty Bonus')).toBeInTheDocument()
   }, 10_000)
 
+  it('seeds Tokio Marine Wealth Builder@Future as a partial catalog product with split premium-bonus windows', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Builder@Future')
+
+    expect(within(dialog).getByText('Wealth Builder@Future')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+
+    expect(screen.getAllByText('Wealth Builder@Future (SGD / MIP 10)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('2.50% policy charge during the minimum investment period and a 0.60% policy charge thereafter')
+    expect(screen.getAllByDisplayValue('Policy Charge').length).toBeGreaterThan(0)
+    expect(screen.getByDisplayValue('Premium Bonus (Policy Years 6-20)')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Bonus (After Policy Year 20)')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Power-up Bonus')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Loyalty Bonus')).toBeInTheDocument()
+  }, 10_000)
+
   it('seeds Tokio Marine #goLuxe as a partial catalog product with modeled account fees and premium-holiday shortfall rules', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
