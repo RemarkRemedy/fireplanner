@@ -67,6 +67,23 @@ function isCoveredByAccountFee(rule: IlpTemplateFeeRule, accounts: IlpTemplateAc
   return sameRate(account.feeRate, rule.rate) && sameRate(account.postMipFeeRate ?? account.feeRate, rule.rate)
 }
 
+function mapFeeRuleBasis(
+  basis: NonNullable<IlpTemplateFeeRule['basis']>,
+): IlpChargeRule['basis'] {
+  switch (basis) {
+    case 'assurance-sum-at-risk':
+    case 'premium-base-mip-multiplier':
+    case 'cumulative-paid-regular-premium':
+    case 'initial-single-premium':
+    case 'fixed-annual':
+    case 'annual-contribution':
+    case 'account-value':
+      return basis
+    default:
+      return 'account-value'
+  }
+}
+
 function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] {
   return variant.feeRules
     .filter((rule) => (
@@ -83,25 +100,13 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
       }
 
       const isAssurance = rule.basis === 'assurance-sum-at-risk'
-      const isPremiumBase = rule.basis === 'premium-base-mip-multiplier'
-      const isCumulativePaidPremium = rule.basis === 'cumulative-paid-regular-premium'
       const isFixedAnnual = rule.basis === 'fixed-annual'
-      const isAnnualContribution = rule.basis === 'annual-contribution'
+      const isInitialSinglePremium = rule.basis === 'initial-single-premium'
 
       return {
         id: rule.id,
         label: rule.label,
-        basis: isAssurance
-          ? 'assurance-sum-at-risk'
-          : isPremiumBase
-            ? 'premium-base-mip-multiplier'
-            : isCumulativePaidPremium
-              ? 'cumulative-paid-regular-premium'
-            : isFixedAnnual
-              ? 'fixed-annual'
-              : isAnnualContribution
-                ? 'annual-contribution'
-                : 'account-value',
+        basis: mapFeeRuleBasis(rule.basis),
         activeWindow: rule.activeWindow,
         yearBasis: rule.yearBasis,
         startPolicyYear: rule.startPolicyYear,
@@ -127,7 +132,7 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
             }
           : undefined,
         requiresManualInput: rule.requiresManualInput,
-        allocation: isFixedAnnual || isAssurance ? 'pro-rata-by-value' : 'equal-split',
+        allocation: isFixedAnnual || isAssurance || isInitialSinglePremium ? 'pro-rata-by-value' : 'equal-split',
       }
     })
 }
@@ -209,6 +214,7 @@ export function templateVariantToPolicySeed(
     insurer: product.insurer,
     currency: variant.currency,
     monthlyContribution: deriveSeedMonthlyContribution(product),
+    initialSinglePremium: variant.feeRules.some((rule) => rule.basis === 'initial-single-premium') ? 0 : undefined,
     monthsAlreadyPaid: 0,
     currentPolicyYear: 1,
     icpMonths: variant.icpMonths,
@@ -285,6 +291,9 @@ export function templateVariantToPolicySeed(
         : []),
       ...(variant.distributionSupport
         ? ['This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.']
+        : []),
+      ...(variant.feeRules.some((rule) => rule.basis === 'initial-single-premium')
+        ? ['Enter the one-time gross initial single premium lump sum in Policy Details if you want the upfront single-premium deduction to seed the starting policy value honestly.']
         : []),
       ...(variant.unsupportedItems ?? []),
     ],

@@ -182,7 +182,7 @@ export interface IlpCumulativePaidPremiumChargeConfig {
 export interface IlpChargeRule {
   id: string
   label: string
-  basis: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium'
+  basis: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium' | 'initial-single-premium'
   activeWindow: 'during-mip' | 'after-mip' | 'policy-term'
   yearBasis?: 'policy-year' | 'premium-year'
   startPolicyYear?: number
@@ -261,6 +261,7 @@ export interface IlpPolicyInput {
   insurer: string
   currency: 'SGD' | 'USD'
   monthlyContribution: number
+  initialSinglePremium?: number
   monthsAlreadyPaid: number
   currentPolicyYear: number
   icpMonths?: number
@@ -512,6 +513,15 @@ interface IlpNormalizedPolicyEvents {
   assuranceStateEvents: IlpPolicyEvent[]
 }
 
+interface IlpInitialSinglePremiumState {
+  appliesAtProjectionStart: boolean
+  grossContributionByAccount: Map<string, number>
+  chargeByAccount: Map<string, number>
+  netContributionByAccount: Map<string, number>
+  totalGrossContribution: number
+  totalCharge: number
+}
+
 interface IlpNormalizedPolicyInput {
   input: IlpPolicyInput
   contributionRoutesByPhase: Record<IlpContributionRule['phase'], IlpNormalizedContributionRoute[]>
@@ -531,6 +541,14 @@ interface IlpNormalizedPolicyInput {
 
 function getMipBasis(input: Pick<IlpPolicyInput, 'mipBasis'>): 'finite' | 'open-ended' {
   return input.mipBasis ?? 'finite'
+}
+
+function startsAtProjectionInception(
+  input: Pick<IlpPolicyInput, 'currentPolicyYear' | 'monthsAlreadyPaid' | 'initialSinglePremium'>,
+): boolean {
+  return (input.initialSinglePremium ?? 0) > CONTRIBUTION_TOLERANCE
+    && input.currentPolicyYear === 1
+    && input.monthsAlreadyPaid === 0
 }
 
 function hasFiniteMip(input: Pick<IlpPolicyInput, 'mipBasis' | 'mipLength'>): input is Pick<IlpPolicyInput, 'mipBasis'> & { mipLength: number } {
@@ -1888,6 +1906,7 @@ function normalizeRecurringChargeRules(
   const isPostMip = isPostMipPolicyYear(input, context.policyYear)
 
   return (input.chargeRules ?? [])
+    .filter((rule) => rule.basis !== 'initial-single-premium')
     .filter((rule) => {
       const referenceYear = getRuleReferenceYear(context, rule.yearBasis)
       const isActive = rule.activeWindow === 'policy-term'
@@ -1904,6 +1923,140 @@ function normalizeRecurringChargeRules(
       fallbackAppliesTo: resolveFallbackAccounts(normalized, rule.fallbackAppliesTo),
     }))
     .filter((normalizedRule) => normalizedRule.appliesTo.length > 0)
+}
+
+function buildInceptionChargeContext(): IlpCashflowYearContext {
+  return {
+    projectionYear: 0,
+    policyYear: 1,
+    isPostMip: false,
+    range: {
+      startPolicyMonth: 0,
+      endPolicyMonth: 0,
+    },
+    premiumHolidayMonths: 0,
+    payableMonths: 0,
+    paymentHistory: {
+      premiumYearAtStart: 0,
+      premiumYearAtEnd: 0,
+      premiumsPaidUpToDate: true,
+    },
+  }
+}
+
+function computeInitialSinglePremiumState(
+  normalized: IlpNormalizedPolicyInput,
+): IlpInitialSinglePremiumState {
+  const grossContributionByAccount = new Map<string, number>(normalized.input.accounts.map((account) => [account.id, 0]))
+  const chargeByAccount = new Map<string, number>(normalized.input.accounts.map((account) => [account.id, 0]))
+  const netContributionByAccount = new Map<string, number>(normalized.input.accounts.map((account) => [account.id, 0]))
+
+  if (!startsAtProjectionInception(normalized.input)) {
+    return {
+      appliesAtProjectionStart: false,
+      grossContributionByAccount,
+      chargeByAccount,
+      netContributionByAccount,
+      totalGrossContribution: 0,
+      totalCharge: 0,
+    }
+  }
+
+  const initialSinglePremium = normalized.input.initialSinglePremium ?? 0
+  for (const route of normalized.contributionRoutesByPhase['during-icp']) {
+    grossContributionByAccount.set(
+      route.accountId,
+      (grossContributionByAccount.get(route.accountId) ?? 0) + (initialSinglePremium * route.share),
+    )
+  }
+
+  const inceptionContext = buildInceptionChargeContext()
+  const initialChargeRules = (normalized.input.chargeRules ?? [])
+    .filter((rule) => rule.basis === 'initial-single-premium')
+    .filter((rule) => {
+      const referenceYear = getRuleReferenceYear(inceptionContext, rule.yearBasis)
+      const isActive = rule.activeWindow === 'policy-term' || rule.activeWindow === 'during-mip'
+      return isActive
+        && (rule.startPolicyYear == null || referenceYear >= rule.startPolicyYear)
+        && (rule.endPolicyYear == null || referenceYear <= rule.endPolicyYear)
+    })
+    .map((rule) => ({
+      rule,
+      appliesTo: resolveAccountsInDisplayOrder(normalized.input, rule.appliesTo),
+      fallbackAppliesTo: resolveFallbackAccounts(normalized, rule.fallbackAppliesTo),
+    }))
+    .filter((normalizedRule) => normalizedRule.appliesTo.length > 0)
+
+  for (const { rule, appliesTo, fallbackAppliesTo } of initialChargeRules) {
+    const rateCharge = appliesTo.reduce((sum, account) => (
+      sum + ((grossContributionByAccount.get(account.id) ?? 0) * resolveChargeRate(rule, inceptionContext))
+    ), 0)
+    const totalCharge = rateCharge + resolveChargeAmount(rule, inceptionContext)
+    const allocations = applyChargeAllocationsWithFallback(
+      totalCharge,
+      rule.allocation,
+      appliesTo,
+      fallbackAppliesTo,
+      grossContributionByAccount,
+    )
+
+    for (const [accountId, amount] of allocations.entries()) {
+      chargeByAccount.set(accountId, (chargeByAccount.get(accountId) ?? 0) + amount)
+    }
+  }
+
+  let totalGrossContribution = 0
+  let totalCharge = 0
+  for (const account of normalized.input.accounts) {
+    const grossContribution = grossContributionByAccount.get(account.id) ?? 0
+    const charge = chargeByAccount.get(account.id) ?? 0
+    netContributionByAccount.set(account.id, Math.max(0, grossContribution - charge))
+    totalGrossContribution += grossContribution
+    totalCharge += charge
+  }
+
+  return {
+    appliesAtProjectionStart: true,
+    grossContributionByAccount,
+    chargeByAccount,
+    netContributionByAccount,
+    totalGrossContribution,
+    totalCharge,
+  }
+}
+
+function getEffectiveCurrentValue(
+  account: IlpAccount,
+  initialSinglePremiumState: IlpInitialSinglePremiumState,
+): number {
+  return account.currentValue + (initialSinglePremiumState.netContributionByAccount.get(account.id) ?? 0)
+}
+
+function computeCurrentValueSnapshot(
+  input: IlpPolicyInput,
+  initialSinglePremiumState: IlpInitialSinglePremiumState = computeInitialSinglePremiumState(buildNormalizedPolicyInput(input)),
+): {
+  initialSinglePremiumState: IlpInitialSinglePremiumState
+  eecRateNow: number
+  totalCurrentValue: number
+  cancelNowPenalty: number
+} {
+  const eecRateNow = getMipBasis(input) === 'open-ended'
+    ? 0
+    : lookupEecRate(input.currentPolicyYear, input.eecTable)
+  const totalCurrentValue = input.accounts.reduce((sum, account) => (
+    sum + getEffectiveCurrentValue(account, initialSinglePremiumState)
+  ), 0)
+  const cancelNowPenalty = input.accounts
+    .filter((account) => account.subjectToEec)
+    .reduce((sum, account) => sum + getEffectiveCurrentValue(account, initialSinglePremiumState) * eecRateNow, 0)
+
+  return {
+    initialSinglePremiumState,
+    eecRateNow,
+    totalCurrentValue,
+    cancelNowPenalty,
+  }
 }
 
 function getEventChargeEvents(
@@ -2771,16 +2924,20 @@ export function projectIlpPolicy(
   assertScheduledPayoutConfiguration(input)
   assertDistributionConfiguration(input)
   const normalized = buildNormalizedPolicyInput(input)
+  const initialSinglePremiumState = computeInitialSinglePremiumState(normalized)
 
   const blendedNetReturn = computeBlendedReturn(input.funds, scenario)
   const annualContribution = input.monthlyContribution * 12
   const totalYears = computeTotalProjectionYears(input)
-  const previousClose = new Map(input.accounts.map((account) => [account.id, account.currentValue]))
+  const previousClose = new Map(input.accounts.map((account) => [
+    account.id,
+    getEffectiveCurrentValue(account, initialSinglePremiumState),
+  ]))
   const rows: IlpYearRow[] = []
 
-  let cumulativeGrossFees = 0
+  let cumulativeGrossFees = initialSinglePremiumState.totalCharge
   let cumulativeBonuses = 0
-  let cumulativePremiums = input.monthlyContribution * input.monthsAlreadyPaid
+  let cumulativePremiums = (input.monthlyContribution * input.monthsAlreadyPaid) + initialSinglePremiumState.totalGrossContribution
   let assuranceRegularPremiumBase = input.assuranceProfile?.currentNetRegularPremiumBase ?? 0
   let assuranceSupplementaryPremiumBase = input.assuranceProfile?.currentNetSupplementaryPremiumBase ?? 0
   let assuranceSumAssured = input.assuranceProfile?.currentSumAssured
@@ -2798,7 +2955,7 @@ export function projectIlpPolicy(
     const eecReferenceYear = getEecReferenceYear(input, context)
     const eecRate = isPostMip ? 0 : lookupEecRate(eecReferenceYear, input.eecTable)
     const openBalances = new Map(
-      input.accounts.map((account) => [account.id, previousClose.get(account.id) ?? account.currentValue]),
+      input.accounts.map((account) => [account.id, previousClose.get(account.id) ?? getEffectiveCurrentValue(account, initialSinglePremiumState)]),
     )
     const scheduledRegularContributionByAccount = resolveContributionByAccount(normalized, context, scheduledContributionForYear)
     // Annual-contribution charges stay on scheduled regular premiums only.
@@ -2992,8 +3149,10 @@ export function projectIlpPolicy(
 export function computeNpvAnalysis(
   input: IlpPolicyInput,
   projection: IlpProjectionResult,
+  initialSinglePremiumState?: IlpInitialSinglePremiumState,
 ): IlpNpvAnalysis {
   assertBeforeMip(input)
+  const currentValueSnapshot = computeCurrentValueSnapshot(input, initialSinglePremiumState)
 
   const optimizationYears = hasFiniteMip(input)
     ? getRemainingMipYears(input)
@@ -3004,19 +3163,11 @@ export function computeNpvAnalysis(
     )
   }
 
-  const eecRateNow = getMipBasis(input) === 'open-ended'
-    ? 0
-    : lookupEecRate(input.currentPolicyYear, input.eecTable)
-  const totalCurrentValue = input.accounts.reduce((sum, account) => sum + account.currentValue, 0)
-  const eecChargeNow = input.accounts
-    .filter((account) => account.subjectToEec)
-    .reduce((sum, account) => sum + account.currentValue * eecRateNow, 0)
-
   const surrenderNow = {
-    eecRate: eecRateNow,
-    eecCharge: eecChargeNow,
-    npvFees: eecChargeNow,
-    netSurrenderValue: totalCurrentValue - eecChargeNow,
+    eecRate: currentValueSnapshot.eecRateNow,
+    eecCharge: currentValueSnapshot.cancelNowPenalty,
+    npvFees: currentValueSnapshot.cancelNowPenalty,
+    netSurrenderValue: currentValueSnapshot.totalCurrentValue - currentValueSnapshot.cancelNowPenalty,
   }
 
   let cumulativeNpvGrossFees = 0
@@ -3125,35 +3276,31 @@ export function computeOpportunityCost(
 export function computeSummaryMetrics(
   input: IlpPolicyInput,
   projection: IlpProjectionResult,
+  initialSinglePremiumState?: IlpInitialSinglePremiumState,
 ): IlpSummaryMetrics {
   const mipEndRow = projection.rows[getMipEndProjectionIndex(input)]
-  const eecRateNow = getMipBasis(input) === 'open-ended'
-    ? 0
-    : lookupEecRate(input.currentPolicyYear, input.eecTable)
-  const totalCurrentValue = input.accounts.reduce((sum, account) => sum + account.currentValue, 0)
-  const cancelNowPenalty = input.accounts
-    .filter((account) => account.subjectToEec)
-    .reduce((sum, account) => sum + account.currentValue * eecRateNow, 0)
+  const currentValueSnapshot = computeCurrentValueSnapshot(input, initialSinglePremiumState)
 
   return {
     totalPremiumsPaid: mipEndRow.cumulativePremiums,
     totalFeesCharged: mipEndRow.cumulativeGrossFees,
     totalBonusesReceived: mipEndRow.cumulativeBonuses,
     netFeeDrag: mipEndRow.cumulativeGrossFees - mipEndRow.cumulativeBonuses,
-    currentSurrenderValue: totalCurrentValue - cancelNowPenalty,
-    cancelNowPenalty,
+    currentSurrenderValue: currentValueSnapshot.totalCurrentValue - currentValueSnapshot.cancelNowPenalty,
+    cancelNowPenalty: currentValueSnapshot.cancelNowPenalty,
   }
 }
 
 export function analyzeIlpPolicy(input: IlpPolicyInput): IlpPolicyAnalysis {
+  const initialSinglePremiumState = computeInitialSinglePremiumState(buildNormalizedPolicyInput(input))
   const projections: Record<ReturnScenario, IlpProjectionResult> = {
     low: projectIlpPolicy(input, 'low'),
     mid: projectIlpPolicy(input, 'mid'),
     high: projectIlpPolicy(input, 'high'),
   }
-  const npvAnalysis = computeNpvAnalysis(input, projections.mid)
+  const npvAnalysis = computeNpvAnalysis(input, projections.mid, initialSinglePremiumState)
   const opportunityCost = computeOpportunityCost(input, projections.mid, npvAnalysis)
-  const summary = computeSummaryMetrics(input, projections.mid)
+  const summary = computeSummaryMetrics(input, projections.mid, initialSinglePremiumState)
 
   return {
     policyId: input.id,

@@ -264,7 +264,7 @@ export const ilpBonusRuleSchema = z.object({
 export const ilpChargeRuleSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
-  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium']),
+  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium', 'initial-single-premium']),
   activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']),
   yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   startPolicyYear: z.number().int().min(1).max(100).optional(),
@@ -593,6 +593,7 @@ export const ilpPolicySchema = z.object({
   insurer: z.string().max(100),
   currency: z.enum(['SGD', 'USD']),
   monthlyContribution: z.number().min(0).max(100_000),
+  initialSinglePremium: z.number().min(0).max(100_000_000).optional(),
   monthsAlreadyPaid: z.number().int().min(0).max(1_200),
   currentPolicyYear: z.number().int().min(1).max(100),
   icpMonths: z.number().int().min(0).max(1_200).optional(),

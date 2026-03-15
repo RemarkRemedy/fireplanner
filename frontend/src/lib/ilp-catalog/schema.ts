@@ -60,7 +60,7 @@ export const ilpTemplateBonusSchema = z.object({
 export const ilpTemplateFeeRuleSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
-  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium']).optional(),
+  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium', 'initial-single-premium']).optional(),
   yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   rate: z.number().min(0).max(0.2).nullable(),
   amount: z.number().min(0).max(100_000_000).nullable().optional(),

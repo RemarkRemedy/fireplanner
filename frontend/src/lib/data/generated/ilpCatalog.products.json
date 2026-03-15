@@ -28194,18 +28194,18 @@
     "structureStatus": "structured",
     "economicsStatus": "partial-modeled-subset",
     "modeledEconomics": [
+      "branch:great-eastern-gia-sp-initial-single-premium-charge",
       "branch:great-eastern-gia-sp-top-up-premium-charge",
       "branch:great-eastern-gia-sp-open-ended-zero-surrender-charge"
     ],
     "metadataOnlyBehaviors": [
-      "great-eastern-gia-sp-initial-single-premium-charge",
       "great-eastern-gia-sp-death-benefit",
       "great-eastern-gia-sp-terminal-illness-benefit",
       "great-eastern-gia-sp-single-premium-principal-tracking",
       "great-eastern-gia-sp-srs-cpfis-surrender-destination"
     ],
     "warnings": [
-      "GREAT Invest Advantage (SP) is cataloged as a partial modeled subset in V1. The parser captures the published top-up premium charge and explicit no-surrender-charge structure through the open-ended no-MIP basis, while the initial single-premium charge, protection benefits, and single-premium principal tracking remain outside the current engine."
+      "GREAT Invest Advantage (SP) is cataloged as a partial modeled subset in V1. The parser captures the upfront initial single-premium charge, accepted top-up premium charge, and explicit no-surrender-charge structure through the open-ended no-MIP basis, while protection benefits and single-premium principal tracking remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -28249,7 +28249,29 @@
           }
         ],
         "bonuses": [],
-        "feeRules": [],
+        "feeRules": [
+          {
+            "id": "initial-single-premium-charge",
+            "label": "Initial Single Premium Charge (Cash / SRS)",
+            "basis": "initial-single-premium",
+            "rate": 0.03,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Applies the published 3% upfront deduction to the initial single premium before the policy value is seeded."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Premium charge and top-ups",
+                "excerpt": "A premium charge will be deducted from the single premium or single premium top-up (as the case Premium may be) before the remaining amount is apportioned to create and grant units in each fund selected charge by you. Th"
+              }
+            ]
+          }
+        ],
         "eventChargeRules": [
           {
             "id": "top-up-premium-charge",
@@ -28277,11 +28299,10 @@
         ],
         "eecTable": [],
         "warnings": [
-          "This Cash / SRS variant keeps the initial 3% single-premium charge metadata-only because the current engine does not yet model one-time deductions from the initial single premium before unit creation, while accepted top-up premiums continue to use the executable event charge surface.",
+          "Enter the gross initial single premium in the seeded policy if you want the starting policy value to include the upfront single-premium deduction path.",
           "This open-ended single-premium product uses the new no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
         ],
         "unsupportedItems": [
-          "Initial single-premium charge remains informational only because the current engine does not yet model one-time deductions from the initial single premium before unit creation.",
           "Death and terminal-illness benefit formulas remain informational only.",
           "Single-premium principal tracking remains informational only in V1.",
           "Fund-switching and minimum-transaction guards remain informational only."
@@ -28344,7 +28365,29 @@
           }
         ],
         "bonuses": [],
-        "feeRules": [],
+        "feeRules": [
+          {
+            "id": "initial-single-premium-charge",
+            "label": "Initial Single Premium Charge (CPFIS)",
+            "basis": "initial-single-premium",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "No initial premium charge applies when the accepted payment method is CPFIS."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Premium charge and top-ups",
+                "excerpt": "A premium charge will be deducted from the single premium or single premium top-up (as the case Premium may be) before the remaining amount is apportioned to create and grant units in each fund selected charge by you. Th"
+              }
+            ]
+          }
+        ],
         "eventChargeRules": [
           {
             "id": "top-up-premium-charge",
@@ -28372,11 +28415,10 @@
         ],
         "eecTable": [],
         "warnings": [
-          "This CPFIS variant omits the initial single-premium charge because the published path is 0%, and it models the accepted top-up corridor through the event charge surface.",
+          "Enter the gross initial single premium in the seeded policy if you want the starting policy value to include the upfront single-premium deduction path.",
           "This open-ended single-premium product uses the new no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
         ],
         "unsupportedItems": [
-          "Initial single-premium charge remains informational only because the current engine does not yet model one-time deductions from the initial single premium before unit creation.",
           "Death and terminal-illness benefit formulas remain informational only.",
           "Single-premium principal tracking remains informational only in V1.",
           "Fund-switching and minimum-transaction guards remain informational only."

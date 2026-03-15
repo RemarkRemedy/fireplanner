@@ -3584,6 +3584,327 @@ describe('projectIlpPolicy', () => {
     expect(() => projectIlpPolicy(makeDefaultPolicy({ currentPolicyYear: 30 }), 'mid')).toThrow(/at or past MIP/)
   })
 
+  it('applies an upfront initial-single-premium deduction once at inception before growth continues', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      initialSinglePremium: 1_000,
+      monthsAlreadyPaid: 0,
+      postMipYears: 2,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [TEN_PERCENT_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'initial-premium-charge',
+          label: 'Initial Single Premium Charge',
+          basis: 'initial-single-premium',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0.03,
+          amount: 0,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+    const summary = computeSummaryMetrics(policy, result)
+
+    expect(accountRow(result.rows[0], 'policy').open).toBeCloseTo(970, 6)
+    expect(accountRow(result.rows[0], 'policy').close).toBeCloseTo(1_067, 6)
+    expect(result.rows[0].annualContribution).toBe(0)
+    expect(result.rows[0].cumulativePremiums).toBe(1_000)
+    expect(result.rows[0].cumulativeGrossFees).toBeCloseTo(30, 6)
+    expect(summary.currentSurrenderValue).toBeCloseTo(970, 6)
+  })
+
+  it('keeps zero-rate initial-single-premium corridors unchanged while still seeding the starting policy value', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      initialSinglePremium: 1_000,
+      monthsAlreadyPaid: 0,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [TEN_PERCENT_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'initial-premium-charge',
+          label: 'Initial Single Premium Charge',
+          basis: 'initial-single-premium',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'policy').open).toBeCloseTo(1_000, 6)
+    expect(accountRow(result.rows[0], 'policy').close).toBeCloseTo(1_100, 6)
+    expect(result.rows[0].cumulativePremiums).toBe(1_000)
+    expect(result.rows[0].cumulativeGrossFees).toBe(0)
+  })
+
+  it('does not regress annual-contribution charge rules when an initial single premium is also present', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 100,
+      initialSinglePremium: 1_000,
+      monthsAlreadyPaid: 0,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'initial-premium-charge',
+          label: 'Initial Single Premium Charge',
+          basis: 'initial-single-premium',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0.05,
+          amount: 0,
+          allocation: 'pro-rata-by-value',
+        },
+        {
+          id: 'regular-premium-charge',
+          label: 'Regular Premium Charge',
+          basis: 'annual-contribution',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0.1,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'policy').open).toBeCloseTo(950, 6)
+    expect(accountRow(result.rows[0], 'policy').grossFee).toBeCloseTo(120, 6)
+    expect(result.rows[0].annualContribution).toBe(1_200)
+    expect(result.rows[0].cumulativeGrossFees).toBeCloseTo(170, 6)
+  })
+
+  it('does not regress top-up event charges when the policy also seeds an initial single premium', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      initialSinglePremium: 1_000,
+      monthsAlreadyPaid: 0,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'initial-premium-charge',
+          label: 'Initial Single Premium Charge',
+          basis: 'initial-single-premium',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0.03,
+          amount: 0,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'top-up-premium-charge',
+          label: 'Top-up Premium Charge',
+          trigger: 'top-up',
+          basis: 'event-amount',
+          appliesTo: ['policy'],
+          rate: 0.05,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+      policyEvents: [
+        {
+          id: 'top-up-1',
+          type: 'top-up',
+          startPolicyMonth: 1,
+          durationMonths: 1,
+          amount: 200,
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'policy').open).toBeCloseTo(970, 6)
+    expect(accountRow(result.rows[0], 'policy').grossFee).toBeCloseTo(10, 6)
+    expect(accountRow(result.rows[0], 'policy').contributionAmount).toBe(200)
+    expect(accountRow(result.rows[0], 'policy').close).toBeCloseTo(1_160, 6)
+    expect(result.rows[0].cumulativeGrossFees).toBeCloseTo(40, 6)
+  })
+
+  it('allocates multi-account initial-single-premium deductions against routed inception balances', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      initialSinglePremium: 1_000,
+      monthsAlreadyPaid: 0,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'core',
+          label: 'Core Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 0.75 },
+            { phase: 'after-icp', contributionShare: 0.75 },
+          ],
+        },
+        {
+          id: 'satellite',
+          label: 'Satellite Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 0.25 },
+            { phase: 'after-icp', contributionShare: 0.25 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'initial-premium-charge',
+          label: 'Initial Single Premium Charge',
+          basis: 'initial-single-premium',
+          activeWindow: 'policy-term',
+          appliesTo: ['core', 'satellite'],
+          rate: 0.1,
+          amount: 0,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'core').open).toBeCloseTo(675, 6)
+    expect(accountRow(result.rows[0], 'satellite').open).toBeCloseTo(225, 6)
+    expect(result.rows[0].combinedValue).toBeCloseTo(900, 6)
+    expect(result.rows[0].cumulativePremiums).toBe(1_000)
+    expect(result.rows[0].cumulativeGrossFees).toBeCloseTo(100, 6)
+  })
+
+  it('does not apply initial-single-premium deductions when the projection does not start at honest inception', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      initialSinglePremium: 1_000,
+      monthsAlreadyPaid: 1,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 400,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'initial-premium-charge',
+          label: 'Initial Single Premium Charge',
+          basis: 'initial-single-premium',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0.03,
+          amount: 0,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+    const summary = computeSummaryMetrics(policy, result)
+
+    expect(accountRow(result.rows[0], 'policy').open).toBeCloseTo(400, 6)
+    expect(result.rows[0].cumulativePremiums).toBe(0)
+    expect(result.rows[0].cumulativeGrossFees).toBe(0)
+    expect(summary.currentSurrenderValue).toBeCloseTo(400, 6)
+  })
+
   it('floors negative close values at zero before EEC is applied', () => {
     const policy = makeDefaultPolicy({
       monthlyContribution: 0,

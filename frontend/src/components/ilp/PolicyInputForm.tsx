@@ -88,6 +88,8 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
   const fundAllocationTotal = policy.funds.reduce((sum, fund) => sum + fund.allocation, 0)
   const fundAllocationValid = Math.abs(fundAllocationTotal - 1) < 0.001
   const assuranceRules = (policy.chargeRules ?? []).filter((rule) => rule.basis === 'assurance-sum-at-risk')
+  const initialSinglePremiumRules = (policy.chargeRules ?? []).filter((rule) => rule.basis === 'initial-single-premium')
+  const needsInitialSinglePremiumInput = initialSinglePremiumRules.length > 0 || (policy.initialSinglePremium ?? 0) > 0
   const assuranceProfile = policy.assuranceProfile
   const missingAssuranceProfile = assuranceRules.some((rule) => rule.requiresManualInput) && !assuranceProfile
   const missingRegularPremiumBase = assuranceRules.some((rule) => rule.requiresManualInput && requiresCurrentNetRegularPremiumBase(rule))
@@ -100,6 +102,13 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
     && assuranceProfile?.currentBasicSumAssured == null
   const missingCurrentNetSupplementaryPremiumBase = assuranceRules.some((rule) => rule.requiresManualInput && requiresCurrentNetSupplementaryPremiumBase(rule))
     && assuranceProfile?.currentNetSupplementaryPremiumBase == null
+  const missingInitialSinglePremium = initialSinglePremiumRules.length > 0
+    && policy.currentPolicyYear === 1
+    && policy.monthsAlreadyPaid === 0
+    && (policy.initialSinglePremium ?? 0) <= 0
+  const initialSinglePremiumOutsideInception = initialSinglePremiumRules.length > 0
+    && (policy.initialSinglePremium ?? 0) > 0
+    && (policy.currentPolicyYear !== 1 || policy.monthsAlreadyPaid !== 0)
   const assuranceAgeBoundaryWarning = assuranceProfile
     ? assuranceRules
       .map((rule) => {
@@ -143,6 +152,12 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
       : []),
     ...(missingCurrentNetSupplementaryPremiumBase
       ? ['This product also needs the current net RSP + top-up base before the HSBC Flexi Choice Cover charge can be trusted.']
+      : []),
+    ...(missingInitialSinglePremium
+      ? ['This product publishes an upfront initial single-premium charge. Enter the one-time gross initial single premium lump sum before trusting the seeded starting value.']
+      : []),
+    ...(initialSinglePremiumOutsideInception
+      ? ['Initial single premium seeding only applies when Current Policy Year = 1 and Months Already Paid = 0. Clear the field or move the policy back to inception if you want the upfront charge to be applied.']
       : []),
     ...assuranceAgeBoundaryWarning,
   ]
@@ -267,6 +282,13 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
               value={policy.monthlyContribution}
               onChange={(value) => updatePolicy(policy.id, { monthlyContribution: value })}
             />
+            {needsInitialSinglePremiumInput && (
+              <CurrencyInput
+                label={`Initial Single Premium (Gross Lump Sum, ${policy.currency})`}
+                value={policy.initialSinglePremium ?? 0}
+                onChange={(value) => updatePolicy(policy.id, { initialSinglePremium: value })}
+              />
+            )}
             <NumberInput
               label="Months Already Paid"
               value={policy.monthsAlreadyPaid}
@@ -871,6 +893,7 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                                   ],
                                 })
                               : undefined,
+                            allocation: value === 'initial-single-premium' ? 'pro-rata-by-value' : rule.allocation,
                             rateSchedule: value === 'account-value' || value === 'annual-contribution'
                               ? (rule.rateSchedule ?? [])
                               : undefined,
@@ -886,6 +909,7 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                           <SelectItem value="fixed-annual">Fixed Annual</SelectItem>
                           <SelectItem value="account-value">Account Value</SelectItem>
                           <SelectItem value="annual-contribution">Annual Contribution</SelectItem>
+                          <SelectItem value="initial-single-premium">Initial Single Premium</SelectItem>
                           <SelectItem value="assurance-sum-at-risk">Assurance Sum-at-Risk</SelectItem>
                           <SelectItem value="premium-base-mip-multiplier">Premium-Base AMF</SelectItem>
                         </SelectContent>

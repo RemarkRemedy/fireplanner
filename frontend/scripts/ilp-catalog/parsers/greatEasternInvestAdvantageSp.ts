@@ -2,6 +2,7 @@ import path from 'node:path'
 import type {
   IlpCatalogProduct,
   IlpCatalogSourceRef,
+  IlpTemplateFeeRule,
   IlpTemplateEventChargeRule,
   IlpTemplateVariant,
 } from '../../../src/lib/ilp-catalog/types.js'
@@ -47,6 +48,23 @@ function buildVariant(
   const page1 = sourceRef(1, 'Plan overview', snippetNear(document, 1, 'About your plan'))
   const page2 = sourceRef(2, 'Premium charge and top-ups', snippetNear(document, 2, 'Premium charge', 18))
   const page3 = sourceRef(3, 'Partial and full surrender', snippetNear(document, 3, 'Partial surrender', 18))
+  const feeRules: IlpTemplateFeeRule[] = [
+    {
+      id: 'initial-single-premium-charge',
+      label: paymentMode === 'cpfis' ? 'Initial Single Premium Charge (CPFIS)' : 'Initial Single Premium Charge (Cash / SRS)',
+      basis: 'initial-single-premium',
+      rate: premiumChargeRate,
+      amount: 0,
+      appliesTo: ['policy'],
+      activeWindow: 'policy-term',
+      notes: [
+        paymentMode === 'cpfis'
+          ? 'No initial premium charge applies when the accepted payment method is CPFIS.'
+          : 'Applies the published 3% upfront deduction to the initial single premium before the policy value is seeded.',
+      ],
+      sourceRefs: [page2],
+    },
+  ]
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
     {
@@ -89,17 +107,14 @@ function buildVariant(
       },
     ],
     bonuses: [],
-    feeRules: [],
+    feeRules,
     eventChargeRules,
     eecTable: [],
     warnings: [
-      paymentMode === 'cpfis'
-        ? 'This CPFIS variant omits the initial single-premium charge because the published path is 0%, and it models the accepted top-up corridor through the event charge surface.'
-        : 'This Cash / SRS variant keeps the initial 3% single-premium charge metadata-only because the current engine does not yet model one-time deductions from the initial single premium before unit creation, while accepted top-up premiums continue to use the executable event charge surface.',
+      'Enter the gross initial single premium in the seeded policy if you want the starting policy value to include the upfront single-premium deduction path.',
       'This open-ended single-premium product uses the new no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
-      'Initial single-premium charge remains informational only because the current engine does not yet model one-time deductions from the initial single premium before unit creation.',
       'Death and terminal-illness benefit formulas remain informational only.',
       'Single-premium principal tracking remains informational only in V1.',
       'Fund-switching and minimum-transaction guards remain informational only.',
@@ -121,18 +136,18 @@ export function parseGreatEasternInvestAdvantageSp(context: ParseContext): IlpCa
     structureStatus: 'structured',
     economicsStatus: 'partial-modeled-subset',
     modeledEconomics: [
+      'branch:great-eastern-gia-sp-initial-single-premium-charge',
       'branch:great-eastern-gia-sp-top-up-premium-charge',
       'branch:great-eastern-gia-sp-open-ended-zero-surrender-charge',
     ],
     metadataOnlyBehaviors: [
-      'great-eastern-gia-sp-initial-single-premium-charge',
       'great-eastern-gia-sp-death-benefit',
       'great-eastern-gia-sp-terminal-illness-benefit',
       'great-eastern-gia-sp-single-premium-principal-tracking',
       'great-eastern-gia-sp-srs-cpfis-surrender-destination',
     ],
     warnings: [
-      'GREAT Invest Advantage (SP) is cataloged as a partial modeled subset in V1. The parser captures the published top-up premium charge and explicit no-surrender-charge structure through the open-ended no-MIP basis, while the initial single-premium charge, protection benefits, and single-premium principal tracking remain outside the current engine.',
+      'GREAT Invest Advantage (SP) is cataloged as a partial modeled subset in V1. The parser captures the upfront initial single-premium charge, accepted top-up premium charge, and explicit no-surrender-charge structure through the open-ended no-MIP basis, while protection benefits and single-premium principal tracking remain outside the current engine.',
     ],
     archived: false,
     variants: [

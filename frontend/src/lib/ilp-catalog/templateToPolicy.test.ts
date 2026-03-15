@@ -641,18 +641,40 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.name).toBe('GREAT Invest Advantage (SP) (SGD / Open-ended (Cash Or Srs))')
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-gia-sp-initial-single-premium-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-gia-sp-initial-single-premium-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('great-eastern-gia-sp-initial-single-premium-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-gia-sp-single-premium-principal-tracking')
     expect(seed.mipBasis).toBe('open-ended')
     expect(seed.mipLength).toBeNull()
     expect(seed.postMipYears).toBe(20)
     expect(seed.monthlyContribution).toBe(0)
+    expect(seed.initialSinglePremium).toBe(0)
     expect(seed.eecTable).toEqual([])
     expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'top-up', contributionShare: 1 },
     ])
-    expect(seed.chargeRules).toEqual([])
+    expect(seed.chargeRules).toEqual([
+      {
+        id: 'initial-single-premium-charge',
+        label: 'Initial Single Premium Charge (Cash / SRS)',
+        basis: 'initial-single-premium',
+        activeWindow: 'policy-term',
+        startPolicyYear: undefined,
+        endPolicyYear: undefined,
+        appliesTo: ['policy'],
+        fallbackAppliesTo: undefined,
+        rateSchedule: undefined,
+        amountSchedule: undefined,
+        rate: 0.03,
+        amount: 0,
+        assuranceConfig: undefined,
+        premiumBaseConfig: undefined,
+        cumulativePaidPremiumConfig: undefined,
+        requiresManualInput: undefined,
+        allocation: 'pro-rata-by-value',
+      },
+    ])
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
@@ -661,6 +683,7 @@ describe('templateVariantToPolicySeed', () => {
       }),
     ])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('default 20-year review horizon'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('gross initial single premium'))).toBe(true)
   })
 
   it('maps GREAT Invest Advantage 2 (SP) into an open-ended partial single-premium seed', () => {

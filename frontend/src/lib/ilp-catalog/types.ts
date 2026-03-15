@@ -66,7 +66,7 @@ export interface IlpTemplateBonus {
 export interface IlpTemplateFeeRule {
   id: string
   label: string
-  basis?: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium'
+  basis?: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium' | 'initial-single-premium'
   yearBasis?: 'policy-year' | 'premium-year'
   rate: number | null
   amount?: number | null
