@@ -28,9 +28,10 @@ describe('parseManulifeManulinkInvestorIi', () => {
     expect(product.modeledEconomics).toEqual([
       'branch:manulink-investor-ii-single-premium-charge',
       'branch:manulink-investor-ii-top-up-premium-charge',
+      'branch:manulink-investor-ii-srs-recurring-single-premium-charge',
+      'tokio-recurring-single-premium-routing',
     ])
     expect(product.metadataOnlyBehaviors).toContain('manulink-investor-ii-cpf-funding-route')
-    expect(product.metadataOnlyBehaviors).toContain('manulink-investor-ii-srs-recurring-single-premium-option')
     expect(product.metadataOnlyBehaviors).toContain('manulink-investor-ii-single-premium-principal-tracking')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cash-or-srs'])
 
@@ -60,6 +61,13 @@ describe('parseManulifeManulinkInvestorIi', () => {
         id: 'top-up-premium-charge',
         trigger: 'top-up',
         basis: 'event-amount',
+        activeWindow: 'policy-term',
+        rate: 0.03,
+      }),
+      expect.objectContaining({
+        id: 'recurring-single-premium-charge',
+        trigger: 'recurring-single-premium',
+        basis: 'event-amount-with-overlap-months',
         activeWindow: 'policy-term',
         rate: 0.03,
       }),

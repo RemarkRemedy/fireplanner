@@ -77,6 +77,22 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       ],
       sourceRefs: [page2],
     },
+    {
+      id: 'recurring-single-premium-charge',
+      label: 'Recurring Single Premium Charge (SRS)',
+      trigger: 'recurring-single-premium',
+      basis: 'event-amount-with-overlap-months',
+      appliesTo: ['policy'],
+      rate: 0.03,
+      amount: 0,
+      activeWindow: 'policy-term',
+      allocation: 'equal-split',
+      notes: [
+        'Models the published 3% charge on each recurring single premium paid under the SRS-only RSP option.',
+        'Use recurring-single-premium events to represent the standing SRS instruction and its chosen cadence.',
+      ],
+      sourceRefs: [page2, page2Recurring],
+    },
   ]
 
   return {
@@ -104,14 +120,13 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eventChargeRules,
     eecTable: [],
     warnings: [
-      'Manulink Investor (II) is cataloged as a partial modeled subset in V1. The parser captures the published 3% single-premium and top-up charge path for the explicit cash / SRS corridor through the open-ended no-MIP basis.',
+      'Manulink Investor (II) is cataloged as a partial modeled subset in V1. The parser captures the published 3% single-premium, top-up, and SRS recurring-single-premium charge path for the explicit cash / SRS corridor through the open-ended no-MIP basis.',
       'CPF funding availability remains metadata-only because the product summary does not publish an explicit CPF premium-charge rate.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
       'Death and terminal-illness benefit formulas remain informational only.',
       'Single-premium principal tracking remains informational only in V1.',
-      'SRS recurring single premium option remains informational only in V1.',
       'Partial-withdrawal and full-surrender administration remain informational only.',
       'Fund-level management fees remain informational only because they vary by chosen ILP sub-fund and are published in the fund summaries.',
       'Fund-switching and dividend distribution elections remain informational only.',
@@ -136,13 +151,14 @@ export function parseManulifeManulinkInvestorIi(context: ParseContext): IlpCatal
     modeledEconomics: [
       'branch:manulink-investor-ii-single-premium-charge',
       'branch:manulink-investor-ii-top-up-premium-charge',
+      'branch:manulink-investor-ii-srs-recurring-single-premium-charge',
+      'tokio-recurring-single-premium-routing',
     ],
     metadataOnlyBehaviors: [
       'manulink-investor-ii-death-benefit',
       'manulink-investor-ii-terminal-illness-benefit',
       'manulink-investor-ii-single-premium-principal-tracking',
       'manulink-investor-ii-cpf-funding-route',
-      'manulink-investor-ii-srs-recurring-single-premium-option',
       'manulink-investor-ii-partial-withdrawal',
       'manulink-investor-ii-full-surrender',
       'manulink-investor-ii-fund-management-fee',
@@ -151,7 +167,7 @@ export function parseManulifeManulinkInvestorIi(context: ParseContext): IlpCatal
       'manulink-investor-ii-lapse-and-termination',
     ],
     warnings: [
-      'Manulink Investor (II) is cataloged as a partial modeled subset in V1. The parser captures the published 3% single-premium and top-up charge path for the explicit cash / SRS corridor through the open-ended no-MIP basis, while protection formulas, principal-tracking, CPF funding, the SRS recurring option, and fund-level charges remain outside the current engine.',
+      'Manulink Investor (II) is cataloged as a partial modeled subset in V1. The parser captures the published 3% single-premium, top-up, and SRS recurring-single-premium charge path for the explicit cash / SRS corridor through the open-ended no-MIP basis, while protection formulas, principal-tracking, CPF funding, and fund-level charges remain outside the current engine.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],
