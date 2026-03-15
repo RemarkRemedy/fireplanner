@@ -26,7 +26,7 @@ import {
 import { usePageMeta } from '@/hooks/usePageMeta'
 
 export function ChecklistPage() {
-  usePageMeta({ title: 'Singapore FIRE Checklist — Financial Independence Milestones', description: 'Track your progress toward financial independence with a Singapore-specific checklist covering CPF, insurance, emergency fund, estate planning, and portfolio milestones.', path: '/checklist' })
+  usePageMeta({ title: 'FIRE Checklist — SG FIRE Planner', description: 'Track your progress toward financial independence with a Singapore-specific checklist covering CPF, insurance, emergency fund, estate planning, and portfolio milestones.', path: '/checklist' })
   const [checked, setChecked] = useState<Record<string, boolean>>(getCheckedItems)
   const progress = getProgress()
   const categories = getCategories()

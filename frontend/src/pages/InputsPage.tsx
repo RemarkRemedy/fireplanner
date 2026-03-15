@@ -170,7 +170,7 @@ function HouseholdPlaceholderCard({
 
 export function InputsPage() {
   usePageMeta({
-    title: 'FIRE Plan Inputs — Income, Expenses, CPF & Portfolio Setup',
+    title: 'Plan Inputs — SG FIRE Planner',
     description: 'Set up your income, expenses, CPF contributions, investment portfolio, and retirement assumptions. All calculations run in your browser with Singapore-specific defaults.',
     path: '/inputs',
   })

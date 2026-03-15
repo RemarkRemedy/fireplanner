@@ -25,7 +25,7 @@ function issueMessagesFromPolicy(policy: unknown): string[] {
 
 export function IlpReviewPage() {
   usePageMeta({
-    title: 'ILP Fee Calculator — Compare Investment-Linked Policy Costs',
+    title: 'ILP Review — SG FIRE Planner',
     description: 'Calculate ILP fee drag, surrender penalties, and MIP-end outcomes. Compare multiple investment-linked policies side by side to decide whether to keep, surrender, or redirect premiums.',
     path: '/ilp-review',
   })

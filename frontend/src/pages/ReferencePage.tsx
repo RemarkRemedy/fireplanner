@@ -604,7 +604,7 @@ function ChangelogList() {
 }
 
 export function ReferencePage() {
-  usePageMeta({ title: 'Singapore Retirement Planning Guide — CPF, Tax, Withdrawal Strategies', description: 'Comprehensive reference for Singapore retirement planning: CPF contribution rates, income tax brackets, withdrawal strategy formulas, Monte Carlo methodology, and data sources.', path: '/reference' })
+  usePageMeta({ title: 'Reference Guide — SG FIRE Planner', description: 'Comprehensive reference for Singapore retirement planning: CPF contribution rates, income tax brackets, withdrawal strategy formulas, Monte Carlo methodology, and data sources.', path: '/reference' })
   const location = useLocation()
   const hashId = location.hash.slice(1)
   const allIds = [...SECTIONS.map(s => s.id), 'changelog', 'data-sources']
