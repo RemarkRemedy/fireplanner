@@ -45,6 +45,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page4 = sourceRef(4, 'Premium allocation and rider account value', snippetNear(document, 4, '100% of the single Premium paid', 18))
   const page6 = sourceRef(6, 'Zero-charge subscription and redemption illustration', snippetNear(document, 6, 'There is no fees and charges incurred for the purchase', 18))
   const page7 = sourceRef(7, 'Management charge and fund management fee', snippetNear(document, 7, 'Management Charge', 18))
+  const page7Dividend = sourceRef(7, 'Distribution of Dividend', snippetNear(document, 7, 'Distribution of Dividend', 18))
   const page8 = sourceRef(8, 'Top-up and fund switching', snippetNear(document, 8, 'Top-up (Ad-hoc / Recurring)', 20))
   const page9 = sourceRef(9, 'Free look and grace period', snippetNear(document, 9, 'Grace Period', 18))
 
@@ -134,9 +135,23 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: [],
     feeRules,
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Portfolio-fund dividends default to reinvestment unless the policyholder elects payout.',
+        'Dividend payout leaves the rider and is credited into the linked Basic policy, so V1 treats payout as a rider-side outflow and does not model the receiving Basic policy ledger.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.',
+      ],
+      sourceRefs: [page7Dividend],
+    },
     eecTable: [],
     warnings: [
-      'Dash PET Plus is cataloged as a partial modeled subset in V1. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, and the 0.75% annual management charge through the open-ended rider basis.',
+      'Dash PET Plus is cataloged as a partial modeled subset in V1. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, the 0.75% annual management charge through the open-ended rider basis, and reinvest-default distribution support.',
       'This is a yearly renewable rider attached to a basic policy; rider renewability and basic-policy dependency remain informational only in V1.',
       'This open-ended rider product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
@@ -145,9 +160,9 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       'Yearly renewability, basic-policy attachment gating, and unilateral rider termination notice remain informational only.',
       'PayNow transfer charges remain informational only because they depend on payout method rather than the rider ledger.',
       'Fund-level management fees remain informational only because they depend on the selected ILP sub-fund.',
-      'Dividend elections, automatic portfolio rebalancing, grace-period funding, and free-look handling remain informational only.',
+      'Dividend crediting into the linked Basic policy, automatic portfolio rebalancing, grace-period funding, and free-look handling remain informational only.',
     ],
-    sourceRefs: [page1, page2, page3, page4, page6, page7, page8, page9],
+    sourceRefs: [page1, page2, page3, page4, page6, page7, page7Dividend, page8, page9],
   }
 }
 
@@ -168,6 +183,7 @@ export function parseEtiqaDashPetPlus(context: ParseContext): IlpCatalogProduct 
       'branch:etiqa-dash-pet-plus-management-charge',
       'branch:etiqa-dash-pet-plus-zero-top-up-charge',
       'branch:etiqa-dash-pet-plus-zero-partial-withdrawal-charge',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'etiqa-dash-pet-plus-death-benefit',
@@ -176,13 +192,13 @@ export function parseEtiqaDashPetPlus(context: ParseContext): IlpCatalogProduct 
       'etiqa-dash-pet-plus-basic-policy-dependency',
       'etiqa-dash-pet-plus-paynow-transfer-charge',
       'etiqa-dash-pet-plus-fund-management-fee',
-      'etiqa-dash-pet-plus-dividend-handling',
+      'etiqa-dash-pet-plus-dividend-crediting-to-basic-policy',
       'etiqa-dash-pet-plus-automatic-portfolio-rebalancing',
       'etiqa-dash-pet-plus-grace-period-top-up-funding',
       'etiqa-dash-pet-plus-free-look',
     ],
     warnings: [
-      'Dash PET Plus is cataloged as a partial modeled subset in V1. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, and the 0.75% annual management charge through the open-ended rider basis, while protection formulas, yearly renewability, basic-policy dependency, and payout-method fees remain outside the current engine.',
+      'Dash PET Plus is cataloged as a partial modeled subset in V1. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, the 0.75% annual management charge through the open-ended rider basis, and reinvest-default distribution support, while protection formulas, yearly renewability, basic-policy dependency, payout-method fees, and Basic-policy crediting remain outside the current engine.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

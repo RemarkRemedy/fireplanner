@@ -22084,7 +22084,8 @@
       "branch:etiqa-dash-pet-plus-zero-single-premium-charge",
       "branch:etiqa-dash-pet-plus-management-charge",
       "branch:etiqa-dash-pet-plus-zero-top-up-charge",
-      "branch:etiqa-dash-pet-plus-zero-partial-withdrawal-charge"
+      "branch:etiqa-dash-pet-plus-zero-partial-withdrawal-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "etiqa-dash-pet-plus-death-benefit",
@@ -22093,13 +22094,13 @@
       "etiqa-dash-pet-plus-basic-policy-dependency",
       "etiqa-dash-pet-plus-paynow-transfer-charge",
       "etiqa-dash-pet-plus-fund-management-fee",
-      "etiqa-dash-pet-plus-dividend-handling",
+      "etiqa-dash-pet-plus-dividend-crediting-to-basic-policy",
       "etiqa-dash-pet-plus-automatic-portfolio-rebalancing",
       "etiqa-dash-pet-plus-grace-period-top-up-funding",
       "etiqa-dash-pet-plus-free-look"
     ],
     "warnings": [
-      "Dash PET Plus is cataloged as a partial modeled subset in V1. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, and the 0.75% annual management charge through the open-ended rider basis, while protection formulas, yearly renewability, basic-policy dependency, and payout-method fees remain outside the current engine."
+      "Dash PET Plus is cataloged as a partial modeled subset in V1. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, the 0.75% annual management charge through the open-ended rider basis, and reinvest-default distribution support, while protection formulas, yearly renewability, basic-policy dependency, payout-method fees, and Basic-policy crediting remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -22251,9 +22252,31 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Portfolio-fund dividends default to reinvestment unless the policyholder elects payout.",
+            "Dividend payout leaves the rider and is credited into the linked Basic policy, so V1 treats payout as a rider-side outflow and does not model the receiving Basic policy ledger.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 7,
+              "section": "Distribution of Dividend",
+              "excerpt": "Distribution of Dividend If the Portfolio fund pays dividends, You have the option to either reinvest these dividends or to receive payments of these dividends. You will need to decide the dividend treatment during Appli"
+            }
+          ]
+        },
         "eecTable": [],
         "warnings": [
-          "Dash PET Plus is cataloged as a partial modeled subset in V1. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, and the 0.75% annual management charge through the open-ended rider basis.",
+          "Dash PET Plus is cataloged as a partial modeled subset in V1. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, the 0.75% annual management charge through the open-ended rider basis, and reinvest-default distribution support.",
           "This is a yearly renewable rider attached to a basic policy; rider renewability and basic-policy dependency remain informational only in V1.",
           "This open-ended rider product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
         ],
@@ -22262,7 +22285,7 @@
           "Yearly renewability, basic-policy attachment gating, and unilateral rider termination notice remain informational only.",
           "PayNow transfer charges remain informational only because they depend on payout method rather than the rider ledger.",
           "Fund-level management fees remain informational only because they depend on the selected ILP sub-fund.",
-          "Dividend elections, automatic portfolio rebalancing, grace-period funding, and free-look handling remain informational only."
+          "Dividend crediting into the linked Basic policy, automatic portfolio rebalancing, grace-period funding, and free-look handling remain informational only."
         ],
         "sourceRefs": [
           {
@@ -22294,6 +22317,11 @@
             "page": 7,
             "section": "Management charge and fund management fee",
             "excerpt": "Calculation of Redemption Proceeds The following example illustrates how the redemption works assuming You plan to withdraw S$1,000 from Your Portfolio fund. ILP No. of Units ILP Sub- Amount to Unit Units Fees & Balance "
+          },
+          {
+            "page": 7,
+            "section": "Distribution of Dividend",
+            "excerpt": "Distribution of Dividend If the Portfolio fund pays dividends, You have the option to either reinvest these dividends or to receive payments of these dividends. You will need to decide the dividend treatment during Appli"
           },
           {
             "page": 8,

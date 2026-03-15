@@ -2309,6 +2309,66 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('supports distribution-paying fund elections'))).toBe(true)
   })
 
+  it('maps Dash PET Plus into a partial rider seed with reinvest-default distribution support', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'etiqa-dash-pet-plus')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-rider')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-dash-pet-plus-management-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-dash-pet-plus-dividend-crediting-to-basic-policy')
+    expect(seed.mipBasis).toBe('open-ended')
+    expect(seed.mipLength).toBeNull()
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'policy',
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+          { phase: 'top-up', contributionShare: 1 },
+        ],
+      }),
+    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'management-charge',
+          basis: 'account-value',
+          rate: 0.0075,
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        rate: 0,
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        rate: 0,
+      }),
+    ])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('supports distribution-paying fund elections'))).toBe(true)
+  })
+
   it('maps Goal Builder II into a partial premium-year seed with PAF and surrender schedules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'hsbc-life-goal-builder-ii')

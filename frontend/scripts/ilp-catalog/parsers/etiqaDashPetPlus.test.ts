@@ -68,12 +68,15 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
       },
       {
         pageNumber: 7,
-        characterCount: 240,
-        text: 'Management charge and fund management fee',
+        characterCount: 380,
+        text: 'Management charge, fund management fee, and distribution of dividend',
         lines: [
           { y: 700, text: 'Management Charge' },
           { y: 680, text: 'We will deduct a management charge of 0.75% per annum of the Rider account value.' },
           { y: 660, text: 'Insurance Charge There is no insurance charge imposed on Your rider.' },
+          { y: 640, text: 'Distribution of Dividend' },
+          { y: 620, text: 'If the Portfolio fund pays dividends, You have the option to either reinvest these dividends or to receive payments of these dividends.' },
+          { y: 600, text: 'If You choose to receive dividends, We will distribute these dividends to You within thirty (30) days from the dividend declaration date to Your Basic policy.' },
         ],
       },
       {
@@ -116,9 +119,11 @@ describe('parseEtiqaDashPetPlus', () => {
       'branch:etiqa-dash-pet-plus-management-charge',
       'branch:etiqa-dash-pet-plus-zero-top-up-charge',
       'branch:etiqa-dash-pet-plus-zero-partial-withdrawal-charge',
+      'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('etiqa-dash-pet-plus-yearly-renewability')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-dash-pet-plus-paynow-transfer-charge')
+    expect(product.metadataOnlyBehaviors).toContain('etiqa-dash-pet-plus-dividend-crediting-to-basic-policy')
 
     const variant = product.variants[0]
     expect(variant).toMatchObject({
@@ -150,6 +155,18 @@ describe('parseEtiqaDashPetPlus', () => {
         rate: 0,
       }),
     ])
+    expect(variant.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('credited into the linked Basic policy'),
+      ]),
+      sourceRefs: expect.any(Array),
+    })
     expect(variant.eecTable).toEqual([])
   })
 
