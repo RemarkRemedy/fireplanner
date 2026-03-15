@@ -134,6 +134,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page16 = sourceRef(16, 'Appendix 2 surrender charge', snippetNear(document, 16, 'Appendix 2', 16))
   const page17 = sourceRef(17, 'Appendix 3 partial withdrawal charge', snippetNear(document, 17, 'Appendix 3', 16))
   const page18 = sourceRef(18, 'Appendix 4 premium holiday charge', snippetNear(document, 18, 'Appendix 4', 16))
+  const page22 = sourceRef(22, 'Declaration and reinvesting of distributions', snippetNear(document, 22, 'Declaration and Reinvesting of Distributions', 18))
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
     {
@@ -192,18 +193,32 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: buildBonuses(page2),
     feeRules: [],
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Distribution-paying ILP sub-funds default to reinvestment, and future payouts can be elected by written instruction when the fund-level minimum amount is met.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published minimum distribution amount remains informational only.',
+      ],
+      sourceRefs: [page22],
+    },
     eecTable: [...SURRENDER_AND_WITHDRAWAL_CHARGE],
     warnings: [
-      'Invest Flex TriVantage is currently modeled as a partial product in V1. Regular-premium allocation uplifts, investment bonus, loyalty bonus, top-up routing, premium-holiday charge, partial-withdrawal charge, and surrender-charge schedules are modeled.',
-      'Insurance cover charges, secondary insured option, life events withdrawal benefit, and future premium option remain informational only.',
+      'Invest Flex TriVantage is currently modeled as a partial product in V1. Regular-premium allocation uplifts, investment bonus, loyalty bonus, top-up routing, premium-holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support are modeled.',
+      'Insurance cover charges, secondary insured option, life events withdrawal benefit, future premium option, and the published minimum distribution amount remain informational only.',
     ],
     unsupportedItems: [
       'Death and terminal illness insurance cover charges remain informational only.',
       'Secondary insured option remains informational only.',
       'Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.',
       'Future Premium Option remains informational only.',
+      'The published minimum distribution amount and fund-level payout processing remain informational only.',
     ],
-    sourceRefs: [page1, page2, page4, page6, page8, page16, page17, page18],
+    sourceRefs: [page1, page2, page4, page6, page8, page16, page17, page18, page22],
   }
 }
 
@@ -227,15 +242,17 @@ export function parseIncomeInvestFlexTriVantage(context: ParseContext): IlpCatal
       'branch:income-vs3-partial-withdrawal-charge',
       'branch:income-vs3-surrender-charge',
       'branch:income-vs3-ad-hoc-top-up-routing',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'income-vs3-death-ti-insurance-cover-charge',
       'income-vs3-secondary-insured-option',
       'income-vs3-life-events-withdrawal-benefit',
       'income-vs3-future-premium-option',
+      'income-vs3-distribution-payout-threshold',
     ],
     warnings: [
-      'Invest Flex TriVantage is currently cataloged as a partial product. The regular-premium charge and bonus path is modeled, but insurance-cover charges and insured-replacement / life-event options remain informational only.',
+      'Invest Flex TriVantage is currently cataloged as a partial product. The regular-premium charge and bonus path plus reinvest-default distribution support are modeled, but insurance-cover charges and insured-replacement / life-event options remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

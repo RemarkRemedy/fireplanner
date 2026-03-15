@@ -9256,16 +9256,18 @@
       "branch:income-vs3-premium-holiday-charge",
       "branch:income-vs3-partial-withdrawal-charge",
       "branch:income-vs3-surrender-charge",
-      "branch:income-vs3-ad-hoc-top-up-routing"
+      "branch:income-vs3-ad-hoc-top-up-routing",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "income-vs3-death-ti-insurance-cover-charge",
       "income-vs3-secondary-insured-option",
       "income-vs3-life-events-withdrawal-benefit",
-      "income-vs3-future-premium-option"
+      "income-vs3-future-premium-option",
+      "income-vs3-distribution-payout-threshold"
     ],
     "warnings": [
-      "Invest Flex TriVantage is currently cataloged as a partial product. The regular-premium charge and bonus path is modeled, but insurance-cover charges and insured-replacement / life-event options remain informational only."
+      "Invest Flex TriVantage is currently cataloged as a partial product. The regular-premium charge and bonus path plus reinvest-default distribution support are modeled, but insurance-cover charges and insured-replacement / life-event options remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -9571,6 +9573,27 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Distribution-paying ILP sub-funds default to reinvestment, and future payouts can be elected by written instruction when the fund-level minimum amount is met.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published minimum distribution amount remains informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 22,
+              "section": "Declaration and reinvesting of distributions",
+              "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualised regular premium and divided by 12 for payment "
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -9584,14 +9607,15 @@
           0.05
         ],
         "warnings": [
-          "Invest Flex TriVantage is currently modeled as a partial product in V1. Regular-premium allocation uplifts, investment bonus, loyalty bonus, top-up routing, premium-holiday charge, partial-withdrawal charge, and surrender-charge schedules are modeled.",
-          "Insurance cover charges, secondary insured option, life events withdrawal benefit, and future premium option remain informational only."
+          "Invest Flex TriVantage is currently modeled as a partial product in V1. Regular-premium allocation uplifts, investment bonus, loyalty bonus, top-up routing, premium-holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support are modeled.",
+          "Insurance cover charges, secondary insured option, life events withdrawal benefit, future premium option, and the published minimum distribution amount remain informational only."
         ],
         "unsupportedItems": [
           "Death and terminal illness insurance cover charges remain informational only.",
           "Secondary insured option remains informational only.",
           "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
-          "Future Premium Option remains informational only."
+          "Future Premium Option remains informational only.",
+          "The published minimum distribution amount and fund-level payout processing remain informational only."
         ],
         "sourceRefs": [
           {
@@ -9633,6 +9657,11 @@
             "page": 18,
             "section": "Appendix 4 premium holiday charge",
             "excerpt": "Version 1.26 31 0.48 0.29 32 0.50 0.31 33 0.52 0.33 34 0.54 0.35 35 0.58 0.37 36 0.62 0.43 37 0.66 0.49 38 0.70 0.55 39 0.74 0.61 40 0.79 0.65 41 0.89 0.73 42 0.99 0.81 43 1.09 0.89 44 1.19 0.97 45 1.28 1.06"
+          },
+          {
+            "page": 22,
+            "section": "Declaration and reinvesting of distributions",
+            "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualised regular premium and divided by 12 for payment "
           }
         ]
       }
