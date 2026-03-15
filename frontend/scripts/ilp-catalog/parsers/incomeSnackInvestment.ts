@@ -117,10 +117,23 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: [],
     feeRules,
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: false,
+      cashPayoutAllowedAfterMip: false,
+      source: 'distribution-paying-funds',
+      notes: [
+        'SNACK-Investment reinvests any declared ILP sub-fund distributions back into the same sub-fund.',
+        'The published product summary states that distributions are not paid out under this product.',
+      ],
+      sourceRefs: [page7],
+    },
     eecTable: [],
     warnings: [
       'SNACK-Investment is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial premium, top-up, and no-penalty withdrawal path through the open-ended no-MIP basis.',
-      'The plan reinvests distributions by default, but fund-level management fees and distribution behavior remain outside the current calculator surface.',
+      'The plan reinvests declared distributions and does not support cash payouts in the published corridor; fund-level management fees remain outside the current calculator surface.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
@@ -130,7 +143,6 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       'Fund-level annual management fees remain informational only because the product summary publishes them only at fund level and does not give a single policy-level rate.',
       'Suspension, fund closure, and merged-fund handling remain informational only.',
       'Free-look refund mechanics remain informational only.',
-      'Distribution reinvestment behavior remains informational only.',
     ],
     sourceRefs: [page3, page4, page5, page6, page7],
   }
@@ -152,6 +164,7 @@ export function parseIncomeSnackInvestment(context: ParseContext): IlpCatalogPro
       'branch:income-snack-investment-zero-single-premium-charge',
       'branch:income-snack-investment-zero-top-up-charge',
       'branch:income-snack-investment-zero-withdrawal-charge',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'income-snack-investment-accidental-death-benefit',
@@ -161,10 +174,9 @@ export function parseIncomeSnackInvestment(context: ParseContext): IlpCatalogPro
       'income-snack-investment-fund-management-fee',
       'income-snack-investment-suspension-of-dealings',
       'income-snack-investment-free-look',
-      'income-snack-investment-distribution-reinvestment',
     ],
     warnings: [
-      'SNACK-Investment is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial premium, top-up, and no-penalty withdrawal path through the open-ended no-MIP basis, while accidental-death protection, trigger-driven top-up automation, and fund-level charges remain outside the current engine.',
+      'SNACK-Investment is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial premium, top-up, and no-penalty withdrawal path through the open-ended no-MIP basis, plus the reinvest-only distribution mode published for this product, while accidental-death protection, trigger-driven top-up automation, and fund-level charges remain outside the current engine.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

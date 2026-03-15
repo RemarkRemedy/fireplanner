@@ -29,6 +29,7 @@ describe('parseIncomeSnackInvestment', () => {
       'branch:income-snack-investment-zero-single-premium-charge',
       'branch:income-snack-investment-zero-top-up-charge',
       'branch:income-snack-investment-zero-withdrawal-charge',
+      'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('income-snack-investment-trigger-driven-top-ups')
     expect(product.metadataOnlyBehaviors).toContain('income-snack-investment-fund-management-fee')
@@ -71,6 +72,24 @@ describe('parseIncomeSnackInvestment', () => {
         rate: 0,
       }),
     ])
-    expect(variant?.warnings).toContain('The plan reinvests distributions by default, but fund-level management fees and distribution behavior remain outside the current calculator surface.')
+    expect(variant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: false,
+      cashPayoutAllowedAfterMip: false,
+      source: 'distribution-paying-funds',
+      notes: [
+        'SNACK-Investment reinvests any declared ILP sub-fund distributions back into the same sub-fund.',
+        'The published product summary states that distributions are not paid out under this product.',
+      ],
+      sourceRefs: [
+        expect.objectContaining({
+          page: 7,
+          section: 'Free-look and distributions',
+        }),
+      ],
+    })
+    expect(variant?.warnings).toContain('The plan reinvests declared distributions and does not support cash payouts in the published corridor; fund-level management fees remain outside the current calculator surface.')
   }, 30_000)
 })

@@ -12334,7 +12334,8 @@
     "modeledEconomics": [
       "branch:income-snack-investment-zero-single-premium-charge",
       "branch:income-snack-investment-zero-top-up-charge",
-      "branch:income-snack-investment-zero-withdrawal-charge"
+      "branch:income-snack-investment-zero-withdrawal-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "income-snack-investment-accidental-death-benefit",
@@ -12343,11 +12344,10 @@
       "income-snack-investment-auto-invest-weekly-cap",
       "income-snack-investment-fund-management-fee",
       "income-snack-investment-suspension-of-dealings",
-      "income-snack-investment-free-look",
-      "income-snack-investment-distribution-reinvestment"
+      "income-snack-investment-free-look"
     ],
     "warnings": [
-      "SNACK-Investment is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial premium, top-up, and no-penalty withdrawal path through the open-ended no-MIP basis, while accidental-death protection, trigger-driven top-up automation, and fund-level charges remain outside the current engine."
+      "SNACK-Investment is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial premium, top-up, and no-penalty withdrawal path through the open-ended no-MIP basis, plus the reinvest-only distribution mode published for this product, while accidental-death protection, trigger-driven top-up automation, and fund-level charges remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -12467,10 +12467,31 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": false,
+          "cashPayoutAllowedAfterMip": false,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "SNACK-Investment reinvests any declared ILP sub-fund distributions back into the same sub-fund.",
+            "The published product summary states that distributions are not paid out under this product."
+          ],
+          "sourceRefs": [
+            {
+              "page": 7,
+              "section": "Free-look and distributions",
+              "excerpt": "Example – For a single premium of $1000, (1) (2) (3) = (1) ÷ (2) Single Premium Bid Price No. of Units $1000 $1.00 1000 The number of units purchase with each premium payment depends on the bid price. 6. REDEMPTION OF UN"
+            }
+          ]
+        },
         "eecTable": [],
         "warnings": [
           "SNACK-Investment is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial premium, top-up, and no-penalty withdrawal path through the open-ended no-MIP basis.",
-          "The plan reinvests distributions by default, but fund-level management fees and distribution behavior remain outside the current calculator surface.",
+          "The plan reinvests declared distributions and does not support cash payouts in the published corridor; fund-level management fees remain outside the current calculator surface.",
           "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
         ],
         "unsupportedItems": [
@@ -12479,8 +12500,7 @@
           "Trigger-driven top-up enrollment, weekly cap handling, and Auto Invest behavior remain informational only.",
           "Fund-level annual management fees remain informational only because the product summary publishes them only at fund level and does not give a single policy-level rate.",
           "Suspension, fund closure, and merged-fund handling remain informational only.",
-          "Free-look refund mechanics remain informational only.",
-          "Distribution reinvestment behavior remains informational only."
+          "Free-look refund mechanics remain informational only."
         ],
         "sourceRefs": [
           {
