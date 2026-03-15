@@ -9685,16 +9685,18 @@
       "branch:income-vs2-premium-holiday-charge",
       "branch:income-vs2-partial-withdrawal-charge",
       "branch:income-vs2-surrender-charge",
-      "branch:income-vs2-ad-hoc-top-up-routing"
+      "branch:income-vs2-ad-hoc-top-up-routing",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "income-vs2-death-ti-insurance-cover-charge",
       "income-vs2-secondary-insured-option",
       "income-vs2-life-events-withdrawal-benefit",
-      "income-vs2-future-premium-option"
+      "income-vs2-future-premium-option",
+      "income-vs2-distribution-payout-threshold"
     ],
     "warnings": [
-      "Invest Flex Vantage is currently cataloged as a partial product. The regular-premium charge and bonus path is modeled, but insurance-cover charges and insured-replacement / life-event options remain informational only."
+      "Invest Flex Vantage is currently cataloged as a partial product. The regular-premium charge and bonus path plus reinvest-default distribution support are modeled, but insurance-cover charges and insured-replacement / life-event options remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -9958,6 +9960,27 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Distribution-paying ILP sub-funds default to reinvestment, and future payouts can be elected by written instruction when the fund-level minimum amount is met.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published minimum distribution amount remains informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 22,
+              "section": "Declaration and reinvesting of distributions",
+              "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment "
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -9966,15 +9989,16 @@
           0.2
         ],
         "warnings": [
-          "Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, and surrender-charge schedules.",
-          "Death/TI insurance cover charges, secondary insured option, and life-events withdrawal benefit remain informational only in V1."
+          "Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.",
+          "Death/TI insurance cover charges, secondary insured option, life-events withdrawal benefit, and the published minimum distribution amount remain informational only in V1."
         ],
         "unsupportedItems": [
           "Death and terminal illness insurance cover charges remain informational only.",
           "Secondary insured option remains informational only.",
           "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
           "Future Premium Option remains informational only.",
-          "Death benefit continuation after insured replacement remains informational only."
+          "Death benefit continuation after insured replacement remains informational only.",
+          "The published minimum distribution amount and fund-level payout processing remain informational only."
         ],
         "sourceRefs": [
           {
@@ -10026,6 +10050,11 @@
             "page": 21,
             "section": "Appendix 4 premium holiday charge",
             "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+          },
+          {
+            "page": 22,
+            "section": "Declaration and reinvesting of distributions",
+            "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment "
           }
         ]
       },
@@ -10320,6 +10349,27 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Distribution-paying ILP sub-funds default to reinvestment, and future payouts can be elected by written instruction when the fund-level minimum amount is met.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published minimum distribution amount remains informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 22,
+              "section": "Declaration and reinvesting of distributions",
+              "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment "
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -10333,15 +10383,16 @@
           0.05
         ],
         "warnings": [
-          "Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, and surrender-charge schedules.",
-          "Death/TI insurance cover charges, secondary insured option, and life-events withdrawal benefit remain informational only in V1."
+          "Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.",
+          "Death/TI insurance cover charges, secondary insured option, life-events withdrawal benefit, and the published minimum distribution amount remain informational only in V1."
         ],
         "unsupportedItems": [
           "Death and terminal illness insurance cover charges remain informational only.",
           "Secondary insured option remains informational only.",
           "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
           "Future Premium Option remains informational only.",
-          "Death benefit continuation after insured replacement remains informational only."
+          "Death benefit continuation after insured replacement remains informational only.",
+          "The published minimum distribution amount and fund-level payout processing remain informational only."
         ],
         "sourceRefs": [
           {
@@ -10393,6 +10444,11 @@
             "page": 21,
             "section": "Appendix 4 premium holiday charge",
             "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+          },
+          {
+            "page": 22,
+            "section": "Declaration and reinvesting of distributions",
+            "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment "
           }
         ]
       },
@@ -10762,6 +10818,27 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Distribution-paying ILP sub-funds default to reinvestment, and future payouts can be elected by written instruction when the fund-level minimum amount is met.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published minimum distribution amount remains informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 22,
+              "section": "Declaration and reinvesting of distributions",
+              "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment "
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -10780,15 +10857,16 @@
           0.05
         ],
         "warnings": [
-          "Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, and surrender-charge schedules.",
-          "Death/TI insurance cover charges, secondary insured option, and life-events withdrawal benefit remain informational only in V1."
+          "Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.",
+          "Death/TI insurance cover charges, secondary insured option, life-events withdrawal benefit, and the published minimum distribution amount remain informational only in V1."
         ],
         "unsupportedItems": [
           "Death and terminal illness insurance cover charges remain informational only.",
           "Secondary insured option remains informational only.",
           "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
           "Future Premium Option remains informational only.",
-          "Death benefit continuation after insured replacement remains informational only."
+          "Death benefit continuation after insured replacement remains informational only.",
+          "The published minimum distribution amount and fund-level payout processing remain informational only."
         ],
         "sourceRefs": [
           {
@@ -10840,6 +10918,11 @@
             "page": 21,
             "section": "Appendix 4 premium holiday charge",
             "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+          },
+          {
+            "page": 22,
+            "section": "Declaration and reinvesting of distributions",
+            "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment "
           }
         ]
       },
@@ -11259,6 +11342,27 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Distribution-paying ILP sub-funds default to reinvestment, and future payouts can be elected by written instruction when the fund-level minimum amount is met.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published minimum distribution amount remains informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 22,
+              "section": "Declaration and reinvesting of distributions",
+              "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment "
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -11282,15 +11386,16 @@
           0.05
         ],
         "warnings": [
-          "Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, and surrender-charge schedules.",
-          "Death/TI insurance cover charges, secondary insured option, and life-events withdrawal benefit remain informational only in V1."
+          "Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.",
+          "Death/TI insurance cover charges, secondary insured option, life-events withdrawal benefit, and the published minimum distribution amount remain informational only in V1."
         ],
         "unsupportedItems": [
           "Death and terminal illness insurance cover charges remain informational only.",
           "Secondary insured option remains informational only.",
           "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
           "Future Premium Option remains informational only.",
-          "Death benefit continuation after insured replacement remains informational only."
+          "Death benefit continuation after insured replacement remains informational only.",
+          "The published minimum distribution amount and fund-level payout processing remain informational only."
         ],
         "sourceRefs": [
           {
@@ -11342,6 +11447,11 @@
             "page": 21,
             "section": "Appendix 4 premium holiday charge",
             "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+          },
+          {
+            "page": 22,
+            "section": "Declaration and reinvesting of distributions",
+            "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment "
           }
         ]
       }

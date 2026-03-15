@@ -26,6 +26,8 @@ describe('parseIncomeInvestFlexVantage', () => {
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.metadataOnlyBehaviors).toContain('income-vs2-death-ti-insurance-cover-charge')
     expect(product.metadataOnlyBehaviors).toContain('income-vs2-secondary-insured-option')
+    expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.metadataOnlyBehaviors).toContain('income-vs2-distribution-payout-threshold')
 
     expect(product.variants).toHaveLength(4)
     const variant = product.variants.find((entry) => entry.id === 'sgd-mip-10')
@@ -88,6 +90,23 @@ describe('parseIncomeInvestFlexVantage', () => {
         }),
       ]),
     )
+    expect(variant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('minimum distribution amount remains informational only'),
+      ]),
+      sourceRefs: [
+        expect.objectContaining({
+          page: 22,
+          section: 'Declaration and reinvesting of distributions',
+        }),
+      ],
+    })
     expect(variant?.eecTable).toEqual([1, 1, 0.8, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.05])
   }, 30_000)
 })

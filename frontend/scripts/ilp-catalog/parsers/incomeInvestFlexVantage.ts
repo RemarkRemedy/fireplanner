@@ -175,6 +175,7 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
   const page20 = sourceRef(20, 'Appendix 3 partial withdrawal charge', snippetNear(document, 20, 'Appendix 3', 18))
   const page21 = sourceRef(21, 'Appendix 4 premium holiday charge', snippetNear(document, 21, 'Appendix 4', 18))
   const page12 = sourceRef(12, 'Appendix 1 death and TI insurance cover charge', snippetNear(document, 12, 'Appendix 1', 16))
+  const page22 = sourceRef(22, 'Declaration and reinvesting of distributions', snippetNear(document, 22, 'Declaration and Reinvesting of Distributions', 18))
 
   return {
     id: `sgd-mip-${term}`,
@@ -231,10 +232,23 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
         sourceRefs: [page5, page20],
       },
     ],
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Distribution-paying ILP sub-funds default to reinvestment, and future payouts can be elected by written instruction when the fund-level minimum amount is met.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published minimum distribution amount remains informational only.',
+      ],
+      sourceRefs: [page22],
+    },
     eecTable: [...SURRENDER_CHARGE[term]],
     warnings: [
-      'Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, and surrender-charge schedules.',
-      'Death/TI insurance cover charges, secondary insured option, and life-events withdrawal benefit remain informational only in V1.',
+      'Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.',
+      'Death/TI insurance cover charges, secondary insured option, life-events withdrawal benefit, and the published minimum distribution amount remain informational only in V1.',
     ],
     unsupportedItems: [
       'Death and terminal illness insurance cover charges remain informational only.',
@@ -242,8 +256,9 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
       'Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.',
       'Future Premium Option remains informational only.',
       'Death benefit continuation after insured replacement remains informational only.',
+      'The published minimum distribution amount and fund-level payout processing remain informational only.',
     ],
-    sourceRefs: [page1, page2, page3, page4, page5, page7, page12, page19, page20, page21],
+    sourceRefs: [page1, page2, page3, page4, page5, page7, page12, page19, page20, page21, page22],
   }
 }
 
@@ -267,15 +282,17 @@ export function parseIncomeInvestFlexVantage(context: ParseContext): IlpCatalogP
       'branch:income-vs2-partial-withdrawal-charge',
       'branch:income-vs2-surrender-charge',
       'branch:income-vs2-ad-hoc-top-up-routing',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'income-vs2-death-ti-insurance-cover-charge',
       'income-vs2-secondary-insured-option',
       'income-vs2-life-events-withdrawal-benefit',
       'income-vs2-future-premium-option',
+      'income-vs2-distribution-payout-threshold',
     ],
     warnings: [
-      'Invest Flex Vantage is currently cataloged as a partial product. The regular-premium charge and bonus path is modeled, but insurance-cover charges and insured-replacement / life-event options remain informational only.',
+      'Invest Flex Vantage is currently cataloged as a partial product. The regular-premium charge and bonus path plus reinvest-default distribution support are modeled, but insurance-cover charges and insured-replacement / life-event options remain informational only.',
     ],
     archived: false,
     variants: TERM_OPTIONS.map((term) => buildVariant(context.document, term)),
