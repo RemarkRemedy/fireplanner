@@ -91,6 +91,7 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
   const page7 = sourceRef(7, 'Fees and charges', snippetNear(document, 7, 'Policy Fee', 20))
   const page8 = sourceRef(8, 'Premium holiday charge', snippetNear(document, 8, 'Premium Holiday Charge', 16))
   const page9 = sourceRef(9, 'Subscription and redemption of units', snippetNear(document, 9, '100% of your regular premium', 20))
+  const page17 = sourceRef(17, 'Declaration and Reinvesting of Distributions', snippetNear(document, 17, 'Declaration and Reinvesting of Distributions', 18))
   const page21 = sourceRef(21, 'Appendix 2 charges', snippetNear(document, 21, 'Appendix 2', 20))
 
   const feeRules: IlpTemplateFeeRule[] = [
@@ -156,11 +157,24 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
     bonuses: buildBonuses(term, page1),
     feeRules,
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: false,
+      cashPayoutAllowedAfterMip: false,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Income declares distributions only on a reinvested basis for AstraLink ILP sub-funds that carry a distribution option.',
+        'The published corridor does not provide a normal cash-payout election; each declared distribution is reinvested into the same ILP sub-fund.',
+      ],
+      sourceRefs: [page17],
+    },
     eecTable: [...APPENDIX_2_CHARGE[term]],
     warnings: [
-      'AstraLink (VA2) is modeled as a partial subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, and the Appendix 2 partial-withdrawal / surrender charge schedules.',
+      'AstraLink (VA2) is modeled as a partial subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, the Appendix 2 partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode.',
       'Investment bonus and loyalty bonus remain informational only because the published tables depend on dimensions or term rows that are not fully representable without guesswork in the current template schema.',
-      'Insurance cover charge, No Lapse Guarantee, premium-holiday free-window gating, and distribution-linked withdrawal gating remain informational only in V1.',
+      'Insurance cover charge, No Lapse Guarantee, and premium-holiday free-window gating remain informational only in V1.',
     ],
     unsupportedItems: [
       'Investment bonus tables depend on annual premium bands and sum assured multiple, including a separate rider table, and remain informational only.',
@@ -170,9 +184,9 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
       'Premium holiday free-window gating and the pre-2nd-anniversary lapse path remain informational only.',
       'Minimum withdrawal amount, minimum post-withdrawal policy value, and top-up blocking during premium holiday remain informational only.',
       'Changing premium or sum assured, retirement option, and guaranteed insurability option remain informational only.',
-      'Distribution-paying fund withdrawals and all protection-benefit payout mechanics remain informational only.',
+      'All protection-benefit payout mechanics remain informational only.',
     ],
-    sourceRefs: [page1, page2, page3, page4, page7, page8, page9, page21],
+    sourceRefs: [page1, page2, page3, page4, page7, page8, page9, page17, page21],
   }
 }
 
@@ -193,6 +207,7 @@ export function parseIncomeAstralinkVa2({ document, sourceChecksumSha256 }: Pars
       'branch:astralink-va2-policy-fee',
       'branch:astralink-va2-partial-withdrawal-charge',
       'branch:astralink-va2-surrender-charge',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'astralink-va2-investment-bonus',
@@ -202,11 +217,10 @@ export function parseIncomeAstralinkVa2({ document, sourceChecksumSha256 }: Pars
       'astralink-va2-premium-holiday-charge',
       'astralink-va2-premium-holiday-gating',
       'astralink-va2-protection-benefits',
-      'astralink-va2-distribution-withdrawals',
       'astralink-va2-flexible-options',
     ],
     warnings: [
-      'AstraLink (VA2) is cataloged as a partial modeled subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, and the Appendix 2 partial-withdrawal / surrender charge schedules, while investment bonus, loyalty bonus, insurance cover charge, premium-holiday gating, and protection-side payouts remain outside the current engine.',
+      'AstraLink (VA2) is cataloged as a partial modeled subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, the Appendix 2 partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode, while investment bonus, loyalty bonus, insurance cover charge, premium-holiday gating, and protection-side payouts remain outside the current engine.',
     ],
     archived: false,
     variants: TERM_OPTIONS.map((term) => buildVariant(document, term)),

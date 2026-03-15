@@ -28,6 +28,7 @@ describe('parseIncomeAstralinkVa2', () => {
       'branch:astralink-va2-policy-fee',
       'branch:astralink-va2-partial-withdrawal-charge',
       'branch:astralink-va2-surrender-charge',
+      'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('astralink-va2-investment-bonus')
     expect(product.metadataOnlyBehaviors).toContain('astralink-va2-premium-holiday-charge')
@@ -79,6 +80,18 @@ describe('parseIncomeAstralinkVa2', () => {
         ],
       }),
     ])
+    expect(term15?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: false,
+      cashPayoutAllowedAfterMip: false,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('reinvested into the same ILP sub-fund'),
+      ]),
+      sourceRefs: expect.any(Array),
+    })
     expect(term15?.eecTable).toEqual([1, 1, 0.85, 0.7, 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.08])
   }, 30_000)
 })
