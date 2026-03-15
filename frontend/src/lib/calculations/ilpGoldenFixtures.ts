@@ -38,6 +38,10 @@ export type GoldenCoverageTag =
   | 'branch:prulink-investgrowth-sp-premium-assurance-charge'
   | 'branch:prulink-investgrowth-sp-top-up-charge'
   | 'branch:prulink-investgrowth-sp-top-up-assurance-charge'
+  | 'branch:prulink-investgrowth-recurring-premium-charge'
+  | 'branch:prulink-investgrowth-premium-assurance-charge'
+  | 'branch:prulink-investgrowth-top-up-charge'
+  | 'branch:prulink-investgrowth-top-up-assurance-charge'
   | 'branch:prosper-assurance-charge'
   | 'kernel:distribution-mode-assumption'
   | 'branch:assure-ii-pre-70-assurance'
@@ -1093,6 +1097,56 @@ function pruInvestGrowthSpStressPolicy(
 ): IlpPolicyInput {
   return pruInvestGrowthSpBasePolicy(snapshot, 'sgd-open-ended-cash', id, PRU_STRESS_FUNDS, {
     name: 'Golden PRULink InvestGrowth (SP) (SGD / Open-ended Cash OCF Stress)',
+  })
+}
+
+function pruInvestGrowthRegularBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: string,
+  id: string,
+  funds: IlpFund[] = PRU_BALANCED_FUNDS,
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'prudential-prulink-investgrowth', variantId, id)
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden PRULink InvestGrowth (${variantId.toUpperCase()})`,
+      monthlyContribution: 400,
+      currentPolicyYear: 3,
+      monthsAlreadyPaid: 24,
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function pruInvestGrowthRegularEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return pruInvestGrowthRegularBaselinePolicy(snapshot, 'sgd-open-ended-cash', id, PRU_BALANCED_FUNDS, {
+    name: 'Golden PRULink InvestGrowth (SGD / Open-ended Cash Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 31,
+        durationMonths: 1,
+        amount: 8_000,
+      },
+    ],
+  })
+}
+
+function pruInvestGrowthRegularStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return pruInvestGrowthRegularBaselinePolicy(snapshot, 'sgd-open-ended-cash', id, PRU_STRESS_FUNDS, {
+    name: 'Golden PRULink InvestGrowth (SGD / Open-ended Cash OCF Stress)',
   })
 }
 
@@ -2570,6 +2624,94 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'PRULink InvestGrowth (SP) cash alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'prudential-prulink-investgrowth',
+    variantId: 'sgd-open-ended-cash',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:prulink-investgrowth-recurring-premium-charge',
+      'branch:prulink-investgrowth-premium-assurance-charge',
+    ],
+    description: 'Baseline PRULink InvestGrowth cash scenario proving the supported recurring-premium corridor.',
+    integrityChecks: [
+      {
+        description: 'records positive recurring-premium fees during the projection horizon',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  },
+  {
+    productId: 'prudential-prulink-investgrowth',
+    variantId: 'sgd-open-ended-srs',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:prulink-investgrowth-recurring-premium-charge',
+      'branch:prulink-investgrowth-premium-assurance-charge',
+    ],
+    description: 'Baseline PRULink InvestGrowth SRS scenario proving the supported recurring-premium corridor.',
+    integrityChecks: [
+      {
+        description: 'records positive recurring-premium fees during the projection horizon',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  },
+  {
+    productId: 'prudential-prulink-investgrowth',
+    variantId: 'sgd-open-ended-cpf',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Baseline PRULink InvestGrowth CPF scenario proving the supported zero-charge corridor.',
+    integrityChecks: [
+      {
+        description: 'keeps the recurring-premium corridor fee-free under the published CPF charge path',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) === 0,
+      },
+    ],
+  },
+  {
+    productId: 'prudential-prulink-investgrowth',
+    variantId: 'sgd-open-ended-cash',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:prulink-investgrowth-top-up-charge',
+      'branch:prulink-investgrowth-top-up-assurance-charge',
+    ],
+    description: 'PRULink InvestGrowth cash event-heavy scenario proving standard top-up premium and assurance charges.',
+    integrityChecks: [
+      {
+        description: 'records positive annual contribution from the seeded top-up event',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+      {
+        description: 'top-up event increases cumulative fees beyond the recurring-premium-only baseline',
+        test: (fixture, artifact) => {
+          const withoutEventCharges = ilpPolicySchema.parse({
+            ...fixture.policy,
+            eventChargeRules: [],
+          })
+          const withEventCharges = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutEventChargeFees = analyzeIlpPolicy(withoutEventCharges).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withEventCharges > withoutEventChargeFees
+        },
+      },
+    ],
+  },
+  {
+    productId: 'prudential-prulink-investgrowth',
+    variantId: 'sgd-open-ended-cash',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'PRULink InvestGrowth cash alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'hsbc-life-flexi-protector',
     variantId: 'sgd-open-ended-regular-pay',
     scenarioId: 'assurance-choice-vs-max',
@@ -2944,6 +3086,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'prudential-prulink-investgrowth-sp' && definition.scenarioId === 'ocf-stress') {
     return pruInvestGrowthSpStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-prulink-investgrowth' && definition.scenarioId === 'baseline') {
+    return pruInvestGrowthRegularBaselinePolicy(snapshot, definition.variantId, id)
+  }
+  if (definition.productId === 'prudential-prulink-investgrowth' && definition.scenarioId === 'event-heavy') {
+    return pruInvestGrowthRegularEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-prulink-investgrowth' && definition.scenarioId === 'ocf-stress') {
+    return pruInvestGrowthRegularStressPolicy(snapshot, id)
   }
   if (definition.productId === 'prudential-pruvantage-prosper' && definition.scenarioId === 'event-heavy') {
     return prosperEventHeavyPolicy(snapshot, id)

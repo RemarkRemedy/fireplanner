@@ -11,9 +11,9 @@ export function parsePrudentialPrulinkInvestGrowth(context: ParseContext): IlpCa
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:prulink-investgrowth-recurring-premium-charge',
       'branch:prulink-investgrowth-premium-assurance-charge',
@@ -22,14 +22,13 @@ export function parsePrudentialPrulinkInvestGrowth(context: ParseContext): IlpCa
     ],
     metadataOnlyBehaviors: [
       'prulink-investgrowth-death-benefit',
-      'prulink-investgrowth-recurrent-single-premium-tracking',
       'prulink-investgrowth-e-top-up-charge',
       'prulink-investgrowth-withdrawals',
       'prulink-investgrowth-fund-switching',
       'prulink-investgrowth-minimum-premium-schedule',
     ],
     warnings: [
-      'PRULink InvestGrowth is cataloged as a partial modeled subset in V1. The parser captures the published recurrent-premium charge and premium-event assurance-charge path for standard premiums and standard top-ups, while e-top-up treatment, withdrawals, and paid-premium tracking remain outside the current engine.',
+      'PRULink InvestGrowth is cataloged as a supported V1 product. The parser captures the published recurring-premium charge and premium-event assurance-charge path for standard premiums and standard top-ups, while e-top-up treatment, withdrawals, fund switching, and minimum-premium schedule enforcement remain outside the current engine.',
     ],
     archived: false,
     variants: [

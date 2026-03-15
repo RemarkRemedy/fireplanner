@@ -944,6 +944,54 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
+  it('maps PRULink InvestGrowth cash into a supported recurring-premium seed', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'prudential-prulink-investgrowth')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-cash')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('PRULink InvestGrowth (SGD / Open-ended (Cash))')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.initialSinglePremium).toBeUndefined()
+    expect(seed.mipBasis).toBe('open-ended')
+    expect(seed.postMipYears).toBe(20)
+    expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
+      { phase: 'during-icp', contributionShare: 1 },
+      { phase: 'after-icp', contributionShare: 1 },
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'premium-charge',
+        basis: 'annual-contribution',
+        rate: 0.03,
+      }),
+      expect.objectContaining({
+        id: 'assurance-charge-on-premium',
+        basis: 'annual-contribution',
+        rate: 0.015,
+      }),
+    ])
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        rate: 0.03,
+      }),
+      expect.objectContaining({
+        id: 'top-up-assurance-charge',
+        trigger: 'top-up',
+        rate: 0.015,
+      }),
+    ])
+    expect(seed.distributionSupport).toBeUndefined()
+  })
+
   it('maps Invest flex wealth II into a partial seed with cumulative-paid policy charges and top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-flex-wealth-ii')

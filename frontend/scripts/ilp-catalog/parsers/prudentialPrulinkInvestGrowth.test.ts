@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parsePrudentialPrulinkInvestGrowth', () => {
-  it('builds a valid open-ended partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid open-ended supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parsePrudentialPrulinkInvestGrowth({
       document,
@@ -23,13 +23,21 @@ describe('parsePrudentialPrulinkInvestGrowth', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('prudential-prulink-investgrowth')
     expect(product.productName).toBe('PRULink InvestGrowth')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:prulink-investgrowth-recurring-premium-charge',
       'branch:prulink-investgrowth-premium-assurance-charge',
       'branch:prulink-investgrowth-top-up-charge',
       'branch:prulink-investgrowth-top-up-assurance-charge',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('prulink-investgrowth-minimum-premium-schedule')
+    expect(product.metadataOnlyBehaviors).toEqual([
+      'prulink-investgrowth-death-benefit',
+      'prulink-investgrowth-e-top-up-charge',
+      'prulink-investgrowth-withdrawals',
+      'prulink-investgrowth-fund-switching',
+      'prulink-investgrowth-minimum-premium-schedule',
+    ])
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-open-ended-cash',
       'sgd-open-ended-srs',
