@@ -25123,7 +25123,8 @@
       "branch:etiqa-invest-plus-sp-zero-single-premium-charge",
       "branch:etiqa-invest-plus-sp-policy-charge",
       "branch:etiqa-invest-plus-sp-initial-partial-withdrawal-charge",
-      "branch:etiqa-invest-plus-sp-initial-surrender-charge"
+      "branch:etiqa-invest-plus-sp-initial-surrender-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "etiqa-invest-plus-sp-power-up-bonus",
@@ -25132,13 +25133,13 @@
       "etiqa-invest-plus-sp-top-up-vintage-accounting",
       "etiqa-invest-plus-sp-representative-management-charge",
       "etiqa-invest-plus-sp-fund-management-fee",
-      "etiqa-invest-plus-sp-dividend-handling",
+      "etiqa-invest-plus-sp-dividend-threshold-and-withdrawal-consequences",
       "etiqa-invest-plus-sp-grace-period-top-up-funding",
       "etiqa-invest-plus-sp-reinstatement",
       "etiqa-invest-plus-sp-free-look"
     ],
     "warnings": [
-      "Invest plus SP is cataloged as a partial modeled subset in V1. The parser captures the initial single-premium corridor only: zero initial subscription charge, the initial-account policy-charge schedule, and the initial-account surrender / partial-withdrawal charge tables, while power-up bonus, top-up-vintage charging, representative-management charges, and protection formulas remain outside the current engine."
+      "Invest plus SP is cataloged as a partial modeled subset in V1. The parser captures the initial single-premium corridor only: zero initial subscription charge, the initial-account policy-charge schedule, the initial-account surrender / partial-withdrawal charge tables, and reinvest-default distribution support, while power-up bonus, top-up-vintage charging, representative-management charges, and protection formulas remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -25292,6 +25293,28 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects payout.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.",
+            "Minimum S$40 payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested dividends remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 4,
+              "section": "Distribution of Dividend",
+              "excerpt": "10. Distribution of Dividend If the ILP sub-fund that You have chosen pays dividends, You have the option to either reinvest or receive payments of these dividends. The frequency of dividend distribution of the ILP sub-f"
+            }
+          ]
+        },
         "eecTable": [
           0.07,
           0.05,
@@ -25301,7 +25324,7 @@
           0
         ],
         "warnings": [
-          "Invest plus SP is cataloged as a partial modeled subset in V1. The parser captures the initial single-premium corridor only: zero initial subscription charge, the initial-account policy-charge schedule, and the initial-account surrender / partial-withdrawal charge tables.",
+          "Invest plus SP is cataloged as a partial modeled subset in V1. The parser captures the initial single-premium corridor only: zero initial subscription charge, the initial-account policy-charge schedule, the initial-account surrender / partial-withdrawal charge tables, and reinvest-default distribution support.",
           "Power-up bonus, representative management charge, death-benefit principal floor, and top-up-specific charging remain informational only in V1.",
           "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
         ],
@@ -25310,7 +25333,8 @@
           "Death benefit and the 101% of net premium floor remain informational only.",
           "Top-up premium charge, top-up-specific policy-charge clocks, and top-up-specific surrender / withdrawal charge clocks remain informational only.",
           "Representative management charge remains informational only because the application-agreed rate can vary up to 0.75% per annum.",
-          "Fund-level management fees, dividend elections, grace-period top-up funding, reinstatement, and free-look handling remain informational only."
+          "Fund-level management fees, dividend payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested dividends remain informational only.",
+          "Grace-period top-up funding, reinstatement, and free-look handling remain informational only."
         ],
         "sourceRefs": [
           {
@@ -25327,6 +25351,11 @@
             "page": 3,
             "section": "Surrender and partial withdrawal policy options",
             "excerpt": "5. Partial Withdrawal You may request to make a partial withdrawal by selling some of the units from Your selected Portfolio fund and/or ILP sub-fund(s) at any time, subject to partial withdrawal charge as set out at Fee"
+          },
+          {
+            "page": 4,
+            "section": "Distribution of Dividend",
+            "excerpt": "10. Distribution of Dividend If the ILP sub-fund that You have chosen pays dividends, You have the option to either reinvest or receive payments of these dividends. The frequency of dividend distribution of the ILP sub-f"
           },
           {
             "page": 7,

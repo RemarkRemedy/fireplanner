@@ -71,6 +71,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page1 = sourceRef(1, 'Plan overview and death benefit', snippetNear(document, 1, 'single Premium Investment-linked insurance plan', 20))
   const page2 = sourceRef(2, 'Power-up bonus and maturity benefit', snippetNear(document, 2, 'Power-up Bonus', 18))
   const page3 = sourceRef(3, 'Surrender and partial withdrawal policy options', snippetNear(document, 3, 'Partial Withdrawal', 18))
+  const page4Dividend = sourceRef(4, 'Distribution of Dividend', snippetNear(document, 4, 'Distribution of Dividend', 18))
   const page7 = sourceRef(7, 'Initial single-premium subscription illustration', snippetNear(document, 7, 'There is no fees and charges incurred for the purchase', 14))
   const page9 = sourceRef(9, 'Top-up premium charge', snippetNear(document, 9, 'Premium Charge on Top-up', 16))
   const page10 = sourceRef(10, 'Policy charge and representative management charge', snippetNear(document, 10, 'Policy Charge', 24))
@@ -148,9 +149,23 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: [],
     feeRules,
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects payout.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.',
+        'Minimum S$40 payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested dividends remain informational only.',
+      ],
+      sourceRefs: [page4Dividend],
+    },
     eecTable: [...FULL_SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      'Invest plus SP is cataloged as a partial modeled subset in V1. The parser captures the initial single-premium corridor only: zero initial subscription charge, the initial-account policy-charge schedule, and the initial-account surrender / partial-withdrawal charge tables.',
+      'Invest plus SP is cataloged as a partial modeled subset in V1. The parser captures the initial single-premium corridor only: zero initial subscription charge, the initial-account policy-charge schedule, the initial-account surrender / partial-withdrawal charge tables, and reinvest-default distribution support.',
       'Power-up bonus, representative management charge, death-benefit principal floor, and top-up-specific charging remain informational only in V1.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
@@ -159,9 +174,10 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       'Death benefit and the 101% of net premium floor remain informational only.',
       'Top-up premium charge, top-up-specific policy-charge clocks, and top-up-specific surrender / withdrawal charge clocks remain informational only.',
       'Representative management charge remains informational only because the application-agreed rate can vary up to 0.75% per annum.',
-      'Fund-level management fees, dividend elections, grace-period top-up funding, reinstatement, and free-look handling remain informational only.',
+      'Fund-level management fees, dividend payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested dividends remain informational only.',
+      'Grace-period top-up funding, reinstatement, and free-look handling remain informational only.',
     ],
-    sourceRefs: [page1, page2, page3, page7, page9, page10],
+    sourceRefs: [page1, page2, page3, page4Dividend, page7, page9, page10],
   }
 }
 
@@ -182,6 +198,7 @@ export function parseEtiqaInvestPlusSp(context: ParseContext): IlpCatalogProduct
       'branch:etiqa-invest-plus-sp-policy-charge',
       'branch:etiqa-invest-plus-sp-initial-partial-withdrawal-charge',
       'branch:etiqa-invest-plus-sp-initial-surrender-charge',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'etiqa-invest-plus-sp-power-up-bonus',
@@ -190,13 +207,13 @@ export function parseEtiqaInvestPlusSp(context: ParseContext): IlpCatalogProduct
       'etiqa-invest-plus-sp-top-up-vintage-accounting',
       'etiqa-invest-plus-sp-representative-management-charge',
       'etiqa-invest-plus-sp-fund-management-fee',
-      'etiqa-invest-plus-sp-dividend-handling',
+      'etiqa-invest-plus-sp-dividend-threshold-and-withdrawal-consequences',
       'etiqa-invest-plus-sp-grace-period-top-up-funding',
       'etiqa-invest-plus-sp-reinstatement',
       'etiqa-invest-plus-sp-free-look',
     ],
     warnings: [
-      'Invest plus SP is cataloged as a partial modeled subset in V1. The parser captures the initial single-premium corridor only: zero initial subscription charge, the initial-account policy-charge schedule, and the initial-account surrender / partial-withdrawal charge tables, while power-up bonus, top-up-vintage charging, representative-management charges, and protection formulas remain outside the current engine.',
+      'Invest plus SP is cataloged as a partial modeled subset in V1. The parser captures the initial single-premium corridor only: zero initial subscription charge, the initial-account policy-charge schedule, the initial-account surrender / partial-withdrawal charge tables, and reinvest-default distribution support, while power-up bonus, top-up-vintage charging, representative-management charges, and protection formulas remain outside the current engine.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

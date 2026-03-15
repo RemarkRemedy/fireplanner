@@ -49,6 +49,17 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
         ],
       },
       {
+        pageNumber: 4,
+        characterCount: 320,
+        text: 'Distribution of Dividend',
+        lines: [
+          { y: 700, text: 'Distribution of Dividend' },
+          { y: 680, text: 'If the ILP sub-fund that You have chosen pays dividends, You have the option to either reinvest or receive payments of these dividends.' },
+          { y: 660, text: 'If You choose to receive dividends, We will distribute these dividends to You within thirty (30) days from the dividend declaration date, subject to the minimum amount of S$40.' },
+          { y: 640, text: 'If the amount of dividend is less than S$40, We will reinvest that particular dividend(s) as additional units to Your ILP sub-fund on Your behalf.' },
+        ],
+      },
+      {
         pageNumber: 7,
         characterCount: 260,
         text: 'Initial single-premium subscription illustration',
@@ -101,9 +112,11 @@ describe('parseEtiqaInvestPlusSp', () => {
       'branch:etiqa-invest-plus-sp-policy-charge',
       'branch:etiqa-invest-plus-sp-initial-partial-withdrawal-charge',
       'branch:etiqa-invest-plus-sp-initial-surrender-charge',
+      'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-power-up-bonus')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-representative-management-charge')
+    expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-dividend-threshold-and-withdrawal-consequences')
 
     const variant = product.variants[0]
     expect(variant).toMatchObject({
@@ -132,6 +145,18 @@ describe('parseEtiqaInvestPlusSp', () => {
         trigger: 'partial-withdrawal',
       }),
     ])
+    expect(variant.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('cash payout requires a manual annual distribution-yield assumption'),
+      ]),
+      sourceRefs: expect.any(Array),
+    })
     expect(variant.eecTable).toEqual([0.07, 0.05, 0.04, 0.026, 0.012, 0])
   })
 
