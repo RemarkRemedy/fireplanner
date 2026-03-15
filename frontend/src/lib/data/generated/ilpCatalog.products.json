@@ -38726,17 +38726,17 @@
       "branch:wealth-focus-top-up-premium-charge",
       "branch:wealth-focus-partial-withdrawal-charge",
       "branch:wealth-focus-eec",
-      "branch:wealth-focus-ad-hoc-top-up-routing"
+      "branch:wealth-focus-ad-hoc-top-up-routing",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "wealth-focus-life-replacement-option",
       "wealth-focus-free-partial-withdrawal-benefit",
       "wealth-focus-regular-withdrawal-facility",
-      "wealth-focus-dividend-payout-election",
       "wealth-focus-death-and-ti-benefits"
     ],
     "warnings": [
-      "Wealth Focus Flexi 1 is currently modeled as a partial product in V1. Accumulation charges, MIP-end surrender charges, regular/top-up routing, and the documented bonuses are modeled, but life-event free withdrawals, dividend payout election, and protection-side options remain informational only."
+      "Wealth Focus Flexi 1 is currently modeled as a partial product in V1. Accumulation charges, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but life-event free withdrawals, the top-up-first regular-withdrawal facility, and protection-side options remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -38893,7 +38893,7 @@
             "tieredRates": [],
             "notes": [
               "Allocated monthly from the first policy month after MIP on the Regular Premium Account only.",
-              "Dividend payout elections and repayment-specific Loyalty Bonus exclusions remain informational only in V1."
+              "Repayment-specific Loyalty Bonus exclusions remain informational only in V1."
             ],
             "sourceRefs": [
               {
@@ -39076,6 +39076,28 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 18,
+              "section": "Distribution of Dividend",
+              "excerpt": "• If you do not indicate any option to either reinvest these dividends or to receive payment of these dividends, the default option is to reinvest all dividends from such ILP Sub-Fund(s). For any change to the preferred "
+            }
+          ]
+        },
         "eecTable": [
           0.3,
           0.23,
@@ -39089,15 +39111,13 @@
           0.03
         ],
         "warnings": [
-          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, and MIP-end surrender charges.",
-          "Dividend-paying funds are assumed to reinvest by default in V1. Cash payout election remains informational only.",
+          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
           "Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1."
         ],
         "unsupportedItems": [
           "Life Replacement Option remains informational only.",
           "Free Partial Withdrawal Benefit remains informational only.",
           "Regular Withdrawal facility remains informational only.",
-          "Dividend payout election remains informational only.",
           "Death, terminal illness, and accidental death payout mechanics remain informational only."
         ],
         "sourceRefs": [
@@ -39311,7 +39331,7 @@
             "tieredRates": [],
             "notes": [
               "Allocated monthly from the first policy month after MIP on the Regular Premium Account only.",
-              "Dividend payout elections and repayment-specific Loyalty Bonus exclusions remain informational only in V1."
+              "Repayment-specific Loyalty Bonus exclusions remain informational only in V1."
             ],
             "sourceRefs": [
               {
@@ -39494,6 +39514,28 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 18,
+              "section": "Distribution of Dividend",
+              "excerpt": "• If you do not indicate any option to either reinvest these dividends or to receive payment of these dividends, the default option is to reinvest all dividends from such ILP Sub-Fund(s). For any change to the preferred "
+            }
+          ]
+        },
         "eecTable": [
           0.3,
           0.23,
@@ -39507,15 +39549,13 @@
           0.03
         ],
         "warnings": [
-          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, and MIP-end surrender charges.",
-          "Dividend-paying funds are assumed to reinvest by default in V1. Cash payout election remains informational only.",
+          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
           "Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1."
         ],
         "unsupportedItems": [
           "Life Replacement Option remains informational only.",
           "Free Partial Withdrawal Benefit remains informational only.",
           "Regular Withdrawal facility remains informational only.",
-          "Dividend payout election remains informational only.",
           "Death, terminal illness, and accidental death payout mechanics remain informational only."
         ],
         "sourceRefs": [
@@ -39598,17 +39638,17 @@
       "branch:wealth-focus-partial-withdrawal-charge",
       "branch:wealth-focus-eec",
       "branch:wealth-focus-ad-hoc-top-up-routing",
+      "kernel:distribution-mode-assumption",
       "branch:wealth-focus-premium-holiday-charge"
     ],
     "metadataOnlyBehaviors": [
       "wealth-focus-life-replacement-option",
       "wealth-focus-free-partial-withdrawal-benefit",
       "wealth-focus-regular-withdrawal-facility",
-      "wealth-focus-dividend-payout-election",
       "wealth-focus-death-and-ti-benefits"
     ],
     "warnings": [
-      "Wealth Focus Flexi 3 is currently modeled as a partial product in V1. Accumulation charges, MIP-end surrender charges, regular/top-up routing, and the documented bonuses are modeled, but life-event free withdrawals, dividend payout election, and protection-side options remain informational only."
+      "Wealth Focus Flexi 3 is currently modeled as a partial product in V1. Accumulation charges, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but life-event free withdrawals, the top-up-first regular-withdrawal facility, and protection-side options remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -39765,7 +39805,7 @@
             "tieredRates": [],
             "notes": [
               "Allocated monthly from the first policy month after MIP on the Regular Premium Account only.",
-              "Dividend payout elections and repayment-specific Loyalty Bonus exclusions remain informational only in V1."
+              "Repayment-specific Loyalty Bonus exclusions remain informational only in V1."
             ],
             "sourceRefs": [
               {
@@ -39993,6 +40033,28 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 18,
+              "section": "Distribution of Dividend",
+              "excerpt": "10 Distribution of Dividend • While the Policy is in force, if you choose to invest in any ILP Sub-Fund(s) that pays dividends, you have the option to either reinvest these dividends or to receive payment of these divide"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -40006,15 +40068,13 @@
           0.08
         ],
         "warnings": [
-          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, and MIP-end surrender charges.",
-          "Dividend-paying funds are assumed to reinvest by default in V1. Cash payout election remains informational only.",
+          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
           "Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1."
         ],
         "unsupportedItems": [
           "Life Replacement Option remains informational only.",
           "Free Partial Withdrawal Benefit remains informational only.",
           "Regular Withdrawal facility remains informational only.",
-          "Dividend payout election remains informational only.",
           "Death, terminal illness, and accidental death payout mechanics remain informational only."
         ],
         "sourceRefs": [
@@ -40228,7 +40288,7 @@
             "tieredRates": [],
             "notes": [
               "Allocated monthly from the first policy month after MIP on the Regular Premium Account only.",
-              "Dividend payout elections and repayment-specific Loyalty Bonus exclusions remain informational only in V1."
+              "Repayment-specific Loyalty Bonus exclusions remain informational only in V1."
             ],
             "sourceRefs": [
               {
@@ -40456,6 +40516,28 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 18,
+              "section": "Distribution of Dividend",
+              "excerpt": "10 Distribution of Dividend • While the Policy is in force, if you choose to invest in any ILP Sub-Fund(s) that pays dividends, you have the option to either reinvest these dividends or to receive payment of these divide"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -40469,15 +40551,13 @@
           0.08
         ],
         "warnings": [
-          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, and MIP-end surrender charges.",
-          "Dividend-paying funds are assumed to reinvest by default in V1. Cash payout election remains informational only.",
+          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
           "Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1."
         ],
         "unsupportedItems": [
           "Life Replacement Option remains informational only.",
           "Free Partial Withdrawal Benefit remains informational only.",
           "Regular Withdrawal facility remains informational only.",
-          "Dividend payout election remains informational only.",
           "Death, terminal illness, and accidental death payout mechanics remain informational only."
         ],
         "sourceRefs": [
@@ -40560,17 +40640,17 @@
       "branch:wealth-focus-partial-withdrawal-charge",
       "branch:wealth-focus-eec",
       "branch:wealth-focus-ad-hoc-top-up-routing",
+      "kernel:distribution-mode-assumption",
       "branch:wealth-focus-premium-holiday-charge"
     ],
     "metadataOnlyBehaviors": [
       "wealth-focus-life-replacement-option",
       "wealth-focus-free-partial-withdrawal-benefit",
       "wealth-focus-regular-withdrawal-facility",
-      "wealth-focus-dividend-payout-election",
       "wealth-focus-death-and-ti-benefits"
     ],
     "warnings": [
-      "Wealth Focus Flexi 5 is currently modeled as a partial product in V1. Accumulation charges, MIP-end surrender charges, regular/top-up routing, and the documented bonuses are modeled, but life-event free withdrawals, dividend payout election, and protection-side options remain informational only."
+      "Wealth Focus Flexi 5 is currently modeled as a partial product in V1. Accumulation charges, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but life-event free withdrawals, the top-up-first regular-withdrawal facility, and protection-side options remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -40727,7 +40807,7 @@
             "tieredRates": [],
             "notes": [
               "Allocated monthly from the first policy month after MIP on the Regular Premium Account only.",
-              "Dividend payout elections and repayment-specific Loyalty Bonus exclusions remain informational only in V1."
+              "Repayment-specific Loyalty Bonus exclusions remain informational only in V1."
             ],
             "sourceRefs": [
               {
@@ -40965,6 +41045,28 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 18,
+              "section": "Distribution of Dividend",
+              "excerpt": "10 Distribution of Dividend • While the Policy is in force, if you choose to invest in any ILP Sub-Fund(s) that pays dividends, you have the option to either reinvest these dividends or to receive payment of these divide"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -40978,15 +41080,13 @@
           0.08
         ],
         "warnings": [
-          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, and MIP-end surrender charges.",
-          "Dividend-paying funds are assumed to reinvest by default in V1. Cash payout election remains informational only.",
+          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
           "Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1."
         ],
         "unsupportedItems": [
           "Life Replacement Option remains informational only.",
           "Free Partial Withdrawal Benefit remains informational only.",
           "Regular Withdrawal facility remains informational only.",
-          "Dividend payout election remains informational only.",
           "Death, terminal illness, and accidental death payout mechanics remain informational only."
         ],
         "sourceRefs": [
@@ -41200,7 +41300,7 @@
             "tieredRates": [],
             "notes": [
               "Allocated monthly from the first policy month after MIP on the Regular Premium Account only.",
-              "Dividend payout elections and repayment-specific Loyalty Bonus exclusions remain informational only in V1."
+              "Repayment-specific Loyalty Bonus exclusions remain informational only in V1."
             ],
             "sourceRefs": [
               {
@@ -41438,6 +41538,28 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 18,
+              "section": "Distribution of Dividend",
+              "excerpt": "10 Distribution of Dividend • While the Policy is in force, if you choose to invest in any ILP Sub-Fund(s) that pays dividends, you have the option to either reinvest these dividends or to receive payment of these divide"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -41451,15 +41573,13 @@
           0.08
         ],
         "warnings": [
-          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, and MIP-end surrender charges.",
-          "Dividend-paying funds are assumed to reinvest by default in V1. Cash payout election remains informational only.",
+          "Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
           "Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1."
         ],
         "unsupportedItems": [
           "Life Replacement Option remains informational only.",
           "Free Partial Withdrawal Benefit remains informational only.",
           "Regular Withdrawal facility remains informational only.",
-          "Dividend payout election remains informational only.",
           "Death, terminal illness, and accidental death payout mechanics remain informational only."
         ],
         "sourceRefs": [

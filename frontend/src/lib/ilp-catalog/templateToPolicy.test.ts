@@ -240,7 +240,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:wealth-focus-premium-base-amf')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:wealth-focus-premium-holiday-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-free-partial-withdrawal-benefit')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-regular-withdrawal-facility')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('reinvest by default'))).toBe(true)
     expect(seed.accounts.find((account) => account.id === 'regular')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
@@ -288,6 +290,19 @@ describe('templateVariantToPolicySeed', () => {
     )
     expect(seed.bonuses.find((bonus) => bonus.id === 'premium-contribution-bonus')?.rate).toBe(0.01)
     expect(seed.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.rate).toBe(0.001)
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['regular', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
   it('maps PRUVantage Wealth II into a multi-account seeded ILP policy', () => {

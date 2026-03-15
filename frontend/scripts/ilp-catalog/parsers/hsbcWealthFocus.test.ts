@@ -75,8 +75,9 @@ describe('parseHsbcWealthFocus', () => {
       expect(product.productName).toBe(testCase.productName)
       expect(product.supportStatus).toBe('partial')
       expect(product.economicsStatus).toBe('partial-modeled-subset')
+      expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
       expect(product.metadataOnlyBehaviors).toContain('wealth-focus-free-partial-withdrawal-benefit')
-      expect(product.metadataOnlyBehaviors).toContain('wealth-focus-dividend-payout-election')
+      expect(product.metadataOnlyBehaviors).toContain('wealth-focus-regular-withdrawal-facility')
       expect(product.variants).toHaveLength(2)
 
       const sgdVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10')
@@ -136,6 +137,23 @@ describe('parseHsbcWealthFocus', () => {
         ]),
       )
       expect(sgdVariant?.eecTable).toEqual(testCase.eecTable)
+      expect(sgdVariant?.distributionSupport).toEqual({
+        mode: 'manual-assumption',
+        accountIds: ['regular', 'topup'],
+        defaultMode: 'reinvest',
+        cashPayoutAllowedDuringMip: true,
+        cashPayoutAllowedAfterMip: true,
+        source: 'distribution-paying-funds',
+        notes: expect.arrayContaining([
+          expect.stringContaining('reinvestment as the default'),
+        ]),
+        sourceRefs: [
+          expect.objectContaining({
+            page: 18,
+            section: 'Distribution of Dividend',
+          }),
+        ],
+      })
 
       expect(sgdVariant?.eventChargeRules).toEqual(
         expect.arrayContaining([

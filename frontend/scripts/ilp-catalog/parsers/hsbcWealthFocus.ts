@@ -172,7 +172,7 @@ function buildLoyaltyBonus(term: FlexiTerm, page6: IlpCatalogSourceRef, page8: I
     tieredRates: [],
     notes: [
       'Allocated monthly from the first policy month after MIP on the Regular Premium Account only.',
-      'Dividend payout elections and repayment-specific Loyalty Bonus exclusions remain informational only in V1.',
+      'Repayment-specific Loyalty Bonus exclusions remain informational only in V1.',
     ],
     sourceRefs: [page6, page8],
   }
@@ -312,17 +312,28 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
     ],
     feeRules,
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['regular', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.',
+      ],
+      sourceRefs: [page18],
+    },
     eecTable: FLEXI_CONFIG[term].eecSchedule.map(roundRate),
     warnings: [
-      'Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, and MIP-end surrender charges.',
-      'Dividend-paying funds are assumed to reinvest by default in V1. Cash payout election remains informational only.',
+      'Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.',
       'Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1.',
     ],
     unsupportedItems: [
       'Life Replacement Option remains informational only.',
       'Free Partial Withdrawal Benefit remains informational only.',
       'Regular Withdrawal facility remains informational only.',
-      'Dividend payout election remains informational only.',
       'Death, terminal illness, and accidental death payout mechanics remain informational only.',
     ],
     sourceRefs: [page1, page4, page5, page6, page8, page10, page11, page12, page13, page15, page18],
@@ -342,6 +353,7 @@ export function parseHsbcWealthFocus({ document, sourceChecksumSha256 }: ParseCo
     'branch:wealth-focus-partial-withdrawal-charge',
     'branch:wealth-focus-eec',
     'branch:wealth-focus-ad-hoc-top-up-routing',
+    'kernel:distribution-mode-assumption',
   ]
 
   if (FLEXI_CONFIG[flexiTerm].phcSchedule.length > 0) {
@@ -364,11 +376,10 @@ export function parseHsbcWealthFocus({ document, sourceChecksumSha256 }: ParseCo
       'wealth-focus-life-replacement-option',
       'wealth-focus-free-partial-withdrawal-benefit',
       'wealth-focus-regular-withdrawal-facility',
-      'wealth-focus-dividend-payout-election',
       'wealth-focus-death-and-ti-benefits',
     ],
     warnings: [
-      `Wealth Focus Flexi ${flexiTerm} is currently modeled as a partial product in V1. Accumulation charges, MIP-end surrender charges, regular/top-up routing, and the documented bonuses are modeled, but life-event free withdrawals, dividend payout election, and protection-side options remain informational only.`,
+      `Wealth Focus Flexi ${flexiTerm} is currently modeled as a partial product in V1. Accumulation charges, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but life-event free withdrawals, the top-up-first regular-withdrawal facility, and protection-side options remain informational only.`,
     ],
     archived: false,
     variants: [
