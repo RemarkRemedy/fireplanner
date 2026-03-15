@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 /** Newest first. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-03-15',
+    category: 'feature',
+    title: 'Net FIRE number formula',
+    description:
+      'FIRE number now deducts post-retirement income (CPF LIFE, rental, investment, business, SRS) from expenses before dividing by SWR. If you have $60K expenses and $20K in CPF LIFE payouts, your FIRE number is based on the $40K gap, not the full $60K.',
+    affectedSections: ['section-fire-settings'],
+    insight:
+      'Post-retirement income from the first retired year of the income projection is deflated to today\'s dollars before deducting. The formula is max(0, expenses - postRetirementIncome) / SWR, so income can never make the FIRE number negative.',
+  },
+  {
+    date: '2026-03-15',
+    category: 'feature',
+    title: 'SEO and performance improvements',
+    description:
+      'Lazy-loaded non-critical layout components (HelpPanel, mobile help sheet, expense tracker modal) to reduce initial JS bundle by 70 KB. Rewrote page titles and descriptions for better search engine discoverability. Added rich pre-rendered content for all routes so search engines can index each page with unique, descriptive text.',
+    insight:
+      'The App chunk dropped from 376 KB to 306 KB (111 KB to 93 KB gzipped). Mobile Interaction to Next Paint (INP) should improve from 209 ms toward the 200 ms "good" threshold. Pre-rendered SEO titles are keyword-rich for crawlers while browser tabs keep short user-friendly titles.',
+  },
+  {
     date: '2026-03-13',
     category: 'fix',
     title: 'Downsizing ownership scaling',
