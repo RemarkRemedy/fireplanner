@@ -200,7 +200,7 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
           <button
             type="button"
             aria-label="Close"
-            className="ml-4 rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            className="ml-4 rounded-md p-3 -m-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             onClick={onClose}
           >
             <X className="h-5 w-5" aria-hidden="true" />
