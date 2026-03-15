@@ -413,6 +413,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-ii-pre-70-assurance')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-ii-post-70-charge-tail')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-ii-manual-reduction-resumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('premium-pass-wealth-share-change-of-life-assured-options')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
@@ -430,6 +431,19 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['growth'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
   it('maps PRUVantage Assure (SP) into a partial single-premium seed with explicit unsupported economics warnings', () => {

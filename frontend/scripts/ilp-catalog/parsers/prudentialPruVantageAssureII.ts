@@ -189,12 +189,18 @@ function buildBonuses(term: PremiumTerm, page8: IlpCatalogSourceRef, page9: IlpC
 }
 
 function buildVariant(document: ExtractedPdfDocument, term: PremiumTerm): IlpTemplateVariant {
+  const page3 = sourceRef(3, 'Accounts and dividend election', snippetNear(document, 3, 'Growth Account is where', 8))
   const page7 = sourceRef(7, 'Accounts', snippetNear(document, 7, 'Accounts:'))
   const page8 = sourceRef(8, 'Welcome Bonus', snippetNear(document, 8, 'Welcome Bonus Tables'))
   const page9 = sourceRef(9, 'Loyalty Bonus and Charges', snippetNear(document, 9, 'Administration Charge Table'))
   const page10 = sourceRef(10, 'Assurance Charge and Top-up Premium Charge', snippetNear(document, 10, 'assurance charge'))
   const page14 = sourceRef(14, 'Top-up and Premium Holiday', snippetNear(document, 14, 'Investment Booster'))
   const page15 = sourceRef(15, 'Premium Holiday Refund and Premium Pass', snippetNear(document, 15, 'Premium Holiday Charge Refund'))
+  const dividendPayoutAllowedAfterMip = true
+  const dividendPayoutAllowedDuringMip = term >= 15
+  const dividendElectionNote = term === 5
+    ? 'Growth Account dividend payout is only allowed after 5 years from the cover start date once 5 years of premiums have been paid.'
+    : 'Growth Account dividend payout is only allowed after 10 years from the cover start date once 10 years of premiums have been paid.'
 
   const adminCharge = ADMIN_CHARGE[term]
   const holidayChargeSchedule = buildRateSchedule(PREMIUM_HOLIDAY_CHARGE[term])
@@ -357,10 +363,25 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumTerm): IlpTem
     bonuses: buildBonuses(term, page8, page9),
     feeRules,
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['growth'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: dividendPayoutAllowedDuringMip,
+      cashPayoutAllowedAfterMip: dividendPayoutAllowedAfterMip,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Funds in the Growth Account that aim to distribute dividends reinvest by default.',
+        dividendElectionNote,
+        'Receiving dividend payouts lowers the published Wealth Assure Value relative to reinvestment.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.',
+      ],
+      sourceRefs: [page3, page7],
+    },
     eecTable: [...EXIT_CHARGE[term]],
     warnings: [
       'Set the actual Growth/Flex regular-premium split before trusting the fee-drag output. The seeded draft defaults to 50/50.',
-      'Growth-account dividend/distribution election remains informational only in V1.',
+      dividendElectionNote,
       'Enter insured-life details, current sum assured, and current Wealth Assure Value to activate the modeled assurance charges.',
       'Manual reduction or resumption events for sum assured / Wealth Assure Value require explicit resulting-state inputs.',
     ],
@@ -394,12 +415,13 @@ export function parsePrudentialPruVantageAssureII(context: ParseContext): IlpCat
       'branch:pru-top-up-charge',
       'branch:pru-free-withdrawal',
       'branch:pru-charged-withdrawal',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'premium-pass-wealth-share-change-of-life-assured-options',
     ],
     warnings: [
-      'This template captures account routing, welcome/loyalty bonuses, premium-holiday mechanics, exit charges, and Assure II assurance charges from Prudential Appendix A after you enter the insured-life details, Wealth Assure Value, and current sum assured. Manual reduction/resumption events for sum assured and Wealth Assure Value are modeled as user-entered resulting states. Premium Pass / Wealth Share / change-of-life-assured options remain informational only.',
+      'This template captures account routing, welcome/loyalty bonuses, premium-holiday mechanics, exit charges, Assure II assurance charges from Prudential Appendix A after you enter the insured-life details, Wealth Assure Value, and current sum assured, plus Growth Account dividend-election support through the manual distribution-mode kernel. Manual reduction/resumption events for sum assured and Wealth Assure Value are modeled as user-entered resulting states. Premium Pass / Wealth Share / change-of-life-assured options remain informational only.',
     ],
     archived: false,
     variants,

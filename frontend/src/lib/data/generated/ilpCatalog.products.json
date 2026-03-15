@@ -49438,13 +49438,14 @@
       "branch:pru-holiday-fallback",
       "branch:pru-top-up-charge",
       "branch:pru-free-withdrawal",
-      "branch:pru-charged-withdrawal"
+      "branch:pru-charged-withdrawal",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "premium-pass-wealth-share-change-of-life-assured-options"
     ],
     "warnings": [
-      "This template captures account routing, welcome/loyalty bonuses, premium-holiday mechanics, exit charges, and Assure II assurance charges from Prudential Appendix A after you enter the insured-life details, Wealth Assure Value, and current sum assured. Manual reduction/resumption events for sum assured and Wealth Assure Value are modeled as user-entered resulting states. Premium Pass / Wealth Share / change-of-life-assured options remain informational only."
+      "This template captures account routing, welcome/loyalty bonuses, premium-holiday mechanics, exit charges, Assure II assurance charges from Prudential Appendix A after you enter the insured-life details, Wealth Assure Value, and current sum assured, plus Growth Account dividend-election support through the manual distribution-mode kernel. Manual reduction/resumption events for sum assured and Wealth Assure Value are modeled as user-entered resulting states. Premium Pass / Wealth Share / change-of-life-assured options remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -49985,6 +49986,34 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "growth"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": false,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Funds in the Growth Account that aim to distribute dividends reinvest by default.",
+            "Growth Account dividend payout is only allowed after 5 years from the cover start date once 5 years of premiums have been paid.",
+            "Receiving dividend payouts lowers the published Wealth Assure Value relative to reinvestment.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 3,
+              "section": "Accounts and dividend election",
+              "excerpt": "- Growth Account is where your regular premiums are invested according to your chosen allocation. If the premium in this account is invested in a PRULink fund that aims to distribute dividends on a regular basis, the div"
+            },
+            {
+              "page": 7,
+              "section": "Accounts",
+              "excerpt": "PRULink Fund(s) available in the Accounts: Additional Investment Growth Account Flex Account Account Funds that distribute At the Start of the Policy All funds All funds"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -49994,7 +50023,7 @@
         ],
         "warnings": [
           "Set the actual Growth/Flex regular-premium split before trusting the fee-drag output. The seeded draft defaults to 50/50.",
-          "Growth-account dividend/distribution election remains informational only in V1.",
+          "Growth Account dividend payout is only allowed after 5 years from the cover start date once 5 years of premiums have been paid.",
           "Enter insured-life details, current sum assured, and current Wealth Assure Value to activate the modeled assurance charges.",
           "Manual reduction or resumption events for sum assured / Wealth Assure Value require explicit resulting-state inputs."
         ],
@@ -50621,6 +50650,34 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "growth"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": false,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Funds in the Growth Account that aim to distribute dividends reinvest by default.",
+            "Growth Account dividend payout is only allowed after 10 years from the cover start date once 10 years of premiums have been paid.",
+            "Receiving dividend payouts lowers the published Wealth Assure Value relative to reinvestment.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 3,
+              "section": "Accounts and dividend election",
+              "excerpt": "- Growth Account is where your regular premiums are invested according to your chosen allocation. If the premium in this account is invested in a PRULink fund that aims to distribute dividends on a regular basis, the div"
+            },
+            {
+              "page": 7,
+              "section": "Accounts",
+              "excerpt": "PRULink Fund(s) available in the Accounts: Additional Investment Growth Account Flex Account Account Funds that distribute At the Start of the Policy All funds All funds"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -50635,7 +50692,7 @@
         ],
         "warnings": [
           "Set the actual Growth/Flex regular-premium split before trusting the fee-drag output. The seeded draft defaults to 50/50.",
-          "Growth-account dividend/distribution election remains informational only in V1.",
+          "Growth Account dividend payout is only allowed after 10 years from the cover start date once 10 years of premiums have been paid.",
           "Enter insured-life details, current sum assured, and current Wealth Assure Value to activate the modeled assurance charges.",
           "Manual reduction or resumption events for sum assured / Wealth Assure Value require explicit resulting-state inputs."
         ],
@@ -51280,6 +51337,34 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "growth"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Funds in the Growth Account that aim to distribute dividends reinvest by default.",
+            "Growth Account dividend payout is only allowed after 10 years from the cover start date once 10 years of premiums have been paid.",
+            "Receiving dividend payouts lowers the published Wealth Assure Value relative to reinvestment.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 3,
+              "section": "Accounts and dividend election",
+              "excerpt": "- Growth Account is where your regular premiums are invested according to your chosen allocation. If the premium in this account is invested in a PRULink fund that aims to distribute dividends on a regular basis, the div"
+            },
+            {
+              "page": 7,
+              "section": "Accounts",
+              "excerpt": "PRULink Fund(s) available in the Accounts: Additional Investment Growth Account Flex Account Account Funds that distribute At the Start of the Policy All funds All funds"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -51299,7 +51384,7 @@
         ],
         "warnings": [
           "Set the actual Growth/Flex regular-premium split before trusting the fee-drag output. The seeded draft defaults to 50/50.",
-          "Growth-account dividend/distribution election remains informational only in V1.",
+          "Growth Account dividend payout is only allowed after 10 years from the cover start date once 10 years of premiums have been paid.",
           "Enter insured-life details, current sum assured, and current Wealth Assure Value to activate the modeled assurance charges.",
           "Manual reduction or resumption events for sum assured / Wealth Assure Value require explicit resulting-state inputs."
         ],
@@ -51994,6 +52079,34 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "growth"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Funds in the Growth Account that aim to distribute dividends reinvest by default.",
+            "Growth Account dividend payout is only allowed after 10 years from the cover start date once 10 years of premiums have been paid.",
+            "Receiving dividend payouts lowers the published Wealth Assure Value relative to reinvestment.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 3,
+              "section": "Accounts and dividend election",
+              "excerpt": "- Growth Account is where your regular premiums are invested according to your chosen allocation. If the premium in this account is invested in a PRULink fund that aims to distribute dividends on a regular basis, the div"
+            },
+            {
+              "page": 7,
+              "section": "Accounts",
+              "excerpt": "PRULink Fund(s) available in the Accounts: Additional Investment Growth Account Flex Account Account Funds that distribute At the Start of the Policy All funds All funds"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -52018,7 +52131,7 @@
         ],
         "warnings": [
           "Set the actual Growth/Flex regular-premium split before trusting the fee-drag output. The seeded draft defaults to 50/50.",
-          "Growth-account dividend/distribution election remains informational only in V1.",
+          "Growth Account dividend payout is only allowed after 10 years from the cover start date once 10 years of premiums have been paid.",
           "Enter insured-life details, current sum assured, and current Wealth Assure Value to activate the modeled assurance charges.",
           "Manual reduction or resumption events for sum assured / Wealth Assure Value require explicit resulting-state inputs."
         ],
@@ -52763,6 +52876,34 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "growth"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Funds in the Growth Account that aim to distribute dividends reinvest by default.",
+            "Growth Account dividend payout is only allowed after 10 years from the cover start date once 10 years of premiums have been paid.",
+            "Receiving dividend payouts lowers the published Wealth Assure Value relative to reinvestment.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 3,
+              "section": "Accounts and dividend election",
+              "excerpt": "- Growth Account is where your regular premiums are invested according to your chosen allocation. If the premium in this account is invested in a PRULink fund that aims to distribute dividends on a regular basis, the div"
+            },
+            {
+              "page": 7,
+              "section": "Accounts",
+              "excerpt": "PRULink Fund(s) available in the Accounts: Additional Investment Growth Account Flex Account Account Funds that distribute At the Start of the Policy All funds All funds"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -52792,7 +52933,7 @@
         ],
         "warnings": [
           "Set the actual Growth/Flex regular-premium split before trusting the fee-drag output. The seeded draft defaults to 50/50.",
-          "Growth-account dividend/distribution election remains informational only in V1.",
+          "Growth Account dividend payout is only allowed after 10 years from the cover start date once 10 years of premiums have been paid.",
           "Enter insured-life details, current sum assured, and current Wealth Assure Value to activate the modeled assurance charges.",
           "Manual reduction or resumption events for sum assured / Wealth Assure Value require explicit resulting-state inputs."
         ],
