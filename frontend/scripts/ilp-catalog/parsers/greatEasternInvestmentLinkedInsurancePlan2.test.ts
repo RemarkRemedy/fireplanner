@@ -25,9 +25,9 @@ describe('parseGreatEasternInvestmentLinkedInsurancePlan2', () => {
     expect(product.supportStatus).toBe('partial')
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toContain('branch:great-eastern-ilp2-premium-holiday-charge')
+    expect(product.modeledEconomics).toContain('branch:great-eastern-ilp2-premium-holiday-charge-refund')
     expect(product.modeledEconomics).toContain('branch:great-eastern-ilp2-choice10-fixed-policy-fee')
     expect(product.metadataOnlyBehaviors).toContain('great-eastern-ilp2-insurance-charge')
-    expect(product.metadataOnlyBehaviors).toContain('great-eastern-ilp2-premium-holiday-charge-refund')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-10-choice-5',
       'sgd-mip-10-choice-10-under-6000',
@@ -120,6 +120,7 @@ describe('parseGreatEasternInvestmentLinkedInsurancePlan2', () => {
         }),
       ]),
     )
+    expect(choice5?.eventChargeRules?.find((rule) => rule.id === 'premium-holiday-charge-refund')).toBeUndefined()
     expect(choice5?.eecTable).toEqual([1, 1, 0.75, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.05])
 
     const choice10Low = product.variants.find((variant) => variant.id === 'sgd-mip-10-choice-10-under-6000')
@@ -152,6 +153,17 @@ describe('parseGreatEasternInvestmentLinkedInsurancePlan2', () => {
         }),
       ]),
     )
+    expect(choice10Low?.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'premium-holiday-charge-refund',
+          trigger: 'premium-holiday-repayment',
+          basis: 'premium-holiday-charge-refund',
+          sourceChargeRuleId: 'premium-holiday-charge',
+          rate: 1,
+        }),
+      ]),
+    )
     expect(choice10Low?.unsupportedItems).toContain(
       'Choice 10 prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction.',
     )
@@ -161,6 +173,17 @@ describe('parseGreatEasternInvestmentLinkedInsurancePlan2', () => {
     expect(choice10High?.feeRules).toEqual([
       expect.objectContaining({ id: 'policy-fee-rate', basis: 'account-value' }),
     ])
+    expect(choice10High?.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'premium-holiday-charge-refund',
+          trigger: 'premium-holiday-repayment',
+          basis: 'premium-holiday-charge-refund',
+          sourceChargeRuleId: 'premium-holiday-charge',
+          rate: 1,
+        }),
+      ]),
+    )
     expect(choice10High?.warnings).toContain(
       'This Choice 10 high-annualised-premium variant assumes the additional S$5 monthly policy fee does not apply throughout the modeled path unless you manually switch variants after a premium change.',
     )
