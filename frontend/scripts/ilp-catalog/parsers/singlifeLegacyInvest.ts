@@ -143,6 +143,8 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page3 = sourceRef(3, 'Extension Benefit / Free Partial Withdrawal Benefit', snippetNear(document, 3, 'Free Partial Withdrawal Benefit', 32))
   const page7 = sourceRef(7, 'Administrative Charge', snippetNear(document, 7, 'Administrative Charge', 20))
   const page8 = sourceRef(8, 'Partial Withdrawal Charge / Premium Shortfall Charge', snippetNear(document, 8, 'Premium Shortfall Charge', 28))
+  const page11 = sourceRef(11, 'Regular Withdrawal', snippetNear(document, 11, 'Regular Withdrawal', 24))
+  const page12 = sourceRef(12, 'Dividend Distribution Option', snippetNear(document, 12, 'Dividend Distribution Option', 24))
   const page17 = sourceRef(17, 'Appendix A charge schedules', snippetNear(document, 17, 'Appendix A', 30))
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
@@ -222,11 +224,34 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: buildBonuses(document),
     feeRules: buildFeeRules(document),
     eventChargeRules,
+    scheduledPayoutSupport: {
+      mode: 'manual-assumption',
+      accountId: 'policy',
+      source: 'policy-redemption',
+      notes: [
+        'After the Partial Withdrawal Charge Period, regular withdrawals may be applied annually, semi-annually, quarterly, or monthly from the policy account.',
+        'V1 exposes regular withdrawal only as a manual payout-state assumption; the published $500 minimum withdrawal, $1,000 minimum remaining account value, and sub-fund-selection / pending-transaction resumption rules remain informational only.',
+      ],
+      sourceRefs: [page11],
+    },
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying ILP sub-funds may either reinvest declared dividends or pay them out in cash, with reinvestment as the default if no option is elected.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published $40 minimum cash-out threshold remains informational only.',
+      ],
+      sourceRefs: [page12],
+    },
     eecTable: SURRENDER_AND_WITHDRAWAL_CHARGE_SCHEDULE.map((tier) => tier.rate),
     warnings: [
       'This partial template models the SGD / regular-pay-10-years / policy-term-15-years corridor only.',
-      'This partial template models the welcome bonus tiers, the 0.30% annual loyalty bonus from policy years 11 to 14, the first-10-policy-years administrative charge, the 3% single-premium top-up charge, and the published Appendix A surrender / withdrawal / premium-shortfall charge schedules.',
-      'Special Booster, Maturity Bonus, and Free Partial Withdrawal Benefit sequencing remain informational only in V1.',
+      'This partial template models the welcome bonus tiers, the 0.30% annual loyalty bonus from policy years 11 to 14, the first-10-policy-years administrative charge, the 3% single-premium top-up charge, the published Appendix A surrender / withdrawal / premium-shortfall charge schedules, manual regular-withdrawal payout support, and the reinvest-default distribution-mode assumption surface.',
+      'Special Booster, Maturity Bonus, Free Partial Withdrawal Benefit sequencing, the $40 dividend cash-out threshold, and regular-withdrawal operational constraints remain informational only in V1.',
     ],
     unsupportedItems: [
       'Special Booster remains informational only because it is a one-time bonus based on total basic regular premiums paid during the premium payment term.',
@@ -235,11 +260,12 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       'Extension Benefit elections and post-extension behavior remain informational only.',
       'Free Partial Withdrawal Benefit life-stage gating, penalty-free sequencing, and withdrawal limits remain informational only.',
       'Change of Life Assured, Secondary Life Assured, and policy-continuity mechanics remain informational only.',
-      'Regular withdrawal operational constraints and dividend-distribution choices remain informational only.',
+      'The published $40 minimum dividend cash-out threshold and cash-payment timing remain informational only.',
+      'Regular-withdrawal sub-fund selection, pending-transaction resumption, and operational constraints remain informational only.',
       'Single-premium corridor, USD corridor, and other premium-term / policy-term combinations remain informational only.',
       'Fund-level annual management charges and switching mechanics remain informational only.',
     ],
-    sourceRefs: [page1, page2, page3, page7, page8, page17],
+    sourceRefs: [page1, page2, page3, page7, page8, page11, page12, page17],
   }
 }
 
@@ -263,6 +289,8 @@ export function parseSinglifeLegacyInvest({ document, sourceChecksumSha256 }: Pa
       'branch:singlife-legacy-invest-partial-withdrawal-charge',
       'branch:singlife-legacy-invest-surrender-charge',
       'branch:singlife-legacy-invest-premium-shortfall-charge',
+      'kernel:scheduled-payout-manual-assumption',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'singlife-legacy-invest-special-booster',
@@ -272,12 +300,12 @@ export function parseSinglifeLegacyInvest({ document, sourceChecksumSha256 }: Pa
       'singlife-legacy-invest-free-partial-withdrawal-benefit',
       'singlife-legacy-invest-change-of-life-assured',
       'singlife-legacy-invest-secondary-life-assured',
-      'singlife-legacy-invest-regular-withdrawal',
-      'singlife-legacy-invest-dividend-distribution',
+      'singlife-legacy-invest-regular-withdrawal-operational-constraints',
+      'singlife-legacy-invest-dividend-cashout-threshold',
       'singlife-legacy-invest-non-sgd-and-other-term-corridors',
     ],
     warnings: [
-      'Singlife Legacy Invest is cataloged as a partial modeled subset in V1. The parser captures the SGD / regular-pay-10-years / policy-term-15-years corridor: welcome bonus tiers, annual loyalty bonus, administrative charge, single-premium top-up charge, and the Appendix A surrender / withdrawal / premium-shortfall schedules.',
+      'Singlife Legacy Invest is cataloged as a partial modeled subset in V1. The parser captures the SGD / regular-pay-10-years / policy-term-15-years corridor: welcome bonus tiers, annual loyalty bonus, administrative charge, single-premium top-up charge, the Appendix A surrender / withdrawal / premium-shortfall schedules, manual regular-withdrawal payout support, and reinvest-default distribution support.',
       'Special Booster, Maturity Bonus, Free Partial Withdrawal Benefit sequencing, and protection-side benefits remain informational only because the current engine does not yet execute those one-time or stateful mechanics.',
       'Structured extraction validated against the Singlife Legacy Invest product summary text layer.',
     ],

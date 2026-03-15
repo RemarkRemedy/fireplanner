@@ -3436,6 +3436,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:singlife-legacy-invest-welcome-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:singlife-legacy-invest-premium-shortfall-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('singlife-legacy-invest-maturity-bonus')
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
@@ -3485,7 +3487,27 @@ describe('templateVariantToPolicySeed', () => {
       }),
     ])
     expect(seed.eecTable).toEqual([1, 1, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25, 0.2])
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      accountId: 'policy',
+      source: 'policy-redemption',
+    })
+    expect(seed.scheduledPayoutAssumption).toBeUndefined()
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('policy-term-15-years corridor only'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual payout assumption'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
   it('maps Singlife Savvy Invest II into a partial seed with fixed-10 allocation uplifts and loyalty windows', () => {

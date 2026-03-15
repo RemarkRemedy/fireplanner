@@ -27,6 +27,8 @@ describe('parseSinglifeLegacyInvest', () => {
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toContain('branch:singlife-legacy-invest-welcome-bonus')
     expect(product.modeledEconomics).toContain('branch:singlife-legacy-invest-premium-shortfall-charge')
+    expect(product.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
 
     const variant = product.variants[0]
     expect(variant?.id).toBe('sgd-mip-10-term-15')
@@ -92,6 +94,37 @@ describe('parseSinglifeLegacyInvest', () => {
         ],
       }),
     ])
+    expect(variant?.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      accountId: 'policy',
+      source: 'policy-redemption',
+      notes: expect.arrayContaining([
+        expect.stringContaining('annually, semi-annually, quarterly, or monthly'),
+      ]),
+      sourceRefs: [
+        expect.objectContaining({
+          page: 11,
+          section: 'Regular Withdrawal',
+        }),
+      ],
+    })
+    expect(variant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('$40 minimum cash-out threshold'),
+      ]),
+      sourceRefs: [
+        expect.objectContaining({
+          page: 12,
+          section: 'Dividend Distribution Option',
+        }),
+      ],
+    })
     expect(variant?.eecTable).toEqual([1, 1, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25, 0.2])
   }, 30_000)
 })
