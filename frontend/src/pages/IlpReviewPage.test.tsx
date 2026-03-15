@@ -382,7 +382,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Partial template')
     expect(seededAlert?.textContent).not.toContain('tokio post mip regular premium routing back to initial account')
-    expect(seededAlert?.textContent).toContain('Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event')
+    expect(seededAlert?.textContent).toContain('Wealth Max (II) is modeled with the published initial setup charge, policy investment charge, and admin charge tied to the commencement-date premium commitment.')
     expect(screen.getByDisplayValue('Recurring Single Premium Charge')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Premium Shortfall Charge (Non-payment)')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Performance Investment Bonus')).toBeInTheDocument()

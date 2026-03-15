@@ -4201,11 +4201,8 @@
     "modeledEconomics": [
       "branch:fwd-invest-first-max-initial-account-charge",
       "branch:fwd-invest-first-max-accumulation-account-charge",
-      "branch:fwd-invest-first-max-increase-regular-premium-layer",
       "branch:fwd-invest-first-max-top-up-premium-charge",
       "branch:fwd-invest-first-max-recurring-single-premium-charge",
-      "branch:fwd-invest-first-max-regular-premium-reduction-order",
-      "branch:fwd-invest-first-max-withdrawal-order",
       "branch:fwd-invest-first-max-zero-redemption-fee",
       "branch:fwd-invest-first-max-surrender-charge"
     ],
@@ -4215,6 +4212,7 @@
       "fwd-invest-first-max-accumulation-bonus",
       "fwd-invest-first-max-maturity-benefit",
       "fwd-invest-first-max-death-benefit",
+      "fwd-invest-first-max-increase-regular-premium-layer",
       "fwd-invest-first-max-regular-premium-reduction",
       "fwd-invest-first-max-missed-premium-grace-period",
       "fwd-invest-first-max-minimum-withdrawal-rules",
@@ -4224,8 +4222,8 @@
       "fwd-invest-first-max-fund-management-charge"
     ],
     "warnings": [
-      "FWD Invest First Max is cataloged as a partial modeled subset in V1. The current parser covers the SGD 10-year layer corridor: base-layer routing, future increase-layer creation, layer-scoped initial-account and accumulation-account charges, top-up and recurring-single premium charges, latest-layer-first reduction and withdrawal ordering, and the 10-year surrender-charge schedule.",
-      "Bonus units, maturity benefit, longer-term increase-layer corridors, and broader missed-premium behavior remain outside the current engine."
+      "FWD Invest First Max is cataloged as a partial modeled subset in V1. The current parser covers the SGD 10-year base-layer corridor: initial-account charge, accumulation-account charge, top-up and recurring-single premium charges, zero redemption fee, and the 10-year surrender-charge schedule.",
+      "Bonus units, maturity benefit, increase regular premium layers, and broader premium-flexibility behavior remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -4234,7 +4232,7 @@
         "currency": "SGD",
         "mipBasis": "finite",
         "mipLength": 10,
-        "icpMonths": 24,
+        "icpMonths": 1,
         "accounts": [
           {
             "id": "initial",
@@ -4245,6 +4243,11 @@
             "contributionRules": [
               {
                 "phase": "during-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
                 "targetAccountId": "initial",
                 "contributionShare": 1
               }
@@ -4279,11 +4282,6 @@
             "postMipFeeRate": null,
             "subjectToEec": false,
             "contributionRules": [
-              {
-                "phase": "after-icp",
-                "targetAccountId": "accumulation",
-                "contributionShare": 1
-              },
               {
                 "phase": "top-up",
                 "targetAccountId": "accumulation",
@@ -4321,8 +4319,6 @@
             "label": "Initial Account Charge",
             "basis": "account-value",
             "yearBasis": "policy-year",
-            "scope": "layer",
-            "premiumPaymentTermYears": 10,
             "rate": 0,
             "amount": 0,
             "appliesTo": [
@@ -4337,9 +4333,9 @@
             ],
             "activeWindow": "during-mip",
             "notes": [
-              "Models the published 6.00% p.a. initial-account charge for the supported 10-year layer corridor.",
+              "Models the published 6.00% p.a. initial-account charge for the 10-year premium-payment-term base-layer corridor.",
               "The charge remains deductible even when regular premiums are not paid during the premium payment term.",
-              "Future increase regular premium layers are modeled when they use the supported 10-year premium-payment-term corridor."
+              "Increase regular premium layers are informational only in this slice."
             ],
             "sourceRefs": [
               {
@@ -4359,8 +4355,6 @@
             "label": "Accumulation Account Charge",
             "basis": "account-value",
             "yearBasis": "policy-year",
-            "scope": "layer",
-            "premiumPaymentTermYears": 10,
             "rate": 0,
             "amount": 0,
             "appliesTo": [
@@ -4387,7 +4381,7 @@
             "notes": [
               "Models the published accumulation-account charge schedule on accumulation-units-account value.",
               "Recurring single premiums and top-up premiums route to the base-layer accumulation units account in this corridor.",
-              "Per-layer charge timing is modeled for future increase regular premium layers when they use the supported 10-year premium-payment-term corridor."
+              "Per-layer charge timing for increase regular premium layers remains informational only."
             ],
             "sourceRefs": [
               {
@@ -4493,34 +4487,6 @@
             ]
           }
         ],
-        "policyLayerSupport": {
-          "initialAccountId": "initial",
-          "accumulationAccountId": "accumulation",
-          "baseLayerPremiumPaymentTermYears": 10,
-          "supportedIncreasePremiumPaymentTermYears": [
-            10
-          ],
-          "reductionOrder": "recurring-single-premium-then-latest-layer-then-base",
-          "withdrawalOrderDuringPremiumPaymentTerm": "latest-layer-first",
-          "futureIncreaseLayersOnly": true
-        },
-        "layeredSurrenderChargeSchedules": [
-          {
-            "premiumPaymentTermYears": 10,
-            "eecTable": [
-              1,
-              1,
-              0.99,
-              0.99,
-              0.99,
-              0.81,
-              0.65,
-              0.5,
-              0.31,
-              0.09
-            ]
-          }
-        ],
         "eecTable": [
           1,
           1,
@@ -4534,14 +4500,14 @@
           0.09
         ],
         "warnings": [
-          "FWD Invest First Max is cataloged as a partial modeled subset in V1. The parser captures the SGD 10-year layer corridor: base-layer routing, future increase-layer creation, layer-scoped initial-account and accumulation-account charges, 5% top-up / recurring-single premium charges, latest-layer-first reduction and withdrawal ordering, and the 10-year surrender-charge schedule.",
-          "Booster Bonus, Loyalty Bonus, Accumulation Bonus, maturity benefit, and missed-premium / grace-period behavior remain informational only.",
+          "FWD Invest First Max is cataloged as a partial modeled subset in V1. The parser captures the SGD 10-year base-layer corridor only: the published initial-account charge, accumulation-account charge, 5% top-up / recurring-single premium charges, zero redemption fee, and the 10-year surrender-charge schedule.",
+          "Booster Bonus, Loyalty Bonus, Accumulation Bonus, maturity benefit, increase regular premium layers, and reduction / missed-premium behavior remain informational only.",
           "The product supports longer premium-payment terms and multi-layer premium increases, but those corridors remain outside this executable slice."
         ],
         "unsupportedItems": [
           "Booster Bonus, Loyalty Bonus, and Accumulation Bonus remain informational only because their conditions and increase-layer interactions are not executed in this slice.",
           "Maturity Benefit, death benefit, and change-of-person-insured handling remain informational only.",
-          "Increase regular premium layers are executable only for the supported 10-year premium-payment-term corridor; longer-term increase-layer corridors remain informational only.",
+          "Recurring single premium reduction priority, increase regular premium layers, and regular-premium reduction sequencing remain informational only.",
           "Missed-premium, grace-period, and bonus-suspension interactions remain informational only.",
           "Minimum withdrawal amount, minimum account-value gates, policy closure charge, change-of-policy-currency handling, and fund management charges remain informational only."
         ],
@@ -68229,7 +68195,7 @@
             "rate": 0.012,
             "amount": 0,
             "premiumBaseConfig": {
-              "useHigherOfCommencementAndPrevailing": false,
+              "useHigherOfCommencementAndPrevailing": true,
               "multiplierYearBasis": "policy-year",
               "multiplierSchedule": [
                 {
@@ -68266,7 +68232,7 @@
             "rate": 0.012,
             "amount": 0,
             "premiumBaseConfig": {
-              "useHigherOfCommencementAndPrevailing": false,
+              "useHigherOfCommencementAndPrevailing": true,
               "multiplierYearBasis": "policy-year",
               "multiplierSchedule": [
                 {
@@ -68303,7 +68269,7 @@
             "rate": 0.02,
             "amount": 0,
             "premiumBaseConfig": {
-              "useHigherOfCommencementAndPrevailing": false,
+              "useHigherOfCommencementAndPrevailing": true,
               "multiplierYearBasis": "policy-year",
               "multiplierSchedule": [
                 {
@@ -68744,6 +68710,9 @@
       "tokio-recurring-single-premium-routing",
       "tokio-recurring-single-premium-manual-resumption-after-premium-holiday",
       "tokio-regular-premium-reduction-consumes-recurring-single-premium-first",
+      "tokio-initial-charge-on-initial-account",
+      "tokio-policy-charge-on-accumulation-account",
+      "tokio-admin-charge-on-initial-account",
       "tokio-top-up-premium-charge",
       "tokio-recurring-single-premium-charge",
       "tokio-initial-account-surrender-charge",
@@ -68755,12 +68724,13 @@
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "tokio-initial-setup-policy-investment-admin-and-monthly-protection-charges",
+      "tokio-harvest-pro-monthly-protection-charge",
       "tokio-dividend-payout-threshold-and-record-date-instructions",
       "tokio-multiple-life-and-capital-guarantee-options"
     ],
     "warnings": [
       "Structured extraction validated against the Harvest Pro product summary text layer.",
+      "Harvest Pro is modeled with the published initial setup charge, policy investment charge, and admin charge tied to the commencement-date premium commitment.",
       "Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.",
       "Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.",
       "Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary."
@@ -68972,7 +68942,193 @@
             ]
           }
         ],
-        "feeRules": [],
+        "feeRules": [
+          {
+            "id": "initial-charge",
+            "label": "Initial Setup Charge",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "initial"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.0105
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.021
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.0315
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.042
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.052500000000000005
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.063
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.07350000000000001
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.084
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.0945
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.10500000000000001
+              }
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published monthly initial setup charge during the minimum investment period as 1.05% p.a. multiplied by the current policy year."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Initial Setup Charge / Policy Charge / Admin Charge / MPC",
+                "excerpt": "Policy Investment Charge/ Policy Charge Policy investment charge is also known as “Policy Charge” and such terms are used interchangeably. th From the 37 policy month, a policy investment charge will be deducted monthly "
+              }
+            ]
+          },
+          {
+            "id": "policy-charge-during-mip",
+            "label": "Policy Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.012,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": true,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 4,
+                  "endPolicyYear": 10,
+                  "mode": "policy-year"
+                }
+              ]
+            },
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "initial"
+            ],
+            "activeWindow": "during-mip",
+            "startPolicyYear": 4,
+            "notes": [
+              "Models the published monthly policy investment charge from the 37th policy month through the minimum investment period using annualised regular premium committed at commencement date multiplied by the current policy year.",
+              "Regular-premium reduction, non-payment, and withdrawals do not change the charge base once the policy is in force."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Initial Setup Charge / Policy Charge / Admin Charge / MPC",
+                "excerpt": "Policy Investment Charge/ Policy Charge Policy investment charge is also known as “Policy Charge” and such terms are used interchangeably. th From the 37 policy month, a policy investment charge will be deducted monthly "
+              }
+            ]
+          },
+          {
+            "id": "policy-charge-after-mip",
+            "label": "Policy Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.012,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": true,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 11,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 10
+                }
+              ]
+            },
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "initial"
+            ],
+            "activeWindow": "after-mip",
+            "notes": [
+              "Models the published post-MIP policy investment charge using the fixed 10-year multiplier."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Initial Setup Charge / Policy Charge / Admin Charge / MPC",
+                "excerpt": "Policy Investment Charge/ Policy Charge Policy investment charge is also known as “Policy Charge” and such terms are used interchangeably. th From the 37 policy month, a policy investment charge will be deducted monthly "
+              }
+            ]
+          },
+          {
+            "id": "admin-charge",
+            "label": "Admin Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.02,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": true,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 10,
+                  "mode": "fixed",
+                  "multiplier": 1
+                }
+              ]
+            },
+            "appliesTo": [
+              "initial"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "accumulation"
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published monthly admin charge during the minimum investment period as 2.00% p.a. of the annualised regular premium committed at commencement date."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Initial Setup Charge / Policy Charge / Admin Charge / MPC",
+                "excerpt": "Policy Investment Charge/ Policy Charge Policy investment charge is also known as “Policy Charge” and such terms are used interchangeably. th From the 37 policy month, a policy investment charge will be deducted monthly "
+              }
+            ]
+          }
+        ],
         "eventChargeRules": [
           {
             "id": "top-up-premium-charge",
@@ -69294,14 +69450,14 @@
           0.1
         ],
         "warnings": [
-          "This partial template models regular-premium routing through year 10, top-up routing, recurring single premium routing, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.",
+          "This partial template models regular-premium routing through year 10, top-up routing, recurring single premium routing, the published initial setup charge, policy investment charge, admin charge, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.",
           "This partial template also models the published premium shortfall charge for non-payment periods and regular-premium reductions, including the higher-charge rule when both overlap.",
           "Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.",
           "Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.",
           "Harvest Pro keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface."
         ],
         "unsupportedItems": [
-          "Initial setup charge, policy investment charge, admin charge, and monthly protection charge remain metadata-only for this product.",
+          "Monthly protection charge remains metadata-only for this product.",
           "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product.",
           "Multiple-life and capital-guarantee death-benefit options remain metadata-only for this product."
         ],
@@ -71845,6 +72001,9 @@
       "tokio-recurring-single-premium-routing",
       "tokio-recurring-single-premium-manual-resumption-after-premium-holiday",
       "tokio-regular-premium-reduction-consumes-recurring-single-premium-first",
+      "tokio-initial-charge-on-initial-account",
+      "tokio-policy-charge-on-accumulation-account",
+      "tokio-admin-charge-on-initial-account",
       "tokio-top-up-premium-charge",
       "tokio-recurring-single-premium-charge",
       "tokio-initial-account-surrender-charge",
@@ -71856,12 +72015,13 @@
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "tokio-initial-setup-admin-and-monthly-protection-charges",
+      "tokio-wealth-max-ii-monthly-protection-charge",
       "tokio-dividend-payout-threshold-and-record-date-instructions",
       "tokio-multiple-life-and-capital-guarantee-options"
     ],
     "warnings": [
       "Structured extraction validated against the Wealth Max (II) product summary text layer.",
+      "Wealth Max (II) is modeled with the published initial setup charge, policy investment charge, and admin charge tied to the commencement-date premium commitment.",
       "Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.",
       "When a regular-premium reduction overlaps a recurring single premium, the modeled cashflow reduces the recurring single premium first before reducing regular premium contributions.",
       "Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.",
@@ -72075,7 +72235,218 @@
             ]
           }
         ],
-        "feeRules": [],
+        "feeRules": [
+          {
+            "id": "initial-charge",
+            "label": "Initial Setup Charge",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "initial"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.0105
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.021
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.0315
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.042
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.052500000000000005
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.063
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.07350000000000001
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.084
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.0945
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.10500000000000001
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.1155
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.126
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.1365
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.14700000000000002
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.1575
+              }
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published monthly initial setup charge during the minimum investment period as 1.05% p.a. multiplied by the current policy year."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Initial Setup Charge / Policy Charge / Admin Charge / MPC",
+                "excerpt": "Initial Setup Charge / Initial Charge Initial setup charge is also known as “Initial Charge” and such terms are used interchangeably. During the minimum investment period, an initial setup charge will be deducted monthly"
+              }
+            ]
+          },
+          {
+            "id": "policy-charge-during-mip",
+            "label": "Policy Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.012,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": true,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 4,
+                  "endPolicyYear": 15,
+                  "mode": "policy-year"
+                }
+              ]
+            },
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "initial"
+            ],
+            "activeWindow": "during-mip",
+            "startPolicyYear": 4,
+            "notes": [
+              "Models the published monthly policy investment charge from the 37th policy month through the minimum investment period using annualised regular premium committed at commencement date multiplied by the current policy year.",
+              "Regular-premium reduction, non-payment, and withdrawals do not change the charge base once the policy is in force."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Initial Setup Charge / Policy Charge / Admin Charge / MPC",
+                "excerpt": "Initial Setup Charge / Initial Charge Initial setup charge is also known as “Initial Charge” and such terms are used interchangeably. During the minimum investment period, an initial setup charge will be deducted monthly"
+              }
+            ]
+          },
+          {
+            "id": "policy-charge-after-mip",
+            "label": "Policy Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.012,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": true,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 16,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 15
+                }
+              ]
+            },
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "initial"
+            ],
+            "activeWindow": "after-mip",
+            "notes": [
+              "Models the published post-MIP policy investment charge using the fixed 15-year multiplier."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Initial Setup Charge / Policy Charge / Admin Charge / MPC",
+                "excerpt": "Initial Setup Charge / Initial Charge Initial setup charge is also known as “Initial Charge” and such terms are used interchangeably. During the minimum investment period, an initial setup charge will be deducted monthly"
+              }
+            ]
+          },
+          {
+            "id": "admin-charge",
+            "label": "Admin Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.02,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": true,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 15,
+                  "mode": "fixed",
+                  "multiplier": 1
+                }
+              ]
+            },
+            "appliesTo": [
+              "initial"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "accumulation"
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published monthly admin charge during the minimum investment period as 2.00% p.a. of the annualised regular premium committed at commencement date."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Initial Setup Charge / Policy Charge / Admin Charge / MPC",
+                "excerpt": "Initial Setup Charge / Initial Charge Initial setup charge is also known as “Initial Charge” and such terms are used interchangeably. During the minimum investment period, an initial setup charge will be deducted monthly"
+              }
+            ]
+          }
+        ],
         "eventChargeRules": [
           {
             "id": "top-up-premium-charge",
@@ -72367,7 +72738,7 @@
           0.08
         ],
         "warnings": [
-          "This partial template models regular-premium routing through year 15, top-up routing, recurring single premium routing, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.",
+          "This partial template models regular-premium routing through year 15, top-up routing, recurring single premium routing, the published initial setup charge, policy investment charge, admin charge, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.",
           "This partial template also models the published premium shortfall charge for non-payment periods and regular-premium reductions, including the higher-charge rule when both overlap.",
           "Recurring single premium remains blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.",
           "Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.",
@@ -72375,7 +72746,7 @@
           "The phase-specific dividend cash-payout account restrictions are modeled through the manual distribution-mode assumption surface."
         ],
         "unsupportedItems": [
-          "Initial setup charge, admin charge, and monthly protection charge remain metadata-only for this product.",
+          "Monthly protection charge remains metadata-only for this product.",
           "The published $50 dividend payout threshold, 30-day record-date instruction window, and regular withdrawal facility remain informational only in V1."
         ],
         "sourceRefs": [
@@ -72450,6 +72821,9 @@
       "tokio-recurring-single-premium-routing",
       "tokio-recurring-single-premium-manual-resumption-after-premium-holiday",
       "tokio-regular-premium-reduction-consumes-recurring-single-premium-first",
+      "tokio-initial-charge-on-initial-account",
+      "tokio-policy-charge-on-accumulation-account",
+      "tokio-admin-charge-on-initial-account",
       "tokio-top-up-premium-charge",
       "tokio-recurring-single-premium-charge",
       "tokio-initial-account-surrender-charge",
@@ -72462,12 +72836,13 @@
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "tokio-initial-setup-and-monthly-protection-charges",
+      "tokio-wealth-pro-ii-monthly-protection-charge",
       "tokio-dividend-payout-threshold-and-record-date-instructions",
       "tokio-multiple-life-and-capital-guarantee-options"
     ],
     "warnings": [
       "Structured extraction validated against the Wealth Pro (II) product summary text layer.",
+      "Wealth Pro (II) is modeled with the published initial setup charge, policy investment charge, and admin charge tied to the commencement-date premium commitment.",
       "Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.",
       "Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.",
       "Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary.",
@@ -72681,7 +73056,193 @@
             ]
           }
         ],
-        "feeRules": [],
+        "feeRules": [
+          {
+            "id": "initial-charge",
+            "label": "Initial Setup Charge",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "initial"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.0105
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.021
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.0315
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.042
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.052500000000000005
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.063
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.07350000000000001
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.084
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.0945
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.10500000000000001
+              }
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published monthly initial setup charge during the minimum investment period as 1.05% p.a. multiplied by the current policy year."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Initial Setup Charge / Policy Charge / Admin Charge / MPC",
+                "excerpt": "We will continue to deduct for the initial setup charge even when there is non-payment of regular premium. *Policy Monthiversary means the same day as the commencement date in monthly intervals from the commencement date"
+              }
+            ]
+          },
+          {
+            "id": "policy-charge-during-mip",
+            "label": "Policy Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.012,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": true,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 4,
+                  "endPolicyYear": 10,
+                  "mode": "policy-year"
+                }
+              ]
+            },
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "initial"
+            ],
+            "activeWindow": "during-mip",
+            "startPolicyYear": 4,
+            "notes": [
+              "Models the published monthly policy investment charge from the 37th policy month through the minimum investment period using annualised regular premium committed at commencement date multiplied by the current policy year.",
+              "Regular-premium reduction, non-payment, and withdrawals do not change the charge base once the policy is in force."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Initial Setup Charge / Policy Charge / Admin Charge / MPC",
+                "excerpt": "We will continue to deduct for the initial setup charge even when there is non-payment of regular premium. *Policy Monthiversary means the same day as the commencement date in monthly intervals from the commencement date"
+              }
+            ]
+          },
+          {
+            "id": "policy-charge-after-mip",
+            "label": "Policy Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.012,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": true,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 11,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 10
+                }
+              ]
+            },
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "initial"
+            ],
+            "activeWindow": "after-mip",
+            "notes": [
+              "Models the published post-MIP policy investment charge using the fixed 10-year multiplier."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Initial Setup Charge / Policy Charge / Admin Charge / MPC",
+                "excerpt": "We will continue to deduct for the initial setup charge even when there is non-payment of regular premium. *Policy Monthiversary means the same day as the commencement date in monthly intervals from the commencement date"
+              }
+            ]
+          },
+          {
+            "id": "admin-charge",
+            "label": "Admin Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.02,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": true,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 10,
+                  "mode": "fixed",
+                  "multiplier": 1
+                }
+              ]
+            },
+            "appliesTo": [
+              "initial"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "accumulation"
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published monthly admin charge during the minimum investment period as 2.00% p.a. of the annualised regular premium committed at commencement date."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Initial Setup Charge / Policy Charge / Admin Charge / MPC",
+                "excerpt": "We will continue to deduct for the initial setup charge even when there is non-payment of regular premium. *Policy Monthiversary means the same day as the commencement date in monthly intervals from the commencement date"
+              }
+            ]
+          }
+        ],
         "eventChargeRules": [
           {
             "id": "top-up-premium-charge",
@@ -73013,7 +73574,7 @@
           0.1
         ],
         "warnings": [
-          "This partial template models regular-premium routing through year 10, top-up routing, recurring single premium routing, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.",
+          "This partial template models regular-premium routing through year 10, top-up routing, recurring single premium routing, the published initial setup charge, policy investment charge, admin charge, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.",
           "This partial template also models the published premium shortfall charge for non-payment periods and regular-premium reductions, including the higher-charge rule when both overlap.",
           "Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.",
           "Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.",
@@ -73021,7 +73582,7 @@
         ],
         "unsupportedItems": [
           "Involuntary unemployment and hospitalisation benefit waiver remains metadata-only for this product.",
-          "Initial setup charge, monthly protection charge, and post-MIP regular-premium routing remain metadata-only for this product.",
+          "Monthly protection charge remains metadata-only for this product.",
           "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1."
         ],
         "sourceRefs": [

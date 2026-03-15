@@ -5,6 +5,7 @@ import type {
   IlpTemplateBonus,
   IlpTemplateBonusTier,
   IlpTemplateEventChargeRule,
+  IlpTemplateFeeRule,
   IlpTemplateVariant,
 } from '../../../src/lib/ilp-catalog/types.js'
 import type { ExtractedPdfDocument } from '../pdf/extractPdfText.js'
@@ -56,6 +57,12 @@ const INITIAL_BONUS_TIERS: IlpTemplateBonusTier[] = [
   { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.41 },
   { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.43 },
 ]
+
+const INITIAL_CHARGE_RATE_SCHEDULE = Array.from({ length: MIP_LENGTH }, (_, index) => ({
+  startPolicyYear: index + 1,
+  endPolicyYear: index + 1,
+  rate: 0.0105 * (index + 1),
+}))
 
 function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
@@ -150,6 +157,92 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
         'Annual bonus on the Initial Units Account value from policy year 11 onward.',
       ],
       sourceRefs: [page3],
+    },
+  ]
+}
+
+function buildFeeRules(document: ExtractedPdfDocument): IlpTemplateFeeRule[] {
+  const page10 = sourceRef(10, 'Initial Setup Charge / Policy Charge / Admin Charge / MPC', snippetNear(document, 10, 'Initial Setup Charge', 32))
+
+  return [
+    {
+      id: 'initial-charge',
+      label: 'Initial Setup Charge',
+      basis: 'account-value',
+      rate: 0,
+      rateSchedule: INITIAL_CHARGE_RATE_SCHEDULE.map((tier) => ({ ...tier })),
+      amount: 0,
+      appliesTo: ['initial'],
+      activeWindow: 'during-mip',
+      notes: [
+        'Models the published monthly initial setup charge during the minimum investment period as 1.05% p.a. multiplied by the current policy year.',
+      ],
+      sourceRefs: [page10],
+    },
+    {
+      id: 'policy-charge-during-mip',
+      label: 'Policy Charge',
+      basis: 'premium-base-mip-multiplier',
+      rate: 0.012,
+      amount: 0,
+      appliesTo: ['accumulation'],
+      fallbackAppliesTo: ['topup', 'initial'],
+      activeWindow: 'during-mip',
+      startPolicyYear: 4,
+      premiumBaseConfig: {
+        useHigherOfCommencementAndPrevailing: true,
+        multiplierYearBasis: 'policy-year',
+        multiplierSchedule: [
+          { startPolicyYear: 4, endPolicyYear: 10, mode: 'policy-year' },
+        ],
+      },
+      notes: [
+        'Models the published monthly policy investment charge from the 37th policy month through the minimum investment period using annualised regular premium committed at commencement date multiplied by the current policy year.',
+        'Regular-premium reduction, non-payment, and withdrawals do not change the charge base once the policy is in force.',
+      ],
+      sourceRefs: [page10],
+    },
+    {
+      id: 'policy-charge-after-mip',
+      label: 'Policy Charge',
+      basis: 'premium-base-mip-multiplier',
+      rate: 0.012,
+      amount: 0,
+      appliesTo: ['accumulation'],
+      fallbackAppliesTo: ['topup', 'initial'],
+      activeWindow: 'after-mip',
+      premiumBaseConfig: {
+        useHigherOfCommencementAndPrevailing: true,
+        multiplierYearBasis: 'policy-year',
+        multiplierSchedule: [
+          { startPolicyYear: 11, endPolicyYear: null, mode: 'fixed', multiplier: 10 },
+        ],
+      },
+      notes: [
+        'Models the published post-MIP policy investment charge using the fixed 10-year multiplier.',
+      ],
+      sourceRefs: [page10],
+    },
+    {
+      id: 'admin-charge',
+      label: 'Admin Charge',
+      basis: 'premium-base-mip-multiplier',
+      rate: 0.02,
+      amount: 0,
+      appliesTo: ['initial'],
+      fallbackAppliesTo: ['topup', 'accumulation'],
+      activeWindow: 'during-mip',
+      premiumBaseConfig: {
+        useHigherOfCommencementAndPrevailing: true,
+        multiplierYearBasis: 'policy-year',
+        multiplierSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 10, mode: 'fixed', multiplier: 1 },
+        ],
+      },
+      notes: [
+        'Models the published monthly admin charge during the minimum investment period as 2.00% p.a. of the annualised regular premium committed at commencement date.',
+      ],
+      sourceRefs: [page10],
     },
   ]
 }
@@ -298,7 +391,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       },
     ],
     bonuses: buildBonuses(document),
-    feeRules: [],
+    feeRules: buildFeeRules(document),
     eventChargeRules,
     distributionSupport: {
       mode: 'manual-assumption',
@@ -329,7 +422,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      'This partial template models regular-premium routing through year 10, top-up routing, recurring single premium routing, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.',
+      'This partial template models regular-premium routing through year 10, top-up routing, recurring single premium routing, the published initial setup charge, policy investment charge, admin charge, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.',
       'This partial template also models the published premium shortfall charge for non-payment periods and regular-premium reductions, including the higher-charge rule when both overlap.',
       'Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.',
       'Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.',
@@ -337,7 +430,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     ],
     unsupportedItems: [
       'Involuntary unemployment and hospitalisation benefit waiver remains metadata-only for this product.',
-      'Initial setup charge, monthly protection charge, and post-MIP regular-premium routing remain metadata-only for this product.',
+      'Monthly protection charge remains metadata-only for this product.',
       'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1.',
     ],
     sourceRefs: [page1, page2, page3, page6, page7, page9, page11, page12, page18],
@@ -367,6 +460,9 @@ export function parseTokioMarineWealthProIi(context: ParseContext): IlpCatalogPr
       'tokio-recurring-single-premium-routing',
       'tokio-recurring-single-premium-manual-resumption-after-premium-holiday',
       'tokio-regular-premium-reduction-consumes-recurring-single-premium-first',
+      'tokio-initial-charge-on-initial-account',
+      'tokio-policy-charge-on-accumulation-account',
+      'tokio-admin-charge-on-initial-account',
       'tokio-top-up-premium-charge',
       'tokio-recurring-single-premium-charge',
       'tokio-initial-account-surrender-charge',
@@ -379,12 +475,13 @@ export function parseTokioMarineWealthProIi(context: ParseContext): IlpCatalogPr
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-initial-setup-and-monthly-protection-charges',
+      'tokio-wealth-pro-ii-monthly-protection-charge',
       'tokio-dividend-payout-threshold-and-record-date-instructions',
       'tokio-multiple-life-and-capital-guarantee-options',
     ],
     warnings: [
       'Structured extraction validated against the Wealth Pro (II) product summary text layer.',
+      'Wealth Pro (II) is modeled with the published initial setup charge, policy investment charge, and admin charge tied to the commencement-date premium commitment.',
       'Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.',
       'Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.',
       'Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary.',

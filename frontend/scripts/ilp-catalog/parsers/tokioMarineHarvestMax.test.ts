@@ -87,7 +87,7 @@ describe('parseTokioMarineHarvestMax', () => {
           rate: 0.012,
           startPolicyYear: 4,
           premiumBaseConfig: {
-            useHigherOfCommencementAndPrevailing: false,
+            useHigherOfCommencementAndPrevailing: true,
             multiplierYearBasis: 'policy-year',
             multiplierSchedule: [
               { startPolicyYear: 4, endPolicyYear: 15, mode: 'policy-year' },
@@ -99,7 +99,7 @@ describe('parseTokioMarineHarvestMax', () => {
           basis: 'premium-base-mip-multiplier',
           rate: 0.02,
           premiumBaseConfig: {
-            useHigherOfCommencementAndPrevailing: false,
+            useHigherOfCommencementAndPrevailing: true,
             multiplierYearBasis: 'policy-year',
             multiplierSchedule: [
               { startPolicyYear: 1, endPolicyYear: 15, mode: 'fixed', multiplier: 1 },

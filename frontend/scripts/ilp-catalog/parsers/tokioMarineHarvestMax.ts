@@ -197,7 +197,7 @@ function buildFeeRules(document: ExtractedPdfDocument): IlpTemplateFeeRule[] {
       activeWindow: 'during-mip',
       startPolicyYear: 4,
       premiumBaseConfig: {
-        useHigherOfCommencementAndPrevailing: false,
+        useHigherOfCommencementAndPrevailing: true,
         multiplierYearBasis: 'policy-year',
         multiplierSchedule: [
           { startPolicyYear: 4, endPolicyYear: 15, mode: 'policy-year' },
@@ -218,7 +218,7 @@ function buildFeeRules(document: ExtractedPdfDocument): IlpTemplateFeeRule[] {
       fallbackAppliesTo: ['topup', 'initial'],
       activeWindow: 'after-mip',
       premiumBaseConfig: {
-        useHigherOfCommencementAndPrevailing: false,
+        useHigherOfCommencementAndPrevailing: true,
         multiplierYearBasis: 'policy-year',
         multiplierSchedule: [
           { startPolicyYear: 16, endPolicyYear: null, mode: 'fixed', multiplier: 15 },
@@ -239,7 +239,7 @@ function buildFeeRules(document: ExtractedPdfDocument): IlpTemplateFeeRule[] {
       fallbackAppliesTo: ['topup', 'accumulation'],
       activeWindow: 'during-mip',
       premiumBaseConfig: {
-        useHigherOfCommencementAndPrevailing: false,
+        useHigherOfCommencementAndPrevailing: true,
         multiplierYearBasis: 'policy-year',
         multiplierSchedule: [
           { startPolicyYear: 1, endPolicyYear: 15, mode: 'fixed', multiplier: 1 },

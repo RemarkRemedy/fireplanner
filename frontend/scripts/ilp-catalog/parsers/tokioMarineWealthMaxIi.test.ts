@@ -25,8 +25,12 @@ describe('parseTokioMarineWealthMaxIi', () => {
     expect(product.productName).toBe('Wealth Max (II)')
     expect(product.supportStatus).toBe('partial')
     expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
+    expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(product.modeledEconomics).toContain('tokio-admin-charge-on-initial-account')
     expect(product.modeledEconomics).toContain('tokio-post-mip-regular-premium-routing-back-to-initial-account')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-max-ii-monthly-protection-charge')
     expect(product.metadataOnlyBehaviors).toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
 
     const variant = product.variants[0]
@@ -40,6 +44,44 @@ describe('parseTokioMarineWealthMaxIi', () => {
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.59 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.6 },
     ])
+    expect(variant?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'initial-charge',
+          basis: 'account-value',
+          rateSchedule: expect.arrayContaining([
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 0.0105 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.042 },
+            { startPolicyYear: 15, endPolicyYear: 15, rate: 0.1575 },
+          ]),
+        }),
+        expect.objectContaining({
+          id: 'policy-charge-during-mip',
+          basis: 'premium-base-mip-multiplier',
+          rate: 0.012,
+          startPolicyYear: 4,
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: true,
+            multiplierYearBasis: 'policy-year',
+            multiplierSchedule: [
+              { startPolicyYear: 4, endPolicyYear: 15, mode: 'policy-year' },
+            ],
+          },
+        }),
+        expect.objectContaining({
+          id: 'admin-charge',
+          basis: 'premium-base-mip-multiplier',
+          rate: 0.02,
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: true,
+            multiplierYearBasis: 'policy-year',
+            multiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 15, mode: 'fixed', multiplier: 1 },
+            ],
+          },
+        }),
+      ]),
+    )
     expect(variant?.eventChargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

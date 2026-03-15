@@ -26,9 +26,12 @@ describe('parseTokioMarineHarvestPro', () => {
     expect(product.supportStatus).toBe('partial')
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toContain('tokio-performance-investment-bonus')
+    expect(product.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
+    expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(product.modeledEconomics).toContain('tokio-admin-charge-on-initial-account')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.modeledEconomics).not.toContain('tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-initial-setup-policy-investment-admin-and-monthly-protection-charges')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-pro-monthly-protection-charge')
     expect(product.metadataOnlyBehaviors).toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
     expect(product.metadataOnlyBehaviors).toContain('tokio-multiple-life-and-capital-guarantee-options')
 
@@ -78,6 +81,44 @@ describe('parseTokioMarineHarvestPro', () => {
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.31 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.33 },
     ])
+    expect(variant?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'initial-charge',
+          basis: 'account-value',
+          rateSchedule: expect.arrayContaining([
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 0.0105 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.042 },
+            { startPolicyYear: 10, endPolicyYear: 10, rate: 0.10500000000000001 },
+          ]),
+        }),
+        expect.objectContaining({
+          id: 'policy-charge-during-mip',
+          basis: 'premium-base-mip-multiplier',
+          rate: 0.012,
+          startPolicyYear: 4,
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: true,
+            multiplierYearBasis: 'policy-year',
+            multiplierSchedule: [
+              { startPolicyYear: 4, endPolicyYear: 10, mode: 'policy-year' },
+            ],
+          },
+        }),
+        expect.objectContaining({
+          id: 'admin-charge',
+          basis: 'premium-base-mip-multiplier',
+          rate: 0.02,
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: true,
+            multiplierYearBasis: 'policy-year',
+            multiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 10, mode: 'fixed', multiplier: 1 },
+            ],
+          },
+        }),
+      ]),
+    )
     expect(variant?.eecTable).toEqual([1, 1, 1, 0.99, 0.99, 0.96, 0.93, 0.89, 0.8, 0.1])
     expect(variant?.warnings).toContain(
       'Harvest Pro keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
