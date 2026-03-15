@@ -413,8 +413,9 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Flexi')
 
-    expect(within(dialog).getByText('Wealth Flexi')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+    const wealthFlexiCard = within(dialog).getByText('Wealth Flexi').closest('.rounded-lg')
+    expect(wealthFlexiCard).not.toBeNull()
+    await user.click(within(wealthFlexiCard!).getByRole('button', { name: /sgd \/ mip 10/i }))
 
     expect(screen.getAllByText('Wealth Flexi (SGD / MIP 10)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -424,6 +425,27 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Performance Investment Bonus (Policy Years 4-6)')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Performance Investment Bonus (Policy Years 7-10)')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Premium Shortfall Charge (Non-payment)')).toBeInTheDocument()
+  }, 10_000)
+
+  it('seeds Tokio Marine Wealth Flexi-Link 5.10 as a partial catalog product with accumulation-account policy charges', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Flexi-Link 5.10')
+
+    expect(within(dialog).getByText('Wealth Flexi-Link 5.10')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+
+    expect(screen.getAllByText('Wealth Flexi-Link 5.10 (SGD / MIP 10)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('paid-up and no-withdrawal eligibility gates')
+    expect(screen.getByDisplayValue('Policy Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Bonus')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Power-up Bonus (Policy Year 10)')).toBeInTheDocument()
   }, 10_000)
 
   it('seeds Tokio Marine #goLuxe as a partial catalog product with modeled account fees and premium-holiday shortfall rules', async () => {

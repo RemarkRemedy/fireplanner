@@ -2065,6 +2065,80 @@ describe('templateVariantToPolicySeed', () => {
     )
   })
 
+  it('maps Tokio Marine Wealth Flexi-Link 5.10 into a partial seed with accumulation-account policy charges and bonus windows', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-wealth-flexi-link-5-10')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-premium-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-power-up-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-5-10-involuntary-unemployment-waiver')
+    expect(seed.accounts.find((account) => account.id === 'accumulation')?.contributionRules).toEqual([
+      { phase: 'during-icp', contributionShare: 1 },
+      { phase: 'after-icp', contributionShare: 1 },
+      { phase: 'after-mip', contributionShare: 1 },
+    ])
+    expect(seed.accounts.find((account) => account.id === 'topup')?.contributionRules).toEqual([
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'policy-charge',
+        basis: 'account-value',
+        rate: 0.025,
+        appliesTo: ['accumulation'],
+        fallbackAppliesTo: ['topup'],
+      }),
+    ])
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          rate: 0.05,
+          appliesTo: ['topup'],
+        }),
+        expect.objectContaining({
+          id: 'recurring-single-premium-charge',
+          rate: 0.05,
+          appliesTo: ['topup'],
+        }),
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          rateSchedule: [
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.79 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.6 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.5 },
+            { startPolicyYear: 6, endPolicyYear: 10, rate: 0.05 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'premium-shortfall-charge-non-payment',
+          rateSchedule: [
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.79 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.6 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.5 },
+          ],
+        }),
+      ]),
+    )
+    expect(seed.bonuses.map((bonus) => bonus.label)).toEqual([
+      'Initial Bonus',
+      'Premium Bonus',
+      'Power-up Bonus (Policy Year 8)',
+      'Power-up Bonus (Policy Year 9)',
+      'Power-up Bonus (Policy Year 10)',
+    ])
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Premium Bonus')?.rate).toBe(0.002)
+    expect(seed.eecTable).toEqual([1, 1, 0.92, 0.83, 0.58, 0.57, 0.49, 0.3, 0.12, 0.03])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('paid-up and no-withdrawal eligibility gates'))).toBe(true)
+  })
+
   it('maps Tokio Marine #goLuxe into a partial seed with executable fee and shortfall rules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-goluxe')
