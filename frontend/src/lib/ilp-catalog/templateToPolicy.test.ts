@@ -1882,6 +1882,50 @@ describe('templateVariantToPolicySeed', () => {
     )
   })
 
+  it('maps Tokio Marine #goLuxe into a partial seed with executable fee and shortfall rules', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-goluxe')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-15')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({ id: 'initial', feeRate: 0.03, postMipFeeRate: 0 }),
+      expect.objectContaining({ id: 'accumulation', feeRate: 0.0135, postMipFeeRate: 0.0135 }),
+      expect.objectContaining({ id: 'topup', feeRate: 0 }),
+    ])
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.045 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.06 },
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.085 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.11 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.125 },
+    ])
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'premium-shortfall-charge-premium-holiday',
+          rateSchedule: [
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.5 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.45 },
+            { startPolicyYear: 6, endPolicyYear: 6, rate: 0.4 },
+            { startPolicyYear: 7, endPolicyYear: 7, rate: 0.35 },
+            { startPolicyYear: 8, endPolicyYear: 8, rate: 0.3 },
+            { startPolicyYear: 9, endPolicyYear: 9, rate: 0.25 },
+            { startPolicyYear: 10, endPolicyYear: 10, rate: 0.15 },
+            { startPolicyYear: 11, endPolicyYear: 15, rate: 0 },
+          ],
+        }),
+      ]),
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
+  })
+
   it('maps Manulife InvestReady (III) into a partial seed with protected-base assurance support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'manulife-investready-iii')

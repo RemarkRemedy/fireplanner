@@ -426,6 +426,26 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Premium Shortfall Charge (Non-payment)')).toBeInTheDocument()
   }, 10_000)
 
+  it('seeds Tokio Marine #goLuxe as a partial catalog product with modeled account fees and premium-holiday shortfall rules', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goLuxe')
+
+    expect(within(dialog).getByText('#goLuxe')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 15/i }))
+
+    expect(screen.getAllByText('#goLuxe (SGD / MIP 15)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('SGD / minimum-contribution-period-15 corridor only')
+    expect(screen.getByDisplayValue('Initial Bonus')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Shortfall Charge (Premium Holiday)')).toBeInTheDocument()
+  }, 10_000)
+
   it('renames the active policy from the input form and updates the policy tab', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
