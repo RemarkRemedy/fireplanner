@@ -30,6 +30,7 @@ describe('parseFwdInvestFlexiElite', () => {
       'branch:fwd-invest-flexi-elite-top-up-premium-charge',
       'branch:fwd-invest-flexi-elite-initial-account-redemption-fee',
       'branch:fwd-invest-flexi-elite-initial-account-surrender-charge',
+      'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('fwd-invest-flexi-elite-premium-shortfall-charge')
     expect(product.metadataOnlyBehaviors).toContain('fwd-invest-flexi-elite-free-partial-withdrawal-benefit')
@@ -86,6 +87,23 @@ describe('parseFwdInvestFlexiElite', () => {
         ],
       }),
     ])
+    expect(flexi3?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('S$10 minimum payout threshold'),
+      ]),
+      sourceRefs: [
+        expect.objectContaining({
+          page: 17,
+          section: 'Dividend distribution options',
+        }),
+      ],
+    })
     expect(flexi3?.eecTable).toEqual([1, 1, 0.79, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.05])
     expect(flexi3?.warnings).toContain(
       'Premium shortfall charge remains informational only because the published unemployment waiver, refund, and restart timing cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.',

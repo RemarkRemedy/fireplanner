@@ -91,6 +91,7 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
   const page11 = sourceRef(11, 'Withdrawal option overview', snippetNear(document, 11, 'Withdrawal option and Free Partial Withdrawal Benefit', 28))
   const page12 = sourceRef(12, 'Partial withdrawal limits and minimum account value', snippetNear(document, 12, 'Partial withdrawal limit', 28))
   const page13 = sourceRef(13, 'Free Partial Withdrawal Benefit', snippetNear(document, 13, 'Free Partial Withdrawal Benefit', 28))
+  const page17 = sourceRef(17, 'Dividend distribution options', snippetNear(document, 17, 'What are the options to manage my dividends', 28))
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
     {
@@ -165,11 +166,24 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
       buildInitialAccountChargeRule(page6),
     ],
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published S$10 minimum payout threshold remains informational only.',
+      ],
+      sourceRefs: [page17],
+    },
     eecTable: [...SURRENDER_CHARGE_SCHEDULE[flexMode]],
     warnings: [
-      `FWD Invest Flexi Elite (${variantLabel}) is cataloged as a partial modeled subset in V1. The parser captures the published initial-account-value charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.`,
+      `FWD Invest Flexi Elite (${variantLabel}) is cataloged as a partial modeled subset in V1. The parser captures the published initial-account-value charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.`,
       'Premium shortfall charge remains informational only because the published unemployment waiver, refund, and restart timing cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.',
-      'Booster Bonus, Annual Premium Bonus, Contribution Bonus, insurance charge, Free Partial Withdrawal Benefit, and broader premium-flexibility behavior remain outside the current engine.',
+      'Booster Bonus, Annual Premium Bonus, Contribution Bonus, insurance charge, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain outside the current engine.',
     ],
     unsupportedItems: [
       'Premium shortfall charge remains informational only because the unemployment waiver, refund, and variant-specific charge periods are not modeled exactly in V1.',
@@ -178,9 +192,9 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
       'Free Partial Withdrawal Benefit eligibility, capped fee waivers, and life-event proof requirements remain informational only.',
       'Partial-withdrawal limit formulas, minimum withdrawal requirements, and minimum account-value gates remain informational only.',
       'Regular-premium reduction and increase windows, top-up eligibility gates, and premium-payment continuation after the minimum investment term remain informational only.',
-      'Policy closure charge, fund-switching review rights, dividend-distribution elections, and change-of-policy-currency handling remain informational only.',
+      'Policy closure charge, fund-switching review rights, the published S$10 dividend cash-out threshold and pending-transaction sale timing, and change-of-policy-currency handling remain informational only.',
     ],
-    sourceRefs: [page1, page2, page3, page5, page6, page7, page8, page9, page10, page11, page12, page13],
+    sourceRefs: [page1, page2, page3, page5, page6, page7, page8, page9, page10, page11, page12, page13, page17],
   }
 }
 
@@ -201,6 +215,7 @@ export function parseFwdInvestFlexiElite(context: ParseContext): IlpCatalogProdu
       'branch:fwd-invest-flexi-elite-top-up-premium-charge',
       'branch:fwd-invest-flexi-elite-initial-account-redemption-fee',
       'branch:fwd-invest-flexi-elite-initial-account-surrender-charge',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'fwd-invest-flexi-elite-premium-shortfall-charge',
@@ -216,11 +231,11 @@ export function parseFwdInvestFlexiElite(context: ParseContext): IlpCatalogProdu
       'fwd-invest-flexi-elite-regular-withdrawal-option',
       'fwd-invest-flexi-elite-policy-closure-charge',
       'fwd-invest-flexi-elite-fund-switching',
-      'fwd-invest-flexi-elite-dividend-distribution-option',
+      'fwd-invest-flexi-elite-dividend-cashout-threshold',
       'fwd-invest-flexi-elite-change-of-policy-currency',
     ],
     warnings: [
-      'FWD Invest Flexi Elite is cataloged as a partial modeled subset in V1. The current parser covers the published initial-account-value charge, top-up premium charge, redemption-fee schedule, and surrender-charge schedule that fit the existing kernels.',
+      'FWD Invest Flexi Elite is cataloged as a partial modeled subset in V1. The current parser covers the published initial-account-value charge, top-up premium charge, redemption-fee schedule, surrender-charge schedule, and reinvest-default distribution support that fit the existing kernels.',
       'Premium shortfall / unemployment-waiver behavior, bonuses, insurance charge, Free Partial Withdrawal Benefit, and broader premium-flexibility behavior remain outside the current engine.',
     ],
     archived: false,

@@ -1528,6 +1528,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-flexi-elite-initial-account-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('fwd-invest-flexi-elite-premium-shortfall-charge')
     expect(seed.mipLength).toBe(10)
     expect(seed.accounts).toEqual([
@@ -1578,7 +1579,20 @@ describe('templateVariantToPolicySeed', () => {
       ]),
     )
     expect(seed.eecTable).toEqual([1, 1, 0.8, 0.68, 0.58, 0.55, 0.45, 0.18, 0.12, 0.03])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('unemployment waiver'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
   it('maps Invest Wealth Purpose into a partial seed with cumulative-paid policy charges and top-up routing', () => {
