@@ -2357,7 +2357,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'hsbc-life-flexi-protector',
-    variantId: 'manual-bounded-subset',
+    variantId: 'sgd-open-ended-regular-pay',
     scenarioId: 'assurance-choice-vs-max',
     fixtureClass: 'partial-modeled-subset',
     coverageTags: ['baseline', 'branch:hsbc-flexi-choice-max-assurance'],
@@ -2365,7 +2365,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     manualSource: {
       supportStatus: 'partial',
       sourceFileName: 'HSBC Life Flexi Protector Product Summary.pdf',
-      sourceChecksumSha256: 'manual-bounded-hsbc-flexi-subset',
+      sourceChecksumSha256: '3e6a2d15210a993587f2ec37fce0dc90e5e7f9ac2de3ba99bea98588c634df83',
     },
     integrityChecks: [
       {

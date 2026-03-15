@@ -21,6 +21,7 @@ import { parseFwdInvestFirstHorizon } from './parsers/fwdInvestFirstHorizon.js'
 import { parseFwdInvestGoal1 } from './parsers/fwdInvestGoal1.js'
 import { parseHsbcWealthAccelerate } from './parsers/hsbcWealthAccelerate.js'
 import { parseHsbcWealthAbundance } from './parsers/hsbcWealthAbundance.js'
+import { parseHsbcLifeFlexiProtector } from './parsers/hsbcLifeFlexiProtector.js'
 import { parseHsbcWealthFocus } from './parsers/hsbcWealthFocus.js'
 import { parseHsbcGoalBuilderIi } from './parsers/hsbcGoalBuilderIi.js'
 import { parseHsbcWealthInvestCpf } from './parsers/hsbcWealthInvestCpf.js'
@@ -135,6 +136,7 @@ const HSBC_WEALTH_ABUNDANCE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life We
 const HSBC_WEALTH_FOCUS_FLEXI_1_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WF PS v1.51_MIP10Flexi1.pdf'
 const HSBC_WEALTH_FOCUS_FLEXI_3_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WF PS v1.51_MIP10Flexi3.pdf'
 const HSBC_WEALTH_FOCUS_FLEXI_5_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WF PS v1.51_MIP10Flexi5.pdf'
+const HSBC_LIFE_FLEXI_PROTECTOR_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Flexi Protector Product Summary.pdf'
 const HSBC_WEALTH_HARVEST_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Harvest Product Summary.pdf'
 const HSBC_WEALTH_INVEST_CPF_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Invest (CPF) Product Summary.pdf'
 const HSBC_WEALTH_INVEST_CASH_SRS_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Invest (Cash_SRS) PS.pdf'
@@ -352,6 +354,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const hsbcWealthFocusFlexi3Checksum = await sha256(HSBC_WEALTH_FOCUS_FLEXI_3_SOURCE_PATH)
   const hsbcWealthFocusFlexi5Extracted = await extractPdfText(HSBC_WEALTH_FOCUS_FLEXI_5_SOURCE_PATH)
   const hsbcWealthFocusFlexi5Checksum = await sha256(HSBC_WEALTH_FOCUS_FLEXI_5_SOURCE_PATH)
+  const hsbcLifeFlexiProtectorExtracted = await extractPdfText(HSBC_LIFE_FLEXI_PROTECTOR_SOURCE_PATH)
+  const hsbcLifeFlexiProtectorChecksum = await sha256(HSBC_LIFE_FLEXI_PROTECTOR_SOURCE_PATH)
   const hsbcHarvestExtracted = await extractPdfText(HSBC_WEALTH_HARVEST_SOURCE_PATH)
   const hsbcHarvestChecksum = await sha256(HSBC_WEALTH_HARVEST_SOURCE_PATH)
   const hsbcWealthInvestCpfExtracted = await extractPdfText(HSBC_WEALTH_INVEST_CPF_SOURCE_PATH)
@@ -632,6 +636,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseHsbcWealthFocus({
       document: hsbcWealthFocusFlexi5Extracted,
       sourceChecksumSha256: hsbcWealthFocusFlexi5Checksum,
+    }),
+    parseHsbcLifeFlexiProtector({
+      document: hsbcLifeFlexiProtectorExtracted,
+      sourceChecksumSha256: hsbcLifeFlexiProtectorChecksum,
     }),
     parseHsbcWealthHarvest({
       document: hsbcHarvestExtracted,

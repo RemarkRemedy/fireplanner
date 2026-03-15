@@ -2570,6 +2570,57 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-payment-term-25 corridor only'))).toBe(true)
   })
 
+  it('maps HSBC Life Flexi Protector into a partial seed with premium charges, fixed admin fee, and allocation uplift', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'hsbc-life-flexi-protector')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-regular-pay')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-life-flexi-protector-regular-premium-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-life-flexi-protector-administration-fee')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-insurance-charge')
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'regular-premium-charge',
+          basis: 'annual-contribution',
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 0.8 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 0.6 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.45 },
+            { startPolicyYear: 4, endPolicyYear: null, rate: 0 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'administration-fee',
+          basis: 'fixed-annual',
+          amountSchedule: [
+            { startPolicyYear: 1, endPolicyYear: null, amount: 60 },
+          ],
+        }),
+      ]),
+    )
+    expect(seed.bonuses).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'regular-premium-allocation-uplift',
+          rate: 0.02,
+          startPolicyYear: 5,
+          endPolicyYear: null,
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.05 }),
+      expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
+      expect.objectContaining({ id: 'partial-withdrawal-charge', rate: 0 }),
+    ])
+  })
+
   it('maps Tokio Marine TM Atlas Wealth into a partial seed with 12-month routing and combined account-fee modeling', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-atlas-wealth')

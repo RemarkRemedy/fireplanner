@@ -40095,6 +40095,382 @@
     ]
   },
   {
+    "id": "hsbc-life-flexi-protector",
+    "insurer": "HSBC Life",
+    "productName": "HSBC Life Flexi Protector",
+    "sourceFileName": "HSBC Life Flexi Protector Product Summary.pdf",
+    "sourceChecksumSha256": "3e6a2d15210a993587f2ec37fce0dc90e5e7f9ac2de3ba99bea98588c634df83",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:hsbc-life-flexi-protector-regular-premium-charge",
+      "branch:hsbc-life-flexi-protector-regular-premium-allocation-uplift",
+      "branch:hsbc-life-flexi-protector-administration-fee",
+      "branch:hsbc-life-flexi-protector-top-up-premium-charge",
+      "branch:hsbc-life-flexi-protector-recurring-single-premium-charge",
+      "branch:hsbc-life-flexi-protector-zero-partial-withdrawal-charge",
+      "kernel:distribution-mode-assumption"
+    ],
+    "metadataOnlyBehaviors": [
+      "hsbc-life-flexi-protector-choice-cover",
+      "hsbc-life-flexi-protector-max-cover",
+      "hsbc-life-flexi-protector-insurance-charge",
+      "hsbc-life-flexi-protector-additional-bonus-units",
+      "hsbc-life-flexi-protector-premium-holiday-lapse-sequencing",
+      "hsbc-life-flexi-protector-gio",
+      "hsbc-life-flexi-protector-life-replacement-option",
+      "hsbc-life-flexi-protector-policy-change-approvals",
+      "hsbc-life-flexi-protector-usd-corridor"
+    ],
+    "warnings": [
+      "HSBC Life Flexi Protector is cataloged as a partial modeled subset in V1. The parser captures the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the fixed S$5 monthly administration fee, the 5% top-up / recurring-single-premium charge path, and the nil withdrawal/redemption-fee path through the SGD open-ended regular-pay corridor.",
+      "Choice Cover versus Max Cover, insurance charge, and the tiered Additional Bonus Units remain informational only because the current engine does not execute those protection and account-band mechanics.",
+      "Structured extraction validated against the HSBC Life Flexi Protector product summary text layer."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-open-ended-regular-pay",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Regular premium and premium holiday",
+                "excerpt": "4.1. REGULAR PREMIUM You shall pay the Regular Premium in respect of this Policy subject to the minimum amount as determined by the Company from time to time. Regular Premium may be paid annually, semi- annually, quarter"
+              },
+              {
+                "page": 11,
+                "section": "Top-up premium and recurring single premium",
+                "excerpt": "Top-up Premiums are allowed on an ad-hoc basis anytime during the Policy term. Payment Type Minimum Amount Remark (in accordance with Your Policy Currency) SGD USD Top-up Premium $250 $250 Top-up Premium must be in multi"
+              },
+              {
+                "page": 12,
+                "section": "Premium allocation",
+                "excerpt": "Policy Year Percentage (%) of Premium Charge as Premium to purchase Units percentage (%) of Premium st 1 Policy Year 20% 80% nd 2 Policy Year 40% 60% rd 3 Policy Year 55% 45% th 4 Policy Year 100% 0% th 5 Policy Year onw"
+              },
+              {
+                "page": 16,
+                "section": "Fees and charges",
+                "excerpt": "PREMIUM The Premium Charge to Regular Premium is mentioned in the Subscription CHARGE under Premium Allocation clause. The Premium Charge to Recurring Single Premium or Top Up Premium is 5% deducted by cancellation of Un"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "regular-premium-allocation-uplift",
+            "type": "allocation",
+            "label": "Regular Premium Allocation Uplift",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 5,
+            "endPolicyYear": null,
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published increase from 100% to 102% of regular premium units from the fifth policy year onward."
+            ],
+            "sourceRefs": [
+              {
+                "page": 12,
+                "section": "Premium allocation",
+                "excerpt": "Policy Year Percentage (%) of Premium Charge as Premium to purchase Units percentage (%) of Premium st 1 Policy Year 20% 80% nd 2 Policy Year 40% 60% rd 3 Policy Year 55% 45% th 4 Policy Year 100% 0% th 5 Policy Year onw"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "regular-premium-charge",
+            "label": "Regular Premium Charge",
+            "basis": "annual-contribution",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published regular-premium charge schedule from the subscription table.",
+              "The separate 102% regular-premium allocation from policy year 5 onward is modeled as a standalone allocation uplift bonus."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Regular premium and premium holiday",
+                "excerpt": "4.1. REGULAR PREMIUM You shall pay the Regular Premium in respect of this Policy subject to the minimum amount as determined by the Company from time to time. Regular Premium may be paid annually, semi- annually, quarter"
+              },
+              {
+                "page": 12,
+                "section": "Premium allocation",
+                "excerpt": "Policy Year Percentage (%) of Premium Charge as Premium to purchase Units percentage (%) of Premium st 1 Policy Year 20% 80% nd 2 Policy Year 40% 60% rd 3 Policy Year 55% 45% th 4 Policy Year 100% 0% th 5 Policy Year onw"
+              },
+              {
+                "page": 16,
+                "section": "Fees and charges",
+                "excerpt": "PREMIUM The Premium Charge to Regular Premium is mentioned in the Subscription CHARGE under Premium Allocation clause. The Premium Charge to Recurring Single Premium or Top Up Premium is 5% deducted by cancellation of Un"
+              }
+            ]
+          },
+          {
+            "id": "administration-fee",
+            "label": "Administration Fee",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "amountSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": null,
+                "amount": 60
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published S$5 monthly administration fee as a fixed S$60 annual drag."
+            ],
+            "sourceRefs": [
+              {
+                "page": 16,
+                "section": "Fees and charges",
+                "excerpt": "PREMIUM The Premium Charge to Regular Premium is mentioned in the Subscription CHARGE under Premium Allocation clause. The Premium Charge to Recurring Single Premium or Top Up Premium is 5% deducted by cancellation of Un"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-Up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 5% premium charge on each accepted ad-hoc top-up premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Top-up premium and recurring single premium",
+                "excerpt": "Top-up Premiums are allowed on an ad-hoc basis anytime during the Policy term. Payment Type Minimum Amount Remark (in accordance with Your Policy Currency) SGD USD Top-up Premium $250 $250 Top-up Premium must be in multi"
+              },
+              {
+                "page": 16,
+                "section": "Fees and charges",
+                "excerpt": "PREMIUM The Premium Charge to Regular Premium is mentioned in the Subscription CHARGE under Premium Allocation clause. The Premium Charge to Recurring Single Premium or Top Up Premium is 5% deducted by cancellation of Un"
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurring Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 5% premium charge on each accepted recurring single premium.",
+              "This parser captures the SGD corridor only because recurring single premium is not available for USD-denominated policies."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Top-up premium and recurring single premium",
+                "excerpt": "Top-up Premiums are allowed on an ad-hoc basis anytime during the Policy term. Payment Type Minimum Amount Remark (in accordance with Your Policy Currency) SGD USD Top-up Premium $250 $250 Top-up Premium must be in multi"
+              },
+              {
+                "page": 16,
+                "section": "Fees and charges",
+                "excerpt": "PREMIUM The Premium Charge to Regular Premium is mentioned in the Subscription CHARGE under Premium Allocation clause. The Premium Charge to Recurring Single Premium or Top Up Premium is 5% deducted by cancellation of Un"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "The redemption fee is currently waived and no additional partial-withdrawal charge is stated in the product summary.",
+              "Minimum withdrawal amount, minimum holding amount, and account-value depletion termination rules remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 16,
+                "section": "Fees and charges",
+                "excerpt": "PREMIUM The Premium Charge to Regular Premium is mentioned in the Subscription CHARGE under Premium Allocation clause. The Premium Charge to Recurring Single Premium or Top Up Premium is 5% deducted by cancellation of Un"
+              },
+              {
+                "page": 17,
+                "section": "Partial withdrawal and regular withdrawal",
+                "excerpt": "10. PARTIAL WITHDRAWAL Minimum Withdrawal Remark Amount (in accordance with Your Policy Currency) SGD/USD Partial $250 Partial Withdrawal is only available provided always that Withdrawal the remaining Account Value is m"
+              },
+              {
+                "page": 24,
+                "section": "Surrender and termination",
+                "excerpt": "20. SURRENDER OF THE POLICY At any time after Policy Commencement Date, You may surrender this Policy to Us in exchange for the Surrender Value subject to receipt of the following by Us: (a) Your valid written applicatio"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "The summary allows either dividend reinvestment or cash payout, with reinvestment as the default.",
+            "Cash payout still depends on the fund-level dividend declaration and the minimum S$30 payout threshold."
+          ],
+          "sourceRefs": [
+            {
+              "page": 9,
+              "section": "Distribution of dividend",
+              "excerpt": "3.7. DISTRIBUTION OF DIVIDEND (a) Dividend Handling If You choose to invest in any ILP Sub-Fund that pays dividends, You have the option to either reinvest these dividends or to receive payout in cash of these dividends "
+            }
+          ]
+        },
+        "eecTable": [],
+        "warnings": [
+          "This partial template models the SGD open-ended regular-pay corridor with the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the fixed S$5 monthly administration fee, the 5% top-up / recurring-single-premium charge path, and the nil withdrawal/redemption-fee path.",
+          "Choice Cover versus Max Cover, insurance charge, and the tiered Additional Bonus Units remain outside the current executable slice."
+        ],
+        "unsupportedItems": [
+          "Choice Cover versus Max Cover death, TI, and TPD payout behavior remains informational only.",
+          "Insurance charge remains informational only because it depends on cover option, attained age, and current sum at risk.",
+          "Additional Bonus Units remain informational only because the published tiering is based on current account-value bands rather than a static premium band.",
+          "Premium-holiday lapse sequencing, policy reinstatement, GIO, and life-replacement behavior remain informational only.",
+          "USD-specific payment constraints and the no-RSP USD corridor remain informational only.",
+          "Minimum holding amounts, policy-change approval rules, and fund-switching mechanics remain informational only.",
+          "Fund-level management charges and other underlying-fund expenses remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 4,
+            "section": "Benefits and additional bonus units",
+            "excerpt": "Approximate excerpt; keyword \"Additional Bonus Units\" not found on page. 1. THE POLICY HSBC Life Flexi Protector is a whole life, Regular Premium Investment Linked Plan (“ILP”) which gives You the flexibility to choose t"
+          },
+          {
+            "page": 9,
+            "section": "Distribution of dividend",
+            "excerpt": "3.7. DISTRIBUTION OF DIVIDEND (a) Dividend Handling If You choose to invest in any ILP Sub-Fund that pays dividends, You have the option to either reinvest these dividends or to receive payout in cash of these dividends "
+          },
+          {
+            "page": 10,
+            "section": "Regular premium and premium holiday",
+            "excerpt": "4.1. REGULAR PREMIUM You shall pay the Regular Premium in respect of this Policy subject to the minimum amount as determined by the Company from time to time. Regular Premium may be paid annually, semi- annually, quarter"
+          },
+          {
+            "page": 11,
+            "section": "Top-up premium and recurring single premium",
+            "excerpt": "Top-up Premiums are allowed on an ad-hoc basis anytime during the Policy term. Payment Type Minimum Amount Remark (in accordance with Your Policy Currency) SGD USD Top-up Premium $250 $250 Top-up Premium must be in multi"
+          },
+          {
+            "page": 12,
+            "section": "Premium allocation",
+            "excerpt": "Policy Year Percentage (%) of Premium Charge as Premium to purchase Units percentage (%) of Premium st 1 Policy Year 20% 80% nd 2 Policy Year 40% 60% rd 3 Policy Year 55% 45% th 4 Policy Year 100% 0% th 5 Policy Year onw"
+          },
+          {
+            "page": 16,
+            "section": "Fees and charges",
+            "excerpt": "PREMIUM The Premium Charge to Regular Premium is mentioned in the Subscription CHARGE under Premium Allocation clause. The Premium Charge to Recurring Single Premium or Top Up Premium is 5% deducted by cancellation of Un"
+          },
+          {
+            "page": 17,
+            "section": "Partial withdrawal and regular withdrawal",
+            "excerpt": "10. PARTIAL WITHDRAWAL Minimum Withdrawal Remark Amount (in accordance with Your Policy Currency) SGD/USD Partial $250 Partial Withdrawal is only available provided always that Withdrawal the remaining Account Value is m"
+          },
+          {
+            "page": 24,
+            "section": "Surrender and termination",
+            "excerpt": "20. SURRENDER OF THE POLICY At any time after Policy Commencement Date, You may surrender this Policy to Us in exchange for the Surrender Value subject to receipt of the following by Us: (a) Your valid written applicatio"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "hsbc-life-wealth-harvest",
     "insurer": "HSBC Life",
     "productName": "Wealth Harvest",
