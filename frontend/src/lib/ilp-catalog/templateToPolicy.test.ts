@@ -1031,6 +1031,72 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Premium Pause Waiver'))).toBe(true)
   })
 
+  it('maps FWD Invest Flexi Elite into a finite-MIP multi-account partial seed', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'fwd-invest-flexi-elite')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10-flexi-5')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('FWD Invest Flexi Elite (SGD / MIP 10 (Flexi 5))')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-flexi-elite-initial-account-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('fwd-invest-flexi-elite-premium-shortfall-charge')
+    expect(seed.mipLength).toBe(10)
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'initial',
+        subjectToEec: true,
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+          { phase: 'after-icp', contributionShare: 1 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'accumulation',
+        subjectToEec: false,
+        contributionRules: [
+          { phase: 'top-up', contributionShare: 1 },
+        ],
+      }),
+    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'initial-account-charge',
+          basis: 'account-value',
+          rate: 0.025,
+          activeWindow: 'during-mip',
+          appliesTo: ['initial'],
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          appliesTo: ['accumulation'],
+          rate: 0.05,
+        }),
+        expect.objectContaining({
+          id: 'initial-account-redemption-fee',
+          appliesTo: ['initial'],
+          rateSchedule: [
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.79 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.6 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.5 },
+            { startPolicyYear: 6, endPolicyYear: 10, rate: 0.05 },
+          ],
+        }),
+      ]),
+    )
+    expect(seed.eecTable).toEqual([1, 1, 0.8, 0.68, 0.58, 0.55, 0.45, 0.18, 0.12, 0.03])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('unemployment waiver'))).toBe(true)
+  })
+
   it('maps Invest Wealth Purpose into a partial seed with cumulative-paid policy charges and top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-wealth-purpose')

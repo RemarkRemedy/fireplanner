@@ -3008,6 +3008,646 @@
     ]
   },
   {
+    "id": "fwd-invest-flexi-elite",
+    "insurer": "FWD Singapore",
+    "productName": "FWD Invest Flexi Elite",
+    "sourceFileName": "FWD_Invest Flexi Elite_Summary.pdf",
+    "sourceChecksumSha256": "92086a6aaf508688a40d9a7c67ec90112e48a32132592dd3e76e82fe59d3ec66",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:fwd-invest-flexi-elite-initial-account-charge",
+      "branch:fwd-invest-flexi-elite-top-up-premium-charge",
+      "branch:fwd-invest-flexi-elite-initial-account-redemption-fee",
+      "branch:fwd-invest-flexi-elite-initial-account-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "fwd-invest-flexi-elite-premium-shortfall-charge",
+      "fwd-invest-flexi-elite-involuntary-unemployment-benefit",
+      "fwd-invest-flexi-elite-premium-shortfall-charge-refund",
+      "fwd-invest-flexi-elite-insurance-charge",
+      "fwd-invest-flexi-elite-booster-bonus",
+      "fwd-invest-flexi-elite-annual-premium-bonus",
+      "fwd-invest-flexi-elite-contribution-bonus",
+      "fwd-invest-flexi-elite-free-partial-withdrawal-benefit",
+      "fwd-invest-flexi-elite-partial-withdrawal-limits",
+      "fwd-invest-flexi-elite-premium-flexibility-gates",
+      "fwd-invest-flexi-elite-regular-withdrawal-option",
+      "fwd-invest-flexi-elite-policy-closure-charge",
+      "fwd-invest-flexi-elite-fund-switching",
+      "fwd-invest-flexi-elite-dividend-distribution-option",
+      "fwd-invest-flexi-elite-change-of-policy-currency"
+    ],
+    "warnings": [
+      "FWD Invest Flexi Elite is cataloged as a partial modeled subset in V1. The current parser covers the published initial-account-value charge, top-up premium charge, redemption-fee schedule, and surrender-charge schedule that fit the existing kernels.",
+      "Premium shortfall / unemployment-waiver behavior, bonuses, insurance charge, Free Partial Withdrawal Benefit, and broader premium-flexibility behavior remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-10-flexi-3",
+        "currency": "SGD",
+        "mipBasis": "finite",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "initial",
+            "label": "Initial Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and death benefit",
+                "excerpt": "FWD Invest Flexi Elite Product Summary Note: Please read this Product Summary before you decide to take up this product. Name of the insurer FWD Singapore Pte. Ltd. Product name FWD Invest Flexi Elite If the Person Insur"
+              },
+              {
+                "page": 5,
+                "section": "Regular premium and top-up premium overview",
+                "excerpt": "Celebrate living fwd.com.sg Your Regular Premium will be invested in your chosen ILP sub-funds or selected investment strategy to help you achieve your investment goals. Regular Premium paid through the Policy term will "
+              },
+              {
+                "page": 6,
+                "section": "Initial account charge and insurance charge",
+                "excerpt": "Initial account charge is only payable during the first 10 Policy Years and will be deducted on each 6 Policy Monthiversary. The initial account charge A% p.a. initial units account value as of each Policy x Monthiversar"
+              },
+              {
+                "page": 11,
+                "section": "Withdrawal option overview",
+                "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my Policy? Changes to the Policy You can reduce your Regular Premium from the respective Policy Year shown in the table below, dependent on your chosen Mi"
+              },
+              {
+                "page": 12,
+                "section": "Partial withdrawal limits and minimum account value",
+                "excerpt": "Partial withdrawal limit During the Minimum Investment Term, any partial withdrawals from the initial units account will be subject to the partial withdrawal limits below, except for the Free Partial Withdrawal Benefit. "
+              },
+              {
+                "page": 13,
+                "section": "Free Partial Withdrawal Benefit",
+                "excerpt": "Free Partial Withdrawal Benefit Withdrawal Starting from Policy Year 3, you can apply for a waiver of the redemption fee when you withdraw option and Free from the initial units account following the occurrence of any of"
+              }
+            ]
+          },
+          {
+            "id": "accumulation",
+            "label": "Accumulation Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Regular premium and top-up premium overview",
+                "excerpt": "Celebrate living fwd.com.sg Your Regular Premium will be invested in your chosen ILP sub-funds or selected investment strategy to help you achieve your investment goals. Regular Premium paid through the Policy term will "
+              },
+              {
+                "page": 7,
+                "section": "Top-up premium charge and premium shortfall charge period",
+                "excerpt": "Premium charge For each top-up premium, we will apply a charge of 5% before using the remaining amount to buy (top-up premium) Units in your desired ILP sub-funds. If you miss paying your Regular Premium anytime from Pol"
+              },
+              {
+                "page": 11,
+                "section": "Withdrawal option overview",
+                "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my Policy? Changes to the Policy You can reduce your Regular Premium from the respective Policy Year shown in the table below, dependent on your chosen Mi"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "initial-account-charge",
+            "label": "Initial Account Charge",
+            "basis": "account-value",
+            "yearBasis": "policy-year",
+            "rate": 0.025,
+            "amount": 0,
+            "appliesTo": [
+              "initial"
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published monthly initial-account charge on the initial-units-account value during the 10-year minimum investment term.",
+              "The charge remains deductible even when regular premiums are not being paid during the minimum investment term.",
+              "Pending-transaction deferral timing remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Initial account charge and insurance charge",
+                "excerpt": "Initial account charge is only payable during the first 10 Policy Years and will be deducted on each 6 Policy Monthiversary. The initial account charge A% p.a. initial units account value as of each Policy x Monthiversar"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 5% premium charge on each accepted top-up premium.",
+              "The regular-premium-paid gate, minimum top-up amount, and investment-strategy routing remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Regular premium and top-up premium overview",
+                "excerpt": "Celebrate living fwd.com.sg Your Regular Premium will be invested in your chosen ILP sub-funds or selected investment strategy to help you achieve your investment goals. Regular Premium paid through the Policy term will "
+              },
+              {
+                "page": 7,
+                "section": "Top-up premium charge and premium shortfall charge period",
+                "excerpt": "Premium charge For each top-up premium, we will apply a charge of 5% before using the remaining amount to buy (top-up premium) Units in your desired ILP sub-funds. If you miss paying your Regular Premium anytime from Pol"
+              }
+            ]
+          },
+          {
+            "id": "initial-account-redemption-fee",
+            "label": "Initial Account Redemption Fee",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "initial"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.79
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 10,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published initial-units-account redemption-fee schedule for the 10 years – (3 flexi) corridor.",
+              "The first-two-policy-year withdrawal lockout, partial-withdrawal limit, minimum withdrawal amount, and minimum account-value rules remain informational only.",
+              "Free Partial Withdrawal Benefit waivers remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Redemption fee",
+                "excerpt": "This fee is calculated by multiplying the withdrawal amount by the redemption fee rate depending on the Policy Year at the point of request. The redemption fee will be deducted from the withdrawal proceeds prior to payin"
+              },
+              {
+                "page": 11,
+                "section": "Withdrawal option overview",
+                "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my Policy? Changes to the Policy You can reduce your Regular Premium from the respective Policy Year shown in the table below, dependent on your chosen Mi"
+              },
+              {
+                "page": 12,
+                "section": "Partial withdrawal limits and minimum account value",
+                "excerpt": "Partial withdrawal limit During the Minimum Investment Term, any partial withdrawals from the initial units account will be subject to the partial withdrawal limits below, except for the Free Partial Withdrawal Benefit. "
+              },
+              {
+                "page": 13,
+                "section": "Free Partial Withdrawal Benefit",
+                "excerpt": "Free Partial Withdrawal Benefit Withdrawal Starting from Policy Year 3, you can apply for a waiver of the redemption fee when you withdraw option and Free from the initial units account following the occurrence of any of"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.79,
+          0.6,
+          0.5,
+          0.45,
+          0.4,
+          0.2,
+          0.15,
+          0.05
+        ],
+        "warnings": [
+          "FWD Invest Flexi Elite (10 years – (3 flexi)) is cataloged as a partial modeled subset in V1. The parser captures the published initial-account-value charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.",
+          "Premium shortfall charge remains informational only because the published unemployment waiver, refund, and restart timing cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.",
+          "Booster Bonus, Annual Premium Bonus, Contribution Bonus, insurance charge, Free Partial Withdrawal Benefit, and broader premium-flexibility behavior remain outside the current engine."
+        ],
+        "unsupportedItems": [
+          "Premium shortfall charge remains informational only because the unemployment waiver, refund, and variant-specific charge periods are not modeled exactly in V1.",
+          "Booster Bonus, Annual Premium Bonus, and Contribution Bonus remain informational only.",
+          "Insurance charge remains informational only because the attained-age / sex / smoker appendix table is not yet wired for this FWD protection formula.",
+          "Free Partial Withdrawal Benefit eligibility, capped fee waivers, and life-event proof requirements remain informational only.",
+          "Partial-withdrawal limit formulas, minimum withdrawal requirements, and minimum account-value gates remain informational only.",
+          "Regular-premium reduction and increase windows, top-up eligibility gates, and premium-payment continuation after the minimum investment term remain informational only.",
+          "Policy closure charge, fund-switching review rights, dividend-distribution elections, and change-of-policy-currency handling remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and death benefit",
+            "excerpt": "FWD Invest Flexi Elite Product Summary Note: Please read this Product Summary before you decide to take up this product. Name of the insurer FWD Singapore Pte. Ltd. Product name FWD Invest Flexi Elite If the Person Insur"
+          },
+          {
+            "page": 2,
+            "section": "Booster Bonus and Annual Premium Bonus",
+            "excerpt": "While this Policy is in force, we will pay a Booster Bonus upon receipt of each Regular Premium for the first Policy Year. Booster Bonus = Booster Bonus rate x Regular Premium received The reward band is determined based"
+          },
+          {
+            "page": 3,
+            "section": "Contribution Bonus and Involuntary Unemployment Benefit",
+            "excerpt": "While this Policy is in force, we will pay a Contribution Bonus upon the receipt of each Regular Premium during the Contribution Bonus Payment Period. The Contribution Bonus Payment Period is determined based on your sel"
+          },
+          {
+            "page": 5,
+            "section": "Regular premium and top-up premium overview",
+            "excerpt": "Celebrate living fwd.com.sg Your Regular Premium will be invested in your chosen ILP sub-funds or selected investment strategy to help you achieve your investment goals. Regular Premium paid through the Policy term will "
+          },
+          {
+            "page": 6,
+            "section": "Initial account charge and insurance charge",
+            "excerpt": "Initial account charge is only payable during the first 10 Policy Years and will be deducted on each 6 Policy Monthiversary. The initial account charge A% p.a. initial units account value as of each Policy x Monthiversar"
+          },
+          {
+            "page": 7,
+            "section": "Top-up premium charge and premium shortfall charge period",
+            "excerpt": "Premium charge For each top-up premium, we will apply a charge of 5% before using the remaining amount to buy (top-up premium) Units in your desired ILP sub-funds. If you miss paying your Regular Premium anytime from Pol"
+          },
+          {
+            "page": 8,
+            "section": "Premium shortfall charge formula",
+            "excerpt": "The premium shortfall charge = D% p.a. Annualised Regular Premium x 7 (based on selected Minimum Investment Term) committed at the Effective Date 12 months Where D% is the premium shortfall charge rate in the prevailing "
+          },
+          {
+            "page": 9,
+            "section": "Redemption fee",
+            "excerpt": "This fee is calculated by multiplying the withdrawal amount by the redemption fee rate depending on the Policy Year at the point of request. The redemption fee will be deducted from the withdrawal proceeds prior to payin"
+          },
+          {
+            "page": 10,
+            "section": "Surrender charge",
+            "excerpt": "Surrender charge rate Minimum Investment Term Policy Year 10 years – 10 years – (3 flexi) (5 flexi) Surrender charge 1 100% 100% 2 100% 100% 3 79% 80% 4 60% 68% 5 50% 58% 6 45% 55% 7 40% 45% 8 20% 18% 9 15% 12% 10 5% 3% "
+          },
+          {
+            "page": 11,
+            "section": "Withdrawal option overview",
+            "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my Policy? Changes to the Policy You can reduce your Regular Premium from the respective Policy Year shown in the table below, dependent on your chosen Mi"
+          },
+          {
+            "page": 12,
+            "section": "Partial withdrawal limits and minimum account value",
+            "excerpt": "Partial withdrawal limit During the Minimum Investment Term, any partial withdrawals from the initial units account will be subject to the partial withdrawal limits below, except for the Free Partial Withdrawal Benefit. "
+          },
+          {
+            "page": 13,
+            "section": "Free Partial Withdrawal Benefit",
+            "excerpt": "Free Partial Withdrawal Benefit Withdrawal Starting from Policy Year 3, you can apply for a waiver of the redemption fee when you withdraw option and Free from the initial units account following the occurrence of any of"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-10-flexi-5",
+        "currency": "SGD",
+        "mipBasis": "finite",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "initial",
+            "label": "Initial Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and death benefit",
+                "excerpt": "FWD Invest Flexi Elite Product Summary Note: Please read this Product Summary before you decide to take up this product. Name of the insurer FWD Singapore Pte. Ltd. Product name FWD Invest Flexi Elite If the Person Insur"
+              },
+              {
+                "page": 5,
+                "section": "Regular premium and top-up premium overview",
+                "excerpt": "Celebrate living fwd.com.sg Your Regular Premium will be invested in your chosen ILP sub-funds or selected investment strategy to help you achieve your investment goals. Regular Premium paid through the Policy term will "
+              },
+              {
+                "page": 6,
+                "section": "Initial account charge and insurance charge",
+                "excerpt": "Initial account charge is only payable during the first 10 Policy Years and will be deducted on each 6 Policy Monthiversary. The initial account charge A% p.a. initial units account value as of each Policy x Monthiversar"
+              },
+              {
+                "page": 11,
+                "section": "Withdrawal option overview",
+                "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my Policy? Changes to the Policy You can reduce your Regular Premium from the respective Policy Year shown in the table below, dependent on your chosen Mi"
+              },
+              {
+                "page": 12,
+                "section": "Partial withdrawal limits and minimum account value",
+                "excerpt": "Partial withdrawal limit During the Minimum Investment Term, any partial withdrawals from the initial units account will be subject to the partial withdrawal limits below, except for the Free Partial Withdrawal Benefit. "
+              },
+              {
+                "page": 13,
+                "section": "Free Partial Withdrawal Benefit",
+                "excerpt": "Free Partial Withdrawal Benefit Withdrawal Starting from Policy Year 3, you can apply for a waiver of the redemption fee when you withdraw option and Free from the initial units account following the occurrence of any of"
+              }
+            ]
+          },
+          {
+            "id": "accumulation",
+            "label": "Accumulation Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Regular premium and top-up premium overview",
+                "excerpt": "Celebrate living fwd.com.sg Your Regular Premium will be invested in your chosen ILP sub-funds or selected investment strategy to help you achieve your investment goals. Regular Premium paid through the Policy term will "
+              },
+              {
+                "page": 7,
+                "section": "Top-up premium charge and premium shortfall charge period",
+                "excerpt": "Premium charge For each top-up premium, we will apply a charge of 5% before using the remaining amount to buy (top-up premium) Units in your desired ILP sub-funds. If you miss paying your Regular Premium anytime from Pol"
+              },
+              {
+                "page": 11,
+                "section": "Withdrawal option overview",
+                "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my Policy? Changes to the Policy You can reduce your Regular Premium from the respective Policy Year shown in the table below, dependent on your chosen Mi"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "initial-account-charge",
+            "label": "Initial Account Charge",
+            "basis": "account-value",
+            "yearBasis": "policy-year",
+            "rate": 0.025,
+            "amount": 0,
+            "appliesTo": [
+              "initial"
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published monthly initial-account charge on the initial-units-account value during the 10-year minimum investment term.",
+              "The charge remains deductible even when regular premiums are not being paid during the minimum investment term.",
+              "Pending-transaction deferral timing remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Initial account charge and insurance charge",
+                "excerpt": "Initial account charge is only payable during the first 10 Policy Years and will be deducted on each 6 Policy Monthiversary. The initial account charge A% p.a. initial units account value as of each Policy x Monthiversar"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 5% premium charge on each accepted top-up premium.",
+              "The regular-premium-paid gate, minimum top-up amount, and investment-strategy routing remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Regular premium and top-up premium overview",
+                "excerpt": "Celebrate living fwd.com.sg Your Regular Premium will be invested in your chosen ILP sub-funds or selected investment strategy to help you achieve your investment goals. Regular Premium paid through the Policy term will "
+              },
+              {
+                "page": 7,
+                "section": "Top-up premium charge and premium shortfall charge period",
+                "excerpt": "Premium charge For each top-up premium, we will apply a charge of 5% before using the remaining amount to buy (top-up premium) Units in your desired ILP sub-funds. If you miss paying your Regular Premium anytime from Pol"
+              }
+            ]
+          },
+          {
+            "id": "initial-account-redemption-fee",
+            "label": "Initial Account Redemption Fee",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "initial"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.79
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 10,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published initial-units-account redemption-fee schedule for the 10 years – (5 flexi) corridor.",
+              "The first-two-policy-year withdrawal lockout, partial-withdrawal limit, minimum withdrawal amount, and minimum account-value rules remain informational only.",
+              "Free Partial Withdrawal Benefit waivers remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Redemption fee",
+                "excerpt": "This fee is calculated by multiplying the withdrawal amount by the redemption fee rate depending on the Policy Year at the point of request. The redemption fee will be deducted from the withdrawal proceeds prior to payin"
+              },
+              {
+                "page": 11,
+                "section": "Withdrawal option overview",
+                "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my Policy? Changes to the Policy You can reduce your Regular Premium from the respective Policy Year shown in the table below, dependent on your chosen Mi"
+              },
+              {
+                "page": 12,
+                "section": "Partial withdrawal limits and minimum account value",
+                "excerpt": "Partial withdrawal limit During the Minimum Investment Term, any partial withdrawals from the initial units account will be subject to the partial withdrawal limits below, except for the Free Partial Withdrawal Benefit. "
+              },
+              {
+                "page": 13,
+                "section": "Free Partial Withdrawal Benefit",
+                "excerpt": "Free Partial Withdrawal Benefit Withdrawal Starting from Policy Year 3, you can apply for a waiver of the redemption fee when you withdraw option and Free from the initial units account following the occurrence of any of"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.8,
+          0.68,
+          0.58,
+          0.55,
+          0.45,
+          0.18,
+          0.12,
+          0.03
+        ],
+        "warnings": [
+          "FWD Invest Flexi Elite (10 years – (5 flexi)) is cataloged as a partial modeled subset in V1. The parser captures the published initial-account-value charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.",
+          "Premium shortfall charge remains informational only because the published unemployment waiver, refund, and restart timing cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.",
+          "Booster Bonus, Annual Premium Bonus, Contribution Bonus, insurance charge, Free Partial Withdrawal Benefit, and broader premium-flexibility behavior remain outside the current engine."
+        ],
+        "unsupportedItems": [
+          "Premium shortfall charge remains informational only because the unemployment waiver, refund, and variant-specific charge periods are not modeled exactly in V1.",
+          "Booster Bonus, Annual Premium Bonus, and Contribution Bonus remain informational only.",
+          "Insurance charge remains informational only because the attained-age / sex / smoker appendix table is not yet wired for this FWD protection formula.",
+          "Free Partial Withdrawal Benefit eligibility, capped fee waivers, and life-event proof requirements remain informational only.",
+          "Partial-withdrawal limit formulas, minimum withdrawal requirements, and minimum account-value gates remain informational only.",
+          "Regular-premium reduction and increase windows, top-up eligibility gates, and premium-payment continuation after the minimum investment term remain informational only.",
+          "Policy closure charge, fund-switching review rights, dividend-distribution elections, and change-of-policy-currency handling remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and death benefit",
+            "excerpt": "FWD Invest Flexi Elite Product Summary Note: Please read this Product Summary before you decide to take up this product. Name of the insurer FWD Singapore Pte. Ltd. Product name FWD Invest Flexi Elite If the Person Insur"
+          },
+          {
+            "page": 2,
+            "section": "Booster Bonus and Annual Premium Bonus",
+            "excerpt": "While this Policy is in force, we will pay a Booster Bonus upon receipt of each Regular Premium for the first Policy Year. Booster Bonus = Booster Bonus rate x Regular Premium received The reward band is determined based"
+          },
+          {
+            "page": 3,
+            "section": "Contribution Bonus and Involuntary Unemployment Benefit",
+            "excerpt": "While this Policy is in force, we will pay a Contribution Bonus upon the receipt of each Regular Premium during the Contribution Bonus Payment Period. The Contribution Bonus Payment Period is determined based on your sel"
+          },
+          {
+            "page": 5,
+            "section": "Regular premium and top-up premium overview",
+            "excerpt": "Celebrate living fwd.com.sg Your Regular Premium will be invested in your chosen ILP sub-funds or selected investment strategy to help you achieve your investment goals. Regular Premium paid through the Policy term will "
+          },
+          {
+            "page": 6,
+            "section": "Initial account charge and insurance charge",
+            "excerpt": "Initial account charge is only payable during the first 10 Policy Years and will be deducted on each 6 Policy Monthiversary. The initial account charge A% p.a. initial units account value as of each Policy x Monthiversar"
+          },
+          {
+            "page": 7,
+            "section": "Top-up premium charge and premium shortfall charge period",
+            "excerpt": "Premium charge For each top-up premium, we will apply a charge of 5% before using the remaining amount to buy (top-up premium) Units in your desired ILP sub-funds. If you miss paying your Regular Premium anytime from Pol"
+          },
+          {
+            "page": 8,
+            "section": "Premium shortfall charge formula",
+            "excerpt": "The premium shortfall charge = D% p.a. Annualised Regular Premium x 7 (based on selected Minimum Investment Term) committed at the Effective Date 12 months Where D% is the premium shortfall charge rate in the prevailing "
+          },
+          {
+            "page": 9,
+            "section": "Redemption fee",
+            "excerpt": "This fee is calculated by multiplying the withdrawal amount by the redemption fee rate depending on the Policy Year at the point of request. The redemption fee will be deducted from the withdrawal proceeds prior to payin"
+          },
+          {
+            "page": 10,
+            "section": "Surrender charge",
+            "excerpt": "Surrender charge rate Minimum Investment Term Policy Year 10 years – 10 years – (3 flexi) (5 flexi) Surrender charge 1 100% 100% 2 100% 100% 3 79% 80% 4 60% 68% 5 50% 58% 6 45% 55% 7 40% 45% 8 20% 18% 9 15% 12% 10 5% 3% "
+          },
+          {
+            "page": 11,
+            "section": "Withdrawal option overview",
+            "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my Policy? Changes to the Policy You can reduce your Regular Premium from the respective Policy Year shown in the table below, dependent on your chosen Mi"
+          },
+          {
+            "page": 12,
+            "section": "Partial withdrawal limits and minimum account value",
+            "excerpt": "Partial withdrawal limit During the Minimum Investment Term, any partial withdrawals from the initial units account will be subject to the partial withdrawal limits below, except for the Free Partial Withdrawal Benefit. "
+          },
+          {
+            "page": 13,
+            "section": "Free Partial Withdrawal Benefit",
+            "excerpt": "Free Partial Withdrawal Benefit Withdrawal Starting from Policy Year 3, you can apply for a waiver of the redemption fee when you withdraw option and Free from the initial units account following the occurrence of any of"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "fwd-invest-flexi-vii",
     "insurer": "FWD Singapore",
     "productName": "FWD Invest Flexi VII",
