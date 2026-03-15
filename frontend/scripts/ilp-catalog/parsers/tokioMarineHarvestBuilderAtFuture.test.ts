@@ -28,11 +28,25 @@ describe('parseTokioMarineHarvestBuilderAtFuture', () => {
     expect(product.modeledEconomics).toContain('tokio-power-up-bonus')
     expect(product.modeledEconomics).toContain('tokio-loyalty-bonus')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-builder-atfuture-monthly-protection-charge')
+    expect(product.metadataOnlyBehaviors).toContain(
+      'tokio-harvest-builder-atfuture-dividend-payout-threshold-and-record-date-instructions',
+    )
 
     const variant = product.variants[0]
     expect(variant?.id).toBe('sgd-mip-10')
     expect(variant?.accounts.map((account) => account.id)).toEqual(['accumulation', 'topup'])
+    expect(variant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['accumulation', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([expect.stringContaining('manual annual distribution-yield assumption')]),
+      sourceRefs: [expect.objectContaining({ page: 8, section: 'Dividend Distribution' })],
+    })
     expect(variant?.bonuses.map((bonus) => bonus.label)).toEqual([
       'Initial Bonus',
       'Premium Bonus (Policy Years 6-20)',
@@ -92,5 +106,8 @@ describe('parseTokioMarineHarvestBuilderAtFuture', () => {
       ]),
     )
     expect(variant?.eecTable).toEqual([1, 1, 0.8, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.03])
+    expect(variant?.warnings).toContain(
+      'Harvest Builder@Future keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
+    )
   }, 30_000)
 })

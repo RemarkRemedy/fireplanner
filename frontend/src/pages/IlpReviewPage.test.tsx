@@ -513,6 +513,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Partial template')
     expect(seededAlert?.textContent).toContain('2.50% policy charge during the minimum investment period and a 0.60% policy charge thereafter')
+    expect(seededAlert?.textContent).toContain('tokio harvest builder atfuture dividend payout threshold and record date instructions')
     expect(screen.getAllByDisplayValue('Policy Charge').length).toBeGreaterThan(0)
     expect(screen.getByDisplayValue('Premium Bonus (Policy Years 6-20)')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Power-up Bonus')).toBeInTheDocument()

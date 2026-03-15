@@ -3532,7 +3532,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-power-up-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-builder-atfuture-monthly-protection-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-harvest-builder-atfuture-dividend-payout-threshold-and-record-date-instructions',
+    )
     expect(seed.bonuses.map((bonus) => bonus.label)).toEqual([
       'Initial Bonus',
       'Premium Bonus (Policy Years 6-20)',
@@ -3562,8 +3566,21 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['accumulation', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
     expect(seed.eecTable).toEqual([1, 1, 0.8, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.03])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('paid-up and no-withdrawal eligibility gates'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
   })
 
   it('maps Tokio Marine #goLuxe into a partial seed with executable fee and shortfall rules', () => {
