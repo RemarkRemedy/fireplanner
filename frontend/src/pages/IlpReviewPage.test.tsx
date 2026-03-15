@@ -78,9 +78,12 @@ describe('IlpReviewPage', () => {
     await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 25/i }))
 
     expect(screen.getAllByText('Wealth Accelerate (SGD / MIP 25)').length).toBeGreaterThan(0)
-    expect(screen.getByText('Seeded from catalog template')).toBeInTheDocument()
-    expect(screen.getByText('Supported template')).toBeInTheDocument()
-    expect(screen.getByText(/metadata-only behaviors still outside the calculator: premium holiday delayed or partial repayment/i)).toBeInTheDocument()
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Supported template')
+    expect(seededAlert?.textContent).toContain('premium holiday delayed or partial repayment')
+    expect(seededAlert?.textContent).toContain('hsbc accelerate dividend payout threshold')
+    expect(seededAlert?.textContent).toContain('hsbc accelerate dividend bank routing')
   })
 
   it('seeds HSBC Wealth Harvest as a supported catalog product with explicit reinvestment-default boundaries', async () => {

@@ -123,6 +123,7 @@ function buildVariant(
   const page3 = sourceRef(3, 'The policy', snippetNear(document, 3, 'HSBC Life Wealth Accelerate is a whole life'))
   const page4 = sourceRef(4, 'Power-up bonus', snippetNear(document, 4, '3.2. POWER-UP BONUS'))
   const page5 = sourceRef(5, 'Loyalty bonus', snippetNear(document, 5, '3.3. LOYALTY BONUS'))
+  const page8 = sourceRef(8, 'Distribution of dividend', snippetNear(document, 8, '4.5.1. Dividend Handling', 18))
   const page9 = sourceRef(9, 'Policy premium', snippetNear(document, 9, 'Initial Contribution Period'))
   const page14 = sourceRef(14, 'Policy fees and charges', snippetNear(document, 14, 'AMF Rate per annum'))
   const page15 = sourceRef(15, 'Policy fees and charges', snippetNear(document, 15, 'PARTIAL'))
@@ -328,12 +329,26 @@ function buildVariant(
     bonuses: [...startUpBonuses, powerUpBonus, loyaltyBonus],
     feeRules,
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['iua', 'aua'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.',
+        'Cash payout applies to both the Initial Units Account and the Accumulation Units Account.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption while the published S$30 minimum payout threshold and designated-bank-account routing remain informational only.',
+      ],
+      sourceRefs: [page8],
+    },
     eecTable,
     warnings: [
-      'This template captures generic product mechanics only. Personal policy fields still need user input.',
+      'This template captures generic product mechanics plus reinvest-default distribution support. Personal policy fields still need user input.',
     ],
     unsupportedItems: [],
-    sourceRefs: [page3, page4, page5, page9, page14, page15, page31],
+    sourceRefs: [page3, page4, page5, page8, page9, page14, page15, page31],
   }
 }
 
@@ -378,12 +393,16 @@ export function parseHsbcWealthAccelerate(context: ParseContext): IlpCatalogProd
       'branch:hsbc-bonus-suspension',
       'branch:hsbc-premium-reduction-brc',
       'branch:hsbc-top-up-routing',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'premium-holiday-delayed-or-partial-repayment',
+      'hsbc-accelerate-dividend-payout-threshold',
+      'hsbc-accelerate-dividend-bank-routing',
     ],
     warnings: [
       'Structured extraction validated against the product summary text layer. Premium-holiday repayment is modeled for full back-pay immediately after the latest holiday period; other holiday edge cases still require manual review.',
+      'Wealth Accelerate keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
     ],
     archived: false,
     variants,

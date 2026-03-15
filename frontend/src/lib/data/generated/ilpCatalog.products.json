@@ -36581,13 +36581,17 @@
       "branch:hsbc-holiday-no-repayment",
       "branch:hsbc-bonus-suspension",
       "branch:hsbc-premium-reduction-brc",
-      "branch:hsbc-top-up-routing"
+      "branch:hsbc-top-up-routing",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "premium-holiday-delayed-or-partial-repayment"
+      "premium-holiday-delayed-or-partial-repayment",
+      "hsbc-accelerate-dividend-payout-threshold",
+      "hsbc-accelerate-dividend-bank-routing"
     ],
     "warnings": [
-      "Structured extraction validated against the product summary text layer. Premium-holiday repayment is modeled for full back-pay immediately after the latest holiday period; other holiday edge cases still require manual review."
+      "Structured extraction validated against the product summary text layer. Premium-holiday repayment is modeled for full back-pay immediately after the latest holiday period; other holiday edge cases still require manual review.",
+      "Wealth Accelerate keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface."
     ],
     "archived": false,
     "variants": [
@@ -36938,6 +36942,29 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "iua",
+            "aua"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.",
+            "Cash payout applies to both the Initial Units Account and the Accumulation Units Account.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption while the published S$30 minimum payout threshold and designated-bank-account routing remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 8,
+              "section": "Distribution of dividend",
+              "excerpt": "4.5.1. Dividend Handling If You choose to invest in any ILP Sub-Fund that pays dividends, You have the option to either reinvest these dividends or to receive payout in cash of these dividends (dividend payout option). Y"
+            }
+          ]
+        },
         "eecTable": [
           1,
           0.94,
@@ -36966,7 +36993,7 @@
           0.08
         ],
         "warnings": [
-          "This template captures generic product mechanics only. Personal policy fields still need user input."
+          "This template captures generic product mechanics plus reinvest-default distribution support. Personal policy fields still need user input."
         ],
         "unsupportedItems": [],
         "sourceRefs": [
@@ -36984,6 +37011,11 @@
             "page": 5,
             "section": "Loyalty bonus",
             "excerpt": "3.3. LOYALTY BONUS Starting from the first Policy month after the end of MIP and while the Policy is in force, You will receive the Loyalty Bonus every month throughout the Policy term, subject to the eligibility criteri"
+          },
+          {
+            "page": 8,
+            "section": "Distribution of dividend",
+            "excerpt": "4.5.1. Dividend Handling If You choose to invest in any ILP Sub-Fund that pays dividends, You have the option to either reinvest these dividends or to receive payout in cash of these dividends (dividend payout option). Y"
           },
           {
             "page": 9,
@@ -37354,6 +37386,29 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "iua",
+            "aua"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.",
+            "Cash payout applies to both the Initial Units Account and the Accumulation Units Account.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption while the published S$30 minimum payout threshold and designated-bank-account routing remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 8,
+              "section": "Distribution of dividend",
+              "excerpt": "4.5.1. Dividend Handling If You choose to invest in any ILP Sub-Fund that pays dividends, You have the option to either reinvest these dividends or to receive payout in cash of these dividends (dividend payout option). Y"
+            }
+          ]
+        },
         "eecTable": [
           1,
           0.99,
@@ -37387,7 +37442,7 @@
           0.08
         ],
         "warnings": [
-          "This template captures generic product mechanics only. Personal policy fields still need user input."
+          "This template captures generic product mechanics plus reinvest-default distribution support. Personal policy fields still need user input."
         ],
         "unsupportedItems": [],
         "sourceRefs": [
@@ -37405,6 +37460,11 @@
             "page": 5,
             "section": "Loyalty bonus",
             "excerpt": "3.3. LOYALTY BONUS Starting from the first Policy month after the end of MIP and while the Policy is in force, You will receive the Loyalty Bonus every month throughout the Policy term, subject to the eligibility criteri"
+          },
+          {
+            "page": 8,
+            "section": "Distribution of dividend",
+            "excerpt": "4.5.1. Dividend Handling If You choose to invest in any ILP Sub-Fund that pays dividends, You have the option to either reinvest these dividends or to receive payout in cash of these dividends (dividend payout option). Y"
           },
           {
             "page": 9,
@@ -37775,6 +37835,29 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "iua",
+            "aua"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.",
+            "Cash payout applies to both the Initial Units Account and the Accumulation Units Account.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption while the published S$30 minimum payout threshold and designated-bank-account routing remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 8,
+              "section": "Distribution of dividend",
+              "excerpt": "4.5.1. Dividend Handling If You choose to invest in any ILP Sub-Fund that pays dividends, You have the option to either reinvest these dividends or to receive payout in cash of these dividends (dividend payout option). Y"
+            }
+          ]
+        },
         "eecTable": [
           1,
           0.94,
@@ -37803,7 +37886,7 @@
           0.08
         ],
         "warnings": [
-          "This template captures generic product mechanics only. Personal policy fields still need user input."
+          "This template captures generic product mechanics plus reinvest-default distribution support. Personal policy fields still need user input."
         ],
         "unsupportedItems": [],
         "sourceRefs": [
@@ -37821,6 +37904,11 @@
             "page": 5,
             "section": "Loyalty bonus",
             "excerpt": "3.3. LOYALTY BONUS Starting from the first Policy month after the end of MIP and while the Policy is in force, You will receive the Loyalty Bonus every month throughout the Policy term, subject to the eligibility criteri"
+          },
+          {
+            "page": 8,
+            "section": "Distribution of dividend",
+            "excerpt": "4.5.1. Dividend Handling If You choose to invest in any ILP Sub-Fund that pays dividends, You have the option to either reinvest these dividends or to receive payout in cash of these dividends (dividend payout option). Y"
           },
           {
             "page": 9,
@@ -38191,6 +38279,29 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "iua",
+            "aua"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.",
+            "Cash payout applies to both the Initial Units Account and the Accumulation Units Account.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption while the published S$30 minimum payout threshold and designated-bank-account routing remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 8,
+              "section": "Distribution of dividend",
+              "excerpt": "4.5.1. Dividend Handling If You choose to invest in any ILP Sub-Fund that pays dividends, You have the option to either reinvest these dividends or to receive payout in cash of these dividends (dividend payout option). Y"
+            }
+          ]
+        },
         "eecTable": [
           1,
           0.99,
@@ -38224,7 +38335,7 @@
           0.08
         ],
         "warnings": [
-          "This template captures generic product mechanics only. Personal policy fields still need user input."
+          "This template captures generic product mechanics plus reinvest-default distribution support. Personal policy fields still need user input."
         ],
         "unsupportedItems": [],
         "sourceRefs": [
@@ -38242,6 +38353,11 @@
             "page": 5,
             "section": "Loyalty bonus",
             "excerpt": "3.3. LOYALTY BONUS Starting from the first Policy month after the end of MIP and while the Policy is in force, You will receive the Loyalty Bonus every month throughout the Policy term, subject to the eligibility criteri"
+          },
+          {
+            "page": 8,
+            "section": "Distribution of dividend",
+            "excerpt": "4.5.1. Dividend Handling If You choose to invest in any ILP Sub-Fund that pays dividends, You have the option to either reinvest these dividends or to receive payout in cash of these dividends (dividend payout option). Y"
           },
           {
             "page": 9,

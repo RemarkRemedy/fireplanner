@@ -20,7 +20,17 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.productId).toBe('hsbc-life-wealth-accelerate')
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('premium-holiday-delayed-or-partial-repayment')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-accelerate-dividend-payout-threshold')
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['iua', 'aua'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
     expect(seed.accounts.find((account) => account.id === 'iua')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
     ])
@@ -85,6 +95,7 @@ describe('templateVariantToPolicySeed', () => {
     ])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Top-up routing'))).toBe(false)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('missed-bonus restoration'))).toBe(false)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
   })
 
   it('maps HSBC Wealth Harvest into a supported seed with regular-vs-topup mechanics', () => {

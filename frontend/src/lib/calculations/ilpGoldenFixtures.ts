@@ -2209,7 +2209,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-mip-25',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline'],
+    coverageTags: ['baseline', 'kernel:distribution-mode-assumption'],
     description: 'Baseline in-force HSBC SGD / MIP 25 scenario.',
   },
   {
