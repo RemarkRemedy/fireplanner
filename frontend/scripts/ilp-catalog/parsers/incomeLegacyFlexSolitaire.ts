@@ -85,6 +85,7 @@ function buildVariant(document: ExtractedPdfDocument, config: LegacyFlexVariantC
   const page9 = sourceRef(9, 'Premium charge schedule and policy fee', snippetNear(document, 9, '7.1 Premium Charge', 24))
   const page11 = sourceRef(11, 'Partial withdrawal and premium holiday mechanics', snippetNear(document, 11, '7.7 Partial Withdrawal Charge', 24))
   const page12 = sourceRef(12, 'Subscription of premium and top-up units', snippetNear(document, 12, '100% of your regular premium less any premium charge', 22))
+  const page17 = sourceRef(17, 'Declaration and Reinvesting of Distributions', snippetNear(document, 17, 'Declaration and Reinvesting of Distributions', 18))
   const page25 = sourceRef(25, 'Appendix 2 surrender, partial withdrawal, and premium holiday charges', snippetNear(document, 25, 'Appendix 2', 24))
 
   const feeRules: IlpTemplateFeeRule[] = [
@@ -194,10 +195,23 @@ function buildVariant(document: ExtractedPdfDocument, config: LegacyFlexVariantC
     bonuses: [],
     feeRules,
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['premium', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: false,
+      cashPayoutAllowedAfterMip: false,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Legacy Flex Solitaire reinvests declared distributions into the same ILP sub-fund by default.',
+        'Published payout distributions are available only after exercising the retirement option and meeting the insurer-set minimum distribution amount, so V1 models only the reinvested baseline.',
+      ],
+      sourceRefs: [page17],
+    },
     eecTable: [...config.withdrawalAndSurrenderChargeSchedule],
     warnings: [
-      `Legacy Flex Solitaire is modeled as a partial regular-premium subset in V1 for the ${config.mipLength}-year MIP corridor. The parser captures the premium-year regular premium charge schedule, top-up premium charge, premium-holiday charge, and premium-account Appendix 2 partial-withdrawal / surrender charge schedule.`,
-      'Single-premium charging, loyalty bonus, policy fee, insurance cover charge, No Lapse Guarantee, and top-up-account first-12-month charge timing remain informational only in V1.',
+      `Legacy Flex Solitaire is modeled as a partial regular-premium subset in V1 for the ${config.mipLength}-year MIP corridor. The parser captures the premium-year regular premium charge schedule, top-up premium charge, premium-holiday charge, premium-account Appendix 2 partial-withdrawal / surrender charge schedule, and the published reinvest-only distribution baseline.`,
+      'Single-premium charging, loyalty bonus, policy fee, insurance cover charge, No Lapse Guarantee, top-up-account first-12-month charge timing, and retirement-option distribution payouts remain informational only in V1.',
     ],
     unsupportedItems: [
       'Single-premium corridor remains informational only in V1, including the 4% single-premium charge and the single-premium Appendix 2 charge schedule.',
@@ -206,11 +220,11 @@ function buildVariant(document: ExtractedPdfDocument, config: LegacyFlexVariantC
       'Insurance cover charge and all protection-benefit formulas remain informational only because they depend on sum at risk plus insured-life inputs.',
       'No Lapse Guarantee debt carry and termination behavior remain informational only.',
       'Future Premium Option and recurring top-up enrollment remain informational only.',
-      'Withdrawal Access Option and retirement/distribution payout elections remain informational only.',
+      'Withdrawal Access Option, retirement-option distribution payout elections, and the insurer-set minimum distribution payout threshold remain informational only.',
       'Fund-level annual management fees, fund switching, and suspension of dealings remain informational only.',
       'Top-up-account withdrawals and surrenders within the first 12 months remain informational only because the current executable slice treats the top-up account as charge-free throughout.',
     ],
-    sourceRefs: [page1, page2, page9, page11, page12, page25],
+    sourceRefs: [page1, page2, page9, page11, page12, page17, page25],
   }
 }
 
@@ -231,6 +245,7 @@ export function parseIncomeLegacyFlexSolitaire({ document, sourceChecksumSha256 
       'branch:income-legacy-flex-solitaire-top-up-premium-charge',
       'branch:income-legacy-flex-solitaire-premium-holiday-charge',
       'branch:income-legacy-flex-solitaire-appendix-2-withdrawal-and-surrender-charge',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'income-legacy-flex-solitaire-single-premium-corridor',
@@ -248,7 +263,7 @@ export function parseIncomeLegacyFlexSolitaire({ document, sourceChecksumSha256 
       'income-legacy-flex-solitaire-protection-benefits',
     ],
     warnings: [
-      'Legacy Flex Solitaire (VA3S / VA3R) is cataloged as a partial modeled subset in V1. The current parser models only the regular-premium 5-year and 10-year corridors: premium-year regular premium charges, top-up premium charge, premium-holiday charge, and premium-account Appendix 2 withdrawal / surrender charges. The single-premium corridor, loyalty bonus, policy fee, protection-side charges, No Lapse Guarantee, and top-up-account first-12-month charge timing remain outside the current engine.',
+      'Legacy Flex Solitaire (VA3S / VA3R) is cataloged as a partial modeled subset in V1. The current parser models only the regular-premium 5-year and 10-year corridors: premium-year regular premium charges, top-up premium charge, premium-holiday charge, premium-account Appendix 2 withdrawal / surrender charges, and the published reinvest-only distribution baseline. The single-premium corridor, loyalty bonus, policy fee, protection-side charges, No Lapse Guarantee, retirement-option payout elections, and top-up-account first-12-month charge timing remain outside the current engine.',
     ],
     archived: false,
     variants: VARIANT_CONFIGS.map((config) => buildVariant(document, config)),

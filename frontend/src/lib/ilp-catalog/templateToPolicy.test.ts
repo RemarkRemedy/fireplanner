@@ -2609,6 +2609,50 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.eecTable).toEqual([1, 1, 0.9, 0.8, 0.7, 0.65, 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.16, 0.14, 0.12, 0.1, 0.08])
   })
 
+  it('maps Legacy Flex Solitaire into a partial seed with reinvest-only distribution support', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'income-legacy-flex-solitaire')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-regular-mip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-legacy-flex-solitaire-regular-premium-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-legacy-flex-solitaire-retirement-and-distribution-options')
+    expect(seed.mipLength).toBe(10)
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'premium',
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+          { phase: 'after-icp', contributionShare: 1 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'topup',
+        contributionRules: [
+          { phase: 'top-up', contributionShare: 1 },
+        ],
+      }),
+    ])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['premium', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: false,
+      cashPayoutAllowedAfterMip: false,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('supports distribution-paying fund elections'))).toBe(true)
+  })
+
   it('maps Etiqa Invest flex prime II into a partial seed with distinct Flexi 3 and Flexi 5 variants', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-flex-prime-ii')

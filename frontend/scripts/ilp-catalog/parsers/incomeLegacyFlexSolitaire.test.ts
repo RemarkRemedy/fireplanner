@@ -29,6 +29,7 @@ describe('parseIncomeLegacyFlexSolitaire', () => {
       'branch:income-legacy-flex-solitaire-top-up-premium-charge',
       'branch:income-legacy-flex-solitaire-premium-holiday-charge',
       'branch:income-legacy-flex-solitaire-appendix-2-withdrawal-and-surrender-charge',
+      'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('income-legacy-flex-solitaire-single-premium-corridor')
     expect(product.metadataOnlyBehaviors).toContain('income-legacy-flex-solitaire-loyalty-bonus')
@@ -96,6 +97,18 @@ describe('parseIncomeLegacyFlexSolitaire', () => {
         appliesTo: ['premium'],
       }),
     ])
+    expect(term10?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['premium', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: false,
+      cashPayoutAllowedAfterMip: false,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('retirement option'),
+      ]),
+      sourceRefs: expect.any(Array),
+    })
     expect(term10?.eecTable).toEqual([0.9, 0.8, 0.7, 0.6, 0.55, 0.5, 0.45, 0.4, 0.3, 0.2])
   }, 30_000)
 })
