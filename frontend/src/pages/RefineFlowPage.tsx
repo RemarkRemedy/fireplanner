@@ -146,6 +146,11 @@ export function RefineFlowPage() {
       </header>
 
       <main className="mx-auto max-w-lg px-4 py-8">
+        {currentScreenIndex === 0 && flow.explanation && (
+          <div className="mb-6 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+            {flow.explanation}
+          </div>
+        )}
         <SetupScreen
           screen={currentScreen}
           values={values}

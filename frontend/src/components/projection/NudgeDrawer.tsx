@@ -209,6 +209,11 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-6 py-6">
+          {stepIndex === 0 && flow.explanation && (
+            <div className="mb-6 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+              {flow.explanation}
+            </div>
+          )}
           {currentScreen && (
             <SetupScreen
               screen={currentScreen}

@@ -75,7 +75,7 @@ export const NUDGE_PRIORITY: NudgeFlowId[] = [
 const CPF_FLOW: NudgeFlowDefinition = {
   id: 'cpf',
   label: 'CPF Details',
-  description: 'Add your CPF account balances and configure retirement payouts.',
+  description: 'Unlock a more accurate projection by including your CPF balances and LIFE payouts.',
   estimatedMinutes: 5,
   container: 'full-page',
   explanation:
@@ -157,7 +157,7 @@ const CPF_FLOW: NudgeFlowDefinition = {
 const PROPERTY_FLOW: NudgeFlowDefinition = {
   id: 'property',
   label: 'Property Details',
-  description: 'Add mortgage, downsizing plans, and rental income for your property.',
+  description: 'See how your mortgage, rental income, or downsizing plans impact your net worth.',
   estimatedMinutes: 5,
   container: 'full-page',
   explanation:
@@ -243,7 +243,7 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
 const EXPENSES_FLOW: NudgeFlowDefinition = {
   id: 'expenses',
   label: 'Expense Breakdown',
-  description: 'Break down your annual expenses by category for better retirement estimates.',
+  description: 'Break down your spending to model post-retirement expense changes more accurately.',
   estimatedMinutes: 4,
   container: 'full-page',
   explanation:
@@ -297,7 +297,7 @@ const EXPENSES_FLOW: NudgeFlowDefinition = {
 const HEALTHCARE_FLOW: NudgeFlowDefinition = {
   id: 'healthcare',
   label: 'Healthcare Coverage',
-  description: 'Configure your Integrated Shield Plan tier and MediSave details.',
+  description: 'Factor in ISP premiums and MediSave to prevent medical costs from derailing your plan.',
   estimatedMinutes: 3,
   container: 'full-page',
   explanation:
@@ -380,7 +380,7 @@ const HEALTHCARE_FLOW: NudgeFlowDefinition = {
 const SALARY_FLOW: NudgeFlowDefinition = {
   id: 'salary',
   label: 'Salary Model',
-  description: 'Choose how your salary grows over your career.',
+  description: 'Model your income growth to see its compound effect on your FIRE date.',
   estimatedMinutes: 2,
   container: 'drawer',
   explanation:
@@ -424,7 +424,7 @@ const SALARY_FLOW: NudgeFlowDefinition = {
 const SRS_FLOW: NudgeFlowDefinition = {
   id: 'srs',
   label: 'SRS Contributions',
-  description: 'Set up Supplementary Retirement Scheme contributions for tax savings.',
+  description: 'Model SRS tax relief and withdrawals for a more complete retirement picture.',
   estimatedMinutes: 2,
   container: 'drawer',
   explanation:
@@ -469,7 +469,7 @@ const SRS_FLOW: NudgeFlowDefinition = {
 const GOALS_FLOW: NudgeFlowDefinition = {
   id: 'goals',
   label: 'Financial Goals',
-  description: 'Add specific financial goals to track progress and model their FIRE impact.',
+  description: 'Add lump-sum future expenses that could shift your FIRE timeline.',
   estimatedMinutes: 2,
   container: 'drawer',
   explanation:
@@ -507,7 +507,7 @@ const GOALS_FLOW: NudgeFlowDefinition = {
 const ALLOCATION_FLOW: NudgeFlowDefinition = {
   id: 'allocation',
   label: 'Investment Allocation',
-  description: 'Choose your asset allocation template or customize weights.',
+  description: 'Your asset mix is the biggest driver of long-term returns and volatility.',
   estimatedMinutes: 2,
   container: 'drawer',
   explanation:
@@ -569,7 +569,7 @@ const ALLOCATION_FLOW: NudgeFlowDefinition = {
 const PROTECTION_FLOW: NudgeFlowDefinition = {
   id: 'protection',
   label: 'Protection & Debt',
-  description: 'Add your emergency fund, outstanding debts, and insurance coverage.',
+  description: 'Calculate your true net worth by factoring in emergency funds, loans, and insurance.',
   estimatedMinutes: 3,
   container: 'drawer',
   explanation:
