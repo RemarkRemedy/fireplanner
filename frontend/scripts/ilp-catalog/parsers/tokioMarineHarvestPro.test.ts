@@ -26,13 +26,33 @@ describe('parseTokioMarineHarvestPro', () => {
     expect(product.supportStatus).toBe('partial')
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toContain('tokio-performance-investment-bonus')
+    expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.modeledEconomics).not.toContain('tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-initial-setup-policy-investment-admin-and-monthly-protection-charges')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
     expect(product.metadataOnlyBehaviors).toContain('tokio-multiple-life-and-capital-guarantee-options')
 
     const variant = product.variants[0]
     expect(variant?.id).toBe('sgd-mip-10')
     expect(variant?.icpMonths).toBe(36)
     expect(variant?.accounts.map((account) => account.id)).toEqual(['initial', 'accumulation', 'topup'])
+    expect(variant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('manual annual distribution-yield assumption'),
+      ]),
+      sourceRefs: [
+        expect.objectContaining({
+          page: 9,
+          section: 'Dividend Distribution',
+        }),
+      ],
+    })
     expect(variant?.eventChargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.05 }),
@@ -59,5 +79,8 @@ describe('parseTokioMarineHarvestPro', () => {
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.33 },
     ])
     expect(variant?.eecTable).toEqual([1, 1, 1, 0.99, 0.99, 0.96, 0.93, 0.89, 0.8, 0.1])
+    expect(variant?.warnings).toContain(
+      'Harvest Pro keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
+    )
   }, 30_000)
 })

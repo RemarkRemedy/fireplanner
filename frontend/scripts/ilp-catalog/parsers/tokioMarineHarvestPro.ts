@@ -160,6 +160,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page3 = sourceRef(3, 'Performance Investment / Loyalty / Power-up Bonus', snippetNear(document, 3, 'Performance Investment Bonus', 20))
   const page4 = sourceRef(4, 'Regular Premium Routing', snippetNear(document, 4, 'Initial Units Account: Regular premium due during the first 36 months', 14))
   const page5 = sourceRef(5, 'Recurring Single Premium and Top-up Premium', snippetNear(document, 5, 'Recurring Single Premium', 18))
+  const page9 = sourceRef(9, 'Dividend Distribution', snippetNear(document, 9, 'Dividend Distribution', 20))
   const page11 = sourceRef(11, 'Partial Withdrawal Charge and Premium Shortfall Charge', snippetNear(document, 11, 'Partial Withdrawal Charge', 28))
   const page12 = sourceRef(12, 'Premium Shortfall Charge and fee notes', snippetNear(document, 12, 'Premium Shortfall Charge', 26))
   const page17 = sourceRef(17, 'Appendix A Charges', snippetNear(document, 17, 'SURRENDER CHARGE', 24))
@@ -299,18 +300,34 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: buildBonuses(document),
     feeRules: [],
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying funds default to reinvestment, while cash payout can be explored through the manual annual distribution-yield assumption.',
+        'The published dividend election applies across the Initial Units Account, Accumulation Units Account, and Top-up Units Account.',
+        'The published $50 minimum payout threshold and 30-day record-date instruction window remain informational only in V1.',
+      ],
+      sourceRefs: [page9],
+    },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
       'This partial template models regular-premium routing through year 10, top-up routing, recurring single premium routing, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.',
       'This partial template also models the published premium shortfall charge for non-payment periods and regular-premium reductions, including the higher-charge rule when both overlap.',
       'Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.',
       'Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.',
+      'Harvest Pro keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
     ],
     unsupportedItems: [
-      'Initial setup charge, policy investment charge, admin charge, monthly protection charge, and dividend distribution election remain metadata-only for this product.',
+      'Initial setup charge, policy investment charge, admin charge, and monthly protection charge remain metadata-only for this product.',
+      'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product.',
       'Multiple-life and capital-guarantee death-benefit options remain metadata-only for this product.',
     ],
-    sourceRefs: [page1, page2, page3, page4, page5, page11, page12, page17],
+    sourceRefs: [page1, page2, page3, page4, page5, page9, page11, page12, page17],
   }
 }
 
@@ -345,9 +362,11 @@ export function parseTokioMarineHarvestPro(context: ParseContext): IlpCatalogPro
       'tokio-premium-shortfall-charge-regular-premium-reduction',
       'tokio-premium-increase-restores-shortfall-charge-cessation',
       'tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-initial-setup-policy-investment-admin-monthly-protection-and-dividend-distribution',
+      'tokio-initial-setup-policy-investment-admin-and-monthly-protection-charges',
+      'tokio-dividend-payout-threshold-and-record-date-instructions',
       'tokio-multiple-life-and-capital-guarantee-options',
     ],
     warnings: [

@@ -67757,10 +67757,12 @@
       "tokio-premium-shortfall-charge-non-payment",
       "tokio-premium-shortfall-charge-regular-premium-reduction",
       "tokio-premium-increase-restores-shortfall-charge-cessation",
-      "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only"
+      "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "tokio-initial-setup-policy-investment-admin-monthly-protection-and-dividend-distribution",
+      "tokio-initial-setup-policy-investment-admin-and-monthly-protection-charges",
+      "tokio-dividend-payout-threshold-and-record-date-instructions",
       "tokio-multiple-life-and-capital-guarantee-options"
     ],
     "warnings": [
@@ -68261,6 +68263,30 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "initial",
+            "accumulation",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying funds default to reinvestment, while cash payout can be explored through the manual annual distribution-yield assumption.",
+            "The published dividend election applies across the Initial Units Account, Accumulation Units Account, and Top-up Units Account.",
+            "The published $50 minimum payout threshold and 30-day record-date instruction window remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 9,
+              "section": "Dividend Distribution",
+              "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -68277,10 +68303,12 @@
           "This partial template models regular-premium routing through year 10, top-up routing, recurring single premium routing, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.",
           "This partial template also models the published premium shortfall charge for non-payment periods and regular-premium reductions, including the higher-charge rule when both overlap.",
           "Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.",
-          "Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant."
+          "Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.",
+          "Harvest Pro keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface."
         ],
         "unsupportedItems": [
-          "Initial setup charge, policy investment charge, admin charge, monthly protection charge, and dividend distribution election remain metadata-only for this product.",
+          "Initial setup charge, policy investment charge, admin charge, and monthly protection charge remain metadata-only for this product.",
+          "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product.",
           "Multiple-life and capital-guarantee death-benefit options remain metadata-only for this product."
         ],
         "sourceRefs": [
@@ -68308,6 +68336,11 @@
             "page": 5,
             "section": "Recurring Single Premium and Top-up Premium",
             "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. When there is any reduction in regular premium amount p"
+          },
+          {
+            "page": 9,
+            "section": "Dividend Distribution",
+            "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
           },
           {
             "page": 11,

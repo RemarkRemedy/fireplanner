@@ -766,6 +766,25 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Initial Bonus')).toBeInTheDocument()
   }, 10_000)
 
+  it('seeds Tokio Marine Harvest Pro as a partial catalog product with dividend-mode support on all three accounts', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Harvest Pro')
+
+    expect(within(dialog).getByText('Harvest Pro')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+
+    expect(screen.getAllByText('Harvest Pro (SGD / MIP 10)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('tokio dividend payout threshold and record date instructions')
+    expect(screen.getByDisplayValue('Performance Investment Bonus')).toBeInTheDocument()
+  }, 10_000)
+
   it('seeds Tokio Marine Harvest Max as a partial catalog product with executable initial, policy, and admin charges', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
