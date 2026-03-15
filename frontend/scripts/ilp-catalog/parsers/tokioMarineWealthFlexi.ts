@@ -5,6 +5,7 @@ import type {
   IlpTemplateBonus,
   IlpTemplateBonusTier,
   IlpTemplateEventChargeRule,
+  IlpTemplateFeeRule,
   IlpTemplateVariant,
 } from '../../../src/lib/ilp-catalog/types.js'
 import type { ExtractedPdfDocument } from '../pdf/extractPdfText.js'
@@ -140,6 +141,65 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
         'Annual performance investment bonus on the Accumulation Units Account value after the minimum investment period.',
       ],
       sourceRefs: [page3],
+    },
+  ]
+}
+
+function buildFeeRules(document: ExtractedPdfDocument): IlpTemplateFeeRule[] {
+  const page9 = sourceRef(9, 'Initial Setup Charge / Policy Investment Charge / Admin Charge', snippetNear(document, 9, 'Initial Setup Charge', 28))
+
+  return [
+    {
+      id: 'initial-charge',
+      label: 'Initial Setup Charge',
+      basis: 'account-value',
+      rate: 0.012,
+      amount: 0,
+      appliesTo: ['accumulation'],
+      activeWindow: 'policy-term',
+      notes: [
+        'Models the published monthly initial setup charge as a 1.2% p.a. deduction from the Accumulation Units Account value throughout the policy term.',
+      ],
+      sourceRefs: [page9],
+    },
+    {
+      id: 'policy-charge-during-mip',
+      label: 'Policy Investment Charge',
+      basis: 'premium-base-mip-multiplier',
+      rate: 0.015,
+      amount: 0,
+      appliesTo: ['accumulation'],
+      fallbackAppliesTo: ['topup'],
+      activeWindow: 'during-mip',
+      premiumBaseConfig: {
+        useHigherOfCommencementAndPrevailing: true,
+        multiplierYearBasis: 'policy-year',
+        multiplierSchedule: [
+          { startPolicyYear: 1, endPolicyYear: MIP_LENGTH, mode: 'policy-year' },
+        ],
+      },
+      notes: [
+        'Models the published monthly policy investment charge during the minimum investment period using annualised regular premium committed at commencement date multiplied by the current policy year.',
+        'Regular-premium reduction, non-payment, and withdrawals do not change the charge base once the policy is in force.',
+      ],
+      sourceRefs: [page9],
+    },
+    {
+      id: 'admin-charge',
+      label: 'Admin Charge',
+      basis: 'annual-contribution',
+      rate: 0.05,
+      amount: 0,
+      appliesTo: ['accumulation'],
+      fallbackAppliesTo: ['topup'],
+      activeWindow: 'during-mip',
+      startPolicyYear: 4,
+      endPolicyYear: MIP_LENGTH,
+      notes: [
+        'Models the published admin charge as 5% of regular premium received from policy year 4 through the minimum investment period.',
+        'At annual engine granularity, the monthly deduction following each premium receipt is represented as an annual charge on paid regular premium for the year.',
+      ],
+      sourceRefs: [page9],
     },
   ]
 }
@@ -280,7 +340,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       },
     ],
     bonuses: buildBonuses(document),
-    feeRules: [],
+    feeRules: buildFeeRules(document),
     eventChargeRules,
     distributionSupport: {
       mode: 'manual-assumption',
@@ -311,12 +371,13 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      'This partial template models regular-premium routing to the Accumulation Units Account, top-up routing, recurring single premium routing, the split performance-investment-bonus schedule, the published surrender, partial-withdrawal, and premium-shortfall charge schedules, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
+      'This partial template models regular-premium routing to the Accumulation Units Account, the published initial setup charge, policy investment charge, admin charge, top-up routing, recurring single premium routing, the split performance-investment-bonus schedule, the published surrender, partial-withdrawal, and premium-shortfall charge schedules, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
       'Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the administrative restart month.',
       'Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.',
+      'Wealth Flexi is modeled with the published initial setup charge, policy investment charge, and admin charge on top of the existing routing and shortfall surfaces.',
     ],
     unsupportedItems: [
-      'Initial setup charge, policy investment charge, admin charge, and monthly protection charge remain metadata-only for this product.',
+      'Monthly protection charge remains metadata-only for this product.',
       'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1.',
       'Advanced death benefit, life benefit rider, life replacement administration, and multiple-life handling remain metadata-only for this product.',
     ],
@@ -340,6 +401,9 @@ export function parseTokioMarineWealthFlexi(context: ParseContext): IlpCatalogPr
       'tokio-regular-premium-routing-to-accumulation-account',
       'tokio-initial-bonus-tiered-premium-allocation',
       'tokio-performance-investment-bonus',
+      'tokio-initial-charge-on-accumulation-account',
+      'tokio-policy-charge-on-accumulation-account',
+      'tokio-admin-charge-on-accumulation-account',
       'tokio-top-up-routing',
       'tokio-recurring-single-premium-routing',
       'tokio-recurring-single-premium-manual-resumption-after-premium-holiday',
@@ -355,7 +419,7 @@ export function parseTokioMarineWealthFlexi(context: ParseContext): IlpCatalogPr
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-initial-setup-policy-investment-admin-monthly-protection',
+      'tokio-wealth-flexi-monthly-protection-charge',
       'tokio-wealth-flexi-dividend-payout-threshold-and-record-date-instructions',
       'tokio-multiple-life-and-capital-guarantee-options',
     ],

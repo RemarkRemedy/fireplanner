@@ -3513,7 +3513,52 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-regular-premium-routing-to-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-performance-investment-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-admin-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'initial-charge',
+          label: 'Initial Setup Charge',
+          basis: 'account-value',
+          activeWindow: 'policy-term',
+          appliesTo: ['accumulation'],
+          rate: 0.012,
+          amount: 0,
+        }),
+        expect.objectContaining({
+          id: 'policy-charge-during-mip',
+          label: 'Policy Investment Charge',
+          basis: 'premium-base-mip-multiplier',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+          rate: 0.015,
+          amount: 0,
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: true,
+            multiplierYearBasis: 'policy-year',
+            multiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 10, mode: 'policy-year' },
+            ],
+          },
+        }),
+        expect.objectContaining({
+          id: 'admin-charge',
+          label: 'Admin Charge',
+          basis: 'annual-contribution',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+          rate: 0.05,
+          amount: 0,
+          startPolicyYear: 4,
+          endPolicyYear: 10,
+        }),
+      ]),
+    )
     expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.075 },
       { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.15 },
@@ -3558,7 +3603,7 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-initial-setup-policy-investment-admin-monthly-protection')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-monthly-protection-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
   })
