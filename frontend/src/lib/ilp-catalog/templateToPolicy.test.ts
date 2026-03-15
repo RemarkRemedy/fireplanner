@@ -1710,27 +1710,48 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-first-max-initial-account-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-first-max-increase-regular-premium-layer')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-first-max-recurring-single-premium-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('fwd-invest-first-max-booster-bonus')
     expect(seed.mipLength).toBe(10)
+    expect(seed.layerSupport).toEqual({
+      initialAccountId: 'initial',
+      accumulationAccountId: 'accumulation',
+      baseLayerPremiumPaymentTermYears: 10,
+      supportedIncreasePremiumPaymentTermYears: [10],
+      reductionOrder: 'recurring-single-premium-then-latest-layer-then-base',
+      withdrawalOrderDuringPremiumPaymentTerm: 'latest-layer-first',
+      futureIncreaseLayersOnly: true,
+    })
+    expect(seed.layeredSurrenderChargeSchedules).toEqual([
+      {
+        premiumPaymentTermYears: 10,
+        eecTable: [1, 1, 0.99, 0.99, 0.99, 0.81, 0.65, 0.5, 0.31, 0.09],
+      },
+    ])
     expect(seed.accounts).toEqual([
       expect.objectContaining({
         id: 'initial',
         subjectToEec: true,
         contributionRules: [
           { phase: 'during-icp', contributionShare: 1 },
-          { phase: 'after-icp', contributionShare: 1 },
         ],
       }),
       expect.objectContaining({
         id: 'accumulation',
         subjectToEec: false,
+        contributionRules: [
+          { phase: 'after-icp', contributionShare: 1 },
+          { phase: 'top-up', contributionShare: 1 },
+        ],
       }),
     ])
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
         id: 'initial-account-charge',
         basis: 'account-value',
+        scope: 'layer',
+        premiumPaymentTermYears: 10,
         activeWindow: 'during-mip',
         rateSchedule: [
           { startPolicyYear: 1, endPolicyYear: 10, rate: 0.06 },
@@ -1739,6 +1760,8 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({
         id: 'accumulation-account-charge',
         basis: 'account-value',
+        scope: 'layer',
+        premiumPaymentTermYears: 10,
         activeWindow: 'policy-term',
         rateSchedule: [
           { startPolicyYear: 1, endPolicyYear: 10, rate: 0.016 },
@@ -1753,7 +1776,7 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({ id: 'partial-withdrawal-charge', trigger: 'partial-withdrawal', rate: 0 }),
     ])
     expect(seed.eecTable).toEqual([1, 1, 0.99, 0.99, 0.99, 0.81, 0.65, 0.5, 0.31, 0.09])
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('SGD 10-year base-layer corridor only'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('SGD 10-year layer corridor'))).toBe(true)
   })
 
   it('maps FWD Invest First Summit into a finite-MIP multi-account partial seed', () => {
@@ -2042,8 +2065,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs1-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs1-premium-holiday-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs1-partial-withdrawal-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs1-death-ti-insurance-cover-charge')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs1-distribution-payout-election')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs1-distribution-payout-threshold-and-cpf-srs-exclusions')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(10)
     expect(seed.accounts).toEqual([
@@ -2085,6 +2109,17 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      cashPayoutWindows: [
+        { startPolicyYear: 5, endPolicyYear: null, accountIds: ['policy'] },
+      ],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
     expect(seed.eventChargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

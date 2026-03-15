@@ -25,7 +25,8 @@ describe('parseIncomeInvestFlex', () => {
     expect(product.supportStatus).toBe('partial')
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.metadataOnlyBehaviors).toContain('income-vs1-death-ti-insurance-cover-charge')
-    expect(product.metadataOnlyBehaviors).toContain('income-vs1-distribution-payout-election')
+    expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.metadataOnlyBehaviors).toContain('income-vs1-distribution-payout-threshold-and-cpf-srs-exclusions')
 
     expect(product.variants).toHaveLength(4)
     const variant = product.variants.find((entry) => entry.id === 'sgd-mip-10')
@@ -101,6 +102,21 @@ describe('parseIncomeInvestFlex', () => {
         }),
       ]),
     )
+    expect(variant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      cashPayoutWindows: [
+        { startPolicyYear: 5, endPolicyYear: null, accountIds: ['policy'] },
+      ],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('5th policy anniversary onward'),
+      ]),
+      sourceRefs: expect.any(Array),
+    })
     expect(variant?.eecTable).toEqual([1, 1, 0.8, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.05])
   }, 30_000)
 })
