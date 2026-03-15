@@ -50,10 +50,12 @@ import { generateIncomeProjection } from '@/lib/calculations/income'
 import { generateProjection } from '@/lib/calculations/projection'
 import { NudgeSidebar } from '@/components/projection/NudgeSidebar'
 import { NudgeDrawer } from '@/components/projection/NudgeDrawer'
+import { MobileNudgeBar } from '@/components/projection/MobileNudgeBar'
 import { DeltaCard } from '@/components/projection/DeltaCard'
 import { useMetricsSnapshot } from '@/hooks/useMetricsSnapshot'
 import { computeDelta, type DeltaSummary, type MetricsSnapshot } from '@/lib/calculations/metricsSnapshot'
-import { NUDGE_FLOWS, type NudgeFlowId } from '@/lib/data/nudgeFlows'
+import { NUDGE_FLOWS, NUDGE_PRIORITY, NUDGE_TO_SECTION, type NudgeFlowId } from '@/lib/data/nudgeFlows'
+import { useSectionCompletion } from '@/hooks/useSectionCompletion'
 
 const STRATEGY_SHORT_LABELS: Record<WithdrawalStrategyType, string> = {
   constant_dollar: '4% Rule',
@@ -79,6 +81,7 @@ export function ProjectionPage() {
   const navigate = useNavigate()
   const currentSnapshot = useMetricsSnapshot()
   const deltaProcessed = useRef(false)
+  const nudgeSectionRef = useRef<HTMLDivElement>(null)
 
   // Show welcome toast after completing guided setup
   useEffect(() => {
@@ -156,6 +159,21 @@ export function ProjectionPage() {
   const dollarBasis = useUIStore((s) => s.dollarBasis)
   const projectionView = useUIStore((s) => s.projectionView)
   const setUIField = useUIStore((s) => s.setField)
+
+  // Nudge count for mobile bar — mirrors filtering logic in NudgeSidebar
+  const setupPopulatedSections = useUIStore((s) => s.setupPopulatedSections)
+  const completedNudgeFlows = useUIStore((s) => s.completedNudgeFlows)
+  const { sections: nudgeSections } = useSectionCompletion()
+  const visibleNudgeCount = useMemo(() => {
+    return NUDGE_PRIORITY.filter((flowId) => {
+      const sectionId = NUDGE_TO_SECTION[flowId]
+      const section = nudgeSections[sectionId]
+      const status = section?.status ?? 'default'
+      if (status === 'default') return true
+      if (status === 'customized' && setupPopulatedSections.includes(sectionId)) return true
+      return false
+    }).length
+  }, [nudgeSections, setupPopulatedSections, completedNudgeFlows])
 
   const isPerAdult = isMultiAdult && projectionView !== 'joint'
 
@@ -850,7 +868,7 @@ export function ProjectionPage() {
       {isEligible && rows && rows.length > 0 && <ExpenseTrackerCard />}
 
       {/* Mobile nudge section */}
-      <div className="md:hidden mt-6">
+      <div ref={nudgeSectionRef} className="md:hidden mt-6">
         <NudgeSidebar onOpenDrawer={setDrawerFlowId} />
       </div>
 
@@ -885,6 +903,10 @@ export function ProjectionPage() {
         setDrawerFlowId(null)
         setDeltaStack(prev => [delta, ...prev].slice(0, 3))
       }}
+    />
+    <MobileNudgeBar
+      nudgeCount={visibleNudgeCount}
+      onTap={() => nudgeSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
     />
     </div>
   )
