@@ -61,13 +61,13 @@ function buildRateSchedule(values: readonly number[]): Array<{ startPolicyYear: 
 function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page3 = sourceRef(3, 'Accounts and Death Benefit', snippetNear(document, 3, 'Initial Investment Account'))
   const page7 = sourceRef(7, 'Premium Size and Loyalty Bonus', snippetNear(document, 7, 'Premium Size'))
+  const page7Dividend = sourceRef(7, 'Dividend payout election', snippetNear(document, 7, 'distribution of dividends'))
   const page8 = sourceRef(8, 'Charges', snippetNear(document, 8, 'Administration Charge'))
   const page12 = sourceRef(12, 'Partial Withdrawal Charge', snippetNear(document, 12, 'Partial Withdrawal Charge Table'))
   const page13 = sourceRef(13, 'Surrender Charge', snippetNear(document, 13, 'Surrender Charge Table'))
   const page16 = sourceRef(16, 'Change of Life Assured and Wealth Assure adjustments', snippetNear(document, 16, 'Change of Life Assured'))
   const page17 = sourceRef(17, 'Reduce Sum Assured/Wealth Assure Value', snippetNear(document, 17, 'Reduce Sum Assured/Wealth Assure Value'))
   const page18 = sourceRef(18, 'Top-up premium with the Investment Booster (Lump Sum)', snippetNear(document, 18, 'Investment Booster (Lump Sum)'))
-  const page19 = sourceRef(19, 'Dividend payout election', snippetNear(document, 19, 'distribution of dividends'))
   const page22 = sourceRef(22, 'Appendix A assurance charges', snippetNear(document, 22, 'Appendix A – Assurance Charges'))
 
   const feeRules: IlpTemplateFeeRule[] = [
@@ -181,9 +181,23 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: [],
     feeRules,
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['iia', 'aia'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying PRULink funds default to reinvestment unless the policyholder elects dividend payout.',
+        'Choosing dividend payout lowers the published Wealth Assure Value relative to reinvestment.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.',
+      ],
+      sourceRefs: [page7Dividend],
+    },
     eecTable: [...WITHDRAWAL_AND_SURRENDER_SCHEDULE],
     warnings: [
-      'This single-premium product currently models administration charges, Appendix A combined assurance charges, top-up premium charges, Initial Investment Account withdrawal charges, and Initial Investment Account surrender charges.',
+      'This single-premium product currently models administration charges, Appendix A combined assurance charges, top-up premium charges, Initial Investment Account withdrawal charges, Initial Investment Account surrender charges, and reinvest-default distribution support.',
       'The enhanced single-premium allocation tiers, the recurring 8-year Loyalty Bonus, and the first Initial Investment Account withdrawal free up to 10% of original single premium remain informational only in V1.',
       'Enter insured-life details and use the current net regular premium base field as the current net single-premium base to activate the modeled assurance charge path.',
       'The current ILP engine does not yet track original single-premium principal separately from recurring-premium inputs, so premiums-paid and opportunity-cost outputs should be treated as partial for this product.',
@@ -193,9 +207,9 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       'Loyalty Bonus paid every block of 8 completed policy years remains informational only.',
       'First Initial Investment Account withdrawal free up to 10% of original single premium remains informational only.',
       'Change of life assured and sum assured / Wealth Assure Value reduction-resumption options remain informational only.',
-      'Cash dividend payout election remains informational only; reinvestment should be assumed for accumulation review.',
+      'The published dividend payout election remains informational only insofar as the policy-specific payout yield remains a manual assumption in V1.',
     ],
-    sourceRefs: [page3, page7, page8, page12, page13, page16, page17, page18, page19, page22],
+    sourceRefs: [page3, page7, page7Dividend, page8, page12, page13, page16, page17, page18, page22],
   }
 }
 
@@ -217,6 +231,7 @@ export function parsePrudentialPruVantageAssureSp(context: ParseContext): IlpCat
       'branch:assure-sp-top-up-charge',
       'branch:assure-sp-charged-withdrawal',
       'branch:assure-sp-iia-surrender-charge',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'pruvantage-assure-sp-single-premium-allocation-enhancement',
@@ -225,10 +240,10 @@ export function parsePrudentialPruVantageAssureSp(context: ParseContext): IlpCat
       'pruvantage-assure-sp-single-premium-principal-tracking',
       'pruvantage-assure-sp-change-of-life-assured',
       'pruvantage-assure-sp-sum-assured-wealth-assure-reduction-resumption',
-      'pruvantage-assure-sp-dividend-payout-election',
+      'pruvantage-assure-sp-dividend-payout-yield-assumption',
     ],
     warnings: [
-      'PRUVantage Assure (SP) is cataloged as a partial modeled subset in V1. The parser captures the two-account structure, administration charge, combined Appendix A assurance charge, top-up premium charge, and Initial Investment Account withdrawal / surrender charge schedules, but the enhanced single-premium allocation, recurring 8-year loyalty bonus, first-withdrawal free cap, and single-premium principal tracking remain outside the current engine.',
+      'PRUVantage Assure (SP) is cataloged as a partial modeled subset in V1. The parser captures the two-account structure, administration charge, combined Appendix A assurance charge, top-up premium charge, Initial Investment Account withdrawal / surrender charge schedules, and reinvest-default distribution support, but the enhanced single-premium allocation, recurring 8-year loyalty bonus, first-withdrawal free cap, and single-premium principal tracking remain outside the current engine.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

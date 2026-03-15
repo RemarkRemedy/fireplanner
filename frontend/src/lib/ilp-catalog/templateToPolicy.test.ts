@@ -845,6 +845,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-sp-combined-assurance')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-sp-administration-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('pruvantage-assure-sp-loyalty-bonus-every-8-years')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('pruvantage-assure-sp-first-withdrawal-free-up-to-10pct-single-premium')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('single-premium product'))).toBe(true)
@@ -894,6 +895,14 @@ describe('templateVariantToPolicySeed', () => {
       ]),
     )
     expect(seed.bonuses).toEqual([])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['iia', 'aia'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
   })
 
   it('maps Etiqa Invest starter into a partial regular-premium seed with holiday and withdrawal charge rules', () => {

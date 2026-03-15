@@ -25,6 +25,7 @@ describe('parsePrudentialPruVantageAssureSp', () => {
     expect(product.supportStatus).toBe('partial')
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toContain('branch:assure-sp-combined-assurance')
+    expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('pruvantage-assure-sp-loyalty-bonus-every-8-years')
     expect(product.metadataOnlyBehaviors).toContain('pruvantage-assure-sp-first-withdrawal-free-up-to-10pct-single-premium')
 
@@ -94,6 +95,18 @@ describe('parsePrudentialPruVantageAssureSp', () => {
       { startPolicyYear: 7, endPolicyYear: 7, rate: 0.03 },
       { startPolicyYear: 8, endPolicyYear: 8, rate: 0.015 },
     ])
+    expect(product.variants[0].distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['iia', 'aia'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('Choosing dividend payout lowers the published Wealth Assure Value'),
+      ]),
+      sourceRefs: expect.any(Array),
+    })
     expect(product.variants[0].eecTable).toEqual([0.12, 0.105, 0.09, 0.075, 0.06, 0.045, 0.03, 0.015])
   }, 30_000)
 })
