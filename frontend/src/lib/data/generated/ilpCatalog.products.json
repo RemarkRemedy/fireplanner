@@ -4005,6 +4005,380 @@
     ]
   },
   {
+    "id": "fwd-invest-first-max",
+    "insurer": "FWD Singapore",
+    "productName": "FWD Invest First Max",
+    "sourceFileName": "WA_Sum_200501737H_ILP05_RP_Feb2024.pdf",
+    "sourceChecksumSha256": "68deffc4f67f1058c5ba5d610720b8a371ae6cc86b5b6e07e0f5dddaaee7ee59",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "branch:fwd-invest-first-max-initial-account-charge",
+      "branch:fwd-invest-first-max-accumulation-account-charge",
+      "branch:fwd-invest-first-max-top-up-premium-charge",
+      "branch:fwd-invest-first-max-recurring-single-premium-charge",
+      "branch:fwd-invest-first-max-zero-redemption-fee",
+      "branch:fwd-invest-first-max-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "fwd-invest-first-max-booster-bonus",
+      "fwd-invest-first-max-loyalty-bonus",
+      "fwd-invest-first-max-accumulation-bonus",
+      "fwd-invest-first-max-maturity-benefit",
+      "fwd-invest-first-max-death-benefit",
+      "fwd-invest-first-max-increase-regular-premium-layer",
+      "fwd-invest-first-max-regular-premium-reduction",
+      "fwd-invest-first-max-missed-premium-grace-period",
+      "fwd-invest-first-max-minimum-withdrawal-rules",
+      "fwd-invest-first-max-policy-closure-charge",
+      "fwd-invest-first-max-change-of-person-insured",
+      "fwd-invest-first-max-change-of-policy-currency",
+      "fwd-invest-first-max-fund-management-charge"
+    ],
+    "warnings": [
+      "FWD Invest First Max is cataloged as a partial modeled subset in V1. The current parser covers the SGD 10-year base-layer corridor: initial-account charge, accumulation-account charge, top-up and recurring-single premium charges, zero redemption fee, and the 10-year surrender-charge schedule.",
+      "Bonus units, maturity benefit, increase regular premium layers, and broader premium-flexibility behavior remain outside the current engine."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-10",
+        "currency": "SGD",
+        "mipBasis": "finite",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "initial",
+            "label": "Initial Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and death benefit",
+                "excerpt": "FWD Invest First Max Product summary Note: Please read this product summary before you decide to take up this product. Name of the insurer FWD Singapore Pte. Ltd. Product name FWD Invest First Max Sum insured 105% of Pol"
+              },
+              {
+                "page": 11,
+                "section": "Initial account charge",
+                "excerpt": "Initial account Initial account charge is payable throughout the premium payment term and will be deducted 5 charge on each policy monthiversary. Initial account charge = A% initial units account value as of x each polic"
+              },
+              {
+                "page": 14,
+                "section": "Withdrawal options",
+                "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my policy? Changes to the policy Increase in You may increase your regular premium contribution beyond the annualised amount committed to regular the base"
+              },
+              {
+                "page": 23,
+                "section": "Appendix A surrender charge rate",
+                "excerpt": "Appendix A – Surrender charge rate Surrender charge rate Premium payment term Policy 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 year 1 100% 100% 100% 100% 100% 100% 100% 100% 100% 100% 100% 100% 100% "
+              }
+            ]
+          },
+          {
+            "id": "accumulation",
+            "label": "Accumulation Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Loyalty and accumulation bonus",
+                "excerpt": "Accumulation While this policy is in force, we will pay an Accumulation Bonus at certain policy years, as Bonus specified by us. The Accumulation Bonus, if payable, will be paid at the end of the policy year specified. T"
+              },
+              {
+                "page": 8,
+                "section": "Recurring single premium and top-up premium",
+                "excerpt": "Celebrate living fwd.com.sg For premium payment term 20 – 30 years Premium Minimum regular premium payment SGD ($) USD ($) GBP (£) AUD ($) frequency Annually 3,600 2,760 2,200 3,910 Half-yearly 1,800 1,380 1,100 1,950 Qu"
+              },
+              {
+                "page": 12,
+                "section": "Accumulation account charge and premium charge",
+                "excerpt": "Accumulation Accumulation account charge is payable throughout the policy term and will be deducted on account charge each policy monthiversary. Accumulation account charge = B% accumulation units account value as of x e"
+              },
+              {
+                "page": 14,
+                "section": "Withdrawal options",
+                "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my policy? Changes to the policy Increase in You may increase your regular premium contribution beyond the annualised amount committed to regular the base"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "initial-account-charge",
+            "label": "Initial Account Charge",
+            "basis": "account-value",
+            "yearBasis": "policy-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "initial"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.06
+              }
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published 6.00% p.a. initial-account charge for the 10-year premium-payment-term base-layer corridor.",
+              "The charge remains deductible even when regular premiums are not paid during the premium payment term.",
+              "Increase regular premium layers are informational only in this slice."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Initial account charge",
+                "excerpt": "Initial account Initial account charge is payable throughout the premium payment term and will be deducted 5 charge on each policy monthiversary. Initial account charge = A% initial units account value as of x each polic"
+              },
+              {
+                "page": 24,
+                "section": "Appendix B increase regular premium layer illustration",
+                "excerpt": "Appendix B - Illustration on increase regular premium layer Illustration on increase regular premium layer James purchased FWD Invest First Max at age 30, with a regular premium of S$1,000/month for 25 years. He allocate"
+              }
+            ]
+          },
+          {
+            "id": "accumulation-account-charge",
+            "label": "Accumulation Account Charge",
+            "basis": "account-value",
+            "yearBasis": "policy-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.016
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 20,
+                "rate": 0.014
+              },
+              {
+                "startPolicyYear": 21,
+                "endPolicyYear": null,
+                "rate": 0.012
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published accumulation-account charge schedule on accumulation-units-account value.",
+              "Recurring single premiums and top-up premiums route to the base-layer accumulation units account in this corridor.",
+              "Per-layer charge timing for increase regular premium layers remains informational only."
+            ],
+            "sourceRefs": [
+              {
+                "page": 12,
+                "section": "Accumulation account charge and premium charge",
+                "excerpt": "Accumulation Accumulation account charge is payable throughout the policy term and will be deducted on account charge each policy monthiversary. Accumulation account charge = B% accumulation units account value as of x e"
+              },
+              {
+                "page": 24,
+                "section": "Appendix B increase regular premium layer illustration",
+                "excerpt": "Appendix B - Illustration on increase regular premium layer Illustration on increase regular premium layer James purchased FWD Invest First Max at age 30, with a regular premium of S$1,000/month for 25 years. He allocate"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 5% premium charge on each accepted top-up premium.",
+              "Top-up minimum amount and investment-strategy routing remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Recurring single premium and top-up premium",
+                "excerpt": "Celebrate living fwd.com.sg For premium payment term 20 – 30 years Premium Minimum regular premium payment SGD ($) USD ($) GBP (£) AUD ($) frequency Annually 3,600 2,760 2,200 3,910 Half-yearly 1,800 1,380 1,100 1,950 Qu"
+              },
+              {
+                "page": 12,
+                "section": "Accumulation account charge and premium charge",
+                "excerpt": "Accumulation Accumulation account charge is payable throughout the policy term and will be deducted on account charge each policy monthiversary. Accumulation account charge = B% accumulation units account value as of x e"
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurring Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 5% premium charge on each accepted recurring single premium.",
+              "Reduction priority between recurring single premium and regular premium remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Recurring single premium and top-up premium",
+                "excerpt": "Celebrate living fwd.com.sg For premium payment term 20 – 30 years Premium Minimum regular premium payment SGD ($) USD ($) GBP (£) AUD ($) frequency Annually 3,600 2,760 2,200 3,910 Half-yearly 1,800 1,380 1,100 1,950 Qu"
+              },
+              {
+                "page": 12,
+                "section": "Accumulation account charge and premium charge",
+                "excerpt": "Accumulation Accumulation account charge is payable throughout the policy term and will be deducted on account charge each policy monthiversary. Accumulation account charge = B% accumulation units account value as of x e"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "No redemption fee is stated for withdrawals.",
+              "During the premium payment term, the executable path assumes withdrawals only from the accumulation units account after the first 24 months.",
+              "Initial-units-account withdrawal lockout, minimum withdrawal amount, and minimum account-value rules remain informational only."
+            ],
+            "sourceRefs": [
+              {
+                "page": 13,
+                "section": "Policy changes and zero redemption fee",
+                "excerpt": "Redemption fee We will not apply any charge on such withdrawals. (also known as partial withdrawal or regular withdrawal charge) Switching fee We have kept this charge at zero but we may review this in future. If we chan"
+              },
+              {
+                "page": 14,
+                "section": "Withdrawal options",
+                "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my policy? Changes to the policy Increase in You may increase your regular premium contribution beyond the annualised amount committed to regular the base"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.99,
+          0.99,
+          0.99,
+          0.81,
+          0.65,
+          0.5,
+          0.31,
+          0.09
+        ],
+        "warnings": [
+          "FWD Invest First Max is cataloged as a partial modeled subset in V1. The parser captures the SGD 10-year base-layer corridor only: the published initial-account charge, accumulation-account charge, 5% top-up / recurring-single premium charges, zero redemption fee, and the 10-year surrender-charge schedule.",
+          "Booster Bonus, Loyalty Bonus, Accumulation Bonus, maturity benefit, increase regular premium layers, and reduction / missed-premium behavior remain informational only.",
+          "The product supports longer premium-payment terms and multi-layer premium increases, but those corridors remain outside this executable slice."
+        ],
+        "unsupportedItems": [
+          "Booster Bonus, Loyalty Bonus, and Accumulation Bonus remain informational only because their conditions and increase-layer interactions are not executed in this slice.",
+          "Maturity Benefit, death benefit, and change-of-person-insured handling remain informational only.",
+          "Recurring single premium reduction priority, increase regular premium layers, and regular-premium reduction sequencing remain informational only.",
+          "Missed-premium, grace-period, and bonus-suspension interactions remain informational only.",
+          "Minimum withdrawal amount, minimum account-value gates, policy closure charge, change-of-policy-currency handling, and fund management charges remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and death benefit",
+            "excerpt": "FWD Invest First Max Product summary Note: Please read this product summary before you decide to take up this product. Name of the insurer FWD Singapore Pte. Ltd. Product name FWD Invest First Max Sum insured 105% of Pol"
+          },
+          {
+            "page": 5,
+            "section": "Loyalty and accumulation bonus",
+            "excerpt": "Accumulation While this policy is in force, we will pay an Accumulation Bonus at certain policy years, as Bonus specified by us. The Accumulation Bonus, if payable, will be paid at the end of the policy year specified. T"
+          },
+          {
+            "page": 8,
+            "section": "Recurring single premium and top-up premium",
+            "excerpt": "Celebrate living fwd.com.sg For premium payment term 20 – 30 years Premium Minimum regular premium payment SGD ($) USD ($) GBP (£) AUD ($) frequency Annually 3,600 2,760 2,200 3,910 Half-yearly 1,800 1,380 1,100 1,950 Qu"
+          },
+          {
+            "page": 11,
+            "section": "Initial account charge",
+            "excerpt": "Initial account Initial account charge is payable throughout the premium payment term and will be deducted 5 charge on each policy monthiversary. Initial account charge = A% initial units account value as of x each polic"
+          },
+          {
+            "page": 12,
+            "section": "Accumulation account charge and premium charge",
+            "excerpt": "Accumulation Accumulation account charge is payable throughout the policy term and will be deducted on account charge each policy monthiversary. Accumulation account charge = B% accumulation units account value as of x e"
+          },
+          {
+            "page": 13,
+            "section": "Policy changes and zero redemption fee",
+            "excerpt": "Redemption fee We will not apply any charge on such withdrawals. (also known as partial withdrawal or regular withdrawal charge) Switching fee We have kept this charge at zero but we may review this in future. If we chan"
+          },
+          {
+            "page": 14,
+            "section": "Withdrawal options",
+            "excerpt": "Celebrate living fwd.com.sg 5. What are the changes I can make to my policy? Changes to the policy Increase in You may increase your regular premium contribution beyond the annualised amount committed to regular the base"
+          },
+          {
+            "page": 23,
+            "section": "Appendix A surrender charge rate",
+            "excerpt": "Appendix A – Surrender charge rate Surrender charge rate Premium payment term Policy 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 year 1 100% 100% 100% 100% 100% 100% 100% 100% 100% 100% 100% 100% 100% "
+          },
+          {
+            "page": 24,
+            "section": "Appendix B increase regular premium layer illustration",
+            "excerpt": "Appendix B - Illustration on increase regular premium layer Illustration on increase regular premium layer James purchased FWD Invest First Max at age 30, with a regular premium of S$1,000/month for 25 years. He allocate"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "fwd-invest-first-horizon",
     "insurer": "FWD Singapore",
     "productName": "FWD Invest First Horizon",
