@@ -2036,6 +2036,54 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-payment-term-25 corridor only'))).toBe(true)
   })
 
+  it('maps Tokio Marine TM Atlas Wealth into a partial seed with 12-month routing and combined account-fee modeling', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-atlas-wealth')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-25')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-atlas-loyalty-bonus-adjustment-factor')
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'initial',
+        feeRate: 0.055,
+        postMipFeeRate: 0.015,
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'accumulation',
+        feeRate: 0.015,
+        postMipFeeRate: 0.015,
+        contributionRules: [
+          { phase: 'after-icp', contributionShare: 1 },
+          { phase: 'after-mip', contributionShare: 1 },
+          { phase: 'top-up', contributionShare: 1 },
+        ],
+      }),
+    ])
+    expect(seed.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.075 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.1 },
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.12 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.14 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.195 },
+    ])
+    expect(seed.chargeRules).toEqual([])
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({ id: 'top-up-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
+      expect.objectContaining({ id: 'recurring-single-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
+    ])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-payment-term-25 corridor only'))).toBe(true)
+  })
+
   it('maps Manulife InvestReady (III) into a partial seed with protected-base assurance support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'manulife-investready-iii')

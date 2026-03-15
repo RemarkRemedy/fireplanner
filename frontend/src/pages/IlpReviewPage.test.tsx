@@ -485,6 +485,25 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Initial Bonus')).toBeInTheDocument()
   }, 10_000)
 
+  it('seeds Tokio Marine TM Atlas Wealth as a partial catalog product with 12-month routing and combined account-fee modeling', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Atlas Wealth')
+
+    expect(within(dialog).getByText('TM Atlas Wealth')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 25/i }))
+
+    expect(screen.getAllByText('TM Atlas Wealth (SGD / MIP 25)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('one honest SGD / premium-payment-term-25 corridor')
+    expect(screen.getByDisplayValue('Initial Bonus')).toBeInTheDocument()
+  }, 10_000)
+
   it('renames the active policy from the input form and updates the policy tab', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
