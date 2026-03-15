@@ -3408,7 +3408,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-power-up-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-3-12-involuntary-unemployment-waiver')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-3-12-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.accounts.find((account) => account.id === 'accumulation')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'after-icp', contributionShare: 1 },
@@ -3470,6 +3472,22 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['accumulation', 'topup'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 3, accountIds: ['topup'] },
+        { startPolicyYear: 4, endPolicyYear: null, accountIds: ['accumulation', 'topup'] },
+      ],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
     expect(seed.bonuses.map((bonus) => bonus.label)).toEqual([
       'Initial Bonus',
       'Premium Bonus',
@@ -3488,6 +3506,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.bonuses.find((bonus) => bonus.label === 'Loyalty Bonus')?.rate).toBe(0.0055)
     expect(seed.eecTable).toEqual([1, 1, 0.92, 0.85, 0.78, 0.75, 0.68, 0.58, 0.48, 0.075, 0.015, 0.01])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('paid-up and no-withdrawal eligibility gates'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
   })
 
   it('maps Tokio Marine Wealth Builder@Future into a partial seed with split premium-bonus windows and a power-up milestone', () => {

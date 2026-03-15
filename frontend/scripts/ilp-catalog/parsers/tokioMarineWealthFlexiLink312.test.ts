@@ -28,7 +28,9 @@ describe('parseTokioMarineWealthFlexiLink312', () => {
     expect(product.modeledEconomics).toContain('tokio-power-up-bonus')
     expect(product.modeledEconomics).toContain('tokio-loyalty-bonus')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-3-12-involuntary-unemployment-waiver')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-3-12-dividend-payout-threshold-and-record-date-instructions')
 
     const variant = product.variants[0]
     expect(variant?.id).toBe('sgd-mip-12')
@@ -96,6 +98,22 @@ describe('parseTokioMarineWealthFlexiLink312', () => {
         }),
       ]),
     )
+    expect(variant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['accumulation', 'topup'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 3, accountIds: ['topup'] },
+        { startPolicyYear: 4, endPolicyYear: null, accountIds: ['accumulation', 'topup'] },
+      ],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('For the first three policy years'),
+      ]),
+      sourceRefs: expect.any(Array),
+    })
     expect(variant?.eecTable).toEqual([1, 1, 0.92, 0.85, 0.78, 0.75, 0.68, 0.58, 0.48, 0.075, 0.015, 0.01])
   }, 30_000)
 })
