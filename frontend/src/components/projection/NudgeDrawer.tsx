@@ -58,6 +58,13 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
             if (field.type === 'toggle') defaults[field.name] = false
           }
         }
+        // Seed specific sensible defaults
+        if (defaults.cpfPayoutStartAge === undefined) defaults.cpfPayoutStartAge = 65
+        if (defaults.cpfLifePlan === undefined) defaults.cpfLifePlan = 'standard'
+        if (defaults.emergencyFundTarget === undefined) defaults.emergencyFundTarget = 6
+        if (defaults.rebalancingFrequency === undefined) defaults.rebalancingFrequency = 'annual'
+        if (defaults.ispTier === undefined) defaults.ispTier = 'basic'
+        if (defaults.careShieldEnrolled === undefined) defaults.careShieldEnrolled = true
         setValues(defaults)
       } else {
         setValues({})

@@ -44,6 +44,12 @@ export function RefineFlowPage() {
     }
     // Seed specific sensible defaults
     if (defaults.retirementSpendingRatio === undefined) defaults.retirementSpendingRatio = 1.0
+    if (defaults.cpfPayoutStartAge === undefined) defaults.cpfPayoutStartAge = 65
+    if (defaults.cpfLifePlan === undefined) defaults.cpfLifePlan = 'standard'
+    if (defaults.emergencyFundTarget === undefined) defaults.emergencyFundTarget = 6
+    if (defaults.rebalancingFrequency === undefined) defaults.rebalancingFrequency = 'annual'
+    if (defaults.ispTier === undefined) defaults.ispTier = 'basic'
+    if (defaults.careShieldEnrolled === undefined) defaults.careShieldEnrolled = true
     return defaults
   })
   const [currentScreenIndex, setCurrentScreenIndex] = useState(0)
