@@ -231,6 +231,8 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page6 = sourceRef(6, 'Administrative Charge / Supplementary Charge', snippetNear(document, 6, 'Administrative Charge', 24))
   const page7 = sourceRef(7, 'Surrender Charge / Partial Withdrawal Charge / Premium Shortfall Charge', snippetNear(document, 7, 'Surrender charge', 34))
   const page8 = sourceRef(8, 'Premium holiday / Partial withdrawal / Surrender', snippetNear(document, 8, 'Premium holiday during the minimum investment period', 34))
+  const page12 = sourceRef(12, 'Distribution of Dividends', snippetNear(document, 12, 'Distribution of Dividends', 24))
+  const page13 = sourceRef(13, 'Dividend cash-out threshold', snippetNear(document, 13, 'minimum dividend cash out amount', 18))
   const page15 = sourceRef(15, 'Appendix A charge schedules', snippetNear(document, 15, 'Appendix A', 30))
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
@@ -311,10 +313,23 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: buildBonuses(document),
     feeRules: buildFeeRules(document),
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying ILP sub-funds may either reinvest declared dividends or pay them out in cash, with reinvestment as the default if no option is elected.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published S$40 minimum cash-out threshold remains informational only.',
+      ],
+      sourceRefs: [page12, page13],
+    },
     eecTable: SURRENDER_CHARGE_SCHEDULE.map((tier) => tier.rate),
     warnings: [
       'This partial template models the SGD / 10 years (Fixed) corridor only.',
-      'This partial template models the welcome bonus tiers, the 100% / 102% / 105% regular-premium allocation ladder, the published loyalty-bonus payment windows, the 0.60% administrative charge, the first-10-policy-years 1.90% supplementary charge, the currently nil top-up charge, and the Appendix A surrender / withdrawal / premium-shortfall schedules.',
+      'This partial template models the welcome bonus tiers, the 100% / 102% / 105% regular-premium allocation ladder, the published loyalty-bonus payment windows, the 0.60% administrative charge, the first-10-policy-years 1.90% supplementary charge, the currently nil top-up charge, the Appendix A surrender / withdrawal / premium-shortfall schedules, and the reinvest-default distribution-mode assumption surface.',
       'Life Stage Benefit, cost of insurance, and other minimum-investment-period variants remain informational only in V1.',
     ],
     unsupportedItems: [
@@ -323,9 +338,9 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       'Change of Life Assured and rider continuity effects remain informational only.',
       'Flexible MIP variants, other fixed MIP variants, and other annualised-premium corridors remain informational only.',
       'Allowable partial withdrawal amount limits from Appendix B remain informational only.',
-      'Fund switching, fund-level annual management charges, and future non-guaranteed top-up-charge changes remain informational only.',
+      'Fund switching, fund-level annual management charges, the published S$40 dividend cash-out threshold, and future non-guaranteed top-up-charge changes remain informational only.',
     ],
-    sourceRefs: [page1, page2, page3, page5, page6, page7, page8, page15],
+    sourceRefs: [page1, page2, page3, page5, page6, page7, page8, page12, page13, page15],
   }
 }
 
@@ -351,6 +366,7 @@ export function parseSinglifeSavvyInvestIi({ document, sourceChecksumSha256 }: P
       'branch:singlife-savvy-invest-ii-partial-withdrawal-charge',
       'branch:singlife-savvy-invest-ii-surrender-charge',
       'branch:singlife-savvy-invest-ii-premium-shortfall-charge',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'singlife-savvy-invest-ii-life-stage-benefit',
@@ -359,10 +375,11 @@ export function parseSinglifeSavvyInvestIi({ document, sourceChecksumSha256 }: P
       'singlife-savvy-invest-ii-change-of-life-assured',
       'singlife-savvy-invest-ii-appendix-b-withdrawal-limits',
       'singlife-savvy-invest-ii-flexible-and-other-mip-corridors',
+      'singlife-savvy-invest-ii-dividend-cashout-threshold',
       'singlife-savvy-invest-ii-fund-management-and-switching',
     ],
     warnings: [
-      'Singlife Savvy Invest II is cataloged as a partial modeled subset in V1. The parser captures the SGD / 10 years (Fixed) corridor: welcome bonus tiers, regular-premium allocation uplifts, loyalty-bonus windows, administrative and supplementary charges, the currently nil top-up charge, and the Appendix A surrender / withdrawal / premium-shortfall schedules.',
+      'Singlife Savvy Invest II is cataloged as a partial modeled subset in V1. The parser captures the SGD / 10 years (Fixed) corridor: welcome bonus tiers, regular-premium allocation uplifts, loyalty-bonus windows, administrative and supplementary charges, the currently nil top-up charge, the Appendix A surrender / withdrawal / premium-shortfall schedules, and reinvest-default distribution support.',
       'Life Stage Benefit waivers, cost of insurance, and protection-side benefits remain informational only because the current engine does not yet execute those stateful or insured-life-dependent mechanics.',
       'Structured extraction validated against the Singlife Savvy Invest II product summary text layer.',
     ],

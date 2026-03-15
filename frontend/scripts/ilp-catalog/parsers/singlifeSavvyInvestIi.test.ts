@@ -24,6 +24,7 @@ describe('parseSinglifeSavvyInvestIi', () => {
     expect(product.id).toBe('singlife-savvy-invest-ii')
     expect(product.productName).toBe('Singlife Savvy Invest II')
     expect(product.supportStatus).toBe('partial')
+    expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.modeledEconomics).toContain('branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift')
     expect(product.modeledEconomics).toContain('branch:singlife-savvy-invest-ii-premium-shortfall-charge')
 
@@ -92,6 +93,27 @@ describe('parseSinglifeSavvyInvestIi', () => {
         basis: 'annual-premium-with-overlap-months',
       }),
     ])
+    expect(variant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('S$40 minimum cash-out threshold'),
+      ]),
+      sourceRefs: [
+        expect.objectContaining({
+          page: 12,
+          section: 'Distribution of Dividends',
+        }),
+        expect.objectContaining({
+          page: 13,
+          section: 'Dividend cash-out threshold',
+        }),
+      ],
+    })
     expect(variant?.eecTable).toEqual([1, 1, 0.8, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.1])
   }, 30_000)
 })
