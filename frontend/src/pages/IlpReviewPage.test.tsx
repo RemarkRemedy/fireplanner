@@ -421,14 +421,14 @@ describe('IlpReviewPage', () => {
 
     const wealthFlexiCard = within(dialog).getByText('Wealth Flexi').closest('.rounded-lg') as HTMLElement | null
     expect(wealthFlexiCard).not.toBeNull()
-    await user.click(within(wealthFlexiCard!).getByRole('button', { name: /sgd \/ mip 10/i }))
+    await user.click(within(wealthFlexiCard!).getAllByRole('button', { name: /sgd \/ mip 10/i })[0]!)
 
     expect(screen.getAllByText('Wealth Flexi (SGD / MIP 10)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Partial template')
-    expect(seededAlert?.textContent).toContain('Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account')
-    expect(seededAlert?.textContent).toContain('tokio wealth flexi monthly protection charge')
+    expect(seededAlert?.textContent).toContain('split SGD / MIP 10 death-benefit-option variants')
+    expect(seededAlert?.textContent).toContain('tokio wealth flexi benefit payout handling')
     expect(screen.getByDisplayValue('Initial Setup Charge')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Policy Investment Charge')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Admin Charge')).toBeInTheDocument()
@@ -541,6 +541,25 @@ describe('IlpReviewPage', () => {
     await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10 \(advanced death\)/i }))
 
     expect(screen.getAllByText('Harvest Builder@Future (SGD / MIP 10 (Advanced Death))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
+    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds Tokio Marine Wealth Flexi advanced-death as a partial catalog product with Tokio MPC inputs', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Flexi')
+
+    expect(within(dialog).getByText('Wealth Flexi')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10 \(advanced death\)/i }))
+
+    expect(screen.getAllByText('Wealth Flexi (SGD / MIP 10 (Advanced Death))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
