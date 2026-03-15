@@ -447,6 +447,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Partial template')
     expect(seededAlert?.textContent).toContain('paid-up and no-withdrawal eligibility gates')
+    expect(seededAlert?.textContent).toContain('tokio wealth flexi link 5 10 dividend payout threshold and record date instructions')
     expect(screen.getByDisplayValue('Policy Charge')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Premium Bonus')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Power-up Bonus (Policy Year 10)')).toBeInTheDocument()
