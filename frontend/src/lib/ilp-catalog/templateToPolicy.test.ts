@@ -738,10 +738,10 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('GREAT Invest Advantage 2 (SP) (SGD / Open-ended (Cash Or Srs))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-gia2-sp-initial-single-premium-charge')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-gia2-sp-single-premium-principal-tracking')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('great-eastern-gia2-sp-single-premium-principal-tracking')
     expect(seed.mipBasis).toBe('open-ended')
     expect(seed.mipLength).toBeNull()
     expect(seed.postMipYears).toBe(20)
