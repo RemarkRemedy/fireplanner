@@ -4201,8 +4201,11 @@
     "modeledEconomics": [
       "branch:fwd-invest-first-max-initial-account-charge",
       "branch:fwd-invest-first-max-accumulation-account-charge",
+      "branch:fwd-invest-first-max-increase-regular-premium-layer",
       "branch:fwd-invest-first-max-top-up-premium-charge",
       "branch:fwd-invest-first-max-recurring-single-premium-charge",
+      "branch:fwd-invest-first-max-regular-premium-reduction-order",
+      "branch:fwd-invest-first-max-withdrawal-order",
       "branch:fwd-invest-first-max-zero-redemption-fee",
       "branch:fwd-invest-first-max-surrender-charge"
     ],
@@ -4212,7 +4215,6 @@
       "fwd-invest-first-max-accumulation-bonus",
       "fwd-invest-first-max-maturity-benefit",
       "fwd-invest-first-max-death-benefit",
-      "fwd-invest-first-max-increase-regular-premium-layer",
       "fwd-invest-first-max-regular-premium-reduction",
       "fwd-invest-first-max-missed-premium-grace-period",
       "fwd-invest-first-max-minimum-withdrawal-rules",
@@ -4222,8 +4224,8 @@
       "fwd-invest-first-max-fund-management-charge"
     ],
     "warnings": [
-      "FWD Invest First Max is cataloged as a partial modeled subset in V1. The current parser covers the SGD 10-year base-layer corridor: initial-account charge, accumulation-account charge, top-up and recurring-single premium charges, zero redemption fee, and the 10-year surrender-charge schedule.",
-      "Bonus units, maturity benefit, increase regular premium layers, and broader premium-flexibility behavior remain outside the current engine."
+      "FWD Invest First Max is cataloged as a partial modeled subset in V1. The current parser covers the SGD 10-year layer corridor: base-layer routing, future increase-layer creation, layer-scoped initial-account and accumulation-account charges, top-up and recurring-single premium charges, latest-layer-first reduction and withdrawal ordering, and the 10-year surrender-charge schedule.",
+      "Bonus units, maturity benefit, longer-term increase-layer corridors, and broader missed-premium behavior remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -4232,7 +4234,7 @@
         "currency": "SGD",
         "mipBasis": "finite",
         "mipLength": 10,
-        "icpMonths": 1,
+        "icpMonths": 24,
         "accounts": [
           {
             "id": "initial",
@@ -4243,11 +4245,6 @@
             "contributionRules": [
               {
                 "phase": "during-icp",
-                "targetAccountId": "initial",
-                "contributionShare": 1
-              },
-              {
-                "phase": "after-icp",
                 "targetAccountId": "initial",
                 "contributionShare": 1
               }
@@ -4282,6 +4279,11 @@
             "postMipFeeRate": null,
             "subjectToEec": false,
             "contributionRules": [
+              {
+                "phase": "after-icp",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              },
               {
                 "phase": "top-up",
                 "targetAccountId": "accumulation",
@@ -4319,6 +4321,8 @@
             "label": "Initial Account Charge",
             "basis": "account-value",
             "yearBasis": "policy-year",
+            "scope": "layer",
+            "premiumPaymentTermYears": 10,
             "rate": 0,
             "amount": 0,
             "appliesTo": [
@@ -4333,9 +4337,9 @@
             ],
             "activeWindow": "during-mip",
             "notes": [
-              "Models the published 6.00% p.a. initial-account charge for the 10-year premium-payment-term base-layer corridor.",
+              "Models the published 6.00% p.a. initial-account charge for the supported 10-year layer corridor.",
               "The charge remains deductible even when regular premiums are not paid during the premium payment term.",
-              "Increase regular premium layers are informational only in this slice."
+              "Future increase regular premium layers are modeled when they use the supported 10-year premium-payment-term corridor."
             ],
             "sourceRefs": [
               {
@@ -4355,6 +4359,8 @@
             "label": "Accumulation Account Charge",
             "basis": "account-value",
             "yearBasis": "policy-year",
+            "scope": "layer",
+            "premiumPaymentTermYears": 10,
             "rate": 0,
             "amount": 0,
             "appliesTo": [
@@ -4381,7 +4387,7 @@
             "notes": [
               "Models the published accumulation-account charge schedule on accumulation-units-account value.",
               "Recurring single premiums and top-up premiums route to the base-layer accumulation units account in this corridor.",
-              "Per-layer charge timing for increase regular premium layers remains informational only."
+              "Per-layer charge timing is modeled for future increase regular premium layers when they use the supported 10-year premium-payment-term corridor."
             ],
             "sourceRefs": [
               {
@@ -4487,6 +4493,34 @@
             ]
           }
         ],
+        "policyLayerSupport": {
+          "initialAccountId": "initial",
+          "accumulationAccountId": "accumulation",
+          "baseLayerPremiumPaymentTermYears": 10,
+          "supportedIncreasePremiumPaymentTermYears": [
+            10
+          ],
+          "reductionOrder": "recurring-single-premium-then-latest-layer-then-base",
+          "withdrawalOrderDuringPremiumPaymentTerm": "latest-layer-first",
+          "futureIncreaseLayersOnly": true
+        },
+        "layeredSurrenderChargeSchedules": [
+          {
+            "premiumPaymentTermYears": 10,
+            "eecTable": [
+              1,
+              1,
+              0.99,
+              0.99,
+              0.99,
+              0.81,
+              0.65,
+              0.5,
+              0.31,
+              0.09
+            ]
+          }
+        ],
         "eecTable": [
           1,
           1,
@@ -4500,14 +4534,14 @@
           0.09
         ],
         "warnings": [
-          "FWD Invest First Max is cataloged as a partial modeled subset in V1. The parser captures the SGD 10-year base-layer corridor only: the published initial-account charge, accumulation-account charge, 5% top-up / recurring-single premium charges, zero redemption fee, and the 10-year surrender-charge schedule.",
-          "Booster Bonus, Loyalty Bonus, Accumulation Bonus, maturity benefit, increase regular premium layers, and reduction / missed-premium behavior remain informational only.",
+          "FWD Invest First Max is cataloged as a partial modeled subset in V1. The parser captures the SGD 10-year layer corridor: base-layer routing, future increase-layer creation, layer-scoped initial-account and accumulation-account charges, 5% top-up / recurring-single premium charges, latest-layer-first reduction and withdrawal ordering, and the 10-year surrender-charge schedule.",
+          "Booster Bonus, Loyalty Bonus, Accumulation Bonus, maturity benefit, and missed-premium / grace-period behavior remain informational only.",
           "The product supports longer premium-payment terms and multi-layer premium increases, but those corridors remain outside this executable slice."
         ],
         "unsupportedItems": [
           "Booster Bonus, Loyalty Bonus, and Accumulation Bonus remain informational only because their conditions and increase-layer interactions are not executed in this slice.",
           "Maturity Benefit, death benefit, and change-of-person-insured handling remain informational only.",
-          "Recurring single premium reduction priority, increase regular premium layers, and regular-premium reduction sequencing remain informational only.",
+          "Increase regular premium layers are executable only for the supported 10-year premium-payment-term corridor; longer-term increase-layer corridors remain informational only.",
           "Missed-premium, grace-period, and bonus-suspension interactions remain informational only.",
           "Minimum withdrawal amount, minimum account-value gates, policy closure charge, change-of-policy-currency handling, and fund management charges remain informational only."
         ],
@@ -60944,7 +60978,8 @@
       "tokio-recurring-single-premium-routing",
       "tokio-top-up-premium-charge",
       "tokio-recurring-single-premium-charge",
-      "tokio-initial-account-surrender-charge"
+      "tokio-initial-account-surrender-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "tokio-atlas-loyalty-bonus-adjustment-factor",
@@ -60952,13 +60987,13 @@
       "tokio-atlas-change-of-life-assured-option",
       "tokio-atlas-premium-holiday-lapse-state",
       "tokio-atlas-regular-withdrawal-facility",
-      "tokio-atlas-dividend-distribution-option",
+      "tokio-atlas-dividend-payout-threshold-and-record-date-instructions",
       "tokio-atlas-credit-card-charge"
     ],
     "warnings": [
-      "TM Atlas Wealth is cataloged as a partial modeled subset in V1. The parser captures one honest SGD / premium-payment-term-25 corridor with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, and the 25-year surrender charge on the Initial Units Account.",
+      "TM Atlas Wealth is cataloged as a partial modeled subset in V1. The parser captures one honest SGD / premium-payment-term-25 corridor with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
       "Loyalty Bonus remains informational only because the source uses an annual adjustment-factor formula that the current engine does not execute.",
-      "Advanced Death Benefit monthly protection charges, premium-holiday lapse behavior, add/remove/change-of-life-assured handling, regular withdrawal, dividend distribution election, and other corridors remain outside the current engine.",
+      "Advanced Death Benefit monthly protection charges, premium-holiday lapse behavior, add/remove/change-of-life-assured handling, regular withdrawal, and other corridors remain outside the current engine.",
       "Structured extraction validated against the TM Atlas Wealth product summary text layer."
     ],
     "archived": false,
@@ -61179,6 +61214,47 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "initial",
+            "accumulation"
+          ],
+          "cashPayoutWindows": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 25,
+              "accountIds": [
+                "accumulation"
+              ]
+            },
+            {
+              "startPolicyYear": 26,
+              "endPolicyYear": null,
+              "accountIds": [
+                "initial",
+                "accumulation"
+              ]
+            }
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.",
+            "During the 25-year premium payment term, only dividends from the Accumulation Units Account may be paid in cash.",
+            "After the premium payment term, dividends from both the Initial Units Account and Accumulation Units Account may be paid in cash.",
+            "The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 8,
+              "section": "Dividend Distribution / Initial Charge / Policy Charge",
+              "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -61208,11 +61284,12 @@
         ],
         "warnings": [
           "This partial template models the SGD / premium-payment-term-25 corridor only.",
-          "This partial template models 12-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, and the published 25-year surrender charge on the Initial Units Account."
+          "This partial template models 12-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the published 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface."
         ],
         "unsupportedItems": [
           "Loyalty Bonus remains metadata-only because its annual adjustment-factor formula and qualification state are outside the current engine.",
-          "Advanced Death Benefit monthly protection charges, add/remove/change-of-life-assured handling, premium-holiday lapse behavior, regular withdrawal, dividend distribution election, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only."
+          "Advanced Death Benefit monthly protection charges, add/remove/change-of-life-assured handling, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.",
+          "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1."
         ],
         "sourceRefs": [
           {
@@ -61234,6 +61311,11 @@
             "page": 5,
             "section": "Recurring Single Premium / Top-up Premium / Premium Holiday",
             "excerpt": "If there is any non-payment of regular premium, you may be allowed to resume paying recurring single premium only if the regular premium payment has resumed and the regular premium amount is equivalent to the annualised "
+          },
+          {
+            "page": 8,
+            "section": "Dividend Distribution / Initial Charge / Policy Charge",
+            "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
           },
           {
             "page": 8,
