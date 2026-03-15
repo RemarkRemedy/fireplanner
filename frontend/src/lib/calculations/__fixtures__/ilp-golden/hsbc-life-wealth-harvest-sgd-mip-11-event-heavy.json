@@ -367,20 +367,23 @@
         "branch:hsbc-harvest-holiday-charge",
         "branch:hsbc-harvest-pwc",
         "branch:hsbc-harvest-brc",
-        "branch:hsbc-harvest-topup-charge"
+        "branch:hsbc-harvest-topup-charge",
+        "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
         "hsbc-harvest-regular-withdrawal-facility",
-        "hsbc-harvest-dividend-distribution-option",
+        "hsbc-harvest-dividend-payout-threshold",
+        "hsbc-harvest-dividend-bank-routing",
         "hsbc-harvest-change-of-life-insured-insurance-charge-adjustment",
         "hsbc-harvest-rsp-restart-after-premium-holiday"
       ]
     },
     "catalogWarnings": [
       "Structured extraction validated against the Wealth Harvest product summary text layer.",
-      "V1 assumes dividend-paying funds reinvest by default. Cash dividend payout election remains metadata-only and is not reflected in projected policy values.",
+      "Wealth Harvest keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.",
       "Regular withdrawal, change-of-life-insured behavior, and recurring-single-premium administrative restart after premium holiday remain metadata-only in V1.",
-      "This template captures the modeled regular-premium, top-up, premium-holiday, withdrawal-charge, and BRC mechanics only."
+      "This template captures the modeled regular-premium, top-up, premium-holiday, withdrawal-charge, BRC, and reinvest-default distribution mechanics.",
+      "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only."
     ]
   },
   "expected": {

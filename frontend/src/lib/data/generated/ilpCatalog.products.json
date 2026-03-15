@@ -42480,17 +42480,19 @@
       "branch:hsbc-harvest-holiday-charge",
       "branch:hsbc-harvest-pwc",
       "branch:hsbc-harvest-brc",
-      "branch:hsbc-harvest-topup-charge"
+      "branch:hsbc-harvest-topup-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "hsbc-harvest-regular-withdrawal-facility",
-      "hsbc-harvest-dividend-distribution-option",
+      "hsbc-harvest-dividend-payout-threshold",
+      "hsbc-harvest-dividend-bank-routing",
       "hsbc-harvest-change-of-life-insured-insurance-charge-adjustment",
       "hsbc-harvest-rsp-restart-after-premium-holiday"
     ],
     "warnings": [
       "Structured extraction validated against the Wealth Harvest product summary text layer.",
-      "V1 assumes dividend-paying funds reinvest by default. Cash dividend payout election remains metadata-only and is not reflected in projected policy values.",
+      "Wealth Harvest keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.",
       "Regular withdrawal, change-of-life-insured behavior, and recurring-single-premium administrative restart after premium holiday remain metadata-only in V1."
     ],
     "archived": false,
@@ -42864,6 +42866,29 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.",
+            "Cash payout applies to both the Regular Premium Account and the Top-up Account.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption while the published S$30 minimum payout threshold and designated-bank-account routing remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 13,
+              "section": "Distribution Paying Fund",
+              "excerpt": "to another. These charges are payable from the assets of the ILP Sub-Funds. Copies of the offering documents for the underlying funds are made available by the Company. Without prejudice to the other provisions in this P"
+            }
+          ]
+        },
         "eecTable": [
           1,
           0.95,
@@ -42878,7 +42903,7 @@
           0.05
         ],
         "warnings": [
-          "This template captures the modeled regular-premium, top-up, premium-holiday, withdrawal-charge, and BRC mechanics only."
+          "This template captures the modeled regular-premium, top-up, premium-holiday, withdrawal-charge, BRC, and reinvest-default distribution mechanics."
         ],
         "unsupportedItems": [],
         "sourceRefs": [

@@ -2334,7 +2334,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-mip-11',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline'],
+    coverageTags: ['baseline', 'kernel:distribution-mode-assumption'],
     description: 'HSBC Wealth Harvest baseline scenario under the V1 reinvestment-default assumption.',
   },
   {

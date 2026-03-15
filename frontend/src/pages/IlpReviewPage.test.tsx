@@ -97,7 +97,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('hsbc harvest regular withdrawal facility')
-    expect(seededAlert?.textContent).toContain('reinvest by default')
+    expect(seededAlert?.textContent).toContain('reinvestment as the default')
     expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Start-up Bonus')).toBeInTheDocument()

@@ -101,9 +101,18 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-harvest-holiday-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-harvest-pwc')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-harvest-brc')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-harvest-regular-withdrawal-facility')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-harvest-dividend-distribution-option')
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('reinvest by default'))).toBe(true)
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-harvest-dividend-payout-threshold')
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['regular', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
     expect(seed.accounts.find((account) => account.id === 'regular')?.contributionShare).toBe(1)
     expect(seed.accounts.find((account) => account.id === 'topup')?.contributionRules).toEqual([
       { phase: 'top-up', contributionShare: 1 },
