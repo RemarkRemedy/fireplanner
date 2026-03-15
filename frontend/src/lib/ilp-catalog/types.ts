@@ -66,7 +66,7 @@ export interface IlpTemplateBonus {
 export interface IlpTemplateFeeRule {
   id: string
   label: string
-  basis?: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium' | 'initial-single-premium'
+  basis?: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium' | 'initial-single-premium' | 'initial-single-premium-base'
   yearBasis?: 'policy-year' | 'premium-year'
   rate: number | null
   amount?: number | null
@@ -188,6 +188,7 @@ export interface IlpTemplateVariant {
   distributionSupport?: IlpTemplateDistributionSupport
   eecTable: number[]
   eecYearBasis?: 'policy-year' | 'premium-year'
+  exitChargeBasis?: 'account-value' | 'initial-single-premium-base'
   warnings: string[]
   unsupportedItems: string[]
   sourceRefs: IlpCatalogSourceRef[]

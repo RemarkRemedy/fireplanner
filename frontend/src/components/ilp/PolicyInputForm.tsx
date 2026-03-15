@@ -89,7 +89,11 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
   const fundAllocationValid = Math.abs(fundAllocationTotal - 1) < 0.001
   const assuranceRules = (policy.chargeRules ?? []).filter((rule) => rule.basis === 'assurance-sum-at-risk')
   const initialSinglePremiumRules = (policy.chargeRules ?? []).filter((rule) => rule.basis === 'initial-single-premium')
-  const needsInitialSinglePremiumInput = initialSinglePremiumRules.length > 0 || (policy.initialSinglePremium ?? 0) > 0
+  const originalBaseSinglePremiumRules = (policy.chargeRules ?? []).filter((rule) => rule.basis === 'initial-single-premium-base')
+  const usesPersistedInitialSinglePremiumBase = originalBaseSinglePremiumRules.length > 0 || policy.exitChargeBasis === 'initial-single-premium-base'
+  const needsInitialSinglePremiumInput = initialSinglePremiumRules.length > 0
+    || usesPersistedInitialSinglePremiumBase
+    || (policy.initialSinglePremium ?? 0) > 0
   const assuranceProfile = policy.assuranceProfile
   const missingAssuranceProfile = assuranceRules.some((rule) => rule.requiresManualInput) && !assuranceProfile
   const missingRegularPremiumBase = assuranceRules.some((rule) => rule.requiresManualInput && requiresCurrentNetRegularPremiumBase(rule))
@@ -102,11 +106,15 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
     && assuranceProfile?.currentBasicSumAssured == null
   const missingCurrentNetSupplementaryPremiumBase = assuranceRules.some((rule) => rule.requiresManualInput && requiresCurrentNetSupplementaryPremiumBase(rule))
     && assuranceProfile?.currentNetSupplementaryPremiumBase == null
-  const missingInitialSinglePremium = initialSinglePremiumRules.length > 0
+  const missingInitialSinglePremium = (initialSinglePremiumRules.length > 0 || usesPersistedInitialSinglePremiumBase)
     && policy.currentPolicyYear === 1
     && policy.monthsAlreadyPaid === 0
     && (policy.initialSinglePremium ?? 0) <= 0
+  const missingPersistedInitialSinglePremium = usesPersistedInitialSinglePremiumBase
+    && (policy.initialSinglePremium ?? 0) <= 0
+    && (policy.currentPolicyYear !== 1 || policy.monthsAlreadyPaid !== 0)
   const initialSinglePremiumOutsideInception = initialSinglePremiumRules.length > 0
+    && !usesPersistedInitialSinglePremiumBase
     && (policy.initialSinglePremium ?? 0) > 0
     && (policy.currentPolicyYear !== 1 || policy.monthsAlreadyPaid !== 0)
   const assuranceAgeBoundaryWarning = assuranceProfile
@@ -154,7 +162,10 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
       ? ['This product also needs the current net RSP + top-up base before the HSBC Flexi Choice Cover charge can be trusted.']
       : []),
     ...(missingInitialSinglePremium
-      ? ['This product publishes an upfront initial single-premium charge. Enter the one-time gross initial single premium lump sum before trusting the seeded starting value.']
+      ? ['This product uses the gross initial single premium as an inception seed and/or continuing charge base. Enter the one-time gross commencement lump sum before trusting the seeded starting value, establishment charges, or surrender penalties.']
+      : []),
+    ...(missingPersistedInitialSinglePremium
+      ? ['This product still needs the original gross initial single premium because recurring establishment charges and/or surrender penalties are based on that commencement lump sum.']
       : []),
     ...(initialSinglePremiumOutsideInception
       ? ['Initial single premium seeding only applies when Current Policy Year = 1 and Months Already Paid = 0. Clear the field or move the policy back to inception if you want the upfront charge to be applied.']
@@ -894,7 +905,7 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                                 })
                               : undefined,
                             allocation: value === 'initial-single-premium' ? 'pro-rata-by-value' : rule.allocation,
-                            rateSchedule: value === 'account-value' || value === 'annual-contribution'
+                            rateSchedule: value === 'account-value' || value === 'annual-contribution' || value === 'initial-single-premium-base'
                               ? (rule.rateSchedule ?? [])
                               : undefined,
                             amountSchedule: value === 'fixed-annual' ? (rule.amountSchedule ?? []) : undefined,
@@ -910,6 +921,7 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                           <SelectItem value="account-value">Account Value</SelectItem>
                           <SelectItem value="annual-contribution">Annual Contribution</SelectItem>
                           <SelectItem value="initial-single-premium">Initial Single Premium</SelectItem>
+                          <SelectItem value="initial-single-premium-base">Initial Single Premium Base</SelectItem>
                           <SelectItem value="assurance-sum-at-risk">Assurance Sum-at-Risk</SelectItem>
                           <SelectItem value="premium-base-mip-multiplier">Premium-Base AMF</SelectItem>
                         </SelectContent>

@@ -66278,14 +66278,14 @@
     "economicsStatus": "partial-modeled-subset",
     "modeledEconomics": [
       "branch:tokio-marine-gowealth-enrich-zero-single-premium-charge",
+      "branch:tokio-marine-gowealth-enrich-establishment-charge",
       "branch:tokio-marine-gowealth-enrich-administrative-charge",
       "branch:tokio-marine-gowealth-enrich-recurring-single-and-top-up-charge",
       "branch:tokio-marine-gowealth-enrich-single-premium-partial-withdrawal-charge",
+      "branch:tokio-marine-gowealth-enrich-surrender-charge",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "tokio-marine-gowealth-enrich-establishment-charge",
-      "tokio-marine-gowealth-enrich-surrender-charge",
       "tokio-marine-gowealth-enrich-loyalty-bonus",
       "tokio-marine-gowealth-enrich-death-benefit",
       "tokio-marine-gowealth-enrich-accidental-death-benefit",
@@ -66296,7 +66296,7 @@
       "tokio-marine-gowealth-enrich-dividend-payout-threshold"
     ],
     "warnings": [
-      "#goWealth Enrich is cataloged as a partial modeled subset in V1. The parser captures the published 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the reinvest-default distribution-mode assumption surface, while the initial-premium-based establishment charge, surrender charge, loyalty bonus, and protection benefits remain outside the current engine."
+      "#goWealth Enrich is cataloged as a partial modeled subset in V1. The parser captures the published 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the reinvest-default distribution-mode assumption surface, while loyalty bonus and protection benefits remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -66390,6 +66390,54 @@
                 "page": 3,
                 "section": "Subscription of units and partial withdrawal",
                 "excerpt": "Recurring Single Premium You may pay recurring single premium at any time after one (1) year from the commencement date. The first recurring single premium is due on the next Policy Monthiversary after our approval and s"
+              }
+            ]
+          },
+          {
+            "id": "establishment-charge",
+            "label": "Establishment Charge",
+            "basis": "initial-single-premium-base",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.014
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.014
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.014
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.014
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.014
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 1.4% p.a. establishment charge on the original gross initial single premium during the first five policy years."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Fees and charges",
+                "excerpt": "Administrative Charge As long as the policy is in-force, an administrative charge of 1.00% p.a. of the Single Premium Units Account value will be deducted monthly in advance on each Policy Monthiversary. We will calculat"
               }
             ]
           },
@@ -66546,15 +66594,21 @@
             }
           ]
         },
-        "eecTable": [],
+        "eecTable": [
+          0.07,
+          0.056,
+          0.042,
+          0.028,
+          0.014,
+          0
+        ],
+        "exitChargeBasis": "initial-single-premium-base",
         "warnings": [
-          "#goWealth Enrich is cataloged as a partial modeled subset in V1. The parser captures the published 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the reinvest-default distribution-mode assumption surface through the open-ended single-premium basis.",
-          "The initial-premium-based establishment charge, the initial-premium-based surrender charge, loyalty bonus, and protection benefits remain outside the current engine.",
+          "#goWealth Enrich is cataloged as a partial modeled subset in V1. The parser captures the published 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the reinvest-default distribution-mode assumption surface through the open-ended single-premium basis.",
+          "Loyalty bonus and protection benefits remain outside the current engine.",
           "The published $50 minimum dividend-payout threshold remains informational only."
         ],
         "unsupportedItems": [
-          "The 1.4% p.a. establishment charge on initial single premium for the first five policy years remains informational only because the current engine does not author recurring charges against the original single-premium base.",
-          "The first-five-policy-years surrender charge remains informational only because it is calculated from the initial single premium rather than the current account value.",
           "Loyalty bonus remains informational only.",
           "Death and accidental death benefit formulas remain informational only.",
           "Single-premium protection-state and principal-floor behavior remain informational only.",

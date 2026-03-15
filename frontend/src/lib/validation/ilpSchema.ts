@@ -269,7 +269,7 @@ export const ilpBonusRuleSchema = z.object({
 export const ilpChargeRuleSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
-  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium', 'initial-single-premium']),
+  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium', 'initial-single-premium', 'initial-single-premium-base']),
   activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']),
   yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   startPolicyYear: z.number().int().min(1).max(100).optional(),
@@ -350,10 +350,10 @@ export const ilpChargeRuleSchema = z.object({
     }
   })
 
-  if ((rule.rateSchedule?.length ?? 0) > 0 && !(rule.basis === 'account-value' || rule.basis === 'annual-contribution' || rule.basis === 'cumulative-paid-regular-premium' || rule.basis === 'premium-base-mip-multiplier')) {
+  if ((rule.rateSchedule?.length ?? 0) > 0 && !(rule.basis === 'account-value' || rule.basis === 'annual-contribution' || rule.basis === 'cumulative-paid-regular-premium' || rule.basis === 'premium-base-mip-multiplier' || rule.basis === 'initial-single-premium-base')) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'Charge rule rate schedules can only be used with account-value, annual-contribution, cumulative-paid-regular-premium, or premium-base-mip-multiplier basis',
+      message: 'Charge rule rate schedules can only be used with account-value, annual-contribution, cumulative-paid-regular-premium, premium-base-mip-multiplier, or initial-single-premium-base basis',
       path: ['rateSchedule'],
     })
   }
@@ -614,6 +614,7 @@ export const ilpPolicySchema = z.object({
   postMipYears: z.number().int().min(0).max(50),
   eecTable: z.array(z.number().min(0).max(1)).max(100),
   eecYearBasis: z.enum(['policy-year', 'premium-year']).optional(),
+  exitChargeBasis: z.enum(['account-value', 'initial-single-premium-base']).optional(),
   funds: z.array(ilpFundSchema).min(1).max(20),
   bonuses: z.array(ilpBonusRuleSchema).max(20),
   chargeRules: z.array(ilpChargeRuleSchema).max(30).optional(),
@@ -710,8 +711,11 @@ export const ilpPolicySchema = z.object({
   const contributionShareSum = policy.accounts.reduce((sum, account) => sum + account.contributionShare, 0)
   const hasContributionRules = policy.accounts.some((account) => (account.contributionRules?.length ?? 0) > 0)
   const supportsInitialSinglePremiumRouting = (policy.initialSinglePremium ?? 0) > 0 || (
-    policy.chargeRules?.some((rule) => rule.basis === 'initial-single-premium') ?? false
-  )
+    policy.chargeRules?.some((rule) => (
+      rule.basis === 'initial-single-premium'
+      || rule.basis === 'initial-single-premium-base'
+    )) ?? false
+  ) || policy.exitChargeBasis === 'initial-single-premium-base'
   if (policy.monthlyContribution > 0) {
     if (!hasContributionRules && Math.abs(contributionShareSum - 1) > SUM_TOLERANCE) {
       ctx.addIssue({
@@ -955,6 +959,14 @@ export const ilpPolicySchema = z.object({
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'EEC table must have at least mipLength entries',
+      path: ['eecTable'],
+    })
+  }
+
+  if (policy.exitChargeBasis === 'initial-single-premium-base' && policy.eecTable.length === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Policies using initial-single-premium-base exit charges must define an eecTable',
       path: ['eecTable'],
     })
   }

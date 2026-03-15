@@ -27,19 +27,22 @@ describe('parseTokioMarineGoWealthEnrich', () => {
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toEqual([
       'branch:tokio-marine-gowealth-enrich-zero-single-premium-charge',
+      'branch:tokio-marine-gowealth-enrich-establishment-charge',
       'branch:tokio-marine-gowealth-enrich-administrative-charge',
       'branch:tokio-marine-gowealth-enrich-recurring-single-and-top-up-charge',
       'branch:tokio-marine-gowealth-enrich-single-premium-partial-withdrawal-charge',
+      'branch:tokio-marine-gowealth-enrich-surrender-charge',
       'kernel:distribution-mode-assumption',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('tokio-marine-gowealth-enrich-establishment-charge')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-marine-gowealth-enrich-surrender-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-establishment-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-surrender-charge')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cash'])
 
     const variant = product.variants[0]
     expect(variant?.mipBasis).toBe('open-ended')
     expect(variant?.mipLength).toBeNull()
-    expect(variant?.eecTable).toEqual([])
+    expect(variant?.exitChargeBasis).toBe('initial-single-premium-base')
+    expect(variant?.eecTable).toEqual([0.07, 0.056, 0.042, 0.028, 0.014, 0])
     expect(variant?.accounts).toEqual([
       expect.objectContaining({
         id: 'policy',
@@ -61,6 +64,17 @@ describe('parseTokioMarineGoWealthEnrich', () => {
         id: 'single-premium-charge',
         basis: 'annual-contribution',
         rate: 0,
+      }),
+      expect.objectContaining({
+        id: 'establishment-charge',
+        basis: 'initial-single-premium-base',
+        rateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 1, rate: 0.014 },
+          { startPolicyYear: 2, endPolicyYear: 2, rate: 0.014 },
+          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.014 },
+          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.014 },
+          { startPolicyYear: 5, endPolicyYear: 5, rate: 0.014 },
+        ],
       }),
       expect.objectContaining({
         id: 'administrative-charge',

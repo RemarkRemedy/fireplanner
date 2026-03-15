@@ -60,7 +60,7 @@ export const ilpTemplateBonusSchema = z.object({
 export const ilpTemplateFeeRuleSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
-  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium', 'initial-single-premium']).optional(),
+  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium', 'initial-single-premium', 'initial-single-premium-base']).optional(),
   yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   rate: z.number().min(0).max(0.2).nullable(),
   amount: z.number().min(0).max(100_000_000).nullable().optional(),
@@ -183,6 +183,7 @@ export const ilpTemplateVariantSchema = z.object({
   distributionSupport: ilpTemplateDistributionSupportSchema.optional(),
   eecTable: z.array(z.number().min(0).max(1)).max(100),
   eecYearBasis: z.enum(['policy-year', 'premium-year']).optional(),
+  exitChargeBasis: z.enum(['account-value', 'initial-single-premium-base']).optional(),
   warnings: z.array(z.string()),
   unsupportedItems: z.array(z.string()),
   sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
@@ -316,6 +317,14 @@ export const ilpTemplateVariantSchema = z.object({
         }
       }
     }
+  }
+
+  if (variant.exitChargeBasis === 'initial-single-premium-base' && variant.eecTable.length === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Variants using initial-single-premium-base exit charges must author an eecTable',
+      path: ['eecTable'],
+    })
   }
 })
 

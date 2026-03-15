@@ -44,6 +44,7 @@ export const ilpPolicySeedSchema = z.object({
   postMipYears: z.number().int().min(0).max(50),
   eecTable: z.array(z.number().min(0).max(1)).max(100),
   eecYearBasis: z.enum(['policy-year', 'premium-year']).optional(),
+  exitChargeBasis: z.enum(['account-value', 'initial-single-premium-base']).optional(),
   funds: z.array(ilpFundSchema).min(1).max(20),
   bonuses: z.array(ilpBonusRuleSchema).max(20),
   chargeRules: z.array(ilpChargeRuleSchema).max(30).optional(),
@@ -115,6 +116,14 @@ export const ilpPolicySeedSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'Open-ended policies must define a positive review horizon in postMipYears',
       path: ['postMipYears'],
+    })
+  }
+
+  if (policy.exitChargeBasis === 'initial-single-premium-base' && policy.eecTable.length === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Policies using initial-single-premium-base exit charges must define an eecTable',
+      path: ['eecTable'],
     })
   }
 

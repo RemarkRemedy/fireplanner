@@ -13,13 +13,20 @@ const DEFAULT_TEMPLATE_FUND: IlpPolicyInput['funds'][number] = {
   grossReturnHigh: 0.1,
 }
 
-function deriveSeedMonthlyContribution(product: IlpCatalogProduct, variant: IlpTemplateVariant): number {
-  const hasInitialSinglePremiumCharge = variant.feeRules.some((rule) => rule.basis === 'initial-single-premium')
-  const hasRecurringAfterIcpContribution = variant.accounts.some((account) => (
-    account.contributionRules.some((rule) => rule.phase === 'after-icp' && rule.contributionShare > 0)
-  ))
+function usesInitialSinglePremiumBase(variant: IlpTemplateVariant): boolean {
+  return variant.feeRules.some((rule) => (
+    rule.basis === 'initial-single-premium'
+    || rule.basis === 'initial-single-premium-base'
+  )) || variant.exitChargeBasis === 'initial-single-premium-base'
+}
 
-  if (hasInitialSinglePremiumCharge && !hasRecurringAfterIcpContribution) {
+function usesOriginalSinglePremiumBase(variant: IlpTemplateVariant): boolean {
+  return variant.feeRules.some((rule) => rule.basis === 'initial-single-premium-base')
+    || variant.exitChargeBasis === 'initial-single-premium-base'
+}
+
+function deriveSeedMonthlyContribution(product: IlpCatalogProduct, variant: IlpTemplateVariant): number {
+  if (usesInitialSinglePremiumBase(variant)) {
     return 0
   }
 
@@ -84,6 +91,7 @@ function mapFeeRuleBasis(
     case 'premium-base-mip-multiplier':
     case 'cumulative-paid-regular-premium':
     case 'initial-single-premium':
+    case 'initial-single-premium-base':
     case 'fixed-annual':
     case 'annual-contribution':
     case 'account-value':
@@ -110,7 +118,7 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
 
       const isAssurance = rule.basis === 'assurance-sum-at-risk'
       const isFixedAnnual = rule.basis === 'fixed-annual'
-      const isInitialSinglePremium = rule.basis === 'initial-single-premium'
+      const isInitialSinglePremium = rule.basis === 'initial-single-premium' || rule.basis === 'initial-single-premium-base'
 
       return {
         id: rule.id,
@@ -223,11 +231,12 @@ export function templateVariantToPolicySeed(
     insurer: product.insurer,
     currency: variant.currency,
     monthlyContribution: deriveSeedMonthlyContribution(product, variant),
-    initialSinglePremium: variant.feeRules.some((rule) => rule.basis === 'initial-single-premium') ? 0 : undefined,
+    initialSinglePremium: usesInitialSinglePremiumBase(variant) ? 0 : undefined,
     monthsAlreadyPaid: 0,
     currentPolicyYear: 1,
     icpMonths: variant.icpMonths,
     mipBasis: variant.mipBasis,
+    exitChargeBasis: variant.exitChargeBasis,
     assuranceProfile: undefined,
     scheduledPayoutSupport: variant.scheduledPayoutSupport
       ? {
@@ -310,7 +319,10 @@ export function templateVariantToPolicySeed(
       ...(variant.distributionSupport
         ? ['This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.']
         : []),
-      ...(variant.feeRules.some((rule) => rule.basis === 'initial-single-premium')
+      ...(usesOriginalSinglePremiumBase(variant)
+        ? ['Enter the one-time gross initial single premium lump sum in Policy Details if you want the starting policy value, original-base establishment charges, and surrender penalties to be modeled honestly.']
+        : []),
+      ...(variant.feeRules.some((rule) => rule.basis === 'initial-single-premium') && !usesOriginalSinglePremiumBase(variant)
         ? ['Enter the one-time gross initial single premium lump sum in Policy Details if you want the upfront single-premium deduction to seed the starting policy value honestly.']
         : []),
       ...(variant.unsupportedItems ?? []),
