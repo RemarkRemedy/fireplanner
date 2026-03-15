@@ -25,10 +25,10 @@ describe('parseGreatEasternInvestAdvantage2Sp', () => {
     expect(product.supportStatus).toBe('partial')
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toEqual([
+      'branch:great-eastern-gia2-sp-initial-single-premium-charge',
       'branch:great-eastern-gia2-sp-top-up-premium-charge',
       'branch:great-eastern-gia2-sp-open-ended-zero-surrender-charge',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('great-eastern-gia2-sp-initial-single-premium-charge')
     expect(product.metadataOnlyBehaviors).toContain('great-eastern-gia2-sp-single-premium-principal-tracking')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cash-or-srs'])
 
@@ -45,7 +45,14 @@ describe('parseGreatEasternInvestAdvantage2Sp', () => {
         ],
       }),
     ])
-    expect(variant?.feeRules).toEqual([])
+    expect(variant?.feeRules).toEqual([
+      expect.objectContaining({
+        id: 'initial-single-premium-charge',
+        basis: 'initial-single-premium',
+        activeWindow: 'policy-term',
+        rate: 0.03,
+      }),
+    ])
     expect(variant?.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
