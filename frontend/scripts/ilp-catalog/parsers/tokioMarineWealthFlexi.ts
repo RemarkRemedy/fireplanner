@@ -151,6 +151,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page4 = sourceRef(4, 'Recurring Single Premium and Top-up Premium', snippetNear(document, 4, 'Recurring Single Premium', 22))
   const page5 = sourceRef(5, 'Non-payment of Regular Premium', snippetNear(document, 5, 'Non-payment of Regular Premium', 18))
   const page6 = sourceRef(6, 'Partial Withdrawal', snippetNear(document, 6, 'Partial Withdrawal', 26))
+  const page8Distribution = sourceRef(8, 'Dividend Distribution', snippetNear(document, 8, 'Dividend Distribution', 24))
   const page9 = sourceRef(9, 'Initial Setup Charge / Policy Investment Charge / Admin Charge', snippetNear(document, 9, 'Initial Setup Charge', 28))
   const page10 = sourceRef(10, 'Premium Charge / Surrender Charge / Partial Withdrawal Charge', snippetNear(document, 10, 'Premium Charge for Recurring Single Premium and Top-up Premium', 24))
   const page11 = sourceRef(11, 'Premium Shortfall Charge', snippetNear(document, 11, 'Premium Shortfall Charge', 26))
@@ -281,17 +282,45 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: buildBonuses(document),
     feeRules: [],
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['accumulation', 'topup'],
+      cashPayoutWindows: [
+        {
+          startPolicyYear: 1,
+          endPolicyYear: 3,
+          accountIds: ['topup'],
+        },
+        {
+          startPolicyYear: 4,
+          endPolicyYear: null,
+          accountIds: ['accumulation', 'topup'],
+        },
+      ],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.',
+        'For the first three policy years, only dividends from the Top-up Units Account may be paid in cash.',
+        'After the first three policy years, dividends from both the Accumulation Units Account and Top-up Units Account may be paid in cash.',
+        'The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1.',
+      ],
+      sourceRefs: [page8Distribution],
+    },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      'This partial template models regular-premium routing to the Accumulation Units Account, top-up routing, recurring single premium routing, the split performance-investment-bonus schedule, and the published surrender, partial-withdrawal, and premium-shortfall charge schedules.',
+      'This partial template models regular-premium routing to the Accumulation Units Account, top-up routing, recurring single premium routing, the split performance-investment-bonus schedule, the published surrender, partial-withdrawal, and premium-shortfall charge schedules, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
       'Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the administrative restart month.',
       'Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.',
     ],
     unsupportedItems: [
-      'Initial setup charge, policy investment charge, admin charge, monthly protection charge, and dividend distribution election remain metadata-only for this product.',
+      'Initial setup charge, policy investment charge, admin charge, and monthly protection charge remain metadata-only for this product.',
+      'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1.',
       'Advanced death benefit, life benefit rider, life replacement administration, and multiple-life handling remain metadata-only for this product.',
     ],
-    sourceRefs: [page1, page2, page3, page4, page5, page6, page9, page10, page11, page16],
+    sourceRefs: [page1, page2, page3, page4, page5, page6, page8Distribution, page9, page10, page11, page16],
   }
 }
 
@@ -323,13 +352,16 @@ export function parseTokioMarineWealthFlexi(context: ParseContext): IlpCatalogPr
       'tokio-premium-shortfall-charge-regular-premium-reduction',
       'tokio-premium-increase-restores-shortfall-charge-cessation',
       'tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-initial-setup-policy-investment-admin-monthly-protection-and-dividend-distribution',
+      'tokio-initial-setup-policy-investment-admin-monthly-protection',
+      'tokio-wealth-flexi-dividend-payout-threshold-and-record-date-instructions',
       'tokio-multiple-life-and-capital-guarantee-options',
     ],
     warnings: [
       'Structured extraction validated against the Wealth Flexi product summary text layer.',
+      'Dividend cash payouts are modeled through the manual distribution-mode assumption surface: only Top-up Units Account dividends may be paid in cash during the first three policy years, and Accumulation Units Account dividends join after policy year 3.',
       'Performance investment bonus is modeled as three published policy-year windows: policy years 4 to 6, policy years 7 to 10, and after the minimum investment period.',
       'Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.',
       'Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.',

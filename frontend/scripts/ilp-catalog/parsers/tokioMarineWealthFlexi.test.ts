@@ -27,9 +27,9 @@ describe('parseTokioMarineWealthFlexi', () => {
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toContain('tokio-regular-premium-routing-to-accumulation-account')
     expect(product.modeledEconomics).toContain('tokio-performance-investment-bonus')
-    expect(product.metadataOnlyBehaviors).toContain(
-      'tokio-initial-setup-policy-investment-admin-monthly-protection-and-dividend-distribution',
-    )
+    expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-initial-setup-policy-investment-admin-monthly-protection')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-dividend-payout-threshold-and-record-date-instructions')
 
     const variant = product.variants[0]
     expect(variant?.id).toBe('sgd-mip-10')
@@ -69,6 +69,22 @@ describe('parseTokioMarineWealthFlexi', () => {
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.2 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.22 },
     ])
+    expect(variant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['accumulation', 'topup'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 3, accountIds: ['topup'] },
+        { startPolicyYear: 4, endPolicyYear: null, accountIds: ['accumulation', 'topup'] },
+      ],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('For the first three policy years'),
+      ]),
+      sourceRefs: expect.any(Array),
+    })
     expect(variant?.eecTable).toEqual([1, 1, 0.79, 0.6, 0.5, 0.47, 0.44, 0.21, 0.16, 0.07])
   }, 30_000)
 })
