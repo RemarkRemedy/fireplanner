@@ -405,6 +405,27 @@ describe('IlpReviewPage', () => {
     expect(screen.getByText('Insurer-approved charge waiver applies')).toBeInTheDocument()
   }, 10_000)
 
+  it('seeds Tokio Marine Wealth Flexi as a partial catalog product with split performance-bonus entries', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Flexi')
+
+    expect(within(dialog).getByText('Wealth Flexi')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+
+    expect(screen.getAllByText('Wealth Flexi (SGD / MIP 10)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('Recurring single premium stays blocked after a premium-holiday event')
+    expect(screen.getByDisplayValue('Performance Investment Bonus (Policy Years 4-6)')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Performance Investment Bonus (Policy Years 7-10)')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Shortfall Charge (Non-payment)')).toBeInTheDocument()
+  }, 10_000)
+
   it('renames the active policy from the input form and updates the policy tab', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()

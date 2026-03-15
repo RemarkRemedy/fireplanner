@@ -1837,6 +1837,51 @@ describe('templateVariantToPolicySeed', () => {
     )
   })
 
+  it('maps Tokio Marine Wealth Flexi into a partial seed with split performance-bonus windows', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-wealth-flexi')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-regular-premium-routing-to-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-performance-investment-bonus')
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.075 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.15 },
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.18 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.2 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.22 },
+    ])
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Performance Investment Bonus (Policy Years 4-6)')?.rate).toBe(0.012)
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Performance Investment Bonus (Policy Years 7-10)')?.rate).toBe(0.017)
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Performance Investment Bonus (After MIP)')?.rate).toBe(0.01)
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          rateSchedule: [
+            { startPolicyYear: 3, endPolicyYear: 5, rate: 0.1 },
+            { startPolicyYear: 6, endPolicyYear: 10, rate: 0.05 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'premium-shortfall-charge-non-payment',
+          rateSchedule: [
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.79 },
+            { startPolicyYear: 4, endPolicyYear: 10, rate: 0 },
+          ],
+        }),
+      ]),
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-initial-setup-policy-investment-admin-monthly-protection-and-dividend-distribution',
+    )
+  })
+
   it('maps Manulife InvestReady (III) into a partial seed with protected-base assurance support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'manulife-investready-iii')
