@@ -70,6 +70,7 @@ import { parsePrudentialPrulinkInvestGrowthSp } from './parsers/prudentialPrulin
 import { parsePrudentialPruVantageProsper } from './parsers/prudentialPruVantageProsper.js'
 import { parsePrudentialPruVantageWealthII } from './parsers/prudentialPruVantageWealthII.js'
 import { parseSinglifeLegacyInvest } from './parsers/singlifeLegacyInvest.js'
+import { parseSinglifeSavvyInvestIi } from './parsers/singlifeSavvyInvestIi.js'
 import { parseTokioMarineAtlasWealth } from './parsers/tokioMarineAtlasWealth.js'
 import { parseTokioMarineWealthEnhancerCpfis } from './parsers/tokioMarineWealthEnhancerCpfis.js'
 import { parseTokioMarineWealthBuilderAtFuture } from './parsers/tokioMarineWealthBuilderAtFuture.js'
@@ -151,6 +152,7 @@ const PRUDENTIAL_PRULINK_INVESTGROWTH_SP_SOURCE_PATH = '/Users/tj/Downloads/pdfs
 const PRUDENTIAL_PRUVANTAGE_PROSPER_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRUVantage Prosper Product Summary.pdf'
 const PRUDENTIAL_PRUVANTAGE_WEALTH_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/PRUVantage Wealth II Product Summary.pdf'
 const SINGLIFE_LEGACY_INVEST_SOURCE_PATH = '/Users/tj/Downloads/pdfs/SinglifeLegacyInvest_PS_Dec25.pdf'
+const SINGLIFE_SAVVY_INVEST_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/SinglifeSavvyInvestII_PS_Dec25.pdf'
 const TOKIO_MARINE_ATLAS_WEALTH_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNWO_TPDN_CIN_Summary.pdf'
 const TOKIO_MARINE_WEALTH_ENHANCER_CPFIS_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UL4_TPDN_CIZ_Summary.pdf'
 const TOKIO_MARINE_AFFLUENCE_AT_FUTURE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNZA_TPDN_CIN_Summary.pdf'
@@ -384,6 +386,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const prudentialProsperChecksum = await sha256(PRUDENTIAL_PRUVANTAGE_PROSPER_SOURCE_PATH)
   const singlifeLegacyInvestExtracted = await extractPdfText(SINGLIFE_LEGACY_INVEST_SOURCE_PATH)
   const singlifeLegacyInvestChecksum = await sha256(SINGLIFE_LEGACY_INVEST_SOURCE_PATH)
+  const singlifeSavvyInvestIiExtracted = await extractPdfText(SINGLIFE_SAVVY_INVEST_II_SOURCE_PATH)
+  const singlifeSavvyInvestIiChecksum = await sha256(SINGLIFE_SAVVY_INVEST_II_SOURCE_PATH)
   const tokioMarineAtlasWealthExtracted = await extractPdfText(TOKIO_MARINE_ATLAS_WEALTH_SOURCE_PATH)
   const tokioMarineAtlasWealthChecksum = await sha256(TOKIO_MARINE_ATLAS_WEALTH_SOURCE_PATH)
   const tokioMarineWealthEnhancerCpfisExtracted = await extractPdfText(TOKIO_MARINE_WEALTH_ENHANCER_CPFIS_SOURCE_PATH)
@@ -696,6 +700,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseSinglifeLegacyInvest({
       document: singlifeLegacyInvestExtracted,
       sourceChecksumSha256: singlifeLegacyInvestChecksum,
+    }),
+    parseSinglifeSavvyInvestIi({
+      document: singlifeSavvyInvestIiExtracted,
+      sourceChecksumSha256: singlifeSavvyInvestIiChecksum,
     }),
     parseTokioMarineAtlasWealth({
       document: tokioMarineAtlasWealthExtracted,

@@ -656,6 +656,29 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
   }, 10_000)
 
+  it('seeds Singlife Savvy Invest II as a partial catalog product with fixed-10 allocation uplift and loyalty windows', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Savvy Invest II')
+
+    expect(within(dialog).getByText('Singlife Savvy Invest II')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10 \(fixed\)/i }))
+
+    expect(screen.getAllByText('Singlife Savvy Invest II (SGD / MIP 10 (Fixed))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('10 years (Fixed) corridor only')
+    expect(screen.getByDisplayValue('Administrative Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Supplementary Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Regular Premium Allocation Uplift (Policy Years 11-20)')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Loyalty Bonus (Payments 1-10)')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
+  }, 10_000)
+
   it('seeds Tokio Marine TM Atlas Wealth as a partial catalog product with 12-month routing and combined account-fee modeling', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()

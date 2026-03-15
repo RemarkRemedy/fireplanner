@@ -2751,6 +2751,83 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('policy-term-15-years corridor only'))).toBe(true)
   })
 
+  it('maps Singlife Savvy Invest II into a partial seed with fixed-10 allocation uplifts and loyalty windows', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'singlife-savvy-invest-ii')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10-fixed')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('Singlife Savvy Invest II (SGD / MIP 10 (Fixed))')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:singlife-savvy-invest-ii-zero-top-up-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('singlife-savvy-invest-ii-cost-of-insurance')
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'administrative-charge',
+          basis: 'account-value',
+          rate: 0.006,
+          activeWindow: 'policy-term',
+        }),
+        expect.objectContaining({
+          id: 'supplementary-charge',
+          basis: 'account-value',
+          rate: 0.019,
+          startPolicyYear: 1,
+          endPolicyYear: 10,
+        }),
+      ]),
+    )
+    expect(seed.bonuses).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'welcome-bonus',
+          tieredRates: [
+            { currency: 'SGD', minAnnualPremium: 3_600, maxAnnualPremium: 9_999.99, rate: 0.1 },
+            { currency: 'SGD', minAnnualPremium: 10_000, maxAnnualPremium: null, rate: 0.4 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'regular-premium-allocation-uplift-policy-years-11-20',
+          rate: 0.02,
+        }),
+        expect.objectContaining({
+          id: 'regular-premium-allocation-uplift-policy-year-21-onward',
+          rate: 0.05,
+        }),
+        expect.objectContaining({
+          id: 'loyalty-bonus-payments-11-20',
+          rate: 0.004,
+          startPolicyYear: 21,
+          endPolicyYear: 30,
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'single-premium-top-up-charge',
+        trigger: 'top-up',
+        rate: 0,
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        yearBasis: 'policy-year',
+      }),
+      expect.objectContaining({
+        id: 'premium-shortfall-charge',
+        trigger: 'premium-holiday',
+        basis: 'annual-premium-with-overlap-months',
+      }),
+    ])
+    expect(seed.eecTable).toEqual([1, 1, 0.8, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.1])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('10 years (Fixed) corridor only'))).toBe(true)
+  })
+
   it('maps Tokio Marine TM Atlas Wealth into a partial seed with 12-month routing and combined account-fee modeling', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-atlas-wealth')
