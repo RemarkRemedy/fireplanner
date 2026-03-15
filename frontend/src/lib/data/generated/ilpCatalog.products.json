@@ -8129,7 +8129,8 @@
       "branch:astralink-va2-post-mip-regular-allocation",
       "branch:astralink-va2-policy-fee",
       "branch:astralink-va2-partial-withdrawal-charge",
-      "branch:astralink-va2-surrender-charge"
+      "branch:astralink-va2-surrender-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "astralink-va2-investment-bonus",
@@ -8139,11 +8140,10 @@
       "astralink-va2-premium-holiday-charge",
       "astralink-va2-premium-holiday-gating",
       "astralink-va2-protection-benefits",
-      "astralink-va2-distribution-withdrawals",
       "astralink-va2-flexible-options"
     ],
     "warnings": [
-      "AstraLink (VA2) is cataloged as a partial modeled subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, and the Appendix 2 partial-withdrawal / surrender charge schedules, while investment bonus, loyalty bonus, insurance cover charge, premium-holiday gating, and protection-side payouts remain outside the current engine."
+      "AstraLink (VA2) is cataloged as a partial modeled subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, the Appendix 2 partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode, while investment bonus, loyalty bonus, insurance cover charge, premium-holiday gating, and protection-side payouts remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -8345,6 +8345,27 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": false,
+          "cashPayoutAllowedAfterMip": false,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Income declares distributions only on a reinvested basis for AstraLink ILP sub-funds that carry a distribution option.",
+            "The published corridor does not provide a normal cash-payout election; each declared distribution is reinvested into the same ILP sub-fund."
+          ],
+          "sourceRefs": [
+            {
+              "page": 17,
+              "section": "Declaration and Reinvesting of Distributions",
+              "excerpt": "21.2 Declaration and Reinvesting of Distributions We may declare distributions for certain ILP sub-funds which have a distribution option. The distribution amount will depend on the number of units you hold in these ILP "
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -8358,9 +8379,9 @@
           0.08
         ],
         "warnings": [
-          "AstraLink (VA2) is modeled as a partial subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, and the Appendix 2 partial-withdrawal / surrender charge schedules.",
+          "AstraLink (VA2) is modeled as a partial subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, the Appendix 2 partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode.",
           "Investment bonus and loyalty bonus remain informational only because the published tables depend on dimensions or term rows that are not fully representable without guesswork in the current template schema.",
-          "Insurance cover charge, No Lapse Guarantee, premium-holiday free-window gating, and distribution-linked withdrawal gating remain informational only in V1."
+          "Insurance cover charge, No Lapse Guarantee, and premium-holiday free-window gating remain informational only in V1."
         ],
         "unsupportedItems": [
           "Investment bonus tables depend on annual premium bands and sum assured multiple, including a separate rider table, and remain informational only.",
@@ -8370,7 +8391,7 @@
           "Premium holiday free-window gating and the pre-2nd-anniversary lapse path remain informational only.",
           "Minimum withdrawal amount, minimum post-withdrawal policy value, and top-up blocking during premium holiday remain informational only.",
           "Changing premium or sum assured, retirement option, and guaranteed insurability option remain informational only.",
-          "Distribution-paying fund withdrawals and all protection-benefit payout mechanics remain informational only."
+          "All protection-benefit payout mechanics remain informational only."
         ],
         "sourceRefs": [
           {
@@ -8407,6 +8428,11 @@
             "page": 9,
             "section": "Subscription and redemption of units",
             "excerpt": "Version 1.26 7.3 Insurance Cover Charge There is an insurance cover charge that must be paid monthly. This charge is based on the insured’s age, gender, smoker status and the sum at risk at the time this charge is due. I"
+          },
+          {
+            "page": 17,
+            "section": "Declaration and Reinvesting of Distributions",
+            "excerpt": "21.2 Declaration and Reinvesting of Distributions We may declare distributions for certain ILP sub-funds which have a distribution option. The distribution amount will depend on the number of units you hold in these ILP "
           },
           {
             "page": 21,
@@ -8638,6 +8664,27 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": false,
+          "cashPayoutAllowedAfterMip": false,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Income declares distributions only on a reinvested basis for AstraLink ILP sub-funds that carry a distribution option.",
+            "The published corridor does not provide a normal cash-payout election; each declared distribution is reinvested into the same ILP sub-fund."
+          ],
+          "sourceRefs": [
+            {
+              "page": 17,
+              "section": "Declaration and Reinvesting of Distributions",
+              "excerpt": "21.2 Declaration and Reinvesting of Distributions We may declare distributions for certain ILP sub-funds which have a distribution option. The distribution amount will depend on the number of units you hold in these ILP "
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -8656,9 +8703,9 @@
           0.08
         ],
         "warnings": [
-          "AstraLink (VA2) is modeled as a partial subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, and the Appendix 2 partial-withdrawal / surrender charge schedules.",
+          "AstraLink (VA2) is modeled as a partial subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, the Appendix 2 partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode.",
           "Investment bonus and loyalty bonus remain informational only because the published tables depend on dimensions or term rows that are not fully representable without guesswork in the current template schema.",
-          "Insurance cover charge, No Lapse Guarantee, premium-holiday free-window gating, and distribution-linked withdrawal gating remain informational only in V1."
+          "Insurance cover charge, No Lapse Guarantee, and premium-holiday free-window gating remain informational only in V1."
         ],
         "unsupportedItems": [
           "Investment bonus tables depend on annual premium bands and sum assured multiple, including a separate rider table, and remain informational only.",
@@ -8668,7 +8715,7 @@
           "Premium holiday free-window gating and the pre-2nd-anniversary lapse path remain informational only.",
           "Minimum withdrawal amount, minimum post-withdrawal policy value, and top-up blocking during premium holiday remain informational only.",
           "Changing premium or sum assured, retirement option, and guaranteed insurability option remain informational only.",
-          "Distribution-paying fund withdrawals and all protection-benefit payout mechanics remain informational only."
+          "All protection-benefit payout mechanics remain informational only."
         ],
         "sourceRefs": [
           {
@@ -8705,6 +8752,11 @@
             "page": 9,
             "section": "Subscription and redemption of units",
             "excerpt": "Version 1.26 7.3 Insurance Cover Charge There is an insurance cover charge that must be paid monthly. This charge is based on the insured’s age, gender, smoker status and the sum at risk at the time this charge is due. I"
+          },
+          {
+            "page": 17,
+            "section": "Declaration and Reinvesting of Distributions",
+            "excerpt": "21.2 Declaration and Reinvesting of Distributions We may declare distributions for certain ILP sub-funds which have a distribution option. The distribution amount will depend on the number of units you hold in these ILP "
           },
           {
             "page": 21,
@@ -8961,6 +9013,27 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": false,
+          "cashPayoutAllowedAfterMip": false,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Income declares distributions only on a reinvested basis for AstraLink ILP sub-funds that carry a distribution option.",
+            "The published corridor does not provide a normal cash-payout election; each declared distribution is reinvested into the same ILP sub-fund."
+          ],
+          "sourceRefs": [
+            {
+              "page": 17,
+              "section": "Declaration and Reinvesting of Distributions",
+              "excerpt": "21.2 Declaration and Reinvesting of Distributions We may declare distributions for certain ILP sub-funds which have a distribution option. The distribution amount will depend on the number of units you hold in these ILP "
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -8984,9 +9057,9 @@
           0.08
         ],
         "warnings": [
-          "AstraLink (VA2) is modeled as a partial subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, and the Appendix 2 partial-withdrawal / surrender charge schedules.",
+          "AstraLink (VA2) is modeled as a partial subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, the Appendix 2 partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode.",
           "Investment bonus and loyalty bonus remain informational only because the published tables depend on dimensions or term rows that are not fully representable without guesswork in the current template schema.",
-          "Insurance cover charge, No Lapse Guarantee, premium-holiday free-window gating, and distribution-linked withdrawal gating remain informational only in V1."
+          "Insurance cover charge, No Lapse Guarantee, and premium-holiday free-window gating remain informational only in V1."
         ],
         "unsupportedItems": [
           "Investment bonus tables depend on annual premium bands and sum assured multiple, including a separate rider table, and remain informational only.",
@@ -8996,7 +9069,7 @@
           "Premium holiday free-window gating and the pre-2nd-anniversary lapse path remain informational only.",
           "Minimum withdrawal amount, minimum post-withdrawal policy value, and top-up blocking during premium holiday remain informational only.",
           "Changing premium or sum assured, retirement option, and guaranteed insurability option remain informational only.",
-          "Distribution-paying fund withdrawals and all protection-benefit payout mechanics remain informational only."
+          "All protection-benefit payout mechanics remain informational only."
         ],
         "sourceRefs": [
           {
@@ -9033,6 +9106,11 @@
             "page": 9,
             "section": "Subscription and redemption of units",
             "excerpt": "Version 1.26 7.3 Insurance Cover Charge There is an insurance cover charge that must be paid monthly. This charge is based on the insured’s age, gender, smoker status and the sum at risk at the time this charge is due. I"
+          },
+          {
+            "page": 17,
+            "section": "Declaration and Reinvesting of Distributions",
+            "excerpt": "21.2 Declaration and Reinvesting of Distributions We may declare distributions for certain ILP sub-funds which have a distribution option. The distribution amount will depend on the number of units you hold in these ILP "
           },
           {
             "page": 21,
@@ -9314,6 +9392,27 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": false,
+          "cashPayoutAllowedAfterMip": false,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Income declares distributions only on a reinvested basis for AstraLink ILP sub-funds that carry a distribution option.",
+            "The published corridor does not provide a normal cash-payout election; each declared distribution is reinvested into the same ILP sub-fund."
+          ],
+          "sourceRefs": [
+            {
+              "page": 17,
+              "section": "Declaration and Reinvesting of Distributions",
+              "excerpt": "21.2 Declaration and Reinvesting of Distributions We may declare distributions for certain ILP sub-funds which have a distribution option. The distribution amount will depend on the number of units you hold in these ILP "
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -9342,9 +9441,9 @@
           0.04
         ],
         "warnings": [
-          "AstraLink (VA2) is modeled as a partial subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, and the Appendix 2 partial-withdrawal / surrender charge schedules.",
+          "AstraLink (VA2) is modeled as a partial subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, the Appendix 2 partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode.",
           "Investment bonus and loyalty bonus remain informational only because the published tables depend on dimensions or term rows that are not fully representable without guesswork in the current template schema.",
-          "Insurance cover charge, No Lapse Guarantee, premium-holiday free-window gating, and distribution-linked withdrawal gating remain informational only in V1."
+          "Insurance cover charge, No Lapse Guarantee, and premium-holiday free-window gating remain informational only in V1."
         ],
         "unsupportedItems": [
           "Investment bonus tables depend on annual premium bands and sum assured multiple, including a separate rider table, and remain informational only.",
@@ -9354,7 +9453,7 @@
           "Premium holiday free-window gating and the pre-2nd-anniversary lapse path remain informational only.",
           "Minimum withdrawal amount, minimum post-withdrawal policy value, and top-up blocking during premium holiday remain informational only.",
           "Changing premium or sum assured, retirement option, and guaranteed insurability option remain informational only.",
-          "Distribution-paying fund withdrawals and all protection-benefit payout mechanics remain informational only."
+          "All protection-benefit payout mechanics remain informational only."
         ],
         "sourceRefs": [
           {
@@ -9391,6 +9490,11 @@
             "page": 9,
             "section": "Subscription and redemption of units",
             "excerpt": "Version 1.26 7.3 Insurance Cover Charge There is an insurance cover charge that must be paid monthly. This charge is based on the insured’s age, gender, smoker status and the sum at risk at the time this charge is due. I"
+          },
+          {
+            "page": 17,
+            "section": "Declaration and Reinvesting of Distributions",
+            "excerpt": "21.2 Declaration and Reinvesting of Distributions We may declare distributions for certain ILP sub-funds which have a distribution option. The distribution amount will depend on the number of units you hold in these ILP "
           },
           {
             "page": 21,
