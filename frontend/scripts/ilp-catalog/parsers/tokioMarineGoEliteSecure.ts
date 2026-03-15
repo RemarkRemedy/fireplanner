@@ -13,6 +13,23 @@ interface ParseContext {
   sourceChecksumSha256: string
 }
 
+const ESTABLISHMENT_CHARGE_SCHEDULE = [
+  0.014,
+  0.014,
+  0.014,
+  0.014,
+  0.014,
+] as const
+
+const SURRENDER_CHARGE_TABLE = [
+  0.07,
+  0.056,
+  0.042,
+  0.028,
+  0.014,
+  0,
+] as const
+
 function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
 }
@@ -38,6 +55,14 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
   return page.lines.slice(lineIndex, lineIndex + lineWindow).map((line) => line.text).join(' ')
 }
 
+function buildRateSchedule(values: readonly number[]): Array<{ startPolicyYear: number, endPolicyYear: number | null, rate: number }> {
+  return values.map((rate, index) => ({
+    startPolicyYear: index + 1,
+    endPolicyYear: index + 1,
+    rate,
+  }))
+}
+
 function buildVariant(document: ExtractedPdfDocument, variantId: 'sgd-open-ended-cash' | 'sgd-open-ended-srs'): IlpTemplateVariant {
   const isCash = variantId === 'sgd-open-ended-cash'
   const page1 = sourceRef(1, 'Plan description and locked-in policy value', snippetNear(document, 1, '#goElite Secure', 22))
@@ -60,6 +85,20 @@ function buildVariant(document: ExtractedPdfDocument, variantId: 'sgd-open-ended
         'Models the published 100% allocation of the initial single premium into the Single Premium Units Account with no policy-level premium deduction.',
       ],
       sourceRefs: [page3],
+    },
+    {
+      id: 'establishment-charge',
+      label: 'Establishment Charge',
+      basis: 'initial-single-premium-base',
+      rate: 0,
+      rateSchedule: buildRateSchedule(ESTABLISHMENT_CHARGE_SCHEDULE),
+      amount: 0,
+      appliesTo: ['policy'],
+      activeWindow: 'policy-term',
+      notes: [
+        'Models the published 1.4% p.a. establishment charge on the original gross initial single premium during the first five policy years.',
+      ],
+      sourceRefs: [page7],
     },
     {
       id: 'administrative-charge',
@@ -174,18 +213,17 @@ function buildVariant(document: ExtractedPdfDocument, variantId: 'sgd-open-ended
           ],
       sourceRefs: [page6],
     },
-    eecTable: [],
+    eecTable: [...SURRENDER_CHARGE_TABLE],
+    exitChargeBasis: 'initial-single-premium-base',
     warnings: [
       isCash
-        ? '#goElite Secure (Cash) is cataloged as a partial modeled subset in V1. The parser captures the published zero single-premium charge, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the reinvest-default distribution-mode assumption surface through the open-ended single-premium basis.'
-        : '#goElite Secure (SRS) is cataloged as a partial modeled subset in V1. The parser captures the published zero single-premium charge, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the reinvest-only distribution-mode surface through the open-ended single-premium basis.',
+        ? '#goElite Secure (Cash) is cataloged as a partial modeled subset in V1. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the reinvest-default distribution-mode assumption surface through the open-ended single-premium basis.'
+        : '#goElite Secure (SRS) is cataloged as a partial modeled subset in V1. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the reinvest-only distribution-mode surface through the open-ended single-premium basis.',
       'Recurring single premium and top-up availability only after one policy year remains informational only.',
       'Partial withdrawals remain subject to published minimum transaction and minimum residual Single Premium Units Account rules, which stay informational only in V1.',
     ],
     unsupportedItems: [
-      'The 1.4% p.a. establishment charge on initial single premium for the first five policy years remains informational only because the current engine does not author recurring charges against the original single-premium base.',
       'Monthly Protection Charge and the locked-in-policy-value / adjusted-single-premium protection mechanics remain informational only.',
-      'The first-five-policy-years surrender charge remains informational only because it is calculated from the initial single premium rather than the current account value.',
       'Death benefit and aggregation-limit handling remain informational only.',
       'Fund management fee and third-party banking / currency-conversion charges remain informational only.',
       'Fund-switching administration and reduction of Locked-in Policy Value remain informational only.',
@@ -208,17 +246,17 @@ export function parseTokioMarineGoEliteSecure(context: ParseContext): IlpCatalog
     economicsStatus: 'partial-modeled-subset',
     modeledEconomics: [
       'branch:tokio-marine-goelite-secure-zero-single-premium-charge',
+      'branch:tokio-marine-goelite-secure-establishment-charge',
       'branch:tokio-marine-goelite-secure-administrative-charge',
       'branch:tokio-marine-goelite-secure-recurring-single-and-top-up-charge',
       'branch:tokio-marine-goelite-secure-zero-partial-withdrawal-charge',
+      'branch:tokio-marine-goelite-secure-surrender-charge',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-marine-goelite-secure-establishment-charge',
       'tokio-marine-goelite-secure-monthly-protection-charge',
       'tokio-marine-goelite-secure-locked-in-policy-value',
       'tokio-marine-goelite-secure-adjusted-single-premium',
-      'tokio-marine-goelite-secure-surrender-charge',
       'tokio-marine-goelite-secure-death-benefit',
       'tokio-marine-goelite-secure-aggregation-limit',
       'tokio-marine-goelite-secure-minimum-withdrawal-rules',
@@ -226,7 +264,7 @@ export function parseTokioMarineGoEliteSecure(context: ParseContext): IlpCatalog
       'tokio-marine-goelite-secure-fund-level-and-third-party-charges',
     ],
     warnings: [
-      '#goElite Secure is cataloged as a partial modeled subset in V1. The parser captures the published zero single-premium charge, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the cash-vs-SRS distribution-mode support surface, while the locked-in-policy-value protection mechanics, MPC, establishment charge, surrender charge, and death-benefit formulas remain outside the current engine.',
+      '#goElite Secure is cataloged as a partial modeled subset in V1. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the cash-vs-SRS distribution-mode support surface, while the locked-in-policy-value protection mechanics, MPC, and death-benefit formulas remain outside the current engine.',
     ],
     archived: false,
     variants: [

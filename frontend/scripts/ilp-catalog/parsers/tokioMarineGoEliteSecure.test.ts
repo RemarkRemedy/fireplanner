@@ -100,11 +100,15 @@ describe('parseTokioMarineGoEliteSecure', () => {
     expect(product.supportStatus).toBe('partial')
     expect(product.modeledEconomics).toEqual([
       'branch:tokio-marine-goelite-secure-zero-single-premium-charge',
+      'branch:tokio-marine-goelite-secure-establishment-charge',
       'branch:tokio-marine-goelite-secure-administrative-charge',
       'branch:tokio-marine-goelite-secure-recurring-single-and-top-up-charge',
       'branch:tokio-marine-goelite-secure-zero-partial-withdrawal-charge',
+      'branch:tokio-marine-goelite-secure-surrender-charge',
       'kernel:distribution-mode-assumption',
     ])
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-establishment-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-surrender-charge')
     expect(product.metadataOnlyBehaviors).toContain('tokio-marine-goelite-secure-monthly-protection-charge')
     expect(product.metadataOnlyBehaviors).toContain('tokio-marine-goelite-secure-locked-in-policy-value')
 
@@ -121,10 +125,23 @@ describe('parseTokioMarineGoEliteSecure', () => {
       mipBasis: 'open-ended',
       mipLength: null,
     })
+    expect(product.variants[0].exitChargeBasis).toBe('initial-single-premium-base')
+    expect(product.variants[0].eecTable).toEqual([0.07, 0.056, 0.042, 0.028, 0.014, 0])
     expect(product.variants[0].feeRules).toEqual([
       expect.objectContaining({
         id: 'single-premium-charge',
         rate: 0,
+      }),
+      expect.objectContaining({
+        id: 'establishment-charge',
+        basis: 'initial-single-premium-base',
+        rateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 1, rate: 0.014 },
+          { startPolicyYear: 2, endPolicyYear: 2, rate: 0.014 },
+          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.014 },
+          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.014 },
+          { startPolicyYear: 5, endPolicyYear: 5, rate: 0.014 },
+        ],
       }),
       expect.objectContaining({
         id: 'administrative-charge',
