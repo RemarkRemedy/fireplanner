@@ -555,6 +555,27 @@ describe('IlpReviewPage', () => {
     expect(screen.getAllByDisplayValue('Policy Charge')).toHaveLength(2)
   }, 10_000)
 
+  it('seeds Tokio Marine Affluence@Future as a partial catalog product with capped initial and deferred policy charges', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Affluence@Future')
+
+    expect(within(dialog).getByText('Affluence@Future')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 15/i }))
+
+    expect(screen.getAllByText('Affluence@Future (SGD / MIP 15)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('SGD / premium-payment-term-15 corridor only')
+    expect(screen.getByDisplayValue('Initial Charge')).toBeInTheDocument()
+    expect(screen.getAllByDisplayValue('Policy Charge').length).toBeGreaterThan(0)
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, 10_000)
+
   it('seeds Tokio Marine #goClassic as a partial catalog product with combined account-fee modeling', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()

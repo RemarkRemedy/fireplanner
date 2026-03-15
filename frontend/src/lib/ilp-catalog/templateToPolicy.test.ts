@@ -346,7 +346,7 @@ describe('templateVariantToPolicySeed', () => {
     const product = products.find((entry) => entry.id === 'prudential-pruvantage-prosper')
     expect(product).toBeDefined()
 
-    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-25')
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-15')
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
@@ -2472,6 +2472,71 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
     ])
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goaffluence-loyalty-and-achievement-bonuses')
+  })
+
+  it('maps Tokio Marine Affluence@Future into a partial seed with capped initial-charge and deferred policy-charge rules', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-affluence-atfuture')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-15')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-zero-partial-withdrawal-charge')
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.72 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.8 },
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.87 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.95 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 1 },
+    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'initial-charge',
+          basis: 'account-value',
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 0.01 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 0.02 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.03 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.04 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.05 },
+            { startPolicyYear: 6, endPolicyYear: 6, rate: 0.06 },
+            { startPolicyYear: 7, endPolicyYear: 7, rate: 0.07 },
+            { startPolicyYear: 8, endPolicyYear: 8, rate: 0.08 },
+            { startPolicyYear: 9, endPolicyYear: 9, rate: 0.09 },
+            { startPolicyYear: 10, endPolicyYear: 10, rate: 0.1 },
+            { startPolicyYear: 11, endPolicyYear: 11, rate: 0.1 },
+            { startPolicyYear: 12, endPolicyYear: 12, rate: 0.1 },
+            { startPolicyYear: 13, endPolicyYear: 13, rate: 0.1 },
+            { startPolicyYear: 14, endPolicyYear: 14, rate: 0.1 },
+            { startPolicyYear: 15, endPolicyYear: 15, rate: 0.1 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'policy-charge-during-mip',
+          basis: 'premium-base-mip-multiplier',
+          startPolicyYear: 3,
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: false,
+            multiplierYearBasis: 'policy-year',
+            multiplierSchedule: [
+              { startPolicyYear: 3, endPolicyYear: 15, mode: 'policy-year' },
+            ],
+          },
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.05 }),
+      expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
+      expect.objectContaining({ id: 'partial-withdrawal-charge', rate: 0 }),
+    ])
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-loyalty-bonus-adjustment-factor')
   })
 
   it('maps Tokio Marine #goClassic into a partial seed with combined account-fee modeling and accumulation top-up routing', () => {
