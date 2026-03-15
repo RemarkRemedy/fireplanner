@@ -388,7 +388,7 @@ describe('IlpReviewPage', () => {
 
     await user.click(screen.getByRole('button', { name: /choose product/i }))
     const dialog = await screen.findByRole('dialog')
-    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Tokio')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Pro')
 
     expect(within(dialog).getByText('Wealth Pro (II)')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))

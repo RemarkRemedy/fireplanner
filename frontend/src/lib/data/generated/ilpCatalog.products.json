@@ -57517,6 +57517,606 @@
     ]
   },
   {
+    "id": "tokio-marine-harvest-pro",
+    "insurer": "Tokio Marine",
+    "productName": "Harvest Pro",
+    "sourceFileName": "TML_UNYG_TPDN_CIZ_Summary.pdf",
+    "sourceChecksumSha256": "a4cec6bbb6da94dac531897b73daf9ee70f18ff287338f3417500a1c5e110785",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "tokio-initial-vs-accumulation-regular-premium-routing",
+      "tokio-initial-bonus-tiered-premium-allocation",
+      "tokio-performance-investment-bonus",
+      "tokio-loyalty-bonus",
+      "tokio-power-up-bonus",
+      "tokio-top-up-routing",
+      "tokio-post-mip-regular-premium-routing-back-to-initial-account",
+      "tokio-recurring-single-premium-routing",
+      "tokio-recurring-single-premium-manual-resumption-after-premium-holiday",
+      "tokio-regular-premium-reduction-consumes-recurring-single-premium-first",
+      "tokio-top-up-premium-charge",
+      "tokio-recurring-single-premium-charge",
+      "tokio-initial-account-surrender-charge",
+      "tokio-accumulation-partial-withdrawal-charge",
+      "tokio-premium-shortfall-charge-non-payment",
+      "tokio-premium-shortfall-charge-regular-premium-reduction",
+      "tokio-premium-increase-restores-shortfall-charge-cessation",
+      "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only"
+    ],
+    "metadataOnlyBehaviors": [
+      "tokio-initial-setup-policy-investment-admin-monthly-protection-and-dividend-distribution",
+      "tokio-multiple-life-and-capital-guarantee-options"
+    ],
+    "warnings": [
+      "Structured extraction validated against the Harvest Pro product summary text layer.",
+      "Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.",
+      "Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.",
+      "Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-10",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 36,
+        "accounts": [
+          {
+            "id": "initial",
+            "label": "Initial Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular Premium Routing",
+                "excerpt": "The power-up bonus will be calculated in accordance to the formula below: Power-up Bonus = 0.30% x Initial Units Account value The power-up bonus will be allocated to the policy in the form of additional units to the Ini"
+              }
+            ]
+          },
+          {
+            "id": "accumulation",
+            "label": "Accumulation Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "after-icp",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular Premium Routing",
+                "excerpt": "The power-up bonus will be calculated in accordance to the formula below: Power-up Bonus = 0.30% x Initial Units Account value The power-up bonus will be allocated to the policy in the form of additional units to the Ini"
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium and Top-up Premium",
+                "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. When there is any reduction in regular premium amount p"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "initial-bonus",
+            "type": "allocation",
+            "label": "Initial Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "initial"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.14
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.25
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.27
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.31
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.33
+              }
+            ],
+            "notes": [
+              "Tier is based on the annualised regular premium band stated in the product summary.",
+              "Allocated to the Initial Units Account in the first policy year."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Initial Bonus",
+                "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first policy year upon receipt of each regular premium to boost your investment. Initial bonus = Initial bonus rate x each regular premium "
+              }
+            ]
+          },
+          {
+            "id": "performance-investment-bonus",
+            "type": "custom",
+            "label": "Performance Investment Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 4,
+            "endPolicyYear": 10,
+            "rate": 0.018,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual bonus on the Accumulation Units Account value from the end of policy year 4 until the end of the minimum investment period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Performance Investment / Loyalty / Power-up Bonus",
+                "excerpt": "Performance Investment Bonus While the policy is in-force, an annual performance investment bonus will be paid at the end of each policy year, th starting from the end of the 4 policy year until the end of minimum invest"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": 23,
+            "rate": 0.0155,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual bonus on the Accumulation Units Account value from policy year 11 to policy year 23."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Performance Investment / Loyalty / Power-up Bonus",
+                "excerpt": "Performance Investment Bonus While the policy is in-force, an annual performance investment bonus will be paid at the end of each policy year, th starting from the end of the 4 policy year until the end of minimum invest"
+              }
+            ]
+          },
+          {
+            "id": "power-up-bonus",
+            "type": "power-up",
+            "label": "Power-up Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "initial"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual bonus on the Initial Units Account value from policy year 11 onward."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Performance Investment / Loyalty / Power-up Bonus",
+                "excerpt": "Performance Investment Bonus While the policy is in-force, an annual performance investment bonus will be paid at the end of each policy year, th starting from the end of the 4 policy year until the end of minimum invest"
+              }
+            ]
+          }
+        ],
+        "feeRules": [],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each top-up premium is allocated to the Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium and Top-up Premium",
+                "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. When there is any reduction in regular premium amount p"
+              },
+              {
+                "page": 11,
+                "section": "Partial Withdrawal Charge and Premium Shortfall Charge",
+                "excerpt": "Partial Withdrawal Charge A partial withdrawal charge will be levied upon any partial withdrawal from the Accumulation Units Account on or before the end of the minimum investment period. The partial withdrawal charge is"
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurring Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each recurring single premium allocation to the Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium and Top-up Premium",
+                "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. When there is any reduction in regular premium amount p"
+              },
+              {
+                "page": 11,
+                "section": "Partial Withdrawal Charge and Premium Shortfall Charge",
+                "excerpt": "Partial Withdrawal Charge A partial withdrawal charge will be levied upon any partial withdrawal from the Accumulation Units Account on or before the end of the minimum investment period. The partial withdrawal charge is"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.62
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.52
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.1
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies only to partial withdrawals from the Accumulation Units Account during the minimum investment period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Partial Withdrawal Charge and Premium Shortfall Charge",
+                "excerpt": "Partial Withdrawal Charge A partial withdrawal charge will be levied upon any partial withdrawal from the Accumulation Units Account on or before the end of the minimum investment period. The partial withdrawal charge is"
+              },
+              {
+                "page": 17,
+                "section": "Appendix A Charges",
+                "excerpt": "SURRENDER CHARGE Policy Year Surrender Charge 1 100% 2 100% 3 100% 4 99% 5 99% 6 96% 7 93% 8 89% 9 80% 10 10% PARTIAL WITHDRAWAL CHARGE Policy Year Partial Withdrawal Charge 1 Not applicable as Partial Withdrawal is not "
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge-non-payment",
+            "label": "Premium Shortfall Charge (Non-payment)",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "initial"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.62
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.52
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "exclusiveGroup": "tokio-premium-shortfall",
+            "groupResolution": "max-total-charge",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published monthly premium shortfall charge when regular premium is not paid after the grace period during policy years 4 to 10.",
+              "Deduct from Accumulation Units Account first, then Top-up Units Account, then Initial Units Account.",
+              "Use a premium-holiday event to represent the non-payment period after the grace period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Partial Withdrawal Charge and Premium Shortfall Charge",
+                "excerpt": "Partial Withdrawal Charge A partial withdrawal charge will be levied upon any partial withdrawal from the Accumulation Units Account on or before the end of the minimum investment period. The partial withdrawal charge is"
+              },
+              {
+                "page": 12,
+                "section": "Premium Shortfall Charge and fee notes",
+                "excerpt": "Premium Shortfall Charge A premium shortfall charge will be levied monthly during Premium Shortfall Charge Period when: (i) there is non-payment of regular premium at the expiry of the grace period; or (ii) there is a re"
+              },
+              {
+                "page": 17,
+                "section": "Appendix A Charges",
+                "excerpt": "SURRENDER CHARGE Policy Year Surrender Charge 1 100% 2 100% 3 100% 4 99% 5 99% 6 96% 7 93% 8 89% 9 80% 10 10% PARTIAL WITHDRAWAL CHARGE Policy Year Partial Withdrawal Charge 1 Not applicable as Partial Withdrawal is not "
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge-reduction",
+            "label": "Premium Shortfall Charge (Regular Premium Reduction)",
+            "trigger": "regular-premium-reduction",
+            "basis": "annual-reduction-with-active-months",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "initial"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.62
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.52
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "exclusiveGroup": "tokio-premium-shortfall",
+            "groupResolution": "max-total-charge",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published monthly premium shortfall charge when annualised regular premium is reduced below the commencement-date commitment during policy years 4 to 10.",
+              "Uses the annual reduction amount as the charge base and deducts from Accumulation Units Account first, then Top-up Units Account, then Initial Units Account.",
+              "Use a regular-premium-increase event to restore the commencement-date amount and stop this shortfall charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular Premium Routing",
+                "excerpt": "The power-up bonus will be calculated in accordance to the formula below: Power-up Bonus = 0.30% x Initial Units Account value The power-up bonus will be allocated to the policy in the form of additional units to the Ini"
+              },
+              {
+                "page": 11,
+                "section": "Partial Withdrawal Charge and Premium Shortfall Charge",
+                "excerpt": "Partial Withdrawal Charge A partial withdrawal charge will be levied upon any partial withdrawal from the Accumulation Units Account on or before the end of the minimum investment period. The partial withdrawal charge is"
+              },
+              {
+                "page": 12,
+                "section": "Premium Shortfall Charge and fee notes",
+                "excerpt": "Premium Shortfall Charge A premium shortfall charge will be levied monthly during Premium Shortfall Charge Period when: (i) there is non-payment of regular premium at the expiry of the grace period; or (ii) there is a re"
+              },
+              {
+                "page": 17,
+                "section": "Appendix A Charges",
+                "excerpt": "SURRENDER CHARGE Policy Year Surrender Charge 1 100% 2 100% 3 100% 4 99% 5 99% 6 96% 7 93% 8 89% 9 80% 10 10% PARTIAL WITHDRAWAL CHARGE Policy Year Partial Withdrawal Charge 1 Not applicable as Partial Withdrawal is not "
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          1,
+          0.99,
+          0.99,
+          0.96,
+          0.93,
+          0.89,
+          0.8,
+          0.1
+        ],
+        "warnings": [
+          "This partial template models regular-premium routing through year 10, top-up routing, recurring single premium routing, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.",
+          "This partial template also models the published premium shortfall charge for non-payment periods and regular-premium reductions, including the higher-charge rule when both overlap.",
+          "Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.",
+          "Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant."
+        ],
+        "unsupportedItems": [
+          "Initial setup charge, policy investment charge, admin charge, monthly protection charge, and dividend distribution election remain metadata-only for this product.",
+          "Multiple-life and capital-guarantee death-benefit options remain metadata-only for this product."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan Description",
+            "excerpt": "via top-up premium or recurring single premium. 1 Life Benefit Rider is an optional unit-deducting rider which extends your capital guarantee upon death to before th the policy anniversary immediately after the 99 birthd"
+          },
+          {
+            "page": 2,
+            "section": "Initial Bonus",
+            "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first policy year upon receipt of each regular premium to boost your investment. Initial bonus = Initial bonus rate x each regular premium "
+          },
+          {
+            "page": 3,
+            "section": "Performance Investment / Loyalty / Power-up Bonus",
+            "excerpt": "Performance Investment Bonus While the policy is in-force, an annual performance investment bonus will be paid at the end of each policy year, th starting from the end of the 4 policy year until the end of minimum invest"
+          },
+          {
+            "page": 4,
+            "section": "Regular Premium Routing",
+            "excerpt": "The power-up bonus will be calculated in accordance to the formula below: Power-up Bonus = 0.30% x Initial Units Account value The power-up bonus will be allocated to the policy in the form of additional units to the Ini"
+          },
+          {
+            "page": 5,
+            "section": "Recurring Single Premium and Top-up Premium",
+            "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. When there is any reduction in regular premium amount p"
+          },
+          {
+            "page": 11,
+            "section": "Partial Withdrawal Charge and Premium Shortfall Charge",
+            "excerpt": "Partial Withdrawal Charge A partial withdrawal charge will be levied upon any partial withdrawal from the Accumulation Units Account on or before the end of the minimum investment period. The partial withdrawal charge is"
+          },
+          {
+            "page": 12,
+            "section": "Premium Shortfall Charge and fee notes",
+            "excerpt": "Premium Shortfall Charge A premium shortfall charge will be levied monthly during Premium Shortfall Charge Period when: (i) there is non-payment of regular premium at the expiry of the grace period; or (ii) there is a re"
+          },
+          {
+            "page": 17,
+            "section": "Appendix A Charges",
+            "excerpt": "SURRENDER CHARGE Policy Year Surrender Charge 1 100% 2 100% 3 100% 4 99% 5 99% 6 96% 7 93% 8 89% 9 80% 10 10% PARTIAL WITHDRAWAL CHARGE Policy Year Partial Withdrawal Charge 1 Not applicable as Partial Withdrawal is not "
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "tokio-marine-wealth-max-ii",
     "insurer": "Tokio Marine",
     "productName": "Wealth Max (II)",

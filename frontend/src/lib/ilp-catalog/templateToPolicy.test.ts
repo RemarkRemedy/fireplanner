@@ -1793,6 +1793,50 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-initial-bonus-performance-investment-bonus-loyalty-bonus-and-power-up-bonus')
   })
 
+  it('maps Tokio Marine Harvest Pro into a partial seed with executable bonus ladders', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-harvest-pro')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-bonus-tiered-premium-allocation')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-performance-investment-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-loyalty-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-power-up-bonus')
+    expect(seed.catalogSource?.modeledEconomics).not.toContain('tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events')
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.14 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.25 },
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.27 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.31 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.33 },
+    ])
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Performance Investment Bonus')?.rate).toBe(0.018)
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          rateSchedule: [
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.62 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.52 },
+            { startPolicyYear: 6, endPolicyYear: 6, rate: 0.45 },
+            { startPolicyYear: 7, endPolicyYear: 7, rate: 0.4 },
+            { startPolicyYear: 8, endPolicyYear: 8, rate: 0.3 },
+            { startPolicyYear: 9, endPolicyYear: 9, rate: 0.15 },
+            { startPolicyYear: 10, endPolicyYear: 10, rate: 0.1 },
+          ],
+        }),
+      ]),
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-initial-setup-policy-investment-admin-monthly-protection-and-dividend-distribution',
+    )
+  })
+
   it('maps Manulife InvestReady (III) into a partial seed with protected-base assurance support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'manulife-investready-iii')
