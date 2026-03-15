@@ -33,6 +33,7 @@ const SCREENS: (NudgeFlowScreen & {
   {
     id: 'age',
     title: 'How old are you?',
+    subtitle: 'We\'ll use this to estimate your savings timeline.',
     fields: [
       { name: 'currentAge', label: 'Current age', type: 'number', required: true, validationKey: 'currentAge', tooltip: 'Your age today. Used to calculate years to retirement and CPF projections.' },
       { name: 'retirementAge', label: 'Desired retirement age', type: 'number', required: true, validationKey: 'retirementAge', tooltip: 'The age you plan to stop working. Your portfolio must sustain you from this age onward.' },
@@ -42,6 +43,7 @@ const SCREENS: (NudgeFlowScreen & {
   {
     id: 'income',
     title: 'What do you earn?',
+    subtitle: 'This helps us project your CPF contributions and savings rate.',
     fields: [
       { name: 'hasIncome', label: 'I earn employment or business income', type: 'toggle' },
       // Income details rendered as custom MonthlyIncomeInput below SetupScreen (see render)
@@ -51,6 +53,7 @@ const SCREENS: (NudgeFlowScreen & {
   {
     id: 'expenses',
     title: 'What do you spend?',
+    subtitle: 'Your spending determines how much you need to retire.',
     fields: [
       // Expenses rendered as custom MonthlyExpenseInput below SetupScreen (see render)
     ],
@@ -59,6 +62,7 @@ const SCREENS: (NudgeFlowScreen & {
   {
     id: 'savings',
     title: 'What have you saved?',
+    subtitle: 'This is your starting point for the projection.',
     fields: [
       { name: 'liquidNetWorth', label: 'Cash & investments (excl. CPF/property)', type: 'currency', required: true, validationKey: 'liquidNetWorth', tooltip: 'Cash, savings, investments, and fixed deposits you could access. Excludes CPF and property equity.', helperText: 'Include savings accounts, brokerage, fixed deposits. Exclude CPF and your home — those are tracked separately.' },
     ],
@@ -67,11 +71,12 @@ const SCREENS: (NudgeFlowScreen & {
   {
     id: 'residency',
     title: 'Are you a Singapore citizen or PR?',
+    subtitle: 'Determines CPF rates and tax treatment.',
     fields: [
       {
         name: 'residency',
         label: 'Residency status',
-        type: 'select',
+        type: 'radio-cards',
         tooltip: 'Determines CPF contribution rates, tax treatment, and ABSD rates for property.',
         options: [
           { value: 'citizen', label: 'Singapore Citizen' },
@@ -79,16 +84,16 @@ const SCREENS: (NudgeFlowScreen & {
           { value: 'foreigner', label: 'Foreigner' },
         ],
         required: true,
-        helperText: 'This determines CPF eligibility and tax treatment.',
       },
     ],
   },
   // Screen 6: CPF (skip if foreigner) — custom CpfSetupInput handles all fields
-  { id: 'cpf', title: 'Your CPF', fields: [], skipWhen: { field: 'residency', equals: 'foreigner' } },
+  { id: 'cpf', title: 'How much CPF do you have?', subtitle: 'CPF is a major part of your retirement income.', fields: [], skipWhen: { field: 'residency', equals: 'foreigner' } },
   // Screen 7: Property toggle
   {
     id: 'property-toggle',
     title: 'Do you own property?',
+    subtitle: 'Property equity can be part of your retirement net worth.',
     fields: [
       {
         name: 'ownsProperty',
@@ -149,9 +154,10 @@ const SCREENS: (NudgeFlowScreen & {
   // Screen 9: Healthcare toggle
   {
     id: 'healthcare-toggle',
-    title: 'Healthcare planning',
+    title: 'Should we include healthcare costs?',
+    subtitle: 'Healthcare costs grow with age and can significantly affect retirement spending.',
     fields: [
-      { name: 'healthcareEnabled', label: 'Include healthcare costs in projection', type: 'toggle', tooltip: 'Healthcare costs grow with age and can significantly impact retirement spending.', helperText: 'Healthcare is one of the largest retirement expenses. Including it makes your plan more realistic.' },
+      { name: 'healthcareEnabled', label: 'Include healthcare costs in projection', type: 'toggle', tooltip: 'Healthcare costs grow with age and can significantly impact retirement spending.', helperText: 'We\'ve included basic healthcare costs. You can adjust the tier or disable this.' },
     ],
   },
   // Screen 10: Healthcare details (skip if disabled)
@@ -313,8 +319,8 @@ const INITIAL_VALUES: Record<string, unknown> = {
   mortgageBalance: 0,
   purchasePrice: 1500000,
   purchaseYearsFromNow: 0,
-  healthcareEnabled: false,
-  ispTier: 'none',
+  healthcareEnabled: true,
+  ispTier: 'basic',
   // Partner defaults
   partnerName: '',
   partnerAge: 30,
@@ -353,7 +359,7 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
     age >= 65 ? '65-plus' : age >= 55 ? '55-to-64' : 'before-55'
 
   // CPF: 3 modes — estimate, know/total, know/breakdown
-  let cpfKnown = true
+  const cpfKnown = true
   let cpfTotal: number | undefined
   let cpfBreakdown: { oa: number; sa: number; ma: number; ra: number } | undefined
   const cpfMode = values.cpfMode as 'estimate' | 'know'
@@ -629,6 +635,8 @@ export function SetupPage() {
     // Disable blocker before navigating
     completingRef.current = true
     trackEvent('setup_completed', { planType, isRedo, pathway: sectionOrder })
+    // Store flag so the projection page can show a welcome orientation
+    sessionStorage.setItem('fireplanner-setup-just-completed', '1')
     navigate('/projection')
   }, [state.values, planType, isRedo, sectionOrder, setUIField, navigate])
 
@@ -703,8 +711,23 @@ export function SetupPage() {
   const hasDependents = state.values.hasDependents as boolean
   const dependentsList = (state.values.dependentsList as Array<{ name: string; age: number; relationship: string }>) ?? []
 
+  const isAgeScreen = currentScreen.id === 'age'
+
   // Build custom children for screens that need compound inputs
   const customChildren = (() => {
+    if (isAgeScreen) {
+      const age = (state.values.currentAge as number) ?? 30
+      const retAge = (state.values.retirementAge as number) ?? 55
+      const yearsToGo = retAge - age
+      if (yearsToGo > 0) {
+        return (
+          <p className="text-sm text-muted-foreground text-center">
+            {yearsToGo} years to go. Let&apos;s make them count.
+          </p>
+        )
+      }
+      return null
+    }
     if (isIncomeScreen && state.values.hasIncome) {
       const monthlyInc = (state.values.monthlyIncome as number) ?? 0
       const incType = (state.values.incomeType as 'take-home' | 'gross') ?? 'take-home'
@@ -729,11 +752,24 @@ export function SetupPage() {
     }
     if (isExpensesScreen) {
       return (
-        <MonthlyExpenseInput
-          monthlyExpenses={(state.values.monthlyExpenses as number) ?? 0}
-          onMonthlyExpensesChange={(v) => handleChange('monthlyExpenses', v)}
-          annualExpenses={((state.values.monthlyExpenses as number) ?? 0) * 12}
-        />
+        <>
+          <MonthlyExpenseInput
+            monthlyExpenses={(state.values.monthlyExpenses as number) ?? 0}
+            onMonthlyExpensesChange={(v) => handleChange('monthlyExpenses', v)}
+            annualExpenses={((state.values.monthlyExpenses as number) ?? 0) * 12}
+          />
+          <details className="mt-4 text-sm">
+            <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+              Not sure? Here are typical ranges
+            </summary>
+            <div className="mt-2 space-y-1 text-muted-foreground pl-1">
+              <p>Single, renting: $2,000–3,500/mo</p>
+              <p>Couple with HDB: $3,000–5,000/mo</p>
+              <p>Family with kids: $5,000–8,000/mo</p>
+              <p className="mt-2 text-xs italic">A rough estimate works fine — you can refine it later.</p>
+            </div>
+          </details>
+        </>
       )
     }
     if (isCpfScreen) {

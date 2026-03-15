@@ -129,6 +129,7 @@ export function StartPage() {
         <p className="text-muted-foreground mt-2 text-base">
           Plan your path to Financial Independence with Singapore-specific calculations.
         </p>
+        <p className="mt-2 text-sm text-muted-foreground">Set up in under 3 minutes.</p>
         {!isReturningUser && (
           <p className="mt-3 text-sm text-muted-foreground">
             Also available as a{' '}

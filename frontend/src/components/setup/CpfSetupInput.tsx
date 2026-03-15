@@ -1,7 +1,36 @@
+import { useEffect, useRef, useState } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { MEDISAVE_BHS } from '@/lib/data/healthcarePremiums'
+
+/** Animate a number counting up from 0 to target over duration ms */
+function useCountUp(target: number, duration = 600): number {
+  const [value, setValue] = useState(0)
+  const prevTarget = useRef(target)
+
+  useEffect(() => {
+    if (target === prevTarget.current) return
+    prevTarget.current = target
+
+    const start = performance.now()
+    let frame: number
+    const tick = (now: number) => {
+      const elapsed = now - start
+      const progress = Math.min(elapsed / duration, 1)
+      // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setValue(Math.round(target * eased))
+      if (progress < 1) {
+        frame = requestAnimationFrame(tick)
+      }
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [target, duration])
+
+  return value
+}
 
 interface CpfSplit {
   oa: number
@@ -68,6 +97,8 @@ export function CpfSetupInput({
   manual,
   onManualChange,
 }: CpfSetupInputProps) {
+  const animatedTotal = useCountUp(estimate.total)
+
   return (
     <div className="flex flex-col gap-3">
       <div>
@@ -88,7 +119,7 @@ export function CpfSetupInput({
               Based on your age and income, we estimate:
             </p>
             <p className="text-2xl font-semibold">
-              ~${estimate.total.toLocaleString()}
+              ~${animatedTotal.toLocaleString()}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
               OA ~{formatCompact(estimate.split.oa)} · SA ~

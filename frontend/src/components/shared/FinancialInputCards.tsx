@@ -100,7 +100,7 @@ export function MonthlyIncomeInput({
           onCheckedChange={(checked) => onHasBonusAwsChange(checked === true)}
         />
         <label htmlFor={checkboxId} className="text-xs text-muted-foreground cursor-pointer">
-          I receive bonus / AWS
+          I receive a yearly bonus (13th month / AWS)
         </label>
         {hasBonusAws && (
           <div className="flex items-center gap-1">

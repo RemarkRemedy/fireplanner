@@ -44,6 +44,16 @@ function StatusIcon({ status }: { status: CategoryStatus }) {
 function deriveCategories(draft: SetupDraft): ReviewCategory[] {
   const categories: ReviewCategory[] = []
 
+  // Age & retirement target
+  const yearsToGo = draft.retirementAge - draft.currentAge
+  categories.push({
+    key: 'age',
+    label: 'Age & target',
+    status: 'provided',
+    detail: `Age ${draft.currentAge}, retire at ${draft.retirementAge} (${yearsToGo > 0 ? `${yearsToGo} years to go` : 'already there'})`,
+    screenIndex: 0,
+  })
+
   // Income & savings: always provided
   categories.push({
     key: 'income',
@@ -149,7 +159,7 @@ export function ReviewCheckpoint({ draft, onConfirm, onEdit, validationError }: 
       <div className="flex flex-col gap-1">
         <h2 className="text-xl font-semibold">Review your inputs</h2>
         <p className="text-sm text-muted-foreground">
-          Check that everything looks right before we generate your projection.
+          All done! Check that everything looks right before we generate your projection.
         </p>
       </div>
 
@@ -179,6 +189,22 @@ export function ReviewCheckpoint({ draft, onConfirm, onEdit, validationError }: 
           </Card>
         ))}
       </div>
+
+      {/* Savings rate insight */}
+      {draft.annualIncome > 0 && draft.annualExpenses > 0 && (
+        (() => {
+          const monthlySavings = Math.round((draft.annualIncome - draft.annualExpenses) / 12)
+          const savingsRate = Math.round(((draft.annualIncome - draft.annualExpenses) / draft.annualIncome) * 100)
+          if (savingsRate > 0) {
+            return (
+              <p className="text-sm text-muted-foreground text-center">
+                You&apos;re saving ~{formatCurrency(monthlySavings)}/month ({savingsRate}% of income).
+              </p>
+            )
+          }
+          return null
+        })()
+      )}
 
       {validationError && (
         <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">

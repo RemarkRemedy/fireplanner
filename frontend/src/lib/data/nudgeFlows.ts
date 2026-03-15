@@ -16,7 +16,7 @@ export type NudgeContainer = 'full-page' | 'drawer'
 export interface NudgeField {
   name: string
   label: string
-  type: 'text' | 'number' | 'currency' | 'percent' | 'select' | 'toggle' | 'pill'
+  type: 'text' | 'number' | 'currency' | 'percent' | 'select' | 'toggle' | 'pill' | 'radio-cards'
   options?: Array<{ value: string; label: string }>
   required?: boolean
   /** Only show this field when another field has this value */
@@ -32,6 +32,7 @@ export interface NudgeField {
 export interface NudgeFlowScreen {
   id: string
   title: string
+  subtitle?: string
   fields: NudgeField[]
   skipWhen?: { field: string; equals?: string | boolean; notEquals?: string | boolean }
 }

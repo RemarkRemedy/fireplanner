@@ -122,6 +122,27 @@ function FieldRenderer({ field, values, onChange, error }: FieldRendererProps) {
     )
   }
 
+  if (field.type === 'radio-cards' && field.options) {
+    return (
+      <div className="flex flex-col gap-2">
+        {field.options.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            className={`w-full text-left rounded-lg border-2 px-4 py-3 text-sm transition-colors ${
+              currentValue === opt.value
+                ? 'border-primary bg-primary/5 font-medium'
+                : 'border-border hover:border-primary/30'
+            }`}
+            onClick={() => onChange(field.name, opt.value)}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    )
+  }
+
   if (field.type === 'select' && field.options) {
     return (
       <div className="flex flex-col gap-1">
@@ -260,7 +281,12 @@ export function SetupScreen({
         />
       </div>
 
-      <h2 className="text-xl font-semibold">{screen.title}</h2>
+      <div>
+        <h2 className="text-xl font-semibold">{screen.title}</h2>
+        {screen.subtitle && (
+          <p className="text-sm text-muted-foreground mt-1">{screen.subtitle}</p>
+        )}
+      </div>
 
       <div className="flex flex-col gap-4">
         {screen.fields.map((field) => {
@@ -299,19 +325,26 @@ export function SetupScreen({
 
       {children}
 
-      <div className="flex items-center gap-3 pt-2">
-        {onBack && (
-          <Button type="button" variant="outline" onClick={onBack} className="flex-1">
-            Back
+      <div className="flex flex-col gap-2 pt-2">
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <Button type="button" variant="outline" onClick={onBack} className="flex-1">
+              Back
+            </Button>
+          )}
+          <Button
+            type="submit"
+            className={onBack ? 'flex-1' : 'w-full'}
+            disabled={hasValidationErrors}
+          >
+            {submitLabel}
           </Button>
+        </div>
+        {onBack && (
+          <p className="text-xs text-center text-muted-foreground">
+            You can always change this later.
+          </p>
         )}
-        <Button
-          type="submit"
-          className={onBack ? 'flex-1' : 'w-full'}
-          disabled={hasValidationErrors}
-        >
-          {submitLabel}
-        </Button>
       </div>
     </form>
   )

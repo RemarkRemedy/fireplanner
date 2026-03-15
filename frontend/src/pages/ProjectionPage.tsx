@@ -19,7 +19,8 @@ import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, PartyPopper } from 'lucide-react'
+import { toast } from 'sonner'
 import { NWChartView } from '@/components/projection/NWChartView'
 import { Maximize2 } from 'lucide-react'
 import { useEffectiveMode } from '@/hooks/useEffectiveMode'
@@ -78,6 +79,19 @@ export function ProjectionPage() {
   const navigate = useNavigate()
   const currentSnapshot = useMetricsSnapshot()
   const deltaProcessed = useRef(false)
+
+  // Show welcome toast after completing guided setup
+  useEffect(() => {
+    const justCompleted = sessionStorage.getItem('fireplanner-setup-just-completed')
+    if (justCompleted) {
+      sessionStorage.removeItem('fireplanner-setup-just-completed')
+      toast('Your plan is ready!', {
+        description: 'Use the sidebar to explore inputs, stress tests, and more. Refine cards on this page let you fine-tune specific sections.',
+        duration: 8000,
+        icon: <PartyPopper className="h-4 w-4" />,
+      })
+    }
+  }, [])
 
   useEffect(() => {
     if (deltaProcessed.current || !location.state?.showDelta) return
