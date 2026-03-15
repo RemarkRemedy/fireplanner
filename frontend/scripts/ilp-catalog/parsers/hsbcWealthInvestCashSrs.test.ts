@@ -27,10 +27,11 @@ describe('parseHsbcWealthInvestCashSrs', () => {
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toEqual([
       'branch:hsbc-life-wealth-invest-cash-srs-max-single-premium-charge',
+      'branch:hsbc-life-wealth-invest-cash-srs-max-recurring-single-premium-charge',
       'branch:hsbc-life-wealth-invest-cash-srs-max-top-up-charge',
       'branch:hsbc-life-wealth-invest-cash-srs-zero-redemption-fee',
+      'tokio-recurring-single-premium-routing',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cash-srs-recurring-single-premium')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cash-srs-fund-management-charge')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cash-srs-single-premium-principal-tracking')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cash-srs'])
@@ -61,6 +62,13 @@ describe('parseHsbcWealthInvestCashSrs', () => {
         id: 'top-up-premium-charge',
         trigger: 'top-up',
         basis: 'event-amount',
+        activeWindow: 'policy-term',
+        rate: 0.05,
+      }),
+      expect.objectContaining({
+        id: 'recurring-single-premium-charge',
+        trigger: 'recurring-single-premium',
+        basis: 'event-amount-with-overlap-months',
         activeWindow: 'policy-term',
         rate: 0.05,
       }),
