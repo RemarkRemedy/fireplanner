@@ -1908,6 +1908,118 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-admin-charge')
   })
 
+  it('maps Tokio Marine Harvest Max into a partial seed with executable initial, policy, and admin charge surfaces', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-harvest-max')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-15')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-admin-charge-on-initial-account')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-monthly-protection-charge')
+    expect(seed.accounts.find((account) => account.id === 'initial')?.contributionRules).toEqual([
+      { phase: 'during-icp', contributionShare: 1 },
+      { phase: 'after-mip', contributionShare: 1 },
+    ])
+    expect(seed.accounts.find((account) => account.id === 'accumulation')?.contributionRules).toEqual([
+      { phase: 'after-icp', contributionShare: 1 },
+    ])
+    expect(seed.accounts.find((account) => account.id === 'topup')?.contributionRules).toEqual([
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.28 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.4 },
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.41 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.44 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.45 },
+    ])
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Performance Investment Bonus')?.rate).toBe(0.017)
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Loyalty Bonus')?.rate).toBe(0.012)
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Power-up Bonus')?.rate).toBe(0.003)
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'initial-charge',
+          basis: 'account-value',
+          appliesTo: ['initial'],
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 0.005 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 0.01 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.015 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.02 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.025 },
+            { startPolicyYear: 6, endPolicyYear: 6, rate: 0.03 },
+            { startPolicyYear: 7, endPolicyYear: 7, rate: 0.035 },
+            { startPolicyYear: 8, endPolicyYear: 8, rate: 0.04 },
+            { startPolicyYear: 9, endPolicyYear: 9, rate: 0.045 },
+            { startPolicyYear: 10, endPolicyYear: 10, rate: 0.05 },
+            { startPolicyYear: 11, endPolicyYear: 11, rate: 0.055 },
+            { startPolicyYear: 12, endPolicyYear: 12, rate: 0.06 },
+            { startPolicyYear: 13, endPolicyYear: 13, rate: 0.065 },
+            { startPolicyYear: 14, endPolicyYear: 14, rate: 0.07 },
+            { startPolicyYear: 15, endPolicyYear: 15, rate: 0.075 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'policy-charge-during-mip',
+          basis: 'premium-base-mip-multiplier',
+          rate: 0.012,
+          startPolicyYear: 4,
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+        }),
+        expect.objectContaining({
+          id: 'policy-charge-after-mip',
+          basis: 'premium-base-mip-multiplier',
+          rate: 0.012,
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+        }),
+        expect.objectContaining({
+          id: 'admin-charge',
+          basis: 'premium-base-mip-multiplier',
+          rate: 0.02,
+          appliesTo: ['initial'],
+          fallbackAppliesTo: ['topup', 'accumulation'],
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          rateSchedule: [
+            { startPolicyYear: 6, endPolicyYear: 6, rate: 0.6 },
+            { startPolicyYear: 7, endPolicyYear: 7, rate: 0.3 },
+            { startPolicyYear: 8, endPolicyYear: 8, rate: 0.25 },
+            { startPolicyYear: 9, endPolicyYear: 9, rate: 0.1 },
+            { startPolicyYear: 10, endPolicyYear: 15, rate: 0.05 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'premium-shortfall-charge-non-payment',
+          rateSchedule: [
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.7 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.6 },
+            { startPolicyYear: 6, endPolicyYear: 6, rate: 0.58 },
+            { startPolicyYear: 7, endPolicyYear: 7, rate: 0.53 },
+            { startPolicyYear: 8, endPolicyYear: 8, rate: 0.51 },
+            { startPolicyYear: 9, endPolicyYear: 15, rate: 0 },
+          ],
+        }),
+      ]),
+    )
+    expect(seed.eecTable).toEqual([1, 1, 1, 0.99, 0.99, 0.98, 0.96, 0.95, 0.9, 0.89, 0.88, 0.83, 0.8, 0.75, 0.08])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('102% performance-growth-measure gate'))).toBe(true)
+  })
+
   it('maps Tokio Marine Wealth Flexi into a partial seed with split performance-bonus windows', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-wealth-flexi')

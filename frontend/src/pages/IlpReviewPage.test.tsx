@@ -524,6 +524,27 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Initial Bonus')).toBeInTheDocument()
   }, 10_000)
 
+  it('seeds Tokio Marine Harvest Max as a partial catalog product with executable initial, policy, and admin charges', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Harvest Max')
+
+    expect(within(dialog).getByText('Harvest Max')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 15/i }))
+
+    expect(screen.getAllByText('Harvest Max (SGD / MIP 15)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('102% performance-growth-measure gate')
+    expect(screen.getByDisplayValue('Initial Setup Charge')).toBeInTheDocument()
+    expect(screen.getAllByDisplayValue('Policy Charge').length).toBeGreaterThan(0)
+    expect(screen.getByDisplayValue('Admin Charge')).toBeInTheDocument()
+  }, 10_000)
+
   it('renames the active policy from the input form and updates the policy tab', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()

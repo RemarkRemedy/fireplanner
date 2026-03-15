@@ -59842,6 +59842,859 @@
     ]
   },
   {
+    "id": "tokio-marine-harvest-max",
+    "insurer": "Tokio Marine",
+    "productName": "Harvest Max",
+    "sourceFileName": "TML_UNYR_TPDN_CIZ_Summary.pdf",
+    "sourceChecksumSha256": "40a744e673f67802ee0b03315965c572d23aed59f92f83844613da378f1af31b",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "tokio-initial-vs-accumulation-regular-premium-routing",
+      "tokio-initial-bonus-tiered-premium-allocation",
+      "tokio-performance-investment-bonus",
+      "tokio-loyalty-bonus",
+      "tokio-power-up-bonus",
+      "tokio-top-up-routing",
+      "tokio-post-mip-regular-premium-routing-back-to-initial-account",
+      "tokio-recurring-single-premium-routing",
+      "tokio-recurring-single-premium-manual-resumption-after-premium-holiday",
+      "tokio-regular-premium-reduction-consumes-recurring-single-premium-first",
+      "tokio-initial-charge-on-initial-account",
+      "tokio-policy-charge-on-accumulation-account",
+      "tokio-admin-charge-on-initial-account",
+      "tokio-top-up-premium-charge",
+      "tokio-recurring-single-premium-charge",
+      "tokio-initial-account-surrender-charge",
+      "tokio-accumulation-partial-withdrawal-charge",
+      "tokio-premium-shortfall-charge-non-payment",
+      "tokio-premium-shortfall-charge-regular-premium-reduction",
+      "tokio-premium-increase-restores-shortfall-charge-cessation",
+      "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only"
+    ],
+    "metadataOnlyBehaviors": [
+      "tokio-harvest-max-monthly-protection-charge",
+      "tokio-harvest-max-dividend-distribution-election",
+      "tokio-harvest-max-credit-card-charge",
+      "tokio-harvest-max-life-replacement-option"
+    ],
+    "warnings": [
+      "Structured extraction validated against the Harvest Max product summary text layer.",
+      "Harvest Max is modeled as the SGD / MIP 15 corridor with published initial setup charge, policy charge, admin charge, bonuses, and appendix charge tables.",
+      "Performance investment bonus retains the published 102% performance-growth-measure gate as a manual review assumption.",
+      "Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.",
+      "Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-15",
+        "currency": "SGD",
+        "mipLength": 15,
+        "icpMonths": 36,
+        "accounts": [
+          {
+            "id": "initial",
+            "label": "Initial Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular Premium Routing",
+                "excerpt": "Regular premium are payable throughout the policy term. The plan has a minimum investment period of 15 years whereby: (a) premium shortfall charge applies if you reduce and/or miss any regular premium during policy year "
+              },
+              {
+                "page": 9,
+                "section": "Initial Setup Charge",
+                "excerpt": "Initial Setup Charge / Initial Charge Initial setup charge is also known as “Initial Charge” and such terms are used interchangeably. During the minimum investment period, an initial setup charge will be deducted monthly"
+              },
+              {
+                "page": 10,
+                "section": "Policy Charge / Admin Charge / MPC",
+                "excerpt": "Policy Investment Charge/ Policy Charge Policy investment charge is also known as “Policy Charge” and such terms are used interchangeably. th From the 37 policy month, a policy investment charge will be deducted monthly "
+              }
+            ]
+          },
+          {
+            "id": "accumulation",
+            "label": "Accumulation Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "after-icp",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular Premium Routing",
+                "excerpt": "Regular premium are payable throughout the policy term. The plan has a minimum investment period of 15 years whereby: (a) premium shortfall charge applies if you reduce and/or miss any regular premium during policy year "
+              },
+              {
+                "page": 6,
+                "section": "Partial Withdrawal",
+                "excerpt": "whichever is later. For all recurring single premium due but not received by the premium due date, we will use the unit price on the next pricing day following the receipt of the premiums. You may notify us in writing sh"
+              },
+              {
+                "page": 10,
+                "section": "Policy Charge / Admin Charge / MPC",
+                "excerpt": "Policy Investment Charge/ Policy Charge Policy investment charge is also known as “Policy Charge” and such terms are used interchangeably. th From the 37 policy month, a policy investment charge will be deducted monthly "
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium and Top-up Premium",
+                "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. When there is any reduction in regular premium amount p"
+              },
+              {
+                "page": 6,
+                "section": "Partial Withdrawal",
+                "excerpt": "whichever is later. For all recurring single premium due but not received by the premium due date, we will use the unit price on the next pricing day following the receipt of the premiums. You may notify us in writing sh"
+              },
+              {
+                "page": 11,
+                "section": "Top-up Charge / Withdrawal Charge / Premium Shortfall Charge",
+                "excerpt": "th b) during the minimum investment period and before policy anniversary immediately after the 99 birthday of the youngest life assured if the Advanced Death Benefit with Life Benefit Rider is selected by you. The MPC fo"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "initial-bonus",
+            "type": "allocation",
+            "label": "Initial Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "initial"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.28
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.4
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.41
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.44
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.45
+              }
+            ],
+            "notes": [
+              "Tier is based on the published SGD annualised regular premium band for Harvest Max.",
+              "Allocated to the Initial Units Account in the first policy year."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Initial Bonus",
+                "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first policy year upon receipt of each regular premium to boost your investment. Initial bonus = Initial bonus rate x each regular premium "
+              }
+            ]
+          },
+          {
+            "id": "performance-investment-bonus",
+            "type": "custom",
+            "label": "Performance Investment Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 4,
+            "endPolicyYear": 15,
+            "rate": 0.017,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual bonus on the Accumulation Units Account value from the end of policy year 4 until the end of the minimum investment period.",
+              "The source document conditions payment on the performance growth measure being at least 102%; that gate remains a manual review assumption in this partial template."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Performance Investment / Loyalty / Power-up Bonus",
+                "excerpt": "Performance Investment Bonus While the policy is in-force, an annual performance investment bonus will be paid at the end of each policy year, th starting from the end of the 4 policy year until the end of minimum invest"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 16,
+            "endPolicyYear": 28,
+            "rate": 0.012,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual bonus on the Accumulation Units Account value from policy year 16 to policy year 28."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Performance Investment / Loyalty / Power-up Bonus",
+                "excerpt": "Performance Investment Bonus While the policy is in-force, an annual performance investment bonus will be paid at the end of each policy year, th starting from the end of the 4 policy year until the end of minimum invest"
+              }
+            ]
+          },
+          {
+            "id": "power-up-bonus",
+            "type": "power-up",
+            "label": "Power-up Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "initial"
+            ],
+            "startPolicyYear": 16,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual bonus on the Initial Units Account value from policy year 16 onward."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Performance Investment / Loyalty / Power-up Bonus",
+                "excerpt": "Performance Investment Bonus While the policy is in-force, an annual performance investment bonus will be paid at the end of each policy year, th starting from the end of the 4 policy year until the end of minimum invest"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "initial-charge",
+            "label": "Initial Setup Charge",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "initial"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.005
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.01
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.015
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.02
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.03
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.035
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.04
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.045
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.05
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.055
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.065
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.07
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.075
+              }
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published monthly initial setup charge during the minimum investment period as 0.50% p.a. multiplied by the current policy year."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Initial Setup Charge",
+                "excerpt": "Initial Setup Charge / Initial Charge Initial setup charge is also known as “Initial Charge” and such terms are used interchangeably. During the minimum investment period, an initial setup charge will be deducted monthly"
+              }
+            ]
+          },
+          {
+            "id": "policy-charge-during-mip",
+            "label": "Policy Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.012,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 4,
+                  "endPolicyYear": 15,
+                  "mode": "policy-year"
+                }
+              ]
+            },
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "initial"
+            ],
+            "activeWindow": "during-mip",
+            "startPolicyYear": 4,
+            "notes": [
+              "Models the published monthly policy charge from the 37th policy month through the minimum investment period using annualised regular premium committed at commencement date multiplied by the current policy year."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy Charge / Admin Charge",
+                "excerpt": "Policy Investment Charge/ Policy Charge Policy investment charge is also known as “Policy Charge” and such terms are used interchangeably. th From the 37 policy month, a policy investment charge will be deducted monthly "
+              }
+            ]
+          },
+          {
+            "id": "policy-charge-after-mip",
+            "label": "Policy Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.012,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 16,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 15
+                }
+              ]
+            },
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "initial"
+            ],
+            "activeWindow": "after-mip",
+            "notes": [
+              "Models the published monthly policy charge after the minimum investment period using the fixed 15-year multiplier."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy Charge / Admin Charge",
+                "excerpt": "Policy Investment Charge/ Policy Charge Policy investment charge is also known as “Policy Charge” and such terms are used interchangeably. th From the 37 policy month, a policy investment charge will be deducted monthly "
+              }
+            ]
+          },
+          {
+            "id": "admin-charge",
+            "label": "Admin Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.02,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 15,
+                  "mode": "fixed",
+                  "multiplier": 1
+                }
+              ]
+            },
+            "appliesTo": [
+              "initial"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "accumulation"
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published monthly admin charge during the minimum investment period as 2.00% p.a. of the annualised regular premium committed at commencement date."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy Charge / Admin Charge",
+                "excerpt": "Policy Investment Charge/ Policy Charge Policy investment charge is also known as “Policy Charge” and such terms are used interchangeably. th From the 37 policy month, a policy investment charge will be deducted monthly "
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each top-up premium allocation to the Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium and Top-up Premium",
+                "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. When there is any reduction in regular premium amount p"
+              },
+              {
+                "page": 11,
+                "section": "Top-up Charge / Withdrawal Charge / Premium Shortfall Charge",
+                "excerpt": "th b) during the minimum investment period and before policy anniversary immediately after the 99 birthday of the youngest life assured if the Advanced Death Benefit with Life Benefit Rider is selected by you. The MPC fo"
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurring Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each recurring single premium allocation to the Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium and Top-up Premium",
+                "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. When there is any reduction in regular premium amount p"
+              },
+              {
+                "page": 11,
+                "section": "Top-up Charge / Withdrawal Charge / Premium Shortfall Charge",
+                "excerpt": "th b) during the minimum investment period and before policy anniversary immediately after the 99 birthday of the youngest life assured if the Advanced Death Benefit with Life Benefit Rider is selected by you. The MPC fo"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 15,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies only to partial withdrawals from the Accumulation Units Account during the minimum investment period.",
+              "Partial withdrawals from the Accumulation Units Account are not allowed in the first five policy years."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Partial Withdrawal",
+                "excerpt": "whichever is later. For all recurring single premium due but not received by the premium due date, we will use the unit price on the next pricing day following the receipt of the premiums. You may notify us in writing sh"
+              },
+              {
+                "page": 11,
+                "section": "Top-up Charge / Withdrawal Charge / Premium Shortfall Charge",
+                "excerpt": "th b) during the minimum investment period and before policy anniversary immediately after the 99 birthday of the youngest life assured if the Advanced Death Benefit with Life Benefit Rider is selected by you. The MPC fo"
+              },
+              {
+                "page": 17,
+                "section": "Appendix A Partial Withdrawal Charge",
+                "excerpt": "PARTIAL WITHDRAWAL CHARGE Policy Year Partial Withdrawal Charge 1 2 Not applicable as Partial Withdrawal is not allowed in 3 the first five (5) Policy Years 4 5 6 60% 7 30% 8 25% 9 10% 10 5% 11 5% 12 5% 13 5% 14 5% 15 5%"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge-non-payment",
+            "label": "Premium Shortfall Charge (Non-payment)",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "initial"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.7
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.58
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.53
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.51
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 15,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "exclusiveGroup": "tokio-premium-shortfall",
+            "groupResolution": "max-total-charge",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published monthly premium shortfall charge when regular premium is not paid after the grace period.",
+              "Deduct from Accumulation Units Account first, then Top-up Units Account, then Initial Units Account.",
+              "Use a premium-holiday event to represent the non-payment period after the grace period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular Premium Routing",
+                "excerpt": "Regular premium are payable throughout the policy term. The plan has a minimum investment period of 15 years whereby: (a) premium shortfall charge applies if you reduce and/or miss any regular premium during policy year "
+              },
+              {
+                "page": 11,
+                "section": "Top-up Charge / Withdrawal Charge / Premium Shortfall Charge",
+                "excerpt": "th b) during the minimum investment period and before policy anniversary immediately after the 99 birthday of the youngest life assured if the Advanced Death Benefit with Life Benefit Rider is selected by you. The MPC fo"
+              },
+              {
+                "page": 18,
+                "section": "Appendix A Premium Shortfall Charge",
+                "excerpt": "PREMIUM SHORTFALL CHARGE Policy Year Premium Shortfall Charge 1 Not applicable as non-payment of Regular Premium and 2 reduction in Regular Premium are not allowed in the first three (3) Policy Years 3 4 70% 5 60% 6 58% "
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge-reduction",
+            "label": "Premium Shortfall Charge (Regular Premium Reduction)",
+            "trigger": "regular-premium-reduction",
+            "basis": "annual-reduction-with-active-months",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "initial"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.7
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.58
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.53
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.51
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 15,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "exclusiveGroup": "tokio-premium-shortfall",
+            "groupResolution": "max-total-charge",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published monthly premium shortfall charge when annualised regular premium is reduced below the commencement-date commitment.",
+              "Uses the annual reduction amount as the charge base and deducts from Accumulation Units Account first, then Top-up Units Account, then Initial Units Account.",
+              "Use a regular-premium-increase event to restore the commencement-date amount and stop this shortfall charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular Premium Routing",
+                "excerpt": "Regular premium are payable throughout the policy term. The plan has a minimum investment period of 15 years whereby: (a) premium shortfall charge applies if you reduce and/or miss any regular premium during policy year "
+              },
+              {
+                "page": 11,
+                "section": "Top-up Charge / Withdrawal Charge / Premium Shortfall Charge",
+                "excerpt": "th b) during the minimum investment period and before policy anniversary immediately after the 99 birthday of the youngest life assured if the Advanced Death Benefit with Life Benefit Rider is selected by you. The MPC fo"
+              },
+              {
+                "page": 18,
+                "section": "Appendix A Premium Shortfall Charge",
+                "excerpt": "PREMIUM SHORTFALL CHARGE Policy Year Premium Shortfall Charge 1 Not applicable as non-payment of Regular Premium and 2 reduction in Regular Premium are not allowed in the first three (3) Policy Years 3 4 70% 5 60% 6 58% "
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          1,
+          0.99,
+          0.99,
+          0.98,
+          0.96,
+          0.95,
+          0.9,
+          0.89,
+          0.88,
+          0.83,
+          0.8,
+          0.75,
+          0.08
+        ],
+        "warnings": [
+          "This partial template models the SGD / MIP 15 corridor only.",
+          "This partial template models regular-premium routing through year 15, top-up routing, recurring single premium routing, initial setup charge, policy charge, admin charge, the published bonus set, surrender charge, partial-withdrawal charge, and premium shortfall charge.",
+          "Partial withdrawals from the Accumulation Units Account are not allowed in the first five policy years and are modeled only from policy year 6 onward.",
+          "Performance investment bonus is modeled at the published 1.70% annual rate, but the 102% performance-growth-measure gate remains a manual review assumption.",
+          "Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month."
+        ],
+        "unsupportedItems": [
+          "Monthly protection charge, dividend distribution election, credit-card charge, and add/remove/change-life-assured administration remain metadata-only for this product."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan Description",
+            "excerpt": "PRODUCT SUMMARY − Harvest Max In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description Harvest Max is a non-participating, whole life, regular premium inves"
+          },
+          {
+            "page": 2,
+            "section": "Initial Bonus",
+            "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first policy year upon receipt of each regular premium to boost your investment. Initial bonus = Initial bonus rate x each regular premium "
+          },
+          {
+            "page": 3,
+            "section": "Performance Investment / Loyalty / Power-up Bonus",
+            "excerpt": "Performance Investment Bonus While the policy is in-force, an annual performance investment bonus will be paid at the end of each policy year, th starting from the end of the 4 policy year until the end of minimum invest"
+          },
+          {
+            "page": 4,
+            "section": "Regular Premium Routing",
+            "excerpt": "Regular premium are payable throughout the policy term. The plan has a minimum investment period of 15 years whereby: (a) premium shortfall charge applies if you reduce and/or miss any regular premium during policy year "
+          },
+          {
+            "page": 5,
+            "section": "Recurring Single Premium and Top-up Premium",
+            "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. When there is any reduction in regular premium amount p"
+          },
+          {
+            "page": 6,
+            "section": "Partial Withdrawal",
+            "excerpt": "whichever is later. For all recurring single premium due but not received by the premium due date, we will use the unit price on the next pricing day following the receipt of the premiums. You may notify us in writing sh"
+          },
+          {
+            "page": 9,
+            "section": "Initial Setup Charge",
+            "excerpt": "Initial Setup Charge / Initial Charge Initial setup charge is also known as “Initial Charge” and such terms are used interchangeably. During the minimum investment period, an initial setup charge will be deducted monthly"
+          },
+          {
+            "page": 10,
+            "section": "Policy Charge / Admin Charge / MPC",
+            "excerpt": "Policy Investment Charge/ Policy Charge Policy investment charge is also known as “Policy Charge” and such terms are used interchangeably. th From the 37 policy month, a policy investment charge will be deducted monthly "
+          },
+          {
+            "page": 11,
+            "section": "Top-up Charge / Withdrawal Charge / Premium Shortfall Charge",
+            "excerpt": "th b) during the minimum investment period and before policy anniversary immediately after the 99 birthday of the youngest life assured if the Advanced Death Benefit with Life Benefit Rider is selected by you. The MPC fo"
+          },
+          {
+            "page": 16,
+            "section": "Appendix A Charges",
+            "excerpt": "APPENDIX A Monthly Rates for Monthly Protection Charges (For Death), Per $1,000 Sum at Risk Age Next Male Female Age Next Male Female Birthday ($) ($) Birthday ($) ($) 1 0.02590 0.02230 51 0.16850 0.12050 2 0.02590 0.022"
+          },
+          {
+            "page": 17,
+            "section": "Appendix A Partial Withdrawal Charge",
+            "excerpt": "PARTIAL WITHDRAWAL CHARGE Policy Year Partial Withdrawal Charge 1 2 Not applicable as Partial Withdrawal is not allowed in 3 the first five (5) Policy Years 4 5 6 60% 7 30% 8 25% 9 10% 10 5% 11 5% 12 5% 13 5% 14 5% 15 5%"
+          },
+          {
+            "page": 18,
+            "section": "Appendix A Premium Shortfall Charge",
+            "excerpt": "PREMIUM SHORTFALL CHARGE Policy Year Premium Shortfall Charge 1 Not applicable as non-payment of Regular Premium and 2 reduction in Regular Premium are not allowed in the first three (3) Policy Years 3 4 70% 5 60% 6 58% "
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "tokio-marine-harvest-pro",
     "insurer": "Tokio Marine",
     "productName": "Harvest Pro",
