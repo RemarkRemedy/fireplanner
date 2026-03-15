@@ -446,17 +446,36 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Flexi-Link 5.10')
 
     expect(within(dialog).getByText('Wealth Flexi-Link 5.10')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+    await user.click(within(dialog).getAllByRole('button', { name: /sgd \/ mip 10/i })[0]!)
 
     expect(screen.getAllByText('Wealth Flexi-Link 5.10 (SGD / MIP 10)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Partial template')
-    expect(seededAlert?.textContent).toContain('paid-up and no-withdrawal eligibility gates')
+    expect(seededAlert?.textContent).toContain('split SGD / MIP 10 death-benefit-option variants')
     expect(seededAlert?.textContent).toContain('tokio wealth flexi link 5 10 dividend payout threshold and record date instructions')
     expect(screen.getByDisplayValue('Policy Charge')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Premium Bonus')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Power-up Bonus (Policy Year 10)')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds Tokio Marine Wealth Flexi-Link 5.10 advanced-death as a partial catalog product with Tokio MPC inputs', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Flexi-Link 5.10')
+
+    expect(within(dialog).getByText('Wealth Flexi-Link 5.10')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10 \(advanced death\)/i }))
+
+    expect(screen.getAllByText('Wealth Flexi-Link 5.10 (SGD / MIP 10 (Advanced Death))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
+    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Wealth Flexi-Link 3.12 as a partial catalog product with split policy-charge windows and loyalty bonus', async () => {
@@ -556,8 +575,9 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Flexi')
 
-    expect(within(dialog).getByText('Wealth Flexi')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10 \(advanced death\)/i }))
+    const wealthFlexiCard = within(dialog).getByText('Wealth Flexi').closest('.rounded-lg') as HTMLElement | null
+    expect(wealthFlexiCard).not.toBeNull()
+    await user.click(within(wealthFlexiCard!).getByRole('button', { name: /sgd \/ mip 10 \(advanced death\)/i }))
 
     expect(screen.getAllByText('Wealth Flexi (SGD / MIP 10 (Advanced Death))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')

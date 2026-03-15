@@ -3668,6 +3668,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-5-10-involuntary-unemployment-waiver')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-5-10-benefit-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-5-10-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.accounts.find((account) => account.id === 'accumulation')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
@@ -3744,6 +3745,39 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.eecTable).toEqual([1, 1, 0.92, 0.83, 0.58, 0.57, 0.49, 0.3, 0.12, 0.03])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('paid-up and no-withdrawal eligibility gates'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
+  })
+
+  it('maps Tokio Marine Wealth Flexi-Link 5.10 advanced-death into a partial seed with Tokio MPC inputs', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-wealth-flexi-link-5-10')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10-advanced-death')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('Wealth Flexi-Link 5.10 (SGD / MIP 10 (Advanced Death))')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-wealth-flexi-link-5-10-advanced-death-monthly-protection-charge')
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+          requiresManualInput: true,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+          },
+        }),
+      ]),
+    )
+    expect(seed.assuranceProfile).toBeUndefined()
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('Monthly Protection Charge'))).toBe(true)
   })
 
   it('maps Tokio Marine Wealth Flexi-Link 3.12 into a partial seed with split policy-charge windows and tiered power-up bonuses', () => {
