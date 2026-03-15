@@ -14,6 +14,7 @@ import { CPF_HEURISTIC_SPLIT, SG_GROSS_UP_FACTOR } from '@/lib/data/cpfRates'
 
 export interface SetupDraft {
   // Essential
+  yourName?: string
   currentAge: number
   retirementAge: number
   annualIncome: number
@@ -110,6 +111,7 @@ export function applySetupDraft(draft: SetupDraft, planType: HouseholdPlanType):
 
   // --- Update self adult ---
   const adultUpdates: Partial<PlanningAdult> = {
+    ...(draft.yourName ? { displayName: draft.yourName } : {}),
     currentAge: draft.currentAge,
     retirementAge: draft.retirementAge,
     annualIncome: grossIncome,
@@ -644,6 +646,7 @@ export function hydrateSetupFromPlan(plan: HouseholdPlan): SetupDraft {
   }))
 
   return {
+    yourName: self.displayName !== 'You' ? self.displayName : undefined,
     currentAge: self.currentAge,
     retirementAge: self.retirementAge,
     annualIncome: selfSalary?.annualAmount ?? self.annualIncome,

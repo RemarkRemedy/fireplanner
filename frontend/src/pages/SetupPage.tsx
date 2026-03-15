@@ -36,6 +36,7 @@ const SCREENS: (NudgeFlowScreen & {
     title: 'How old are you?',
     subtitle: 'We\'ll use this to estimate your savings timeline.',
     fields: [
+      { name: 'yourName', label: 'Your name (optional)', type: 'text' },
       { name: 'currentAge', label: 'Current age', type: 'number', required: true, validationKey: 'currentAge', tooltip: 'Your age today. Used to calculate years to retirement and CPF projections.' },
       { name: 'retirementAge', label: 'Desired retirement age', type: 'number', required: true, validationKey: 'retirementAge', tooltip: 'The age you plan to stop working. Your portfolio must sustain you from this age onward.' },
     ],
@@ -293,6 +294,7 @@ function setupReducer(state: SetupState, action: SetupAction): SetupState {
 // ---------------------------------------------------------------------------
 
 const INITIAL_VALUES: Record<string, unknown> = {
+  yourName: '',
   currentAge: 30,
   retirementAge: 55,
   retirementPhase: 'before-55',
@@ -383,6 +385,7 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
   }
 
   const draft: SetupDraft = {
+    yourName: (values.yourName as string) || undefined,
     currentAge: age,
     retirementAge: values.retirementAge as number,
     annualIncome: income,
@@ -435,6 +438,7 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
 
 function hydrateDraftToValues(draft: SetupDraft): Record<string, unknown> {
   const values: Record<string, unknown> = {
+    yourName: draft.yourName ?? '',
     currentAge: draft.currentAge,
     retirementAge: draft.retirementAge,
     retirementPhase: draft.retirementPhase ?? 'before-55',
