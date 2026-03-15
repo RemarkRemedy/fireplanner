@@ -446,6 +446,26 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Premium Shortfall Charge (Premium Holiday)')).toBeInTheDocument()
   }, 10_000)
 
+  it('seeds Tokio Marine #goAffluence as a partial catalog product with modeled initial and policy charge rules', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goAffluence')
+
+    expect(within(dialog).getByText('#goAffluence')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 15/i }))
+
+    expect(screen.getAllByText('#goAffluence (SGD / MIP 15)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('SGD / premium-payment-term-15 corridor only')
+    expect(screen.getByDisplayValue('Initial Charge')).toBeInTheDocument()
+    expect(screen.getAllByDisplayValue('Policy Charge')).toHaveLength(2)
+  }, 10_000)
+
   it('renames the active policy from the input form and updates the policy tab', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()

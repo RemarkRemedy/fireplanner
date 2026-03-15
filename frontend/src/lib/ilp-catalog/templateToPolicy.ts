@@ -36,7 +36,16 @@ function deriveAccountFeeRate(account: IlpTemplateAccount, feeRules: IlpTemplate
     return account.feeRate
   }
 
-  const matchingRule = feeRules.find((rule) => rule.rate != null && rule.appliesTo.length === 1 && rule.appliesTo[0] === account.id)
+  const matchingRule = feeRules.find((rule) => (
+    rule.basis === 'account-value'
+    && rule.rate != null
+    && (rule.rateSchedule?.length ?? 0) === 0
+    && (rule.amountSchedule?.length ?? 0) === 0
+    && rule.startPolicyYear == null
+    && rule.endPolicyYear == null
+    && rule.appliesTo.length === 1
+    && rule.appliesTo[0] === account.id
+  ))
   return matchingRule?.rate ?? 0
 }
 

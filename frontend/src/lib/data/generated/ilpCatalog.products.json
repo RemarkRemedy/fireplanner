@@ -57197,6 +57197,515 @@
     ]
   },
   {
+    "id": "tokio-marine-goaffluence",
+    "insurer": "Tokio Marine",
+    "productName": "#goAffluence",
+    "sourceFileName": "TML_UNYD_TPDN_CIN_Summary.pdf",
+    "sourceChecksumSha256": "22b2a2f26ac41b7579db9b2c34cebc9b78649882847031b1b7c25d7132365730",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "tokio-initial-vs-accumulation-regular-premium-routing",
+      "tokio-initial-bonus-tiered-premium-allocation",
+      "tokio-initial-charge-on-initial-account",
+      "tokio-policy-charge-on-accumulation-account",
+      "tokio-top-up-routing",
+      "tokio-recurring-single-premium-routing",
+      "tokio-recurring-single-premium-manual-resumption-after-premium-holiday",
+      "tokio-regular-premium-reduction-consumes-recurring-single-premium-first",
+      "tokio-top-up-premium-charge",
+      "tokio-recurring-single-premium-charge",
+      "tokio-initial-account-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "tokio-goaffluence-loyalty-and-achievement-bonuses",
+      "tokio-goaffluence-monthly-protection-and-benefit-riders",
+      "tokio-goaffluence-dividend-distribution-regular-withdrawal-and-partial-withdrawal-constraints",
+      "tokio-goaffluence-premium-holiday-and-non-sgd-or-non-15-year-variants"
+    ],
+    "warnings": [
+      "Structured extraction validated against the #goAffluence product summary text layer.",
+      "The parser currently covers the SGD / premium-payment-term-15 corridor only.",
+      "Initial charge is modeled through the published year-scaled account-value fee schedule on the Initial Units Account, and policy charge is modeled through the published premium-base multiplier formula.",
+      "Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-15",
+        "currency": "SGD",
+        "mipLength": 15,
+        "icpMonths": 24,
+        "accounts": [
+          {
+            "id": "initial",
+            "label": "Initial Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan Description",
+                "excerpt": "PRODUCT SUMMARY − #GOAFFLUENCE In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description #goAffluence is a whole life, limited premium investment-linked insu"
+              },
+              {
+                "page": 7,
+                "section": "Regular Premium and Recurring Single Premium",
+                "excerpt": "Regular premium due during the first 24 months of the policy from the commencement date will be used to th purchase units and allocated to the Initial Units Account. Regular premium due from the 25 month of the commencem"
+              },
+              {
+                "page": 11,
+                "section": "Initial Charge",
+                "excerpt": "Initial Charge During the premium payment term, an initial charge will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial Units Account based on the unit price on the next prici"
+              }
+            ]
+          },
+          {
+            "id": "accumulation",
+            "label": "Accumulation Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "after-icp",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan Description",
+                "excerpt": "PRODUCT SUMMARY − #GOAFFLUENCE In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description #goAffluence is a whole life, limited premium investment-linked insu"
+              },
+              {
+                "page": 7,
+                "section": "Regular Premium and Recurring Single Premium",
+                "excerpt": "Regular premium due during the first 24 months of the policy from the commencement date will be used to th purchase units and allocated to the Initial Units Account. Regular premium due from the 25 month of the commencem"
+              },
+              {
+                "page": 12,
+                "section": "Policy Charge and top-up charges",
+                "excerpt": "Policy Charge As long as the policy is in-force, a policy charge will be deducted monthly on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the next pr"
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan Description",
+                "excerpt": "PRODUCT SUMMARY − #GOAFFLUENCE In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description #goAffluence is a whole life, limited premium investment-linked insu"
+              },
+              {
+                "page": 7,
+                "section": "Regular Premium and Recurring Single Premium",
+                "excerpt": "Regular premium due during the first 24 months of the policy from the commencement date will be used to th purchase units and allocated to the Initial Units Account. Regular premium due from the 25 month of the commencem"
+              },
+              {
+                "page": 8,
+                "section": "Top-up Premium and Premium Holiday",
+                "excerpt": "During premium holiday, you may be allowed to resume paying recurring single premium only if the regular premium payment has resumed and the regular premium amount is equivalent to the annualised regular premium amount c"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "initial-bonus",
+            "type": "allocation",
+            "label": "Initial Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "initial"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 2,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.5
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.57
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.64
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.71
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.75
+              }
+            ],
+            "notes": [
+              "Tier is based on the published SGD annualised regular premium band for the 15-year premium payment term.",
+              "Allocated to the Initial Units Account upon each regular premium received in the first two policy years."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Initial Bonus",
+                "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first two (2) policy years upon receipt of each regular premium. Initial bonus = Applicable initial bonus rate (based on annualised regular"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "initial-charge",
+            "label": "Initial Charge",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "initial"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.0085
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.017
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.0255
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.034
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.0425
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.051
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.0595
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.068
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.0765
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.085
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.0935
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.102
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.1105
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.119
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.1275
+              }
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published monthly initial charge for the SGD 15-year term as 0.85% p.a. multiplied by the current policy year."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Initial Charge",
+                "excerpt": "Initial Charge During the premium payment term, an initial charge will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial Units Account based on the unit price on the next prici"
+              }
+            ]
+          },
+          {
+            "id": "policy-charge-during-mip",
+            "label": "Policy Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.012,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 15,
+                  "mode": "policy-year"
+                }
+              ]
+            },
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "initial",
+              "topup"
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published monthly policy charge during the premium payment term using annualised regular premium committed at commencement date multiplied by the current policy year."
+            ],
+            "sourceRefs": [
+              {
+                "page": 12,
+                "section": "Policy Charge",
+                "excerpt": "Policy Charge As long as the policy is in-force, a policy charge will be deducted monthly on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the next pr"
+              }
+            ]
+          },
+          {
+            "id": "policy-charge-after-mip",
+            "label": "Policy Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.012,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 16,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 15
+                }
+              ]
+            },
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "initial",
+              "topup"
+            ],
+            "activeWindow": "after-mip",
+            "notes": [
+              "Models the published monthly policy charge after the premium payment term using the fixed 15-year multiplier."
+            ],
+            "sourceRefs": [
+              {
+                "page": 12,
+                "section": "Policy Charge",
+                "excerpt": "Policy Charge As long as the policy is in-force, a policy charge will be deducted monthly on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the next pr"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each top-up premium allocation to the Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Top-up Premium and Premium Holiday",
+                "excerpt": "During premium holiday, you may be allowed to resume paying recurring single premium only if the regular premium payment has resumed and the regular premium amount is equivalent to the annualised regular premium amount c"
+              },
+              {
+                "page": 12,
+                "section": "Policy Charge and top-up charges",
+                "excerpt": "Policy Charge As long as the policy is in-force, a policy charge will be deducted monthly on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the next pr"
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurring Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each recurring single premium allocation to the Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Regular Premium and Recurring Single Premium",
+                "excerpt": "Regular premium due during the first 24 months of the policy from the commencement date will be used to th purchase units and allocated to the Initial Units Account. Regular premium due from the 25 month of the commencem"
+              },
+              {
+                "page": 12,
+                "section": "Policy Charge and top-up charges",
+                "excerpt": "Policy Charge As long as the policy is in-force, a policy charge will be deducted monthly on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the next pr"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.99,
+          0.99,
+          0.99,
+          0.91,
+          0.84,
+          0.76,
+          0.68,
+          0.6,
+          0.5,
+          0.43,
+          0.34,
+          0.26,
+          0.15
+        ],
+        "warnings": [
+          "This partial template models the SGD / premium-payment-term-15 corridor only.",
+          "This partial template models regular-premium routing through the 15-year payment term, the published initial bonus tiers, the year-scaled initial charge schedule, the policy charge premium-base multiplier basis, top-up routing, recurring single premium routing, and the published 15-year surrender charge table.",
+          "Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount."
+        ],
+        "unsupportedItems": [
+          "Loyalty bonus and achievement bonus remain metadata-only because the published adjustment-factor and milestone qualification gates are not yet represented directly in the template bonus basis.",
+          "Monthly protection charge, advanced death benefit, accidental/dependent medical/retrenchment benefits, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.",
+          "Dividend distribution election, regular withdrawal, partial-withdrawal limit and minimum-account-value constraints, premium holiday state handling, and non-SGD/premium-term variants remain metadata-only for this product."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan Description",
+            "excerpt": "PRODUCT SUMMARY − #GOAFFLUENCE In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description #goAffluence is a whole life, limited premium investment-linked insu"
+          },
+          {
+            "page": 4,
+            "section": "Initial Bonus",
+            "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first two (2) policy years upon receipt of each regular premium. Initial bonus = Applicable initial bonus rate (based on annualised regular"
+          },
+          {
+            "page": 7,
+            "section": "Regular Premium and Recurring Single Premium",
+            "excerpt": "Regular premium due during the first 24 months of the policy from the commencement date will be used to th purchase units and allocated to the Initial Units Account. Regular premium due from the 25 month of the commencem"
+          },
+          {
+            "page": 8,
+            "section": "Top-up Premium and Premium Holiday",
+            "excerpt": "During premium holiday, you may be allowed to resume paying recurring single premium only if the regular premium payment has resumed and the regular premium amount is equivalent to the annualised regular premium amount c"
+          },
+          {
+            "page": 9,
+            "section": "Partial Withdrawal and Regular Withdrawal",
+            "excerpt": "Partial Withdrawal You may request for a partial withdrawal of policy value from the third policy year onwards while the policy is in force provided the minimum amount to be withdrawn is at least $500 (in the policy curr"
+          },
+          {
+            "page": 10,
+            "section": "Dividend Distribution",
+            "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+          },
+          {
+            "page": 11,
+            "section": "Initial Charge",
+            "excerpt": "Initial Charge During the premium payment term, an initial charge will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial Units Account based on the unit price on the next prici"
+          },
+          {
+            "page": 12,
+            "section": "Policy Charge and top-up charges",
+            "excerpt": "Policy Charge As long as the policy is in-force, a policy charge will be deducted monthly on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the next pr"
+          },
+          {
+            "page": 19,
+            "section": "Appendix A Surrender Charge",
+            "excerpt": "Premium Payment Term: 15 – 20 Years Policy Premium Payment Term Year 15 16 17 18 19 20 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100% 100% 100% 3 99% 99% 99% 99% 99% 99% 4 99% 99% 99% 99% 99% 99% 5 99% 99% 99% 99%"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "tokio-marine-goluxe",
     "insurer": "Tokio Marine",
     "productName": "#goLuxe",

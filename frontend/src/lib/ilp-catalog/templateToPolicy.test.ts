@@ -1926,6 +1926,68 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
   })
 
+  it('maps Tokio Marine #goAffluence into a partial seed with executable initial-charge and policy-charge rules', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-goaffluence')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-15')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.5 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.57 },
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.64 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.71 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.75 },
+    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'initial-charge',
+          basis: 'account-value',
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 0.0085 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 0.017 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.0255 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.034 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.0425 },
+            { startPolicyYear: 6, endPolicyYear: 6, rate: 0.051 },
+            { startPolicyYear: 7, endPolicyYear: 7, rate: 0.0595 },
+            { startPolicyYear: 8, endPolicyYear: 8, rate: 0.068 },
+            { startPolicyYear: 9, endPolicyYear: 9, rate: 0.0765 },
+            { startPolicyYear: 10, endPolicyYear: 10, rate: 0.085 },
+            { startPolicyYear: 11, endPolicyYear: 11, rate: 0.0935 },
+            { startPolicyYear: 12, endPolicyYear: 12, rate: 0.102 },
+            { startPolicyYear: 13, endPolicyYear: 13, rate: 0.1105 },
+            { startPolicyYear: 14, endPolicyYear: 14, rate: 0.119 },
+            { startPolicyYear: 15, endPolicyYear: 15, rate: 0.1275 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'policy-charge-during-mip',
+          basis: 'premium-base-mip-multiplier',
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: false,
+            multiplierYearBasis: 'policy-year',
+            multiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 15, mode: 'policy-year' },
+            ],
+          },
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.05 }),
+      expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
+    ])
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goaffluence-loyalty-and-achievement-bonuses')
+  })
+
   it('maps Manulife InvestReady (III) into a partial seed with protected-base assurance support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'manulife-investready-iii')
