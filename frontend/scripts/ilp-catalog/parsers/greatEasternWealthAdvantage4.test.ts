@@ -25,8 +25,8 @@ describe('parseGreatEasternWealthAdvantage4', () => {
     expect(product.supportStatus).toBe('partial')
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toContain('branch:great-eastern-wa4-premium-holiday-charge')
+    expect(product.modeledEconomics).toContain('branch:great-eastern-wa4-premium-holiday-charge-refund')
     expect(product.metadataOnlyBehaviors).toContain('great-eastern-wa4-insurance-charge')
-    expect(product.metadataOnlyBehaviors).toContain('great-eastern-wa4-premium-holiday-charge-refund')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-10-choice-5',
       'sgd-mip-10-choice-10-under-6000',
@@ -92,6 +92,13 @@ describe('parseGreatEasternWealthAdvantage4', () => {
           ],
         }),
         expect.objectContaining({
+          id: 'premium-holiday-charge-refund',
+          trigger: 'premium-holiday-repayment',
+          basis: 'premium-holiday-charge-refund',
+          sourceChargeRuleId: 'premium-holiday-charge',
+          rate: 1,
+        }),
+        expect.objectContaining({
           id: 'partial-withdrawal-charge',
           rateSchedule: [
             { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
@@ -127,5 +134,20 @@ describe('parseGreatEasternWealthAdvantage4', () => {
         }),
       ]),
     )
+    expect(choice10Low?.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'premium-holiday-charge-refund',
+          trigger: 'premium-holiday-repayment',
+          basis: 'premium-holiday-charge-refund',
+          sourceChargeRuleId: 'premium-holiday-charge',
+          rate: 1,
+        }),
+      ]),
+    )
+
+    const choice5 = product.variants.find((variant) => variant.id === 'sgd-mip-10-choice-5')
+    expect(choice5).toBeDefined()
+    expect(choice5?.eventChargeRules?.find((rule) => rule.id === 'premium-holiday-charge-refund')).toBeUndefined()
   }, 30_000)
 })

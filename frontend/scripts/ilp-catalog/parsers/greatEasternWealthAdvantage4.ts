@@ -253,8 +253,7 @@ function buildEventChargeRules(
     : isChoice10(choice)
       ? CHOICE_10_WITHDRAWAL_AND_SURRENDER
       : CHOICE_15_WITHDRAWAL_AND_SURRENDER
-
-  return [
+  const eventChargeRules: IlpTemplateEventChargeRule[] = [
     {
       id: 'premium-holiday-charge',
       label: 'Premium Holiday Charge',
@@ -268,9 +267,6 @@ function buildEventChargeRules(
       allocation: 'pro-rata-by-value',
       notes: [
         'Charged monthly during premium holiday based on the prevailing Annualised Premium.',
-        ...(isChoice5(choice)
-          ? []
-          : ['The separate one-time premium-holiday-charge refund application path remains metadata-only in V1.']),
       ],
       sourceRefs: [page4, page5],
     },
@@ -307,6 +303,29 @@ function buildEventChargeRules(
       sourceRefs: [page8],
     },
   ]
+
+  if (!isChoice5(choice)) {
+    eventChargeRules.splice(1, 0, {
+      id: 'premium-holiday-charge-refund',
+      label: 'Premium Holiday Charge Refund',
+      trigger: 'premium-holiday-repayment',
+      basis: 'premium-holiday-charge-refund',
+      appliesTo: ['policy'],
+      rate: 1,
+      rateSchedule: [],
+      amount: 0,
+      sourceChargeRuleId: 'premium-holiday-charge',
+      activeWindow: 'policy-term',
+      allocation: 'pro-rata-by-contribution-share',
+      notes: [
+        'Refunds 100% of premium-holiday charges when the published accepted-application refund path is used.',
+        'The one-time application limit, six-month lookback, and accepted-application gating remain informational only in V1.',
+      ],
+      sourceRefs: [page5],
+    })
+  }
+
+  return eventChargeRules
 }
 
 function buildVariant(
@@ -355,7 +374,7 @@ function buildVariant(
     eventChargeRules: buildEventChargeRules(choice, page4, page5, page6, page8),
     eecTable: [...eecTable],
     warnings: [
-      'GREAT Wealth Advantage 4 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.',
+      'GREAT Wealth Advantage 4 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, the premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.',
       'Insurance charge, TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1.',
       ...(needsFixedPolicyFee(choice)
         ? ['This low-annualised-premium variant assumes the additional S$5 monthly policy fee applies throughout the modeled path unless you manually switch variants after a premium change.']
@@ -365,7 +384,6 @@ function buildVariant(
     ],
     unsupportedItems: [
       'Insurance charge remains informational only.',
-      'Premium-holiday-charge refund remains informational only because the published one-time application, six-month lookback, and accepted-application constraints are not modeled automatically.',
       'Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only.',
       ...(isChoice10(choice) || isChoice15(choice)
         ? ['Prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction.']
@@ -394,13 +412,13 @@ export function parseGreatEasternWealthAdvantage4(context: ParseContext): IlpCat
       'branch:great-eastern-wa4-policy-fee-rate',
       'branch:great-eastern-wa4-fixed-policy-fee',
       'branch:great-eastern-wa4-premium-holiday-charge',
+      'branch:great-eastern-wa4-premium-holiday-charge-refund',
       'branch:great-eastern-wa4-top-up-premium-charge',
       'branch:great-eastern-wa4-partial-withdrawal-charge',
       'branch:great-eastern-wa4-surrender-charge',
     ],
     metadataOnlyBehaviors: [
       'great-eastern-wa4-insurance-charge',
-      'great-eastern-wa4-premium-holiday-charge-refund',
       'great-eastern-wa4-tpd-continuation-event',
       'great-eastern-wa4-rider-premium-deduction-treatment',
       'great-eastern-wa4-fixed-fee-threshold-transition',
@@ -408,7 +426,7 @@ export function parseGreatEasternWealthAdvantage4(context: ParseContext): IlpCat
       'great-eastern-wa4-automatic-fund-rebalancing-administration',
     ],
     warnings: [
-      'GREAT Wealth Advantage 4 is cataloged as a partial modeled subset in V1. The parser captures the published bonus path, policy fee, premium-holiday charge, top-up charge, and partial-withdrawal / surrender schedules, while insurance-charge and application-gated refund mechanics remain outside the current engine.',
+      'GREAT Wealth Advantage 4 is cataloged as a partial modeled subset in V1. The parser captures the published bonus path, policy fee, premium-holiday charge, the premium-holiday-charge refund path, top-up charge, and partial-withdrawal / surrender schedules, while insurance-charge and broader application-gated mechanics remain outside the current engine.',
     ],
     archived: false,
     variants: [
