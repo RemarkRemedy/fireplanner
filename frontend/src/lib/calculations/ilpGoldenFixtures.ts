@@ -46,6 +46,9 @@ export type GoldenCoverageTag =
   | 'branch:income-wealthlink-gl3-top-up-premium-charge'
   | 'branch:income-wealthlink-gl3-recurring-single-premium-charge'
   | 'branch:income-wealthlink-gl3-open-ended-zero-surrender-charge'
+  | 'branch:great-eastern-gia-sp-initial-single-premium-charge'
+  | 'branch:great-eastern-gia-sp-top-up-premium-charge'
+  | 'branch:great-eastern-gia-sp-open-ended-zero-surrender-charge'
   | 'tokio-recurring-single-premium-routing'
   | 'branch:prosper-assurance-charge'
   | 'kernel:distribution-mode-assumption'
@@ -207,6 +210,44 @@ const INCOME_STRESS_FUNDS: IlpFund[] = [
     grossReturnLow: 0.028,
     grossReturnMid: 0.05,
     grossReturnHigh: 0.068,
+  },
+]
+
+const GREAT_BALANCED_FUNDS: IlpFund[] = [
+  {
+    name: 'Great Asia Growth',
+    allocation: 0.58,
+    ocf: 0.012,
+    grossReturnLow: 0.044,
+    grossReturnMid: 0.071,
+    grossReturnHigh: 0.097,
+  },
+  {
+    name: 'Great Income Opportunities',
+    allocation: 0.42,
+    ocf: 0.009,
+    grossReturnLow: 0.03,
+    grossReturnMid: 0.051,
+    grossReturnHigh: 0.069,
+  },
+]
+
+const GREAT_STRESS_FUNDS: IlpFund[] = [
+  {
+    name: 'Great Emerging Leaders',
+    allocation: 0.68,
+    ocf: 0.024,
+    grossReturnLow: 0.037,
+    grossReturnMid: 0.079,
+    grossReturnHigh: 0.116,
+  },
+  {
+    name: 'Great Alternative Income',
+    allocation: 0.32,
+    ocf: 0.019,
+    grossReturnLow: 0.027,
+    grossReturnMid: 0.049,
+    grossReturnHigh: 0.067,
   },
 ]
 
@@ -1263,6 +1304,74 @@ function incomeWealthLinkGl3StressPolicy(
 ): IlpPolicyInput {
   return incomeWealthLinkGl3BasePolicy(snapshot, id, INCOME_STRESS_FUNDS, {
     name: 'Golden WealthLink (GL3) (SGD / Open-ended OCF Stress)',
+  })
+}
+
+function greatEasternGiaSpBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended-cash-or-srs' | 'sgd-open-ended-cpfis',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'great-eastern-great-invest-advantage-sp', variantId, id, {
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden GREAT Invest Advantage (SP) (${variantId.toUpperCase()})`,
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function greatEasternGiaSpBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended-cash-or-srs' | 'sgd-open-ended-cpfis',
+  id: string,
+): IlpPolicyInput {
+  return greatEasternGiaSpBasePolicy(snapshot, variantId, id, GREAT_BALANCED_FUNDS)
+}
+
+function greatEasternGiaSpEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return greatEasternGiaSpBasePolicy(snapshot, 'sgd-open-ended-cash-or-srs', id, GREAT_BALANCED_FUNDS, {
+    name: 'Golden GREAT Invest Advantage (SP) (SGD / Open-ended Cash Or Srs Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 6,
+        durationMonths: 1,
+        amount: 10_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 10,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function greatEasternGiaSpStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return greatEasternGiaSpBasePolicy(snapshot, 'sgd-open-ended-cash-or-srs', id, GREAT_STRESS_FUNDS, {
+    name: 'Golden GREAT Invest Advantage (SP) (SGD / Open-ended Cash Or Srs OCF Stress)',
   })
 }
 
@@ -2885,6 +2994,75 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'WealthLink (GL3) alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'great-eastern-great-invest-advantage-sp',
+    variantId: 'sgd-open-ended-cash-or-srs',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:great-eastern-gia-sp-initial-single-premium-charge',
+    ],
+    description: 'Baseline GREAT Invest Advantage (SP) cash/SRS scenario proving the supported upfront single-premium charge corridor.',
+    integrityChecks: [
+      {
+        description: 'records a positive upfront single-premium charge at honest inception',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  },
+  {
+    productId: 'great-eastern-great-invest-advantage-sp',
+    variantId: 'sgd-open-ended-cpfis',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Baseline GREAT Invest Advantage (SP) CPFIS scenario proving the supported zero-charge corridor.',
+    integrityChecks: [
+      {
+        description: 'keeps the initial single-premium corridor fee-free under the published CPFIS charge path',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) === 0,
+      },
+    ],
+  },
+  {
+    productId: 'great-eastern-great-invest-advantage-sp',
+    variantId: 'sgd-open-ended-cash-or-srs',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:great-eastern-gia-sp-top-up-premium-charge',
+      'branch:great-eastern-gia-sp-open-ended-zero-surrender-charge',
+    ],
+    description: 'GREAT Invest Advantage (SP) event-heavy scenario proving accepted top-up charges and zero-charge withdrawals.',
+    integrityChecks: [
+      {
+        description: 'top-up event increases cumulative fees beyond the initial single-premium-only baseline',
+        test: (fixture, artifact) => {
+          const withoutEventCharges = ilpPolicySchema.parse({
+            ...fixture.policy,
+            eventChargeRules: [],
+          })
+          const withEventCharges = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutEventChargeFees = analyzeIlpPolicy(withoutEventCharges).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withEventCharges > withoutEventChargeFees
+        },
+      },
+      {
+        description: 'the seeded withdrawal executes through the published open-ended withdrawal corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'great-eastern-great-invest-advantage-sp',
+    variantId: 'sgd-open-ended-cash-or-srs',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'GREAT Invest Advantage (SP) alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'hsbc-life-flexi-protector',
     variantId: 'sgd-open-ended-regular-pay',
     scenarioId: 'assurance-choice-vs-max',
@@ -3277,6 +3455,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'income-wealthlink-gl3' && definition.scenarioId === 'ocf-stress') {
     return incomeWealthLinkGl3StressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'great-eastern-great-invest-advantage-sp' && definition.scenarioId === 'baseline') {
+    return greatEasternGiaSpBaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended-cash-or-srs' | 'sgd-open-ended-cpfis', id)
+  }
+  if (definition.productId === 'great-eastern-great-invest-advantage-sp' && definition.scenarioId === 'event-heavy') {
+    return greatEasternGiaSpEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'great-eastern-great-invest-advantage-sp' && definition.scenarioId === 'ocf-stress') {
+    return greatEasternGiaSpStressPolicy(snapshot, id)
   }
   if (definition.productId === 'prudential-pruvantage-prosper' && definition.scenarioId === 'event-heavy') {
     return prosperEventHeavyPolicy(snapshot, id)

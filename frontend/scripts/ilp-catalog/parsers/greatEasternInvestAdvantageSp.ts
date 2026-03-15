@@ -116,7 +116,6 @@ function buildVariant(
     ],
     unsupportedItems: [
       'Death and terminal-illness benefit formulas remain informational only.',
-      'Single-premium principal tracking remains informational only in V1.',
       'Fund-switching and minimum-transaction guards remain informational only.',
     ],
     sourceRefs: [page1, page2, page3],
@@ -132,9 +131,9 @@ export function parseGreatEasternInvestAdvantageSp(context: ParseContext): IlpCa
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:great-eastern-gia-sp-initial-single-premium-charge',
       'branch:great-eastern-gia-sp-top-up-premium-charge',
@@ -143,11 +142,10 @@ export function parseGreatEasternInvestAdvantageSp(context: ParseContext): IlpCa
     metadataOnlyBehaviors: [
       'great-eastern-gia-sp-death-benefit',
       'great-eastern-gia-sp-terminal-illness-benefit',
-      'great-eastern-gia-sp-single-premium-principal-tracking',
       'great-eastern-gia-sp-srs-cpfis-surrender-destination',
     ],
     warnings: [
-      'GREAT Invest Advantage (SP) is cataloged as a partial modeled subset in V1. The parser captures the upfront initial single-premium charge, accepted top-up premium charge, and explicit no-surrender-charge structure through the open-ended no-MIP basis, while protection benefits and single-premium principal tracking remain outside the current engine.',
+      'GREAT Invest Advantage (SP) is cataloged as a supported V1 product. The parser captures the upfront initial single-premium charge, accepted top-up premium charge, and explicit no-surrender-charge structure through the open-ended no-MIP basis, while protection benefits and surrender-destination handling remain informational only.',
     ],
     archived: false,
     variants: [
