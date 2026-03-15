@@ -43,7 +43,7 @@ export function RefineFlowPage() {
       }
     }
     // Seed specific sensible defaults
-    if (defaults.retirementSpendingRatio === undefined) defaults.retirementSpendingRatio = 100
+    if (defaults.retirementSpendingRatio === undefined) defaults.retirementSpendingRatio = 1.0
     return defaults
   })
   const [currentScreenIndex, setCurrentScreenIndex] = useState(0)
