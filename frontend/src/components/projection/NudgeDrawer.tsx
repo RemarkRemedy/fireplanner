@@ -190,7 +190,7 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
       />
 
       {/* Panel */}
-      <div ref={drawerRef} tabIndex={-1} className="relative ml-auto flex h-full w-full max-w-md flex-col bg-background shadow-xl outline-none">
+      <div ref={drawerRef} tabIndex={-1} className="relative flex h-full w-full md:max-w-md md:ml-auto flex-col bg-background shadow-xl outline-none">
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
           <div>
