@@ -32,9 +32,12 @@ describe('parseHsbcGoalBuilderIi', () => {
       'branch:goal-builder-ii-top-up-premium-charge',
       'branch:goal-builder-ii-recurrent-single-premium-charge',
       'branch:goal-builder-ii-premium-year-surrender-charge',
+      'kernel:scheduled-payout-manual-assumption',
+      'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('goal-builder-ii-loyalty-bonus-supplementary-premium-exclusion')
-    expect(product.metadataOnlyBehaviors).toContain('goal-builder-ii-dividend-payout-election')
+    expect(product.metadataOnlyBehaviors).toContain('goal-builder-ii-dividend-payout-threshold')
+    expect(product.metadataOnlyBehaviors).toContain('goal-builder-ii-regular-withdrawal-minimums')
     expect(product.variants).toHaveLength(6)
 
     const term10 = product.variants.find((variant) => variant.id === 'sgd-mip-10')
@@ -131,6 +134,37 @@ describe('parseHsbcGoalBuilderIi', () => {
         rate: 0.01,
       }),
     ])
+    expect(term10?.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      accountId: 'policy',
+      source: 'policy-redemption',
+      notes: expect.arrayContaining([
+        expect.stringContaining('yearly, half-yearly, quarterly, or monthly'),
+      ]),
+      sourceRefs: [
+        expect.objectContaining({
+          page: 11,
+          section: 'Withdrawal of Units',
+        }),
+      ],
+    })
+    expect(term10?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('$50 minimum payout threshold'),
+      ]),
+      sourceRefs: [
+        expect.objectContaining({
+          page: 14,
+          section: 'Distribution of Dividend',
+        }),
+      ],
+    })
     expect(term10?.eecTable).toEqual([1, 1, 0.75, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.1])
   }, 30_000)
 })

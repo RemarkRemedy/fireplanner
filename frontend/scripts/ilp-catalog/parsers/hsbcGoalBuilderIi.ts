@@ -163,8 +163,9 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
   const page5 = sourceRef(5, 'Premium Year and loyalty bonus', snippetNear(document, 5, 'Premium Year', 18))
   const page8 = sourceRef(8, 'Product Administration Fee', snippetNear(document, 8, 'Product Administration Fee', 20))
   const page9 = sourceRef(9, 'Surrender penalty charge', snippetNear(document, 9, 'Surrender Penalty Charge', 20))
-  const page11 = sourceRef(11, 'Top-up Premium(s) and Recurrent Single Premium(s)', snippetNear(document, 11, 'Top-up Premium(s) and Recurrent Single Premium(s)', 18))
-  const page15 = sourceRef(15, 'Dividends', snippetNear(document, 15, 'dividend', 12))
+  const page11TopUps = sourceRef(11, 'Top-up Premium(s) and Recurrent Single Premium(s)', snippetNear(document, 11, 'Top-up Premium(s) and Recurrent Single Premium(s)', 18))
+  const page11Withdrawals = sourceRef(11, 'Withdrawal of Units', snippetNear(document, 11, 'Withdrawal of Units', 20))
+  const page14Dividends = sourceRef(14, 'Distribution of Dividend', snippetNear(document, 14, 'Distribution of Dividend', 20))
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
     {
@@ -178,7 +179,7 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
       activeWindow: 'policy-term',
       allocation: 'equal-split',
       notes: ['Charged on ad-hoc top-up premiums after units are allocated.'],
-      sourceRefs: [page11],
+      sourceRefs: [page11TopUps],
     },
     {
       id: 'recurring-single-premium-charge',
@@ -191,7 +192,7 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
       activeWindow: 'after-mip',
       allocation: 'equal-split',
       notes: ['Charged on recurrent single premium contributions after the premium term.'],
-      sourceRefs: [page11],
+      sourceRefs: [page11TopUps],
     },
     {
       id: 'partial-withdrawal-charge',
@@ -205,8 +206,11 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
       amount: 0,
       activeWindow: 'policy-term',
       allocation: 'equal-split',
-      notes: ['Uses the same premium-year based surrender penalty schedule as full surrender during the penalty period.'],
-      sourceRefs: [page9],
+      notes: [
+        'Uses the same premium-year based surrender penalty schedule as full surrender during the penalty period.',
+        'Regular withdrawals use the separate scheduled-payout assumption surface and do not reuse this ad hoc partial-withdrawal charge rule.',
+      ],
+      sourceRefs: [page9, page11Withdrawals],
     },
     {
       id: 'welcome-bonus-recovery-charge',
@@ -241,7 +245,7 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
           { phase: 'after-icp', targetAccountId: 'policy', contributionShare: 1 },
           { phase: 'top-up', targetAccountId: 'policy', contributionShare: 1 },
         ],
-        sourceRefs: [page1, page11],
+        sourceRefs: [page1, page11TopUps, page11Withdrawals],
       },
     ],
     bonuses: [
@@ -252,21 +256,44 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
       buildPafRule(term, page8),
     ],
     eventChargeRules,
+    scheduledPayoutSupport: {
+      mode: 'manual-assumption',
+      accountId: 'policy',
+      source: 'policy-redemption',
+      notes: [
+        'After the surrender-penalty period, regular withdrawals may be paid yearly, half-yearly, quarterly, or monthly by redeeming policy units.',
+        'V1 exposes regular withdrawal only as a manual payout-state assumption; the published minimum $250 withdrawal, minimum $1,000 remaining policy value, and per-fund minimum holding rules remain informational only.',
+      ],
+      sourceRefs: [page11Withdrawals],
+    },
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published $50 minimum payout threshold remains informational only.',
+      ],
+      sourceRefs: [page14Dividends],
+    },
     eecTable: [...SURRENDER_CHARGE_BY_TERM[term]],
     eecYearBasis: 'premium-year',
     warnings: [
-      'Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, Loyalty Bonus cadence keyed to Premium Year, top-up / recurrent single premium charge, and Premium-Year-based surrender / partial-withdrawal penalties.',
+      'Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, Loyalty Bonus cadence keyed to Premium Year, top-up / recurrent single premium charge, Premium-Year-based surrender / partial-withdrawal penalties, manual regular-withdrawal payout support, and the reinvest-default distribution-mode assumption surface.',
       'The Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only in V1.',
-      'Dividend-paying funds are treated as reinvesting by default in V1. Cash payout elections remain informational only and are not reflected in projected values.',
+      'The published $50 dividend-payout threshold, no-dividend-during-insufficient-NAV rule, and withdrawal minimum-balance gates remain informational only in V1.',
     ],
     unsupportedItems: [
       'Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only.',
       'Death and terminal illness benefit payout mechanics remain informational only.',
-      'Dividend payout election remains informational only.',
       'Automatic paid-up / lapse state is not modeled beyond premium-holiday fee drag.',
-      'Regular withdrawal behavior remains informational only.',
+      'The published $50 dividend-payout threshold and no-dividend-during-insufficient-NAV rule remain informational only.',
+      'Regular withdrawal minimum-balance gates, minimum withdrawal amount, and per-fund proportional realization rules remain informational only.',
     ],
-    sourceRefs: [page1, page4, page5, page8, page9, page11, page15],
+    sourceRefs: [page1, page4, page5, page8, page9, page11TopUps, page11Withdrawals, page14Dividends],
   }
 }
 
@@ -292,15 +319,17 @@ export function parseHsbcGoalBuilderIi({ document, sourceChecksumSha256 }: Parse
       'branch:goal-builder-ii-top-up-premium-charge',
       'branch:goal-builder-ii-recurrent-single-premium-charge',
       'branch:goal-builder-ii-premium-year-surrender-charge',
+      'kernel:scheduled-payout-manual-assumption',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'goal-builder-ii-loyalty-bonus-supplementary-premium-exclusion',
       'goal-builder-ii-death-ti-benefit',
-      'goal-builder-ii-dividend-payout-election',
-      'goal-builder-ii-regular-withdrawal',
+      'goal-builder-ii-dividend-payout-threshold',
+      'goal-builder-ii-regular-withdrawal-minimums',
     ],
     warnings: [
-      'Goal Builder II is a partial modeled subset in V1. Premium-Year-based Product Administration Fee, Loyalty Bonus cadence, and surrender mechanics are modeled; the 24-month supplementary-premium exclusion inside the Loyalty Bonus formula, payout election, and death/TI payout mechanics are not.',
+      'Goal Builder II is a partial modeled subset in V1. Premium-Year-based Product Administration Fee, Loyalty Bonus cadence, surrender mechanics, manual regular-withdrawal payout support, and reinvest-default dividend-distribution support are modeled; the 24-month supplementary-premium exclusion inside the Loyalty Bonus formula, the dividend threshold / insufficient-NAV gates, and death/TI payout mechanics are not.',
     ],
     archived: false,
     variants: TERM_OPTIONS.flatMap((term) => [
