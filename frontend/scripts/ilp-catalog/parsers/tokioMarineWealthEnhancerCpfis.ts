@@ -75,6 +75,22 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       ],
       sourceRefs: [page1],
     },
+    {
+      id: 'recurring-single-premium-charge',
+      label: 'Regular Top-up Premium Charge (CPF)',
+      trigger: 'recurring-single-premium',
+      basis: 'event-amount-with-overlap-months',
+      appliesTo: ['policy'],
+      rate: 0,
+      amount: 0,
+      activeWindow: 'policy-term',
+      allocation: 'equal-split',
+      notes: [
+        'Models the published 100% allocation of regular top-up premiums with no additional premium charge.',
+        'Use recurring-single-premium events to represent the chosen annual, half-yearly, quarterly, or monthly regular top-up stream.',
+      ],
+      sourceRefs: [page1],
+    },
   ]
 
   return {
@@ -102,14 +118,13 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eventChargeRules,
     eecTable: [],
     warnings: [
-      'TM Wealth Enhancer (CPFIS) is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge single-premium and ad-hoc top-up allocation path for the CPF-funded corridor through the open-ended no-MIP basis.',
+      'TM Wealth Enhancer (CPFIS) is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge single-premium, ad-hoc top-up, and regular top-up allocation path for the CPF-funded corridor through the open-ended no-MIP basis.',
       'Administrative charge is not applicable and switching is published as free, but switching behavior itself remains outside the current calculator surface.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
       'Death-benefit protection formulas remain informational only.',
       'Single-premium and top-up policy-value tracking remain informational only in V1.',
-      'Regular top-up premium enrollment remains informational only in V1.',
       'Partial-withdrawal and full-surrender administration remain informational only.',
       'Fund-level management fees and embedded custody or bank charges remain informational only because they are reflected through fund pricing rather than the policy charge surface.',
       'Fund-switching behavior remains informational only.',
@@ -134,11 +149,12 @@ export function parseTokioMarineWealthEnhancerCpfis(context: ParseContext): IlpC
     modeledEconomics: [
       'branch:tokio-marine-wealth-enhancer-cpfis-zero-single-premium-charge',
       'branch:tokio-marine-wealth-enhancer-cpfis-zero-top-up-charge',
+      'branch:tokio-marine-wealth-enhancer-cpfis-zero-recurring-single-premium-charge',
+      'tokio-recurring-single-premium-routing',
     ],
     metadataOnlyBehaviors: [
       'tokio-marine-wealth-enhancer-cpfis-death-benefit',
       'tokio-marine-wealth-enhancer-cpfis-single-premium-policy-value-tracking',
-      'tokio-marine-wealth-enhancer-cpfis-regular-top-up-premiums',
       'tokio-marine-wealth-enhancer-cpfis-partial-withdrawal',
       'tokio-marine-wealth-enhancer-cpfis-full-surrender',
       'tokio-marine-wealth-enhancer-cpfis-fund-management-fee',
@@ -147,7 +163,7 @@ export function parseTokioMarineWealthEnhancerCpfis(context: ParseContext): IlpC
       'tokio-marine-wealth-enhancer-cpfis-lapse-and-termination',
     ],
     warnings: [
-      'TM Wealth Enhancer (CPFIS) is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge single-premium and ad-hoc top-up allocation path for the CPF-funded corridor through the open-ended no-MIP basis, while protection formulas, regular top-up enrollment, withdrawal administration, and fund-level charges remain outside the current engine.',
+      'TM Wealth Enhancer (CPFIS) is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge single-premium, ad-hoc top-up, and regular top-up allocation path for the CPF-funded corridor through the open-ended no-MIP basis, while protection formulas, withdrawal administration, and fund-level charges remain outside the current engine.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],
