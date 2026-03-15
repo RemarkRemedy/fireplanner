@@ -634,6 +634,28 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Administration Fee')).toBeInTheDocument()
   }, 10_000)
 
+  it('seeds Singlife Legacy Invest as a partial catalog product with welcome, loyalty, and shortfall charges', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Legacy Invest')
+
+    expect(within(dialog).getByText('Singlife Legacy Invest')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10 \(term 15\)/i }))
+
+    expect(screen.getAllByText('Singlife Legacy Invest (SGD / MIP 10 (Term 15))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('policy-term-15-years corridor only')
+    expect(screen.getByDisplayValue('Administrative Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Welcome Bonus')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Loyalty Bonus')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
+  }, 10_000)
+
   it('seeds Tokio Marine TM Atlas Wealth as a partial catalog product with 12-month routing and combined account-fee modeling', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
