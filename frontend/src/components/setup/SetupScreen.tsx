@@ -316,7 +316,7 @@ export function SetupScreen({
               <p className="mt-1 text-xs text-destructive">{validationError}</p>
             )}
             {requiredErrors.has(field.name) && !validationError && (
-              <p className="mt-1 text-xs text-destructive">This field is required</p>
+              <p className="mt-1 text-xs text-destructive">{`Please enter your ${field.label.toLowerCase()}`}</p>
             )}
           </div>
           )
