@@ -99,7 +99,7 @@ const SCREENS: (NudgeFlowScreen & {
       {
         name: 'ownsProperty',
         label: 'Property status',
-        type: 'select',
+        type: 'radio-cards',
         tooltip: 'Property equity can be a significant part of your retirement net worth.',
         options: [
           { value: 'owns', label: 'I own property' },
@@ -227,10 +227,10 @@ const SCREENS: (NudgeFlowScreen & {
       {
         name: 'partnerResidency',
         label: 'Residency status',
-        type: 'select',
+        type: 'radio-cards',
         options: [
           { value: 'citizen', label: 'Singapore Citizen' },
-          { value: 'pr', label: 'Permanent Resident' },
+          { value: 'pr', label: 'Permanent Resident (PR)' },
           { value: 'foreigner', label: 'Foreigner' },
         ],
         required: true,
