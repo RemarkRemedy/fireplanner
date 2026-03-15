@@ -38282,17 +38282,19 @@
       "branch:hsbc-abundance-free-withdrawal",
       "branch:hsbc-abundance-tiered-brc",
       "branch:hsbc-abundance-topup-charge",
-      "branch:hsbc-abundance-power-up-restoration"
+      "branch:hsbc-abundance-power-up-restoration",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "hsbc-abundance-dividend-distribution-option",
+      "hsbc-abundance-dividend-payout-threshold",
+      "hsbc-abundance-dividend-bank-routing",
       "hsbc-abundance-regular-withdrawal-facility",
       "hsbc-abundance-rsp-administrative-restart-after-premium-holiday",
       "hsbc-abundance-life-replacement-option"
     ],
     "warnings": [
       "Structured extraction validated against the Wealth Abundance product summary text layer.",
-      "V1 assumes dividend-paying funds reinvest by default. Cash dividend payout election remains metadata-only and is not reflected in projected policy values.",
+      "Wealth Abundance keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.",
       "Regular withdrawals, post-holiday recurring-single-premium administrative restart, and life replacement remain metadata-only in V1."
     ],
     "archived": false,
@@ -38677,6 +38679,29 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.",
+            "Cash payout applies to both the Regular Premium Account and the Top-up Account.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption while the published S$30 minimum payout threshold and designated-bank-account routing remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 16,
+              "section": "Dividend distribution",
+              "excerpt": "• While the Policy is in force, if you choose to invest in any ILP Sub-Fund(s) that pays dividends, you have the option to either reinvest these dividends or to receive payment of these dividends. The frequency of divide"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -38690,7 +38715,7 @@
           0.08
         ],
         "warnings": [
-          "This template captures the modeled regular-premium, top-up, recurring-single-premium, free-withdrawal, BRC, and account-fee subset only."
+          "This template captures the modeled regular-premium, top-up, recurring-single-premium, free-withdrawal, BRC, account-fee, and reinvest-default distribution subset."
         ],
         "unsupportedItems": [],
         "sourceRefs": [
@@ -39092,6 +39117,29 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.",
+            "Cash payout applies to both the Regular Premium Account and the Top-up Account.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption while the published S$30 minimum payout threshold and designated-bank-account routing remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 16,
+              "section": "Dividend distribution",
+              "excerpt": "• While the Policy is in force, if you choose to invest in any ILP Sub-Fund(s) that pays dividends, you have the option to either reinvest these dividends or to receive payment of these dividends. The frequency of divide"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -39105,7 +39153,7 @@
           0.08
         ],
         "warnings": [
-          "This template captures the modeled regular-premium, top-up, recurring-single-premium, free-withdrawal, BRC, and account-fee subset only.",
+          "This template captures the modeled regular-premium, top-up, recurring-single-premium, free-withdrawal, BRC, account-fee, and reinvest-default distribution subset.",
           "Recurring single premium is not available for USD-denominated policies and is therefore omitted from this variant."
         ],
         "unsupportedItems": [],

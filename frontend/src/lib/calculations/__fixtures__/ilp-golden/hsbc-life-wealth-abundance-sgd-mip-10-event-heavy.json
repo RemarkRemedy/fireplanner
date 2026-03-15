@@ -372,10 +372,12 @@
         "branch:hsbc-abundance-free-withdrawal",
         "branch:hsbc-abundance-tiered-brc",
         "branch:hsbc-abundance-topup-charge",
-        "branch:hsbc-abundance-power-up-restoration"
+        "branch:hsbc-abundance-power-up-restoration",
+        "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
-        "hsbc-abundance-dividend-distribution-option",
+        "hsbc-abundance-dividend-payout-threshold",
+        "hsbc-abundance-dividend-bank-routing",
         "hsbc-abundance-regular-withdrawal-facility",
         "hsbc-abundance-rsp-administrative-restart-after-premium-holiday",
         "hsbc-abundance-life-replacement-option"
@@ -383,9 +385,10 @@
     },
     "catalogWarnings": [
       "Structured extraction validated against the Wealth Abundance product summary text layer.",
-      "V1 assumes dividend-paying funds reinvest by default. Cash dividend payout election remains metadata-only and is not reflected in projected policy values.",
+      "Wealth Abundance keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.",
       "Regular withdrawals, post-holiday recurring-single-premium administrative restart, and life replacement remain metadata-only in V1.",
-      "This template captures the modeled regular-premium, top-up, recurring-single-premium, free-withdrawal, BRC, and account-fee subset only."
+      "This template captures the modeled regular-premium, top-up, recurring-single-premium, free-withdrawal, BRC, account-fee, and reinvest-default distribution subset.",
+      "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only."
     ]
   },
   "expected": {

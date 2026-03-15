@@ -2392,7 +2392,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-mip-10',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline'],
+    coverageTags: ['baseline', 'kernel:distribution-mode-assumption'],
     description: 'HSBC Wealth Abundance SGD baseline scenario under the V1 reinvestment-default assumption.',
   },
   {

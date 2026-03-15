@@ -135,8 +135,17 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-abundance-tiered-brc')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-abundance-free-withdrawal')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-abundance-dividend-distribution-option')
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('reinvest by default'))).toBe(true)
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-abundance-dividend-payout-threshold')
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['regular', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
     expect(seed.accounts.find((account) => account.id === 'topup')?.contributionRules).toEqual([
       { phase: 'top-up', contributionShare: 1 },
     ])
