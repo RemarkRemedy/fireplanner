@@ -106,6 +106,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page5 = sourceRef(4, 'Full Surrender Charge and Partial Withdrawal Charge', snippetNear(document, 4, 'Full Surrender Charge', 20))
   const page6 = sourceRef(5, 'Top-up and withdrawal effects', snippetNear(document, 5, 'You may request to pay additional top-up premium', 20))
   const page7 = sourceRef(7, 'Premium holiday and reinstatement', snippetNear(document, 7, 'your policy will remain on Premium Holiday', 18))
+  const page8 = sourceRef(8, 'Distribution of dividends', snippetNear(document, 8, 'Distribution of Dividends', 22))
 
   const feeRules: IlpTemplateFeeRule[] = [
     {
@@ -218,21 +219,34 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: [],
     feeRules,
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying ILP sub-funds default to reinvestment as additional units unless a cash dividend election is made.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published S$50 minimum cash-out threshold remains informational only.',
+      ],
+      sourceRefs: [page8],
+    },
     eecTable: [...FULL_SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      'AIA Wealth Venture is cataloged as a partial modeled subset in V1. The current parser models the regular-pay 8-year corridor: zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge, the premium-holiday charge schedule, the 3% top-up premium charge, and the regular-premium withdrawal / surrender charge schedules.',
+      'AIA Wealth Venture is cataloged as a partial modeled subset in V1. The current parser models the regular-pay 8-year corridor: zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support.',
       'Welcome Bonus, Investment Bonus, Performance Bonus, Benefit Charge, and Secondary Insured mechanics remain informational only in V1.',
-      'Automatic fund switching, automatic fund re-balancing, dividend handling, and regular top-up enrollment gating remain informational only in V1.',
+      'Automatic fund switching, automatic fund re-balancing, the published S$50 dividend cash-out threshold, and regular top-up enrollment gating remain informational only in V1.',
     ],
     unsupportedItems: [
       'Welcome Bonus, Investment Bonus, and Performance Bonus remain informational only because they credit additional regular-premium units outside the current executable slice.',
       'Benefit Charge, death benefit, accidental death benefit, secondary insured, and other protection-side formulas remain informational only.',
       'Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.',
       'Minimum withdrawal amount, minimum post-withdrawal policy value, regular-top-up eligibility while premiums are outstanding, and top-up suspension remain informational only.',
-      'Fund switching, automatic fund switching, automatic fund re-balancing, and dividend handling remain informational only.',
+      'Fund switching, automatic fund switching, automatic fund re-balancing, and the published S$50 dividend cash-out threshold remain informational only.',
       'Reinstatement and premium-holiday continuation remain informational only.',
     ],
-    sourceRefs: [page1, page2, page3, page4, page5, page6, page7],
+    sourceRefs: [page1, page2, page3, page4, page5, page6, page7, page8],
   }
 }
 
@@ -255,6 +269,7 @@ export function parseAiaWealthVenture({ document, sourceChecksumSha256 }: ParseC
       'branch:aia-wealth-venture-premium-holiday-charge',
       'branch:aia-wealth-venture-partial-withdrawal-charge',
       'branch:aia-wealth-venture-full-surrender-charge',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'aia-wealth-venture-welcome-bonus',
@@ -265,11 +280,12 @@ export function parseAiaWealthVenture({ document, sourceChecksumSha256 }: ParseC
       'aia-wealth-venture-secondary-insured-option',
       'aia-wealth-venture-fund-management-charge',
       'aia-wealth-venture-top-up-eligibility-gating',
-      'aia-wealth-venture-fund-switching-and-dividends',
+      'aia-wealth-venture-fund-switching',
+      'aia-wealth-venture-dividend-cashout-threshold',
       'aia-wealth-venture-reinstatement',
     ],
     warnings: [
-      'AIA Wealth Venture is cataloged as a partial modeled subset in V1. The current parser models the regular-pay 8-year corridor: zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge, the premium-holiday charge schedule, the 3% top-up premium charge, and the regular-premium withdrawal / surrender charge schedules, while bonuses, protection benefits, secondary-insured options, dividend handling, and fund-level charges remain outside the current engine.',
+      'AIA Wealth Venture is cataloged as a partial modeled subset in V1. The current parser models the regular-pay 8-year corridor: zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support, while bonuses, protection benefits, secondary-insured options, and fund-level charges remain outside the current engine.',
     ],
     archived: false,
     variants: [buildVariant(document)],

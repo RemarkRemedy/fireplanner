@@ -18,8 +18,8 @@ async function sha256(filePath: string): Promise<string> {
 function makeSyntheticDocument(): ExtractedPdfDocument {
   return {
     filePath: '/synthetic/WA_Sum_201106386R_AWV_Jan2026.pdf',
-    pageCount: 7,
-    totalCharacters: 1_800,
+    pageCount: 8,
+    totalCharacters: 2_050,
     pages: [
       {
         pageNumber: 1,
@@ -85,6 +85,16 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
           { y: 680, text: 'For reinstatement, you are required to back-pay all outstanding past regular premiums that were due.' },
         ],
       },
+      {
+        pageNumber: 8,
+        characterCount: 250,
+        text: 'Distribution of Dividends',
+        lines: [
+          { y: 700, text: 'Distribution of Dividends' },
+          { y: 680, text: 'By default, the dividends will be reinvested and distributed as additional units in the fund.' },
+          { y: 660, text: 'If a fund permits dividends to be paid in cash, we will not pay cash if the cash value of the dividend is less than S$50.' },
+        ],
+      },
     ],
   }
 }
@@ -108,9 +118,11 @@ describe('parseAiaWealthVenture', () => {
       'branch:aia-wealth-venture-premium-holiday-charge',
       'branch:aia-wealth-venture-partial-withdrawal-charge',
       'branch:aia-wealth-venture-full-surrender-charge',
+      'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-wealth-venture-welcome-bonus')
     expect(product.metadataOnlyBehaviors).toContain('aia-wealth-venture-performance-bonus')
+    expect(product.metadataOnlyBehaviors).toContain('aia-wealth-venture-dividend-cashout-threshold')
 
     expect(product.variants).toHaveLength(1)
     const variant = product.variants[0]
@@ -150,6 +162,23 @@ describe('parseAiaWealthVenture', () => {
         basis: 'event-amount',
       }),
     ])
+    expect(variant.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('S$50 minimum cash-out threshold'),
+      ]),
+      sourceRefs: [
+        expect.objectContaining({
+          page: 8,
+          section: 'Distribution of dividends',
+        }),
+      ],
+    })
     expect(variant.eecTable).toEqual([0.7, 0.65, 0.6, 0.55, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05, 0])
   })
 
