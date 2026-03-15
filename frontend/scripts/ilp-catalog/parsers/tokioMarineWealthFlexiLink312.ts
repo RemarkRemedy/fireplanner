@@ -245,8 +245,41 @@ function buildFeeRules(document: ExtractedPdfDocument): IlpTemplateFeeRule[] {
   ]
 }
 
-function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
-  const page1 = sourceRef(1, 'Plan Description', snippetNear(document, 1, 'Wealth Flexi-Link 3.12', 18))
+function buildTokioMpcFeeRule(
+  optionPage: IlpCatalogSourceRef,
+  chargePage: IlpCatalogSourceRef,
+  tablePage: IlpCatalogSourceRef,
+): IlpTemplateFeeRule {
+  return {
+    id: 'monthly-protection-charge',
+    label: 'Monthly Protection Charge',
+    basis: 'assurance-sum-at-risk',
+    rate: 0,
+    amount: 0,
+    appliesTo: ['accumulation'],
+    fallbackAppliesTo: ['topup'],
+    activeWindow: 'during-mip',
+    assuranceConfig: {
+      formula: 'tokio-mpc-net-premium-floor',
+      rateTable: 'tokio-mpc-unzo-death',
+      monthlyModalFactor: 1,
+      maxAgeNextBirthday: 99,
+    },
+    requiresManualInput: true,
+    notes: [
+      'Models the published Monthly Protection Charge for the Advanced Death Benefit corridor during the 12-year minimum investment period only.',
+      'Sum at risk is the published net premium less 101% of Total Investment Value, using the modeled Accumulation Units Account value as the executable investment-value base.',
+      'The charge is deducted monthly in advance from the Top-up Units Account first, and thereafter from the eligible rider if applicable; the eligible-rider fallback remains metadata-only in this partial template.',
+    ],
+    sourceRefs: [optionPage, chargePage, tablePage],
+  }
+}
+
+function buildVariant(
+  document: ExtractedPdfDocument,
+  deathBenefitOption: 'basic-death' | 'advanced-death',
+): IlpTemplateVariant {
+  const page1 = sourceRef(1, 'Death Benefit Options', snippetNear(document, 1, 'Basic Death Benefit', 18))
   const page2 = sourceRef(2, 'Initial Bonus', snippetNear(document, 2, 'Initial Bonus', 24))
   const page3 = sourceRef(3, 'Premium Bonus / Power-up Bonus', snippetNear(document, 3, 'Premium Bonus', 34))
   const page4 = sourceRef(4, 'Loyalty Bonus / Involuntary Unemployment Benefit', snippetNear(document, 4, 'Loyalty Bonus', 24))
@@ -255,8 +288,9 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page7 = sourceRef(7, 'Non-payment / Partial Withdrawal', snippetNear(document, 7, 'Non-payment of Regular Premium', 30))
   const page8 = sourceRef(8, 'Regular Withdrawal / Full Surrender', snippetNear(document, 8, 'Regular Withdrawal', 24))
   const page9Distribution = sourceRef(9, 'Dividend Distribution', snippetNear(document, 9, 'Dividend Distribution', 24))
-  const page10 = sourceRef(10, 'Policy Charge / MPC', snippetNear(document, 10, 'Policy Charge', 26))
+  const page10 = sourceRef(10, 'Policy Charge / MPC', snippetNear(document, 10, 'Policy Charge', 30))
   const page11 = sourceRef(11, 'Premium Shortfall Charge', snippetNear(document, 11, 'Premium Shortfall Charge', 24))
+  const page16 = sourceRef(16, 'Appendix A Monthly Protection Charge Rates', snippetNear(document, 16, 'Monthly Rates for Monthly Protection Charges', 24))
   const page17 = sourceRef(17, 'Appendix A Charges', snippetNear(document, 17, 'SURRENDER CHARGE', 28))
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
@@ -328,8 +362,15 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
   ]
 
+  const feeRules = buildFeeRules(document)
+  if (deathBenefitOption === 'advanced-death') {
+    feeRules.push(buildTokioMpcFeeRule(page1, page10, page16))
+  }
+
+  const isAdvancedDeath = deathBenefitOption === 'advanced-death'
+
   return {
-    id: 'sgd-mip-12',
+    id: deathBenefitOption === 'basic-death' ? 'sgd-mip-12' : 'sgd-mip-12-advanced-death',
     currency: 'SGD',
     mipLength: MIP_LENGTH,
     icpMonths: 1,
@@ -360,7 +401,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       },
     ],
     bonuses: buildBonuses(document),
-    feeRules: buildFeeRules(document),
+    feeRules,
     eventChargeRules,
     distributionSupport: {
       mode: 'manual-assumption',
@@ -391,16 +432,41 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      'This partial template models the SGD / MIP 12 corridor only.',
+      `This partial template models the SGD / MIP 12 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
       'This partial template models regular-premium routing to the Accumulation Units Account, top-up routing, recurring single premium routing, a 2.45% account-value policy charge during the minimum investment period, a 0.60% account-value policy charge thereafter, the published surrender, partial-withdrawal, and premium-shortfall charge schedules, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
+      ...(isAdvancedDeath
+        ? [
+            'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
+          ]
+        : []),
       'Premium bonus, power-up bonus, and loyalty bonus are modeled at the published rate windows, but their paid-up and no-withdrawal eligibility gates remain manual review assumptions.',
       'Recurring single premium stays blocked after a premium-holiday event until regular premium resumes at the commencement-date amount.',
     ],
     unsupportedItems: [
-      'Involuntary unemployment waiver, enhanced death benefit monthly protection charge, credit-card charge, life-replacement administration, regular withdrawal behavior, and minimum-account-value enforcement remain metadata-only for this product.',
+      ...(isAdvancedDeath
+        ? [
+            'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, eligible rider fallback, involuntary unemployment waiver, credit-card charge, life-replacement administration, regular withdrawal behavior, and minimum-account-value enforcement remain metadata-only for this product.',
+          ]
+        : [
+            'Advanced Death Benefit selection, eligible rider handling, involuntary unemployment waiver, credit-card charge, life-replacement administration, regular withdrawal behavior, and minimum-account-value enforcement remain metadata-only for this product.',
+          ]),
       'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1.',
     ],
-    sourceRefs: [page1, page2, page3, page4, page5, page6, page7, page8, page9Distribution, page10, page11, page17],
+    sourceRefs: [
+      page1,
+      page2,
+      page3,
+      page4,
+      page5,
+      page6,
+      page7,
+      page8,
+      page9Distribution,
+      page10,
+      page11,
+      ...(isAdvancedDeath ? [page16] : []),
+      page17,
+    ],
   }
 }
 
@@ -431,23 +497,29 @@ export function parseTokioMarineWealthFlexiLink312(context: ParseContext): IlpCa
       'tokio-accumulation-account-surrender-charge',
       'tokio-accumulation-partial-withdrawal-charge',
       'tokio-premium-shortfall-charge-non-payment',
+      'branch:tokio-wealth-flexi-link-3-12-advanced-death-monthly-protection-charge',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'tokio-wealth-flexi-link-3-12-involuntary-unemployment-waiver',
-      'tokio-wealth-flexi-link-3-12-monthly-protection-charge',
+      'tokio-wealth-flexi-link-3-12-benefit-payout-handling',
+      'tokio-wealth-flexi-link-3-12-life-benefit-rider',
       'tokio-wealth-flexi-link-3-12-dividend-payout-threshold-and-record-date-instructions',
       'tokio-wealth-flexi-link-3-12-credit-card-charge',
       'tokio-wealth-flexi-link-3-12-life-replacement-option',
     ],
     warnings: [
       'Structured extraction validated against the Wealth Flexi-Link 3.12 product summary text layer.',
-      'Wealth Flexi-Link 3.12 is modeled as the SGD / MIP 12 corridor with a published 2.45% policy charge during the minimum investment period and a 0.60% policy charge thereafter.',
+      'Wealth Flexi-Link 3.12 is modeled as split SGD / MIP 12 death-benefit-option variants with a published 2.45% policy charge during the minimum investment period and a 0.60% policy charge thereafter.',
+      'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface: only Top-up Units Account dividends may be paid in cash during the first three policy years, and Accumulation Units Account dividends join after policy year 3.',
       'Premium bonus, power-up bonus, and loyalty bonus retain the published paid-up and no-withdrawal eligibility gates as manual review assumptions.',
       'Recurring single premium stays blocked after a premium-holiday event until regular premium resumes at the commencement-date amount.',
     ],
     archived: false,
-    variants: [buildVariant(context.document)],
+    variants: [
+      buildVariant(context.document, 'basic-death'),
+      buildVariant(context.document, 'advanced-death'),
+    ],
   }
 }

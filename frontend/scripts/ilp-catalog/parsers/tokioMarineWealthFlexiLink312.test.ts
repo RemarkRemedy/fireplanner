@@ -28,14 +28,20 @@ describe('parseTokioMarineWealthFlexiLink312', () => {
     expect(product.modeledEconomics).toContain('tokio-power-up-bonus')
     expect(product.modeledEconomics).toContain('tokio-loyalty-bonus')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(product.modeledEconomics).toContain('branch:tokio-wealth-flexi-link-3-12-advanced-death-monthly-protection-charge')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-3-12-involuntary-unemployment-waiver')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-3-12-benefit-payout-handling')
     expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-3-12-dividend-payout-threshold-and-record-date-instructions')
+    expect(product.variants).toHaveLength(2)
 
-    const variant = product.variants[0]
-    expect(variant?.id).toBe('sgd-mip-12')
-    expect(variant?.accounts.map((account) => account.id)).toEqual(['accumulation', 'topup'])
-    expect(variant?.bonuses.map((bonus) => bonus.label)).toEqual([
+    const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-12')
+    const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-12-advanced-death')
+
+    expect(basicVariant).toBeDefined()
+    expect(advancedVariant).toBeDefined()
+    expect(basicVariant?.accounts.map((account) => account.id)).toEqual(['accumulation', 'topup'])
+    expect(basicVariant?.bonuses.map((bonus) => bonus.label)).toEqual([
       'Initial Bonus',
       'Premium Bonus',
       'Power-up Bonus (Policy Year 10)',
@@ -43,19 +49,19 @@ describe('parseTokioMarineWealthFlexiLink312', () => {
       'Power-up Bonus (Policy Year 12)',
       'Loyalty Bonus',
     ])
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.16 },
       { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: null, rate: 0.3 },
     ])
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'premium-bonus')?.rate).toBe(0.0023)
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'power-up-bonus-policy-year-12')?.tieredRates).toEqual([
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'premium-bonus')?.rate).toBe(0.0023)
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'power-up-bonus-policy-year-12')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 23_999.99, rate: 0.0305 },
       { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.0345 },
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.0375 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.04 },
     ])
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.rate).toBe(0.0055)
-    expect(variant?.feeRules).toEqual([
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.rate).toBe(0.0055)
+    expect(basicVariant?.feeRules).toEqual([
       expect.objectContaining({
         id: 'policy-charge-during-mip',
         basis: 'account-value',
@@ -71,7 +77,7 @@ describe('parseTokioMarineWealthFlexiLink312', () => {
         fallbackAppliesTo: ['topup'],
       }),
     ])
-    expect(variant?.eventChargeRules).toEqual(
+    expect(basicVariant?.eventChargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.05 }),
         expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
@@ -98,7 +104,8 @@ describe('parseTokioMarineWealthFlexiLink312', () => {
         }),
       ]),
     )
-    expect(variant?.distributionSupport).toEqual({
+    expect(basicVariant?.feeRules.some((rule) => rule.id === 'monthly-protection-charge')).toBe(false)
+    expect(basicVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['accumulation', 'topup'],
       cashPayoutWindows: [
@@ -114,6 +121,31 @@ describe('parseTokioMarineWealthFlexiLink312', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
-    expect(variant?.eecTable).toEqual([1, 1, 0.92, 0.85, 0.78, 0.75, 0.68, 0.58, 0.48, 0.075, 0.015, 0.01])
+    expect(basicVariant?.eecTable).toEqual([1, 1, 0.92, 0.85, 0.78, 0.75, 0.68, 0.58, 0.48, 0.075, 0.015, 0.01])
+    expect(advancedVariant?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+          requiresManualInput: true,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+          },
+        }),
+      ]),
+    )
+    expect(advancedVariant?.warnings).toContain(
+      'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
+    )
+    expect(advancedVariant?.unsupportedItems).toContain(
+      'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, eligible rider fallback, involuntary unemployment waiver, credit-card charge, life-replacement administration, regular withdrawal behavior, and minimum-account-value enforcement remain metadata-only for this product.',
+    )
+    expect(advancedVariant?.sourceRefs.some((ref) => ref.page === 16)).toBe(true)
+    expect(basicVariant?.sourceRefs.some((ref) => ref.page === 16)).toBe(false)
   }, 30_000)
 })

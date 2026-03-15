@@ -487,7 +487,7 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Flexi-Link 3.12')
 
     expect(within(dialog).getByText('Wealth Flexi-Link 3.12')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 12/i }))
+    await user.click(within(dialog).getAllByRole('button', { name: /sgd \/ mip 12/i })[0]!)
 
     expect(screen.getAllByText('Wealth Flexi-Link 3.12 (SGD / MIP 12)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -499,6 +499,26 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Premium Bonus')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Power-up Bonus (Policy Year 12)')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Loyalty Bonus')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds Tokio Marine Wealth Flexi-Link 3.12 advanced-death as a partial catalog product with Tokio MPC inputs', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Flexi-Link 3.12')
+
+    const wealthFlexiLinkCard = within(dialog).getByText('Wealth Flexi-Link 3.12').closest('.rounded-lg') as HTMLElement | null
+    expect(wealthFlexiLinkCard).not.toBeNull()
+    await user.click(within(wealthFlexiLinkCard!).getByRole('button', { name: /sgd \/ mip 12 \(advanced death\)/i }))
+
+    expect(screen.getAllByText('Wealth Flexi-Link 3.12 (SGD / MIP 12 (Advanced Death))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
+    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Wealth Builder@Future as a partial catalog product with split premium-bonus windows', async () => {
