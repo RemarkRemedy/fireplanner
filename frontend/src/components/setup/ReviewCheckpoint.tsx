@@ -60,7 +60,7 @@ function deriveCategories(draft: SetupDraft): ReviewCategory[] {
     label: 'Income & savings',
     status: 'provided',
     detail: `${formatCurrency(draft.annualIncome)}/yr income, ${formatCurrency(draft.liquidNetWorth)} cash & investments`,
-    screenIndex: 0,
+    screenIndex: 1,
   })
 
   // Expenses: always provided
@@ -69,7 +69,7 @@ function deriveCategories(draft: SetupDraft): ReviewCategory[] {
     label: 'Expenses',
     status: 'provided',
     detail: `${formatCurrency(draft.annualExpenses)}/yr`,
-    screenIndex: 1,
+    screenIndex: 2,
   })
 
   // CPF
@@ -90,7 +90,7 @@ function deriveCategories(draft: SetupDraft): ReviewCategory[] {
     label: 'CPF',
     status: cpfStatus,
     detail: cpfDetail,
-    screenIndex: 2,
+    screenIndex: 3,
   })
 
   // Property
@@ -114,7 +114,7 @@ function deriveCategories(draft: SetupDraft): ReviewCategory[] {
     label: 'Property',
     status: propertyStatus,
     detail: propertyDetail,
-    screenIndex: 3,
+    screenIndex: 4,
   })
 
   // Healthcare
@@ -134,7 +134,7 @@ function deriveCategories(draft: SetupDraft): ReviewCategory[] {
     label: 'Healthcare',
     status: healthcareStatus,
     detail: healthcareDetail,
-    screenIndex: 4,
+    screenIndex: 5,
   })
 
   // Partner (only if present)
@@ -144,7 +144,7 @@ function deriveCategories(draft: SetupDraft): ReviewCategory[] {
       label: 'Partner',
       status: 'provided',
       detail: `${draft.partner.name || 'Partner'}, age ${draft.partner.currentAge}, ${formatCurrency(draft.partner.annualIncome)}/yr`,
-      screenIndex: 5,
+      screenIndex: 6,
     })
   }
 
@@ -199,6 +199,13 @@ export function ReviewCheckpoint({ draft, onConfirm, onEdit, validationError }: 
             return (
               <p className="text-sm text-muted-foreground text-center">
                 You&apos;re saving ~{formatCurrency(monthlySavings)}/month ({savingsRate}% of income).
+              </p>
+            )
+          }
+          if (savingsRate <= 0) {
+            return (
+              <p className="text-sm text-muted-foreground text-center">
+                Your expenses exceed your income. The projection will show when savings run out.
               </p>
             )
           }

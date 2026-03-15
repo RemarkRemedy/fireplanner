@@ -19,6 +19,7 @@ import { MonthlyIncomeInput, MonthlyExpenseInput } from '@/components/shared/Fin
 import { CpfSetupInput } from '@/components/setup/CpfSetupInput'
 import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
 import { estimateCpfBalances } from '@/lib/calculations/cpf'
+import { SG_EXPENSE_BENCHMARKS } from '@/lib/data/expenseBenchmarks'
 
 // ---------------------------------------------------------------------------
 // Screen definitions
@@ -586,9 +587,9 @@ export function SetupPage() {
   const handleEdit = useCallback(
     (screenIndex: number) => {
       // Map review category screenIndex to a visible screen. The review
-      // checkpoint uses category indices (0=income, 1=expenses, etc.) that
-      // don't map 1:1 to SCREENS indices. Find the best matching screen.
-      const targetIds = ['income', 'expenses', 'cpf', 'property-toggle', 'healthcare-toggle', 'partner-name']
+      // checkpoint uses category indices (0=age, 1=income, 2=expenses, etc.)
+      // that don't map 1:1 to SCREENS indices. Find the best matching screen.
+      const targetIds = ['age', 'income', 'expenses', 'cpf', 'property-toggle', 'healthcare-toggle', 'partner-name']
       const targetId = targetIds[screenIndex]
       const targetIndex = visibleScreenDefs.findIndex((s) => s.id === targetId)
       const resolvedIndex = targetIndex !== -1 ? targetIndex : 0
@@ -763,9 +764,9 @@ export function SetupPage() {
               Not sure? Here are typical ranges
             </summary>
             <div className="mt-2 space-y-1 text-muted-foreground pl-1">
-              <p>Single, renting: $2,000–3,500/mo</p>
-              <p>Couple with HDB: $3,000–5,000/mo</p>
-              <p>Family with kids: $5,000–8,000/mo</p>
+              {SG_EXPENSE_BENCHMARKS.map((b) => (
+                <p key={b.label}>{b.label}: {b.range}</p>
+              ))}
               <p className="mt-2 text-xs italic">A rough estimate works fine — you can refine it later.</p>
             </div>
           </details>
