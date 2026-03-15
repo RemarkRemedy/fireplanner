@@ -56787,6 +56787,340 @@
     ]
   },
   {
+    "id": "tokio-marine-goclassic-secure",
+    "insurer": "Tokio Marine",
+    "productName": "#goClassic Secure",
+    "sourceFileName": "TML_UNXN_TPDN_CIN_Summary.pdf",
+    "sourceChecksumSha256": "cc7fbda65a6c35ae17bed08c493c929e86d54418f7fc9b214eae12c26b993ddd",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "tokio-initial-vs-accumulation-regular-premium-routing",
+      "tokio-initial-bonus-tiered-premium-allocation",
+      "tokio-initial-charge-on-initial-account",
+      "tokio-policy-charge-on-policy-value",
+      "tokio-top-up-routing",
+      "tokio-recurring-single-premium-routing",
+      "tokio-top-up-premium-charge",
+      "tokio-recurring-single-premium-charge",
+      "tokio-initial-account-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "tokio-goclassic-secure-locked-in-policy-value",
+      "tokio-goclassic-secure-monthly-protection-charge",
+      "tokio-goclassic-secure-loyalty-bonus-adjustment-factor",
+      "tokio-goclassic-secure-additional-bonus-qualification",
+      "tokio-goclassic-secure-premium-holiday-lapse-state",
+      "tokio-goclassic-secure-regular-withdrawal-facility",
+      "tokio-goclassic-secure-dividend-distribution-option",
+      "tokio-goclassic-secure-credit-card-charge",
+      "tokio-goclassic-secure-aggregation-limit",
+      "tokio-goclassic-secure-change-of-life-assured"
+    ],
+    "warnings": [
+      "#goClassic Secure is cataloged as a partial modeled subset in V1. The parser captures one honest SGD / premium-payment-term-25 corridor with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, and the 25-year surrender charge on the Initial Units Account.",
+      "Locked-in Policy Value protection, monthly protection charges, and the related death-benefit behavior remain informational only because the current engine does not execute those protection-state mechanics.",
+      "Loyalty Bonus and Additional Bonus remain informational only because the source uses annual qualification gates and an adjustment-factor formula that the current engine does not execute.",
+      "Structured extraction validated against the #goClassic Secure product summary text layer."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-25",
+        "currency": "SGD",
+        "mipLength": 25,
+        "icpMonths": 24,
+        "accounts": [
+          {
+            "id": "initial",
+            "label": "Initial Units Account",
+            "feeRate": 0.0675,
+            "postMipFeeRate": 0.0135,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan Description",
+                "excerpt": "PRODUCT SUMMARY − #GOCLASSIC SECURE In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description #goClassic Secure is a whole life, limited premium investment-l"
+              },
+              {
+                "page": 2,
+                "section": "Initial Bonus / Loyalty Bonus / Additional Bonus",
+                "excerpt": "Reduction in Locked-in Policy Value You may apply to reduce the Locked-in Policy Value after the end of premium payment term, subject to below condition and our approval: (a) If you have made a reduction in Locked-in Pol"
+              },
+              {
+                "page": 4,
+                "section": "Regular Premium Routing",
+                "excerpt": "*Accumulation Units Account refers to the account to which units purchased with the regular premium due from th the 25 month of the commencement date as well as any recurring single premium, top-up premium and units purc"
+              },
+              {
+                "page": 9,
+                "section": "Initial Charge / Policy Charge / MPC",
+                "excerpt": "Investment Funds We offer a suite of funds as set out in the offering fund documents available on our website, www.tokiomarine.com. We may from time to time change the address of our website without any reference to you."
+              }
+            ]
+          },
+          {
+            "id": "accumulation",
+            "label": "Accumulation Units Account",
+            "feeRate": 0.0135,
+            "postMipFeeRate": 0.0135,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "after-icp",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Initial Bonus / Loyalty Bonus / Additional Bonus",
+                "excerpt": "Reduction in Locked-in Policy Value You may apply to reduce the Locked-in Policy Value after the end of premium payment term, subject to below condition and our approval: (a) If you have made a reduction in Locked-in Pol"
+              },
+              {
+                "page": 4,
+                "section": "Regular Premium Routing",
+                "excerpt": "*Accumulation Units Account refers to the account to which units purchased with the regular premium due from th the 25 month of the commencement date as well as any recurring single premium, top-up premium and units purc"
+              },
+              {
+                "page": 5,
+                "section": "Recurring Single Premium / Top-up Premium / Premium Holiday",
+                "excerpt": "(ii) the sum of all recurring single premium as committed by you at the commencement of the recurring single premium; and (iii) the sum of all top-up premium as committed by you while the policy is in force. Regular Prem"
+              },
+              {
+                "page": 9,
+                "section": "Initial Charge / Policy Charge / MPC",
+                "excerpt": "Investment Funds We offer a suite of funds as set out in the offering fund documents available on our website, www.tokiomarine.com. We may from time to time change the address of our website without any reference to you."
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge / Surrender Charge",
+                "excerpt": "Premium Charge for Recurring Single Premium and Top-up Premium A 5% premium charge will be imposed on each recurring single premium and/or top-up premium. This charge will be deducted prior to the allocation of the recur"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "initial-bonus",
+            "type": "allocation",
+            "label": "Initial Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "initial"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 3,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.15
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.25
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.42
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.44
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.47
+              }
+            ],
+            "notes": [
+              "Tier is based on the published SGD annualised regular premium band for the 25-year premium payment term.",
+              "Allocated to the Initial Units Account upon each regular premium received in the first three policy years."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Initial Bonus",
+                "excerpt": "PRODUCT SUMMARY − #GOCLASSIC SECURE In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description #goClassic Secure is a whole life, limited premium investment-l"
+              },
+              {
+                "page": 2,
+                "section": "Initial Bonus Rates",
+                "excerpt": "Initial bonus rates on a per annum basis are set out below: E & O E ULJ UNXN, UNXO, UNXP Page 2 of 15 05/11/2025 Tokio Marine Life Insurance Singapore Pte. Ltd. (Company Reg. No.: 194800055D) 20 McCallum Street, #07-01 T"
+              }
+            ]
+          }
+        ],
+        "feeRules": [],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each top-up premium allocation to the Accumulation Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium / Top-up Premium / Premium Holiday",
+                "excerpt": "(ii) the sum of all recurring single premium as committed by you at the commencement of the recurring single premium; and (iii) the sum of all top-up premium as committed by you while the policy is in force. Regular Prem"
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge / Surrender Charge",
+                "excerpt": "Premium Charge for Recurring Single Premium and Top-up Premium A 5% premium charge will be imposed on each recurring single premium and/or top-up premium. This charge will be deducted prior to the allocation of the recur"
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurring Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each recurring single premium allocation to the Accumulation Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium / Top-up Premium / Premium Holiday",
+                "excerpt": "(ii) the sum of all recurring single premium as committed by you at the commencement of the recurring single premium; and (iii) the sum of all top-up premium as committed by you while the policy is in force. Regular Prem"
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge / Surrender Charge",
+                "excerpt": "Premium Charge for Recurring Single Premium and Top-up Premium A 5% premium charge will be imposed on each recurring single premium and/or top-up premium. This charge will be deducted prior to the allocation of the recur"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.95,
+          0.93,
+          0.91,
+          0.89,
+          0.87,
+          0.85,
+          0.83,
+          0.8,
+          0.77,
+          0.74,
+          0.71,
+          0.68,
+          0.64,
+          0.6,
+          0.56,
+          0.51,
+          0.46,
+          0.41,
+          0.36,
+          0.31,
+          0.26,
+          0.21,
+          0.15
+        ],
+        "warnings": [
+          "This partial template models the SGD / premium-payment-term-25 corridor only.",
+          "This partial template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, and the published 25-year surrender charge on the Initial Units Account."
+        ],
+        "unsupportedItems": [
+          "Locked-in Policy Value, monthly protection charges, and the related death-benefit mechanics remain metadata-only because they require protection-state tracking beyond the current engine.",
+          "Loyalty Bonus and Additional Bonus remain metadata-only because their annual qualification and adjustment-factor formulas need stateful bonus tracking beyond the current engine.",
+          "Premium-holiday lapse behavior, regular withdrawal, dividend distribution election, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan Description",
+            "excerpt": "PRODUCT SUMMARY − #GOCLASSIC SECURE In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description #goClassic Secure is a whole life, limited premium investment-l"
+          },
+          {
+            "page": 2,
+            "section": "Initial Bonus / Loyalty Bonus / Additional Bonus",
+            "excerpt": "Reduction in Locked-in Policy Value You may apply to reduce the Locked-in Policy Value after the end of premium payment term, subject to below condition and our approval: (a) If you have made a reduction in Locked-in Pol"
+          },
+          {
+            "page": 4,
+            "section": "Regular Premium Routing",
+            "excerpt": "*Accumulation Units Account refers to the account to which units purchased with the regular premium due from th the 25 month of the commencement date as well as any recurring single premium, top-up premium and units purc"
+          },
+          {
+            "page": 5,
+            "section": "Recurring Single Premium / Top-up Premium / Premium Holiday",
+            "excerpt": "(ii) the sum of all recurring single premium as committed by you at the commencement of the recurring single premium; and (iii) the sum of all top-up premium as committed by you while the policy is in force. Regular Prem"
+          },
+          {
+            "page": 9,
+            "section": "Initial Charge / Policy Charge / MPC",
+            "excerpt": "Investment Funds We offer a suite of funds as set out in the offering fund documents available on our website, www.tokiomarine.com. We may from time to time change the address of our website without any reference to you."
+          },
+          {
+            "page": 10,
+            "section": "Premium Charge / Surrender Charge",
+            "excerpt": "Premium Charge for Recurring Single Premium and Top-up Premium A 5% premium charge will be imposed on each recurring single premium and/or top-up premium. This charge will be deducted prior to the allocation of the recur"
+          },
+          {
+            "page": 14,
+            "section": "Appendix A Surrender Charge",
+            "excerpt": "APPENDIX A Monthly Rates for Monthly Protection Charges (For Death), Per $1,000 Sum at Risk Age Male Female Age Next Male Female Next Birthday ($) ($) Birthday ($) ($) 1 0.02590 0.02230 51 0.16850 0.12050 2 0.02590 0.022"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "tokio-marine-goelite",
     "insurer": "Tokio Marine",
     "productName": "#goElite",

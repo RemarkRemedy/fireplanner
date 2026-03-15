@@ -563,10 +563,30 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goClassic')
 
-    expect(within(dialog).getByText('#goClassic')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 25/i }))
+    const goClassicCard = within(dialog).getByText('#goClassic').closest('.rounded-lg') as HTMLElement | null
+    expect(goClassicCard).not.toBeNull()
+    await user.click(within(goClassicCard!).getByRole('button', { name: /sgd \/ mip 25/i }))
 
     expect(screen.getAllByText('#goClassic (SGD / MIP 25)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('one honest SGD / premium-payment-term-25 corridor')
+    expect(screen.getByDisplayValue('Initial Bonus')).toBeInTheDocument()
+  }, 10_000)
+
+  it('seeds Tokio Marine #goClassic Secure as a partial catalog product with combined account-fee modeling', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goClassic Secure')
+
+    expect(within(dialog).getByText('#goClassic Secure')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 25/i }))
+
+    expect(screen.getAllByText('#goClassic Secure (SGD / MIP 25)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Partial template')
