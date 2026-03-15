@@ -85,9 +85,9 @@ const CPF_FLOW: NudgeFlowDefinition = {
       id: 'cpf-accounts',
       title: 'CPF Account Balances',
       fields: [
-        { name: 'cpfOA', label: 'Ordinary Account (OA)', type: 'currency', required: true, validationKey: 'cpfOA', tooltip: 'Used for housing, education, and investment. Earns 2.5% interest.' },
-        { name: 'cpfSA', label: 'Special Account (SA)', type: 'currency', required: true, validationKey: 'cpfSA', tooltip: 'For retirement. Earns 4% interest. Cannot be withdrawn before 55.' },
-        { name: 'cpfMA', label: 'MediSave Account (MA)', type: 'currency', required: true, validationKey: 'cpfMA', tooltip: 'For healthcare expenses. Capped at Basic Healthcare Sum ($79,000 in 2026).' },
+        { name: 'cpfOA', label: 'Ordinary Account (OA)', type: 'currency', required: true, validationKey: 'cpfOA', tooltip: 'Used for housing, education, and investment. Earns 2.5% interest.', helperText: 'Check your CPF statement or my.cpf.gov.sg' },
+        { name: 'cpfSA', label: 'Special Account (SA)', type: 'currency', required: true, validationKey: 'cpfSA', tooltip: 'For retirement. Earns 4% interest. Cannot be withdrawn before 55.', helperText: 'Check your CPF statement or my.cpf.gov.sg' },
+        { name: 'cpfMA', label: 'MediSave Account (MA)', type: 'currency', required: true, validationKey: 'cpfMA', tooltip: 'For healthcare expenses. Capped at Basic Healthcare Sum ($79,000 in 2026).', helperText: 'Check your CPF statement or my.cpf.gov.sg' },
         { name: 'cpfRA', label: 'Retirement Account (RA)', type: 'currency', validationKey: 'cpfRA', tooltip: 'Created at age 55 from SA and OA transfers. Funds CPF LIFE payouts.', showWhen: { field: 'currentAge', greaterThanOrEqual: 55 } },
       ],
     },
@@ -178,8 +178,9 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
           ],
           required: true,
         },
-        { name: 'propertyValue', label: 'Current estimated value', type: 'currency', required: true, tooltip: 'Current market value. Check recent HDB or URA transactions.' },
-        { name: 'leaseStartYear', label: 'Lease start year (for HDB)', type: 'number' },
+        { name: 'propertyValue', label: 'Current estimated value', type: 'currency', required: true, tooltip: 'Current market value. Check recent HDB or URA transactions.', helperText: 'Check recent HDB or URA transactions' },
+        { name: 'leaseStartYear', label: 'Lease start year', type: 'number',
+          showWhen: { field: 'propertyType', equals: 'hdb' } },
         {
           name: 'leaseTenure',
           label: 'Lease tenure (years)',
@@ -579,7 +580,7 @@ const PROTECTION_FLOW: NudgeFlowDefinition = {
       id: 'protection-emergency',
       title: 'Emergency Fund',
       fields: [
-        { name: 'emergencyFundBalance', label: 'Emergency fund balance', type: 'currency', required: true, tooltip: 'Cash savings for emergencies. Recommended 3-6 months of expenses.' },
+        { name: 'emergencyFundBalance', label: 'Emergency fund balance', type: 'currency', required: true, tooltip: 'Cash savings for emergencies. Recommended 3-6 months of expenses.', helperText: 'Cash savings set aside for emergencies' },
         {
           name: 'emergencyFundTarget',
           label: 'Target emergency fund (months of expenses)',
