@@ -19,21 +19,22 @@ export function parsePrudentialPrulinkInvestGrowthSp(context: ParseContext): Ilp
       'branch:prulink-investgrowth-sp-premium-assurance-charge',
       'branch:prulink-investgrowth-sp-top-up-charge',
       'branch:prulink-investgrowth-sp-top-up-assurance-charge',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'prulink-investgrowth-sp-death-benefit',
       'prulink-investgrowth-sp-single-premium-principal-tracking',
       'prulink-investgrowth-sp-e-top-up-charge',
       'prulink-investgrowth-sp-withdrawals',
-      'prulink-investgrowth-sp-direct-income-option',
       'prulink-investgrowth-sp-fund-switching',
     ],
     warnings: [
-      'PRULink InvestGrowth (SP) is cataloged as a partial modeled subset in V1. The parser captures the published premium-charge and premium-event assurance-charge path for initial and standard top-up premiums, while e-top-up treatment, withdrawals, Direct Income, and single-premium principal tracking remain outside the current engine.',
+      'PRULink InvestGrowth (SP) is cataloged as a partial modeled subset in V1. The parser captures the published premium-charge and premium-event assurance-charge path for initial and standard top-up premiums, plus cash-corridor Direct Income distribution support through the manual distribution-mode kernel, while e-top-up treatment, withdrawals, and single-premium principal tracking remain outside the current engine.',
     ],
     archived: false,
     variants: [
-      buildPrudentialInvestGrowthVariant(context.document, 'single-premium', 'cash-or-srs'),
+      buildPrudentialInvestGrowthVariant(context.document, 'single-premium', 'cash'),
+      buildPrudentialInvestGrowthVariant(context.document, 'single-premium', 'srs'),
       buildPrudentialInvestGrowthVariant(context.document, 'single-premium', 'cpf'),
     ],
   }

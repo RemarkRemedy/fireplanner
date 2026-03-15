@@ -33,7 +33,8 @@ export function parsePrudentialPrulinkInvestGrowth(context: ParseContext): IlpCa
     ],
     archived: false,
     variants: [
-      buildPrudentialInvestGrowthVariant(context.document, 'recurrent-single-premium', 'cash-or-srs'),
+      buildPrudentialInvestGrowthVariant(context.document, 'recurrent-single-premium', 'cash'),
+      buildPrudentialInvestGrowthVariant(context.document, 'recurrent-single-premium', 'srs'),
       buildPrudentialInvestGrowthVariant(context.document, 'recurrent-single-premium', 'cpf'),
     ],
   }

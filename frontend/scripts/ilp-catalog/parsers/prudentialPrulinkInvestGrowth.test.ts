@@ -31,11 +31,12 @@ describe('parsePrudentialPrulinkInvestGrowth', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('prulink-investgrowth-minimum-premium-schedule')
     expect(product.variants.map((variant) => variant.id)).toEqual([
-      'sgd-open-ended-cash-or-srs',
+      'sgd-open-ended-cash',
+      'sgd-open-ended-srs',
       'sgd-open-ended-cpf',
     ])
 
-    const cashVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-cash-or-srs')
+    const cashVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-cash')
     expect(cashVariant?.accounts).toEqual([
       expect.objectContaining({
         id: 'policy',
@@ -53,6 +54,16 @@ describe('parsePrudentialPrulinkInvestGrowth', () => {
     expect(cashVariant?.eventChargeRules).toEqual([
       expect.objectContaining({ id: 'top-up-premium-charge', trigger: 'top-up', rate: 0.03 }),
       expect.objectContaining({ id: 'top-up-assurance-charge', trigger: 'top-up', rate: 0.015 }),
+    ])
+
+    const srsVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-srs')
+    expect(srsVariant?.feeRules).toEqual([
+      expect.objectContaining({ id: 'premium-charge', rate: 0.03 }),
+      expect.objectContaining({ id: 'assurance-charge-on-premium', rate: 0.015 }),
+    ])
+    expect(srsVariant?.eventChargeRules).toEqual([
+      expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.03 }),
+      expect.objectContaining({ id: 'top-up-assurance-charge', rate: 0.015 }),
     ])
 
     const cpfVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-cpf')

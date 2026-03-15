@@ -28,14 +28,15 @@ describe('parsePrudentialPrulinkInvestGrowthSp', () => {
       'branch:prulink-investgrowth-sp-premium-assurance-charge',
       'branch:prulink-investgrowth-sp-top-up-charge',
       'branch:prulink-investgrowth-sp-top-up-assurance-charge',
+      'kernel:distribution-mode-assumption',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('prulink-investgrowth-sp-direct-income-option')
     expect(product.variants.map((variant) => variant.id)).toEqual([
-      'sgd-open-ended-cash-or-srs',
+      'sgd-open-ended-cash',
+      'sgd-open-ended-srs',
       'sgd-open-ended-cpf',
     ])
 
-    const cashVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-cash-or-srs')
+    const cashVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-cash')
     expect(cashVariant?.feeRules).toEqual([
       expect.objectContaining({ id: 'premium-charge', basis: 'annual-contribution', rate: 0.03 }),
       expect.objectContaining({ id: 'assurance-charge-on-premium', basis: 'annual-contribution', rate: 0.015 }),
@@ -44,7 +45,27 @@ describe('parsePrudentialPrulinkInvestGrowthSp', () => {
       expect.objectContaining({ id: 'top-up-premium-charge', trigger: 'top-up', rate: 0.03 }),
       expect.objectContaining({ id: 'top-up-assurance-charge', trigger: 'top-up', rate: 0.015 }),
     ])
-    expect(cashVariant?.warnings).toContain('The Direct Income option is available only for cash-funded policies and remains metadata-only.')
+    expect(cashVariant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'The Direct Income Option is available only for cash-funded policies and lets eligible distribution-paying funds pay out cash instead of reinvesting.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.',
+      ],
+      sourceRefs: expect.any(Array),
+    })
+
+    const srsVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-srs')
+    expect(srsVariant?.feeRules).toEqual([
+      expect.objectContaining({ id: 'premium-charge', rate: 0.03 }),
+      expect.objectContaining({ id: 'assurance-charge-on-premium', rate: 0.015 }),
+    ])
+    expect(srsVariant?.distributionSupport).toBeUndefined()
+    expect(srsVariant?.unsupportedItems).toContain('Direct Income option mechanics remain informational only.')
 
     const cpfVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-cpf')
     expect(cpfVariant?.feeRules).toEqual([

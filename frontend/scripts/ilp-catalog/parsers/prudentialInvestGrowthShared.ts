@@ -12,7 +12,7 @@ export interface ParseContext {
 }
 
 type ProductMode = 'single-premium' | 'recurrent-single-premium'
-type PaymentMode = 'cash-or-srs' | 'cpf'
+type PaymentMode = 'cash' | 'srs' | 'cpf'
 
 function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
@@ -41,14 +41,14 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
 
 function premiumChargeLabel(productMode: ProductMode, paymentMode: PaymentMode): string {
   const base = productMode === 'single-premium' ? 'Single Premium Charge' : 'Recurring Premium Charge'
-  return paymentMode === 'cpf' ? `${base} (CPF)` : `${base} (Cash / SRS)`
+  return paymentMode === 'cpf' ? `${base} (CPF)` : paymentMode === 'cash' ? `${base} (Cash)` : `${base} (SRS)`
 }
 
 function assuranceChargeLabel(productMode: ProductMode, paymentMode: PaymentMode): string {
   const base = productMode === 'single-premium'
     ? 'Premium-based Assurance Charge'
     : 'Recurring Premium-based Assurance Charge'
-  return paymentMode === 'cpf' ? `${base} (CPF)` : `${base} (Cash / SRS)`
+  return paymentMode === 'cpf' ? `${base} (CPF)` : paymentMode === 'cash' ? `${base} (Cash)` : `${base} (SRS)`
 }
 
 export function buildPrudentialInvestGrowthVariant(
@@ -58,6 +58,7 @@ export function buildPrudentialInvestGrowthVariant(
 ): IlpTemplateVariant {
   const premiumChargeRate = paymentMode === 'cpf' ? 0 : 0.03
   const assuranceChargeRate = paymentMode === 'cpf' ? 0 : 0.015
+  const supportsDirectIncome = productMode === 'single-premium' && paymentMode === 'cash'
   const page1 = sourceRef(1, 'Plan overview', snippetNear(document, 1, 'Nature of Plan', 12))
   const page2 = sourceRef(2, 'Top-ups and withdrawals', snippetNear(document, 2, 'Top-up your premium', 12))
   const page3 = sourceRef(3, 'Additional option', snippetNear(document, 3, 'Direct Income Option', 14))
@@ -79,7 +80,9 @@ export function buildPrudentialInvestGrowthVariant(
           : 'Models the published upfront charge on each recurrent single premium payment.',
         paymentMode === 'cpf'
           ? 'CPF-funded variants use the published 0% premium-charge path.'
-          : 'Cash and SRS variants use the published 3% premium-charge path.',
+          : paymentMode === 'cash'
+            ? 'Cash-funded variants use the published 3% premium-charge path.'
+            : 'SRS-funded variants use the published 3% premium-charge path.',
       ],
       sourceRefs: [page5],
     },
@@ -94,7 +97,9 @@ export function buildPrudentialInvestGrowthVariant(
       notes: [
         paymentMode === 'cpf'
           ? 'CPF-funded variants do not pay the published 1.5% assurance charge on premium events.'
-          : 'Cash and SRS variants pay the published 1.5% assurance charge on premium events.',
+          : paymentMode === 'cash'
+            ? 'Cash-funded variants pay the published 1.5% assurance charge on premium events.'
+            : 'SRS-funded variants pay the published 1.5% assurance charge on premium events.',
         'This is modeled as a premium-event charge rather than a sum-at-risk mortality curve.',
       ],
       sourceRefs: [page5],
@@ -115,7 +120,9 @@ export function buildPrudentialInvestGrowthVariant(
       notes: [
         paymentMode === 'cpf'
           ? 'CPF-funded variants use the published 0% top-up premium-charge path.'
-          : 'Models the published 3% standard top-up premium charge.',
+          : paymentMode === 'cash'
+            ? 'Models the published 3% standard top-up premium charge for cash-funded variants.'
+            : 'Models the published 3% standard top-up premium charge for SRS-funded variants.',
         'The reduced e-top-up rate is not modeled automatically and remains metadata-only.',
       ],
       sourceRefs: [page2, page5],
@@ -133,7 +140,9 @@ export function buildPrudentialInvestGrowthVariant(
       notes: [
         paymentMode === 'cpf'
           ? 'CPF-funded variants do not pay the published 1.5% assurance charge on top-ups.'
-          : 'Models the published 1.5% assurance charge on standard top-up premiums.',
+          : paymentMode === 'cash'
+            ? 'Models the published 1.5% assurance charge on standard top-up premiums for cash-funded variants.'
+            : 'Models the published 1.5% assurance charge on standard top-up premiums for SRS-funded variants.',
         'The reduced e-top-up rate is not modeled automatically and remains metadata-only.',
       ],
       sourceRefs: [page2, page5],
@@ -141,7 +150,7 @@ export function buildPrudentialInvestGrowthVariant(
   ]
 
   return {
-    id: paymentMode === 'cpf' ? 'sgd-open-ended-cpf' : 'sgd-open-ended-cash-or-srs',
+    id: paymentMode === 'cpf' ? 'sgd-open-ended-cpf' : paymentMode === 'cash' ? 'sgd-open-ended-cash' : 'sgd-open-ended-srs',
     currency: 'SGD',
     mipBasis: 'open-ended',
     mipLength: null,
@@ -169,14 +178,31 @@ export function buildPrudentialInvestGrowthVariant(
     bonuses: [],
     feeRules,
     eventChargeRules,
+    distributionSupport: supportsDirectIncome
+      ? {
+          mode: 'manual-assumption',
+          accountIds: ['policy'],
+          defaultMode: 'reinvest',
+          cashPayoutAllowedDuringMip: true,
+          cashPayoutAllowedAfterMip: true,
+          source: 'distribution-paying-funds',
+          notes: [
+            'The Direct Income Option is available only for cash-funded policies and lets eligible distribution-paying funds pay out cash instead of reinvesting.',
+            'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.',
+          ],
+          sourceRefs: [page3],
+        }
+      : undefined,
     eecTable: [],
     warnings: [
       paymentMode === 'cpf'
         ? 'This CPF-funded variant uses the published 0% premium-charge and 0% premium-event assurance-charge path.'
-        : 'This Cash / SRS variant uses the published 3% premium-charge and 1.5% premium-event assurance-charge path.',
+        : paymentMode === 'cash'
+          ? 'This cash-funded variant uses the published 3% premium-charge and 1.5% premium-event assurance-charge path.'
+          : 'This SRS-funded variant uses the published 3% premium-charge and 1.5% premium-event assurance-charge path.',
       'This open-ended product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
-      ...(productMode === 'single-premium'
-        ? ['The Direct Income option is available only for cash-funded policies and remains metadata-only.']
+      ...(supportsDirectIncome
+        ? ['The Direct Income option is modeled through manual distribution-mode support for the cash-funded corridor.']
         : []),
     ],
     unsupportedItems: [
@@ -186,7 +212,7 @@ export function buildPrudentialInvestGrowthVariant(
         : 'Recurrent-single-premium paid-premium tracking remains informational only in V1.',
       'e-top-up reduced premium-charge and assurance-charge treatment remains informational only.',
       'Withdrawal administration and fund-switching mechanics remain informational only.',
-      ...(productMode === 'single-premium'
+      ...(productMode === 'single-premium' && !supportsDirectIncome
         ? ['Direct Income option mechanics remain informational only.']
         : []),
     ],

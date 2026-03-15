@@ -841,6 +841,66 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('default 20-year review horizon'))).toBe(true)
   })
 
+  it('maps PRULink InvestGrowth (SP) cash into a partial seed with direct-income distribution support', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'prudential-prulink-investgrowth-sp')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-cash')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('PRULink InvestGrowth (SP) (SGD / Open-ended (Cash))')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('prulink-investgrowth-sp-direct-income-option')
+    expect(seed.monthlyContribution).toBe(0)
+    expect(seed.mipBasis).toBe('open-ended')
+    expect(seed.postMipYears).toBe(20)
+    expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
+      { phase: 'during-icp', contributionShare: 1 },
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'premium-charge',
+        basis: 'annual-contribution',
+        rate: 0.03,
+      }),
+      expect.objectContaining({
+        id: 'assurance-charge-on-premium',
+        basis: 'annual-contribution',
+        rate: 0.015,
+      }),
+    ])
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        rate: 0.03,
+      }),
+      expect.objectContaining({
+        id: 'top-up-assurance-charge',
+        trigger: 'top-up',
+        rate: 0.015,
+      }),
+    ])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
+  })
+
   it('maps Invest flex wealth II into a partial seed with cumulative-paid policy charges and top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-flex-wealth-ii')
