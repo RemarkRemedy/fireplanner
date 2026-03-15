@@ -79,6 +79,7 @@ import { parseTokioMarineWealthBuilderAtFuture } from './parsers/tokioMarineWeal
 import { parseTokioMarineAffluenceAtFuture } from './parsers/tokioMarineAffluenceAtFuture.js'
 import { parseTokioMarineGoClassic } from './parsers/tokioMarineGoClassic.js'
 import { parseTokioMarineGoClassicSecure } from './parsers/tokioMarineGoClassicSecure.js'
+import { parseTokioMarineGoAssure } from './parsers/tokioMarineGoAssure.js'
 import { parseTokioMarineGoElite } from './parsers/tokioMarineGoElite.js'
 import { parseTokioMarineGoEliteSecure } from './parsers/tokioMarineGoEliteSecure.js'
 import { parseTokioMarineGoAffluence } from './parsers/tokioMarineGoAffluence.js'
@@ -160,6 +161,7 @@ const TOKIO_MARINE_WEALTH_ENHANCER_CPFIS_SOURCE_PATH = '/Users/tj/Downloads/pdfs
 const TOKIO_MARINE_AFFLUENCE_AT_FUTURE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNZA_TPDN_CIN_Summary.pdf'
 const TOKIO_MARINE_GOCLASSIC_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNWU_TPDN_CIN_Summary.pdf'
 const TOKIO_MARINE_GOCLASSIC_SECURE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNXN_TPDN_CIN_Summary.pdf'
+const TOKIO_MARINE_GOASSURE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNYA_TPDY_CIN_Summary.pdf'
 const TOKIO_MARINE_GOELITE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_ULH_TPDN_CIZ_Summary.pdf'
 const TOKIO_MARINE_GOELITE_SECURE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_ULI_TPDN_CIZ_Summary.pdf'
 const TOKIO_MARINE_GOAFFLUENCE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNYD_TPDN_CIN_Summary.pdf'
@@ -406,6 +408,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const tokioMarineGoClassicChecksum = await sha256(TOKIO_MARINE_GOCLASSIC_SOURCE_PATH)
   const tokioMarineGoClassicSecureExtracted = await extractPdfText(TOKIO_MARINE_GOCLASSIC_SECURE_SOURCE_PATH)
   const tokioMarineGoClassicSecureChecksum = await sha256(TOKIO_MARINE_GOCLASSIC_SECURE_SOURCE_PATH)
+  const tokioMarineGoAssureExtracted = await extractPdfText(TOKIO_MARINE_GOASSURE_SOURCE_PATH)
+  const tokioMarineGoAssureChecksum = await sha256(TOKIO_MARINE_GOASSURE_SOURCE_PATH)
   const tokioMarineGoEliteExtracted = await extractPdfText(TOKIO_MARINE_GOELITE_SOURCE_PATH)
   const tokioMarineGoEliteChecksum = await sha256(TOKIO_MARINE_GOELITE_SOURCE_PATH)
   const tokioMarineGoEliteSecureExtracted = await extractPdfText(TOKIO_MARINE_GOELITE_SECURE_SOURCE_PATH)
@@ -740,6 +744,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseTokioMarineGoClassicSecure({
       document: tokioMarineGoClassicSecureExtracted,
       sourceChecksumSha256: tokioMarineGoClassicSecureChecksum,
+    }),
+    parseTokioMarineGoAssure({
+      document: tokioMarineGoAssureExtracted,
+      sourceChecksumSha256: tokioMarineGoAssureChecksum,
     }),
     parseTokioMarineGoElite({
       document: tokioMarineGoEliteExtracted,
