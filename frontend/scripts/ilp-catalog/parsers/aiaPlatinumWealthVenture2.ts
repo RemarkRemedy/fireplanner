@@ -97,6 +97,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page6 = sourceRef(6, 'Top-up and withdrawal effects', snippetNear(document, 6, 'You may request to pay additional top-up premium', 20))
   const page7 = sourceRef(7, 'Premium holiday continuation', snippetNear(document, 7, 'Premium Holiday', 18))
   const page8 = sourceRef(8, 'Reinstatement and termination', snippetNear(document, 8, 'For reinstatement', 18))
+  const page10 = sourceRef(10, 'Distribution of dividends', snippetNear(document, 10, 'Distribution of Dividends', 22))
 
   const feeRules: IlpTemplateFeeRule[] = [
     {
@@ -209,21 +210,34 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: [],
     feeRules,
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying ILP sub-funds default to reinvestment as additional units unless a cash dividend election is made.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published S$50 minimum cash-out threshold remains informational only.',
+      ],
+      sourceRefs: [page10],
+    },
     eecTable: [...FULL_SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      'AIA Platinum Wealth Venture 2.0 is cataloged as a partial modeled subset in V1. The current parser models the regular-pay 5-year corridor: zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the premium-holiday charge schedule, the 3% top-up premium charge, and the regular-premium withdrawal / surrender charge schedules.',
+      'AIA Platinum Wealth Venture 2.0 is cataloged as a partial modeled subset in V1. The current parser models the regular-pay 5-year corridor: zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support.',
       'Welcome Bonus, Investment Bonus, Performance Bonus, Benefit Charge, and Secondary Insured mechanics remain informational only in V1.',
-      'Automatic fund switching, reinvested dividends, and fund-level management charges remain informational only in V1.',
+      'Automatic fund switching, reinvested dividend top-up units, the published S$50 dividend cash-out threshold, and fund-level management charges remain informational only in V1.',
     ],
     unsupportedItems: [
       'Welcome Bonus, Investment Bonus, and Performance Bonus remain informational only because they credit additional regular-premium units outside the current executable slice.',
       'Benefit Charge, death benefit floors, accidental death benefit, secondary insured, and other protection-side formulas remain informational only.',
       'Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.',
       'Minimum withdrawal amount, minimum post-withdrawal policy value, regular-top-up eligibility while premiums are outstanding, and top-up suspension remain informational only.',
-      'Fund switching, dividend handling, and reinvested dividend top-up units remain informational only.',
+      'Fund switching, reinvested dividend top-up units, and the published S$50 dividend cash-out threshold remain informational only.',
       'Reinstatement and premium-holiday continuation remain informational only.',
     ],
-    sourceRefs: [page1, page2, page3, page4, page5, page6, page7, page8],
+    sourceRefs: [page1, page2, page3, page4, page5, page6, page7, page8, page10],
   }
 }
 
@@ -246,6 +260,7 @@ export function parseAiaPlatinumWealthVenture2({ document, sourceChecksumSha256 
       'branch:aia-platinum-wealth-venture-2-premium-holiday-charge',
       'branch:aia-platinum-wealth-venture-2-partial-withdrawal-charge',
       'branch:aia-platinum-wealth-venture-2-full-surrender-charge',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'aia-platinum-wealth-venture-2-welcome-bonus',
@@ -256,11 +271,12 @@ export function parseAiaPlatinumWealthVenture2({ document, sourceChecksumSha256 
       'aia-platinum-wealth-venture-2-secondary-insured-option',
       'aia-platinum-wealth-venture-2-fund-management-charge',
       'aia-platinum-wealth-venture-2-top-up-eligibility-gating',
-      'aia-platinum-wealth-venture-2-fund-switching-and-dividends',
+      'aia-platinum-wealth-venture-2-fund-switching',
+      'aia-platinum-wealth-venture-2-dividend-cashout-threshold',
       'aia-platinum-wealth-venture-2-reinstatement',
     ],
     warnings: [
-      'AIA Platinum Wealth Venture 2.0 is cataloged as a partial modeled subset in V1. The current parser models the regular-pay 5-year corridor: zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the premium-holiday charge schedule, the 3% top-up premium charge, and the regular-premium withdrawal / surrender charge schedules, while bonuses, protection benefits, secondary-insured options, dividend handling, and fund-level charges remain outside the current engine.',
+      'AIA Platinum Wealth Venture 2.0 is cataloged as a partial modeled subset in V1. The current parser models the regular-pay 5-year corridor: zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support, while bonuses, protection benefits, secondary-insured options, and fund-level charges remain outside the current engine.',
     ],
     archived: false,
     variants: [buildVariant(document)],
