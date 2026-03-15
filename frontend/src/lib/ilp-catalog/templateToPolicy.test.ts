@@ -1911,6 +1911,52 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('regular top-up enrollment'))).toBe(false)
   })
 
+  it('maps HSBC Life Wealth Invest (CPF) into a partial seed with zero-charge recurring single premiums', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'hsbc-life-wealth-invest-cpf')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-cpf')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('HSBC Life Wealth Invest (CPF) (SGD / Open-ended (Cpf))')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-life-wealth-invest-cpf-zero-recurring-single-premium-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-recurring-single-premium-routing')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cpf-recurring-single-premium')
+    expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
+      { phase: 'during-icp', contributionShare: 1 },
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        basis: 'event-amount',
+        appliesTo: ['policy'],
+        rate: 0,
+        amount: 0,
+      }),
+      expect.objectContaining({
+        id: 'recurring-single-premium-charge',
+        trigger: 'recurring-single-premium',
+        basis: 'event-amount-with-overlap-months',
+        appliesTo: ['policy'],
+        rate: 0,
+        amount: 0,
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
+        appliesTo: ['policy'],
+        rate: 0,
+        amount: 0,
+      }),
+    ])
+  })
+
   it('maps Tokio Marine Wealth Pro (II) into a partial seed with executable bonus ladders', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-wealth-pro-ii')

@@ -27,10 +27,11 @@ describe('parseHsbcWealthInvestCpf', () => {
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toEqual([
       'branch:hsbc-life-wealth-invest-cpf-zero-single-premium-charge',
+      'branch:hsbc-life-wealth-invest-cpf-zero-recurring-single-premium-charge',
       'branch:hsbc-life-wealth-invest-cpf-zero-top-up-charge',
       'branch:hsbc-life-wealth-invest-cpf-zero-redemption-fee',
+      'tokio-recurring-single-premium-routing',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cpf-recurring-single-premium')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cpf-fund-management-charge')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cpf-single-premium-principal-tracking')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cpf'])
@@ -61,6 +62,13 @@ describe('parseHsbcWealthInvestCpf', () => {
         id: 'top-up-premium-charge',
         trigger: 'top-up',
         basis: 'event-amount',
+        activeWindow: 'policy-term',
+        rate: 0,
+      }),
+      expect.objectContaining({
+        id: 'recurring-single-premium-charge',
+        trigger: 'recurring-single-premium',
+        basis: 'event-amount-with-overlap-months',
         activeWindow: 'policy-term',
         rate: 0,
       }),
