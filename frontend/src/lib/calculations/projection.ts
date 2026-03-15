@@ -999,6 +999,16 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     })
   }
 
+  // If the portfolio never depleted but FIRE was never formally achieved by
+  // crossing the FIRE number, the household effectively achieved FIRE at
+  // retirement age — post-retirement income (CPF LIFE, rental, etc.) sustained
+  // spending without the portfolio needing to reach the gross FIRE number.
+  // Only applies if the projection actually reached retirement (lifeExpectancy >= retirementAge).
+  const lastAge = rows.length > 0 ? rows[rows.length - 1].age : currentAge
+  if (fireAchievedAge === null && portfolioDepletedAge === null && lastAge >= retirementAge) {
+    fireAchievedAge = retirementAge
+  }
+
   const lastRow = rows[rows.length - 1]
   const totalGoalShortfall = rows.reduce((sum, r) => sum + r.goalShortfall, 0)
   const totalRetirementWithdrawalShortfall = rows.reduce((sum, r) => sum + r.retirementWithdrawalShortfall, 0)
