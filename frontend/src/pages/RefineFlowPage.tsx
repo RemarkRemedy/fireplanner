@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button'
 import { SetupScreen, shouldSkipScreen } from '@/components/setup/SetupScreen'
 import { useMetricsSnapshot } from '@/hooks/useMetricsSnapshot'
 import { useUIStore } from '@/stores/useUIStore'
-import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { applyFlowValues } from '@/lib/household/applyFlowValues'
+import { seedFlowValues } from '@/lib/household/seedFlowValues'
 import { getNudgeFlow, getFullPageFlowIds } from '@/lib/data/nudgeFlows'
 import type { NudgeFlowId, NudgeFlowScreen } from '@/lib/data/nudgeFlows'
 import type { MetricsSnapshot } from '@/lib/calculations/metricsSnapshot'
@@ -30,27 +30,26 @@ export function RefineFlowPage() {
   const flow = flowId ? getNudgeFlow(flowId as NudgeFlowId) : undefined
   const isValid = flowId != null && fullPageIds.includes(flowId as NudgeFlowId) && flow != null
 
-  // Initialize toggle defaults + seed context values (age) for showWhen logic
+  // Initialize from store data + seed toggle defaults for showWhen logic
   const [values, setValues] = useState<Record<string, unknown>>(() => {
-    if (!flow) return {}
-    const defaults: Record<string, unknown> = {}
-    // Seed currentAge from the plan store for age-conditional fields (e.g., RA hidden when < 55)
-    const selfAdult = useHouseholdPlanStore.getState().plan.adults.find(a => a.owner === 'self')
-    if (selfAdult) defaults.currentAge = selfAdult.currentAge
+    if (!flow || !flowId) return {}
+    const seeds = seedFlowValues(flowId as NudgeFlowId)
     for (const screen of flow.screens) {
       for (const field of screen.fields) {
-        if (field.type === 'toggle') defaults[field.name] = false
+        if (field.type === 'toggle' && seeds[field.name] === undefined) {
+          seeds[field.name] = false
+        }
       }
     }
-    // Seed specific sensible defaults
-    if (defaults.retirementSpendingRatio === undefined) defaults.retirementSpendingRatio = 1.0
-    if (defaults.cpfPayoutStartAge === undefined) defaults.cpfPayoutStartAge = 65
-    if (defaults.cpfLifePlan === undefined) defaults.cpfLifePlan = 'standard'
-    if (defaults.emergencyFundTarget === undefined) defaults.emergencyFundTarget = 6
-    if (defaults.rebalancingFrequency === undefined) defaults.rebalancingFrequency = 'annual'
-    if (defaults.ispTier === undefined) defaults.ispTier = 'basic'
-    if (defaults.careShieldEnrolled === undefined) defaults.careShieldEnrolled = true
-    return defaults
+    // Sensible defaults for fields not populated by store data
+    if (seeds.retirementSpendingRatio === undefined) seeds.retirementSpendingRatio = 1.0
+    if (seeds.cpfPayoutStartAge === undefined) seeds.cpfPayoutStartAge = 65
+    if (seeds.cpfLifePlan === undefined) seeds.cpfLifePlan = 'standard'
+    if (seeds.emergencyFundTarget === undefined) seeds.emergencyFundTarget = 6
+    if (seeds.rebalancingFrequency === undefined) seeds.rebalancingFrequency = 'annual'
+    if (seeds.ispTier === undefined) seeds.ispTier = 'basic'
+    if (seeds.careShieldEnrolled === undefined) seeds.careShieldEnrolled = true
+    return seeds
   })
   const [currentScreenIndex, setCurrentScreenIndex] = useState(0)
 

@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import { SetupScreen, shouldSkipScreen } from '@/components/setup/SetupScreen'
 import { getNudgeFlow, NUDGE_FLOWS } from '@/lib/data/nudgeFlows'
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
+import { seedFlowValues } from '@/lib/household/seedFlowValues'
 import { computeDelta } from '@/lib/calculations/metricsSnapshot'
 import type { DeltaSummary, MetricsSnapshot } from '@/lib/calculations/metricsSnapshot'
 import { useMetricsSnapshot } from '@/hooks/useMetricsSnapshot'
@@ -49,23 +50,25 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
       beforeSnapshotRef.current = currentSnapshot
       setStepIndex(0)
 
-      // Seed toggle fields with explicit false so skipWhen logic works
+      // Seed from store data + toggle defaults for skipWhen logic
       const flow = NUDGE_FLOWS.find((f) => f.id === flowId)
       if (flow) {
-        const defaults: Record<string, unknown> = {}
+        const seeds = seedFlowValues(flowId)
         for (const screen of flow.screens) {
           for (const field of screen.fields) {
-            if (field.type === 'toggle') defaults[field.name] = false
+            if (field.type === 'toggle' && seeds[field.name] === undefined) {
+              seeds[field.name] = false
+            }
           }
         }
-        // Seed specific sensible defaults
-        if (defaults.cpfPayoutStartAge === undefined) defaults.cpfPayoutStartAge = 65
-        if (defaults.cpfLifePlan === undefined) defaults.cpfLifePlan = 'standard'
-        if (defaults.emergencyFundTarget === undefined) defaults.emergencyFundTarget = 6
-        if (defaults.rebalancingFrequency === undefined) defaults.rebalancingFrequency = 'annual'
-        if (defaults.ispTier === undefined) defaults.ispTier = 'basic'
-        if (defaults.careShieldEnrolled === undefined) defaults.careShieldEnrolled = true
-        setValues(defaults)
+        // Sensible defaults for fields not populated by store data
+        if (seeds.cpfPayoutStartAge === undefined) seeds.cpfPayoutStartAge = 65
+        if (seeds.cpfLifePlan === undefined) seeds.cpfLifePlan = 'standard'
+        if (seeds.emergencyFundTarget === undefined) seeds.emergencyFundTarget = 6
+        if (seeds.rebalancingFrequency === undefined) seeds.rebalancingFrequency = 'annual'
+        if (seeds.ispTier === undefined) seeds.ispTier = 'basic'
+        if (seeds.careShieldEnrolled === undefined) seeds.careShieldEnrolled = true
+        setValues(seeds)
       } else {
         setValues({})
       }
