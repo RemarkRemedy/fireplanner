@@ -504,6 +504,26 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Initial Bonus')).toBeInTheDocument()
   }, 10_000)
 
+  it('seeds Tokio Marine Harvest Flexi as a partial catalog product with executable charge surfaces', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Harvest Flexi')
+
+    expect(within(dialog).getByText('Harvest Flexi')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+
+    expect(screen.getAllByText('Harvest Flexi (SGD / MIP 10)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('Performance investment bonus is modeled as three published policy-year windows')
+    expect(screen.getByDisplayValue('Policy Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Initial Bonus')).toBeInTheDocument()
+  }, 10_000)
+
   it('renames the active policy from the input form and updates the policy tab', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
