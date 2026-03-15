@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { SetupScreen, shouldSkipScreen } from '@/components/setup/SetupScreen'
 import { getNudgeFlow, NUDGE_FLOWS } from '@/lib/data/nudgeFlows'
@@ -145,6 +145,7 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
   }
 
   function handleNext() {
+    if (!flowId) return
     if (isLastStep) {
       // Apply flow values to the store
       const applied = applyFlowValues(flowId, values)
