@@ -204,7 +204,40 @@ function buildFeeRules(document: ExtractedPdfDocument): IlpTemplateFeeRule[] {
   ]
 }
 
-function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
+function buildTokioMpcFeeRule(
+  optionPage: IlpCatalogSourceRef,
+  chargePage: IlpCatalogSourceRef,
+  tablePage: IlpCatalogSourceRef,
+): IlpTemplateFeeRule {
+  return {
+    id: 'monthly-protection-charge',
+    label: 'Monthly Protection Charge',
+    basis: 'assurance-sum-at-risk',
+    rate: 0,
+    amount: 0,
+    appliesTo: ['accumulation'],
+    fallbackAppliesTo: ['topup'],
+    activeWindow: 'during-mip',
+    assuranceConfig: {
+      formula: 'tokio-mpc-net-premium-floor',
+      rateTable: 'tokio-mpc-unzo-death',
+      monthlyModalFactor: 1,
+      maxAgeNextBirthday: 99,
+    },
+    requiresManualInput: true,
+    notes: [
+      'Models the published Monthly Protection Charge for the Advanced Death Benefit corridor during the 10-year minimum investment period only.',
+      'Sum at risk is the published net premium less 101% of the Accumulation Units Account value, floored at zero.',
+      'The charge is deducted monthly in advance from the Accumulation Units Account, with outstanding amounts deducted from the Top-up Units Account if needed.',
+    ],
+    sourceRefs: [optionPage, chargePage, tablePage],
+  }
+}
+
+function buildVariant(
+  document: ExtractedPdfDocument,
+  deathBenefitOption: 'basic-death' | 'advanced-death',
+): IlpTemplateVariant {
   const page1 = sourceRef(1, 'Plan Description', snippetNear(document, 1, 'Harvest Builder@Future', 18))
   const page2 = sourceRef(2, 'Initial Bonus / Premium Bonus', snippetNear(document, 2, 'Initial Bonus', 36))
   const page3 = sourceRef(3, 'Power-up Bonus / Loyalty Bonus', snippetNear(document, 3, 'Power-up Bonus', 30))
@@ -215,6 +248,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page8 = sourceRef(8, 'Dividend Distribution', snippetNear(document, 8, 'Dividend Distribution', 24))
   const page9 = sourceRef(9, 'Policy Charge / MPC', snippetNear(document, 9, 'Policy Charge', 28))
   const page10 = sourceRef(10, 'Premium Shortfall Charge', snippetNear(document, 10, 'Premium Shortfall Charge', 24))
+  const page14 = sourceRef(14, 'Appendix A Monthly Protection Charge Rates', snippetNear(document, 14, 'Monthly Rates for Monthly Protection Charges', 24))
   const page15 = sourceRef(15, 'Appendix A Charges', snippetNear(document, 15, 'SURRENDER CHARGE', 28))
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
@@ -285,8 +319,15 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
   ]
 
+  const feeRules = buildFeeRules(document)
+  if (deathBenefitOption === 'advanced-death') {
+    feeRules.push(buildTokioMpcFeeRule(page1, page9, page14))
+  }
+
+  const isAdvancedDeath = deathBenefitOption === 'advanced-death'
+
   return {
-    id: 'sgd-mip-10',
+    id: deathBenefitOption === 'basic-death' ? 'sgd-mip-10' : 'sgd-mip-10-advanced-death',
     currency: 'SGD',
     mipLength: MIP_LENGTH,
     icpMonths: 1,
@@ -317,7 +358,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       },
     ],
     bonuses: buildBonuses(document),
-    feeRules: buildFeeRules(document),
+    feeRules,
     eventChargeRules,
     distributionSupport: {
       mode: 'manual-assumption',
@@ -335,17 +376,41 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      'This partial template models the SGD / MIP 10 corridor only.',
+      `This partial template models the SGD / MIP 10 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
       'This partial template models regular-premium routing to the Accumulation Units Account, top-up routing, recurring single premium routing, the published premium-bonus windows, the end-of-MIP power-up bonus, the loyalty-bonus tail, a 2.50% account-value policy charge during the minimum investment period, a 0.60% account-value policy charge thereafter, and the published surrender, partial-withdrawal, and premium-shortfall charge schedules.',
+      ...(isAdvancedDeath
+        ? [
+            'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
+          ]
+        : []),
       'Premium bonus, power-up bonus, and loyalty bonus are modeled at the published rate windows, but their paid-up and no-withdrawal eligibility gates remain manual review assumptions.',
       'Recurring single premium stays blocked after a premium-holiday event until regular premium resumes at the commencement-date amount.',
       'Harvest Builder@Future keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
     ],
     unsupportedItems: [
-      'Advanced death benefit handling, Life Benefit Rider, monthly protection charge, credit-card charge, life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
+      ...(isAdvancedDeath
+        ? [
+            'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider, credit-card charge, life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
+          ]
+        : [
+            'Advanced Death Benefit selection, Life Benefit Rider, credit-card charge, life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
+          ]),
       'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product.',
     ],
-    sourceRefs: [page1, page2, page3, page4, page5, page6, page7, page8, page9, page10, page15],
+    sourceRefs: [
+      page1,
+      page2,
+      page3,
+      page4,
+      page5,
+      page6,
+      page7,
+      page8,
+      page9,
+      page10,
+      ...(isAdvancedDeath ? [page14] : []),
+      page15,
+    ],
   }
 }
 
@@ -376,22 +441,27 @@ export function parseTokioMarineHarvestBuilderAtFuture(context: ParseContext): I
       'tokio-accumulation-account-surrender-charge',
       'tokio-accumulation-partial-withdrawal-charge',
       'tokio-premium-shortfall-charge-non-payment',
+      'branch:tokio-harvest-builder-atfuture-advanced-death-monthly-protection-charge',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-harvest-builder-atfuture-advanced-death-benefit-and-life-benefit-rider',
-      'tokio-harvest-builder-atfuture-monthly-protection-charge',
+      'tokio-harvest-builder-atfuture-benefit-payout-handling',
+      'tokio-harvest-builder-atfuture-life-benefit-rider',
       'tokio-harvest-builder-atfuture-dividend-payout-threshold-and-record-date-instructions',
       'tokio-harvest-builder-atfuture-credit-card-charge',
       'tokio-harvest-builder-atfuture-life-replacement-option',
     ],
     warnings: [
       'Structured extraction validated against the Harvest Builder@Future product summary text layer.',
-      'Harvest Builder@Future is modeled as the SGD / MIP 10 corridor with a published 2.50% policy charge during the minimum investment period and a 0.60% policy charge thereafter.',
+      'Harvest Builder@Future is modeled as split SGD / MIP 10 death-benefit-option variants with a published 2.50% policy charge during the minimum investment period and a 0.60% policy charge thereafter.',
+      'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
       'Premium bonus, power-up bonus, and loyalty bonus retain the published paid-up and no-withdrawal eligibility gates as manual review assumptions.',
       'Recurring single premium stays blocked after a premium-holiday event until regular premium resumes at the commencement-date amount.',
     ],
     archived: false,
-    variants: [buildVariant(context.document)],
+    variants: [
+      buildVariant(context.document, 'basic-death'),
+      buildVariant(context.document, 'advanced-death'),
+    ],
   }
 }

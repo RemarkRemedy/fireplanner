@@ -57,6 +57,7 @@ function requiresCurrentNetRegularPremiumBase(rule: IlpChargeRule): boolean {
   return rule.assuranceConfig?.formula === 'prudential-prosper-death'
     || rule.assuranceConfig?.formula === 'prudential-prosper-accidental-death'
     || rule.assuranceConfig?.formula === 'prudential-assure-ii-combined'
+    || rule.assuranceConfig?.formula === 'tokio-mpc-net-premium-floor'
 }
 
 function requiresCurrentBasicSumAssured(rule: IlpChargeRule): boolean {

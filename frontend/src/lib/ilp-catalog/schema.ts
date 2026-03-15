@@ -73,7 +73,11 @@ export const ilpTemplateFeeRuleSchema = z.object({
       'hsbc-flexi-max-death-ti',
       'manulife-investready-iii-death-ti',
       'manulife-manuinvest-duo-death-ti-tpd',
+      'tokio-mpc-net-premium-floor',
     ]),
+    rateTable: z.enum([
+      'tokio-mpc-unzo-death',
+    ]).optional(),
     monthlyModalFactor: z.number().min(0).max(1),
     maxAgeNextBirthday: z.number().int().min(1).max(120).optional(),
   }).optional(),

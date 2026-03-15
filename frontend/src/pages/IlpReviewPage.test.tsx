@@ -506,7 +506,7 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Loyalty Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
-  it('seeds Tokio Marine Harvest Builder@Future as a partial catalog product with the same charge frame and lower initial bonus bands', async () => {
+  it('seeds Tokio Marine Harvest Builder@Future basic-death as a partial catalog product with the same charge frame and lower initial bonus bands', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
 
@@ -515,7 +515,7 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Harvest Builder@Future')
 
     expect(within(dialog).getByText('Harvest Builder@Future')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+    await user.click(within(dialog).getAllByRole('button', { name: /sgd \/ mip 10/i })[0]!)
 
     expect(screen.getAllByText('Harvest Builder@Future (SGD / MIP 10)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -527,6 +527,25 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Premium Bonus (Policy Years 6-20)')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Power-up Bonus')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Loyalty Bonus')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds Tokio Marine Harvest Builder@Future advanced-death as a partial catalog product with Tokio MPC inputs', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Harvest Builder@Future')
+
+    expect(within(dialog).getByText('Harvest Builder@Future')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10 \(advanced death\)/i }))
+
+    expect(screen.getAllByText('Harvest Builder@Future (SGD / MIP 10 (Advanced Death))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
+    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine #goLuxe as a partial catalog product with modeled account fees and premium-holiday shortfall rules', async () => {

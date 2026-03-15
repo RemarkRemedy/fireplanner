@@ -5,11 +5,13 @@ import {
   PRUVANTAGE_ASSURE_II_COMBINED_RATE_TABLE,
   PRUVANTAGE_PROSPER_ACCIDENTAL_DEATH_RATE_TABLE,
   PRUVANTAGE_PROSPER_DEATH_RATE_TABLE,
+  TOKIO_MPC_UNZO_DEATH_RATE_TABLE,
 } from '@/lib/data/ilpAssuranceTables'
 import {
   MANULIFE_PROTECTED_BASE_FLOOR_MULTIPLIER,
   PRUDENTIAL_ASSURE_II_MULTIPLIERS,
   PRUDENTIAL_PROSPER_SUM_AT_RISK_MULTIPLIERS,
+  TOKIO_MPC_PROTECTED_BASE_FLOOR_MULTIPLIER,
 } from '@/lib/data/ilpAssuranceConfig'
 import { lookupEecRate } from '@/lib/data/ilpDefaults'
 
@@ -156,6 +158,9 @@ export interface IlpAssuranceChargeConfig {
     | 'hsbc-flexi-max-death-ti'
     | 'manulife-investready-iii-death-ti'
     | 'manulife-manuinvest-duo-death-ti-tpd'
+    | 'tokio-mpc-net-premium-floor'
+  rateTable?:
+    | 'tokio-mpc-unzo-death'
   monthlyModalFactor: number
   maxAgeNextBirthday?: number
 }
@@ -470,6 +475,7 @@ type IlpAssuranceFormulaFamily =
   | 'hsbc-flexi'
   | 'protected-base-paid-premium-floor'
   | 'protected-base-sum-assured'
+  | 'tokio-mpc-net-premium-floor'
 
 interface IlpNormalizedAssuranceRule {
   rule: IlpChargeRule & { assuranceConfig: IlpAssuranceChargeConfig }
@@ -1377,6 +1383,8 @@ function getAssuranceFormulaFamily(
       return 'protected-base-paid-premium-floor'
     case 'manulife-manuinvest-duo-death-ti-tpd':
       return 'protected-base-sum-assured'
+    case 'tokio-mpc-net-premium-floor':
+      return 'tokio-mpc-net-premium-floor'
     default:
       return assertNever(config.formula)
   }
@@ -1408,6 +1416,13 @@ function resolveAssuranceRate(
       return MANULIFE_INVESTREADY_III_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0
     case 'manulife-manuinvest-duo-death-ti-tpd':
       return MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE[riskClass][ageIndex] ?? 0
+    case 'tokio-mpc-net-premium-floor':
+      switch (rule.assuranceConfig.rateTable) {
+        case 'tokio-mpc-unzo-death':
+          return TOKIO_MPC_UNZO_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0
+        default:
+          return 0
+      }
     default:
       return assertNever(rule.assuranceConfig.formula)
   }
@@ -1487,6 +1502,20 @@ function computeProtectedBaseSumAtRisk(
     default:
       return assertNever(formula)
   }
+}
+
+function computeTokioMpcNetPremiumFloorSumAtRisk(
+  regularPremiumBaseAtStartOfYear: number,
+  regularPremiumPaidThisYear: number,
+  currentYearApplicableWithdrawals: number,
+  midpointApplicableValue: number,
+): number {
+  const midpointNetPremiumBase = Math.max(
+    0,
+    regularPremiumBaseAtStartOfYear + ((regularPremiumPaidThisYear - currentYearApplicableWithdrawals) / 2),
+  )
+
+  return Math.max(0, midpointNetPremiumBase - (midpointApplicableValue * TOKIO_MPC_PROTECTED_BASE_FLOOR_MULTIPLIER))
 }
 
 function computePrudentialAssureIiStateAndRisk(
@@ -1683,6 +1712,15 @@ function computeAssuranceChargeByAccount(
           currentYearApplicableWithdrawals,
           midpointApplicableValue,
           sumAssuredAtStartOfYear,
+        )
+        break
+
+      case 'tokio-mpc-net-premium-floor':
+        sumAtRisk = computeTokioMpcNetPremiumFloorSumAtRisk(
+          regularPremiumBaseAtStartOfYear,
+          regularPremiumPaidThisYear,
+          currentYearApplicableWithdrawals,
+          midpointApplicableValue,
         )
         break
     }

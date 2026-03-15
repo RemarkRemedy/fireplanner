@@ -28,16 +28,22 @@ describe('parseTokioMarineHarvestBuilderAtFuture', () => {
     expect(product.modeledEconomics).toContain('tokio-power-up-bonus')
     expect(product.modeledEconomics).toContain('tokio-loyalty-bonus')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(product.modeledEconomics).toContain('branch:tokio-harvest-builder-atfuture-advanced-death-monthly-protection-charge')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-builder-atfuture-monthly-protection-charge')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-builder-atfuture-benefit-payout-handling')
     expect(product.metadataOnlyBehaviors).toContain(
       'tokio-harvest-builder-atfuture-dividend-payout-threshold-and-record-date-instructions',
     )
 
-    const variant = product.variants[0]
-    expect(variant?.id).toBe('sgd-mip-10')
-    expect(variant?.accounts.map((account) => account.id)).toEqual(['accumulation', 'topup'])
-    expect(variant?.distributionSupport).toEqual({
+    expect(product.variants).toHaveLength(2)
+
+    const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10')
+    const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10-advanced-death')
+
+    expect(basicVariant).toBeDefined()
+    expect(advancedVariant).toBeDefined()
+    expect(basicVariant?.accounts.map((account) => account.id)).toEqual(['accumulation', 'topup'])
+    expect(basicVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['accumulation', 'topup'],
       defaultMode: 'reinvest',
@@ -47,22 +53,22 @@ describe('parseTokioMarineHarvestBuilderAtFuture', () => {
       notes: expect.arrayContaining([expect.stringContaining('manual annual distribution-yield assumption')]),
       sourceRefs: [expect.objectContaining({ page: 8, section: 'Dividend Distribution' })],
     })
-    expect(variant?.bonuses.map((bonus) => bonus.label)).toEqual([
+    expect(basicVariant?.bonuses.map((bonus) => bonus.label)).toEqual([
       'Initial Bonus',
       'Premium Bonus (Policy Years 6-20)',
       'Premium Bonus (After Policy Year 20)',
       'Power-up Bonus',
       'Loyalty Bonus',
     ])
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 9_599.99, rate: 0.15 },
       { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.2 },
     ])
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'premium-bonus-policy-years-6-20')?.rate).toBe(0.0008)
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'premium-bonus-after-policy-year-20')?.rate).toBe(0.0015)
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'power-up-bonus')?.rate).toBe(0.013)
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.rate).toBe(0.005)
-    expect(variant?.feeRules).toEqual([
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'premium-bonus-policy-years-6-20')?.rate).toBe(0.0008)
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'premium-bonus-after-policy-year-20')?.rate).toBe(0.0015)
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'power-up-bonus')?.rate).toBe(0.013)
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.rate).toBe(0.005)
+    expect(basicVariant?.feeRules).toEqual([
       expect.objectContaining({
         id: 'policy-charge-during-mip',
         basis: 'account-value',
@@ -78,7 +84,7 @@ describe('parseTokioMarineHarvestBuilderAtFuture', () => {
         fallbackAppliesTo: ['topup'],
       }),
     ])
-    expect(variant?.eventChargeRules).toEqual(
+    expect(basicVariant?.eventChargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.05 }),
         expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
@@ -105,9 +111,60 @@ describe('parseTokioMarineHarvestBuilderAtFuture', () => {
         }),
       ]),
     )
-    expect(variant?.eecTable).toEqual([1, 1, 0.8, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.03])
-    expect(variant?.warnings).toContain(
+    expect(basicVariant?.feeRules.some((rule) => rule.id === 'monthly-protection-charge')).toBe(false)
+    expect(basicVariant?.eecTable).toEqual([1, 1, 0.8, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.03])
+    expect(basicVariant?.warnings).toContain(
       'Harvest Builder@Future keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
     )
+
+    expect(advancedVariant?.accounts.map((account) => account.id)).toEqual(['accumulation', 'topup'])
+    expect(advancedVariant?.bonuses.map((bonus) => bonus.label)).toEqual([
+      'Initial Bonus',
+      'Premium Bonus (Policy Years 6-20)',
+      'Premium Bonus (After Policy Year 20)',
+      'Power-up Bonus',
+      'Loyalty Bonus',
+    ])
+    expect(advancedVariant?.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.05 }),
+        expect.objectContaining({ id: 'premium-shortfall-charge-non-payment' }),
+      ]),
+    )
+    expect(advancedVariant?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-charge-during-mip',
+          basis: 'account-value',
+          rate: 0.025,
+        }),
+        expect.objectContaining({
+          id: 'policy-charge-after-mip',
+          basis: 'account-value',
+          rate: 0.006,
+        }),
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+          requiresManualInput: true,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+          },
+        }),
+      ]),
+    )
+    expect(advancedVariant?.warnings).toContain(
+      'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
+    )
+    expect(advancedVariant?.unsupportedItems).toContain(
+      'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider, credit-card charge, life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
+    )
+    expect(advancedVariant?.sourceRefs.some((ref) => ref.page === 14)).toBe(true)
+    expect(basicVariant?.sourceRefs.some((ref) => ref.page === 14)).toBe(false)
   }, 30_000)
 })

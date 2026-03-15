@@ -3930,7 +3930,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
   })
 
-  it('maps Tokio Marine Harvest Builder@Future into a partial seed with the same policy-charge frame and lower initial bonus bands', () => {
+  it('maps Tokio Marine Harvest Builder@Future basic-death into a partial seed with the same policy-charge frame and lower initial bonus bands', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-harvest-builder-atfuture')
     expect(product).toBeDefined()
@@ -3945,7 +3945,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-builder-atfuture-monthly-protection-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-builder-atfuture-benefit-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
       'tokio-harvest-builder-atfuture-dividend-payout-threshold-and-record-date-instructions',
     )
@@ -3993,6 +3993,38 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.eecTable).toEqual([1, 1, 0.8, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.03])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('paid-up and no-withdrawal eligibility gates'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
+  })
+
+  it('maps Tokio Marine Harvest Builder@Future advanced-death into a partial seed with Tokio MPC and assurance inputs', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-harvest-builder-atfuture')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10-advanced-death')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('Harvest Builder@Future (SGD / MIP 10 (Advanced Death))')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+          requiresManualInput: true,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+          },
+        }),
+      ]),
+    )
+    expect(seed.assuranceProfile).toBeUndefined()
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('Monthly Protection Charge'))).toBe(true)
   })
 
   it('maps Tokio Marine #goLuxe into a partial seed with executable fee and shortfall rules', () => {

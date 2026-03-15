@@ -297,7 +297,11 @@ export const ilpChargeRuleSchema = z.object({
       'hsbc-flexi-max-death-ti',
       'manulife-investready-iii-death-ti',
       'manulife-manuinvest-duo-death-ti-tpd',
+      'tokio-mpc-net-premium-floor',
     ]),
+    rateTable: z.enum([
+      'tokio-mpc-unzo-death',
+    ]).optional(),
     monthlyModalFactor: z.number().min(0).max(1),
     maxAgeNextBirthday: z.number().int().min(1).max(120).optional(),
   }).optional(),
@@ -467,6 +471,14 @@ export const ilpChargeRuleSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'Cumulative-paid premium configuration can only be used on cumulative-paid-regular-premium charge rules',
       path: ['cumulativePaidPremiumConfig'],
+    })
+  }
+
+  if (rule.assuranceConfig?.formula === 'tokio-mpc-net-premium-floor' && !rule.assuranceConfig.rateTable) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Tokio MPC assurance rules must declare a rateTable',
+      path: ['assuranceConfig', 'rateTable'],
     })
   }
 })

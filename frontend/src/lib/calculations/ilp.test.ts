@@ -2434,6 +2434,220 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(regularWithdrawal.rows[0], 'topup').grossFee).toBeCloseTo(accountRow(noWithdrawal.rows[0], 'topup').grossFee, 6)
   })
 
+  it('computes Tokio MPC from net premium less 101% of the accumulation-account midpoint value', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 100,
+      monthsAlreadyPaid: 12,
+      currentPolicyYear: 2,
+      mipLength: 10,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 1_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 500,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-mpc',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+          },
+          requiresManualInput: true,
+          allocation: 'equal-split',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 1_200,
+      },
+    }), 'mid')
+
+    const midpointNetPremiumBase = 1_200 + (1_200 / 2)
+    const midpointAccumulationValue = (1_000 + 2_200) / 2
+    const expectedTokioCharge = Math.max(0, midpointNetPremiumBase - (midpointAccumulationValue * 1.01)) * 0.0655 / 1000 * 12
+
+    expect(accountRow(result.rows[0], 'accumulation').grossFee).toBeCloseTo(expectedTokioCharge, 9)
+    expect(accountRow(result.rows[0], 'topup').grossFee).toBe(0)
+  })
+
+  it('floors Tokio MPC at zero when 101% of accumulation value reaches net premium', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 12,
+      currentPolicyYear: 2,
+      mipLength: 10,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 1_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-mpc',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+          },
+          requiresManualInput: true,
+          allocation: 'equal-split',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 1_000,
+      },
+    }), 'mid')
+
+    expect(accountRow(result.rows[0], 'accumulation').grossFee).toBe(0)
+    expect(accountRow(result.rows[0], 'topup').grossFee).toBe(0)
+  })
+
+  it('falls back Tokio MPC from accumulation to topup when the primary account is insufficient', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 48,
+      currentPolicyYear: 5,
+      mipLength: 10,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 1,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 800,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-mpc',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+          },
+          requiresManualInput: true,
+          allocation: 'equal-split',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 99,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 30_000,
+      },
+    }), 'mid')
+
+    expect(accountRow(result.rows[0], 'accumulation').grossFee).toBe(1)
+    expect(accountRow(result.rows[0], 'topup').grossFee).toBe(800)
+  })
+
   it('projects the next-year Prudential Assure II combined assurance charge from the current worked-example state', () => {
     const result = projectIlpPolicy(makeDefaultPolicy({
       monthlyContribution: 0,
