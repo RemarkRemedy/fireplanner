@@ -109,7 +109,6 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     ],
     unsupportedItems: [
       'Death and terminal-illness benefit formulas remain informational only.',
-      'Recurrent-single-premium principal tracking remains informational only in V1.',
       'Fund-switching and minimum-transaction guards remain informational only.',
     ],
     sourceRefs: [page1, page2, page3],
@@ -125,9 +124,9 @@ export function parseGreatEasternInvestAdvantage2Rsp(context: ParseContext): Ilp
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:great-eastern-gia2-rsp-recurrent-single-premium-charge',
       'branch:great-eastern-gia2-rsp-top-up-premium-charge',
@@ -136,11 +135,10 @@ export function parseGreatEasternInvestAdvantage2Rsp(context: ParseContext): Ilp
     metadataOnlyBehaviors: [
       'great-eastern-gia2-rsp-death-benefit',
       'great-eastern-gia2-rsp-terminal-illness-benefit',
-      'great-eastern-gia2-rsp-recurrent-single-premium-principal-tracking',
       'great-eastern-gia2-rsp-srs-surrender-destination',
     ],
     warnings: [
-      'GREAT Invest Advantage 2 (RSP) is cataloged as a partial modeled subset in V1. The parser captures the published recurrent-premium charge path, top-up premium charge, and explicit no-surrender-charge structure through the open-ended no-MIP basis, while protection benefits and paid-premium tracking remain outside the current engine.',
+      'GREAT Invest Advantage 2 (RSP) is cataloged as a supported V1 product. The parser captures the published recurrent-premium charge path, top-up premium charge, and explicit no-surrender-charge structure through the open-ended no-MIP basis, while protection benefits and surrender-destination handling remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

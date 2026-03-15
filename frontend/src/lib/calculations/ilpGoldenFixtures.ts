@@ -55,6 +55,9 @@ export type GoldenCoverageTag =
   | 'branch:great-eastern-gia-rsp-recurrent-single-premium-charge'
   | 'branch:great-eastern-gia-rsp-top-up-premium-charge'
   | 'branch:great-eastern-gia-rsp-open-ended-zero-surrender-charge'
+  | 'branch:great-eastern-gia2-rsp-recurrent-single-premium-charge'
+  | 'branch:great-eastern-gia2-rsp-top-up-premium-charge'
+  | 'branch:great-eastern-gia2-rsp-open-ended-zero-surrender-charge'
   | 'tokio-recurring-single-premium-routing'
   | 'branch:prosper-assurance-charge'
   | 'kernel:distribution-mode-assumption'
@@ -1509,6 +1512,69 @@ function greatEasternGiaRspStressPolicy(
 ): IlpPolicyInput {
   return greatEasternGiaRspBasePolicy(snapshot, 'sgd-open-ended-cash-or-srs', id, GREAT_STRESS_FUNDS, {
     name: 'Golden GREAT Invest Advantage (RSP) (SGD / Open-ended Cash Or Srs OCF Stress)',
+  })
+}
+
+function greatEasternGia2RspBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'great-eastern-great-invest-advantage-2-rsp', 'sgd-open-ended-cash-or-srs', id)
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden GREAT Invest Advantage 2 (RSP) (SGD / Open-ended Cash Or Srs)',
+      monthlyContribution: 350,
+      currentPolicyYear: 3,
+      monthsAlreadyPaid: 24,
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function greatEasternGia2RspBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return greatEasternGia2RspBasePolicy(snapshot, id, GREAT_BALANCED_FUNDS)
+}
+
+function greatEasternGia2RspEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return greatEasternGia2RspBasePolicy(snapshot, id, GREAT_BALANCED_FUNDS, {
+    name: 'Golden GREAT Invest Advantage 2 (RSP) (SGD / Open-ended Cash Or Srs Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 31,
+        durationMonths: 1,
+        amount: 10_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 33,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function greatEasternGia2RspStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return greatEasternGia2RspBasePolicy(snapshot, id, GREAT_STRESS_FUNDS, {
+    name: 'Golden GREAT Invest Advantage 2 (RSP) (SGD / Open-ended Cash Or Srs OCF Stress)',
   })
 }
 
@@ -3324,6 +3390,61 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'GREAT Invest Advantage (RSP) alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'great-eastern-great-invest-advantage-2-rsp',
+    variantId: 'sgd-open-ended-cash-or-srs',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:great-eastern-gia2-rsp-recurrent-single-premium-charge',
+    ],
+    description: 'Baseline GREAT Invest Advantage 2 (RSP) scenario proving the supported recurrent-premium charge corridor.',
+    integrityChecks: [
+      {
+        description: 'records positive recurring-premium fees during the projection horizon',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  },
+  {
+    productId: 'great-eastern-great-invest-advantage-2-rsp',
+    variantId: 'sgd-open-ended-cash-or-srs',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:great-eastern-gia2-rsp-top-up-premium-charge',
+      'branch:great-eastern-gia2-rsp-open-ended-zero-surrender-charge',
+    ],
+    description: 'GREAT Invest Advantage 2 (RSP) event-heavy scenario proving accepted top-up charges and zero-charge withdrawals.',
+    integrityChecks: [
+      {
+        description: 'top-up event increases cumulative fees beyond the recurring-premium-only baseline',
+        test: (fixture, artifact) => {
+          const withoutEventCharges = ilpPolicySchema.parse({
+            ...fixture.policy,
+            eventChargeRules: [],
+          })
+          const withEventCharges = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutEventChargeFees = analyzeIlpPolicy(withoutEventCharges).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withEventCharges > withoutEventChargeFees
+        },
+      },
+      {
+        description: 'the seeded withdrawal executes through the published open-ended withdrawal corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'great-eastern-great-invest-advantage-2-rsp',
+    variantId: 'sgd-open-ended-cash-or-srs',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'GREAT Invest Advantage 2 (RSP) alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'hsbc-life-flexi-protector',
     variantId: 'sgd-open-ended-regular-pay',
     scenarioId: 'assurance-choice-vs-max',
@@ -3743,6 +3864,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'great-eastern-great-invest-advantage-rsp' && definition.scenarioId === 'ocf-stress') {
     return greatEasternGiaRspStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'great-eastern-great-invest-advantage-2-rsp' && definition.scenarioId === 'baseline') {
+    return greatEasternGia2RspBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'great-eastern-great-invest-advantage-2-rsp' && definition.scenarioId === 'event-heavy') {
+    return greatEasternGia2RspEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'great-eastern-great-invest-advantage-2-rsp' && definition.scenarioId === 'ocf-stress') {
+    return greatEasternGia2RspStressPolicy(snapshot, id)
   }
   if (definition.productId === 'prudential-pruvantage-prosper' && definition.scenarioId === 'event-heavy') {
     return prosperEventHeavyPolicy(snapshot, id)

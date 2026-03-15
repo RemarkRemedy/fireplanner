@@ -22,14 +22,14 @@ describe('parseGreatEasternInvestAdvantage2Rsp', () => {
 
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('great-eastern-great-invest-advantage-2-rsp')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:great-eastern-gia2-rsp-recurrent-single-premium-charge',
       'branch:great-eastern-gia2-rsp-top-up-premium-charge',
       'branch:great-eastern-gia2-rsp-open-ended-zero-surrender-charge',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('great-eastern-gia2-rsp-recurrent-single-premium-principal-tracking')
+    expect(product.metadataOnlyBehaviors).not.toContain('great-eastern-gia2-rsp-recurrent-single-premium-principal-tracking')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cash-or-srs'])
 
     const variant = product.variants[0]
