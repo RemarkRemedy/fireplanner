@@ -413,7 +413,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Flexi')
 
-    const wealthFlexiCard = within(dialog).getByText('Wealth Flexi').closest('.rounded-lg')
+    const wealthFlexiCard = within(dialog).getByText('Wealth Flexi').closest('.rounded-lg') as HTMLElement | null
     expect(wealthFlexiCard).not.toBeNull()
     await user.click(within(wealthFlexiCard!).getByRole('button', { name: /sgd \/ mip 10/i }))
 
@@ -446,6 +446,28 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Policy Charge')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Premium Bonus')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Power-up Bonus (Policy Year 10)')).toBeInTheDocument()
+  }, 10_000)
+
+  it('seeds Tokio Marine Wealth Flexi-Link 3.12 as a partial catalog product with split policy-charge windows and loyalty bonus', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Flexi-Link 3.12')
+
+    expect(within(dialog).getByText('Wealth Flexi-Link 3.12')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 12/i }))
+
+    expect(screen.getAllByText('Wealth Flexi-Link 3.12 (SGD / MIP 12)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('2.45% policy charge during the minimum investment period and a 0.60% policy charge thereafter')
+    expect(screen.getAllByDisplayValue('Policy Charge').length).toBeGreaterThan(0)
+    expect(screen.getByDisplayValue('Premium Bonus')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Power-up Bonus (Policy Year 12)')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Loyalty Bonus')).toBeInTheDocument()
   }, 10_000)
 
   it('seeds Tokio Marine #goLuxe as a partial catalog product with modeled account fees and premium-holiday shortfall rules', async () => {

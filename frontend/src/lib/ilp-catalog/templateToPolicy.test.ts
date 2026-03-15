@@ -2139,6 +2139,102 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('paid-up and no-withdrawal eligibility gates'))).toBe(true)
   })
 
+  it('maps Tokio Marine Wealth Flexi-Link 3.12 into a partial seed with split policy-charge windows and tiered power-up bonuses', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-wealth-flexi-link-3-12')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-12')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-premium-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-power-up-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-loyalty-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-3-12-involuntary-unemployment-waiver')
+    expect(seed.accounts.find((account) => account.id === 'accumulation')?.contributionRules).toEqual([
+      { phase: 'during-icp', contributionShare: 1 },
+      { phase: 'after-icp', contributionShare: 1 },
+      { phase: 'after-mip', contributionShare: 1 },
+    ])
+    expect(seed.accounts.find((account) => account.id === 'topup')?.contributionRules).toEqual([
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-charge-during-mip',
+          basis: 'account-value',
+          rate: 0.0245,
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+        }),
+        expect.objectContaining({
+          id: 'policy-charge-after-mip',
+          basis: 'account-value',
+          rate: 0.006,
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          rate: 0.05,
+          appliesTo: ['topup'],
+        }),
+        expect.objectContaining({
+          id: 'recurring-single-premium-charge',
+          rate: 0.05,
+          appliesTo: ['topup'],
+        }),
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          rateSchedule: [
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.92 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.85 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.78 },
+            { startPolicyYear: 6, endPolicyYear: 6, rate: 0.75 },
+            { startPolicyYear: 7, endPolicyYear: 7, rate: 0.68 },
+            { startPolicyYear: 8, endPolicyYear: 8, rate: 0.58 },
+            { startPolicyYear: 9, endPolicyYear: 9, rate: 0.48 },
+            { startPolicyYear: 10, endPolicyYear: 10, rate: 0.075 },
+            { startPolicyYear: 11, endPolicyYear: 11, rate: 0.015 },
+            { startPolicyYear: 12, endPolicyYear: 12, rate: 0.01 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'premium-shortfall-charge-non-payment',
+          rateSchedule: [
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.79 },
+          ],
+        }),
+      ]),
+    )
+    expect(seed.bonuses.map((bonus) => bonus.label)).toEqual([
+      'Initial Bonus',
+      'Premium Bonus',
+      'Power-up Bonus (Policy Year 10)',
+      'Power-up Bonus (Policy Year 11)',
+      'Power-up Bonus (Policy Year 12)',
+      'Loyalty Bonus',
+    ])
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Premium Bonus')?.rate).toBe(0.0023)
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Power-up Bonus (Policy Year 12)')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 23_999.99, rate: 0.0305 },
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.0345 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.0375 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.04 },
+    ])
+    expect(seed.bonuses.find((bonus) => bonus.label === 'Loyalty Bonus')?.rate).toBe(0.0055)
+    expect(seed.eecTable).toEqual([1, 1, 0.92, 0.85, 0.78, 0.75, 0.68, 0.58, 0.48, 0.075, 0.015, 0.01])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('paid-up and no-withdrawal eligibility gates'))).toBe(true)
+  })
+
   it('maps Tokio Marine #goLuxe into a partial seed with executable fee and shortfall rules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-goluxe')

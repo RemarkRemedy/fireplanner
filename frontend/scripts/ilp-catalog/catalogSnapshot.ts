@@ -80,6 +80,7 @@ import { parseTokioMarineHarvestFlexi } from './parsers/tokioMarineHarvestFlexi.
 import { parseTokioMarineHarvestMax } from './parsers/tokioMarineHarvestMax.js'
 import { parseTokioMarineHarvestPro } from './parsers/tokioMarineHarvestPro.js'
 import { parseTokioMarineWealthFlexi } from './parsers/tokioMarineWealthFlexi.js'
+import { parseTokioMarineWealthFlexiLink312 } from './parsers/tokioMarineWealthFlexiLink312.js'
 import { parseTokioMarineWealthFlexiLink510 } from './parsers/tokioMarineWealthFlexiLink510.js'
 import { parseTokioMarineWealthMaxIi } from './parsers/tokioMarineWealthMaxIi.js'
 import { parseTokioMarineWealthProIi } from './parsers/tokioMarineWealthProIi.js'
@@ -154,6 +155,7 @@ const TOKIO_MARINE_HARVEST_FLEXI_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNY
 const TOKIO_MARINE_HARVEST_MAX_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNYR_TPDN_CIZ_Summary.pdf'
 const TOKIO_MARINE_HARVEST_PRO_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNYG_TPDN_CIZ_Summary.pdf'
 const TOKIO_MARINE_WEALTH_FLEXI_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNZY_TPDN_CIZ_Summary.pdf'
+const TOKIO_MARINE_WEALTH_FLEXI_LINK_312_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UOAB_TPDN_CIN_Summary.pdf'
 const TOKIO_MARINE_WEALTH_FLEXI_LINK_510_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UOAN_TPDN_CIN_Summary.pdf'
 const TOKIO_MARINE_WEALTH_MAX_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNZV_TPDN_CIZ_Summary.pdf'
 const TOKIO_MARINE_WEALTH_PRO_II_SOURCE_PATH = '/Users/tj/Downloads/pdfs/TML_UNZS_TPDN_CIZ_Summary.pdf'
@@ -390,6 +392,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const tokioMarineHarvestProChecksum = await sha256(TOKIO_MARINE_HARVEST_PRO_SOURCE_PATH)
   const tokioMarineWealthFlexiExtracted = await extractPdfText(TOKIO_MARINE_WEALTH_FLEXI_SOURCE_PATH)
   const tokioMarineWealthFlexiChecksum = await sha256(TOKIO_MARINE_WEALTH_FLEXI_SOURCE_PATH)
+  const tokioMarineWealthFlexiLink312Extracted = await extractPdfText(TOKIO_MARINE_WEALTH_FLEXI_LINK_312_SOURCE_PATH)
+  const tokioMarineWealthFlexiLink312Checksum = await sha256(TOKIO_MARINE_WEALTH_FLEXI_LINK_312_SOURCE_PATH)
   const tokioMarineWealthFlexiLink510Extracted = await extractPdfText(TOKIO_MARINE_WEALTH_FLEXI_LINK_510_SOURCE_PATH)
   const tokioMarineWealthFlexiLink510Checksum = await sha256(TOKIO_MARINE_WEALTH_FLEXI_LINK_510_SOURCE_PATH)
   const tokioMarineExtracted = await extractPdfText(TOKIO_MARINE_WEALTH_MAX_II_SOURCE_PATH)
@@ -708,6 +712,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseTokioMarineWealthFlexi({
       document: tokioMarineWealthFlexiExtracted,
       sourceChecksumSha256: tokioMarineWealthFlexiChecksum,
+    }),
+    parseTokioMarineWealthFlexiLink312({
+      document: tokioMarineWealthFlexiLink312Extracted,
+      sourceChecksumSha256: tokioMarineWealthFlexiLink312Checksum,
     }),
     parseTokioMarineWealthFlexiLink510({
       document: tokioMarineWealthFlexiLink510Extracted,
