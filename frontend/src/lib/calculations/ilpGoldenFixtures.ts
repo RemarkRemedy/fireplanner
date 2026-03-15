@@ -860,6 +860,13 @@ function pruBaselinePolicy(
   const base = seedPolicy(snapshot, 'prudential-pruvantage-wealth-ii', variantId, id)
   const term = Number(variantId.replace('sgd-mip-', ''))
   const currentPolicyYear = Math.min(Math.max(Math.floor(term / 2) + 1, 3), term - 1)
+  const distributionAssumption = variantId === 'sgd-mip-20'
+    ? {
+        mode: 'cash-payout' as const,
+        source: 'manual-assumption' as const,
+        annualYieldRate: 0.04,
+      }
+    : base.distributionAssumption
 
   return withPruBalancesAndSplit(
     withFunds(
@@ -869,6 +876,7 @@ function pruBaselinePolicy(
         monthlyContribution: 1_400,
         currentPolicyYear,
         monthsAlreadyPaid: (currentPolicyYear - 1) * 12,
+        distributionAssumption,
         policyEvents: [],
       }),
       PRU_BALANCED_FUNDS,
@@ -2003,8 +2011,14 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-mip-20',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline'],
-    description: 'Baseline in-force PRUVantage Wealth II SGD / MIP 20 scenario.',
+    coverageTags: ['baseline', 'kernel:distribution-mode-assumption'],
+    description: 'Baseline in-force PRUVantage Wealth II SGD / MIP 20 scenario with eligible Growth Account cash-payout distributions.',
+    integrityChecks: [
+      {
+        description: 'pays positive annual distributions once the 10-year Growth Account election is eligible',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
   },
   {
     productId: 'prudential-pruvantage-wealth-ii',

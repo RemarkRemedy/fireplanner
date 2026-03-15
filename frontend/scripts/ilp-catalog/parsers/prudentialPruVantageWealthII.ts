@@ -149,11 +149,17 @@ function buildWelcomeBonuses(term: PremiumTerm, page4: IlpCatalogSourceRef, page
 function buildVariant(document: ExtractedPdfDocument, term: PremiumTerm): IlpTemplateVariant {
   const page2 = sourceRef(2, 'Accounts', snippetNear(document, 2, 'Accounts:'))
   const page4 = sourceRef(4, 'Welcome Bonus', snippetNear(document, 4, 'Welcome Bonus Tables'))
+  const page4Dividends = sourceRef(4, 'Dividend-paying funds', snippetNear(document, 4, 'Funds that distribute dividends only', 8))
   const page5 = sourceRef(5, 'Loyalty Bonus and Administration Charge', snippetNear(document, 5, 'Loyalty Bonus'))
   const page10 = sourceRef(10, 'Premium Holiday', snippetNear(document, 10, 'Premium Holiday Charge Table'))
   const page11 = sourceRef(11, 'Premium Holiday Charge Refund', snippetNear(document, 11, 'Premium Holiday Charge Refund'))
   const page12 = sourceRef(12, 'Partial Withdrawal Charge', snippetNear(document, 12, 'Partial Withdrawal Charge Table'))
   const page14 = sourceRef(14, 'Surrender Charge', snippetNear(document, 14, 'Surrender Charge Table'))
+  const dividendPayoutAllowedAfterMip = true
+  const dividendPayoutAllowedDuringMip = term >= 15
+  const dividendElectionNote = term === 5
+    ? 'Growth Account dividend payout is only allowed after 5 years from the cover start date once 5 years of premiums have been paid.'
+    : 'Growth Account dividend payout is only allowed after 10 years from the cover start date once 10 years of premiums have been paid.'
 
   const adminCharge = ADMIN_CHARGE[term]
   const holidayChargeSchedule = buildRateSchedule(PREMIUM_HOLIDAY_CHARGE[term])
@@ -292,14 +298,29 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumTerm): IlpTem
     bonuses: buildWelcomeBonuses(term, page4, page5),
     feeRules,
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['growth'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: dividendPayoutAllowedDuringMip,
+      cashPayoutAllowedAfterMip: dividendPayoutAllowedAfterMip,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Funds in the Growth Account that aim to distribute dividends reinvest by default.',
+        dividendElectionNote,
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.',
+      ],
+      sourceRefs: [page2, page4Dividends],
+    },
     eecTable: [...EXIT_CHARGE[term]],
     warnings: [
       'Set the actual Growth/Flex regular-premium split before trusting the fee-drag output. The seeded draft defaults to 50/50.',
+      dividendElectionNote,
     ],
     unsupportedItems: [
       'Premium Pass, Wealth Share, and secondary-life/ownership options remain informational only.',
     ],
-    sourceRefs: [page2, page4, page5, page10, page11, page12, page14],
+    sourceRefs: [page2, page4, page4Dividends, page5, page10, page11, page12, page14],
   }
 }
 
@@ -323,6 +344,7 @@ export function parsePrudentialPruVantageWealthII(context: ParseContext): IlpCat
       'branch:pru-top-up-charge',
       'branch:pru-free-withdrawal',
       'branch:pru-charged-withdrawal',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'premium-pass',
@@ -330,7 +352,7 @@ export function parsePrudentialPruVantageWealthII(context: ParseContext): IlpCat
       'secondary-life-ownership-options',
     ],
     warnings: [
-      'This template focuses on fee drag and exit economics. Protection and ownership features are retained as warnings only.',
+      'This template focuses on fee drag, exit economics, and Growth Account dividend elections through the manual distribution-mode kernel. Protection and ownership features are retained as warnings only.',
     ],
     archived: false,
     variants,
