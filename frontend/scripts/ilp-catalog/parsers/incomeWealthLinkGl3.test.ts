@@ -28,10 +28,13 @@ describe('parseIncomeWealthLinkGl3', () => {
     expect(product.modeledEconomics).toEqual([
       'branch:income-wealthlink-gl3-single-premium-charge',
       'branch:income-wealthlink-gl3-top-up-premium-charge',
+      'branch:income-wealthlink-gl3-recurring-single-premium-charge',
       'branch:income-wealthlink-gl3-open-ended-zero-surrender-charge',
+      'tokio-recurring-single-premium-routing',
     ])
     expect(product.metadataOnlyBehaviors).toContain('income-wealthlink-gl3-fund-level-annual-management-fee')
     expect(product.metadataOnlyBehaviors).toContain('income-wealthlink-gl3-single-premium-principal-tracking')
+    expect(product.metadataOnlyBehaviors).not.toContain('income-wealthlink-gl3-regular-top-up-enrollment')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cash-or-srs'])
 
     const variant = product.variants[0]
@@ -60,6 +63,13 @@ describe('parseIncomeWealthLinkGl3', () => {
         id: 'top-up-premium-charge',
         trigger: 'top-up',
         basis: 'event-amount',
+        activeWindow: 'policy-term',
+        rate: 0.035,
+      }),
+      expect.objectContaining({
+        id: 'recurring-single-premium-charge',
+        trigger: 'recurring-single-premium',
+        basis: 'event-amount-with-overlap-months',
         activeWindow: 'policy-term',
         rate: 0.035,
       }),

@@ -43,6 +43,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page2 = sourceRef(2, 'Death and accidental death benefits', snippetNear(document, 2, 'Accidental Death Benefit', 16))
   const page5 = sourceRef(5, 'Charges', snippetNear(document, 5, 'Premium Charge', 18))
   const page6 = sourceRef(6, 'Subscription of units', snippetNear(document, 6, 'Single Premium', 18))
+  const page6RegularTopUp = sourceRef(6, 'Regular single premium top ups', snippetNear(document, 6, 'Regular Single Premium Top ups', 12))
   const page8 = sourceRef(8, 'Partial withdrawals and surrender', snippetNear(document, 8, 'Full Surrender and Partial Withdrawals', 18))
 
   const feeRules: IlpTemplateFeeRule[] = [
@@ -76,6 +77,22 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
         'Applies a 3.5% premium charge to each top-up.',
       ],
       sourceRefs: [page5, page6],
+    },
+    {
+      id: 'recurring-single-premium-charge',
+      label: 'Regular Single Premium Top-up Charge',
+      trigger: 'recurring-single-premium',
+      basis: 'event-amount-with-overlap-months',
+      appliesTo: ['policy'],
+      rate: 0.035,
+      amount: 0,
+      activeWindow: 'policy-term',
+      allocation: 'equal-split',
+      notes: [
+        'Applies the published 3.5% premium charge to each regular single premium top-up.',
+        'Use recurring-single-premium events to represent the chosen monthly, quarterly, half-yearly, or annual top-up cadence.',
+      ],
+      sourceRefs: [page5, page6, page6RegularTopUp],
     },
     {
       id: 'partial-withdrawal-charge',
@@ -119,14 +136,13 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eventChargeRules,
     eecTable: [],
     warnings: [
-      'WealthLink (GL3) is cataloged as a partial modeled subset in V1. The parser captures the published 3.5% single-premium and top-up charge path plus the explicit no-surrender-charge withdrawal path through the open-ended no-MIP basis.',
+      'WealthLink (GL3) is cataloged as a partial modeled subset in V1. The parser captures the published 3.5% single-premium, ad hoc top-up, and regular single premium top-up charge path plus the explicit no-surrender-charge withdrawal path through the open-ended no-MIP basis.',
       'This product currently has no policy fee and no insurance cover charge.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
       'Death and accidental-death benefit formulas remain informational only.',
       'Single-premium principal tracking remains informational only in V1.',
-      'Regular top-up enrollment remains informational only.',
       'Fund-level annual management fees remain informational only because they are published outside the product summary and vary by chosen ILP sub-fund.',
       'Fund-switching administration remains informational only.',
     ],
@@ -149,18 +165,19 @@ export function parseIncomeWealthLinkGl3(context: ParseContext): IlpCatalogProdu
     modeledEconomics: [
       'branch:income-wealthlink-gl3-single-premium-charge',
       'branch:income-wealthlink-gl3-top-up-premium-charge',
+      'branch:income-wealthlink-gl3-recurring-single-premium-charge',
       'branch:income-wealthlink-gl3-open-ended-zero-surrender-charge',
+      'tokio-recurring-single-premium-routing',
     ],
     metadataOnlyBehaviors: [
       'income-wealthlink-gl3-death-benefit',
       'income-wealthlink-gl3-accidental-death-benefit',
       'income-wealthlink-gl3-single-premium-principal-tracking',
-      'income-wealthlink-gl3-regular-top-up-enrollment',
       'income-wealthlink-gl3-fund-level-annual-management-fee',
       'income-wealthlink-gl3-fund-switching',
     ],
     warnings: [
-      'WealthLink (GL3) is cataloged as a partial modeled subset in V1. The parser captures the published 3.5% single-premium and top-up charge path plus the explicit no-surrender-charge withdrawal path through the open-ended no-MIP basis, while protection formulas and fund-level annual management fees remain outside the current engine.',
+      'WealthLink (GL3) is cataloged as a partial modeled subset in V1. The parser captures the published 3.5% single-premium, ad hoc top-up, and regular single premium top-up charge path plus the explicit no-surrender-charge withdrawal path through the open-ended no-MIP basis, while protection formulas and fund-level annual management fees remain outside the current engine.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],
