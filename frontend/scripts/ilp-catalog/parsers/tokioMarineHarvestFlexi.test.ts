@@ -26,8 +26,9 @@ describe('parseTokioMarineHarvestFlexi', () => {
     expect(product.supportStatus).toBe('partial')
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(product.modeledEconomics).toContain('tokio-admin-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-admin-charge')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-monthly-protection-charge')
     expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions')
 
     const variant = product.variants[0]
@@ -62,20 +63,31 @@ describe('parseTokioMarineHarvestFlexi', () => {
         postMipFeeRate: 0,
       }),
     ])
-    expect(variant?.feeRules).toEqual([
-      expect.objectContaining({
-        id: 'policy-charge-during-mip',
-        basis: 'premium-base-mip-multiplier',
-        rate: 0.015,
-        premiumBaseConfig: {
-          useHigherOfCommencementAndPrevailing: false,
-          multiplierYearBasis: 'policy-year',
-          multiplierSchedule: [
-            { startPolicyYear: 1, endPolicyYear: 10, mode: 'policy-year' },
-          ],
-        },
-      }),
-    ])
+    expect(variant?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-charge-during-mip',
+          basis: 'premium-base-mip-multiplier',
+          rate: 0.015,
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: true,
+            multiplierYearBasis: 'policy-year',
+            multiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 10, mode: 'policy-year' },
+            ],
+          },
+        }),
+        expect.objectContaining({
+          id: 'admin-charge',
+          basis: 'annual-contribution',
+          rate: 0.05,
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+          startPolicyYear: 4,
+          endPolicyYear: 10,
+        }),
+      ]),
+    )
     expect(variant?.eventChargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.05 }),

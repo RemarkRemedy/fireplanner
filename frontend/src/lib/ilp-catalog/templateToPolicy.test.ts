@@ -3297,6 +3297,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-regular-premium-routing-to-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-admin-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.accounts).toEqual([
       expect.objectContaining({
@@ -3328,20 +3329,31 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.bonuses.find((bonus) => bonus.label === 'Performance Investment Bonus (Policy Years 4-6)')?.rate).toBe(0.012)
     expect(seed.bonuses.find((bonus) => bonus.label === 'Performance Investment Bonus (Policy Years 7-10)')?.rate).toBe(0.017)
     expect(seed.bonuses.find((bonus) => bonus.label === 'Performance Investment Bonus (After MIP)')?.rate).toBe(0.01)
-    expect(seed.chargeRules).toEqual([
-      expect.objectContaining({
-        id: 'policy-charge-during-mip',
-        basis: 'premium-base-mip-multiplier',
-        rate: 0.015,
-        premiumBaseConfig: {
-          useHigherOfCommencementAndPrevailing: false,
-          multiplierYearBasis: 'policy-year',
-          multiplierSchedule: [
-            { startPolicyYear: 1, endPolicyYear: 10, mode: 'policy-year' },
-          ],
-        },
-      }),
-    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-charge-during-mip',
+          basis: 'premium-base-mip-multiplier',
+          rate: 0.015,
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: true,
+            multiplierYearBasis: 'policy-year',
+            multiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 10, mode: 'policy-year' },
+            ],
+          },
+        }),
+        expect.objectContaining({
+          id: 'admin-charge',
+          basis: 'annual-contribution',
+          rate: 0.05,
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+          startPolicyYear: 4,
+          endPolicyYear: 10,
+        }),
+      ]),
+    )
     expect(seed.eventChargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -3353,7 +3365,7 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-admin-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-monthly-protection-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
       'tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions',
     )

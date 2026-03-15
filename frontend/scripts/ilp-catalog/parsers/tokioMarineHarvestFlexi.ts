@@ -146,7 +146,7 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
 }
 
 function buildFeeRules(document: ExtractedPdfDocument): IlpTemplateFeeRule[] {
-  const page9 = sourceRef(9, 'Initial Charge / Policy Charge', snippetNear(document, 9, 'Initial Setup Charge', 26))
+  const page9 = sourceRef(9, 'Initial Charge / Policy Charge / Admin Charge', snippetNear(document, 9, 'Initial Setup Charge', 30))
 
   return [
     {
@@ -159,7 +159,7 @@ function buildFeeRules(document: ExtractedPdfDocument): IlpTemplateFeeRule[] {
       fallbackAppliesTo: ['topup'],
       activeWindow: 'during-mip',
       premiumBaseConfig: {
-        useHigherOfCommencementAndPrevailing: false,
+        useHigherOfCommencementAndPrevailing: true,
         multiplierYearBasis: 'policy-year',
         multiplierSchedule: [
           { startPolicyYear: 1, endPolicyYear: 10, mode: 'policy-year' },
@@ -167,6 +167,24 @@ function buildFeeRules(document: ExtractedPdfDocument): IlpTemplateFeeRule[] {
       },
       notes: [
         'Models the published monthly policy investment charge during the minimum investment period using annualised regular premium committed at commencement date multiplied by the current policy year.',
+        'Regular-premium reduction, non-payment, and withdrawals do not change the charge base once the policy is in force.',
+      ],
+      sourceRefs: [page9],
+    },
+    {
+      id: 'admin-charge',
+      label: 'Admin Charge',
+      basis: 'annual-contribution',
+      rate: 0.05,
+      amount: 0,
+      appliesTo: ['accumulation'],
+      fallbackAppliesTo: ['topup'],
+      activeWindow: 'during-mip',
+      startPolicyYear: 4,
+      endPolicyYear: MIP_LENGTH,
+      notes: [
+        'Models the published admin charge as 5% of regular premium received from policy year 4 through the minimum investment period.',
+        'At annual engine granularity, the monthly deduction following each premium receipt is represented as an annual charge on paid regular premium for the year.',
       ],
       sourceRefs: [page9],
     },
@@ -328,13 +346,14 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
       'This partial template models one SGD / minimum-investment-period-10 corridor only.',
-      'This partial template models one SGD / minimum-investment-period-10 corridor with regular-premium routing into the Accumulation Units Account, top-up routing, recurring single premium routing, the published initial charge through the accumulation-account fee rate, the published policy charge premium-base multiplier basis, the split performance-investment-bonus schedule, and the published surrender, partial-withdrawal, and premium-shortfall charge schedules.',
+      'This partial template models one SGD / minimum-investment-period-10 corridor with regular-premium routing into the Accumulation Units Account, top-up routing, recurring single premium routing, the published initial charge through the accumulation-account fee rate, the published policy charge premium-base multiplier basis, the published admin charge on regular premium received, the split performance-investment-bonus schedule, and the published surrender, partial-withdrawal, and premium-shortfall charge schedules.',
       'Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the administrative restart month.',
       'Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD corridor.',
       'Harvest Flexi keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
+      'Harvest Flexi is modeled with the published policy investment charge tied to the commencement-date premium commitment and the published admin charge on received regular premium.',
     ],
     unsupportedItems: [
-      'Admin charge, monthly protection charge, partial-withdrawal limit gates, and credit-card charge remain metadata-only for this product.',
+      'Monthly protection charge, partial-withdrawal limit gates, and credit-card charge remain metadata-only for this product.',
       'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product.',
       'Advanced death benefit, life benefit rider, life replacement administration, and multiple-life handling remain metadata-only for this product.',
     ],
@@ -360,6 +379,7 @@ export function parseTokioMarineHarvestFlexi(context: ParseContext): IlpCatalogP
       'tokio-performance-investment-bonus',
       'tokio-initial-charge-on-accumulation-account',
       'tokio-policy-charge-on-accumulation-account',
+      'tokio-admin-charge-on-accumulation-account',
       'tokio-top-up-routing',
       'tokio-recurring-single-premium-routing',
       'tokio-recurring-single-premium-manual-resumption-after-premium-holiday',
@@ -375,7 +395,6 @@ export function parseTokioMarineHarvestFlexi(context: ParseContext): IlpCatalogP
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-harvest-flexi-admin-charge',
       'tokio-harvest-flexi-monthly-protection-charge',
       'tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions',
       'tokio-harvest-flexi-partial-withdrawal-limit-gates',
