@@ -70966,7 +70966,8 @@
       "branch:aia-pro-achiever-3-regular-premium-charge",
       "branch:aia-pro-achiever-3-top-up-premium-charge",
       "branch:aia-pro-achiever-3-partial-withdrawal-charge",
-      "branch:aia-pro-achiever-3-full-surrender-charge"
+      "branch:aia-pro-achiever-3-full-surrender-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "aia-pro-achiever-3-benefit-charge",
@@ -70978,11 +70979,11 @@
       "aia-pro-achiever-3-welcome-bonus",
       "aia-pro-achiever-3-special-bonus",
       "aia-pro-achiever-3-secondary-insured-option",
-      "aia-pro-achiever-3-dividend-handling",
+      "aia-pro-achiever-3-dividend-cashout-threshold",
       "aia-pro-achiever-3-fund-management-charge"
     ],
     "warnings": [
-      "AIA Pro Achiever 3.0 is cataloged as a partial modeled subset in V1. The parser models the 10-year IIP premium-charge corridor, 5% top-up premium charge, and the regular-premium withdrawal / surrender charge schedules, while benefit-charge, premium-pass / premium-holiday interactions, premium-reduction mechanics, premium rewards / bonuses, and protection-side options remain outside the current engine."
+      "AIA Pro Achiever 3.0 is cataloged as a partial modeled subset in V1. The parser models the 10-year IIP premium-charge corridor, 5% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default dividend support with cash payout allowed only after IIP, while benefit-charge, premium-pass / premium-holiday interactions, premium-reduction mechanics, premium rewards / bonuses, and protection-side options remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -71200,6 +71201,27 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": false,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "By default, fund dividends are reinvested into the policy as additional units.",
+            "If a fund offers cash dividend payouts, that option is only allowed after the end of the relevant IIP; V1 seeds reinvestment by default and cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 17,
+              "section": "Distribution of dividends",
+              "excerpt": "Approximate excerpt; keyword \"Distribution of Dividends\" not found on page. If the policy was delivered to you by hand, the 14-day free-look period will start 7 days from the date on which the policy was given to the pos"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -71214,16 +71236,16 @@
           0
         ],
         "warnings": [
-          "AIA Pro Achiever 3.0 is cataloged as a partial modeled subset in V1. The parser models the 10-year IIP corridor: the premium-year regular premium charge schedule, the 5% top-up premium charge, and the regular-premium full-surrender / partial-withdrawal charge schedules.",
+          "AIA Pro Achiever 3.0 is cataloged as a partial modeled subset in V1. The parser models the 10-year IIP corridor: the premium-year regular premium charge schedule, the 5% top-up premium charge, the regular-premium full-surrender / partial-withdrawal charge schedules, and the reinvest-default distribution-mode assumption surface.",
           "Benefit Charge, Supplementary Charge, Premium Holiday Charge, Premium Pass, Premium Reduction, Premium Reward, and the Welcome / Special Bonus layer remain outside the current engine.",
-          "Secondary Insured handling, dividend handling, and fund-level charges remain informational only in V1."
+          "Secondary Insured handling, the published S$50 dividend cash-out threshold, and fund-level charges remain informational only in V1."
         ],
         "unsupportedItems": [
           "Benefit Charge and the death / accidental-death benefit formulas remain informational only.",
           "Supplementary Charge, Premium Holiday Charge, and Premium Pass remain informational only because their interaction depends on premium-pass state that is not modeled in this slice.",
           "Premium Reduction Charge, Premium Reduction Policy Value, and Premium Reduction Top-Up units remain informational only.",
           "Premium Reward, Welcome Bonus, and Special Bonus remain informational only because they add units and depend on paid-up and bonus-state conditions outside the current executable slice.",
-          "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
+          "The published S$50 dividend cash-out threshold, post-IIP cash-election operations, and fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
           "Top-up eligibility gating, fund switching, automatic fund switching, automatic fund re-balancing, and secondary insured handling remain informational only."
         ],
         "sourceRefs": [
@@ -71261,6 +71283,11 @@
             "page": 14,
             "section": "Premium Pass and premium holiday interactions",
             "excerpt": "Approximate excerpt; keyword \"Premium Pass\" not found on page. Back payments of regular premiums are not allowed. Implication of Premium Holiday on Fees and Charges During premium holiday, supplementary charge will not b"
+          },
+          {
+            "page": 17,
+            "section": "Distribution of dividends",
+            "excerpt": "Approximate excerpt; keyword \"Distribution of Dividends\" not found on page. If the policy was delivered to you by hand, the 14-day free-look period will start 7 days from the date on which the policy was given to the pos"
           }
         ]
       }

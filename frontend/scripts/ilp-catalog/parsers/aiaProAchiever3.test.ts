@@ -49,6 +49,7 @@ describe('parseAiaProAchiever3', () => {
       'branch:aia-pro-achiever-3-top-up-premium-charge',
       'branch:aia-pro-achiever-3-partial-withdrawal-charge',
       'branch:aia-pro-achiever-3-full-surrender-charge',
+      'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-pro-achiever-3-benefit-charge')
     expect(product.metadataOnlyBehaviors).toContain('aia-pro-achiever-3-premium-pass')
@@ -79,6 +80,23 @@ describe('parseAiaProAchiever3', () => {
         yearBasis: 'premium-year',
       }),
     ])
+    expect(variant.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: false,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('only allowed after the end of the relevant IIP'),
+      ]),
+      sourceRefs: [
+        expect.objectContaining({
+          page: 17,
+          section: 'Distribution of dividends',
+        }),
+      ],
+    })
     expect(variant.eecTable).toEqual([1, 1, 0.8, 0.7, 0.6, 0.5, 0.45, 0.35, 0.2, 0.05, 0])
   })
 
