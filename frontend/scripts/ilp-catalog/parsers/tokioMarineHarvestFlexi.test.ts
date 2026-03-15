@@ -26,11 +26,30 @@ describe('parseTokioMarineHarvestFlexi', () => {
     expect(product.supportStatus).toBe('partial')
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-admin-charge')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions')
 
     const variant = product.variants[0]
     expect(variant?.id).toBe('sgd-mip-10')
     expect(variant?.icpMonths).toBe(1)
+    expect(variant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['accumulation', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('manual annual distribution-yield assumption'),
+      ]),
+      sourceRefs: [
+        expect.objectContaining({
+          page: 8,
+          section: 'Dividend Distribution',
+        }),
+      ],
+    })
     expect(variant?.accounts).toEqual([
       expect.objectContaining({
         id: 'accumulation',
@@ -78,5 +97,8 @@ describe('parseTokioMarineHarvestFlexi', () => {
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.22 },
     ])
     expect(variant?.eecTable).toEqual([1, 1, 0.79, 0.6, 0.5, 0.47, 0.44, 0.21, 0.16, 0.07])
+    expect(variant?.warnings).toContain(
+      'Harvest Flexi keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
+    )
   }, 30_000)
 })

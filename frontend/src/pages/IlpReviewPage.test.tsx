@@ -762,6 +762,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Partial template')
     expect(seededAlert?.textContent).toContain('Performance investment bonus is modeled as three published policy-year windows')
+    expect(seededAlert?.textContent).toContain('tokio harvest flexi dividend payout threshold and record date instructions')
     expect(screen.getByDisplayValue('Policy Charge')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Initial Bonus')).toBeInTheDocument()
   }, 10_000)

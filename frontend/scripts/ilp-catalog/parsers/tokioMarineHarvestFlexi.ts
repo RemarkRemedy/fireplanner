@@ -180,6 +180,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page4 = sourceRef(4, 'Regular Premium Routing / Reduction', snippetNear(document, 4, 'Accumulation Units Account: Regular premium will be used', 26))
   const page5 = sourceRef(5, 'Recurring Single Premium / Top-up / Non-payment', snippetNear(document, 5, 'Recurring Single Premium', 28))
   const page6 = sourceRef(6, 'Partial Withdrawal', snippetNear(document, 6, 'Partial Withdrawal', 28))
+  const page8 = sourceRef(8, 'Dividend Distribution', snippetNear(document, 8, 'Dividend Distribution', 20))
   const page9 = sourceRef(9, 'Initial Charge / Policy Charge / Admin Charge', snippetNear(document, 9, 'Initial Setup Charge', 30))
   const page10 = sourceRef(10, 'Premium Charge / Surrender / Partial Withdrawal / Shortfall', snippetNear(document, 10, 'Premium Charge for Recurring Single Premium and Top-up Premium', 30))
   const page11 = sourceRef(11, 'Premium Shortfall Charge', snippetNear(document, 11, 'Premium Shortfall Charge', 28))
@@ -310,18 +311,34 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: buildBonuses(document),
     feeRules: buildFeeRules(document),
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['accumulation', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying funds default to reinvestment, while cash payout can be explored through the manual annual distribution-yield assumption.',
+        'The published dividend election applies across the Accumulation Units Account and Top-up Units Account.',
+        'The published $50 minimum payout threshold and 30-day record-date instruction window remain informational only in V1.',
+      ],
+      sourceRefs: [page8],
+    },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
       'This partial template models one SGD / minimum-investment-period-10 corridor only.',
       'This partial template models one SGD / minimum-investment-period-10 corridor with regular-premium routing into the Accumulation Units Account, top-up routing, recurring single premium routing, the published initial charge through the accumulation-account fee rate, the published policy charge premium-base multiplier basis, the split performance-investment-bonus schedule, and the published surrender, partial-withdrawal, and premium-shortfall charge schedules.',
       'Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the administrative restart month.',
       'Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD corridor.',
+      'Harvest Flexi keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
     ],
     unsupportedItems: [
-      'Admin charge, monthly protection charge, dividend distribution election, partial-withdrawal limit gates, and credit-card charge remain metadata-only for this product.',
+      'Admin charge, monthly protection charge, partial-withdrawal limit gates, and credit-card charge remain metadata-only for this product.',
+      'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product.',
       'Advanced death benefit, life benefit rider, life replacement administration, and multiple-life handling remain metadata-only for this product.',
     ],
-    sourceRefs: [page1, page2, page3, page4, page5, page6, page9, page10, page11, page16],
+    sourceRefs: [page1, page2, page3, page4, page5, page6, page8, page9, page10, page11, page16],
   }
 }
 
@@ -355,10 +372,12 @@ export function parseTokioMarineHarvestFlexi(context: ParseContext): IlpCatalogP
       'tokio-premium-shortfall-charge-regular-premium-reduction',
       'tokio-premium-increase-restores-shortfall-charge-cessation',
       'tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'tokio-harvest-flexi-admin-charge',
-      'tokio-harvest-flexi-monthly-protection-and-dividend-distribution',
+      'tokio-harvest-flexi-monthly-protection-charge',
+      'tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions',
       'tokio-harvest-flexi-partial-withdrawal-limit-gates',
       'tokio-harvest-flexi-credit-card-charge',
       'tokio-multiple-life-and-capital-guarantee-options',

@@ -3014,6 +3014,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-regular-premium-routing-to-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.accounts).toEqual([
       expect.objectContaining({
         id: 'accumulation',
@@ -3070,6 +3071,22 @@ describe('templateVariantToPolicySeed', () => {
       ]),
     )
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-admin-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions',
+    )
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['accumulation', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
   })
 
   it('maps Tokio Marine Harvest Max into a partial seed with executable initial, policy, and admin charge surfaces', () => {
