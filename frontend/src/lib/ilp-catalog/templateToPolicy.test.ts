@@ -1039,6 +1039,56 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('SGD 10-year base-layer corridor only'))).toBe(true)
   })
 
+  it('maps FWD Invest First Summit into a finite-MIP multi-account partial seed', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'fwd-invest-first-summit')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('FWD Invest First Summit (SGD / MIP 10)')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-first-summit-premium-shortfall-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('fwd-invest-first-summit-accumulation-account-charge-capped')
+    expect(seed.mipLength).toBe(10)
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'initial',
+        subjectToEec: true,
+      }),
+      expect.objectContaining({
+        id: 'accumulation',
+        subjectToEec: false,
+      }),
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'initial-account-charge',
+        basis: 'account-value',
+        rate: 0.0395,
+        activeWindow: 'during-mip',
+      }),
+    ])
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({ id: 'top-up-premium-charge', trigger: 'top-up', rate: 0.05 }),
+      expect.objectContaining({ id: 'premium-shortfall-charge', trigger: 'premium-holiday', basis: 'annual-premium-with-overlap-months', rate: 0.09 }),
+      expect.objectContaining({
+        id: 'premium-reduction-charge',
+        trigger: 'regular-premium-reduction',
+        basis: 'annual-reduction-with-active-months',
+        rateSchedule: [
+          { startPolicyYear: 3, endPolicyYear: 4, rate: 0.09 },
+        ],
+      }),
+      expect.objectContaining({ id: 'partial-withdrawal-charge', trigger: 'partial-withdrawal', rate: 0 }),
+    ])
+    expect(seed.eecTable).toEqual([1, 1, 0.99, 0.99, 0.99, 0.81, 0.65, 0.5, 0.31, 0.09])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('accumulation-account charge remains informational only'))).toBe(true)
+  })
+
   it('maps FWD Invest Flexi VII into a finite-MIP multi-account partial seed', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'fwd-invest-flexi-vii')

@@ -18,6 +18,7 @@ import { parseAiaWealthVenture } from './parsers/aiaWealthVenture.js'
 import { parseFwdInvestFlexiElite } from './parsers/fwdInvestFlexiElite.js'
 import { parseFwdInvestFlexiVii } from './parsers/fwdInvestFlexiVii.js'
 import { parseFwdInvestFirstMax } from './parsers/fwdInvestFirstMax.js'
+import { parseFwdInvestFirstSummit } from './parsers/fwdInvestFirstSummit.js'
 import { parseFwdInvestFirstHorizon } from './parsers/fwdInvestFirstHorizon.js'
 import { parseFwdInvestGoal1 } from './parsers/fwdInvestGoal1.js'
 import { parseHsbcWealthAccelerate } from './parsers/hsbcWealthAccelerate.js'
@@ -189,6 +190,7 @@ const FWD_INVEST_FLEXI_ELITE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/FWD_Invest 
 const FWD_INVEST_FLEXI_VII_SOURCE_PATH = '/Users/tj/Downloads/pdfs/FWD Invest Flexi VII Product Summary.pdf'
 const FWD_INVEST_FIRST_HORIZON_SOURCE_PATH = '/Users/tj/Downloads/pdfs/FWD Invest First Horizon Product Summary.pdf'
 const FWD_INVEST_FIRST_MAX_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_200501737H_ILP05_RP_Feb2024.pdf'
+const FWD_INVEST_FIRST_SUMMIT_SOURCE_PATH = '/Users/tj/Downloads/pdfs/FWD_Invest First Summit_Summary.pdf'
 const FWD_INVEST_GOAL_1_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_200501737H_ILP01_SP_May2023.pdf'
 
 export interface IlpCatalogSnapshot {
@@ -280,6 +282,8 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const fwdInvestFlexiViiChecksum = await sha256(FWD_INVEST_FLEXI_VII_SOURCE_PATH)
   const fwdInvestFirstMaxExtracted = await extractPdfText(FWD_INVEST_FIRST_MAX_SOURCE_PATH)
   const fwdInvestFirstMaxChecksum = await sha256(FWD_INVEST_FIRST_MAX_SOURCE_PATH)
+  const fwdInvestFirstSummitExtracted = await extractPdfText(FWD_INVEST_FIRST_SUMMIT_SOURCE_PATH)
+  const fwdInvestFirstSummitChecksum = await sha256(FWD_INVEST_FIRST_SUMMIT_SOURCE_PATH)
   const fwdInvestFirstHorizonExtracted = await extractPdfText(FWD_INVEST_FIRST_HORIZON_SOURCE_PATH)
   const fwdInvestFirstHorizonChecksum = await sha256(FWD_INVEST_FIRST_HORIZON_SOURCE_PATH)
   const fwdInvestGoal1Extracted = await extractPdfText(FWD_INVEST_GOAL_1_SOURCE_PATH)
@@ -488,6 +492,10 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     parseFwdInvestFirstMax({
       document: fwdInvestFirstMaxExtracted,
       sourceChecksumSha256: fwdInvestFirstMaxChecksum,
+    }),
+    parseFwdInvestFirstSummit({
+      document: fwdInvestFirstSummitExtracted,
+      sourceChecksumSha256: fwdInvestFirstSummitChecksum,
     }),
     parseFwdInvestFirstHorizon({
       document: fwdInvestFirstHorizonExtracted,

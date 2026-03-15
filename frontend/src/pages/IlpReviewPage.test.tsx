@@ -701,6 +701,28 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Recurring Single Premium Charge')).toBeInTheDocument()
   }, 10_000)
 
+  it('seeds FWD Invest First Summit as a partial catalog product with shortfall and reduction charge rules', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest First Summit')
+
+    expect(within(dialog).getByText('FWD Invest First Summit')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+
+    expect(screen.getAllByText('FWD Invest First Summit (SGD / MIP 10)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('accumulation-account charge remains informational only')
+    expect(screen.getByDisplayValue('Initial Account Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Reduction Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
+  }, 10_000)
+
   it('seeds Tokio Marine TM Atlas Wealth as a partial catalog product with 12-month routing and combined account-fee modeling', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
