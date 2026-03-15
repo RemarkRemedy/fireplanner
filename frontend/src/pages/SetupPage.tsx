@@ -772,6 +772,25 @@ export function SetupPage() {
         </>
       )
     }
+    if (currentScreen.id === 'savings') {
+      return (
+        <details className="mt-1 text-sm">
+          <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+            Help me add it up
+          </summary>
+          <div className="mt-2 space-y-1 text-muted-foreground pl-1">
+            <p>Add together your:</p>
+            <ul className="list-disc pl-4 space-y-0.5">
+              <li>Bank savings and current accounts</li>
+              <li>Stocks, ETFs, and brokerage balances</li>
+              <li>Fixed deposits and bonds</li>
+              <li>Robo-advisor balances (Endowus, Syfe, etc.)</li>
+            </ul>
+            <p className="mt-2 text-xs italic">Don&apos;t include CPF or property value.</p>
+          </div>
+        </details>
+      )
+    }
     if (isCpfScreen) {
       return (
         <CpfSetupInput

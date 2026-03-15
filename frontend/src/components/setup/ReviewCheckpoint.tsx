@@ -1,4 +1,4 @@
-import { CheckCircle2, MinusCircle, AlertCircle } from 'lucide-react'
+import { CheckCircle2, MinusCircle, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import type { SetupDraft } from '@/lib/household/setupDraft'
@@ -37,8 +37,8 @@ function StatusIcon({ status }: { status: CategoryStatus }) {
   if (status === 'not-applicable') {
     return <MinusCircle className="h-5 w-5 text-muted-foreground shrink-0" />
   }
-  // 'excluded'
-  return <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
+  // 'excluded' — valid user choice, not an error
+  return <Info className="h-5 w-5 text-muted-foreground shrink-0" />
 }
 
 function deriveCategories(draft: SetupDraft): ReviewCategory[] {

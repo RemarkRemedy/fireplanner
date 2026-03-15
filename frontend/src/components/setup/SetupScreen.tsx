@@ -277,7 +277,7 @@ export function SetupScreen({
           max={totalSteps}
           aria-valuenow={currentStep}
           aria-valuemax={totalSteps}
-          className="w-full h-1.5 rounded-full [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-primary"
+          className="w-full h-2 rounded-full [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-primary"
         />
       </div>
 
@@ -326,15 +326,15 @@ export function SetupScreen({
       {children}
 
       <div className="flex flex-col gap-2 pt-2">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col-reverse sm:flex-row items-center gap-3">
           {onBack && (
-            <Button type="button" variant="outline" onClick={onBack} className="flex-1">
+            <Button type="button" variant="outline" onClick={onBack} className="w-full sm:flex-1">
               Back
             </Button>
           )}
           <Button
             type="submit"
-            className={onBack ? 'flex-1' : 'w-full'}
+            className={onBack ? 'w-full sm:flex-1' : 'w-full'}
             disabled={hasValidationErrors}
           >
             {submitLabel}
