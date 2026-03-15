@@ -5136,6 +5136,49 @@ describe('templateVariantToPolicySeed', () => {
     ])
   })
 
+  it('maps FWD Invest Goal 1 SGD into an open-ended single-premium seed with original-base plan and surrender charges', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'fwd-invest-goal-1')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-goal-1-plan-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-goal-1-surrender-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-goal-1-plan-charge-single-premium-base')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-goal-1-surrender-charge-single-premium-base')
+    expect(seed.monthlyContribution).toBe(0)
+    expect(seed.initialSinglePremium).toBe(0)
+    expect(seed.mipBasis).toBe('open-ended')
+    expect(seed.exitChargeBasis).toBe('initial-single-premium-base')
+    expect(seed.eecTable).toEqual([0.07, 0.056, 0.042, 0.028, 0.014, 0])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('gross initial single premium lump sum'))).toBe(true)
+    expect(seed.accounts.find((account) => account.id === 'policy')?.feeRate).toBe(0.01)
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'single-premium-charge',
+          basis: 'annual-contribution',
+          rate: 0,
+        }),
+        expect.objectContaining({
+          id: 'plan-charge',
+          basis: 'initial-single-premium-base',
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 0.014 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 0.014 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.014 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.014 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.014 },
+          ],
+        }),
+      ]),
+    )
+  })
+
   it('preserves template charge allocation, event activeWindow, and rateSchedule-only fee rules', () => {
     const manifest: IlpCatalogManifest = {
       generatedAt: '2026-03-13T00:00:00.000Z',

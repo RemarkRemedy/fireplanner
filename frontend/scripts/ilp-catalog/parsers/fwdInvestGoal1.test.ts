@@ -95,10 +95,12 @@ describe('parseFwdInvestGoal1', () => {
     expect(product.modeledEconomics).toEqual([
       'branch:fwd-invest-goal-1-zero-single-premium-charge',
       'branch:fwd-invest-goal-1-initial-account-charge',
+      'branch:fwd-invest-goal-1-plan-charge',
+      'branch:fwd-invest-goal-1-surrender-charge',
       'branch:fwd-invest-goal-1-zero-partial-withdrawal-charge',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('fwd-invest-goal-1-plan-charge-single-premium-base')
-    expect(product.metadataOnlyBehaviors).toContain('fwd-invest-goal-1-surrender-charge-single-premium-base')
+    expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-goal-1-plan-charge-single-premium-base')
+    expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-goal-1-surrender-charge-single-premium-base')
 
     expect(product.variants).toHaveLength(2)
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended', 'usd-open-ended'])
@@ -112,6 +114,8 @@ describe('parseFwdInvestGoal1', () => {
       mipBasis: 'open-ended',
       mipLength: null,
     })
+    expect(product.variants[0].exitChargeBasis).toBe('initial-single-premium-base')
+    expect(product.variants[0].eecTable).toEqual([0.07, 0.056, 0.042, 0.028, 0.014, 0])
     expect(product.variants[0].feeRules).toEqual([
       expect.objectContaining({
         id: 'single-premium-charge',
@@ -122,6 +126,17 @@ describe('parseFwdInvestGoal1', () => {
         id: 'initial-account-charge',
         basis: 'account-value',
         rate: 0.01,
+      }),
+      expect.objectContaining({
+        id: 'plan-charge',
+        basis: 'initial-single-premium-base',
+        rateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 1, rate: 0.014 },
+          { startPolicyYear: 2, endPolicyYear: 2, rate: 0.014 },
+          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.014 },
+          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.014 },
+          { startPolicyYear: 5, endPolicyYear: 5, rate: 0.014 },
+        ],
       }),
     ])
     expect(product.variants[0].eventChargeRules).toEqual([

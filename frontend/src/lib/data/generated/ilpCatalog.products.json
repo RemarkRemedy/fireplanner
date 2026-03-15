@@ -5753,13 +5753,13 @@
     "modeledEconomics": [
       "branch:fwd-invest-goal-1-zero-single-premium-charge",
       "branch:fwd-invest-goal-1-initial-account-charge",
+      "branch:fwd-invest-goal-1-plan-charge",
+      "branch:fwd-invest-goal-1-surrender-charge",
       "branch:fwd-invest-goal-1-zero-partial-withdrawal-charge"
     ],
     "metadataOnlyBehaviors": [
       "fwd-invest-goal-1-death-benefit",
       "fwd-invest-goal-1-multi-life-last-survivor",
-      "fwd-invest-goal-1-plan-charge-single-premium-base",
-      "fwd-invest-goal-1-surrender-charge-single-premium-base",
       "fwd-invest-goal-1-single-premium-principal-tracking",
       "fwd-invest-goal-1-withdrawal-minimum-rules",
       "fwd-invest-goal-1-policy-closure-charge",
@@ -5769,7 +5769,7 @@
       "fwd-invest-goal-1-fund-management-fees"
     ],
     "warnings": [
-      "FWD Invest Goal 1 is cataloged as a partial modeled subset in V1. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, and the zero policy-level partial-withdrawal charge through the open-ended single-premium basis, while the committed-single-premium plan charge, surrender charge, protection benefits, and principal-tracking remain outside the current engine."
+      "FWD Invest Goal 1 is cataloged as a partial modeled subset in V1. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, the 1.4% plan charge on the committed initial single premium during the first five policy years, the first-five-policy-years surrender charge on that same original base, and the zero policy-level partial-withdrawal charge through the open-ended single-premium basis, while protection benefits and principal-tracking remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -5860,6 +5860,54 @@
                 "excerpt": "Initial account charge is payable throughout the policy term and will be Initial account deducted on each policy monthiversary*. charge The initial account charge = (1% p.a. / 12 months) x number of units in the initial "
               }
             ]
+          },
+          {
+            "id": "plan-charge",
+            "label": "Plan Charge",
+            "basis": "initial-single-premium-base",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.014
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.014
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.014
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.014
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.014
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 1.4% p.a. plan charge on the committed gross initial single premium during the first five policy years."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Initial account charge and plan charge",
+                "excerpt": "Initial account charge is payable throughout the policy term and will be Initial account deducted on each policy monthiversary*. charge The initial account charge = (1% p.a. / 12 months) x number of units in the initial "
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -5892,16 +5940,22 @@
             ]
           }
         ],
-        "eecTable": [],
+        "eecTable": [
+          0.07,
+          0.056,
+          0.042,
+          0.028,
+          0.014,
+          0
+        ],
+        "exitChargeBasis": "initial-single-premium-base",
         "warnings": [
-          "FWD Invest Goal 1 (SGD) is cataloged as a partial modeled subset in V1. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, and the zero policy-level partial-withdrawal charge through the open-ended single-premium basis.",
+          "FWD Invest Goal 1 (SGD) is cataloged as a partial modeled subset in V1. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, the 1.4% plan charge on the committed initial single premium during the first five policy years, the first-five-policy-years surrender charge on that same original base, and the zero policy-level partial-withdrawal charge through the open-ended single-premium basis.",
           "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.",
           "The withdrawal minimum transaction amount and minimum residual account-value rules remain informational only in V1."
         ],
         "unsupportedItems": [
           "Death benefit and multi-life last-survivor behavior remain informational only.",
-          "The first-five-policy-years plan charge remains informational only because it is calculated from the committed single premium rather than current account value.",
-          "The first-five-policy-years surrender charge remains informational only because it is calculated from the original single premium rather than current account value.",
           "Single-premium principal tracking remains informational only in V1.",
           "Policy closure charge, currency-change processing, change-of-person-insured handling, and reviewable switching-fee administration remain informational only.",
           "Fund management fees remain informational only because they depend on the selected ILP sub-fund."
@@ -6021,6 +6075,54 @@
                 "excerpt": "Initial account charge is payable throughout the policy term and will be Initial account deducted on each policy monthiversary*. charge The initial account charge = (1% p.a. / 12 months) x number of units in the initial "
               }
             ]
+          },
+          {
+            "id": "plan-charge",
+            "label": "Plan Charge",
+            "basis": "initial-single-premium-base",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.014
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.014
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.014
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.014
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.014
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 1.4% p.a. plan charge on the committed gross initial single premium during the first five policy years."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Initial account charge and plan charge",
+                "excerpt": "Initial account charge is payable throughout the policy term and will be Initial account deducted on each policy monthiversary*. charge The initial account charge = (1% p.a. / 12 months) x number of units in the initial "
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -6053,16 +6155,22 @@
             ]
           }
         ],
-        "eecTable": [],
+        "eecTable": [
+          0.07,
+          0.056,
+          0.042,
+          0.028,
+          0.014,
+          0
+        ],
+        "exitChargeBasis": "initial-single-premium-base",
         "warnings": [
-          "FWD Invest Goal 1 (USD) is cataloged as a partial modeled subset in V1. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, and the zero policy-level partial-withdrawal charge through the open-ended single-premium basis.",
+          "FWD Invest Goal 1 (USD) is cataloged as a partial modeled subset in V1. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, the 1.4% plan charge on the committed initial single premium during the first five policy years, the first-five-policy-years surrender charge on that same original base, and the zero policy-level partial-withdrawal charge through the open-ended single-premium basis.",
           "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.",
           "The withdrawal minimum transaction amount and minimum residual account-value rules remain informational only in V1."
         ],
         "unsupportedItems": [
           "Death benefit and multi-life last-survivor behavior remain informational only.",
-          "The first-five-policy-years plan charge remains informational only because it is calculated from the committed single premium rather than current account value.",
-          "The first-five-policy-years surrender charge remains informational only because it is calculated from the original single premium rather than current account value.",
           "Single-premium principal tracking remains informational only in V1.",
           "Policy closure charge, currency-change processing, change-of-person-insured handling, and reviewable switching-fee administration remain informational only.",
           "Fund management fees remain informational only because they depend on the selected ILP sub-fund."
