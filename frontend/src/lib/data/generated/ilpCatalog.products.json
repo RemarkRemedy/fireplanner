@@ -56127,6 +56127,336 @@
     ]
   },
   {
+    "id": "tokio-marine-goclassic",
+    "insurer": "Tokio Marine",
+    "productName": "#goClassic",
+    "sourceFileName": "TML_UNWU_TPDN_CIN_Summary.pdf",
+    "sourceChecksumSha256": "13ae4264f87d11f477b1797ff24264a3a34db2bd7364767ecfaf75b9044eae73",
+    "sourceDocumentType": "summary",
+    "sourceClass": "summary",
+    "supportStatus": "partial",
+    "structureStatus": "structured",
+    "economicsStatus": "partial-modeled-subset",
+    "modeledEconomics": [
+      "tokio-initial-vs-accumulation-regular-premium-routing",
+      "tokio-initial-bonus-tiered-premium-allocation",
+      "tokio-initial-charge-on-initial-account",
+      "tokio-policy-charge-on-policy-value",
+      "tokio-top-up-routing",
+      "tokio-recurring-single-premium-routing",
+      "tokio-top-up-premium-charge",
+      "tokio-recurring-single-premium-charge",
+      "tokio-initial-account-surrender-charge"
+    ],
+    "metadataOnlyBehaviors": [
+      "tokio-goclassic-loyalty-bonus-adjustment-factor",
+      "tokio-goclassic-additional-bonus-qualification",
+      "tokio-goclassic-advanced-death-benefit-mpc",
+      "tokio-goclassic-premium-holiday-lapse-state",
+      "tokio-goclassic-regular-withdrawal-facility",
+      "tokio-goclassic-dividend-distribution-option",
+      "tokio-goclassic-credit-card-charge"
+    ],
+    "warnings": [
+      "#goClassic is cataloged as a partial modeled subset in V1. The parser captures one honest SGD / premium-payment-term-25 corridor with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, and the 25-year surrender charge on the Initial Units Account.",
+      "Loyalty Bonus and Additional Bonus remain informational only because the source uses annual qualification gates and an adjustment-factor formula that the current engine does not execute.",
+      "Advanced Death Benefit monthly protection charges, premium-holiday lapse behavior, regular withdrawal, dividend distribution election, and other corridors remain outside the current engine.",
+      "Structured extraction validated against the #goClassic product summary text layer."
+    ],
+    "archived": false,
+    "variants": [
+      {
+        "id": "sgd-mip-25",
+        "currency": "SGD",
+        "mipLength": 25,
+        "icpMonths": 24,
+        "accounts": [
+          {
+            "id": "initial",
+            "label": "Initial Units Account",
+            "feeRate": 0.0675,
+            "postMipFeeRate": 0.0135,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan Description",
+                "excerpt": "PRODUCT SUMMARY − #GOCLASSIC In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description #goClassic is a whole life, limited premium investment-linked insuranc"
+              },
+              {
+                "page": 2,
+                "section": "Initial Bonus / Loyalty Bonus / Additional Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. During premium payment term, loyalty bonus will be paid in acco"
+              },
+              {
+                "page": 4,
+                "section": "Regular Premium Routing",
+                "excerpt": "Regular premium due during the first 24 months of the policy from the commencement date will be used to th purchase initial units and allocated to the Initial Units Account. Regular premium due from the 25 month of the c"
+              },
+              {
+                "page": 9,
+                "section": "Initial Charge / Policy Charge / MPC",
+                "excerpt": "Initial Charge During the premium payment term, an initial charge of 5.4% p.a. of the Initial Units Account value will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial Units A"
+              }
+            ]
+          },
+          {
+            "id": "accumulation",
+            "label": "Accumulation Units Account",
+            "feeRate": 0.0135,
+            "postMipFeeRate": 0.0135,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "after-icp",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Initial Bonus / Loyalty Bonus / Additional Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. During premium payment term, loyalty bonus will be paid in acco"
+              },
+              {
+                "page": 4,
+                "section": "Regular Premium Routing",
+                "excerpt": "Regular premium due during the first 24 months of the policy from the commencement date will be used to th purchase initial units and allocated to the Initial Units Account. Regular premium due from the 25 month of the c"
+              },
+              {
+                "page": 5,
+                "section": "Recurring Single Premium / Top-up Premium / Premium Holiday",
+                "excerpt": "100% of each recurring single premium paid net of premium charge will be used to purchase units and allocated to the Accumulation Units Account in accordance with your latest investment allocation instructions of the pol"
+              },
+              {
+                "page": 9,
+                "section": "Initial Charge / Policy Charge / MPC",
+                "excerpt": "Initial Charge During the premium payment term, an initial charge of 5.4% p.a. of the Initial Units Account value will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial Units A"
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge / Surrender Charge",
+                "excerpt": "Premium Charge for Recurring Single Premium and Top-up Premium A 5% premium charge will be imposed on each recurring single premium and/or top-up premium. This charge will be deducted prior to the allocation of the recur"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "initial-bonus",
+            "type": "allocation",
+            "label": "Initial Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "initial"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 3,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.15
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.25
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.42
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.44
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.47
+              }
+            ],
+            "notes": [
+              "Tier is based on the published SGD annualised regular premium band for the 25-year premium payment term.",
+              "Allocated to the Initial Units Account upon each regular premium received in the first three policy years."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Initial Bonus",
+                "excerpt": "Initial Bonus *%UWI22* While the policy is in force, an initial bonus will be paid in the first three (3) policy years upon receipt of each regular premium. Product Summary Initial bonus = Applicable initial bonus rate ("
+              },
+              {
+                "page": 2,
+                "section": "Initial Bonus Rates",
+                "excerpt": "Initial bonus rates on a per annum basis are set out below: Annualised Premium Payment Term (Years) Regular Premium 5-9 10-14 15-19 20 21 22 23 24 25 Band 1 2.00% 5.00% 9.00% 12.00% 12.00% 12.00% 12.00% 12.00% 15.00% 2 4"
+              }
+            ]
+          }
+        ],
+        "feeRules": [],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each top-up premium allocation to the Accumulation Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium / Top-up Premium / Premium Holiday",
+                "excerpt": "100% of each recurring single premium paid net of premium charge will be used to purchase units and allocated to the Accumulation Units Account in accordance with your latest investment allocation instructions of the pol"
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge / Surrender Charge",
+                "excerpt": "Premium Charge for Recurring Single Premium and Top-up Premium A 5% premium charge will be imposed on each recurring single premium and/or top-up premium. This charge will be deducted prior to the allocation of the recur"
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurring Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each recurring single premium allocation to the Accumulation Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium / Top-up Premium / Premium Holiday",
+                "excerpt": "100% of each recurring single premium paid net of premium charge will be used to purchase units and allocated to the Accumulation Units Account in accordance with your latest investment allocation instructions of the pol"
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge / Surrender Charge",
+                "excerpt": "Premium Charge for Recurring Single Premium and Top-up Premium A 5% premium charge will be imposed on each recurring single premium and/or top-up premium. This charge will be deducted prior to the allocation of the recur"
+              }
+            ]
+          }
+        ],
+        "eecTable": [
+          1,
+          1,
+          0.95,
+          0.93,
+          0.91,
+          0.89,
+          0.87,
+          0.85,
+          0.83,
+          0.8,
+          0.77,
+          0.74,
+          0.71,
+          0.68,
+          0.64,
+          0.6,
+          0.56,
+          0.51,
+          0.46,
+          0.41,
+          0.36,
+          0.31,
+          0.26,
+          0.21,
+          0.15
+        ],
+        "warnings": [
+          "This partial template models the SGD / premium-payment-term-25 corridor only.",
+          "This partial template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, and the published 25-year surrender charge on the Initial Units Account."
+        ],
+        "unsupportedItems": [
+          "Loyalty Bonus and Additional Bonus remain metadata-only because their annual qualification and adjustment-factor formulas need stateful bonus tracking beyond the current engine.",
+          "Advanced Death Benefit monthly protection charges, premium-holiday lapse behavior, regular withdrawal, dividend distribution election, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan Description",
+            "excerpt": "PRODUCT SUMMARY − #GOCLASSIC In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description #goClassic is a whole life, limited premium investment-linked insuranc"
+          },
+          {
+            "page": 2,
+            "section": "Initial Bonus / Loyalty Bonus / Additional Bonus",
+            "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. During premium payment term, loyalty bonus will be paid in acco"
+          },
+          {
+            "page": 4,
+            "section": "Regular Premium Routing",
+            "excerpt": "Regular premium due during the first 24 months of the policy from the commencement date will be used to th purchase initial units and allocated to the Initial Units Account. Regular premium due from the 25 month of the c"
+          },
+          {
+            "page": 5,
+            "section": "Recurring Single Premium / Top-up Premium / Premium Holiday",
+            "excerpt": "100% of each recurring single premium paid net of premium charge will be used to purchase units and allocated to the Accumulation Units Account in accordance with your latest investment allocation instructions of the pol"
+          },
+          {
+            "page": 9,
+            "section": "Initial Charge / Policy Charge / MPC",
+            "excerpt": "Initial Charge During the premium payment term, an initial charge of 5.4% p.a. of the Initial Units Account value will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial Units A"
+          },
+          {
+            "page": 10,
+            "section": "Premium Charge / Surrender Charge",
+            "excerpt": "Premium Charge for Recurring Single Premium and Top-up Premium A 5% premium charge will be imposed on each recurring single premium and/or top-up premium. This charge will be deducted prior to the allocation of the recur"
+          },
+          {
+            "page": 14,
+            "section": "Appendix A Surrender Charge",
+            "excerpt": "Premium Payment Term: 25 -16 Years Policy Premium Payment Term Year 25 24 23 22 21 20 19 18 17 16 1 100% 100% 100% 100% 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100% 100% 100% 100% 100% 100% 100% 3 95% 93% 91% 89% "
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "tokio-marine-goelite",
     "insurer": "Tokio Marine",
     "productName": "#goElite",
