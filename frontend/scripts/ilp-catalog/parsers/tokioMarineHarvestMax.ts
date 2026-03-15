@@ -260,6 +260,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page4 = sourceRef(4, 'Regular Premium Routing', snippetNear(document, 4, 'Regular premium are payable throughout the policy term', 22))
   const page5 = sourceRef(5, 'Recurring Single Premium and Top-up Premium', snippetNear(document, 5, 'Recurring Single Premium', 22))
   const page6 = sourceRef(6, 'Partial Withdrawal', snippetNear(document, 6, 'Partial Withdrawal', 28))
+  const page8 = sourceRef(8, 'Dividend Distribution', snippetNear(document, 8, 'Dividend Distribution', 20))
   const page9 = sourceRef(9, 'Initial Setup Charge', snippetNear(document, 9, 'Initial setup charge', 24))
   const page10 = sourceRef(10, 'Policy Charge / Admin Charge / MPC', snippetNear(document, 10, 'Policy investment charge', 34))
   const page11 = sourceRef(11, 'Top-up Charge / Withdrawal Charge / Premium Shortfall Charge', snippetNear(document, 11, 'Premium Shortfall Charge', 28))
@@ -403,6 +404,20 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: buildBonuses(document),
     feeRules: buildFeeRules(document),
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying funds default to reinvestment, while cash payout can be explored through the manual annual distribution-yield assumption.',
+        'The published dividend election applies across the Initial Units Account, Accumulation Units Account, and Top-up Units Account.',
+        'The published $50 minimum payout threshold and 30-day record-date instruction window remain informational only in V1.',
+      ],
+      sourceRefs: [page8],
+    },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
       'This partial template models the SGD / MIP 15 corridor only.',
@@ -410,11 +425,13 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       'Partial withdrawals from the Accumulation Units Account are not allowed in the first five policy years and are modeled only from policy year 6 onward.',
       'Performance investment bonus is modeled at the published 1.70% annual rate, but the 102% performance-growth-measure gate remains a manual review assumption.',
       'Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.',
+      'Harvest Max keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
     ],
     unsupportedItems: [
-      'Monthly protection charge, dividend distribution election, credit-card charge, and add/remove/change-life-assured administration remain metadata-only for this product.',
+      'Monthly protection charge, credit-card charge, and add/remove/change-life-assured administration remain metadata-only for this product.',
+      'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product.',
     ],
-    sourceRefs: [page1, page2, page3, page4, page5, page6, page9, page10, page11, page16, page17, page18],
+    sourceRefs: [page1, page2, page3, page4, page5, page6, page8, page9, page10, page11, page16, page17, page18],
   }
 }
 
@@ -452,10 +469,11 @@ export function parseTokioMarineHarvestMax(context: ParseContext): IlpCatalogPro
       'tokio-premium-shortfall-charge-regular-premium-reduction',
       'tokio-premium-increase-restores-shortfall-charge-cessation',
       'tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'tokio-harvest-max-monthly-protection-charge',
-      'tokio-harvest-max-dividend-distribution-election',
+      'tokio-harvest-max-dividend-payout-threshold-and-record-date-instructions',
       'tokio-harvest-max-credit-card-charge',
       'tokio-harvest-max-life-replacement-option',
     ],

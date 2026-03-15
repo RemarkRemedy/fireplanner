@@ -801,6 +801,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Partial template')
     expect(seededAlert?.textContent).toContain('102% performance-growth-measure gate')
+    expect(seededAlert?.textContent).toContain('tokio harvest max dividend payout threshold and record date instructions')
     expect(screen.getByDisplayValue('Initial Setup Charge')).toBeInTheDocument()
     expect(screen.getAllByDisplayValue('Policy Charge').length).toBeGreaterThan(0)
     expect(screen.getByDisplayValue('Admin Charge')).toBeInTheDocument()
