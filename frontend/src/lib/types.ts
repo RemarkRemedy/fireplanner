@@ -383,7 +383,9 @@ export interface FireMetrics {
     baseExpenses: number          // annualExpenses × retirementSpendingAdjustment × fireTypeMultiplier
     parentSupportAnnual: number   // additive, 0 if disabled
     healthcareCashOutlay: number  // additive, 0 if disabled
-    effectiveExpenses: number     // final total: fireNumber = effectiveExpenses / SWR
+    effectiveExpenses: number     // gross total before post-retirement income deduction
+    postRetirementIncome: number  // passive income deducted from expenses (CPF LIFE, rental, etc.)
+    netEffectiveExpenses: number  // max(0, effectiveExpenses - postRetirementIncome): fireNumber = this / SWR
   }
 }
 

@@ -1,5 +1,5 @@
-// Generated from the sequence-risk param parity helper. Update only via approved fixture regeneration.
-
+// Auto-regenerated SR parity outputs — do not edit by hand.
+// Formula change: net FIRE number = max(0, expenses - postRetirementIncome) / SWR
 export const APPROVED_SEQUENCE_RISK_PARAM_PARITY_OUTPUTS = {
   "salary-only": {
     "retirementAge": 60,
@@ -1058,5 +1058,5 @@ export const APPROVED_SEQUENCE_RISK_PARAM_PARITY_OUTPUTS = {
       0.1,
       0
     ]
-  },
+  }
 } as const

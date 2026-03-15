@@ -68,6 +68,7 @@ export function buildBaseInputsFromEffectiveIncome(
   property: PropertyState,
   effectiveIncome: number,
   timingOverride?: TimingOverride,
+  postRetirementIncome?: number,
 ) {
   const cpfTotal = profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
   const currentAge = timingOverride?.currentAge ?? profile.currentAge
@@ -117,6 +118,7 @@ export function buildBaseInputsFromEffectiveIncome(
     healthcareConfig: profile.healthcareConfig?.enabled ? profile.healthcareConfig : null,
     cashReserveOffset,
     lockedAssets: profile.lockedAssets,
+    postRetirementIncome,
   }
 }
 
@@ -141,12 +143,31 @@ export function getBaseInputs(
     ? generateIncomeProjection(projectionParams)
     : null
 
+  // Extract passive post-retirement income from first retired row, deflated to today's dollars.
+  // Excludes salary (employment income defeats the FIRE concept).
+  let postRetirementIncome: number | undefined
+  if (projection) {
+    const firstRetiredRow = projection.find((r) => r.isRetired)
+    if (firstRetiredRow) {
+      const passiveNominal = firstRetiredRow.governmentIncome
+        + firstRetiredRow.rentalIncome
+        + firstRetiredRow.investmentIncome
+        + firstRetiredRow.businessIncome
+        + firstRetiredRow.srsWithdrawal
+      const yearsToRetired = firstRetiredRow.age - currentAge
+      postRetirementIncome = yearsToRetired > 0 && profile.inflation > 0
+        ? passiveNominal / Math.pow(1 + profile.inflation, yearsToRetired)
+        : passiveNominal
+    }
+  }
+
   return buildBaseInputsFromEffectiveIncome(
     profile,
     allocation,
     property,
     resolveEffectiveIncome(profile, projection),
     { currentAge, retirementAge, lifeExpectancy },
+    postRetirementIncome,
   )
 }
 

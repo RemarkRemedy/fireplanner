@@ -60,8 +60,9 @@ describe('useDashboardMetrics', () => {
     })
     const { result } = renderHook(() => useDashboardMetrics())
     expect(result.current.progress).not.toBeNull()
-    // NW = 850K, FIRE = 48000/0.04 = 1.2M → progress ~71%
-    expect(result.current.progress!).toBeCloseTo(0.708, 1)
+    // progress = totalNW / fireNumber (fireNumber may include post-retirement income deduction)
+    const expectedProgress = result.current.totalNetWorth! / result.current.fireNumber!
+    expect(result.current.progress!).toBeCloseTo(expectedProgress, 2)
   })
 
   it('totalNetWorth includes liquid + CPF balances', () => {

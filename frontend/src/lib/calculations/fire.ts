@@ -307,6 +307,9 @@ export function calculateAllFireMetrics(params: {
   cashReserveOffset?: number
   lockedAssets?: LockedAsset[]
   expenseAdjustments?: ExpenseAdjustment[]
+  /** Passive post-retirement income in today's dollars (CPF LIFE, rental, investment, SRS).
+   *  Deducted from expenses before computing FIRE number: net = max(0, expenses - this). */
+  postRetirementIncome?: number
 }): FireMetrics {
   const {
     currentAge,
@@ -374,6 +377,9 @@ export function calculateAllFireMetrics(params: {
     effectiveExpenses *= Math.pow(1 + inflation, yearsToRetirement)
   }
 
+  // Post-retirement income deduction (in today's dollars, inflated alongside expenses)
+  const basePostRetIncome = params.postRetirementIncome ?? 0
+
   // fireAge basis: iterative fixed-point convergence
   // FIRE number depends on FIRE age (inflation target), FIRE age depends on FIRE number (NPER).
   // Start with today's expenses, compute FIRE age, inflate to that age, recompute, repeat.
@@ -389,7 +395,10 @@ export function calculateAllFireMetrics(params: {
     const TOLERANCE = 0.01
 
     for (let i = 0; i < MAX_ITERATIONS; i++) {
-      const currentFireNumber = calculateFireNumber(baseExpensesForFireAge * inflationFactor, swr)
+      const inflatedExpenses = baseExpensesForFireAge * inflationFactor
+      const inflatedPostRet = basePostRetIncome * inflationFactor
+      const netExpenses = Math.max(0, inflatedExpenses - inflatedPostRet)
+      const currentFireNumber = calculateFireNumber(netExpenses, swr)
       const currentYearsToFire = calculateYearsToFire(netRealReturn, annualSavings, totalNetWorth, currentFireNumber)
 
       const yearsForInflation = isFinite(currentYearsToFire)
@@ -404,7 +413,16 @@ export function calculateAllFireMetrics(params: {
     effectiveExpenses = baseExpensesForFireAge * inflationFactor
   }
 
-  const fireNumber = calculateFireNumber(effectiveExpenses, swr)
+  // Inflate post-retirement income to same dollar basis as effectiveExpenses
+  let inflatedPostRetIncome = basePostRetIncome
+  if (fireNumberBasis === 'retirement' && yearsToRetirement > 0 && inflation > 0) {
+    inflatedPostRetIncome *= Math.pow(1 + inflation, yearsToRetirement)
+  } else if (fireNumberBasis === 'fireAge' && inflation > 0) {
+    inflatedPostRetIncome *= inflationFactor
+  }
+
+  const netEffectiveExpenses = Math.max(0, effectiveExpenses - inflatedPostRetIncome)
+  const fireNumber = calculateFireNumber(netEffectiveExpenses, swr)
   // Lean/Fat reference values also include retirement adjustment and inflate when using retirement or fireAge basis
   let leanExpenses = retirementEffectiveExpenses * retirementSpendingAdjustment
   let fatExpenses = retirementEffectiveExpenses * retirementSpendingAdjustment
@@ -476,6 +494,8 @@ export function calculateAllFireMetrics(params: {
       parentSupportAnnual,
       healthcareCashOutlay,
       effectiveExpenses,
+      postRetirementIncome: inflatedPostRetIncome,
+      netEffectiveExpenses,
     },
   }
 }

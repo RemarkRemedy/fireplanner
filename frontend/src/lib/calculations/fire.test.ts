@@ -406,6 +406,81 @@ describe('fireNumberBasis', () => {
   })
 })
 
+describe('postRetirementIncome deduction', () => {
+  const baseParams = {
+    currentAge: 30,
+    retirementAge: 65,
+    annualIncome: 100000,
+    annualExpenses: 48000,
+    liquidNetWorth: 200000,
+    cpfTotal: 0,
+    swr: 0.04,
+    expectedReturn: 0.07,
+    inflation: 0.025,
+    expenseRatio: 0.003,
+  }
+
+  it('reduces FIRE number by postRetirementIncome / SWR (today basis)', () => {
+    const without = calculateAllFireMetrics({ ...baseParams, fireNumberBasis: 'today' })
+    const with20k = calculateAllFireMetrics({ ...baseParams, fireNumberBasis: 'today', postRetirementIncome: 20000 })
+    // Without: 48000 / 0.04 = 1,200,000
+    // With 20K income: max(0, 48000 - 20000) / 0.04 = 28000 / 0.04 = 700,000
+    expect(without.fireNumber).toBe(1200000)
+    expect(with20k.fireNumber).toBe(700000)
+  })
+
+  it('FIRE number cannot go below 0 when income exceeds expenses', () => {
+    const m = calculateAllFireMetrics({ ...baseParams, fireNumberBasis: 'today', postRetirementIncome: 60000 })
+    expect(m.fireNumber).toBe(0)
+  })
+
+  it('zero postRetirementIncome matches omitted (backward compat)', () => {
+    const omitted = calculateAllFireMetrics(baseParams)
+    const zero = calculateAllFireMetrics({ ...baseParams, postRetirementIncome: 0 })
+    expect(zero.fireNumber).toBe(omitted.fireNumber)
+    expect(zero.yearsToFire).toBe(omitted.yearsToFire)
+  })
+
+  it('inflates postRetirementIncome with retirement basis', () => {
+    // Both expenses and income inflate by the same factor
+    const m = calculateAllFireMetrics({ ...baseParams, fireNumberBasis: 'retirement', postRetirementIncome: 20000 })
+    const inflationFactor = Math.pow(1.025, 35)
+    const expectedNet = Math.max(0, 48000 * inflationFactor - 20000 * inflationFactor)
+    expect(m.fireNumber).toBeCloseTo(expectedNet / 0.04, 0)
+  })
+
+  it('inflates postRetirementIncome with fireAge basis', () => {
+    const m = calculateAllFireMetrics({ ...baseParams, fireNumberBasis: 'fireAge', postRetirementIncome: 20000 })
+    // The converged FIRE number should be self-consistent
+    const convergedYears = m.yearsToFire
+    const inflationFactor = Math.pow(1.025, convergedYears)
+    const expectedNet = Math.max(0, 48000 * inflationFactor - 20000 * inflationFactor)
+    const expectedFireNumber = expectedNet / 0.04
+    const relativeError = Math.abs(m.fireNumber - expectedFireNumber) / expectedFireNumber
+    expect(relativeError).toBeLessThan(0.001)
+  })
+
+  it('reduces yearsToFire and fireAge', () => {
+    const without = calculateAllFireMetrics({ ...baseParams, fireNumberBasis: 'today' })
+    const withIncome = calculateAllFireMetrics({ ...baseParams, fireNumberBasis: 'today', postRetirementIncome: 20000 })
+    expect(withIncome.yearsToFire).toBeLessThan(without.yearsToFire)
+    expect(withIncome.fireAge).toBeLessThan(without.fireAge)
+  })
+
+  it('includes postRetirementIncome in expensesBreakdown', () => {
+    const m = calculateAllFireMetrics({ ...baseParams, fireNumberBasis: 'today', postRetirementIncome: 15000 })
+    expect(m.expensesBreakdown.postRetirementIncome).toBe(15000)
+    expect(m.expensesBreakdown.netEffectiveExpenses).toBe(48000 - 15000)
+    expect(m.expensesBreakdown.effectiveExpenses).toBe(48000) // gross unchanged
+  })
+
+  it('does not affect baristaFireIncome (uses gross expenses)', () => {
+    const without = calculateAllFireMetrics({ ...baseParams, fireNumberBasis: 'today' })
+    const withIncome = calculateAllFireMetrics({ ...baseParams, fireNumberBasis: 'today', postRetirementIncome: 20000 })
+    expect(withIncome.baristaFireIncome).toBe(without.baristaFireIncome)
+  })
+})
+
 describe('cpfDependency', () => {
   it('true when liquid < FIRE but total >= FIRE', () => {
     const m = calculateAllFireMetrics({

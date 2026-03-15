@@ -181,7 +181,7 @@ function buildFormulaSideWaterfall(
   fireType: FireType,
   basisFactor: number,
 ): WaterfallItem[] {
-  const { baseExpenses, parentSupportAnnual, healthcareCashOutlay } = metrics.expensesBreakdown
+  const { baseExpenses, parentSupportAnnual, healthcareCashOutlay, postRetirementIncome } = metrics.expensesBreakdown
   const FIRE_LABELS: Record<FireType, string> = {
     regular: 'Expenses',
     lean: 'Expenses (60%)',
@@ -196,6 +196,9 @@ function buildFormulaSideWaterfall(
   }
   if (parentSupportAnnual > 0) {
     items.push({ label: 'Parent support', amount: parentSupportAnnual * basisFactor, type: 'add' })
+  }
+  if (postRetirementIncome > 0) {
+    items.push({ label: 'Post-retirement income', amount: postRetirementIncome * basisFactor, type: 'subtract' })
   }
   return items
 }
