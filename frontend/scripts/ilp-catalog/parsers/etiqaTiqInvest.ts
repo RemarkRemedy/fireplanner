@@ -43,6 +43,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page2 = sourceRef(2, 'Surrender and maturity benefits', snippetNear(document, 2, 'Partial Withdrawal', 16))
   const page5 = sourceRef(5, 'Illustrative zero transaction charges', snippetNear(document, 5, 'There is no fees & charges incurred upon the withdrawal', 8))
   const page6 = sourceRef(6, 'Management charge and top-ups', snippetNear(document, 6, 'Management Charge Fee', 18))
+  const page6Recurring = sourceRef(6, 'Recurring top-up', snippetNear(document, 6, 'Recurring Top-up', 12))
   const page7 = sourceRef(7, 'Fund switching', snippetNear(document, 7, 'Fund Switching', 12))
   const page9 = sourceRef(9, 'Grace period and reinstatement', snippetNear(document, 9, 'Grace Period', 16))
 
@@ -92,6 +93,22 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       sourceRefs: [page5, page6],
     },
     {
+      id: 'recurring-single-premium-charge',
+      label: 'Recurring Top-up Charge',
+      trigger: 'recurring-single-premium',
+      basis: 'event-amount-with-overlap-months',
+      appliesTo: ['policy'],
+      rate: 0,
+      amount: 0,
+      activeWindow: 'policy-term',
+      allocation: 'equal-split',
+      notes: [
+        'The published top-up section states recurring top-ups follow the same zero-charge policy surface as ad-hoc top-ups.',
+        'Use recurring-single-premium events to represent the chosen monthly, quarterly, semi-annual, or annual recurring top-up cadence.',
+      ],
+      sourceRefs: [page5, page6, page6Recurring],
+    },
+    {
       id: 'partial-withdrawal-charge',
       label: 'Partial Withdrawal Charge',
       trigger: 'partial-withdrawal',
@@ -133,14 +150,14 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eventChargeRules,
     eecTable: [],
     warnings: [
-      'Tiq Invest is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial subscription, zero-charge top-up and withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis.',
+      'Tiq Invest is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial subscription, zero-charge ad-hoc and recurring top-up path, zero-charge withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis.',
       'There is no insurance charge imposed on this policy.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
       'Death and terminal-illness benefit formulas remain informational only.',
       'Single-premium principal tracking remains informational only in V1.',
-      'Recurring top-up enrollment and grace-period funding remain informational only.',
+      'Grace-period funding remains informational only.',
       'Fund-switching administration remains informational only.',
     ],
     sourceRefs: [page1, page2, page5, page6, page7, page9],
@@ -163,18 +180,19 @@ export function parseEtiqaTiqInvest(context: ParseContext): IlpCatalogProduct {
       'branch:etiqa-tiq-invest-zero-single-premium-charge',
       'branch:etiqa-tiq-invest-management-charge',
       'branch:etiqa-tiq-invest-zero-top-up-charge',
+      'branch:etiqa-tiq-invest-zero-recurring-single-premium-charge',
       'branch:etiqa-tiq-invest-zero-partial-withdrawal-charge',
+      'tokio-recurring-single-premium-routing',
     ],
     metadataOnlyBehaviors: [
       'etiqa-tiq-invest-death-benefit',
       'etiqa-tiq-invest-terminal-illness-benefit',
       'etiqa-tiq-invest-single-premium-principal-tracking',
-      'etiqa-tiq-invest-recurring-top-up-enrollment',
       'etiqa-tiq-invest-fund-switching',
       'etiqa-tiq-invest-grace-period-reinstatement',
     ],
     warnings: [
-      'Tiq Invest is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial subscription, zero-charge top-up and withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis, while protection benefits and principal-tracking remain outside the current engine.',
+      'Tiq Invest is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial subscription, zero-charge ad-hoc and recurring top-up path, zero-charge withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis, while protection benefits and principal-tracking remain outside the current engine.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

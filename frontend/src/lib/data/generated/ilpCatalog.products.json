@@ -25992,18 +25992,19 @@
       "branch:etiqa-tiq-invest-zero-single-premium-charge",
       "branch:etiqa-tiq-invest-management-charge",
       "branch:etiqa-tiq-invest-zero-top-up-charge",
-      "branch:etiqa-tiq-invest-zero-partial-withdrawal-charge"
+      "branch:etiqa-tiq-invest-zero-recurring-single-premium-charge",
+      "branch:etiqa-tiq-invest-zero-partial-withdrawal-charge",
+      "tokio-recurring-single-premium-routing"
     ],
     "metadataOnlyBehaviors": [
       "etiqa-tiq-invest-death-benefit",
       "etiqa-tiq-invest-terminal-illness-benefit",
       "etiqa-tiq-invest-single-premium-principal-tracking",
-      "etiqa-tiq-invest-recurring-top-up-enrollment",
       "etiqa-tiq-invest-fund-switching",
       "etiqa-tiq-invest-grace-period-reinstatement"
     ],
     "warnings": [
-      "Tiq Invest is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial subscription, zero-charge top-up and withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis, while protection benefits and principal-tracking remain outside the current engine."
+      "Tiq Invest is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial subscription, zero-charge ad-hoc and recurring top-up path, zero-charge withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis, while protection benefits and principal-tracking remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -26121,6 +26122,40 @@
             ]
           },
           {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurring Top-up Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "The published top-up section states recurring top-ups follow the same zero-charge policy surface as ad-hoc top-ups.",
+              "Use recurring-single-premium events to represent the chosen monthly, quarterly, semi-annual, or annual recurring top-up cadence."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Illustrative zero transaction charges",
+                "excerpt": "There is no fees & charges incurred upon the withdrawal of the Packaged fund. ** The actual issue price of units will fluctuate according to the market performance. Page 5 of 11"
+              },
+              {
+                "page": 6,
+                "section": "Management charge and top-ups",
+                "excerpt": "Management Charge Fee Management Charge Fee is a fee that We charge for the management of Your policy. We will deduct a management charge fee of 0.75% per annum of the Account value at the beginning of each Policy month "
+              },
+              {
+                "page": 6,
+                "section": "Recurring top-up",
+                "excerpt": "• Recurring Top-up Recurring Top-up is subject to the following: - The minimum recurring Top-up must be at least S$1,200 per annum, S$600 per semi-annual, S$300 per quarter or S$100 per month. - Top-up must be in multipl"
+              }
+            ]
+          },
+          {
             "id": "partial-withdrawal-charge",
             "label": "Partial Withdrawal Charge",
             "trigger": "partial-withdrawal",
@@ -26151,14 +26186,14 @@
         ],
         "eecTable": [],
         "warnings": [
-          "Tiq Invest is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial subscription, zero-charge top-up and withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis.",
+          "Tiq Invest is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial subscription, zero-charge ad-hoc and recurring top-up path, zero-charge withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis.",
           "There is no insurance charge imposed on this policy.",
           "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
         ],
         "unsupportedItems": [
           "Death and terminal-illness benefit formulas remain informational only.",
           "Single-premium principal tracking remains informational only in V1.",
-          "Recurring top-up enrollment and grace-period funding remain informational only.",
+          "Grace-period funding remains informational only.",
           "Fund-switching administration remains informational only."
         ],
         "sourceRefs": [

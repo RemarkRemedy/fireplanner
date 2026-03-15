@@ -29,12 +29,15 @@ describe('parseEtiqaTiqInvest', () => {
       'branch:etiqa-tiq-invest-zero-single-premium-charge',
       'branch:etiqa-tiq-invest-management-charge',
       'branch:etiqa-tiq-invest-zero-top-up-charge',
+      'branch:etiqa-tiq-invest-zero-recurring-single-premium-charge',
       'branch:etiqa-tiq-invest-zero-partial-withdrawal-charge',
+      'tokio-recurring-single-premium-routing',
     ])
     expect(product.metadataOnlyBehaviors).toContain('etiqa-tiq-invest-single-premium-principal-tracking')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-tiq-invest-grace-period-reinstatement')
+    expect(product.metadataOnlyBehaviors).not.toContain('etiqa-tiq-invest-recurring-top-up-enrollment')
     expect(product.warnings).toContain(
-      'Tiq Invest is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial subscription, zero-charge top-up and withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis, while protection benefits and principal-tracking remain outside the current engine.',
+      'Tiq Invest is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial subscription, zero-charge ad-hoc and recurring top-up path, zero-charge withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis, while protection benefits and principal-tracking remain outside the current engine.',
     )
 
     expect(product.variants).toHaveLength(1)
@@ -75,6 +78,12 @@ describe('parseEtiqaTiqInvest', () => {
         rate: 0,
       }),
       expect.objectContaining({
+        id: 'recurring-single-premium-charge',
+        trigger: 'recurring-single-premium',
+        basis: 'event-amount-with-overlap-months',
+        rate: 0,
+      }),
+      expect.objectContaining({
         id: 'partial-withdrawal-charge',
         trigger: 'partial-withdrawal',
         basis: 'event-amount',
@@ -82,7 +91,7 @@ describe('parseEtiqaTiqInvest', () => {
       }),
     ])
     expect(variant.warnings).toContain('There is no insurance charge imposed on this policy.')
-    expect(variant.unsupportedItems).toContain('Recurring top-up enrollment and grace-period funding remain informational only.')
+    expect(variant.unsupportedItems).toContain('Grace-period funding remains informational only.')
     expect(variant.eecTable).toEqual([])
   }, 30_000)
 })
