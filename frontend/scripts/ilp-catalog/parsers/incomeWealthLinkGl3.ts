@@ -50,7 +50,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     {
       id: 'single-premium-charge',
       label: 'Single Premium Charge',
-      basis: 'annual-contribution',
+      basis: 'initial-single-premium',
       rate: 0.035,
       amount: 0,
       appliesTo: ['policy'],
@@ -136,13 +136,12 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eventChargeRules,
     eecTable: [],
     warnings: [
-      'WealthLink (GL3) is cataloged as a partial modeled subset in V1. The parser captures the published 3.5% single-premium, ad hoc top-up, and regular single premium top-up charge path plus the explicit no-surrender-charge withdrawal path through the open-ended no-MIP basis.',
+      'WealthLink (GL3) is cataloged as a supported V1 product. The parser captures the published 3.5% upfront single-premium charge, ad hoc top-up and regular single premium top-up charge path, and the explicit no-surrender-charge withdrawal path through the open-ended no-MIP basis.',
       'This product currently has no policy fee and no insurance cover charge.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
       'Death and accidental-death benefit formulas remain informational only.',
-      'Single-premium principal tracking remains informational only in V1.',
       'Fund-level annual management fees remain informational only because they are published outside the product summary and vary by chosen ILP sub-fund.',
       'Fund-switching administration remains informational only.',
     ],
@@ -159,9 +158,9 @@ export function parseIncomeWealthLinkGl3(context: ParseContext): IlpCatalogProdu
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:income-wealthlink-gl3-single-premium-charge',
       'branch:income-wealthlink-gl3-top-up-premium-charge',
@@ -172,12 +171,11 @@ export function parseIncomeWealthLinkGl3(context: ParseContext): IlpCatalogProdu
     metadataOnlyBehaviors: [
       'income-wealthlink-gl3-death-benefit',
       'income-wealthlink-gl3-accidental-death-benefit',
-      'income-wealthlink-gl3-single-premium-principal-tracking',
       'income-wealthlink-gl3-fund-level-annual-management-fee',
       'income-wealthlink-gl3-fund-switching',
     ],
     warnings: [
-      'WealthLink (GL3) is cataloged as a partial modeled subset in V1. The parser captures the published 3.5% single-premium, ad hoc top-up, and regular single premium top-up charge path plus the explicit no-surrender-charge withdrawal path through the open-ended no-MIP basis, while protection formulas and fund-level annual management fees remain outside the current engine.',
+      'WealthLink (GL3) is cataloged as a supported V1 product. The parser captures the published 3.5% upfront single-premium charge, ad hoc top-up and regular single premium top-up charge path, and the explicit no-surrender-charge withdrawal path through the open-ended no-MIP basis, while death-benefit formulas and fund-level annual management fees remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

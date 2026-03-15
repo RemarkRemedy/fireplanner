@@ -42,6 +42,11 @@ export type GoldenCoverageTag =
   | 'branch:prulink-investgrowth-premium-assurance-charge'
   | 'branch:prulink-investgrowth-top-up-charge'
   | 'branch:prulink-investgrowth-top-up-assurance-charge'
+  | 'branch:income-wealthlink-gl3-single-premium-charge'
+  | 'branch:income-wealthlink-gl3-top-up-premium-charge'
+  | 'branch:income-wealthlink-gl3-recurring-single-premium-charge'
+  | 'branch:income-wealthlink-gl3-open-ended-zero-surrender-charge'
+  | 'tokio-recurring-single-premium-routing'
   | 'branch:prosper-assurance-charge'
   | 'kernel:distribution-mode-assumption'
   | 'branch:assure-ii-pre-70-assurance'
@@ -164,6 +169,44 @@ const PRU_STRESS_FUNDS: IlpFund[] = [
     grossReturnLow: 0.03,
     grossReturnMid: 0.052,
     grossReturnHigh: 0.07,
+  },
+]
+
+const INCOME_BALANCED_FUNDS: IlpFund[] = [
+  {
+    name: 'Income Global Opportunities',
+    allocation: 0.6,
+    ocf: 0.012,
+    grossReturnLow: 0.045,
+    grossReturnMid: 0.072,
+    grossReturnHigh: 0.098,
+  },
+  {
+    name: 'Income Stable Yield',
+    allocation: 0.4,
+    ocf: 0.009,
+    grossReturnLow: 0.03,
+    grossReturnMid: 0.052,
+    grossReturnHigh: 0.07,
+  },
+]
+
+const INCOME_STRESS_FUNDS: IlpFund[] = [
+  {
+    name: 'Income Emerging Equity',
+    allocation: 0.65,
+    ocf: 0.023,
+    grossReturnLow: 0.038,
+    grossReturnMid: 0.078,
+    grossReturnHigh: 0.115,
+  },
+  {
+    name: 'Income Alternative Income',
+    allocation: 0.35,
+    ocf: 0.019,
+    grossReturnLow: 0.028,
+    grossReturnMid: 0.05,
+    grossReturnHigh: 0.068,
   },
 ]
 
@@ -1147,6 +1190,79 @@ function pruInvestGrowthRegularStressPolicy(
 ): IlpPolicyInput {
   return pruInvestGrowthRegularBaselinePolicy(snapshot, 'sgd-open-ended-cash', id, PRU_STRESS_FUNDS, {
     name: 'Golden PRULink InvestGrowth (SGD / Open-ended Cash OCF Stress)',
+  })
+}
+
+function incomeWealthLinkGl3BasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'income-wealthlink-gl3', 'sgd-open-ended-cash-or-srs', id, {
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden WealthLink (GL3) (SGD / Open-ended Cash Or Srs)',
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function incomeWealthLinkGl3BaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return incomeWealthLinkGl3BasePolicy(snapshot, id, INCOME_BALANCED_FUNDS)
+}
+
+function incomeWealthLinkGl3EventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return incomeWealthLinkGl3BasePolicy(snapshot, id, INCOME_BALANCED_FUNDS, {
+    name: 'Golden WealthLink (GL3) (SGD / Open-ended Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 6,
+        durationMonths: 1,
+        amount: 10_000,
+      },
+      {
+        id: 'rsp-1',
+        type: 'recurring-single-premium',
+        startPolicyMonth: 7,
+        durationMonths: 6,
+        amount: 500,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 11,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function incomeWealthLinkGl3StressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return incomeWealthLinkGl3BasePolicy(snapshot, id, INCOME_STRESS_FUNDS, {
+    name: 'Golden WealthLink (GL3) (SGD / Open-ended OCF Stress)',
   })
 }
 
@@ -2712,6 +2828,63 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'PRULink InvestGrowth cash alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'income-wealthlink-gl3',
+    variantId: 'sgd-open-ended-cash-or-srs',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:income-wealthlink-gl3-single-premium-charge',
+    ],
+    description: 'Baseline WealthLink (GL3) scenario proving the supported upfront single-premium charge corridor.',
+    integrityChecks: [
+      {
+        description: 'records a positive upfront single-premium charge at honest inception',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  },
+  {
+    productId: 'income-wealthlink-gl3',
+    variantId: 'sgd-open-ended-cash-or-srs',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:income-wealthlink-gl3-top-up-premium-charge',
+      'branch:income-wealthlink-gl3-recurring-single-premium-charge',
+      'branch:income-wealthlink-gl3-open-ended-zero-surrender-charge',
+      'tokio-recurring-single-premium-routing',
+    ],
+    description: 'WealthLink (GL3) event-heavy scenario proving top-up, recurring single-premium, and zero-charge withdrawal behavior.',
+    integrityChecks: [
+      {
+        description: 'top-up and recurring single-premium events increase cumulative fees beyond the initial single-premium-only baseline',
+        test: (fixture, artifact) => {
+          const withoutEventCharges = ilpPolicySchema.parse({
+            ...fixture.policy,
+            eventChargeRules: [],
+          })
+          const withEventCharges = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutEventChargeFees = analyzeIlpPolicy(withoutEventCharges).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withEventCharges > withoutEventChargeFees
+        },
+      },
+      {
+        description: 'the seeded withdrawal executes through the published open-ended withdrawal corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'income-wealthlink-gl3',
+    variantId: 'sgd-open-ended-cash-or-srs',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'WealthLink (GL3) alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'hsbc-life-flexi-protector',
     variantId: 'sgd-open-ended-regular-pay',
     scenarioId: 'assurance-choice-vs-max',
@@ -3095,6 +3268,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'prudential-prulink-investgrowth' && definition.scenarioId === 'ocf-stress') {
     return pruInvestGrowthRegularStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'income-wealthlink-gl3' && definition.scenarioId === 'baseline') {
+    return incomeWealthLinkGl3BaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'income-wealthlink-gl3' && definition.scenarioId === 'event-heavy') {
+    return incomeWealthLinkGl3EventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'income-wealthlink-gl3' && definition.scenarioId === 'ocf-stress') {
+    return incomeWealthLinkGl3StressPolicy(snapshot, id)
   }
   if (definition.productId === 'prudential-pruvantage-prosper' && definition.scenarioId === 'event-heavy') {
     return prosperEventHeavyPolicy(snapshot, id)

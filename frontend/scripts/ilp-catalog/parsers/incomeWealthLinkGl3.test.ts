@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseIncomeWealthLinkGl3', () => {
-  it('builds a valid open-ended partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid open-ended supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseIncomeWealthLinkGl3({
       document,
@@ -23,8 +23,8 @@ describe('parseIncomeWealthLinkGl3', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('income-wealthlink-gl3')
     expect(product.productName).toBe('WealthLink (GL3)')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:income-wealthlink-gl3-single-premium-charge',
       'branch:income-wealthlink-gl3-top-up-premium-charge',
@@ -33,7 +33,7 @@ describe('parseIncomeWealthLinkGl3', () => {
       'tokio-recurring-single-premium-routing',
     ])
     expect(product.metadataOnlyBehaviors).toContain('income-wealthlink-gl3-fund-level-annual-management-fee')
-    expect(product.metadataOnlyBehaviors).toContain('income-wealthlink-gl3-single-premium-principal-tracking')
+    expect(product.metadataOnlyBehaviors).not.toContain('income-wealthlink-gl3-single-premium-principal-tracking')
     expect(product.metadataOnlyBehaviors).not.toContain('income-wealthlink-gl3-regular-top-up-enrollment')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cash-or-srs'])
 
@@ -53,7 +53,7 @@ describe('parseIncomeWealthLinkGl3', () => {
     expect(variant?.feeRules).toEqual([
       expect.objectContaining({
         id: 'single-premium-charge',
-        basis: 'annual-contribution',
+        basis: 'initial-single-premium',
         activeWindow: 'policy-term',
         rate: 0.035,
       }),

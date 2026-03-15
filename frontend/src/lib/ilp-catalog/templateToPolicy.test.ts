@@ -2215,7 +2215,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('regular top-up enrollment'))).toBe(false)
   })
 
-  it('maps WealthLink (GL3) into a partial seed with recurring single premium top-up routing', () => {
+  it('maps WealthLink (GL3) into a supported seed with initial single-premium and recurring top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'income-wealthlink-gl3')
     expect(product).toBeDefined()
@@ -2225,13 +2225,27 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('WealthLink (GL3) (SGD / Open-ended (Cash Or Srs))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-wealthlink-gl3-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-wealthlink-gl3-recurring-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-recurring-single-premium-routing')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('income-wealthlink-gl3-single-premium-principal-tracking')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('income-wealthlink-gl3-regular-top-up-enrollment')
+    expect(seed.monthlyContribution).toBe(0)
+    expect(seed.initialSinglePremium).toBe(0)
     expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'single-premium-charge',
+        basis: 'initial-single-premium',
+        appliesTo: ['policy'],
+        rate: 0.035,
+        amount: 0,
+      }),
     ])
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({
@@ -2259,6 +2273,7 @@ describe('templateVariantToPolicySeed', () => {
         amount: 0,
       }),
     ])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('gross initial single premium lump sum'))).toBe(true)
   })
 
   it('maps HSBC Life Wealth Invest (CPF) into a partial seed with zero-charge recurring single premiums', () => {
