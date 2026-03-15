@@ -17610,18 +17610,19 @@
       "branch:etiqa-flex-prime-ii-top-up-premium-charge",
       "branch:etiqa-flex-prime-ii-startup-bonus-recovery",
       "branch:etiqa-flex-prime-ii-partial-withdrawal-charge",
-      "branch:etiqa-flex-prime-ii-surrender-charge"
+      "branch:etiqa-flex-prime-ii-surrender-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "etiqa-flex-prime-ii-premium-free-period-gating",
       "etiqa-flex-prime-ii-premium-shortfall-charge",
       "etiqa-flex-prime-ii-free-partial-withdrawal-benefit",
       "etiqa-flex-prime-ii-insurance-charge",
-      "etiqa-flex-prime-ii-distribution-paying-fund-election",
+      "etiqa-flex-prime-ii-distribution-paying-fund-threshold-and-withdrawal-consequences",
       "etiqa-flex-prime-ii-change-of-life-insured"
     ],
     "warnings": [
-      "Invest flex prime II is currently modeled as a partial product in V1. The parser captures the bounded accumulation mechanics, but Premium-Free Period gating, premium shortfall charge, insurance charge, and distribution-paying fund election remain outside the calculator."
+      "Invest flex prime II is currently modeled as a partial product in V1. The parser captures the bounded accumulation mechanics and reinvest-default distribution support, but Premium-Free Period gating, premium shortfall charge, insurance charge, and distribution-paying fund thresholds and withdrawal consequences remain outside the calculator."
     ],
     "archived": false,
     "variants": [
@@ -17948,6 +17949,29 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Distribution-paying ILP Sub-Funds default to reinvestment unless the policyholder elects payout or accumulation.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.",
+            "Minimum S$40 payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 13,
+              "section": "Distribution Paying Fund",
+              "excerpt": "24. Distribution Paying Fund Where the ILP Sub-Fund under this Policy provides for the payment of distribution, the Company has the sole discretion to determine the following: a) the distribution payable for the units in"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -17963,14 +17987,15 @@
         "warnings": [
           "Flexi 3 is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "No Premium-Free Period applies for 10 Years – Flexi 3.",
-          "Premium-Free Period gating, premium-shortfall charge, insurance charge, and distribution-paying fund election remain informational only in V1."
+          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
           "Insurance charge for death and terminal illness remains informational only.",
-          "Distribution-paying fund election remains informational only; reinvestment/cash election is not modeled.",
+          "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
         ],
@@ -18399,6 +18424,29 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Distribution-paying ILP Sub-Funds default to reinvestment unless the policyholder elects payout or accumulation.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.",
+            "Minimum S$40 payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 13,
+              "section": "Distribution Paying Fund",
+              "excerpt": "24. Distribution Paying Fund Where the ILP Sub-Fund under this Policy provides for the payment of distribution, the Company has the sole discretion to determine the following: a) the distribution payable for the units in"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -18414,14 +18462,15 @@
         "warnings": [
           "Flexi 5 is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "Up to 84 months of Premium-Free Period may be accumulated across the 10-year premium term.",
-          "Premium-Free Period gating, premium-shortfall charge, insurance charge, and distribution-paying fund election remain informational only in V1."
+          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
           "Insurance charge for death and terminal illness remains informational only.",
-          "Distribution-paying fund election remains informational only; reinvestment/cash election is not modeled.",
+          "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
         ],
@@ -18931,6 +18980,29 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Distribution-paying ILP Sub-Funds default to reinvestment unless the policyholder elects payout or accumulation.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.",
+            "Minimum S$40 payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 13,
+              "section": "Distribution Paying Fund",
+              "excerpt": "24. Distribution Paying Fund Where the ILP Sub-Fund under this Policy provides for the payment of distribution, the Company has the sole discretion to determine the following: a) the distribution payable for the units in"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -18956,14 +19028,15 @@
         "warnings": [
           "20 Years is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "Up to 132 months of Premium-Free Period may be accumulated across the 20-year premium term.",
-          "Premium-Free Period gating, premium-shortfall charge, insurance charge, and distribution-paying fund election remain informational only in V1."
+          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
           "Insurance charge for death and terminal illness remains informational only.",
-          "Distribution-paying fund election remains informational only; reinvestment/cash election is not modeled.",
+          "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
         ],
@@ -19066,18 +19139,19 @@
       "branch:etiqa-flex-pro-top-up-premium-charge",
       "branch:etiqa-flex-pro-startup-bonus-recovery",
       "branch:etiqa-flex-pro-partial-withdrawal-charge",
-      "branch:etiqa-flex-pro-surrender-charge"
+      "branch:etiqa-flex-pro-surrender-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "etiqa-flex-pro-premium-free-period-gating",
       "etiqa-flex-pro-premium-shortfall-charge",
       "etiqa-flex-pro-free-partial-withdrawal-benefit",
       "etiqa-flex-pro-insurance-charge",
-      "etiqa-flex-pro-distribution-paying-fund-election",
+      "etiqa-flex-pro-distribution-paying-fund-threshold-and-withdrawal-consequences",
       "etiqa-flex-pro-change-of-life-insured"
     ],
     "warnings": [
-      "Invest flex pro is currently modeled as a partial product in V1. The parser captures the bounded accumulation mechanics, but Premium-Free Period gating, premium shortfall charge, insurance charge, and distribution-paying fund election remain outside the calculator."
+      "Invest flex pro is currently modeled as a partial product in V1. The parser captures the bounded accumulation mechanics and reinvest-default distribution support, but Premium-Free Period gating, premium shortfall charge, insurance charge, and distribution-paying fund thresholds and withdrawal consequences remain outside the calculator."
     ],
     "archived": false,
     "variants": [
@@ -19404,6 +19478,29 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Distribution-paying ILP Sub-Funds default to reinvestment unless the policyholder elects payout or accumulation.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.",
+            "Minimum S$40 payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 13,
+              "section": "Distribution Paying Fund",
+              "excerpt": "24. Distribution Paying Fund Where the ILP Sub-Fund under this Policy provides for the payment of distribution, the Company has the sole discretion to determine the following: a) the distribution payable for the units in"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -19419,14 +19516,15 @@
         "warnings": [
           "Flexi 3 is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "No Premium-Free Period applies for 10 Years – Flexi 3.",
-          "Premium-Free Period gating, premium-shortfall charge, insurance charge, and distribution-paying fund election remain informational only in V1."
+          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
           "Insurance charge for death and terminal illness remains informational only.",
-          "Distribution-paying fund election remains informational only; reinvestment/cash election is not modeled.",
+          "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
         ],
@@ -19855,6 +19953,29 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Distribution-paying ILP Sub-Funds default to reinvestment unless the policyholder elects payout or accumulation.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.",
+            "Minimum S$40 payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 13,
+              "section": "Distribution Paying Fund",
+              "excerpt": "24. Distribution Paying Fund Where the ILP Sub-Fund under this Policy provides for the payment of distribution, the Company has the sole discretion to determine the following: a) the distribution payable for the units in"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -19870,14 +19991,15 @@
         "warnings": [
           "Flexi 5 is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "Up to 84 months of Premium-Free Period may be accumulated across the 10-year premium term.",
-          "Premium-Free Period gating, premium-shortfall charge, insurance charge, and distribution-paying fund election remain informational only in V1."
+          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
           "Insurance charge for death and terminal illness remains informational only.",
-          "Distribution-paying fund election remains informational only; reinvestment/cash election is not modeled.",
+          "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
         ],
@@ -20387,6 +20509,29 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Distribution-paying ILP Sub-Funds default to reinvestment unless the policyholder elects payout or accumulation.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.",
+            "Minimum S$40 payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 13,
+              "section": "Distribution Paying Fund",
+              "excerpt": "24. Distribution Paying Fund Where the ILP Sub-Fund under this Policy provides for the payment of distribution, the Company has the sole discretion to determine the following: a) the distribution payable for the units in"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -20412,14 +20557,15 @@
         "warnings": [
           "20 Years is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "Up to 132 months of Premium-Free Period may be accumulated across the 20-year premium term.",
-          "Premium-Free Period gating, premium-shortfall charge, insurance charge, and distribution-paying fund election remain informational only in V1."
+          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
           "Insurance charge for death and terminal illness remains informational only.",
-          "Distribution-paying fund election remains informational only; reinvestment/cash election is not modeled.",
+          "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
         ],
@@ -25220,18 +25366,19 @@
       "branch:etiqa-vista-top-up-premium-charge",
       "branch:etiqa-vista-startup-bonus-recovery",
       "branch:etiqa-vista-partial-withdrawal-charge",
-      "branch:etiqa-vista-surrender-charge"
+      "branch:etiqa-vista-surrender-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "etiqa-vista-premium-free-period-gating",
       "etiqa-vista-premium-shortfall-charge",
       "etiqa-vista-free-partial-withdrawal-benefit",
       "etiqa-vista-insurance-charge",
-      "etiqa-vista-distribution-paying-fund-election",
+      "etiqa-vista-distribution-paying-fund-threshold-and-withdrawal-consequences",
       "etiqa-vista-change-of-life-insured"
     ],
     "warnings": [
-      "Invest vista is currently modeled as a partial product in V1. The parser captures the bounded accumulation mechanics, but Premium-Free Period gating, premium shortfall charge, insurance charge, and distribution-paying fund election remain outside the calculator."
+      "Invest vista is currently modeled as a partial product in V1. The parser captures the bounded accumulation mechanics and reinvest-default distribution support, but Premium-Free Period gating, premium shortfall charge, insurance charge, and distribution-paying fund thresholds and withdrawal consequences remain outside the calculator."
     ],
     "archived": false,
     "variants": [
@@ -25558,6 +25705,29 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Distribution-paying ILP Sub-Funds default to reinvestment unless the policyholder elects payout or accumulation.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.",
+            "Minimum S$40 payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 13,
+              "section": "Distribution Paying Fund",
+              "excerpt": "24. Distribution Paying Fund Where the ILP Sub-Fund under this Policy provides for the payment of distribution, the Company has the sole discretion to determine the following: a) the distribution payable for the units in"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -25573,14 +25743,15 @@
         "warnings": [
           "Flexi 3 is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "No Premium-Free Period applies for 10 Years – Flexi 3.",
-          "Premium-Free Period gating, premium-shortfall charge, insurance charge, and distribution-paying fund election remain informational only in V1."
+          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
           "Insurance charge for death and terminal illness remains informational only.",
-          "Distribution-paying fund election remains informational only; reinvestment/cash election is not modeled.",
+          "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
         ],
@@ -26009,6 +26180,29 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Distribution-paying ILP Sub-Funds default to reinvestment unless the policyholder elects payout or accumulation.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.",
+            "Minimum S$40 payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 13,
+              "section": "Distribution Paying Fund",
+              "excerpt": "24. Distribution Paying Fund Where the ILP Sub-Fund under this Policy provides for the payment of distribution, the Company has the sole discretion to determine the following: a) the distribution payable for the units in"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -26024,14 +26218,15 @@
         "warnings": [
           "Flexi 5 is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "Up to 84 months of Premium-Free Period may be accumulated across the 10-year premium term.",
-          "Premium-Free Period gating, premium-shortfall charge, insurance charge, and distribution-paying fund election remain informational only in V1."
+          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
           "Insurance charge for death and terminal illness remains informational only.",
-          "Distribution-paying fund election remains informational only; reinvestment/cash election is not modeled.",
+          "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
         ],
@@ -26541,6 +26736,29 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "regular",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Distribution-paying ILP Sub-Funds default to reinvestment unless the policyholder elects payout or accumulation.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.",
+            "Minimum S$40 payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 13,
+              "section": "Distribution Paying Fund",
+              "excerpt": "24. Distribution Paying Fund Where the ILP Sub-Fund under this Policy provides for the payment of distribution, the Company has the sole discretion to determine the following: a) the distribution payable for the units in"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -26566,14 +26784,15 @@
         "warnings": [
           "20 Years is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "Up to 132 months of Premium-Free Period may be accumulated across the 20-year premium term.",
-          "Premium-Free Period gating, premium-shortfall charge, insurance charge, and distribution-paying fund election remain informational only in V1."
+          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
           "Insurance charge for death and terminal illness remains informational only.",
-          "Distribution-paying fund election remains informational only; reinvestment/cash election is not modeled.",
+          "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
         ],

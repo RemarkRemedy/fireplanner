@@ -26,8 +26,10 @@ describe('parseEtiqaInvestVista', () => {
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toContain('branch:etiqa-vista-policy-charge')
     expect(product.modeledEconomics).toContain('branch:etiqa-vista-startup-bonus')
+    expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-vista-premium-shortfall-charge')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-vista-insurance-charge')
+    expect(product.metadataOnlyBehaviors).toContain('etiqa-vista-distribution-paying-fund-threshold-and-withdrawal-consequences')
 
     expect(product.variants).toHaveLength(3)
     expect(product.variants.map((variant) => variant.id)).toEqual([
@@ -39,7 +41,6 @@ describe('parseEtiqaInvestVista', () => {
     const flexi5 = product.variants.find((entry) => entry.id === 'sgd-mip-10-flexi-5')
     expect(flexi5).toBeDefined()
     expect(flexi5?.accounts.map((account) => account.id)).toEqual(['regular', 'topup'])
-    expect(flexi5?.chargeRules).toBeUndefined()
     expect(flexi5?.feeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -67,5 +68,17 @@ describe('parseEtiqaInvestVista', () => {
         expect.objectContaining({ id: 'partial-withdrawal-charge', trigger: 'partial-withdrawal' }),
       ]),
     )
+    expect(flexi5?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['regular', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('cash payout requires a manual annual distribution-yield assumption'),
+      ]),
+      sourceRefs: expect.any(Array),
+    })
   }, 30_000)
 })
