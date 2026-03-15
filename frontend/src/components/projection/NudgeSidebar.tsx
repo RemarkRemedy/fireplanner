@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { Check } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { getNudgeFlow, NUDGE_PRIORITY, NUDGE_TO_SECTION } from '@/lib/data/nudgeFlows'
@@ -16,23 +18,24 @@ export function NudgeSidebar({ onOpenDrawer }: NudgeSidebarProps) {
   const completedNudgeFlows = useUIStore((s) => s.completedNudgeFlows)
   const { sections } = useSectionCompletion()
 
-  const visibleNudges = NUDGE_PRIORITY.filter((flowId) => {
-    // Hide if already completed
-    if (completedNudgeFlows.includes(flowId)) return false
-
+  const visibleNudges = NUDGE_PRIORITY.map((flowId) => {
+    const isCompleted = completedNudgeFlows.includes(flowId)
     const sectionId = NUDGE_TO_SECTION[flowId]
     const section = sections[sectionId]
     const status = section?.status ?? 'default'
 
-    // Show if section is still at default (not customized at all)
-    if (status === 'default') return true
+    if (isCompleted) return { flowId, completed: true }
+    if (status === 'default') return { flowId, completed: false }
+    if (status === 'customized' && setupPopulatedSections.includes(sectionId)) {
+      return { flowId, completed: false }
+    }
+    return null
+  }).filter((x): x is { flowId: NudgeFlowId; completed: boolean } => x !== null)
 
-    // Show if section was customized only via setup (not by user directly)
-    if (status === 'customized' && setupPopulatedSections.includes(sectionId)) return true
-
-    // Hide if user has customized this section directly
-    return false
-  })
+  const [showAll, setShowAll] = useState(false)
+  const INITIAL_SHOW_COUNT = 3
+  const displayedNudges = showAll ? visibleNudges : visibleNudges.slice(0, INITIAL_SHOW_COUNT)
+  const hiddenCount = visibleNudges.length - INITIAL_SHOW_COUNT
 
   const handleRefine = (flowId: NudgeFlowId) => {
     const flow = getNudgeFlow(flowId)
@@ -58,20 +61,30 @@ export function NudgeSidebar({ onOpenDrawer }: NudgeSidebarProps) {
     )
   }
 
+  const sortedNudges = [...displayedNudges].sort((a, b) => Number(a.completed) - Number(b.completed))
+
   return (
     <div className="flex flex-col gap-3">
-      {visibleNudges.map((flowId) => {
-        const flow = getNudgeFlow(flowId)
+      {sortedNudges.map((item) => {
+        const flow = getNudgeFlow(item.flowId)
         if (!flow) return null
 
         return (
-          <Card key={flowId}>
+          <Card key={item.flowId} className={item.completed ? 'opacity-60' : ''}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold flex items-center justify-between">
                 <span>{flow.label}</span>
-                <span className="text-xs font-normal text-muted-foreground">
-                  ~{flow.estimatedMinutes} min
-                </span>
+                {item.completed ? (
+                  <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                    <Check className="h-3 w-3" /> Refined
+                  </span>
+                ) : (
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {flow.estimatedMinutes >= 4
+                      ? `Under ${flow.estimatedMinutes} mins`
+                      : `~${flow.estimatedMinutes} min`}
+                  </span>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
@@ -79,15 +92,25 @@ export function NudgeSidebar({ onOpenDrawer }: NudgeSidebarProps) {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => handleRefine(flowId)}
+                onClick={() => handleRefine(item.flowId)}
                 className="w-full"
               >
-                Refine
+                {item.completed ? 'Update' : 'Add details'}
               </Button>
             </CardContent>
           </Card>
         )
       })}
+      {!showAll && hiddenCount > 0 && (
+        <Button variant="ghost" size="sm" onClick={() => setShowAll(true)} className="w-full text-muted-foreground">
+          Show {hiddenCount} more refinements
+        </Button>
+      )}
+      {showAll && visibleNudges.length > INITIAL_SHOW_COUNT && (
+        <Button variant="ghost" size="sm" onClick={() => setShowAll(false)} className="w-full text-muted-foreground">
+          Show fewer
+        </Button>
+      )}
     </div>
   )
 }
