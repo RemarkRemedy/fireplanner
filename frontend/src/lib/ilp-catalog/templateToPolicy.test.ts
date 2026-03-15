@@ -181,7 +181,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
     expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-voyage-premium-base-amf')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-voyage-premium-holiday-charge-after-free-duration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-voyage-dividend-payout-threshold')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -225,6 +227,19 @@ describe('templateVariantToPolicySeed', () => {
     )
     expect(seed.bonuses.find((bonus) => bonus.id === 'startup-bonus-y1')?.tieredRates).toHaveLength(2)
     expect(seed.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.rate).toBe(0.011)
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['regular', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
   it('maps HSBC Wealth Focus Flexi 3 into a partial seed with two-account routing and holiday charges', () => {

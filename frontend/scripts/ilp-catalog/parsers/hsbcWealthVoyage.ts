@@ -378,12 +378,27 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', m
     bonuses,
     feeRules,
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['regular', 'topup'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption, and the published S$30 minimum payout threshold remains informational only.',
+      ],
+      sourceRefs: [page19],
+    },
     eecTable: EEC_SCHEDULES[mipLength].map(roundRate),
     warnings: [
-      'This template models the premium-base AMF, start-up bonus, BRC, top-up charge, PWC, EEC, and the modeled subset of power-up / loyalty bonus suspension rules.',
-      'Premium Holiday Charge waiver exhaustion, backpaid premium-holiday AMF reconciliation, regular-withdrawal-linked loyalty suspension, and dividend distribution remain metadata-only for this product family.',
+      'This template models the premium-base AMF, start-up bonus, BRC, top-up charge, PWC, EEC, the modeled subset of power-up / loyalty bonus suspension rules, and the reinvest-default distribution-mode assumption surface.',
+      'Premium Holiday Charge waiver exhaustion, backpaid premium-holiday AMF reconciliation, regular-withdrawal-linked loyalty suspension, and the published S$30 dividend-payout threshold remain metadata-only for this product family.',
     ],
-    unsupportedItems: [],
+    unsupportedItems: [
+      'The published S$30 dividend-payout threshold, bank-credit fallback to reinvestment, and cash payout in SGD remain informational only.',
+    ],
     sourceRefs: [page2, page4, page5, page6, page10, page11, page12, page13, page14, page19],
   }
 }
@@ -409,16 +424,17 @@ export function parseHsbcWealthVoyage(context: ParseContext): IlpCatalogProduct 
       'hsbc-voyage-topup-premium-charge',
       'hsbc-voyage-partial-withdrawal-charge',
       'hsbc-voyage-eec',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'hsbc-voyage-premium-holiday-charge-after-free-duration',
       'hsbc-voyage-premium-holiday-backpay-amf-reconciliation',
       'hsbc-voyage-regular-withdrawal-loyalty-suspension',
-      'hsbc-voyage-dividend-distribution-option',
+      'hsbc-voyage-dividend-payout-threshold',
       'hsbc-voyage-life-replacement-option',
     ],
     warnings: [
-      'Wealth Voyage remains partial because free premium-holiday duration tracking and dividend payout mode are not executable from the current runtime alone.',
+      'Wealth Voyage remains partial because free premium-holiday duration tracking, the top-up-first regular-withdrawal facility, and protection-side behavior are not executable from the current runtime alone.',
     ],
     archived: false,
     variants: [
