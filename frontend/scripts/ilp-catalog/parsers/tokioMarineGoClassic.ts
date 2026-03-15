@@ -106,6 +106,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page2 = sourceRef(2, 'Initial Bonus / Loyalty Bonus / Additional Bonus', snippetNear(document, 2, 'Loyalty Bonus', 22))
   const page4 = sourceRef(4, 'Regular Premium Routing', snippetNear(document, 4, 'Regular premium due during the first 24 months', 20))
   const page5 = sourceRef(5, 'Recurring Single Premium / Top-up Premium / Premium Holiday', snippetNear(document, 5, 'Recurring Single Premium', 22))
+  const page8 = sourceRef(8, 'Dividend Distribution', snippetNear(document, 8, 'Dividend Distribution', 28))
   const page9 = sourceRef(9, 'Initial Charge / Policy Charge / MPC', snippetNear(document, 9, 'Initial Charge', 28))
   const page10 = sourceRef(10, 'Premium Charge / Surrender Charge', snippetNear(document, 10, 'Premium Charge for Recurring Single Premium and Top-up Premium', 26))
   const page14 = sourceRef(14, 'Appendix A Surrender Charge', snippetNear(document, 14, 'Premium Payment Term: 25', 24))
@@ -177,16 +178,44 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: buildBonuses(document),
     feeRules: [],
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation'],
+      cashPayoutWindows: [
+        {
+          startPolicyYear: 1,
+          endPolicyYear: 25,
+          accountIds: ['accumulation'],
+        },
+        {
+          startPolicyYear: 26,
+          endPolicyYear: null,
+          accountIds: ['initial', 'accumulation'],
+        },
+      ],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.',
+        'During the 25-year premium payment term, only dividends from the Accumulation Units Account may be paid in cash.',
+        'After the premium payment term, dividends from both the Initial Units Account and Accumulation Units Account may be paid in cash.',
+        'The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1.',
+      ],
+      sourceRefs: [page8],
+    },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
       'This partial template models the SGD / premium-payment-term-25 corridor only.',
-      'This partial template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, and the published 25-year surrender charge on the Initial Units Account.',
+      'This partial template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the published 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
     ],
     unsupportedItems: [
       'Loyalty Bonus and Additional Bonus remain metadata-only because their annual qualification and adjustment-factor formulas need stateful bonus tracking beyond the current engine.',
-      'Advanced Death Benefit monthly protection charges, premium-holiday lapse behavior, regular withdrawal, dividend distribution election, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
+      'Advanced Death Benefit monthly protection charges, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
+      'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1.',
     ],
-    sourceRefs: [page1, page2, page4, page5, page9, page10, page14],
+    sourceRefs: [page1, page2, page4, page5, page8, page9, page10, page14],
   }
 }
 
@@ -212,6 +241,7 @@ export function parseTokioMarineGoClassic(context: ParseContext): IlpCatalogProd
       'tokio-top-up-premium-charge',
       'tokio-recurring-single-premium-charge',
       'tokio-initial-account-surrender-charge',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'tokio-goclassic-loyalty-bonus-adjustment-factor',
@@ -219,13 +249,13 @@ export function parseTokioMarineGoClassic(context: ParseContext): IlpCatalogProd
       'tokio-goclassic-advanced-death-benefit-mpc',
       'tokio-goclassic-premium-holiday-lapse-state',
       'tokio-goclassic-regular-withdrawal-facility',
-      'tokio-goclassic-dividend-distribution-option',
+      'tokio-goclassic-dividend-payout-threshold-and-record-date-instructions',
       'tokio-goclassic-credit-card-charge',
     ],
     warnings: [
-      '#goClassic is cataloged as a partial modeled subset in V1. The parser captures one honest SGD / premium-payment-term-25 corridor with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, and the 25-year surrender charge on the Initial Units Account.',
+      '#goClassic is cataloged as a partial modeled subset in V1. The parser captures one honest SGD / premium-payment-term-25 corridor with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
       'Loyalty Bonus and Additional Bonus remain informational only because the source uses annual qualification gates and an adjustment-factor formula that the current engine does not execute.',
-      'Advanced Death Benefit monthly protection charges, premium-holiday lapse behavior, regular withdrawal, dividend distribution election, and other corridors remain outside the current engine.',
+      'Advanced Death Benefit monthly protection charges, premium-holiday lapse behavior, regular withdrawal, and other corridors remain outside the current engine.',
       'Structured extraction validated against the #goClassic product summary text layer.',
     ],
     archived: false,

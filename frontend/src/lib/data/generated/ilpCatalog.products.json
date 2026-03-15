@@ -61992,7 +61992,8 @@
       "tokio-recurring-single-premium-routing",
       "tokio-top-up-premium-charge",
       "tokio-recurring-single-premium-charge",
-      "tokio-initial-account-surrender-charge"
+      "tokio-initial-account-surrender-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "tokio-goclassic-loyalty-bonus-adjustment-factor",
@@ -62000,13 +62001,13 @@
       "tokio-goclassic-advanced-death-benefit-mpc",
       "tokio-goclassic-premium-holiday-lapse-state",
       "tokio-goclassic-regular-withdrawal-facility",
-      "tokio-goclassic-dividend-distribution-option",
+      "tokio-goclassic-dividend-payout-threshold-and-record-date-instructions",
       "tokio-goclassic-credit-card-charge"
     ],
     "warnings": [
-      "#goClassic is cataloged as a partial modeled subset in V1. The parser captures one honest SGD / premium-payment-term-25 corridor with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, and the 25-year surrender charge on the Initial Units Account.",
+      "#goClassic is cataloged as a partial modeled subset in V1. The parser captures one honest SGD / premium-payment-term-25 corridor with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
       "Loyalty Bonus and Additional Bonus remain informational only because the source uses annual qualification gates and an adjustment-factor formula that the current engine does not execute.",
-      "Advanced Death Benefit monthly protection charges, premium-holiday lapse behavior, regular withdrawal, dividend distribution election, and other corridors remain outside the current engine.",
+      "Advanced Death Benefit monthly protection charges, premium-holiday lapse behavior, regular withdrawal, and other corridors remain outside the current engine.",
       "Structured extraction validated against the #goClassic product summary text layer."
     ],
     "archived": false,
@@ -62227,6 +62228,47 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "initial",
+            "accumulation"
+          ],
+          "cashPayoutWindows": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 25,
+              "accountIds": [
+                "accumulation"
+              ]
+            },
+            {
+              "startPolicyYear": 26,
+              "endPolicyYear": null,
+              "accountIds": [
+                "initial",
+                "accumulation"
+              ]
+            }
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.",
+            "During the 25-year premium payment term, only dividends from the Accumulation Units Account may be paid in cash.",
+            "After the premium payment term, dividends from both the Initial Units Account and Accumulation Units Account may be paid in cash.",
+            "The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 8,
+              "section": "Dividend Distribution",
+              "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -62256,11 +62298,12 @@
         ],
         "warnings": [
           "This partial template models the SGD / premium-payment-term-25 corridor only.",
-          "This partial template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, and the published 25-year surrender charge on the Initial Units Account."
+          "This partial template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the published 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface."
         ],
         "unsupportedItems": [
           "Loyalty Bonus and Additional Bonus remain metadata-only because their annual qualification and adjustment-factor formulas need stateful bonus tracking beyond the current engine.",
-          "Advanced Death Benefit monthly protection charges, premium-holiday lapse behavior, regular withdrawal, dividend distribution election, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only."
+          "Advanced Death Benefit monthly protection charges, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.",
+          "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1."
         ],
         "sourceRefs": [
           {
@@ -62282,6 +62325,11 @@
             "page": 5,
             "section": "Recurring Single Premium / Top-up Premium / Premium Holiday",
             "excerpt": "100% of each recurring single premium paid net of premium charge will be used to purchase units and allocated to the Accumulation Units Account in accordance with your latest investment allocation instructions of the pol"
+          },
+          {
+            "page": 8,
+            "section": "Dividend Distribution",
+            "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
           },
           {
             "page": 9,
@@ -62322,7 +62370,8 @@
       "tokio-recurring-single-premium-routing",
       "tokio-top-up-premium-charge",
       "tokio-recurring-single-premium-charge",
-      "tokio-initial-account-surrender-charge"
+      "tokio-initial-account-surrender-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "tokio-goclassic-secure-locked-in-policy-value",
@@ -62331,13 +62380,13 @@
       "tokio-goclassic-secure-additional-bonus-qualification",
       "tokio-goclassic-secure-premium-holiday-lapse-state",
       "tokio-goclassic-secure-regular-withdrawal-facility",
-      "tokio-goclassic-secure-dividend-distribution-option",
+      "tokio-goclassic-secure-dividend-payout-threshold-and-record-date-instructions",
       "tokio-goclassic-secure-credit-card-charge",
       "tokio-goclassic-secure-aggregation-limit",
       "tokio-goclassic-secure-change-of-life-assured"
     ],
     "warnings": [
-      "#goClassic Secure is cataloged as a partial modeled subset in V1. The parser captures one honest SGD / premium-payment-term-25 corridor with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, and the 25-year surrender charge on the Initial Units Account.",
+      "#goClassic Secure is cataloged as a partial modeled subset in V1. The parser captures one honest SGD / premium-payment-term-25 corridor with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
       "Locked-in Policy Value protection, monthly protection charges, and the related death-benefit behavior remain informational only because the current engine does not execute those protection-state mechanics.",
       "Loyalty Bonus and Additional Bonus remain informational only because the source uses annual qualification gates and an adjustment-factor formula that the current engine does not execute.",
       "Structured extraction validated against the #goClassic Secure product summary text layer."
@@ -62380,9 +62429,9 @@
                 "excerpt": "*Accumulation Units Account refers to the account to which units purchased with the regular premium due from th the 25 month of the commencement date as well as any recurring single premium, top-up premium and units purc"
               },
               {
-                "page": 9,
+                "page": 10,
                 "section": "Initial Charge / Policy Charge / MPC",
-                "excerpt": "Investment Funds We offer a suite of funds as set out in the offering fund documents available on our website, www.tokiomarine.com. We may from time to time change the address of our website without any reference to you."
+                "excerpt": "Initial Charge During the premium payment term, an initial charge of 5.4% p.a. of the Initial Units Account value will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial Units A"
               }
             ]
           },
@@ -62426,9 +62475,9 @@
                 "excerpt": "(ii) the sum of all recurring single premium as committed by you at the commencement of the recurring single premium; and (iii) the sum of all top-up premium as committed by you while the policy is in force. Regular Prem"
               },
               {
-                "page": 9,
+                "page": 10,
                 "section": "Initial Charge / Policy Charge / MPC",
-                "excerpt": "Investment Funds We offer a suite of funds as set out in the offering fund documents available on our website, www.tokiomarine.com. We may from time to time change the address of our website without any reference to you."
+                "excerpt": "Initial Charge During the premium payment term, an initial charge of 5.4% p.a. of the Initial Units Account value will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial Units A"
               },
               {
                 "page": 10,
@@ -62560,6 +62609,47 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "initial",
+            "accumulation"
+          ],
+          "cashPayoutWindows": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 25,
+              "accountIds": [
+                "accumulation"
+              ]
+            },
+            {
+              "startPolicyYear": 26,
+              "endPolicyYear": null,
+              "accountIds": [
+                "initial",
+                "accumulation"
+              ]
+            }
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.",
+            "During the 25-year premium payment term, only dividends from the Accumulation Units Account may be paid in cash.",
+            "After the premium payment term, dividends from both the Initial Units Account and Accumulation Units Account may be paid in cash.",
+            "The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 9,
+              "section": "Dividend Distribution",
+              "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -62589,12 +62679,13 @@
         ],
         "warnings": [
           "This partial template models the SGD / premium-payment-term-25 corridor only.",
-          "This partial template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, and the published 25-year surrender charge on the Initial Units Account."
+          "This partial template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the published 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface."
         ],
         "unsupportedItems": [
           "Locked-in Policy Value, monthly protection charges, and the related death-benefit mechanics remain metadata-only because they require protection-state tracking beyond the current engine.",
           "Loyalty Bonus and Additional Bonus remain metadata-only because their annual qualification and adjustment-factor formulas need stateful bonus tracking beyond the current engine.",
-          "Premium-holiday lapse behavior, regular withdrawal, dividend distribution election, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only."
+          "Premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.",
+          "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1."
         ],
         "sourceRefs": [
           {
@@ -62619,8 +62710,13 @@
           },
           {
             "page": 9,
+            "section": "Dividend Distribution",
+            "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+          },
+          {
+            "page": 10,
             "section": "Initial Charge / Policy Charge / MPC",
-            "excerpt": "Investment Funds We offer a suite of funds as set out in the offering fund documents available on our website, www.tokiomarine.com. We may from time to time change the address of our website without any reference to you."
+            "excerpt": "Initial Charge During the premium payment term, an initial charge of 5.4% p.a. of the Initial Units Account value will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial Units A"
           },
           {
             "page": 10,
@@ -64342,18 +64438,19 @@
       "tokio-regular-premium-reduction-consumes-recurring-single-premium-first",
       "tokio-top-up-premium-charge",
       "tokio-recurring-single-premium-charge",
-      "tokio-initial-account-surrender-charge"
+      "tokio-initial-account-surrender-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "tokio-goaffluence-loyalty-and-achievement-bonuses",
       "tokio-goaffluence-monthly-protection-and-benefit-riders",
-      "tokio-goaffluence-dividend-distribution-regular-withdrawal-and-partial-withdrawal-constraints",
+      "tokio-goaffluence-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints",
       "tokio-goaffluence-premium-holiday-and-non-sgd-or-non-15-year-variants"
     ],
     "warnings": [
       "Structured extraction validated against the #goAffluence product summary text layer.",
       "The parser currently covers the SGD / premium-payment-term-15 corridor only.",
-      "Initial charge is modeled through the published year-scaled account-value fee schedule on the Initial Units Account, and policy charge is modeled through the published premium-base multiplier formula.",
+      "Initial charge is modeled through the published year-scaled account-value fee schedule on the Initial Units Account, policy charge is modeled through the published premium-base multiplier formula, and phase-specific dividend cash-payout account restrictions are modeled through the manual distribution-mode assumption surface.",
       "Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge."
     ],
     "archived": false,
@@ -64752,6 +64849,50 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "initial",
+            "accumulation",
+            "topup"
+          ],
+          "cashPayoutWindows": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15,
+              "accountIds": [
+                "accumulation",
+                "topup"
+              ]
+            },
+            {
+              "startPolicyYear": 16,
+              "endPolicyYear": null,
+              "accountIds": [
+                "initial",
+                "accumulation",
+                "topup"
+              ]
+            }
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.",
+            "During the 15-year premium payment term, only dividends from the Accumulation Units Account and Top-up Units Account may be paid in cash.",
+            "After the premium payment term, dividends from the Initial Units Account, Accumulation Units Account, and Top-up Units Account may be paid in cash.",
+            "The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 10,
+              "section": "Dividend Distribution",
+              "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -64771,13 +64912,14 @@
         ],
         "warnings": [
           "This partial template models the SGD / premium-payment-term-15 corridor only.",
-          "This partial template models regular-premium routing through the 15-year payment term, the published initial bonus tiers, the year-scaled initial charge schedule, the policy charge premium-base multiplier basis, top-up routing, recurring single premium routing, and the published 15-year surrender charge table.",
+          "This partial template models regular-premium routing through the 15-year payment term, the published initial bonus tiers, the year-scaled initial charge schedule, the policy charge premium-base multiplier basis, top-up routing, recurring single premium routing, the published 15-year surrender charge table, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
           "Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount."
         ],
         "unsupportedItems": [
           "Loyalty bonus and achievement bonus remain metadata-only because the published adjustment-factor and milestone qualification gates are not yet represented directly in the template bonus basis.",
           "Monthly protection charge, advanced death benefit, accidental/dependent medical/retrenchment benefits, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.",
-          "Dividend distribution election, regular withdrawal, partial-withdrawal limit and minimum-account-value constraints, premium holiday state handling, and non-SGD/premium-term variants remain metadata-only for this product."
+          "Regular withdrawal, partial-withdrawal limit and minimum-account-value constraints, premium holiday state handling, and non-SGD/premium-term variants remain metadata-only for this product.",
+          "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1."
         ],
         "sourceRefs": [
           {
@@ -64856,18 +64998,19 @@
       "tokio-premium-shortfall-charge-premium-holiday",
       "tokio-premium-shortfall-charge-regular-premium-reduction",
       "tokio-premium-increase-restores-shortfall-charge-cessation",
-      "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only"
+      "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "tokio-goluxe-loyalty-and-achievement-bonuses",
       "tokio-goluxe-monthly-protection-charge-and-death-options",
-      "tokio-goluxe-dividend-distribution-and-regular-withdrawal",
+      "tokio-goluxe-dividend-payout-threshold-record-date-and-regular-withdrawal",
       "tokio-goluxe-non-sgd-policy-currencies"
     ],
     "warnings": [
       "Structured extraction validated against the #goLuxe product summary text layer.",
       "The parser currently covers the SGD / minimum-contribution-period-15 corridor only.",
-      "Initial charge is modeled as a 3.00% p.a. fee on the Initial Units Account during the minimum contribution period, and policy charge is modeled as a 1.35% p.a. fee on the Accumulation Units Account throughout the policy term.",
+      "Initial charge is modeled as a 3.00% p.a. fee on the Initial Units Account during the minimum contribution period, policy charge is modeled as a 1.35% p.a. fee on the Accumulation Units Account throughout the policy term, and phase-specific dividend cash-payout account restrictions are modeled through the manual distribution-mode assumption surface.",
       "Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge."
     ],
     "archived": false,
@@ -65313,6 +65456,50 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "initial",
+            "accumulation",
+            "topup"
+          ],
+          "cashPayoutWindows": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15,
+              "accountIds": [
+                "accumulation",
+                "topup"
+              ]
+            },
+            {
+              "startPolicyYear": 16,
+              "endPolicyYear": null,
+              "accountIds": [
+                "initial",
+                "accumulation",
+                "topup"
+              ]
+            }
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.",
+            "During the 15-year minimum contribution period, only dividends from the Accumulation Units Account and Top-up Units Account may be paid in cash.",
+            "After the minimum contribution period, dividends from the Initial Units Account, Accumulation Units Account, and Top-up Units Account may be paid in cash.",
+            "The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 8,
+              "section": "Dividend Distribution",
+              "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -65332,13 +65519,14 @@
         ],
         "warnings": [
           "This partial template models the SGD / minimum-contribution-period-15 corridor only.",
-          "This partial template models regular-premium routing through year 15, the published initial charge and policy charge through account fee rates, top-up routing, recurring single premium routing, the published surrender charge on the Initial Units Account, and the published partial-withdrawal and premium-shortfall charge schedules.",
+          "This partial template models regular-premium routing through year 15, the published initial charge and policy charge through account fee rates, top-up routing, recurring single premium routing, the published surrender charge on the Initial Units Account, the published partial-withdrawal and premium-shortfall charge schedules, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
           "Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount."
         ],
         "unsupportedItems": [
           "Loyalty bonus and achievement bonus remain metadata-only because the published adjustment-factor and first-ten-policy-years qualification gates are not yet represented directly in the template bonus basis.",
           "Monthly protection charge, advanced death benefit, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.",
-          "Dividend distribution election, regular withdrawal, partial-withdrawal limit caps, and non-SGD policy currencies remain metadata-only for this product."
+          "Regular withdrawal, partial-withdrawal limit caps, and non-SGD policy currencies remain metadata-only for this product.",
+          "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1."
         ],
         "sourceRefs": [
           {
@@ -70805,11 +70993,12 @@
       "tokio-premium-shortfall-charge-non-payment",
       "tokio-premium-shortfall-charge-regular-premium-reduction",
       "tokio-premium-increase-restores-shortfall-charge-cessation",
-      "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only"
+      "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "tokio-initial-setup-admin-and-monthly-protection-charges",
-      "tokio-dividend-distribution-election",
+      "tokio-dividend-payout-threshold-and-record-date-instructions",
       "tokio-multiple-life-and-capital-guarantee-options"
     ],
     "warnings": [
@@ -70817,7 +71006,8 @@
       "Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.",
       "When a regular-premium reduction overlaps a recurring single premium, the modeled cashflow reduces the recurring single premium first before reducing regular premium contributions.",
       "Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.",
-      "Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary."
+      "Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary.",
+      "Dividend cash payouts are modeled through the manual distribution-mode assumption surface: only Accumulation Units Account and Top-up Units Account dividends may be paid in cash during the minimum investment period, and Initial Units Account dividends join after the minimum investment period."
     ],
     "archived": false,
     "variants": [
@@ -71256,6 +71446,50 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "initial",
+            "accumulation",
+            "topup"
+          ],
+          "cashPayoutWindows": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15,
+              "accountIds": [
+                "accumulation",
+                "topup"
+              ]
+            },
+            {
+              "startPolicyYear": 16,
+              "endPolicyYear": null,
+              "accountIds": [
+                "initial",
+                "accumulation",
+                "topup"
+              ]
+            }
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.",
+            "During the 15-year minimum investment period, only dividends from the Accumulation Units Account and Top-up Units Account may be paid in cash.",
+            "After the minimum investment period, dividends from the Initial Units Account, Accumulation Units Account, and Top-up Units Account may be paid in cash.",
+            "The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 9,
+              "section": "Dividend Distribution",
+              "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -71278,10 +71512,12 @@
           "This partial template also models the published premium shortfall charge for non-payment periods and regular-premium reductions, including the higher-charge rule when both overlap.",
           "Recurring single premium remains blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.",
           "Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.",
-          "Regular premiums paid after the minimum investment period route back to the Initial Units Account in the source document, but post-MIP regular-premium routing is not modeled in V1."
+          "Regular premiums paid after the minimum investment period route back to the Initial Units Account in line with the product summary.",
+          "The phase-specific dividend cash-payout account restrictions are modeled through the manual distribution-mode assumption surface."
         ],
         "unsupportedItems": [
-          "Initial setup charge, admin charge, monthly protection charge, and post-MIP regular-premium routing remain metadata-only for this product."
+          "Initial setup charge, admin charge, and monthly protection charge remain metadata-only for this product.",
+          "The published $50 dividend payout threshold, 30-day record-date instruction window, and regular withdrawal facility remain informational only in V1."
         ],
         "sourceRefs": [
           {
@@ -71308,6 +71544,11 @@
             "page": 6,
             "section": "Recurring Single Premium and Top-up Premium",
             "excerpt": "Recurring Single Premium You may apply to pay recurring single premium at any time after one (1) year from the commencement date. The premium mode and method of payment must follow that of the regular premium. The minimu"
+          },
+          {
+            "page": 9,
+            "section": "Dividend Distribution",
+            "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
           },
           {
             "page": 11,
@@ -71358,10 +71599,12 @@
       "tokio-premium-shortfall-charge-regular-premium-reduction",
       "tokio-premium-increase-restores-shortfall-charge-cessation",
       "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only",
-      "tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events"
+      "tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "tokio-initial-setup-monthly-protection-and-dividend-distribution",
+      "tokio-initial-setup-and-monthly-protection-charges",
+      "tokio-dividend-payout-threshold-and-record-date-instructions",
       "tokio-multiple-life-and-capital-guarantee-options"
     ],
     "warnings": [
@@ -71369,6 +71612,7 @@
       "Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.",
       "Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.",
       "Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary.",
+      "Dividend cash payouts are modeled through the manual distribution-mode assumption surface: only Accumulation Units Account and Top-up Units Account dividends may be paid in cash during the minimum investment period, and Initial Units Account dividends join after the minimum investment period.",
       "Use the charge waiver toggle on qualifying premium holidays, regular-premium reductions, or partial withdrawals only after Tokio has approved the involuntary unemployment or hospitalisation waiver."
     ],
     "archived": false,
@@ -71853,6 +72097,50 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "initial",
+            "accumulation",
+            "topup"
+          ],
+          "cashPayoutWindows": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 10,
+              "accountIds": [
+                "accumulation",
+                "topup"
+              ]
+            },
+            {
+              "startPolicyYear": 11,
+              "endPolicyYear": null,
+              "accountIds": [
+                "initial",
+                "accumulation",
+                "topup"
+              ]
+            }
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.",
+            "During the 10-year minimum investment period, only dividends from the Accumulation Units Account and Top-up Units Account may be paid in cash.",
+            "After the minimum investment period, dividends from the Initial Units Account, Accumulation Units Account, and Top-up Units Account may be paid in cash.",
+            "The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 9,
+              "section": "Dividend Distribution",
+              "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+            }
+          ]
+        },
         "eecTable": [
           1,
           1,
@@ -71869,11 +72157,13 @@
           "This partial template models regular-premium routing through year 10, top-up routing, recurring single premium routing, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.",
           "This partial template also models the published premium shortfall charge for non-payment periods and regular-premium reductions, including the higher-charge rule when both overlap.",
           "Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.",
-          "Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant."
+          "Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.",
+          "The phase-specific dividend cash-payout account restrictions are modeled through the manual distribution-mode assumption surface."
         ],
         "unsupportedItems": [
           "Involuntary unemployment and hospitalisation benefit waiver remains metadata-only for this product.",
-          "Initial setup charge, monthly protection charge, dividend distribution election, and post-MIP regular-premium routing remain metadata-only for this product."
+          "Initial setup charge, monthly protection charge, and post-MIP regular-premium routing remain metadata-only for this product.",
+          "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1."
         ],
         "sourceRefs": [
           {
@@ -71900,6 +72190,11 @@
             "page": 7,
             "section": "Recurring Single Premium and Top-up Premium",
             "excerpt": "unit deduction from the policy value. If this arrangement is not allowed for by the rider, the premium-paying rider will be terminated with effect from the expiry of the grace period. (v) All unit-deducting riders (if an"
+          },
+          {
+            "page": 9,
+            "section": "Dividend Distribution",
+            "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
           },
           {
             "page": 11,

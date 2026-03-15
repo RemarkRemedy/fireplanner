@@ -156,6 +156,11 @@ export const ilpTemplateScheduledPayoutSupportSchema = z.object({
 export const ilpTemplateDistributionSupportSchema = z.object({
   mode: z.literal('manual-assumption'),
   accountIds: z.array(z.string().min(1)).min(1).max(10),
+  cashPayoutWindows: z.array(z.object({
+    startPolicyYear: z.number().int().min(1).max(100),
+    endPolicyYear: z.number().int().min(1).max(100).nullable(),
+    accountIds: z.array(z.string().min(1)).min(1).max(10),
+  })).min(1).max(10).optional(),
   defaultMode: z.literal('reinvest'),
   cashPayoutAllowedDuringMip: z.boolean(),
   cashPayoutAllowedAfterMip: z.boolean(),
@@ -182,6 +187,7 @@ export const ilpTemplateVariantSchema = z.object({
   unsupportedItems: z.array(z.string()),
   sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
 }).superRefine((variant, ctx) => {
+  const accountIds = new Set(variant.accounts.map((account) => account.id))
   const mipBasis = variant.mipBasis ?? 'finite'
 
   if (mipBasis === 'finite' && variant.mipLength == null) {
@@ -243,7 +249,7 @@ export const ilpTemplateVariantSchema = z.object({
 
   if (variant.distributionSupport) {
     variant.distributionSupport.accountIds.forEach((accountId, accountIndex) => {
-      if (!variant.accounts.some((account) => account.id === accountId)) {
+      if (!accountIds.has(accountId)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'distributionSupport.accountIds must reference existing accounts',
@@ -251,6 +257,65 @@ export const ilpTemplateVariantSchema = z.object({
         })
       }
     })
+
+    variant.distributionSupport.cashPayoutWindows?.forEach((window, windowIndex) => {
+      if (window.endPolicyYear != null && window.endPolicyYear < window.startPolicyYear) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'distributionSupport.cashPayoutWindows endPolicyYear must be greater than or equal to startPolicyYear',
+          path: ['distributionSupport', 'cashPayoutWindows', windowIndex, 'endPolicyYear'],
+        })
+      }
+
+      window.accountIds.forEach((accountId, accountIndex) => {
+        if (!accountIds.has(accountId)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'distributionSupport.cashPayoutWindows accountIds must reference existing accounts',
+            path: ['distributionSupport', 'cashPayoutWindows', windowIndex, 'accountIds', accountIndex],
+          })
+        }
+
+        if (!variant.distributionSupport?.accountIds.includes(accountId)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'distributionSupport.cashPayoutWindows accountIds must be included in distributionSupport.accountIds',
+            path: ['distributionSupport', 'cashPayoutWindows', windowIndex, 'accountIds', accountIndex],
+          })
+        }
+      })
+    })
+
+    if (variant.distributionSupport.cashPayoutWindows) {
+      variant.distributionSupport.accountIds.forEach((accountId, accountIndex) => {
+        const appearsInWindow = variant.distributionSupport?.cashPayoutWindows?.some((window) => window.accountIds.includes(accountId))
+        if (!appearsInWindow) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'distributionSupport.accountIds must be the union of distributionSupport.cashPayoutWindows accountIds when windows are authored',
+            path: ['distributionSupport', 'accountIds', accountIndex],
+          })
+        }
+      })
+
+      const windows = variant.distributionSupport.cashPayoutWindows
+      for (let leftIndex = 0; leftIndex < windows.length; leftIndex += 1) {
+        const leftWindow = windows[leftIndex]
+        const leftEnd = leftWindow.endPolicyYear ?? Number.POSITIVE_INFINITY
+        for (let rightIndex = leftIndex + 1; rightIndex < windows.length; rightIndex += 1) {
+          const rightWindow = windows[rightIndex]
+          const rightEnd = rightWindow.endPolicyYear ?? Number.POSITIVE_INFINITY
+          const overlaps = leftWindow.startPolicyYear <= rightEnd && rightWindow.startPolicyYear <= leftEnd
+          if (overlaps) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'distributionSupport.cashPayoutWindows must not overlap',
+              path: ['distributionSupport', 'cashPayoutWindows', rightIndex],
+            })
+          }
+        }
+      }
+    }
   }
 })
 

@@ -2518,6 +2518,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-power-up-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-post-mip-regular-premium-routing-back-to-initial-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.accounts.find((account) => account.id === 'initial')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'after-mip', contributionShare: 1 },
@@ -2623,7 +2624,25 @@ describe('templateVariantToPolicySeed', () => {
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.59 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.6 },
     ])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation', 'topup'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 15, accountIds: ['accumulation', 'topup'] },
+        { startPolicyYear: 16, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
+      ],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-initial-bonus-and-performance-loyalty-power-up-bonuses')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
   })
 
   it('maps TM Wealth Enhancer (CPFIS) into a partial seed with zero-charge regular top-up routing', () => {
@@ -2930,6 +2949,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-power-up-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-post-mip-regular-premium-routing-back-to-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.17 },
       { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.35 },
@@ -2940,8 +2960,26 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.bonuses.find((bonus) => bonus.label === 'Performance Investment Bonus')?.rate).toBe(0.018)
     expect(seed.bonuses.find((bonus) => bonus.label === 'Loyalty Bonus')?.startPolicyYear).toBe(11)
     expect(seed.bonuses.find((bonus) => bonus.label === 'Power-up Bonus')?.startPolicyYear).toBe(11)
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation', 'topup'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 10, accountIds: ['accumulation', 'topup'] },
+        { startPolicyYear: 11, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
+      ],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-involuntary-unemployment-and-hospitalisation-waiver')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-initial-bonus-performance-investment-bonus-loyalty-bonus-and-power-up-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
   })
 
   it('maps Tokio Marine Harvest Pro into a partial seed with executable bonus ladders', () => {
@@ -3612,6 +3650,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.accounts).toEqual([
       expect.objectContaining({ id: 'initial', feeRate: 0.03, postMipFeeRate: 0 }),
       expect.objectContaining({ id: 'accumulation', feeRate: 0.0135, postMipFeeRate: 0.0135 }),
@@ -3641,7 +3680,25 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation', 'topup'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 15, accountIds: ['accumulation', 'topup'] },
+        { startPolicyYear: 16, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
+      ],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-dividend-payout-threshold-record-date-and-regular-withdrawal')
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
   })
 
   it('maps Tokio Marine #goAffluence into a partial seed with executable initial-charge and policy-charge rules', () => {
@@ -3656,6 +3713,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.5 },
       { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.57 },
@@ -3703,7 +3761,25 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.05 }),
       expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
     ])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation', 'topup'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 15, accountIds: ['accumulation', 'topup'] },
+        { startPolicyYear: 16, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
+      ],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goaffluence-loyalty-and-achievement-bonuses')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goaffluence-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints')
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
   })
 
   it('maps Tokio Marine Affluence@Future into a partial seed with capped initial-charge and deferred policy-charge rules', () => {
@@ -3783,7 +3859,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goclassic-loyalty-bonus-adjustment-factor')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goclassic-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.accounts).toEqual([
       expect.objectContaining({
         id: 'initial',
@@ -3816,7 +3894,24 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({ id: 'top-up-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
       expect.objectContaining({ id: 'recurring-single-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
     ])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 25, accountIds: ['accumulation'] },
+        { startPolicyYear: 26, endPolicyYear: null, accountIds: ['initial', 'accumulation'] },
+      ],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-payment-term-25 corridor only'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
   })
 
   it('maps Tokio Marine #goClassic Secure into a partial seed with combined account-fee modeling and accumulation top-up routing', () => {
@@ -3831,7 +3926,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goclassic-secure-locked-in-policy-value')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goclassic-secure-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.accounts).toEqual([
       expect.objectContaining({
         id: 'initial',
@@ -3864,7 +3961,24 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({ id: 'top-up-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
       expect.objectContaining({ id: 'recurring-single-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
     ])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 25, accountIds: ['accumulation'] },
+        { startPolicyYear: 26, endPolicyYear: null, accountIds: ['initial', 'accumulation'] },
+      ],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-payment-term-25 corridor only'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
   })
 
   it('maps HSBC Life Flexi Protector into a partial seed with premium charges, fixed admin fee, and allocation uplift', () => {

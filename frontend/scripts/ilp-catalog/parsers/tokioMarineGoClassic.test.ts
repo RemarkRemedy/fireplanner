@@ -26,6 +26,7 @@ describe('parseTokioMarineGoClassic', () => {
     expect(product.supportStatus).toBe('partial')
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
+    expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
 
     const variant = product.variants[0]
     expect(variant?.id).toBe('sgd-mip-25')
@@ -62,6 +63,22 @@ describe('parseTokioMarineGoClassic', () => {
       expect.objectContaining({ id: 'top-up-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
       expect.objectContaining({ id: 'recurring-single-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
     ])
+    expect(variant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 25, accountIds: ['accumulation'] },
+        { startPolicyYear: 26, endPolicyYear: null, accountIds: ['initial', 'accumulation'] },
+      ],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('During the 25-year premium payment term'),
+      ]),
+      sourceRefs: expect.any(Array),
+    })
     expect(variant?.eecTable).toEqual([
       1, 1, 0.95, 0.93, 0.91, 0.89, 0.87, 0.85, 0.83, 0.8,
       0.77, 0.74, 0.71, 0.68, 0.64, 0.6, 0.56, 0.51, 0.46, 0.41,

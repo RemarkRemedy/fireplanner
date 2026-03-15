@@ -74,6 +74,11 @@ export type IlpScheduledPayoutAssumption =
 export interface IlpDistributionSupport {
   mode: 'manual-assumption'
   accountIds: string[]
+  cashPayoutWindows?: Array<{
+    startPolicyYear: number
+    endPolicyYear: number | null
+    accountIds: string[]
+  }>
   defaultMode: 'reinvest'
   cashPayoutAllowedDuringMip: boolean
   cashPayoutAllowedAfterMip: boolean
@@ -1046,15 +1051,13 @@ function getDistributionPayoutsByAccount(
   }
 
   const policyYear = normalized.input.currentPolicyYear + projectionYear
-  const payoutAllowed = isPostMipPolicyYear(normalized.input, policyYear)
-    ? distributionSupport.cashPayoutAllowedAfterMip
-    : distributionSupport.cashPayoutAllowedDuringMip
+  const eligibleAccountIds = resolveDistributionPayoutAccountIds(normalized.input, policyYear)
 
-  if (!payoutAllowed) {
+  if (eligibleAccountIds.length === 0) {
     return payouts
   }
 
-  for (const accountId of distributionSupport.accountIds) {
+  for (const accountId of eligibleAccountIds) {
     const openBalance = openBalances.get(accountId) ?? 0
     if (openBalance <= 0) continue
     payouts.set(accountId, openBalance * distributionAssumption.annualYieldRate)
@@ -1113,6 +1116,45 @@ function assertDistributionConfiguration(input: IlpPolicyInput): void {
         throw new Error(`Distribution support account "${accountId}" does not exist on policy "${input.name}".`)
       }
     }
+
+    input.distributionSupport.cashPayoutWindows?.forEach((window, windowIndex) => {
+      if (window.endPolicyYear != null && window.endPolicyYear < window.startPolicyYear) {
+        throw new Error(`Distribution support cash-payout window ${windowIndex + 1} has endPolicyYear before startPolicyYear on policy "${input.name}".`)
+      }
+
+      for (const accountId of window.accountIds) {
+        if (!accountIds.has(accountId)) {
+          throw new Error(`Distribution support cash-payout window account "${accountId}" does not exist on policy "${input.name}".`)
+        }
+
+        if (!input.distributionSupport?.accountIds.includes(accountId)) {
+          throw new Error(`Distribution support cash-payout window account "${accountId}" must also exist in distributionSupport.accountIds on policy "${input.name}".`)
+        }
+      }
+    })
+
+    if (input.distributionSupport.cashPayoutWindows) {
+      for (const accountId of input.distributionSupport.accountIds) {
+        const appearsInWindow = input.distributionSupport.cashPayoutWindows.some((window) => window.accountIds.includes(accountId))
+        if (!appearsInWindow) {
+          throw new Error(`Distribution support account "${accountId}" must be represented in at least one cash-payout window on policy "${input.name}".`)
+        }
+      }
+
+      const windows = input.distributionSupport.cashPayoutWindows
+      for (let leftIndex = 0; leftIndex < windows.length; leftIndex += 1) {
+        const leftWindow = windows[leftIndex]
+        const leftEnd = leftWindow.endPolicyYear ?? Number.POSITIVE_INFINITY
+        for (let rightIndex = leftIndex + 1; rightIndex < windows.length; rightIndex += 1) {
+          const rightWindow = windows[rightIndex]
+          const rightEnd = rightWindow.endPolicyYear ?? Number.POSITIVE_INFINITY
+          const overlaps = leftWindow.startPolicyYear <= rightEnd && rightWindow.startPolicyYear <= leftEnd
+          if (overlaps) {
+            throw new Error(`Distribution support cash-payout windows must not overlap on policy "${input.name}".`)
+          }
+        }
+      }
+    }
   }
 
   if (input.distributionAssumption && !input.distributionSupport) {
@@ -1122,11 +1164,37 @@ function assertDistributionConfiguration(input: IlpPolicyInput): void {
   if (
     input.distributionAssumption?.mode === 'cash-payout'
     && input.distributionSupport
-    && !input.distributionSupport.cashPayoutAllowedDuringMip
-    && !input.distributionSupport.cashPayoutAllowedAfterMip
+    && !(
+      input.distributionSupport.cashPayoutWindows?.length
+      || input.distributionSupport.cashPayoutAllowedDuringMip
+      || input.distributionSupport.cashPayoutAllowedAfterMip
+    )
   ) {
     throw new Error(`Cash-payout distribution assumption requires at least one payout-eligible phase on policy "${input.name}".`)
   }
+}
+
+function resolveDistributionPayoutAccountIds(
+  input: IlpPolicyInput,
+  policyYear: number,
+): string[] {
+  const distributionSupport = input.distributionSupport
+  if (!distributionSupport) return []
+
+  if (distributionSupport.cashPayoutWindows?.length) {
+    const matchingWindow = distributionSupport.cashPayoutWindows.find((window) => (
+      policyYear >= window.startPolicyYear
+      && (window.endPolicyYear == null || policyYear <= window.endPolicyYear)
+    ))
+
+    return matchingWindow ? [...matchingWindow.accountIds] : []
+  }
+
+  const payoutAllowed = isPostMipPolicyYear(input, policyYear)
+    ? distributionSupport.cashPayoutAllowedAfterMip
+    : distributionSupport.cashPayoutAllowedDuringMip
+
+  return payoutAllowed ? [...distributionSupport.accountIds] : []
 }
 
 function getAnnualPremiumReductionAtMonth(

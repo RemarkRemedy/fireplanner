@@ -241,6 +241,15 @@ export function templateVariantToPolicySeed(
       ? {
           mode: variant.distributionSupport.mode,
           accountIds: [...variant.distributionSupport.accountIds],
+          ...(variant.distributionSupport.cashPayoutWindows
+            ? {
+                cashPayoutWindows: variant.distributionSupport.cashPayoutWindows.map((window) => ({
+                  startPolicyYear: window.startPolicyYear,
+                  endPolicyYear: window.endPolicyYear ?? null,
+                  accountIds: [...window.accountIds],
+                })),
+              }
+            : {}),
           defaultMode: variant.distributionSupport.defaultMode,
           cashPayoutAllowedDuringMip: variant.distributionSupport.cashPayoutAllowedDuringMip,
           cashPayoutAllowedAfterMip: variant.distributionSupport.cashPayoutAllowedAfterMip,

@@ -161,6 +161,11 @@ export interface IlpTemplateScheduledPayoutSupport {
 export interface IlpTemplateDistributionSupport {
   mode: 'manual-assumption'
   accountIds: string[]
+  cashPayoutWindows?: Array<{
+    startPolicyYear: number
+    endPolicyYear: number | null
+    accountIds: string[]
+  }>
   defaultMode: 'reinvest'
   cashPayoutAllowedDuringMip: boolean
   cashPayoutAllowedAfterMip: boolean

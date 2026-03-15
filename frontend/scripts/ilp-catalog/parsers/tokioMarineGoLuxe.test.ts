@@ -27,7 +27,9 @@ describe('parseTokioMarineGoLuxe', () => {
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-dividend-payout-threshold-record-date-and-regular-withdrawal')
 
     const variant = product.variants[0]
     expect(variant?.id).toBe('sgd-mip-15')
@@ -69,6 +71,22 @@ describe('parseTokioMarineGoLuxe', () => {
         }),
       ]),
     )
+    expect(variant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation', 'topup'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 15, accountIds: ['accumulation', 'topup'] },
+        { startPolicyYear: 16, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
+      ],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('During the 15-year minimum contribution period'),
+      ]),
+      sourceRefs: expect.any(Array),
+    })
     expect(variant?.eecTable).toEqual([1, 1, 1, 0.95, 0.76, 0.76, 0.76, 0.73, 0.73, 0.73, 0.7, 0.6, 0.45, 0.25, 0.07])
   }, 30_000)
 })
