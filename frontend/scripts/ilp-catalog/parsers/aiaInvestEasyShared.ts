@@ -20,6 +20,7 @@ interface AiaInvestEasyConfig {
   variantId: string
   singlePremiumChargeRate: number
   topUpChargeRate: number
+  recurringTopUpChargeRate: number
   modeledEconomics: string[]
   metadataOnlyBehaviors: string[]
   warnings: string[]
@@ -59,6 +60,7 @@ function snippetNear(
 function buildVariant(document: ExtractedPdfDocument, config: AiaInvestEasyConfig): IlpTemplateVariant {
   const page1 = sourceRef(1, 'Plan description and benefits', snippetNear(document, 1, config.productName, 18))
   const page2 = sourceRef(2, 'Subscription and policy options', snippetNear(document, 2, '5. Fees and Charges', 26))
+  const page2Recurring = sourceRef(document.pages.length > 3 ? 2 : 2, 'Regular top-up premiums', snippetNear(document, 2, 'You may pay regular top-up premiums', 10))
   const page3 = sourceRef(3, 'Fund switching and free-look', snippetNear(document, 3, '7. Other Material Information', 22))
   const page4 = sourceRef(4, 'Exclusions and available funds', snippetNear(document, 4, '8. Other Material Information', 18))
 
@@ -97,6 +99,24 @@ function buildVariant(document: ExtractedPdfDocument, config: AiaInvestEasyConfi
           : 'Models the published upfront 3% premium charge on each top-up premium.',
       ],
       sourceRefs: [page1, page2],
+    },
+    {
+      id: 'recurring-single-premium-charge',
+      label: 'Regular Top-up Premium Charge',
+      trigger: 'recurring-single-premium',
+      basis: 'event-amount-with-overlap-months',
+      appliesTo: ['policy'],
+      rate: config.recurringTopUpChargeRate,
+      amount: 0,
+      activeWindow: 'policy-term',
+      allocation: 'equal-split',
+      notes: [
+        config.recurringTopUpChargeRate === 0
+          ? 'Models the published 100% allocation of recurring top-up premiums into units with no policy-level deduction.'
+          : 'Models the published upfront 3% premium charge on each recurring top-up premium.',
+        'Use recurring-single-premium events to represent the chosen monthly, quarterly, semi-annual, or annual regular top-up stream.',
+      ],
+      sourceRefs: [page1, page2, page2Recurring],
     },
   ]
 

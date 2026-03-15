@@ -8,9 +8,12 @@ export function parseAiaInvestEasyCashSrs(context: ParseContext) {
     variantId: 'sgd-open-ended-cash-srs',
     singlePremiumChargeRate: 0.03,
     topUpChargeRate: 0.03,
+    recurringTopUpChargeRate: 0.03,
     modeledEconomics: [
       'branch:aia-invest-easy-cash-srs-three-percent-single-premium-charge',
       'branch:aia-invest-easy-cash-srs-three-percent-top-up-charge',
+      'branch:aia-invest-easy-cash-srs-three-percent-recurring-single-premium-charge',
+      'tokio-recurring-single-premium-routing',
     ],
     metadataOnlyBehaviors: [
       'aia-invest-easy-cash-srs-death-benefit',
@@ -25,7 +28,7 @@ export function parseAiaInvestEasyCashSrs(context: ParseContext) {
       'aia-invest-easy-cash-srs-top-up-age-limit',
     ],
     warnings: [
-      'The parser captures the published 3% single-premium and 3% top-up premium charges for the Cash/SRS corridor through the open-ended no-MIP basis, while protection benefits, withdrawals, switching, and fund-level charges remain outside the current engine.',
+      'The parser captures the published 3% single-premium, ad-hoc top-up, and regular top-up premium charges for the Cash/SRS corridor through the open-ended no-MIP basis, while protection benefits, withdrawals, switching, and fund-level charges remain outside the current engine.',
       'Cash/SRS funding keeps the same product shell but uses a different premium-charge corridor from the CPF version.',
     ],
     unsupportedItems: [

@@ -8,9 +8,12 @@ export function parseAiaInvestEasyCpf(context: ParseContext) {
     variantId: 'sgd-open-ended-cpf',
     singlePremiumChargeRate: 0,
     topUpChargeRate: 0,
+    recurringTopUpChargeRate: 0,
     modeledEconomics: [
       'branch:aia-invest-easy-cpf-zero-single-premium-charge',
       'branch:aia-invest-easy-cpf-zero-top-up-charge',
+      'branch:aia-invest-easy-cpf-zero-recurring-single-premium-charge',
+      'tokio-recurring-single-premium-routing',
     ],
     metadataOnlyBehaviors: [
       'aia-invest-easy-cpf-death-benefit',
@@ -26,7 +29,7 @@ export function parseAiaInvestEasyCpf(context: ParseContext) {
       'aia-invest-easy-cpf-top-up-age-limit',
     ],
     warnings: [
-      'The parser captures the published zero-charge single-premium and top-up allocation path for the CPF-funded corridor through the open-ended no-MIP basis, while protection benefits, withdrawals, switching, and fund-level charges remain outside the current engine.',
+      'The parser captures the published zero-charge single-premium, ad-hoc top-up, and regular top-up allocation path for the CPF-funded corridor through the open-ended no-MIP basis, while protection benefits, withdrawals, switching, and fund-level charges remain outside the current engine.',
       'Fund access is limited to CPFIS-eligible ILP sub-funds.',
     ],
     unsupportedItems: [

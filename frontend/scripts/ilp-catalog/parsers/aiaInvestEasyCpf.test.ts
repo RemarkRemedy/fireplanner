@@ -27,6 +27,8 @@ describe('parseAiaInvestEasyCpf', () => {
     expect(product.modeledEconomics).toEqual([
       'branch:aia-invest-easy-cpf-zero-single-premium-charge',
       'branch:aia-invest-easy-cpf-zero-top-up-charge',
+      'branch:aia-invest-easy-cpf-zero-recurring-single-premium-charge',
+      'tokio-recurring-single-premium-routing',
     ])
 
     const variant = product.variants[0]
@@ -44,6 +46,12 @@ describe('parseAiaInvestEasyCpf', () => {
       expect.objectContaining({
         id: 'top-up-premium-charge',
         trigger: 'top-up',
+        rate: 0,
+      }),
+      expect.objectContaining({
+        id: 'recurring-single-premium-charge',
+        trigger: 'recurring-single-premium',
+        basis: 'event-amount-with-overlap-months',
         rate: 0,
       }),
     ])

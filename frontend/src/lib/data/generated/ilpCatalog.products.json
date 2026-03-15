@@ -594,7 +594,9 @@
     "economicsStatus": "partial-modeled-subset",
     "modeledEconomics": [
       "branch:aia-invest-easy-cash-srs-three-percent-single-premium-charge",
-      "branch:aia-invest-easy-cash-srs-three-percent-top-up-charge"
+      "branch:aia-invest-easy-cash-srs-three-percent-top-up-charge",
+      "branch:aia-invest-easy-cash-srs-three-percent-recurring-single-premium-charge",
+      "tokio-recurring-single-premium-routing"
     ],
     "metadataOnlyBehaviors": [
       "aia-invest-easy-cash-srs-death-benefit",
@@ -609,7 +611,7 @@
       "aia-invest-easy-cash-srs-top-up-age-limit"
     ],
     "warnings": [
-      "AIA Invest Easy (Cash/SRS) is cataloged as a partial modeled subset in V1. The parser captures the published 3% single-premium and 3% top-up premium charges for the Cash/SRS corridor through the open-ended no-MIP basis, while protection benefits, withdrawals, switching, and fund-level charges remain outside the current engine."
+      "AIA Invest Easy (Cash/SRS) is cataloged as a partial modeled subset in V1. The parser captures the published 3% single-premium, ad-hoc top-up, and regular top-up premium charges for the Cash/SRS corridor through the open-ended no-MIP basis, while protection benefits, withdrawals, switching, and fund-level charges remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -709,11 +711,45 @@
                 "excerpt": "5. Fees and Charges (a) Premium Charge We will deduct Premium Charge from Single Premium and Top-Up Premium (if any). Premium Charge = 3% of Single Premium and 3% of each Top-Up Premium ➢ As an example, the number of uni"
               }
             ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Regular Top-up Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published upfront 3% premium charge on each recurring top-up premium.",
+              "Use recurring-single-premium events to represent the chosen monthly, quarterly, semi-annual, or annual regular top-up stream."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and benefits",
+                "excerpt": "Product Summary for AIA Invest Easy (Cash/SRS) Version 3.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.a"
+              },
+              {
+                "page": 2,
+                "section": "Subscription and policy options",
+                "excerpt": "5. Fees and Charges (a) Premium Charge We will deduct Premium Charge from Single Premium and Top-Up Premium (if any). Premium Charge = 3% of Single Premium and 3% of each Top-Up Premium ➢ As an example, the number of uni"
+              },
+              {
+                "page": 2,
+                "section": "Regular top-up premiums",
+                "excerpt": "You may pay regular top-up premiums on monthly, quarterly, semi-annual or annual basis. If you have requested for regular top-ups in your policy application, the first regular top-up will commence from inception. You may"
+              }
+            ]
           }
         ],
         "eecTable": [],
         "warnings": [
-          "The parser captures the published 3% single-premium and 3% top-up premium charges for the Cash/SRS corridor through the open-ended no-MIP basis, while protection benefits, withdrawals, switching, and fund-level charges remain outside the current engine.",
+          "The parser captures the published 3% single-premium, ad-hoc top-up, and regular top-up premium charges for the Cash/SRS corridor through the open-ended no-MIP basis, while protection benefits, withdrawals, switching, and fund-level charges remain outside the current engine.",
           "Cash/SRS funding keeps the same product shell but uses a different premium-charge corridor from the CPF version.",
           "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
         ],
@@ -764,7 +800,9 @@
     "economicsStatus": "partial-modeled-subset",
     "modeledEconomics": [
       "branch:aia-invest-easy-cpf-zero-single-premium-charge",
-      "branch:aia-invest-easy-cpf-zero-top-up-charge"
+      "branch:aia-invest-easy-cpf-zero-top-up-charge",
+      "branch:aia-invest-easy-cpf-zero-recurring-single-premium-charge",
+      "tokio-recurring-single-premium-routing"
     ],
     "metadataOnlyBehaviors": [
       "aia-invest-easy-cpf-death-benefit",
@@ -780,7 +818,7 @@
       "aia-invest-easy-cpf-top-up-age-limit"
     ],
     "warnings": [
-      "AIA Invest Easy (CPF) is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge single-premium and top-up allocation path for the CPF-funded corridor through the open-ended no-MIP basis, while protection benefits, withdrawals, switching, and fund-level charges remain outside the current engine."
+      "AIA Invest Easy (CPF) is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge single-premium, ad-hoc top-up, and regular top-up allocation path for the CPF-funded corridor through the open-ended no-MIP basis, while protection benefits, withdrawals, switching, and fund-level charges remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -880,11 +918,45 @@
                 "excerpt": "5. Fees and Charges Fund Management Charge The fees and charges payable through deduction from the net asset value of each ILP sub-fund are set out in the AIA Investment Fund Product Summary. 6. Policy Options and Flexib"
               }
             ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Regular Top-up Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 100% allocation of recurring top-up premiums into units with no policy-level deduction.",
+              "Use recurring-single-premium events to represent the chosen monthly, quarterly, semi-annual, or annual regular top-up stream."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and benefits",
+                "excerpt": "Product Summary for AIA Invest Easy (CPF) Version 4.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.aia.co"
+              },
+              {
+                "page": 2,
+                "section": "Subscription and policy options",
+                "excerpt": "5. Fees and Charges Fund Management Charge The fees and charges payable through deduction from the net asset value of each ILP sub-fund are set out in the AIA Investment Fund Product Summary. 6. Policy Options and Flexib"
+              },
+              {
+                "page": 2,
+                "section": "Regular top-up premiums",
+                "excerpt": "You may pay regular top-up premiums on monthly, quarterly, semi-annual or annual basis. If you have requested for regular top-ups in your policy application, the first regular top-up will commence from inception. You may"
+              }
+            ]
           }
         ],
         "eecTable": [],
         "warnings": [
-          "The parser captures the published zero-charge single-premium and top-up allocation path for the CPF-funded corridor through the open-ended no-MIP basis, while protection benefits, withdrawals, switching, and fund-level charges remain outside the current engine.",
+          "The parser captures the published zero-charge single-premium, ad-hoc top-up, and regular top-up allocation path for the CPF-funded corridor through the open-ended no-MIP basis, while protection benefits, withdrawals, switching, and fund-level charges remain outside the current engine.",
           "Fund access is limited to CPFIS-eligible ILP sub-funds.",
           "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
         ],

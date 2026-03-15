@@ -27,6 +27,8 @@ describe('parseAiaInvestEasyCashSrs', () => {
     expect(product.modeledEconomics).toEqual([
       'branch:aia-invest-easy-cash-srs-three-percent-single-premium-charge',
       'branch:aia-invest-easy-cash-srs-three-percent-top-up-charge',
+      'branch:aia-invest-easy-cash-srs-three-percent-recurring-single-premium-charge',
+      'tokio-recurring-single-premium-routing',
     ])
 
     const variant = product.variants[0]
@@ -44,6 +46,12 @@ describe('parseAiaInvestEasyCashSrs', () => {
       expect.objectContaining({
         id: 'top-up-premium-charge',
         trigger: 'top-up',
+        rate: 0.03,
+      }),
+      expect.objectContaining({
+        id: 'recurring-single-premium-charge',
+        trigger: 'recurring-single-premium',
+        basis: 'event-amount-with-overlap-months',
         rate: 0.03,
       }),
     ])
