@@ -76,9 +76,26 @@ export function NumberInput({
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value
-      setLocalValue(raw)
 
-      const stripped = formatWithCommas ? raw.replace(/,/g, '') : raw
+      // Filter to valid numeric characters only (digits, one decimal point, leading minus)
+      let filtered: string
+      if (formatWithCommas) {
+        // Allow digits and commas (commas are formatting, stripped before parsing)
+        filtered = raw.replace(/[^\d,.-]/g, '')
+      } else if (effectiveInteger) {
+        // Allow digits and optional leading minus
+        filtered = raw.replace(/[^\d-]/g, '').replace(/(?!^)-/g, '')
+      } else {
+        // Allow digits, one decimal point, optional leading minus
+        filtered = raw.replace(/[^\d.-]/g, '').replace(/(?!^)-/g, '')
+        // Ensure only one decimal point
+        const parts = filtered.split('.')
+        if (parts.length > 2) filtered = parts[0] + '.' + parts.slice(1).join('')
+      }
+
+      setLocalValue(filtered)
+
+      const stripped = formatWithCommas ? filtered.replace(/,/g, '') : filtered
       const parsed = effectiveInteger ? parseInt(stripped, 10) : parseFloat(stripped)
       if (!isNaN(parsed)) {
         onChange(clamp(parsed))
