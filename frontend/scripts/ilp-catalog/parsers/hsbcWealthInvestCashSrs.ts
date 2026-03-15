@@ -13,6 +13,8 @@ interface ParseContext {
   sourceChecksumSha256: string
 }
 
+type FundingMode = 'cash' | 'srs'
+
 function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
 }
@@ -38,25 +40,29 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
   return page.lines.slice(lineIndex, lineIndex + lineWindow).map((line) => line.text).join(' ')
 }
 
-function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
+function buildVariant(document: ExtractedPdfDocument, fundingMode: FundingMode): IlpTemplateVariant {
   const page3 = sourceRef(3, 'Benefits', snippetNear(document, 3, 'Death Benefit', 18))
+  const page5Dividends = sourceRef(5, 'Distribution of dividend', snippetNear(document, 5, 'Only cash purchased Policy', 26))
   const page5 = sourceRef(5, 'Fees and charges', snippetNear(document, 5, 'Redemption Fee', 22))
   const page6 = sourceRef(6, 'Subscription and premium types', snippetNear(document, 6, 'Premium (single, recurring and top-up)', 22))
   const page8 = sourceRef(8, 'Redemption of units', snippetNear(document, 8, 'Minimum Partial Redemption Amount', 18))
   const page11 = sourceRef(11, 'Switching of units', snippetNear(document, 11, 'SWITCHING OF UNITS', 20))
   const page14 = sourceRef(14, 'Key policy provisions', snippetNear(document, 14, 'Free-look Period', 18))
+  const isSrs = fundingMode === 'srs'
 
   const feeRules: IlpTemplateFeeRule[] = [
     {
       id: 'single-premium-charge',
-      label: 'Single Premium Charge (Cash/SRS)',
+      label: isSrs ? 'Single Premium Charge (SRS)' : 'Single Premium Charge (Cash)',
       basis: 'annual-contribution',
       rate: 0.05,
       amount: 0,
       appliesTo: ['policy'],
       activeWindow: 'policy-term',
       notes: [
-        'Models the published up-to-5% premium-charge corridor applied after allocating the initial single premium into units for the Cash/SRS corridor.',
+        isSrs
+          ? 'Models the published up-to-5% premium-charge corridor applied after allocating the initial single premium into units for the SRS corridor.'
+          : 'Models the published up-to-5% premium-charge corridor applied after allocating the initial single premium into units for the cash corridor.',
       ],
       sourceRefs: [page6],
     },
@@ -65,7 +71,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
     {
       id: 'top-up-premium-charge',
-      label: 'Top-up Premium Charge (Cash/SRS)',
+      label: isSrs ? 'Top-up Premium Charge (SRS)' : 'Top-up Premium Charge (Cash)',
       trigger: 'top-up',
       basis: 'event-amount',
       appliesTo: ['policy'],
@@ -74,13 +80,15 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       activeWindow: 'policy-term',
       allocation: 'equal-split',
       notes: [
-        'Models the published up-to-5% premium-charge corridor applied after allocating each approved top-up premium into units for the Cash/SRS corridor.',
+        isSrs
+          ? 'Models the published up-to-5% premium-charge corridor applied after allocating each approved top-up premium into units for the SRS corridor.'
+          : 'Models the published up-to-5% premium-charge corridor applied after allocating each approved top-up premium into units for the cash corridor.',
       ],
       sourceRefs: [page6],
     },
     {
       id: 'recurring-single-premium-charge',
-      label: 'Recurring Single Premium Charge (Cash/SRS)',
+      label: isSrs ? 'Recurring Single Premium Charge (SRS)' : 'Recurring Single Premium Charge (Cash)',
       trigger: 'recurring-single-premium',
       basis: 'event-amount-with-overlap-months',
       appliesTo: ['policy'],
@@ -89,7 +97,9 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       activeWindow: 'policy-term',
       allocation: 'equal-split',
       notes: [
-        'Models the published up-to-5% premium-charge corridor applied after allocating each approved recurring single premium into units for the Cash/SRS corridor.',
+        isSrs
+          ? 'Models the published up-to-5% premium-charge corridor applied after allocating each approved recurring single premium into units for the SRS corridor.'
+          : 'Models the published up-to-5% premium-charge corridor applied after allocating each approved recurring single premium into units for the cash corridor.',
         'Use recurring-single-premium events to represent the approved annual, half-yearly, or quarterly cadence.',
       ],
       sourceRefs: [page6],
@@ -112,7 +122,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   ]
 
   return {
-    id: 'sgd-open-ended-cash-srs',
+    id: isSrs ? 'sgd-open-ended-srs' : 'sgd-open-ended-cash',
     currency: 'SGD',
     mipBasis: 'open-ended',
     mipLength: null,
@@ -134,10 +144,30 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: [],
     feeRules,
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: !isSrs,
+      cashPayoutAllowedAfterMip: !isSrs,
+      source: 'distribution-paying-funds',
+      notes: isSrs
+        ? [
+            'SRS-funded policies default dividend distributions to reinvestment because the published payout election is only available to cash-purchased policies.',
+            'V1 seeds reinvestment by default; the published S$30 minimum payout threshold and designated-bank-account payout operations remain informational only because no SRS cash-payout path is modeled.',
+          ]
+        : [
+            'Cash-funded policies default dividend distributions to reinvestment and may elect cash payout for dividend-paying ILP sub-funds.',
+            'V1 seeds reinvestment by default; payout elections use a manual annual distribution-yield assumption while the published S$30 minimum payout threshold and designated-bank-account payout operations remain informational only.',
+          ],
+      sourceRefs: [page5Dividends],
+    },
     eecTable: [],
     warnings: [
-      'HSBC Life Wealth Invest (Cash/SRS) is cataloged as a partial modeled subset in V1. The parser captures the published up-to-5% premium-charge corridor for initial single premiums, recurring single premiums, and top-ups plus the nil-redemption-fee withdrawal path for the Cash/SRS corridor through the open-ended no-MIP basis.',
-      'Switching fees are currently nil, but dividend payout elections, switching behavior, and SRS eligibility constraints remain outside the current calculator surface.',
+      isSrs
+        ? 'HSBC Life Wealth Invest (SRS) is cataloged as a partial modeled subset in V1. The parser captures the published up-to-5% premium-charge corridor for initial single premiums, recurring single premiums, and top-ups plus reinvest-only distribution support and the nil-redemption-fee withdrawal path through the open-ended no-MIP basis.'
+        : 'HSBC Life Wealth Invest (Cash) is cataloged as a partial modeled subset in V1. The parser captures the published up-to-5% premium-charge corridor for initial single premiums, recurring single premiums, and top-ups plus reinvest-default distribution support and the nil-redemption-fee withdrawal path through the open-ended no-MIP basis.',
+      'Switching fees are currently nil, while switching behavior, dividend cash-payout operations, and bank-routing edge cases remain outside the current calculator surface.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
@@ -145,10 +175,11 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       'Single-premium principal tracking remains informational only in V1.',
       'Recurring single premium enrollment approval, allocation-change requests, and failed-deduction handling remain informational only.',
       'Fund-level management charges and additional ILP-sub-fund charges remain informational only because they depend on the selected fund mix and are not a single product-level rate.',
-      'Dividend payout elections, switching administration, and SRS eligibility constraints remain informational only.',
+      'Fund switching administration remains informational only.',
+      'The published S$30 dividend minimum and designated-bank-account payout operations remain informational only.',
       'Termination and free-look refund behavior remain informational only.',
     ],
-    sourceRefs: [page3, page5, page6, page8, page11, page14],
+    sourceRefs: [page3, page5Dividends, page5, page6, page8, page11, page14],
   }
 }
 
@@ -170,6 +201,7 @@ export function parseHsbcWealthInvestCashSrs(context: ParseContext): IlpCatalogP
       'branch:hsbc-life-wealth-invest-cash-srs-max-top-up-charge',
       'branch:hsbc-life-wealth-invest-cash-srs-zero-redemption-fee',
       'tokio-recurring-single-premium-routing',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'hsbc-life-wealth-invest-cash-srs-death-benefit',
@@ -177,14 +209,19 @@ export function parseHsbcWealthInvestCashSrs(context: ParseContext): IlpCatalogP
       'hsbc-life-wealth-invest-cash-srs-single-premium-principal-tracking',
       'hsbc-life-wealth-invest-cash-srs-fund-management-charge',
       'hsbc-life-wealth-invest-cash-srs-additional-ilp-sub-fund-charges',
-      'hsbc-life-wealth-invest-cash-srs-dividend-and-switching-options',
+      'hsbc-life-wealth-invest-cash-srs-dividend-cashout-threshold',
+      'hsbc-life-wealth-invest-cash-srs-dividend-bank-account-routing',
+      'hsbc-life-wealth-invest-cash-srs-fund-switching',
       'hsbc-life-wealth-invest-cash-srs-free-look-refund',
       'hsbc-life-wealth-invest-cash-srs-termination',
     ],
     warnings: [
-      'HSBC Life Wealth Invest (Cash/SRS) is cataloged as a partial modeled subset in V1. The parser captures the published up-to-5% premium-charge corridor for initial single premiums, recurring single premiums, and top-ups plus the nil-redemption-fee withdrawal path for the Cash/SRS corridor through the open-ended no-MIP basis, while protection formulas, dividend payout handling, single-premium principal tracking, and fund-level charges remain outside the current engine.',
+      'HSBC Life Wealth Invest (Cash/SRS) is cataloged as a partial modeled subset in V1. The parser captures separate cash and SRS corridors for the published up-to-5% single-premium, recurring-single-premium, and top-up charge paths, reinvest-default or reinvest-only distribution support, and the nil-redemption-fee withdrawal path through the open-ended no-MIP basis, while protection formulas, single-premium principal tracking, and fund-level charges remain outside the current engine.',
     ],
     archived: false,
-    variants: [buildVariant(context.document)],
+    variants: [
+      buildVariant(context.document, 'cash'),
+      buildVariant(context.document, 'srs'),
+    ],
   }
 }

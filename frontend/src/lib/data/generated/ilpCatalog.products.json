@@ -43159,7 +43159,8 @@
       "branch:hsbc-life-wealth-invest-cash-srs-max-recurring-single-premium-charge",
       "branch:hsbc-life-wealth-invest-cash-srs-max-top-up-charge",
       "branch:hsbc-life-wealth-invest-cash-srs-zero-redemption-fee",
-      "tokio-recurring-single-premium-routing"
+      "tokio-recurring-single-premium-routing",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "hsbc-life-wealth-invest-cash-srs-death-benefit",
@@ -43167,17 +43168,19 @@
       "hsbc-life-wealth-invest-cash-srs-single-premium-principal-tracking",
       "hsbc-life-wealth-invest-cash-srs-fund-management-charge",
       "hsbc-life-wealth-invest-cash-srs-additional-ilp-sub-fund-charges",
-      "hsbc-life-wealth-invest-cash-srs-dividend-and-switching-options",
+      "hsbc-life-wealth-invest-cash-srs-dividend-cashout-threshold",
+      "hsbc-life-wealth-invest-cash-srs-dividend-bank-account-routing",
+      "hsbc-life-wealth-invest-cash-srs-fund-switching",
       "hsbc-life-wealth-invest-cash-srs-free-look-refund",
       "hsbc-life-wealth-invest-cash-srs-termination"
     ],
     "warnings": [
-      "HSBC Life Wealth Invest (Cash/SRS) is cataloged as a partial modeled subset in V1. The parser captures the published up-to-5% premium-charge corridor for initial single premiums, recurring single premiums, and top-ups plus the nil-redemption-fee withdrawal path for the Cash/SRS corridor through the open-ended no-MIP basis, while protection formulas, dividend payout handling, single-premium principal tracking, and fund-level charges remain outside the current engine."
+      "HSBC Life Wealth Invest (Cash/SRS) is cataloged as a partial modeled subset in V1. The parser captures separate cash and SRS corridors for the published up-to-5% single-premium, recurring-single-premium, and top-up charge paths, reinvest-default or reinvest-only distribution support, and the nil-redemption-fee withdrawal path through the open-ended no-MIP basis, while protection formulas, single-premium principal tracking, and fund-level charges remain outside the current engine."
     ],
     "archived": false,
     "variants": [
       {
-        "id": "sgd-open-ended-cash-srs",
+        "id": "sgd-open-ended-cash",
         "currency": "SGD",
         "mipBasis": "open-ended",
         "mipLength": null,
@@ -43214,7 +43217,7 @@
         "feeRules": [
           {
             "id": "single-premium-charge",
-            "label": "Single Premium Charge (Cash/SRS)",
+            "label": "Single Premium Charge (Cash)",
             "basis": "annual-contribution",
             "rate": 0.05,
             "amount": 0,
@@ -43223,7 +43226,7 @@
             ],
             "activeWindow": "policy-term",
             "notes": [
-              "Models the published up-to-5% premium-charge corridor applied after allocating the initial single premium into units for the Cash/SRS corridor."
+              "Models the published up-to-5% premium-charge corridor applied after allocating the initial single premium into units for the cash corridor."
             ],
             "sourceRefs": [
               {
@@ -43237,7 +43240,7 @@
         "eventChargeRules": [
           {
             "id": "top-up-premium-charge",
-            "label": "Top-up Premium Charge (Cash/SRS)",
+            "label": "Top-up Premium Charge (Cash)",
             "trigger": "top-up",
             "basis": "event-amount",
             "appliesTo": [
@@ -43248,7 +43251,7 @@
             "activeWindow": "policy-term",
             "allocation": "equal-split",
             "notes": [
-              "Models the published up-to-5% premium-charge corridor applied after allocating each approved top-up premium into units for the Cash/SRS corridor."
+              "Models the published up-to-5% premium-charge corridor applied after allocating each approved top-up premium into units for the cash corridor."
             ],
             "sourceRefs": [
               {
@@ -43260,7 +43263,7 @@
           },
           {
             "id": "recurring-single-premium-charge",
-            "label": "Recurring Single Premium Charge (Cash/SRS)",
+            "label": "Recurring Single Premium Charge (Cash)",
             "trigger": "recurring-single-premium",
             "basis": "event-amount-with-overlap-months",
             "appliesTo": [
@@ -43271,7 +43274,7 @@
             "activeWindow": "policy-term",
             "allocation": "equal-split",
             "notes": [
-              "Models the published up-to-5% premium-charge corridor applied after allocating each approved recurring single premium into units for the Cash/SRS corridor.",
+              "Models the published up-to-5% premium-charge corridor applied after allocating each approved recurring single premium into units for the cash corridor.",
               "Use recurring-single-premium events to represent the approved annual, half-yearly, or quarterly cadence."
             ],
             "sourceRefs": [
@@ -43311,10 +43314,31 @@
             ]
           }
         ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Cash-funded policies default dividend distributions to reinvestment and may elect cash payout for dividend-paying ILP sub-funds.",
+            "V1 seeds reinvestment by default; payout elections use a manual annual distribution-yield assumption while the published S$30 minimum payout threshold and designated-bank-account payout operations remain informational only."
+          ],
+          "sourceRefs": [
+            {
+              "page": 5,
+              "section": "Distribution of dividend",
+              "excerpt": "Only cash purchased Policy is entitled to the dividend payout option. 7.2 Dividend Handling If Policyholder chooses to invest in any ILP Sub-Fund that pays dividends, Policyholder has the option to either reinvest these "
+            }
+          ]
+        },
         "eecTable": [],
         "warnings": [
-          "HSBC Life Wealth Invest (Cash/SRS) is cataloged as a partial modeled subset in V1. The parser captures the published up-to-5% premium-charge corridor for initial single premiums, recurring single premiums, and top-ups plus the nil-redemption-fee withdrawal path for the Cash/SRS corridor through the open-ended no-MIP basis.",
-          "Switching fees are currently nil, but dividend payout elections, switching behavior, and SRS eligibility constraints remain outside the current calculator surface.",
+          "HSBC Life Wealth Invest (Cash) is cataloged as a partial modeled subset in V1. The parser captures the published up-to-5% premium-charge corridor for initial single premiums, recurring single premiums, and top-ups plus reinvest-default distribution support and the nil-redemption-fee withdrawal path through the open-ended no-MIP basis.",
+          "Switching fees are currently nil, while switching behavior, dividend cash-payout operations, and bank-routing edge cases remain outside the current calculator surface.",
           "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
         ],
         "unsupportedItems": [
@@ -43322,7 +43346,8 @@
           "Single-premium principal tracking remains informational only in V1.",
           "Recurring single premium enrollment approval, allocation-change requests, and failed-deduction handling remain informational only.",
           "Fund-level management charges and additional ILP-sub-fund charges remain informational only because they depend on the selected fund mix and are not a single product-level rate.",
-          "Dividend payout elections, switching administration, and SRS eligibility constraints remain informational only.",
+          "Fund switching administration remains informational only.",
+          "The published S$30 dividend minimum and designated-bank-account payout operations remain informational only.",
           "Termination and free-look refund behavior remain informational only."
         ],
         "sourceRefs": [
@@ -43330,6 +43355,220 @@
             "page": 3,
             "section": "Benefits",
             "excerpt": "1.2.1 Death Benefit In the event of death of the Life Assured during the Policy term while the Policy is in force, the Death Benefit payable is will be the higher of 101% of total Premiums (Initial Single Premium plus To"
+          },
+          {
+            "page": 5,
+            "section": "Distribution of dividend",
+            "excerpt": "Only cash purchased Policy is entitled to the dividend payout option. 7.2 Dividend Handling If Policyholder chooses to invest in any ILP Sub-Fund that pays dividends, Policyholder has the option to either reinvest these "
+          },
+          {
+            "page": 5,
+            "section": "Fees and charges",
+            "excerpt": "Redemption Fee Currently nil. We reserve the right to impose a redemption fee in its discretion from time to time by giving the Policyholder one (1) month’s prior written notice. Switching Fee between Currently nil. We r"
+          },
+          {
+            "page": 6,
+            "section": "Subscription and premium types",
+            "excerpt": "Dividend distributions are not guaranteed and can be made out of the income, capital gains and/or capital of the ILP Sub-Fund. Dividend policies vary depending on the ILP Sub-Fund. The issuance of dividends remains at th"
+          },
+          {
+            "page": 8,
+            "section": "Redemption of units",
+            "excerpt": "a Dealing Day or on a day which is not a Dealing Day, such payment will be taken to have been received on the next Dealing Day. We and the authorised financial advisers reserve the right to revise the cut-off time in res"
+          },
+          {
+            "page": 11,
+            "section": "Switching of units",
+            "excerpt": "10. INVESTMENT 10.1 Investment Option The allocation, crediting, cancellation, switching or other dealings of Units as described in this Policy are notional in nature and are solely for the purpose of this Policy, includ"
+          },
+          {
+            "page": 14,
+            "section": "Key policy provisions",
+            "excerpt": "14. PERFORMANCE AND BENCHMARK The performance and benchmark against which the performance of an ILP Sub-Fund is measured are set out in the relevant section of the Fund Information Booklet. 15. EXPENSE RATIO The expense "
+          }
+        ]
+      },
+      {
+        "id": "sgd-open-ended-srs",
+        "currency": "SGD",
+        "mipBasis": "open-ended",
+        "mipLength": null,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Subscription and premium types",
+                "excerpt": "Dividend distributions are not guaranteed and can be made out of the income, capital gains and/or capital of the ILP Sub-Fund. Dividend policies vary depending on the ILP Sub-Fund. The issuance of dividends remains at th"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "single-premium-charge",
+            "label": "Single Premium Charge (SRS)",
+            "basis": "annual-contribution",
+            "rate": 0.05,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published up-to-5% premium-charge corridor applied after allocating the initial single premium into units for the SRS corridor."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Subscription and premium types",
+                "excerpt": "Dividend distributions are not guaranteed and can be made out of the income, capital gains and/or capital of the ILP Sub-Fund. Dividend policies vary depending on the ILP Sub-Fund. The issuance of dividends remains at th"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge (SRS)",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published up-to-5% premium-charge corridor applied after allocating each approved top-up premium into units for the SRS corridor."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Subscription and premium types",
+                "excerpt": "Dividend distributions are not guaranteed and can be made out of the income, capital gains and/or capital of the ILP Sub-Fund. Dividend policies vary depending on the ILP Sub-Fund. The issuance of dividends remains at th"
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurring Single Premium Charge (SRS)",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published up-to-5% premium-charge corridor applied after allocating each approved recurring single premium into units for the SRS corridor.",
+              "Use recurring-single-premium events to represent the approved annual, half-yearly, or quarterly cadence."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Subscription and premium types",
+                "excerpt": "Dividend distributions are not guaranteed and can be made out of the income, capital gains and/or capital of the ILP Sub-Fund. Dividend policies vary depending on the ILP Sub-Fund. The issuance of dividends remains at th"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the currently nil redemption-fee path for partial redemptions."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Fees and charges",
+                "excerpt": "Redemption Fee Currently nil. We reserve the right to impose a redemption fee in its discretion from time to time by giving the Policyholder one (1) month’s prior written notice. Switching Fee between Currently nil. We r"
+              },
+              {
+                "page": 8,
+                "section": "Redemption of units",
+                "excerpt": "a Dealing Day or on a day which is not a Dealing Day, such payment will be taken to have been received on the next Dealing Day. We and the authorised financial advisers reserve the right to revise the cut-off time in res"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": false,
+          "cashPayoutAllowedAfterMip": false,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "SRS-funded policies default dividend distributions to reinvestment because the published payout election is only available to cash-purchased policies.",
+            "V1 seeds reinvestment by default; the published S$30 minimum payout threshold and designated-bank-account payout operations remain informational only because no SRS cash-payout path is modeled."
+          ],
+          "sourceRefs": [
+            {
+              "page": 5,
+              "section": "Distribution of dividend",
+              "excerpt": "Only cash purchased Policy is entitled to the dividend payout option. 7.2 Dividend Handling If Policyholder chooses to invest in any ILP Sub-Fund that pays dividends, Policyholder has the option to either reinvest these "
+            }
+          ]
+        },
+        "eecTable": [],
+        "warnings": [
+          "HSBC Life Wealth Invest (SRS) is cataloged as a partial modeled subset in V1. The parser captures the published up-to-5% premium-charge corridor for initial single premiums, recurring single premiums, and top-ups plus reinvest-only distribution support and the nil-redemption-fee withdrawal path through the open-ended no-MIP basis.",
+          "Switching fees are currently nil, while switching behavior, dividend cash-payout operations, and bank-routing edge cases remain outside the current calculator surface.",
+          "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
+        ],
+        "unsupportedItems": [
+          "Death and terminal-illness benefit formulas remain informational only, including the 101% of total premiums principal-style floor.",
+          "Single-premium principal tracking remains informational only in V1.",
+          "Recurring single premium enrollment approval, allocation-change requests, and failed-deduction handling remain informational only.",
+          "Fund-level management charges and additional ILP-sub-fund charges remain informational only because they depend on the selected fund mix and are not a single product-level rate.",
+          "Fund switching administration remains informational only.",
+          "The published S$30 dividend minimum and designated-bank-account payout operations remain informational only.",
+          "Termination and free-look refund behavior remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 3,
+            "section": "Benefits",
+            "excerpt": "1.2.1 Death Benefit In the event of death of the Life Assured during the Policy term while the Policy is in force, the Death Benefit payable is will be the higher of 101% of total Premiums (Initial Single Premium plus To"
+          },
+          {
+            "page": 5,
+            "section": "Distribution of dividend",
+            "excerpt": "Only cash purchased Policy is entitled to the dividend payout option. 7.2 Dividend Handling If Policyholder chooses to invest in any ILP Sub-Fund that pays dividends, Policyholder has the option to either reinvest these "
           },
           {
             "page": 5,

@@ -2743,20 +2743,21 @@ describe('templateVariantToPolicySeed', () => {
     ])
   })
 
-  it('maps HSBC Life Wealth Invest (Cash/SRS) into a partial seed with recurring single premium charges', () => {
+  it('maps HSBC Life Wealth Invest (Cash) into a partial seed with recurring single premium charges and distribution support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'hsbc-life-wealth-invest-cash-srs')
     expect(product).toBeDefined()
 
-    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-cash-srs')
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-cash')
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.name).toBe('HSBC Life Wealth Invest (Cash/SRS) (SGD / Open-ended (Cash Srs))')
+    expect(seed.name).toBe('HSBC Life Wealth Invest (Cash/SRS) (SGD / Open-ended (Cash))')
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-life-wealth-invest-cash-srs-max-recurring-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-recurring-single-premium-routing')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cash-srs-recurring-single-premium')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cash-srs-dividend-cashout-threshold')
     expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'top-up', contributionShare: 1 },
@@ -2787,6 +2788,63 @@ describe('templateVariantToPolicySeed', () => {
         amount: 0,
       }),
     ])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+  })
+
+  it('maps HSBC Life Wealth Invest (SRS) into a partial seed with reinvest-only distribution support', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'hsbc-life-wealth-invest-cash-srs')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-srs')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('HSBC Life Wealth Invest (Cash/SRS) (SGD / Open-ended (Srs))')
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-life-wealth-invest-cash-srs-max-recurring-single-premium-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        basis: 'event-amount',
+        appliesTo: ['policy'],
+        rate: 0.05,
+        amount: 0,
+      }),
+      expect.objectContaining({
+        id: 'recurring-single-premium-charge',
+        trigger: 'recurring-single-premium',
+        basis: 'event-amount-with-overlap-months',
+        appliesTo: ['policy'],
+        rate: 0.05,
+        amount: 0,
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
+        appliesTo: ['policy'],
+        rate: 0,
+        amount: 0,
+      }),
+    ])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: false,
+      cashPayoutAllowedAfterMip: false,
+      source: 'distribution-paying-funds',
+    })
   })
 
   it('maps Manulink Investor (II) SRS seed into a partial policy with recurring single premium charges', () => {

@@ -31,16 +31,20 @@ describe('parseHsbcWealthInvestCashSrs', () => {
       'branch:hsbc-life-wealth-invest-cash-srs-max-top-up-charge',
       'branch:hsbc-life-wealth-invest-cash-srs-zero-redemption-fee',
       'tokio-recurring-single-premium-routing',
+      'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cash-srs-fund-management-charge')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cash-srs-single-premium-principal-tracking')
-    expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cash-srs'])
+    expect(product.variants.map((variant) => variant.id)).toEqual([
+      'sgd-open-ended-cash',
+      'sgd-open-ended-srs',
+    ])
 
-    const variant = product.variants[0]
-    expect(variant?.mipBasis).toBe('open-ended')
-    expect(variant?.mipLength).toBeNull()
-    expect(variant?.eecTable).toEqual([])
-    expect(variant?.accounts).toEqual([
+    const cashVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-cash')
+    expect(cashVariant?.mipBasis).toBe('open-ended')
+    expect(cashVariant?.mipLength).toBeNull()
+    expect(cashVariant?.eecTable).toEqual([])
+    expect(cashVariant?.accounts).toEqual([
       expect.objectContaining({
         id: 'policy',
         contributionRules: [
@@ -49,7 +53,7 @@ describe('parseHsbcWealthInvestCashSrs', () => {
         ],
       }),
     ])
-    expect(variant?.feeRules).toEqual([
+    expect(cashVariant?.feeRules).toEqual([
       expect.objectContaining({
         id: 'single-premium-charge',
         basis: 'annual-contribution',
@@ -57,7 +61,7 @@ describe('parseHsbcWealthInvestCashSrs', () => {
         rate: 0.05,
       }),
     ])
-    expect(variant?.eventChargeRules).toEqual([
+    expect(cashVariant?.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
         trigger: 'top-up',
@@ -80,6 +84,65 @@ describe('parseHsbcWealthInvestCashSrs', () => {
         rate: 0,
       }),
     ])
-    expect(variant?.warnings).toContain('Switching fees are currently nil, but dividend payout elections, switching behavior, and SRS eligibility constraints remain outside the current calculator surface.')
+    expect(cashVariant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('Cash-funded policies default dividend distributions to reinvestment'),
+      ]),
+      sourceRefs: [
+        expect.objectContaining({
+          page: 5,
+          section: 'Distribution of dividend',
+        }),
+      ],
+    })
+
+    const srsVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-srs')
+    expect(srsVariant?.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        basis: 'event-amount',
+        activeWindow: 'policy-term',
+        rate: 0.05,
+      }),
+      expect.objectContaining({
+        id: 'recurring-single-premium-charge',
+        trigger: 'recurring-single-premium',
+        basis: 'event-amount-with-overlap-months',
+        activeWindow: 'policy-term',
+        rate: 0.05,
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
+        activeWindow: 'policy-term',
+        rate: 0,
+      }),
+    ])
+    expect(srsVariant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: false,
+      cashPayoutAllowedAfterMip: false,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('SRS-funded policies default dividend distributions to reinvestment'),
+      ]),
+      sourceRefs: [
+        expect.objectContaining({
+          page: 5,
+          section: 'Distribution of dividend',
+        }),
+      ],
+    })
+    expect(srsVariant?.warnings).toContain('Switching fees are currently nil, while switching behavior, dividend cash-payout operations, and bank-routing edge cases remain outside the current calculator surface.')
   }, 30_000)
 })
