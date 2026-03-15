@@ -39,7 +39,7 @@ const HOUSEHOLD_KEY_SECTIONS: { id: SectionId; label: string }[] = [
 ]
 
 export function DashboardPage() {
-  usePageMeta({ title: 'Dashboard — SG FIRE Planner', description: 'Your FIRE dashboard with key metrics, risk assessment, and retirement readiness overview.', path: '/dashboard' })
+  usePageMeta({ title: 'FIRE Dashboard — Retirement Readiness & Risk Assessment', description: 'See your FIRE number, years to retirement, portfolio at retirement, success probability, and risk assessment in one view. Updated live as you adjust inputs.', path: '/dashboard' })
   const metrics = useDashboardMetrics()
   const isEmpty = metrics.fireNumber === null
   const { isEligible } = useExpenseTracker()

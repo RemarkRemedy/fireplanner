@@ -63,7 +63,7 @@ function buildWithdrawalMonteCarloRunSignature(input: {
 }
 
 export function WithdrawalPage() {
-  usePageMeta({ title: 'Withdrawal Strategies — SG FIRE Planner', description: 'Compare 12 retirement withdrawal strategies including the 4% rule, VPW, guardrails, and CAPE-based approaches.', path: '/withdrawal' })
+  usePageMeta({ title: '12 Retirement Withdrawal Strategies Compared — Singapore FIRE Planner', description: 'Compare the 4% rule, VPW, Guyton-Klinger guardrails, CAPE-based, Vanguard Dynamic, and 7 more withdrawal strategies side by side with your actual numbers.', path: '/withdrawal' })
   const { profile } = useHouseholdRuntimeInputs()
   // Normalized context for household-aware ages and revision tracking
   const normalized = useNormalizedLegacyAnalysisContext()

@@ -51,51 +51,177 @@ const routes = [
   },
   {
     path: '/inputs',
-    title: 'Plan Inputs \u2014 SG FIRE Planner',
-    heading: 'Plan Inputs',
-    description: 'Configure your income, expenses, CPF, investments, and retirement assumptions for Singapore FIRE planning.',
+    title: 'FIRE Plan Inputs \u2014 Income, Expenses, CPF & Portfolio Setup',
+    heading: 'Plan Your Singapore Retirement Inputs',
+    description: 'Set up your income, expenses, CPF contributions, investment portfolio, and retirement assumptions. All calculations run in your browser with Singapore-specific defaults.',
+    bodyHtml: `
+      <p>Configure the key inputs for your Singapore retirement plan: salary and income streams, monthly expenses and goals, CPF contribution rates by age bracket, net worth and portfolio allocation across 8 asset classes.</p>
+      <p>Every input has Singapore-specific defaults (MOM salary benchmarks, CPF rates, 2.5% inflation) so you can start with sensible values and refine from there.</p>
+      <ul>
+        <li><a href="/">Back to start</a></li>
+        <li><a href="/projection">View your year-by-year projection</a></li>
+        <li><a href="/reference">CPF rates and tax bracket reference</a></li>
+      </ul>
+    `,
   },
   {
     path: '/projection',
-    title: 'Projection \u2014 SG FIRE Planner',
-    heading: 'Projection',
-    description: 'Year-by-year financial projection with net worth trajectory, CPF balances, and retirement milestones.',
+    title: 'Retirement Projection \u2014 Year-by-Year Net Worth & CPF Forecast',
+    heading: 'Year-by-Year Retirement Projection',
+    description: 'See your net worth trajectory from today to retirement and beyond. Tracks portfolio growth, CPF OA/SA/MA balances, income changes, and spending year by year.',
+    bodyHtml: `
+      <p>View a detailed year-by-year table showing how your net worth, CPF balances, and portfolio evolve from today through retirement and beyond.</p>
+      <p>The projection accounts for salary growth, CPF contribution rate changes by age bracket, investment returns across 8 asset classes, inflation, and planned life events.</p>
+      <ul>
+        <li><a href="/inputs">Adjust your plan inputs</a></li>
+        <li><a href="/stress-test">Run Monte Carlo stress tests</a></li>
+        <li><a href="/withdrawal">Compare withdrawal strategies</a></li>
+      </ul>
+    `,
   },
   {
     path: '/withdrawal',
-    title: 'Withdrawal Strategies \u2014 SG FIRE Planner',
-    heading: 'Withdrawal Strategies',
-    description: 'Compare 12 retirement withdrawal strategies including the 4% rule, VPW, guardrails, and CAPE-based approaches.',
+    title: '12 Retirement Withdrawal Strategies Compared \u2014 Singapore FIRE Planner',
+    heading: 'Compare 12 Retirement Withdrawal Strategies',
+    description: 'Compare the 4% rule, VPW, Guyton-Klinger guardrails, CAPE-based, Vanguard Dynamic, and 7 more withdrawal strategies side by side with your actual numbers.',
+    bodyHtml: `
+      <p>Not sure how to draw down your retirement portfolio? Compare 12 evidence-based withdrawal strategies using your own financial inputs:</p>
+      <ul>
+        <li>Constant Dollar (the classic 4% rule)</li>
+        <li>Variable Percentage Withdrawal (VPW)</li>
+        <li>Guyton-Klinger Guardrails</li>
+        <li>Vanguard Dynamic Spending</li>
+        <li>CAPE-Based Withdrawal</li>
+        <li>Floor-and-Ceiling</li>
+        <li>Percent of Portfolio</li>
+        <li>1/N Remaining Years</li>
+        <li>Sensible Withdrawals</li>
+        <li>95% Rule</li>
+        <li>Endowment (Yale Model)</li>
+        <li>Hebeler Autopilot II</li>
+      </ul>
+      <p>Each strategy shows annual income, portfolio balance over time, and risk of depletion.</p>
+      <ul>
+        <li><a href="/stress-test">Stress test your chosen strategy</a></li>
+        <li><a href="/reference">How each strategy works</a></li>
+      </ul>
+    `,
   },
   {
     path: '/stress-test',
-    title: 'Stress Test \u2014 SG FIRE Planner',
-    heading: 'Stress Test',
-    description: 'Monte Carlo simulation, historical backtesting, and sequence risk analysis for your Singapore retirement plan.',
+    title: 'Monte Carlo Retirement Simulator \u2014 Backtest & Stress Test Your Plan',
+    heading: 'Monte Carlo Simulation, Backtesting & Stress Testing',
+    description: 'Run 10,000 Monte Carlo simulations, historical rolling-window backtests, and sequence-of-returns stress tests on your Singapore retirement plan.',
+    bodyHtml: `
+      <p>Test whether your retirement plan survives real-world uncertainty:</p>
+      <ul>
+        <li><strong>Monte Carlo simulation</strong> \u2014 10,000 randomized paths using parametric, historical bootstrap, or fat-tail (Student-t) methods</li>
+        <li><strong>Historical backtesting</strong> \u2014 Bengen-style rolling window analysis across 98 years of market data (1928\u20132025)</li>
+        <li><strong>Sequence-of-returns risk</strong> \u2014 stress test against specific crisis scenarios (GFC, dot-com, stagflation)</li>
+        <li><strong>Safe withdrawal rate optimizer</strong> \u2014 binary search for the highest SWR at your target success rate</li>
+      </ul>
+      <p>All simulations run in your browser using a Web Worker. No data leaves your device.</p>
+      <ul>
+        <li><a href="/withdrawal">Choose a withdrawal strategy first</a></li>
+        <li><a href="/dashboard">View your results dashboard</a></li>
+      </ul>
+    `,
   },
   {
     path: '/dashboard',
-    title: 'Dashboard \u2014 SG FIRE Planner',
-    heading: 'Dashboard',
-    description: 'Your FIRE dashboard with key metrics, risk assessment, and retirement readiness overview.',
+    title: 'FIRE Dashboard \u2014 Retirement Readiness & Risk Assessment',
+    heading: 'Your FIRE Dashboard',
+    description: 'See your FIRE number, years to retirement, portfolio at retirement, success probability, and risk assessment in one view. Updated live as you adjust inputs.',
+    bodyHtml: `
+      <p>Your retirement readiness at a glance: FIRE number, estimated retirement age, portfolio projection at retirement, Monte Carlo success rate, and safe withdrawal rate.</p>
+      <p>The dashboard pulls from your inputs, projection, and simulation results to give a single-page summary of where you stand.</p>
+      <ul>
+        <li><a href="/inputs">Adjust your inputs</a></li>
+        <li><a href="/stress-test">Run stress tests</a></li>
+        <li><a href="/checklist">FIRE checklist</a></li>
+      </ul>
+    `,
   },
   {
     path: '/checklist',
-    title: 'FIRE Checklist \u2014 SG FIRE Planner',
-    heading: 'FIRE Checklist',
-    description: 'Track your progress toward financial independence with this Singapore-specific FIRE checklist.',
+    title: 'Singapore FIRE Checklist \u2014 Financial Independence Milestones',
+    heading: 'Singapore FIRE Checklist',
+    description: 'Track your progress toward financial independence with a Singapore-specific checklist covering CPF, insurance, emergency fund, estate planning, and portfolio milestones.',
+    bodyHtml: `
+      <p>A step-by-step checklist for reaching financial independence in Singapore. Covers:</p>
+      <ul>
+        <li>Emergency fund and insurance foundations</li>
+        <li>CPF optimization (SA top-ups, voluntary contributions)</li>
+        <li>Investment portfolio setup and rebalancing</li>
+        <li>Debt elimination and housing planning</li>
+        <li>Estate planning and nomination</li>
+        <li>Pre-retirement transition steps</li>
+      </ul>
+      <p>Track your progress and see what percentage of milestones you have completed.</p>
+      <ul>
+        <li><a href="/inputs">Set up your financial plan</a></li>
+        <li><a href="/dashboard">View your dashboard</a></li>
+      </ul>
+    `,
   },
   {
     path: '/reference',
-    title: 'Reference Guide \u2014 SG FIRE Planner',
-    heading: 'Reference Guide',
-    description: 'Comprehensive guide to Singapore retirement planning: CPF, tax, withdrawal strategies, Monte Carlo methods, and data sources.',
+    title: 'Singapore Retirement Planning Guide \u2014 CPF, Tax, Withdrawal Strategies',
+    heading: 'Singapore Retirement Planning Reference Guide',
+    description: 'Comprehensive reference for Singapore retirement planning: CPF contribution rates, income tax brackets, withdrawal strategy formulas, Monte Carlo methodology, and data sources.',
+    bodyHtml: `
+      <p>A detailed reference guide covering everything behind the planner\u2019s calculations:</p>
+      <ul>
+        <li>CPF contribution rates by age bracket, OW/AW ceilings, BRS/FRS/ERS projections</li>
+        <li>Singapore income tax brackets and personal relief categories</li>
+        <li>SRS contribution limits and tax treatment</li>
+        <li>12 withdrawal strategy formulas with worked examples</li>
+        <li>Monte Carlo simulation methodology (parametric, bootstrap, fat-tail)</li>
+        <li>Historical return data sources and methodology (1928\u20132025)</li>
+        <li>Property stamp duty rates (BSD, ABSD) and Bala\u2019s Table</li>
+      </ul>
+      <ul>
+        <li><a href="/">Start planning</a></li>
+        <li><a href="/stress-test">Run simulations</a></li>
+      </ul>
+    `,
   },
   {
     path: '/health-check',
-    title: 'Health Check \u2014 SG FIRE Planner',
-    heading: 'Financial Health Check',
-    description: 'Financial health ratios and insurance needs analysis for Singapore residents. Covers savings, liquidity, debt service, and CPF adequacy.',
+    title: 'Financial Health Check \u2014 Singapore Savings, Debt & Insurance Ratios',
+    heading: 'Financial Health Check for Singapore Residents',
+    description: 'Check your financial health with Singapore-specific ratios: savings rate, emergency fund, debt service (TDSR), liquidity, insurance coverage, and CPF adequacy.',
+    bodyHtml: `
+      <p>Assess your financial health using ratios calibrated for Singapore residents:</p>
+      <ul>
+        <li>Savings rate (net income basis)</li>
+        <li>Emergency fund adequacy (months of expenses)</li>
+        <li>Total debt service ratio (TDSR) against MAS guidelines</li>
+        <li>Non-mortgage debt service ratio</li>
+        <li>Liquidity ratio</li>
+        <li>Insurance needs gap analysis (death, disability, critical illness)</li>
+        <li>CPF retirement adequacy</li>
+      </ul>
+      <p>Each ratio shows where you stand (healthy, caution, or action needed) with Singapore-specific thresholds.</p>
+      <ul>
+        <li><a href="/inputs">Set up your financial profile</a></li>
+        <li><a href="/dashboard">View your FIRE dashboard</a></li>
+      </ul>
+    `,
+  },
+  {
+    path: '/ilp-review',
+    title: 'ILP Fee Calculator \u2014 Compare Investment-Linked Policy Costs',
+    heading: 'ILP Review: Compare Investment-Linked Policy Fees',
+    description: 'Calculate ILP fee drag, surrender penalties, and MIP-end outcomes. Compare multiple investment-linked policies side by side to decide whether to keep, surrender, or redirect premiums.',
+    bodyHtml: `
+      <p>Review how much your investment-linked policy may be costing you in fees, what surrendering could mean today, and how different ILPs compare side by side.</p>
+      <p>The tool highlights fee drag, best pre-MIP exit timing, and the opportunity cost of redirecting premiums to lower-cost alternatives.</p>
+      <ul>
+        <li><a href="/ilp-review">Open ILP Review</a></li>
+        <li><a href="/retirement-planner">Return to the retirement planner</a></li>
+      </ul>
+    `,
   },
 ]
 

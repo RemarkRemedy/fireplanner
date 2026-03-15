@@ -64,7 +64,7 @@ const STRATEGY_SHORT_LABELS: Record<WithdrawalStrategyType, string> = {
 }
 
 export function ProjectionPage() {
-  usePageMeta({ title: 'Projection — SG FIRE Planner', description: 'Year-by-year financial projection with net worth trajectory, CPF balances, and retirement milestones.', path: '/projection' })
+  usePageMeta({ title: 'Retirement Projection — Year-by-Year Net Worth & CPF Forecast', description: 'See your net worth trajectory from today to retirement and beyond. Tracks portfolio growth, CPF OA/SA/MA balances, income changes, and spending year by year.', path: '/projection' })
   const normalized = useNormalizedLegacyAnalysisContext()
   const { rows: jointRows, summary: jointSummary, hasErrors } = useProjection()
   const { isEligible } = useExpenseTracker()

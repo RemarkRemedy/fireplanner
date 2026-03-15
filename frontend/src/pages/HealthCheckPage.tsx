@@ -18,7 +18,7 @@ function formatThreshold(value: number, unit: string): string {
 }
 
 export function HealthCheckPage() {
-  usePageMeta({ title: 'Health Check — SG FIRE Planner', description: 'Financial health ratios and insurance needs analysis for Singapore residents. Covers savings, liquidity, debt service, and CPF adequacy.', path: '/health-check' })
+  usePageMeta({ title: 'Financial Health Check — Singapore Savings, Debt & Insurance Ratios', description: 'Check your financial health with Singapore-specific ratios: savings rate, emergency fund, debt service (TDSR), liquidity, insurance coverage, and CPF adequacy.', path: '/health-check' })
   const adults = useHouseholdPlanStore((s) => s.plan.adults)
   const isMultiAdult = adults.length > 1
 
