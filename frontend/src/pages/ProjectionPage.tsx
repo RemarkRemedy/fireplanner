@@ -134,22 +134,22 @@ export function ProjectionPage() {
   const allocationReturnOverrides = useAllocationStore((s) => s.returnOverrides)
   const allocationGlidePathConfig = useAllocationStore((s) => s.glidePathConfig)
   const allocationValidationErrors = useAllocationStore((s) => s.validationErrors)
-  const allocation = {
+  const allocation = useMemo(() => ({
     currentWeights: allocationCurrentWeights,
     targetWeights: allocationTargetWeights,
     returnOverrides: allocationReturnOverrides,
     glidePathConfig: allocationGlidePathConfig,
     validationErrors: allocationValidationErrors,
-  }
+  }), [allocationCurrentWeights, allocationTargetWeights, allocationReturnOverrides, allocationGlidePathConfig, allocationValidationErrors])
   const simSelectedStrategy = useSimulationStore((s) => s.selectedStrategy)
   const simStrategyParams = useSimulationStore((s) => s.strategyParams)
   const simWithdrawalBasis = useSimulationStore((s) => s.withdrawalBasis)
   const hasRunMC = useSimulationStore((s) => s.lastMCSuccessRate !== null)
-  const simulation = {
+  const simulation = useMemo(() => ({
     selectedStrategy: simSelectedStrategy,
     strategyParams: simStrategyParams,
     withdrawalBasis: simWithdrawalBasis,
-  }
+  }), [simSelectedStrategy, simStrategyParams, simWithdrawalBasis])
   const activeStrategy = simSelectedStrategy
   const setSimField = useSimulationStore((s) => s.setField)
 
