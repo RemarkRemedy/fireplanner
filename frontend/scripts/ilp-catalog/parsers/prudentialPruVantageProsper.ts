@@ -155,6 +155,11 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumTerm): IlpTem
   const page12 = sourceRef(12, 'Premium Holiday Refund and Premium Pass', snippetNear(document, 12, 'Premium Holiday Charge Refund'))
   const page13 = sourceRef(13, 'Partial Withdrawal Charge', snippetNear(document, 13, 'Partial Withdrawal Charge Table'))
   const page14 = sourceRef(14, 'Free Partial Withdrawal and Surrender Charge', snippetNear(document, 14, 'Free Partial Withdrawal after 10 years'))
+  const dividendPayoutAllowedAfterMip = true
+  const dividendPayoutAllowedDuringMip = term >= 15
+  const dividendElectionNote = term === 5
+    ? 'Growth Account dividend payout is only allowed after 5 years from the cover start date once 5 years of premiums have been paid.'
+    : 'Growth Account dividend payout is only allowed after 10 years from the cover start date once 10 years of premiums have been paid.'
 
   const adminCharge = ADMIN_CHARGE[term]
   const holidayChargeSchedule = buildRateSchedule(PREMIUM_HOLIDAY_CHARGE[term])
@@ -338,10 +343,24 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumTerm): IlpTem
     bonuses: buildBonuses(term, page4, page5),
     feeRules,
     eventChargeRules,
+    distributionSupport: {
+      mode: 'manual-assumption',
+      accountIds: ['growth'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: dividendPayoutAllowedDuringMip,
+      cashPayoutAllowedAfterMip: dividendPayoutAllowedAfterMip,
+      source: 'distribution-paying-funds',
+      notes: [
+        'Funds in the Growth Account that aim to distribute dividends reinvest by default.',
+        dividendElectionNote,
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.',
+      ],
+      sourceRefs: [page2, page4],
+    },
     eecTable: [...EXIT_CHARGE[term]],
     warnings: [
       'Set the actual Growth/Flex regular-premium split before trusting the fee-drag output. The seeded draft defaults to 50/50.',
-      'Growth-account dividend/distribution election remains informational only in V1.',
+      dividendElectionNote,
       'Enter insured-life details and the current net regular premium base to activate the modeled assurance charges.',
     ],
     unsupportedItems: [
@@ -372,13 +391,13 @@ export function parsePrudentialPruVantageProsper(context: ParseContext): IlpCata
       'branch:pru-top-up-charge',
       'branch:pru-free-withdrawal',
       'branch:pru-charged-withdrawal',
+      'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'growth-account-distribution-election',
       'premium-pass-wealth-share-secondary-life-options',
     ],
     warnings: [
-      'This template captures account routing, bonuses, premium-holiday mechanics, exit charges, and Prudential Prosper assurance charges after you enter the insured-life details and current net regular premium base. Growth-account distribution election and Premium Pass / Wealth Share / secondary-life options remain informational only.',
+      'This template captures account routing, bonuses, premium-holiday mechanics, exit charges, Prudential Prosper assurance charges after you enter the insured-life details and current net regular premium base, plus Growth Account dividend-election support through the manual distribution-mode kernel. Premium Pass / Wealth Share / secondary-life options remain informational only.',
     ],
     archived: false,
     variants,

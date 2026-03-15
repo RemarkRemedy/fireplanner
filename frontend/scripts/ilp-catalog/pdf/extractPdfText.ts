@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
+import { getDocument, VerbosityLevel } from 'pdfjs-dist/legacy/build/pdf.mjs'
 
 const STANDARD_FONT_DATA_PATH = `${path.resolve(
   import.meta.dirname,
@@ -86,6 +86,7 @@ export async function extractPdfText(filePath: string): Promise<ExtractedPdfDocu
     useWorkerFetch: false,
     isEvalSupported: false,
     standardFontDataUrl: STANDARD_FONT_DATA_PATH,
+    verbosity: VerbosityLevel.ERRORS,
   })
   const pdf = await loadingTask.promise
   const pages: ExtractedPdfPage[] = []

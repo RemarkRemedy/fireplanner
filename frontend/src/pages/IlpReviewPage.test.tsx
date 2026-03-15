@@ -158,7 +158,8 @@ describe('IlpReviewPage', () => {
     expect(screen.getByText('Seeded from catalog template')).toBeInTheDocument()
     expect(screen.getByText('Supported template')).toBeInTheDocument()
     expect(screen.getByText(/prudential prosper assurance charges after you enter the insured-life details and current net regular premium base/i)).toBeInTheDocument()
-    expect(screen.getByText(/metadata-only behaviors still outside the calculator: growth account distribution election, premium pass wealth share secondary life options/i)).toBeInTheDocument()
+    expect(screen.getByText(/metadata-only behaviors still outside the calculator: premium pass wealth share secondary life options/i)).toBeInTheDocument()
+    expect(screen.getByText(/growth account dividend payout is only allowed after 10 years/i)).toBeInTheDocument()
     expect(screen.getByDisplayValue('Assurance Charge (Death)')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
 

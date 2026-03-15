@@ -35,6 +35,7 @@ export type GoldenCoverageTag =
   | 'branch:pru-free-withdrawal'
   | 'branch:pru-charged-withdrawal'
   | 'branch:prosper-assurance-charge'
+  | 'kernel:distribution-mode-assumption'
   | 'branch:assure-ii-pre-70-assurance'
   | 'branch:assure-ii-post-70-charge-tail'
   | 'branch:assure-ii-manual-reduction-resumption'
@@ -1017,6 +1018,13 @@ function prosperBaselinePolicy(
   const base = seedPolicy(snapshot, 'prudential-pruvantage-prosper', variantId, id)
   const term = Number(variantId.replace('sgd-mip-', ''))
   const currentPolicyYear = Math.min(Math.max(Math.floor(term / 2) + 1, 3), term - 1)
+  const distributionAssumption = variantId === 'sgd-mip-20'
+    ? {
+        mode: 'cash-payout' as const,
+        source: 'manual-assumption' as const,
+        annualYieldRate: 0.04,
+      }
+    : base.distributionAssumption
 
   return withResolvedManualInputs(withPruBalancesAndSplit(
     withFunds(
@@ -1026,6 +1034,7 @@ function prosperBaselinePolicy(
         monthlyContribution: 1_250,
         currentPolicyYear,
         monthsAlreadyPaid: (currentPolicyYear - 1) * 12,
+        distributionAssumption,
         assuranceProfile: {
           currentAgeNextBirthday: 47,
           sex: 'male',
@@ -2099,8 +2108,14 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-mip-20',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline', 'branch:prosper-assurance-charge'],
-    description: 'Baseline in-force PRUVantage Prosper SGD / MIP 20 scenario.',
+    coverageTags: ['baseline', 'branch:prosper-assurance-charge', 'kernel:distribution-mode-assumption'],
+    description: 'Baseline in-force PRUVantage Prosper SGD / MIP 20 scenario with eligible Growth Account cash-payout distributions.',
+    integrityChecks: [
+      {
+        description: 'pays positive annual distributions once the 10-year Growth Account election is eligible',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
   },
   {
     productId: 'prudential-pruvantage-prosper',

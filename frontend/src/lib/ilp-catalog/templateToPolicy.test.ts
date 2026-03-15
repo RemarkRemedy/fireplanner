@@ -353,7 +353,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:prosper-assurance-charge')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('growth-account-distribution-election')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('growth-account-distribution-election')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -383,6 +384,19 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['growth'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
   it('maps PRUVantage Assure II into a supported seed with an Appendix A assurance-charge rule', () => {
