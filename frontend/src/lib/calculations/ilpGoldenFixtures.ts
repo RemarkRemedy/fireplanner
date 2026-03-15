@@ -34,6 +34,10 @@ export type GoldenCoverageTag =
   | 'branch:pru-top-up-charge'
   | 'branch:pru-free-withdrawal'
   | 'branch:pru-charged-withdrawal'
+  | 'branch:prulink-investgrowth-sp-single-premium-charge'
+  | 'branch:prulink-investgrowth-sp-premium-assurance-charge'
+  | 'branch:prulink-investgrowth-sp-top-up-charge'
+  | 'branch:prulink-investgrowth-sp-top-up-assurance-charge'
   | 'branch:prosper-assurance-charge'
   | 'kernel:distribution-mode-assumption'
   | 'branch:assure-ii-pre-70-assurance'
@@ -182,7 +186,11 @@ function cloneFunds(funds: IlpFund[]): IlpFund[] {
   return funds.map((fund) => ({ ...fund }))
 }
 
-function clonePolicySeedIntoInput(seed: ReturnType<typeof templateVariantToPolicySeed>, id: string): IlpPolicyInput {
+function clonePolicySeedIntoInput(
+  seed: ReturnType<typeof templateVariantToPolicySeed>,
+  id: string,
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
   const base = createDefaultPolicy()
   return ilpPolicySchema.parse({
     ...base,
@@ -224,6 +232,7 @@ function clonePolicySeedIntoInput(seed: ReturnType<typeof templateVariantToPolic
     })) ?? [],
     catalogSource: seed.catalogSource ? { ...seed.catalogSource } : undefined,
     catalogWarnings: seed.catalogWarnings ? [...seed.catalogWarnings] : undefined,
+    ...overrides,
   })
 }
 
@@ -248,10 +257,11 @@ function seedPolicy(
   productId: string,
   variantId: string,
   fixtureId: string,
+  overrides: Partial<IlpPolicyInput> = {},
 ): IlpPolicyInput {
   const product = requireProduct(snapshot, productId)
   const variant = requireVariant(product, variantId)
-  return clonePolicySeedIntoInput(templateVariantToPolicySeed(product, variant, snapshot.manifest), fixtureId)
+  return clonePolicySeedIntoInput(templateVariantToPolicySeed(product, variant, snapshot.manifest), fixtureId, overrides)
 }
 
 function withFunds(policy: IlpPolicyInput, funds: IlpFund[]): IlpPolicyInput {
@@ -1016,6 +1026,74 @@ function prosperAssurancePolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 
     50_000,
     0.5,
   ))
+}
+
+function pruInvestGrowthSpBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: string,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'prudential-prulink-investgrowth-sp', variantId, id, {
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+  const distributionAssumption = variantId === 'sgd-open-ended-cash'
+    ? {
+        mode: 'cash-payout' as const,
+        source: 'manual-assumption' as const,
+        annualYieldRate: 0.04,
+      }
+    : base.distributionAssumption
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden PRULink InvestGrowth (SP) (${variantId.toUpperCase()})`,
+      policyEvents: [],
+      distributionAssumption,
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function pruInvestGrowthSpBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: string,
+  id: string,
+): IlpPolicyInput {
+  return pruInvestGrowthSpBasePolicy(snapshot, variantId, id, PRU_BALANCED_FUNDS)
+}
+
+function pruInvestGrowthSpEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return pruInvestGrowthSpBasePolicy(snapshot, 'sgd-open-ended-cash', id, PRU_BALANCED_FUNDS, {
+    name: 'Golden PRULink InvestGrowth (SP) (SGD / Open-ended Cash Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 6,
+        durationMonths: 1,
+        amount: 10_000,
+      },
+    ],
+  })
+}
+
+function pruInvestGrowthSpStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return pruInvestGrowthSpBasePolicy(snapshot, 'sgd-open-ended-cash', id, PRU_STRESS_FUNDS, {
+    name: 'Golden PRULink InvestGrowth (SP) (SGD / Open-ended Cash OCF Stress)',
+  })
 }
 
 function prosperBaselinePolicy(
@@ -2399,6 +2477,99 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     ],
   },
   {
+    productId: 'prudential-prulink-investgrowth-sp',
+    variantId: 'sgd-open-ended-cash',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'branch:prulink-investgrowth-sp-single-premium-charge',
+      'branch:prulink-investgrowth-sp-premium-assurance-charge',
+    ],
+    description: 'Baseline PRULink InvestGrowth (SP) cash scenario proving the initial single-premium charge and Direct Income cash-payout support.',
+    integrityChecks: [
+      {
+        description: 'records a positive upfront single-premium charge at honest inception',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+      {
+        description: 'pays positive annual distributions under the cash Direct Income assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'prudential-prulink-investgrowth-sp',
+    variantId: 'sgd-open-ended-srs',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:prulink-investgrowth-sp-single-premium-charge',
+      'branch:prulink-investgrowth-sp-premium-assurance-charge',
+    ],
+    description: 'Baseline PRULink InvestGrowth (SP) SRS scenario proving the supported initial single-premium corridor without Direct Income payouts.',
+    integrityChecks: [
+      {
+        description: 'records a positive upfront single-premium charge at honest inception',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  },
+  {
+    productId: 'prudential-prulink-investgrowth-sp',
+    variantId: 'sgd-open-ended-cpf',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Baseline PRULink InvestGrowth (SP) CPF scenario proving the supported zero-charge corridor.',
+    integrityChecks: [
+      {
+        description: 'keeps the initial single-premium corridor fee-free under the published CPF charge path',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) === 0,
+      },
+    ],
+  },
+  {
+    productId: 'prudential-prulink-investgrowth-sp',
+    variantId: 'sgd-open-ended-cash',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:prulink-investgrowth-sp-top-up-charge',
+      'branch:prulink-investgrowth-sp-top-up-assurance-charge',
+    ],
+    description: 'PRULink InvestGrowth (SP) cash event-heavy scenario proving standard top-up premium and assurance charges.',
+    integrityChecks: [
+      {
+        description: 'records positive annual contribution from the seeded top-up event',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > 0),
+      },
+      {
+        description: 'top-up event increases cumulative fees beyond the initial single-premium-only baseline',
+        test: (fixture, artifact) => {
+          const withoutEventCharges = ilpPolicySchema.parse({
+            ...fixture.policy,
+            eventChargeRules: [],
+          })
+          const withEventCharges = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutEventChargeFees = analyzeIlpPolicy(withoutEventCharges).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withEventCharges > withoutEventChargeFees
+        },
+      },
+    ],
+  },
+  {
+    productId: 'prudential-prulink-investgrowth-sp',
+    variantId: 'sgd-open-ended-cash',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'PRULink InvestGrowth (SP) cash alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'hsbc-life-flexi-protector',
     variantId: 'sgd-open-ended-regular-pay',
     scenarioId: 'assurance-choice-vs-max',
@@ -2764,6 +2935,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'prudential-pruvantage-prosper' && definition.scenarioId === 'assurance-active') {
     return prosperAssurancePolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-prulink-investgrowth-sp' && definition.scenarioId === 'baseline') {
+    return pruInvestGrowthSpBaselinePolicy(snapshot, definition.variantId, id)
+  }
+  if (definition.productId === 'prudential-prulink-investgrowth-sp' && definition.scenarioId === 'event-heavy') {
+    return pruInvestGrowthSpEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-prulink-investgrowth-sp' && definition.scenarioId === 'ocf-stress') {
+    return pruInvestGrowthSpStressPolicy(snapshot, id)
   }
   if (definition.productId === 'prudential-pruvantage-prosper' && definition.scenarioId === 'event-heavy') {
     return prosperEventHeavyPolicy(snapshot, id)

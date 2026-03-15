@@ -704,6 +704,9 @@ export const ilpPolicySchema = z.object({
 
   const contributionShareSum = policy.accounts.reduce((sum, account) => sum + account.contributionShare, 0)
   const hasContributionRules = policy.accounts.some((account) => (account.contributionRules?.length ?? 0) > 0)
+  const supportsInitialSinglePremiumRouting = (policy.initialSinglePremium ?? 0) > 0 || (
+    policy.chargeRules?.some((rule) => rule.basis === 'initial-single-premium') ?? false
+  )
   if (policy.monthlyContribution > 0) {
     if (!hasContributionRules && Math.abs(contributionShareSum - 1) > SUM_TOLERANCE) {
       ctx.addIssue({
@@ -712,12 +715,17 @@ export const ilpPolicySchema = z.object({
         path: ['accounts'],
       })
     }
-  } else if (!hasContributionRules && Math.abs(contributionShareSum) > SUM_TOLERANCE) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'If monthlyContribution = 0, account contributionShares must sum to 0',
-      path: ['accounts'],
-    })
+  } else if (!hasContributionRules) {
+    const expectedContributionShareSum = supportsInitialSinglePremiumRouting ? 1 : 0
+    if (Math.abs(contributionShareSum - expectedContributionShareSum) > SUM_TOLERANCE) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: supportsInitialSinglePremiumRouting
+          ? 'If monthlyContribution = 0 with initial-single-premium routing, account contributionShares must sum to 1.0'
+          : 'If monthlyContribution = 0, account contributionShares must sum to 0',
+        path: ['accounts'],
+      })
+    }
   }
 
   if (hasContributionRules) {
@@ -738,12 +746,17 @@ export const ilpPolicySchema = z.object({
         })
       }
 
-      if (policy.monthlyContribution === 0 && Math.abs(phaseShareSum) > SUM_TOLERANCE) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `If monthlyContribution = 0, ${phase} contributionRules must sum to 0`,
-          path: ['accounts'],
-        })
+      if (policy.monthlyContribution === 0) {
+        const expectedPhaseShareSum = phase === 'during-icp' && supportsInitialSinglePremiumRouting ? 1 : 0
+        if (Math.abs(phaseShareSum - expectedPhaseShareSum) > SUM_TOLERANCE) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: expectedPhaseShareSum === 1
+              ? 'If monthlyContribution = 0 with initial-single-premium routing, during-icp contributionRules must sum to 1.0'
+              : `If monthlyContribution = 0, ${phase} contributionRules must sum to 0`,
+            path: ['accounts'],
+          })
+        }
       }
     }
 

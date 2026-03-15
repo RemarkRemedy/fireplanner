@@ -13,7 +13,16 @@ const DEFAULT_TEMPLATE_FUND: IlpPolicyInput['funds'][number] = {
   grossReturnHigh: 0.1,
 }
 
-function deriveSeedMonthlyContribution(product: IlpCatalogProduct): number {
+function deriveSeedMonthlyContribution(product: IlpCatalogProduct, variant: IlpTemplateVariant): number {
+  const hasInitialSinglePremiumCharge = variant.feeRules.some((rule) => rule.basis === 'initial-single-premium')
+  const hasRecurringAfterIcpContribution = variant.accounts.some((account) => (
+    account.contributionRules.some((rule) => rule.phase === 'after-icp' && rule.contributionShare > 0)
+  ))
+
+  if (hasInitialSinglePremiumCharge && !hasRecurringAfterIcpContribution) {
+    return 0
+  }
+
   return product.metadataOnlyBehaviors.some((behavior) => (
     behavior.endsWith('single-premium-principal-tracking')
     && !behavior.endsWith('recurrent-single-premium-principal-tracking')
@@ -213,7 +222,7 @@ export function templateVariantToPolicySeed(
     name: `${product.productName} (${formatCatalogVariantLabel(variant)})`,
     insurer: product.insurer,
     currency: variant.currency,
-    monthlyContribution: deriveSeedMonthlyContribution(product),
+    monthlyContribution: deriveSeedMonthlyContribution(product, variant),
     initialSinglePremium: variant.feeRules.some((rule) => rule.basis === 'initial-single-premium') ? 0 : undefined,
     monthsAlreadyPaid: 0,
     currentPolicyYear: 1,

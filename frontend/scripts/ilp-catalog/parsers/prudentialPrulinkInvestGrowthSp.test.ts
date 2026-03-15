@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parsePrudentialPrulinkInvestGrowthSp', () => {
-  it('builds a valid open-ended partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid open-ended supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parsePrudentialPrulinkInvestGrowthSp({
       document,
@@ -23,12 +23,20 @@ describe('parsePrudentialPrulinkInvestGrowthSp', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('prudential-prulink-investgrowth-sp')
     expect(product.productName).toBe('PRULink InvestGrowth (SP)')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:prulink-investgrowth-sp-single-premium-charge',
       'branch:prulink-investgrowth-sp-premium-assurance-charge',
       'branch:prulink-investgrowth-sp-top-up-charge',
       'branch:prulink-investgrowth-sp-top-up-assurance-charge',
       'kernel:distribution-mode-assumption',
+    ])
+    expect(product.metadataOnlyBehaviors).toEqual([
+      'prulink-investgrowth-sp-death-benefit',
+      'prulink-investgrowth-sp-e-top-up-charge',
+      'prulink-investgrowth-sp-withdrawals',
+      'prulink-investgrowth-sp-fund-switching',
     ])
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-open-ended-cash',
@@ -38,8 +46,8 @@ describe('parsePrudentialPrulinkInvestGrowthSp', () => {
 
     const cashVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-cash')
     expect(cashVariant?.feeRules).toEqual([
-      expect.objectContaining({ id: 'premium-charge', basis: 'annual-contribution', rate: 0.03 }),
-      expect.objectContaining({ id: 'assurance-charge-on-premium', basis: 'annual-contribution', rate: 0.015 }),
+      expect.objectContaining({ id: 'premium-charge', basis: 'initial-single-premium', rate: 0.03 }),
+      expect.objectContaining({ id: 'assurance-charge-on-premium', basis: 'initial-single-premium', rate: 0.015 }),
     ])
     expect(cashVariant?.eventChargeRules).toEqual([
       expect.objectContaining({ id: 'top-up-premium-charge', trigger: 'top-up', rate: 0.03 }),

@@ -883,7 +883,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('default 20-year review horizon'))).toBe(true)
   })
 
-  it('maps PRULink InvestGrowth (SP) cash into a partial seed with direct-income distribution support', () => {
+  it('maps PRULink InvestGrowth (SP) cash into a supported seed with direct-income distribution support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'prudential-prulink-investgrowth-sp')
     expect(product).toBeDefined()
@@ -893,11 +893,12 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('PRULink InvestGrowth (SP) (SGD / Open-ended (Cash))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('prulink-investgrowth-sp-direct-income-option')
     expect(seed.monthlyContribution).toBe(0)
+    expect(seed.initialSinglePremium).toBe(0)
     expect(seed.mipBasis).toBe('open-ended')
     expect(seed.postMipYears).toBe(20)
     expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
@@ -907,12 +908,12 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
         id: 'premium-charge',
-        basis: 'annual-contribution',
+        basis: 'initial-single-premium',
         rate: 0.03,
       }),
       expect.objectContaining({
         id: 'assurance-charge-on-premium',
-        basis: 'annual-contribution',
+        basis: 'initial-single-premium',
         rate: 0.015,
       }),
     ])

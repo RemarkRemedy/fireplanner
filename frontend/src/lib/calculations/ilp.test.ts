@@ -4012,6 +4012,40 @@ describe('computeNpvAnalysis', () => {
     }))).toThrow(/positive review horizon/)
   })
 
+  it('accepts zero-monthly-contribution policies with initial-single-premium inception routing', () => {
+    expect(() => ilpPolicySchema.parse(makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      initialSinglePremium: 100_000,
+      chargeRules: [
+        {
+          id: 'initial-single-premium-charge',
+          label: 'Initial Single Premium Charge',
+          basis: 'initial-single-premium',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0.03,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 0 },
+          ],
+        },
+      ],
+    }))).not.toThrow()
+  })
+
   it('rejects overlapping cumulative-paid premium count tiers', () => {
     expect(() => ilpPolicySchema.parse(makeDefaultPolicy({
       bonuses: [],

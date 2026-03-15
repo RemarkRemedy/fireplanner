@@ -11,9 +11,9 @@ export function parsePrudentialPrulinkInvestGrowthSp(context: ParseContext): Ilp
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:prulink-investgrowth-sp-single-premium-charge',
       'branch:prulink-investgrowth-sp-premium-assurance-charge',
@@ -23,13 +23,12 @@ export function parsePrudentialPrulinkInvestGrowthSp(context: ParseContext): Ilp
     ],
     metadataOnlyBehaviors: [
       'prulink-investgrowth-sp-death-benefit',
-      'prulink-investgrowth-sp-single-premium-principal-tracking',
       'prulink-investgrowth-sp-e-top-up-charge',
       'prulink-investgrowth-sp-withdrawals',
       'prulink-investgrowth-sp-fund-switching',
     ],
     warnings: [
-      'PRULink InvestGrowth (SP) is cataloged as a partial modeled subset in V1. The parser captures the published premium-charge and premium-event assurance-charge path for initial and standard top-up premiums, plus cash-corridor Direct Income distribution support through the manual distribution-mode kernel, while e-top-up treatment, withdrawals, and single-premium principal tracking remain outside the current engine.',
+      'PRULink InvestGrowth (SP) is cataloged as a supported V1 product. The parser captures the published initial single-premium charge, premium-event assurance-charge path for initial and standard top-up premiums, and cash-corridor Direct Income support through the manual distribution-mode kernel, while e-top-up treatment, withdrawals, and fund-switching remain outside the current engine.',
     ],
     archived: false,
     variants: [

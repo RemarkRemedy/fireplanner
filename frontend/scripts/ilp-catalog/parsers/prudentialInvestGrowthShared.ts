@@ -40,7 +40,7 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
 }
 
 function premiumChargeLabel(productMode: ProductMode, paymentMode: PaymentMode): string {
-  const base = productMode === 'single-premium' ? 'Single Premium Charge' : 'Recurring Premium Charge'
+  const base = productMode === 'single-premium' ? 'Initial Single Premium Charge' : 'Recurring Premium Charge'
   return paymentMode === 'cpf' ? `${base} (CPF)` : paymentMode === 'cash' ? `${base} (Cash)` : `${base} (SRS)`
 }
 
@@ -69,7 +69,7 @@ export function buildPrudentialInvestGrowthVariant(
     {
       id: 'premium-charge',
       label: premiumChargeLabel(productMode, paymentMode),
-      basis: 'annual-contribution',
+      basis: productMode === 'single-premium' ? 'initial-single-premium' : 'annual-contribution',
       rate: premiumChargeRate,
       amount: 0,
       appliesTo: ['policy'],
@@ -89,7 +89,7 @@ export function buildPrudentialInvestGrowthVariant(
     {
       id: 'assurance-charge-on-premium',
       label: assuranceChargeLabel(productMode, paymentMode),
-      basis: 'annual-contribution',
+      basis: productMode === 'single-premium' ? 'initial-single-premium' : 'annual-contribution',
       rate: assuranceChargeRate,
       amount: 0,
       appliesTo: ['policy'],
