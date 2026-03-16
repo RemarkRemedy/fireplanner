@@ -988,6 +988,49 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Top-up Premium Charge (Cash / SRS)')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds PRULink InvestGrowth (SP) cash as a supported catalog product with direct-income support', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'PRULink InvestGrowth (SP)')
+
+    expect(within(dialog).getByText('PRULink InvestGrowth (SP)')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash\)use template$/i }))
+
+    expect(screen.getAllByText('PRULink InvestGrowth (SP) (SGD / Open-ended (Cash))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Supported template')
+    expect(seededAlert?.textContent).toContain('published initial single-premium charge')
+    expect(seededAlert?.textContent).toContain('Direct Income support through the manual distribution-mode kernel')
+    expect(seededAlert?.textContent).toContain('Direct Income option is modeled through manual distribution-mode support')
+    expect(screen.getByDisplayValue('Initial Single Premium Charge (Cash)')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds PRULink InvestGrowth cash as a supported catalog product with premium-based assurance charges', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'PRULink InvestGrowth')
+
+    const investGrowthCard = within(dialog).getByText('PRULink InvestGrowth').closest('.rounded-lg') as HTMLElement | null
+    expect(investGrowthCard).not.toBeNull()
+    await user.click(within(investGrowthCard!).getByRole('button', { name: /^sgd \/ open-ended \(cash\)use template$/i }))
+
+    expect(screen.getAllByText('PRULink InvestGrowth (SGD / Open-ended (Cash))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Supported template')
+    expect(seededAlert?.textContent).toContain('published recurring-premium charge')
+    expect(seededAlert?.textContent).toContain('premium-event assurance-charge path')
+    expect(seededAlert?.textContent).toContain('minimum-premium schedule enforcement remain outside the current engine')
+    expect(screen.getByDisplayValue('Recurring Premium Charge (Cash)')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds Tokio Marine #goClassic basic-death as a partial catalog product with combined account-fee modeling', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
