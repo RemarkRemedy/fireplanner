@@ -2108,7 +2108,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Premium Pause Waiver'))).toBe(true)
   })
 
-  it('maps FWD Invest Flexi Elite into a finite-MIP multi-account partial seed with protected-base insurance charge support', () => {
+  it('maps FWD Invest Flexi Elite into a finite-MIP multi-account supported seed with protected-base insurance charge support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'fwd-invest-flexi-elite')
     expect(product).toBeDefined()
@@ -2118,8 +2118,8 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('FWD Invest Flexi Elite (SGD / MIP 10 (Flexi 5))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-flexi-elite-initial-account-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-flexi-elite-insurance-charge')

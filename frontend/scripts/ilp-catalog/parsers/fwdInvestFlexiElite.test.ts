@@ -23,8 +23,8 @@ describe('parseFwdInvestFlexiElite', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('fwd-invest-flexi-elite')
     expect(product.productName).toBe('FWD Invest Flexi Elite')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'kernel:protected-base-assurance',
       'branch:fwd-invest-flexi-elite-initial-account-charge',
@@ -125,6 +125,9 @@ describe('parseFwdInvestFlexiElite', () => {
     )
     expect(flexi3?.warnings).not.toContain(
       'Booster Bonus, Annual Premium Bonus, Contribution Bonus, insurance charge, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain outside the current engine.',
+    )
+    expect(flexi3?.warnings).not.toContain(
+      'FWD Invest Flexi Elite (10 years – (3 flexi)) is cataloged as a partial modeled subset in V1. The parser captures the published initial-account-value charge, monthly insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.',
     )
 
     const flexi5 = product.variants.find((variant) => variant.id === 'sgd-mip-10-flexi-5')

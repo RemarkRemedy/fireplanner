@@ -208,9 +208,9 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
     },
     eecTable: [...SURRENDER_CHARGE_SCHEDULE[flexMode]],
     warnings: [
-      `FWD Invest Flexi Elite (${variantLabel}) is cataloged as a partial modeled subset in V1. The parser captures the published initial-account-value charge, monthly insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.`,
+      `FWD Invest Flexi Elite (${variantLabel}) is cataloged as a supported V1 product. The parser captures the published initial-account-value charge, monthly insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.`,
       'Premium shortfall charge remains informational only because the published unemployment waiver, refund, and restart timing cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.',
-      'Booster Bonus, Annual Premium Bonus, Contribution Bonus, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain outside the current engine.',
+      'Booster Bonus, Annual Premium Bonus, Contribution Bonus, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain metadata-only.',
     ],
     unsupportedItems: [
       'Premium shortfall charge remains informational only because the unemployment waiver, refund, and variant-specific charge periods are not modeled exactly in V1.',
@@ -233,9 +233,9 @@ export function parseFwdInvestFlexiElite(context: ParseContext): IlpCatalogProdu
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'kernel:protected-base-assurance',
       'branch:fwd-invest-flexi-elite-initial-account-charge',
@@ -262,8 +262,8 @@ export function parseFwdInvestFlexiElite(context: ParseContext): IlpCatalogProdu
       'fwd-invest-flexi-elite-change-of-policy-currency',
     ],
     warnings: [
-      'FWD Invest Flexi Elite is cataloged as a partial modeled subset in V1. The current parser covers the published initial-account-value charge, monthly insurance charge, top-up premium charge, redemption-fee schedule, surrender-charge schedule, and reinvest-default distribution support that fit the existing kernels.',
-      'Premium shortfall / unemployment-waiver behavior, bonuses, Free Partial Withdrawal Benefit, and broader premium-flexibility behavior remain outside the current engine.',
+      'FWD Invest Flexi Elite is cataloged as a supported V1 product. The current parser covers the published initial-account-value charge, monthly insurance charge, top-up premium charge, redemption-fee schedule, surrender-charge schedule, and reinvest-default distribution support that fit the existing kernels.',
+      'Premium shortfall / unemployment-waiver behavior, bonuses, Free Partial Withdrawal Benefit, and broader premium-flexibility behavior remain metadata-only.',
     ],
     archived: false,
     variants: [
