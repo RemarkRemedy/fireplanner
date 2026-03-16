@@ -231,9 +231,9 @@ export function parseManulifeSmartRetireIncome({ document, sourceChecksumSha256 
     sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:manulife-smartretire-v-administrative-charge',
       'branch:manulife-smartretire-v-withdrawal-and-surrender-charge',
@@ -256,7 +256,7 @@ export function parseManulifeSmartRetireIncome({ document, sourceChecksumSha256 
       'manulife-smartretire-v-income-fund-switching-and-redirection',
     ],
     warnings: [
-      'Manulife SmartRetire (V) - Income is cataloged as a partial modeled subset in V1. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface, while hybrid COI mechanics, TPD waiver, COI refund, bonuses, and fund-level charges remain outside the current engine.',
+      'Manulife SmartRetire (V) - Income is cataloged as a supported V1 product for the regular-pay corridors. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface, while hybrid COI mechanics, TPD waiver, COI refund, bonuses, and fund-level charges remain outside the current engine.',
     ],
     archived: false,
     variants: VARIANTS.map((variantDefinition) => buildVariant(document, variantDefinition)),
