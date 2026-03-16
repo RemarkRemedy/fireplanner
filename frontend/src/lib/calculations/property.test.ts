@@ -143,7 +143,6 @@ describe('calculateSellAndDownsize', () => {
   })
 
   it('scales net equity by proceedsAllocationPercent', () => {
-    const bsd = calculateBSD(800000)
     const fullResult = calculateSellAndDownsize({
       salePrice: 1500000,
       outstandingMortgage: 300000,
@@ -173,8 +172,7 @@ describe('calculateSellAndDownsize', () => {
   })
 
   it('defaults to 100% when proceedsAllocationPercent is undefined', () => {
-    const bsd = calculateBSD(800000)
-    const expectedNet = 1500000 - 300000 - bsd - 0 - 200000
+    const expectedNet = 1500000 - 300000 - calculateBSD(800000) - 0 - 200000
     const result = calculateSellAndDownsize({
       salePrice: 1500000,
       outstandingMortgage: 300000,

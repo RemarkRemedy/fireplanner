@@ -364,11 +364,13 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       if (typeof values.salaryStopYear === 'number') {
         const currentYear = new Date().getFullYear()
         const endAge = selfAdult.currentAge + (values.salaryStopYear - currentYear)
-        if (endAge > selfAdult.currentAge) {
+        if (endAge >= selfAdult.currentAge) {
           incomeUpdates.timing = {
-            ...salaryIncome.timing,
+            kind: 'age-range',
+            owner: salaryIncome.timing.owner,
+            startAge: salaryIncome.timing.kind === 'age-range' ? salaryIncome.timing.startAge : selfAdult.currentAge,
             endAge,
-          } as IncomeSource['timing']
+          }
         }
       }
 

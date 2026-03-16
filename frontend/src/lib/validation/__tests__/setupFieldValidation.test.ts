@@ -267,4 +267,29 @@ describe('validateSetupField', () => {
       expect(validateSetupField('cpfPayoutStartAge', 81, { currentAge: ageForPre1958 })).not.toBeNull()
     })
   })
+
+  // -------------------------------------------------------------------
+  // Salary stop year
+  // -------------------------------------------------------------------
+  describe('salaryStopYear', () => {
+    it('rejects year in the past', () => {
+      const currentYear = new Date().getFullYear()
+      expect(validateSetupField('salaryStopYear', currentYear - 1)).not.toBeNull()
+    })
+
+    it('accepts current year', () => {
+      const currentYear = new Date().getFullYear()
+      expect(validateSetupField('salaryStopYear', currentYear)).toBeNull()
+    })
+
+    it('accepts year within 50 years', () => {
+      const currentYear = new Date().getFullYear()
+      expect(validateSetupField('salaryStopYear', currentYear + 30)).toBeNull()
+    })
+
+    it('rejects year more than 50 years in future', () => {
+      const currentYear = new Date().getFullYear()
+      expect(validateSetupField('salaryStopYear', currentYear + 51)).not.toBeNull()
+    })
+  })
 })

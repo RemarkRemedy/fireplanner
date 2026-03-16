@@ -260,6 +260,57 @@ function makeTwoAdultFixture(): HouseholdPlan {
   }
 }
 
+// ---------------------------------------------------------------------------
+// P1 field wiring: targeted mapping tests
+// ---------------------------------------------------------------------------
+describe('P1 field wiring', () => {
+  it('nets amountSaved from goal amount in runtime output', () => {
+    const plan = makeTwoAdultFixture()
+    const goalWithSavings: GoalItem = {
+      id: 'goal-test',
+      owner: 'self',
+      label: 'Test Goal',
+      kind: 'financial-goal',
+      timing: { kind: 'single-age', owner: 'self', age: 45 },
+      amount: 50_000,
+      amountSaved: 20_000,
+      durationYears: 1,
+      priority: 'important',
+      inflationAdjusted: false,
+      category: 'other',
+    }
+    plan.goals = [goalWithSavings]
+    const compiled = compileHouseholdPlan(plan)
+    const runtime = buildHouseholdRuntimeLegacyInputs(plan, compiled)
+    const mappedGoal = runtime.profile.financialGoals.find((g) => g.label === 'Test Goal')
+    expect(mappedGoal).toBeDefined()
+    expect(mappedGoal!.amount).toBe(30_000) // 50K - 20K
+  })
+
+  it('clamps netted goal amount to zero when amountSaved exceeds amount', () => {
+    const plan = makeTwoAdultFixture()
+    const overFundedGoal: GoalItem = {
+      id: 'goal-over',
+      owner: 'self',
+      label: 'Over-funded',
+      kind: 'financial-goal',
+      timing: { kind: 'single-age', owner: 'self', age: 45 },
+      amount: 10_000,
+      amountSaved: 15_000,
+      durationYears: 1,
+      priority: 'nice-to-have',
+      inflationAdjusted: false,
+      category: 'other',
+    }
+    plan.goals = [overFundedGoal]
+    const compiled = compileHouseholdPlan(plan)
+    const runtime = buildHouseholdRuntimeLegacyInputs(plan, compiled)
+    const mappedGoal = runtime.profile.financialGoals.find((g) => g.label === 'Over-funded')
+    expect(mappedGoal).toBeDefined()
+    expect(mappedGoal!.amount).toBe(0) // clamped to 0
+  })
+})
+
 const BASE_STRATEGY_PARAMS: StrategyParamsMap = {
   constant_dollar: { swr: 0.04 },
   vpw: { expectedRealReturn: 0.03, targetEndValue: 0.10 },

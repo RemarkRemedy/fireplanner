@@ -254,6 +254,15 @@ export function validateSetupField(
       return null
     }
 
+    // Salary stop year: must be current year or later, and within 50 years
+    case 'salaryStopYear': {
+      const currentYear = new Date().getFullYear()
+      const schema = z.number().int().min(currentYear).max(currentYear + 50)
+      const result = schema.safeParse(value)
+      if (!result.success) return `Year must be between ${currentYear} and ${currentYear + 50}`
+      return null
+    }
+
     // Variable pay percent
     case 'variablePayPercent': {
       const schema = z.number().min(0).max(1)

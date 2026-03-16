@@ -474,7 +474,7 @@ const GOALS_FLOW: NudgeFlowDefinition = {
         },
         { name: 'goalTargetAmount', label: 'Target amount', type: 'currency', required: true },
         { name: 'goalTargetYear', label: 'Target year', type: 'number', required: true },
-        { name: 'goalCurrentSavings', label: 'Amount already saved toward this goal', type: 'currency' },
+        { name: 'goalCurrentSavings', label: 'Amount already saved toward this goal', type: 'currency', tooltip: 'If this is included in your liquid net worth, we will reduce the goal target by this amount to avoid double-counting.' },
       ],
     },
   ],
