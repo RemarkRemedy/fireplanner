@@ -1121,6 +1121,80 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds AIA Platinum Retirement Elite as a partial catalog product with payout-state and supplementary-charge warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Retirement Elite')
+
+    expect(within(dialog).getByText('AIA Platinum Retirement Elite')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use partial template$/i }))
+
+    expect(screen.getAllByText('AIA Platinum Retirement Elite (SGD / MIP 5)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('regular-pay 5-year corridor')
+    expect(seededAlert?.textContent).toContain('2.50% p.a. regular-premium supplementary charge')
+    expect(seededAlert?.textContent).toContain('scheduled payout capability through the payout-state kernel')
+    expect(seededAlert?.textContent).toContain('Target Monthly Retirement Income amount')
+    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Supplementary Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds AIA Platinum Wealth Elite 2.0 as a partial catalog product with premium-term extension warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Elite 2.0')
+
+    expect(within(dialog).getByText('AIA Platinum Wealth Elite 2.0')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use partial template$/i }))
+
+    expect(screen.getAllByText('AIA Platinum Wealth Elite 2.0 (SGD / MIP 5)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('premium-year regular premium charges')
+    expect(seededAlert?.textContent).toContain('3% top-up premium charge')
+    expect(seededAlert?.textContent).toContain('premium-holiday charge schedule')
+    expect(seededAlert?.textContent).toContain('optional extension of the regular premium term beyond five years')
+    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds AIA Platinum Wealth Legacy as a partial catalog product with informational withdrawal-table warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Legacy')
+
+    expect(within(dialog).getByText('AIA Platinum Wealth Legacy')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use partial template$/i }))
+
+    expect(screen.getAllByText(/AIA Platinum Wealth Legacy/i).length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('cash regular-pay 5-year corridor')
+    expect(seededAlert?.textContent).toContain('3% top-up premium charge')
+    expect(seededAlert?.textContent).toContain('premium-holiday charge schedule')
+    expect(seededAlert?.textContent).toContain('partial-withdrawal / surrender table is left informational only')
+    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds GREAT Invest Advantage 2 (SP) as a supported catalog product with open-ended single-premium routing', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()

@@ -1097,7 +1097,7 @@ export const ilpPolicySchema = z.object({
     }
   })
 
-  if (mipBasis === 'finite' && policy.mipLength != null && policy.eecTable.length < policy.mipLength) {
+  if (mipBasis === 'finite' && policy.mipLength != null && policy.eecTable.length > 0 && policy.eecTable.length < policy.mipLength) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'EEC table must have at least mipLength entries',

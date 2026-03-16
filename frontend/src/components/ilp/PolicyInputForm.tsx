@@ -243,15 +243,15 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
             )}
             {policy.catalogWarnings && policy.catalogWarnings.length > 0 && (
               <ul className="list-disc pl-5">
-                {policy.catalogWarnings.slice(0, 4).map((warning) => (
-                  <li key={warning}>{warning}</li>
+                {policy.catalogWarnings.slice(0, 4).map((warning, index) => (
+                  <li key={`${index}-${warning}`}>{warning}</li>
                 ))}
               </ul>
             )}
             {manualChargeWarnings.length > 0 && (
               <ul className="list-disc pl-5 text-amber-700 dark:text-amber-300">
-                {manualChargeWarnings.map((warning) => (
-                  <li key={warning}>{warning}</li>
+                {manualChargeWarnings.map((warning, index) => (
+                  <li key={`${index}-${warning}`}>{warning}</li>
                 ))}
               </ul>
             )}
