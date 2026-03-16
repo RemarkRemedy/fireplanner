@@ -557,6 +557,7 @@ const PROTECTION_FLOW: NudgeFlowDefinition = {
     {
       id: 'protection-emergency',
       title: 'Emergency Fund',
+      subtitle: 'These values power the Dashboard health check. They don\'t change your FIRE number or projection (your emergency fund is already part of your liquid net worth).',
       fields: [
         { name: 'emergencyFundBalance', label: 'Emergency fund balance', type: 'currency', required: true, tooltip: 'Cash savings for emergencies. Recommended 3-6 months of expenses.', helperText: 'Cash savings set aside for emergencies' },
         {
@@ -580,6 +581,7 @@ const PROTECTION_FLOW: NudgeFlowDefinition = {
     {
       id: 'protection-debt',
       title: 'Outstanding Debt',
+      subtitle: 'Debt totals power the health check. Monthly debt repayment and payoff age affect your projection by reducing cash flow each year.',
       fields: [
         { name: 'hasOutstandingDebt', label: 'Do you have outstanding debt (excluding mortgage)?', type: 'toggle' },
         { name: 'carLoanOutstanding', label: 'Car loan outstanding', type: 'currency' },
@@ -593,6 +595,7 @@ const PROTECTION_FLOW: NudgeFlowDefinition = {
     {
       id: 'protection-insurance',
       title: 'Insurance Coverage',
+      subtitle: 'Coverage amounts power the health check. Annual premiums affect your projection by reducing cash flow.',
       fields: [
         { name: 'lifeCoverageAmount', label: 'Life insurance coverage amount', type: 'currency', tooltip: 'Total death benefit from term life or whole life insurance.' },
         { name: 'ciCoverageAmount', label: 'Critical illness coverage amount', type: 'currency', tooltip: 'Critical illness lump sum payout amount.' },
