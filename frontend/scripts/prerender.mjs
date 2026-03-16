@@ -209,20 +209,6 @@ const routes = [
       </ul>
     `,
   },
-  {
-    path: '/ilp-review',
-    title: 'ILP Fee Calculator \u2014 Compare Investment-Linked Policy Costs',
-    heading: 'ILP Review: Compare Investment-Linked Policy Fees',
-    description: 'Calculate ILP fee drag, surrender penalties, and MIP-end outcomes. Compare multiple investment-linked policies side by side to decide whether to keep, surrender, or redirect premiums.',
-    bodyHtml: `
-      <p>Review how much your investment-linked policy may be costing you in fees, what surrendering could mean today, and how different ILPs compare side by side.</p>
-      <p>The tool highlights fee drag, best pre-MIP exit timing, and the opportunity cost of redirecting premiums to lower-cost alternatives.</p>
-      <ul>
-        <li><a href="/ilp-review">Open ILP Review</a></li>
-        <li><a href="/retirement-planner">Return to the retirement planner</a></li>
-      </ul>
-    `,
-  },
 ]
 
 const template = readFileSync(join(distDir, 'index.html'), 'utf-8')
