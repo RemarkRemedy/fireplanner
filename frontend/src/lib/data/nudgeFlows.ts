@@ -77,7 +77,7 @@ const CPF_FLOW: NudgeFlowDefinition = {
   label: 'CPF Details',
   description: 'Unlock a more accurate projection by including your CPF balances and LIFE payouts.',
   estimatedMinutes: 5,
-  container: 'full-page',
+  container: 'drawer',
   explanation:
     'CPF is a major retirement asset for most Singaporeans. Accurate balances and payout settings significantly improve projection accuracy.',
   screens: [
@@ -146,7 +146,7 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
   label: 'Property Details',
   description: 'See how your mortgage, rental income, or downsizing plans impact your net worth.',
   estimatedMinutes: 5,
-  container: 'full-page',
+  container: 'drawer',
   explanation:
     'Property equity is often the largest asset outside CPF. Capturing mortgage obligations and future plans improves your net worth and FIRE timeline accuracy.',
   screens: [
@@ -225,7 +225,7 @@ const EXPENSES_FLOW: NudgeFlowDefinition = {
   label: 'Expense Breakdown',
   description: 'Break down your spending to model post-retirement expense changes more accurately.',
   estimatedMinutes: 4,
-  container: 'full-page',
+  container: 'drawer',
   explanation:
     'Knowing how your spending is allocated lets us model post-retirement expense changes more accurately (e.g., reduced commuting costs, healthcare increasing with age).',
   screens: [
@@ -267,7 +267,7 @@ const HEALTHCARE_FLOW: NudgeFlowDefinition = {
   label: 'Healthcare Coverage',
   description: 'Factor in ISP premiums and MediSave to prevent medical costs from derailing your plan.',
   estimatedMinutes: 3,
-  container: 'full-page',
+  container: 'drawer',
   explanation:
     'Healthcare is one of the largest retirement expenses in Singapore. Capturing your ISP tier and MediSave balance improves long-term cost projections.',
   screens: [
@@ -613,6 +613,3 @@ export function getNudgeFlow(id: NudgeFlowId): NudgeFlowDefinition | undefined {
   return NUDGE_FLOWS.find((f) => f.id === id)
 }
 
-export function getFullPageFlowIds(): NudgeFlowId[] {
-  return NUDGE_FLOWS.filter((f) => f.container === 'full-page').map((f) => f.id)
-}

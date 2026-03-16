@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Check } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,6 @@ interface NudgeSidebarProps {
 }
 
 export function NudgeSidebar({ onOpenDrawer }: NudgeSidebarProps) {
-  const navigate = useNavigate()
   const setupPopulatedSections = useUIStore((s) => s.setupPopulatedSections)
   const completedNudgeFlows = useUIStore((s) => s.completedNudgeFlows)
   const { sections } = useSectionCompletion()
@@ -38,14 +37,7 @@ export function NudgeSidebar({ onOpenDrawer }: NudgeSidebarProps) {
   const hiddenCount = visibleNudges.length - INITIAL_SHOW_COUNT
 
   const handleRefine = (flowId: NudgeFlowId) => {
-    const flow = getNudgeFlow(flowId)
-    if (!flow) return
-
-    if (flow.container === 'full-page') {
-      navigate(`/refine/${flowId}`)
-    } else {
-      onOpenDrawer(flowId)
-    }
+    onOpenDrawer(flowId)
   }
 
   if (visibleNudges.length === 0) {

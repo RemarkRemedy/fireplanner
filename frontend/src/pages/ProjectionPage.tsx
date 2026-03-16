@@ -125,6 +125,14 @@ export function ProjectionPage() {
     }
   }, [location.state])
 
+  // Auto-open drawer when navigated with openFlow state (from Dashboard, PlanCompleteness)
+  useEffect(() => {
+    if (location.state?.openFlow) {
+      setDrawerFlowId(location.state.openFlow as NudgeFlowId)
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+  }, [location.state, navigate, location.pathname])
+
   const normalized = useNormalizedLegacyAnalysisContext()
   const { rows: jointRows, summary: jointSummary, hasErrors, errors: crossStoreErrors } = useProjection()
   const householdValidationErrors = useHouseholdPlanStore((s) => s.validationErrors)

@@ -11,7 +11,6 @@ import { useUIStore } from '@/stores/useUIStore'
 
 const StartPage = lazy(() => import('@/pages/StartPage').then(m => ({ default: m.StartPage })))
 const SetupPage = lazy(() => import('@/pages/SetupPage').then(m => ({ default: m.SetupPage })))
-const RefineFlowPage = lazy(() => import('@/pages/RefineFlowPage').then(m => ({ default: m.RefineFlowPage })))
 const InputsPage = lazy(() => import('@/pages/InputsPage').then(m => ({ default: m.InputsPage })))
 const ProjectionPage = lazy(() => import('@/pages/ProjectionPage').then(m => ({ default: m.ProjectionPage })))
 const WithdrawalPage = lazy(() => import('@/pages/WithdrawalPage').then(m => ({ default: m.WithdrawalPage })))
@@ -88,13 +87,13 @@ function PlannerRouteShell() {
 const routerBasename = isCompanionMode() ? '/planner' : undefined
 
 export const router = createBrowserRouter([
-  // Guided setup + refine routes (outside PlannerRouteShell)
+  // Guided setup (outside PlannerRouteShell)
   {
     element: <SetupLayout />,
     children: [
       { path: '/setup', element: page(SetupPage) },
-      { path: '/refine/:flowId', element: page(RefineFlowPage) },
-      { path: '/refine/*', element: <Navigate to="/" replace /> },
+      // /refine/* routes removed — all flows now open as drawers on ProjectionPage
+      { path: '/refine/*', element: <Navigate to="/projection" replace /> },
     ],
   },
   // Main app routes (inside PlannerRouteShell)

@@ -3,17 +3,7 @@ import { CheckCircle2, Circle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { usePlanCompleteness } from '@/hooks/usePlanCompleteness'
-import { NUDGE_FLOWS, NUDGE_TO_SECTION } from '@/lib/data/nudgeFlows'
 import type { CompletenessRow } from '@/hooks/usePlanCompleteness'
-
-function rowActionPath(row: CompletenessRow): string {
-  const flow = NUDGE_FLOWS.find(f => f.id === row.flowId)
-  if (flow?.container === 'full-page') {
-    return `/refine/${row.flowId}`
-  }
-  const sectionId = NUDGE_TO_SECTION[row.flowId]
-  return `/inputs#${sectionId}`
-}
 
 export function PlanCompleteness() {
   const rows = usePlanCompleteness()
@@ -21,6 +11,11 @@ export function PlanCompleteness() {
 
   const providedCount = rows.filter(r => r.status === 'provided' || r.status === 'provided-basic' || r.status === 'not-applicable').length
   const totalCount = rows.length
+
+  const handleAction = (row: CompletenessRow) => {
+    // All flows now open as drawers on the projection page
+    navigate('/projection', { state: { openFlow: row.flowId } })
+  }
 
   return (
     <Card>
@@ -59,7 +54,7 @@ export function PlanCompleteness() {
                     variant="ghost"
                     size="sm"
                     className="shrink-0 h-7 px-2 text-xs"
-                    onClick={() => navigate(rowActionPath(row))}
+                    onClick={() => handleAction(row)}
                   >
                     {row.actionLabel}
                   </Button>

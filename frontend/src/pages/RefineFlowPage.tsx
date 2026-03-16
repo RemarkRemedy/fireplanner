@@ -10,7 +10,7 @@ import { useUIStore } from '@/stores/useUIStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { applyFlowValues } from '@/lib/household/applyFlowValues'
 import { seedFlowValues, applyFlowDefaults } from '@/lib/household/seedFlowValues'
-import { getNudgeFlow, getFullPageFlowIds } from '@/lib/data/nudgeFlows'
+import { getNudgeFlow } from '@/lib/data/nudgeFlows'
 import { DEFAULT_CAREER_PHASES } from '@/lib/calculations/income'
 import { EXPENSE_CATEGORY_BENCHMARKS } from '@/lib/data/expenseBenchmarks'
 import { FLOW_FIELD_TO_CATEGORY, CATEGORY_TO_FLOW_FIELD } from '@/lib/data/retirementTemplates'
@@ -45,9 +45,8 @@ export function RefineFlowPage() {
   const snapshot = useMetricsSnapshot()
   const snapshotCaptured = useRef(false)
 
-  const fullPageIds = useMemo(() => getFullPageFlowIds(), [])
   const flow = flowId ? getNudgeFlow(flowId as NudgeFlowId) : undefined
-  const isValid = flowId != null && fullPageIds.includes(flowId as NudgeFlowId) && flow != null
+  const isValid = flowId != null && flow != null
 
   // Initialize from store data + seed toggle defaults for showWhen logic
   const [values, setValues] = useState<Record<string, unknown>>(() => {
