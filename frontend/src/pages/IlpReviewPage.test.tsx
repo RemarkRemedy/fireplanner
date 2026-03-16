@@ -1216,6 +1216,29 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Top-up Premium Charge (Cash)')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds Invest plus SP as a partial catalog product with initial single-premium corridor warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest plus SP')
+
+    expect(within(dialog).getByText('Invest plus SP')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(single premium initial only\)use partial template$/i }))
+
+    expect(screen.getAllByText('Invest plus SP (SGD / Open-ended (Single Premium Initial Only))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('initial single-premium corridor only')
+    expect(seededAlert?.textContent).toContain('reinvest-default distribution support')
+    expect(seededAlert?.textContent).toContain('open-ended single-premium product uses the no-MIP basis')
+    expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Policy Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
