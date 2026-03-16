@@ -798,12 +798,16 @@ export const ilpPolicySchema = z.object({
 
   const contributionShareSum = policy.accounts.reduce((sum, account) => sum + account.contributionShare, 0)
   const hasContributionRules = policy.accounts.some((account) => (account.contributionRules?.length ?? 0) > 0)
+  const hasInitialSinglePremiumContributionRules = policy.accounts.some((account) => (
+    account.contributionRules?.some((rule) => rule.phase === 'during-icp' && rule.contributionShare > 0)
+  ))
   const supportsInitialSinglePremiumRouting = (policy.initialSinglePremium ?? 0) > 0 || (
     policy.chargeRules?.some((rule) => (
       rule.basis === 'initial-single-premium'
       || rule.basis === 'initial-single-premium-base'
     )) ?? false
   ) || policy.exitChargeBasis === 'initial-single-premium-base'
+    || hasInitialSinglePremiumContributionRules
   if (policy.monthlyContribution > 0) {
     if (!hasContributionRules && Math.abs(contributionShareSum - 1) > SUM_TOLERANCE) {
       ctx.addIssue({

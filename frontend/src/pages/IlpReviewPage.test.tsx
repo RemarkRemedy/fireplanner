@@ -1075,6 +1075,52 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Regular Top-up Premium Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Elite Secure Income - Single Premium')
+
+    expect(within(dialog).getByText('AIA Elite Secure Income - Single Premium')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(sp\)use partial template$/i }))
+
+    expect(screen.getAllByText(/AIA Elite Secure Income - Single Premium/i).length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('published 3% top-up premium charge')
+    expect(seededAlert?.textContent).toContain('scheduled payout capability through the payout-state kernel')
+    expect(seededAlert?.textContent).toContain('initial single-premium charge and payout amount remain manual or informational inputs')
+    expect(seededAlert?.textContent).toContain('open-ended single-premium product uses the no-MIP basis')
+    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds AIA Elite Secure Income - 5 Pay as a partial catalog product with premium-history and payout warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Elite Secure Income - 5 Pay')
+
+    expect(within(dialog).getByText('AIA Elite Secure Income - 5 Pay')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use partial template$/i }))
+
+    expect(screen.getAllByText('AIA Elite Secure Income - 5 Pay (SGD / MIP 5)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('premium-year regular premium charge schedule')
+    expect(seededAlert?.textContent).toContain('premium-holiday charge schedule')
+    expect(seededAlert?.textContent).toContain('scheduled payout capability through the payout-state kernel')
+    expect(seededAlert?.textContent).toContain('Secure Monthly Income eligibility depends on no premium holiday')
+    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds GREAT Invest Advantage 2 (SP) as a supported catalog product with open-ended single-premium routing', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
