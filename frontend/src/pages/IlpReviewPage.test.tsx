@@ -1589,6 +1589,30 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Investment Booster (Lump Sum) Premium Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds Investment-linked Insurance Plan 2 as a partial catalog product with premium-holiday refund warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Investment-linked Insurance Plan 2')
+
+    expect(within(dialog).getByText('Investment-linked Insurance Plan 2')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(choice 5\)use partial template$/i }))
+
+    expect(screen.getAllByText('Investment-linked Insurance Plan 2 (SGD / MIP 10 (Choice 5))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('published bonus path')
+    expect(seededAlert?.textContent).toContain('policy fee')
+    expect(seededAlert?.textContent).toContain('premium-holiday charge')
+    expect(screen.getByDisplayValue('Policy Fee')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Single Premium Top-up Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
