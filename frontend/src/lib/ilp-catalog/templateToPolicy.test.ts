@@ -925,7 +925,7 @@ describe('templateVariantToPolicySeed', () => {
     })
   })
 
-  it('maps Etiqa Invest starter into a partial regular-premium seed with holiday and withdrawal charge rules', () => {
+  it('maps Etiqa Invest starter into a supported regular-premium seed with holiday and withdrawal charge rules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-starter')
     expect(product).toBeDefined()
@@ -934,8 +934,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:invest-starter-policy-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:invest-starter-premium-shortfall-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:invest-starter-premium-shortfall-refund')

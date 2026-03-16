@@ -127,6 +127,12 @@ export type GoldenCoverageTag =
   | 'branch:hsbc-life-wealth-invest-cpf-zero-recurring-single-premium-charge'
   | 'branch:hsbc-life-wealth-invest-cpf-zero-top-up-charge'
   | 'branch:hsbc-life-wealth-invest-cpf-zero-redemption-fee'
+  | 'branch:invest-starter-policy-charge'
+  | 'branch:invest-starter-premium-shortfall-charge'
+  | 'branch:invest-starter-premium-shortfall-refund'
+  | 'branch:invest-starter-partial-withdrawal-charge'
+  | 'branch:invest-starter-surrender-charge'
+  | 'branch:invest-starter-ad-hoc-top-up-routing'
   | 'branch:etiqa-tiq-invest-zero-single-premium-charge'
   | 'branch:etiqa-tiq-invest-management-charge'
   | 'branch:etiqa-tiq-invest-zero-top-up-charge'
@@ -3383,6 +3389,93 @@ function etiqaTiqInvestBasePolicy(
   )
 }
 
+function etiqaInvestStarterBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'etiqa-invest-starter', 'sgd-mip-5', id, {
+    monthlyContribution: 0,
+    currentPolicyYear: 2,
+    monthsAlreadyPaid: 12,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden Etiqa Invest starter (SGD / MIP 5)',
+      monthlyContribution: 350,
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 12_000,
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+          { phase: 'after-icp', contributionShare: 1 },
+          { phase: 'top-up', contributionShare: 1 },
+        ],
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function etiqaInvestStarterBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return etiqaInvestStarterBasePolicy(snapshot, id, ETIQA_BALANCED_FUNDS)
+}
+
+function etiqaInvestStarterEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return etiqaInvestStarterBasePolicy(snapshot, id, ETIQA_BALANCED_FUNDS, {
+    name: 'Golden Etiqa Invest starter (SGD / MIP 5 Event Heavy)',
+    currentPolicyYear: 3,
+    monthsAlreadyPaid: 24,
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 25,
+        durationMonths: 3,
+        repayMissedPremiums: true,
+        repaymentAccountId: 'portfolio',
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 29,
+        durationMonths: 1,
+        amount: 2_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 31,
+        durationMonths: 1,
+        amount: 1_000,
+        accountId: 'portfolio',
+      },
+    ],
+  })
+}
+
+function etiqaInvestStarterStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return etiqaInvestStarterBasePolicy(snapshot, id, ETIQA_STRESS_FUNDS, {
+    name: 'Golden Etiqa Invest starter (SGD / MIP 5 OCF Stress)',
+    currentPolicyYear: 4,
+    monthsAlreadyPaid: 36,
+  })
+}
+
 function etiqaTiqInvestBaselinePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
@@ -6400,6 +6493,68 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'HSBC Life Wealth Invest (CPF) alternate-fund stress scenario through the open-ended CPF corridor.',
   },
   {
+    productId: 'etiqa-invest-starter',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:invest-starter-policy-charge',
+      'branch:invest-starter-surrender-charge',
+    ],
+    description: 'Etiqa Invest starter baseline scenario proving the supported policy-charge and five-year surrender corridor.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive ongoing fees from the published account-value policy charge',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  },
+  {
+    productId: 'etiqa-invest-starter',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:invest-starter-premium-shortfall-charge',
+      'branch:invest-starter-premium-shortfall-refund',
+      'branch:invest-starter-partial-withdrawal-charge',
+      'branch:invest-starter-ad-hoc-top-up-routing',
+    ],
+    description: 'Etiqa Invest starter event-heavy scenario proving premium-holiday shortfall charging and refund, ad-hoc top-up routing, and a charged partial withdrawal.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy records both additional contribution and a later withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > 4_200 && row.annualWithdrawals > 0),
+      },
+      {
+        description: 'premium-holiday repayment reduces cumulative fees versus leaving the shortfall charge unrepaid',
+        test: (fixture, artifact) => {
+          const withoutRepayment = ilpPolicySchema.parse({
+            ...fixture.policy,
+            policyEvents: fixture.policy.policyEvents?.map((event) => (
+              event.type === 'premium-holiday'
+                ? { ...event, repayMissedPremiums: false, repaymentAccountId: undefined }
+                : event
+            )),
+          })
+          const withRefundFees = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutRefundFees = analyzeIlpPolicy(withoutRepayment).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withRefundFees < withoutRefundFees
+        },
+      },
+    ],
+  },
+  {
+    productId: 'etiqa-invest-starter',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Etiqa Invest starter alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'etiqa-tiq-invest',
     variantId: 'sgd-open-ended',
     scenarioId: 'baseline',
@@ -7744,6 +7899,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'hsbc-life-goal-builder-ii' && definition.scenarioId === 'ocf-stress') {
     return hsbcGoalBuilderIiStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'etiqa-invest-starter' && definition.scenarioId === 'baseline') {
+    return etiqaInvestStarterBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'etiqa-invest-starter' && definition.scenarioId === 'event-heavy') {
+    return etiqaInvestStarterEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'etiqa-invest-starter' && definition.scenarioId === 'ocf-stress') {
+    return etiqaInvestStarterStressPolicy(snapshot, id)
   }
   if (definition.productId === 'income-snack-investment' && definition.scenarioId === 'baseline') {
     return incomeSnackInvestmentBaselinePolicy(snapshot, id)

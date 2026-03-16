@@ -156,8 +156,8 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eventChargeRules,
     eecTable: [...SHORTFALL_AND_EXIT_SCHEDULE],
     warnings: [
-      'Invest starter is cataloged as a partial modeled subset in V1. The parser captures the policy charge, premium-holiday shortfall charge and refund, partial-withdrawal charge, surrender charge horizon, and regular-premium / top-up cashflow structure.',
-      'The three-year policy charge refund and one-time reward remain informational only in V1 because they require bonus-state logic beyond the current kernel.',
+      'Invest starter is cataloged as a supported V1 product. The parser captures the policy charge, premium-holiday shortfall charge and refund, partial-withdrawal charge, surrender charge horizon, and regular-premium / top-up cashflow structure.',
+      'The three-year policy charge refund and one-time reward remain informational only in V1.',
       'Dividend reinvestment is automatic at the sub-fund level and is therefore treated as part of accumulation value rather than as a separate user election.',
     ],
     unsupportedItems: [
@@ -179,9 +179,9 @@ export function parseEtiqaInvestStarter(context: ParseContext): IlpCatalogProduc
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:invest-starter-policy-charge',
       'branch:invest-starter-premium-shortfall-charge',
@@ -197,7 +197,7 @@ export function parseEtiqaInvestStarter(context: ParseContext): IlpCatalogProduc
       'invest-starter-optional-protection-riders',
     ],
     warnings: [
-      'Invest starter is currently modeled as a partial product in V1. The regular-premium cashflow, top-up routing, policy charge, premium-holiday shortfall charge/refund, and first-five-year withdrawal / surrender charge schedules are modeled, but the three-year policy charge refund and one-time reward remain informational only.',
+      'Invest starter is cataloged as a supported V1 product. The regular-premium cashflow, top-up routing, policy charge, premium-holiday shortfall charge/refund, and first-five-year withdrawal / surrender charge schedules are modeled, while the three-year policy charge refund, one-time reward, change-of-life-insured, and optional protection riders remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

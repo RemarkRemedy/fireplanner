@@ -1,0 +1,374 @@
+{
+  "metadata": {
+    "fixtureId": "etiqa-invest-starter-sgd-mip-5-ocf-stress",
+    "fixtureClass": "supported",
+    "productId": "etiqa-invest-starter",
+    "variantId": "sgd-mip-5",
+    "scenarioId": "ocf-stress",
+    "supportStatus": "supported",
+    "description": "Etiqa Invest starter alternate-fund high-OCF stress scenario.",
+    "coverageTags": [
+      "ocf-stress"
+    ],
+    "catalogVersion": "0.1.0",
+    "sourceFileName": "EIP_Invest starter_Product Summary.pdf",
+    "sourceChecksumSha256": "a523913b86dfd3ae62d098a27ea4c88e2bf937c3b899f6c0400b1df792f696a2"
+  },
+  "policyInput": {
+    "id": "etiqa-invest-starter-sgd-mip-5-ocf-stress",
+    "name": "Golden Etiqa Invest starter (SGD / MIP 5 OCF Stress)",
+    "insurer": "Etiqa",
+    "currency": "SGD",
+    "monthlyContribution": 350,
+    "monthsAlreadyPaid": 36,
+    "currentPolicyYear": 4,
+    "icpMonths": 1,
+    "mipLength": 5,
+    "postMipYears": 0,
+    "eecTable": [
+      0.07,
+      0.07,
+      0.06,
+      0.06,
+      0.05
+    ],
+    "discountRate": 0.07,
+    "inflationRate": 0.025,
+    "alternativeReturn": 0.07,
+    "accounts": [
+      {
+        "id": "portfolio",
+        "label": "Portfolio Fund Account",
+        "feeRate": 0,
+        "currentValue": 12000,
+        "contributionShare": 0,
+        "subjectToEec": true,
+        "postMipFeeRate": null,
+        "contributionRules": [
+          {
+            "phase": "during-icp",
+            "contributionShare": 1
+          },
+          {
+            "phase": "after-icp",
+            "contributionShare": 1
+          },
+          {
+            "phase": "top-up",
+            "contributionShare": 1
+          }
+        ]
+      }
+    ],
+    "funds": [
+      {
+        "name": "Etiqa Asia Growth",
+        "allocation": 0.66,
+        "ocf": 0.023,
+        "grossReturnLow": 0.038,
+        "grossReturnMid": 0.079,
+        "grossReturnHigh": 0.112
+      },
+      {
+        "name": "Etiqa Strategic Income",
+        "allocation": 0.34,
+        "ocf": 0.018,
+        "grossReturnLow": 0.028,
+        "grossReturnMid": 0.05,
+        "grossReturnHigh": 0.068
+      }
+    ],
+    "bonuses": [],
+    "chargeRules": [
+      {
+        "id": "policy-charge",
+        "label": "Policy Charge",
+        "basis": "account-value",
+        "activeWindow": "policy-term",
+        "startPolicyYear": 1,
+        "endPolicyYear": null,
+        "appliesTo": [
+          "portfolio"
+        ],
+        "rate": 0.008,
+        "amount": 0,
+        "allocation": "equal-split"
+      }
+    ],
+    "policyEvents": [],
+    "eventChargeRules": [
+      {
+        "id": "premium-shortfall-charge",
+        "label": "Premium Shortfall Charge",
+        "trigger": "premium-holiday",
+        "basis": "annual-premium-with-overlap-months",
+        "activeWindow": "during-mip",
+        "appliesTo": [
+          "portfolio"
+        ],
+        "rate": 0,
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0.07
+          },
+          {
+            "startPolicyYear": 2,
+            "endPolicyYear": 2,
+            "rate": 0.07
+          },
+          {
+            "startPolicyYear": 3,
+            "endPolicyYear": 3,
+            "rate": 0.06
+          },
+          {
+            "startPolicyYear": 4,
+            "endPolicyYear": 4,
+            "rate": 0.06
+          },
+          {
+            "startPolicyYear": 5,
+            "endPolicyYear": 5,
+            "rate": 0.05
+          }
+        ],
+        "amount": 0,
+        "allocation": "equal-split"
+      },
+      {
+        "id": "premium-shortfall-charge-refund",
+        "label": "Premium Shortfall Charge Refund",
+        "trigger": "premium-holiday-repayment",
+        "basis": "premium-holiday-charge-refund",
+        "activeWindow": "during-mip",
+        "appliesTo": [
+          "portfolio"
+        ],
+        "rate": 1,
+        "amount": 0,
+        "sourceChargeRuleId": "premium-shortfall-charge",
+        "allocation": "equal-split"
+      },
+      {
+        "id": "partial-withdrawal-charge",
+        "label": "Partial Withdrawal Charge",
+        "trigger": "partial-withdrawal",
+        "basis": "event-amount",
+        "activeWindow": "during-mip",
+        "appliesTo": [
+          "portfolio"
+        ],
+        "rate": 0,
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0.07
+          },
+          {
+            "startPolicyYear": 2,
+            "endPolicyYear": 2,
+            "rate": 0.07
+          },
+          {
+            "startPolicyYear": 3,
+            "endPolicyYear": 3,
+            "rate": 0.06
+          },
+          {
+            "startPolicyYear": 4,
+            "endPolicyYear": 4,
+            "rate": 0.06
+          },
+          {
+            "startPolicyYear": 5,
+            "endPolicyYear": 5,
+            "rate": 0.05
+          }
+        ],
+        "amount": 0,
+        "allocation": "equal-split"
+      }
+    ],
+    "catalogSource": {
+      "productId": "etiqa-invest-starter",
+      "productName": "Invest starter",
+      "variantId": "sgd-mip-5",
+      "variantLabel": "SGD / MIP 5",
+      "catalogVersion": "0.1.0",
+      "supportStatus": "supported",
+      "economicsStatus": "supported",
+      "structureStatus": "structured",
+      "modeledEconomics": [
+        "branch:invest-starter-policy-charge",
+        "branch:invest-starter-premium-shortfall-charge",
+        "branch:invest-starter-premium-shortfall-refund",
+        "branch:invest-starter-partial-withdrawal-charge",
+        "branch:invest-starter-surrender-charge",
+        "branch:invest-starter-ad-hoc-top-up-routing"
+      ],
+      "metadataOnlyBehaviors": [
+        "invest-starter-policy-charge-refund-every-3-years",
+        "invest-starter-one-time-reward",
+        "invest-starter-change-of-life-insured",
+        "invest-starter-optional-protection-riders"
+      ]
+    },
+    "catalogWarnings": [
+      "Invest starter is cataloged as a supported V1 product. The regular-premium cashflow, top-up routing, policy charge, premium-holiday shortfall charge/refund, and first-five-year withdrawal / surrender charge schedules are modeled, while the three-year policy charge refund, one-time reward, change-of-life-insured, and optional protection riders remain informational only.",
+      "Invest starter is cataloged as a supported V1 product. The parser captures the policy charge, premium-holiday shortfall charge and refund, partial-withdrawal charge, surrender charge horizon, and regular-premium / top-up cashflow structure.",
+      "The three-year policy charge refund and one-time reward remain informational only in V1.",
+      "Dividend reinvestment is automatic at the sub-fund level and is therefore treated as part of accumulation value rather than as a separate user election.",
+      "Policy charge refund every three years remains informational only.",
+      "One-time reward for linked insurance purchases remains informational only.",
+      "Change of life insured remains informational only.",
+      "Optional protection riders remain informational only."
+    ]
+  },
+  "expected": {
+    "summary": {
+      "totalPremiumsPaid": 16800,
+      "totalFeesCharged": 96,
+      "totalBonusesReceived": 0,
+      "netFeeDrag": 96,
+      "currentSurrenderValue": 11280,
+      "cancelNowPenalty": 720
+    },
+    "npvAnalysis": {
+      "surrenderNow": {
+        "eecRate": 0.06,
+        "eecCharge": 720,
+        "npvFees": 720,
+        "netSurrenderValue": 11280
+      },
+      "futureExitOptions": [
+        {
+          "exitYear": 1,
+          "policyYear": 5,
+          "eecRate": 0.05,
+          "eecCharge": 833.67,
+          "pvEec": 779.13,
+          "npvGrossFees": 89.72,
+          "npvBonuses": 0,
+          "totalNpvFees": 868.85,
+          "netSurrenderValue": 15839.81,
+          "totalContributions": 16800
+        }
+      ],
+      "bestExitYear": 1,
+      "bestExitNpvFees": 868.85,
+      "holdToMip": {
+        "npvGrossFees": 89.72,
+        "npvBonuses": 0,
+        "totalNpvFees": 868.85,
+        "finalValue": 16673.49,
+        "totalContributions": 16800
+      }
+    },
+    "opportunityCost": {
+      "alternativePortfolioValue": 16269.6,
+      "ilpValueAtHorizon": 16673.49,
+      "difference": -403.89,
+      "atBestExit": {
+        "exitYear": 1,
+        "alternativeValue": 15839.81,
+        "ilpValueAtHorizon": 16673.49,
+        "difference": -833.67
+      }
+    },
+    "projections": {
+      "low": {
+        "blendedNetReturn": 0.0133,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 5,
+            "annualContribution": 4200,
+            "annualWithdrawals": 0,
+            "combinedValue": 16262.32,
+            "eecRate": 0.05,
+            "eecCharge": 813.12,
+            "surrenderValue": 15449.21,
+            "cumulativePremiums": 16800,
+            "cumulativeGrossFees": 96,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "portfolio",
+                "open": 12000,
+                "contributionAmount": 4200,
+                "grossFee": 96,
+                "bonusCredit": 0,
+                "netFee": 96,
+                "withdrawalAmount": 0,
+                "close": 16262.32
+              }
+            ]
+          }
+        ]
+      },
+      "mid": {
+        "blendedNetReturn": 0.04784,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 5,
+            "annualContribution": 4200,
+            "annualWithdrawals": 0,
+            "combinedValue": 16673.49,
+            "eecRate": 0.05,
+            "eecCharge": 833.67,
+            "surrenderValue": 15839.81,
+            "cumulativePremiums": 16800,
+            "cumulativeGrossFees": 96,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "portfolio",
+                "open": 12000,
+                "contributionAmount": 4200,
+                "grossFee": 96,
+                "bonusCredit": 0,
+                "netFee": 96,
+                "withdrawalAmount": 0,
+                "close": 16673.49
+              }
+            ]
+          }
+        ]
+      },
+      "high": {
+        "blendedNetReturn": 0.07574,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 5,
+            "annualContribution": 4200,
+            "annualWithdrawals": 0,
+            "combinedValue": 17005.61,
+            "eecRate": 0.05,
+            "eecCharge": 850.28,
+            "surrenderValue": 16155.33,
+            "cumulativePremiums": 16800,
+            "cumulativeGrossFees": 96,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "portfolio",
+                "open": 12000,
+                "contributionAmount": 4200,
+                "grossFee": 96,
+                "bonusCredit": 0,
+                "netFee": 96,
+                "withdrawalAmount": 0,
+                "close": 17005.61
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseEtiqaInvestStarter', () => {
-  it('builds a valid partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseEtiqaInvestStarter({
       document,
@@ -22,8 +22,8 @@ describe('parseEtiqaInvestStarter', () => {
 
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('etiqa-invest-starter')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:invest-starter-policy-charge',
       'branch:invest-starter-premium-shortfall-charge',
