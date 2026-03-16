@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseTokioMarineWealthBuilderAtFuture', () => {
-  it('builds a valid partial Wealth Builder@Future product from the source PDF', async () => {
+  it('builds valid split Wealth Builder@Future death-benefit variants from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseTokioMarineWealthBuilderAtFuture({
       document,
@@ -28,16 +28,18 @@ describe('parseTokioMarineWealthBuilderAtFuture', () => {
     expect(product.modeledEconomics).toContain('tokio-power-up-bonus')
     expect(product.modeledEconomics).toContain('tokio-loyalty-bonus')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(product.modeledEconomics).toContain('branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-builder-atfuture-monthly-protection-charge')
     expect(product.metadataOnlyBehaviors).toContain(
       'tokio-wealth-builder-atfuture-dividend-payout-threshold-and-record-date-instructions',
     )
 
-    const variant = product.variants[0]
-    expect(variant?.id).toBe('sgd-mip-10')
-    expect(variant?.accounts.map((account) => account.id)).toEqual(['accumulation', 'topup'])
-    expect(variant?.distributionSupport).toEqual({
+    const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10')
+    const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10-advanced-death')
+
+    expect(product.variants).toHaveLength(2)
+    expect(basicVariant?.accounts.map((account) => account.id)).toEqual(['accumulation', 'topup'])
+    expect(basicVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['accumulation', 'topup'],
       defaultMode: 'reinvest',
@@ -47,22 +49,22 @@ describe('parseTokioMarineWealthBuilderAtFuture', () => {
       notes: expect.arrayContaining([expect.stringContaining('manual annual distribution-yield assumption')]),
       sourceRefs: [expect.objectContaining({ page: 8, section: 'Dividend Distribution' })],
     })
-    expect(variant?.bonuses.map((bonus) => bonus.label)).toEqual([
+    expect(basicVariant?.bonuses.map((bonus) => bonus.label)).toEqual([
       'Initial Bonus',
       'Premium Bonus (Policy Years 6-20)',
       'Premium Bonus (After Policy Year 20)',
       'Power-up Bonus',
       'Loyalty Bonus',
     ])
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 9_599.99, rate: 0.2 },
       { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.25 },
     ])
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'premium-bonus-policy-years-6-20')?.rate).toBe(0.0008)
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'premium-bonus-after-policy-year-20')?.rate).toBe(0.0015)
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'power-up-bonus')?.rate).toBe(0.013)
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.rate).toBe(0.005)
-    expect(variant?.feeRules).toEqual([
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'premium-bonus-policy-years-6-20')?.rate).toBe(0.0008)
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'premium-bonus-after-policy-year-20')?.rate).toBe(0.0015)
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'power-up-bonus')?.rate).toBe(0.013)
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.rate).toBe(0.005)
+    expect(basicVariant?.feeRules).toEqual([
       expect.objectContaining({
         id: 'policy-charge-during-mip',
         basis: 'account-value',
@@ -78,7 +80,7 @@ describe('parseTokioMarineWealthBuilderAtFuture', () => {
         fallbackAppliesTo: ['topup'],
       }),
     ])
-    expect(variant?.eventChargeRules).toEqual(
+    expect(basicVariant?.eventChargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.05 }),
         expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
@@ -105,9 +107,25 @@ describe('parseTokioMarineWealthBuilderAtFuture', () => {
         }),
       ]),
     )
-    expect(variant?.eecTable).toEqual([1, 1, 0.8, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.03])
-    expect(variant?.warnings).toContain(
+    expect(basicVariant?.eecTable).toEqual([1, 1, 0.8, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.03])
+    expect(basicVariant?.warnings).toContain(
       'Wealth Builder@Future keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
+    )
+    expect(advancedVariant?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+          assuranceConfig: expect.objectContaining({
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+          }),
+          requiresManualInput: true,
+        }),
+      ]),
     )
   }, 30_000)
 })

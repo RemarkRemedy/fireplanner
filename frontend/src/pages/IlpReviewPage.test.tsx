@@ -581,16 +581,13 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Builder@Future')
 
     expect(within(dialog).getByText('Wealth Builder@Future')).toBeInTheDocument()
-    const wealthBuilderSgdButton = within(dialog)
-      .getAllByRole('button')
-      .find((button) => button.textContent?.startsWith('SGD / MIP 10'))
-    expect(wealthBuilderSgdButton).toBeDefined()
-    await user.click(wealthBuilderSgdButton!)
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use partial template$/i }))
 
     expect(screen.getAllByText('Wealth Builder@Future (SGD / MIP 10)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('Basic Death keeps Monthly Protection Charge metadata-only')
     expect(seededAlert?.textContent).toContain('2.50% policy charge during the minimum investment period and a 0.60% policy charge thereafter')
     expect(seededAlert?.textContent).toContain('tokio wealth builder atfuture dividend payout threshold and record date instructions')
     expect(screen.getAllByDisplayValue('Policy Charge').length).toBeGreaterThan(0)
@@ -598,6 +595,26 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Premium Bonus (After Policy Year 20)')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Power-up Bonus')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Loyalty Bonus')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds Tokio Marine Wealth Builder@Future advanced-death as a partial catalog product with Tokio MPC inputs', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Builder@Future')
+
+    expect(within(dialog).getByText('Wealth Builder@Future')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10 \(advanced death\)/i }))
+
+    expect(screen.getAllByText('Wealth Builder@Future (SGD / MIP 10 (Advanced Death))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
+    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Harvest Builder@Future basic-death as a partial catalog product with the same charge frame and lower initial bonus bands', async () => {
