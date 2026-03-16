@@ -1199,7 +1199,8 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
       sourceId: goal.id,
     })
 
-    const annualGoalAmount = goal.amount / Math.max(1, goal.durationYears)
+    const netGoalAmount = Math.max(0, goal.amount - (goal.amountSaved ?? 0))
+    const annualGoalAmount = netGoalAmount / Math.max(1, goal.durationYears)
     for (let yearOffset = window.startYearOffset; yearOffset <= Math.min(window.endYearOffset, yearCount - 1); yearOffset += 1) {
       portfolioAdjustments.push({
         yearOffset,
