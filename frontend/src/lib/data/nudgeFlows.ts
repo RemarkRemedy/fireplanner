@@ -205,9 +205,10 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
             compute: (values) => {
               const outstanding = typeof values.mortgageOutstanding === 'number' ? values.mortgageOutstanding : 0
               const monthly = typeof values.monthlyMortgagePayment === 'number' ? values.monthlyMortgagePayment : 0
-              const ratePercent = typeof values.mortgageRatePercent === 'number' ? values.mortgageRatePercent : 0
+              // PercentInput stores as decimal: 0.05 = 5%
+              const rate = typeof values.mortgageRatePercent === 'number' ? values.mortgageRatePercent : 0
               if (outstanding <= 0 || monthly <= 0) return null
-              const monthlyRate = (ratePercent / 100) / 12
+              const monthlyRate = rate / 12
               if (monthlyRate <= 0) return new Date().getFullYear() + Math.ceil(outstanding / monthly / 12)
               if (monthly <= outstanding * monthlyRate) return null
               const months = -Math.log(1 - (monthlyRate * outstanding / monthly)) / Math.log(1 + monthlyRate)
