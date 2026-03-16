@@ -4334,7 +4334,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Monthly Protection Charge'))).toBe(true)
   })
 
-  it('maps Tokio Marine Wealth Flexi-Link 3.12 into a partial seed with split policy-charge windows and tiered power-up bonuses', () => {
+  it('maps Tokio Marine Wealth Flexi-Link 3.12 into a supported seed with split policy-charge windows and tiered power-up bonuses', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-wealth-flexi-link-3-12')
     expect(product).toBeDefined()
@@ -4343,7 +4343,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-premium-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-power-up-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-loyalty-bonus')
@@ -4450,7 +4451,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
   })
 
-  it('maps Tokio Marine Wealth Flexi-Link 3.12 advanced-death into a partial seed with Tokio MPC inputs', () => {
+  it('maps Tokio Marine Wealth Flexi-Link 3.12 advanced-death into a supported seed with Tokio MPC inputs', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-wealth-flexi-link-3-12')
     expect(product).toBeDefined()
@@ -4460,7 +4461,8 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('Wealth Flexi-Link 3.12 (SGD / MIP 12 (Advanced Death))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-wealth-flexi-link-3-12-advanced-death-monthly-protection-charge')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([

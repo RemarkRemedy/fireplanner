@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseTokioMarineWealthFlexiLink312', () => {
-  it('builds a valid partial Wealth Flexi-Link 3.12 product from the source PDF', async () => {
+  it('builds a valid supported Wealth Flexi-Link 3.12 product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseTokioMarineWealthFlexiLink312({
       document,
@@ -23,7 +23,8 @@ describe('parseTokioMarineWealthFlexiLink312', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('tokio-marine-wealth-flexi-link-3-12')
     expect(product.productName).toBe('Wealth Flexi-Link 3.12')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('tokio-premium-bonus')
     expect(product.modeledEconomics).toContain('tokio-power-up-bonus')
     expect(product.modeledEconomics).toContain('tokio-loyalty-bonus')
