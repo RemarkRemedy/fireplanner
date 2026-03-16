@@ -3683,6 +3683,72 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[1], 'accumulation').grossFee).toBeCloseTo(expectedYearTwoCharge, 6)
   })
 
+  it('charges Tokio secure MPC against the higher adjusted-single-premium floor on open-ended secure products', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      initialSinglePremium: 100_000,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 0,
+      mipBasis: 'open-ended',
+      mipLength: null,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Single Premium Units Account',
+          feeRate: 0,
+          currentValue: 30_000,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-goelite-secure-mpc',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          assuranceValueAppliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+            tokioProtectionState: {
+              mode: 'locked-in-policy-value-with-adjusted-single-premium',
+              trackedValueAccountIds: ['policy'],
+              withdrawalReductionAccountIds: ['policy'],
+            },
+          },
+          requiresManualInput: true,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentLockedInPolicyValue: 70_000,
+        currentAdjustedSinglePremium: 100_000,
+      },
+    }), 'mid')
+
+    const yearOneRate = TOKIO_MPC_UNZO_DEATH_RATE_TABLE['male-non-smoker'][39] ?? 0
+    const expectedYearOneCharge = yearOneRate * 70_000 / 1000 * 12
+
+    expect(accountRow(result.rows[0], 'policy').grossFee).toBeCloseTo(expectedYearOneCharge, 6)
+  })
+
   it('projects the next-year Prudential Assure II combined assurance charge from the current worked-example state', () => {
     const result = projectIlpPolicy(makeDefaultPolicy({
       monthlyContribution: 0,

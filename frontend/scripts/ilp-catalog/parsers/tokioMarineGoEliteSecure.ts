@@ -63,14 +63,55 @@ function buildRateSchedule(values: readonly number[]): Array<{ startPolicyYear: 
   }))
 }
 
+function buildTokioEliteSecureMpcFeeRule(
+  page1: IlpCatalogSourceRef,
+  page2: IlpCatalogSourceRef,
+  page5: IlpCatalogSourceRef,
+  page7: IlpCatalogSourceRef,
+  page11: IlpCatalogSourceRef,
+): IlpTemplateFeeRule {
+  return {
+    id: 'monthly-protection-charge',
+    label: 'Monthly Protection Charge',
+    basis: 'assurance-sum-at-risk',
+    rate: 0,
+    amount: 0,
+    appliesTo: ['policy'],
+    assuranceValueAppliesTo: ['policy'],
+    activeWindow: 'policy-term',
+    requiresManualInput: true,
+    assuranceConfig: {
+      formula: 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium',
+      rateTable: 'tokio-mpc-unzo-death',
+      monthlyModalFactor: 1,
+      maxAgeNextBirthday: 99,
+      tokioProtectionState: {
+        mode: 'locked-in-policy-value-with-adjusted-single-premium',
+        trackedValueAccountIds: ['policy'],
+        withdrawalReductionAccountIds: ['policy'],
+      },
+    },
+    notes: [
+      'Models the published Monthly Protection Charge deducted monthly in advance from the Single Premium Units Account value while the policy remains in force.',
+      'The sum at risk is the published death benefit less the Single Premium Units Account value, where the death-benefit floor is the higher of the Locked-in Policy Value and Adjusted Single Premium.',
+      'The engine uses an annual approximation of the published monthiversary locked-in-value updates and proportional partial-withdrawal reductions to Locked-in Policy Value and Adjusted Single Premium.',
+      'Change-of-life-assured administration and payout handling beyond the modeled Monthly Protection Charge remain metadata-only.',
+    ],
+    sourceRefs: [page1, page2, page5, page7, page11],
+  }
+}
+
 function buildVariant(document: ExtractedPdfDocument, variantId: 'sgd-open-ended-cash' | 'sgd-open-ended-srs'): IlpTemplateVariant {
   const isCash = variantId === 'sgd-open-ended-cash'
   const page1 = sourceRef(1, 'Plan description and locked-in policy value', snippetNear(document, 1, '#goElite Secure', 22))
+  const page2 = sourceRef(2, 'Reduction in Locked-in Policy Value and Death Benefit', snippetNear(document, 2, 'Reduction in Locked-in Policy Value', 32))
   const page3 = sourceRef(3, 'Single premium and recurring single premium', snippetNear(document, 3, 'Single Premium', 24))
   const page4 = sourceRef(4, 'Top-up premium and partial withdrawal', snippetNear(document, 4, 'Top-up Premiums', 24))
+  const page5 = sourceRef(5, 'Partial withdrawal effects on Locked-in Policy Value and Adjusted Single Premium', snippetNear(document, 5, 'Upon each partial withdrawal from the Single Premium Units Account', 28))
   const page6 = sourceRef(6, 'Dividend distribution', snippetNear(document, 6, 'Dividend Distribution', 26))
   const page7 = sourceRef(7, 'Fees and charges', snippetNear(document, 7, 'Administrative Charge', 28))
   const page8 = sourceRef(8, 'Surrender charge and switching charge', snippetNear(document, 8, 'Surrender Charge', 24))
+  const page11 = sourceRef(11, 'Appendix A Monthly Protection Charge Rates', snippetNear(document, 11, 'Monthly Rates for Monthly Protection Charges', 20))
 
   const feeRules: IlpTemplateFeeRule[] = [
     {
@@ -113,6 +154,7 @@ function buildVariant(document: ExtractedPdfDocument, variantId: 'sgd-open-ended
       ],
       sourceRefs: [page7],
     },
+    buildTokioEliteSecureMpcFeeRule(page1, page2, page5, page7, page11),
   ]
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
@@ -217,18 +259,17 @@ function buildVariant(document: ExtractedPdfDocument, variantId: 'sgd-open-ended
     exitChargeBasis: 'initial-single-premium-base',
     warnings: [
       isCash
-        ? '#goElite Secure (Cash) is cataloged as a partial modeled subset in V1. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the reinvest-default distribution-mode assumption surface through the open-ended single-premium basis.'
-        : '#goElite Secure (SRS) is cataloged as a partial modeled subset in V1. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the reinvest-only distribution-mode surface through the open-ended single-premium basis.',
+        ? '#goElite Secure (Cash) is cataloged as a partial modeled subset in V1. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the published Monthly Protection Charge through the locked-in-policy-value plus adjusted-single-premium protection-state kernel, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the reinvest-default distribution-mode assumption surface through the open-ended single-premium basis.'
+        : '#goElite Secure (SRS) is cataloged as a partial modeled subset in V1. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the published Monthly Protection Charge through the locked-in-policy-value plus adjusted-single-premium protection-state kernel, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the reinvest-only distribution-mode surface through the open-ended single-premium basis.',
       'Recurring single premium and top-up availability only after one policy year remains informational only.',
       'Partial withdrawals remain subject to published minimum transaction and minimum residual Single Premium Units Account rules, which stay informational only in V1.',
     ],
     unsupportedItems: [
-      'Monthly Protection Charge and the locked-in-policy-value / adjusted-single-premium protection mechanics remain informational only.',
-      'Death benefit and aggregation-limit handling remain informational only.',
+      'Death-benefit payout handling, aggregation-limit handling, and any policy action that changes the life assured remain informational only.',
       'Fund management fee and third-party banking / currency-conversion charges remain informational only.',
-      'Fund-switching administration and reduction of Locked-in Policy Value remain informational only.',
+      'Fund-switching administration and user-requested reductions in Locked-in Policy Value remain informational only.',
     ],
-    sourceRefs: [page1, page3, page4, page6, page7, page8],
+    sourceRefs: [page1, page2, page3, page4, page5, page6, page7, page8, page11],
   }
 }
 
@@ -248,15 +289,13 @@ export function parseTokioMarineGoEliteSecure(context: ParseContext): IlpCatalog
       'branch:tokio-marine-goelite-secure-zero-single-premium-charge',
       'branch:tokio-marine-goelite-secure-establishment-charge',
       'branch:tokio-marine-goelite-secure-administrative-charge',
+      'kernel:tokio-locked-in-protection-state',
       'branch:tokio-marine-goelite-secure-recurring-single-and-top-up-charge',
       'branch:tokio-marine-goelite-secure-zero-partial-withdrawal-charge',
       'branch:tokio-marine-goelite-secure-surrender-charge',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-marine-goelite-secure-monthly-protection-charge',
-      'tokio-marine-goelite-secure-locked-in-policy-value',
-      'tokio-marine-goelite-secure-adjusted-single-premium',
       'tokio-marine-goelite-secure-death-benefit',
       'tokio-marine-goelite-secure-aggregation-limit',
       'tokio-marine-goelite-secure-minimum-withdrawal-rules',
@@ -264,7 +303,8 @@ export function parseTokioMarineGoEliteSecure(context: ParseContext): IlpCatalog
       'tokio-marine-goelite-secure-fund-level-and-third-party-charges',
     ],
     warnings: [
-      '#goElite Secure is cataloged as a partial modeled subset in V1. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the cash-vs-SRS distribution-mode support surface, while the locked-in-policy-value protection mechanics, MPC, and death-benefit formulas remain outside the current engine.',
+      '#goElite Secure is cataloged as a partial modeled subset in V1. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the published Monthly Protection Charge through the locked-in-policy-value plus adjusted-single-premium protection-state kernel, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the cash-vs-SRS distribution-mode support surface.',
+      'The modeled Monthly Protection Charge uses the published death-benefit floor logic across Locked-in Policy Value and Adjusted Single Premium, but change-of-life-assured handling, explicit approved Locked-in Policy Value reductions, and death-benefit payout handling remain metadata-only.',
     ],
     archived: false,
     variants: [

@@ -338,7 +338,10 @@ export function templateVariantToPolicySeed(
       ...(variant.feeRules.some((rule) => rule.basis === 'initial-single-premium') && !usesOriginalSinglePremiumBase(variant)
         ? ['Enter the one-time gross initial single premium lump sum in Policy Details if you want the upfront single-premium deduction to seed the starting policy value honestly.']
         : []),
-      ...(variant.feeRules.some((rule) => rule.assuranceConfig?.tokioProtectionState)
+      ...(variant.feeRules.some((rule) => rule.assuranceConfig?.tokioProtectionState?.mode === 'locked-in-policy-value-with-adjusted-single-premium')
+        ? ['Tokio secure-product protection-state mechanics use annualized approximations of the published monthiversary locked-in-value and adjusted-single-premium updates. Enter the current locked-in value and adjusted single premium manually if you are starting mid-policy.']
+        : []),
+      ...(variant.feeRules.some((rule) => rule.assuranceConfig?.tokioProtectionState?.mode === 'locked-in-policy-value')
         ? ['Tokio secure-product protection-state mechanics use annualized approximations of the published monthiversary locked-in-value updates. Enter the current locked-in value manually if you are starting mid-policy.']
         : []),
       ...(variant.unsupportedItems ?? []),

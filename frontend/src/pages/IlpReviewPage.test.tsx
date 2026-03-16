@@ -783,6 +783,29 @@ describe('IlpReviewPage', () => {
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('#goElite Secure cash seeds locked-in-value and adjusted-single-premium MPC inputs', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goElite Secure')
+
+    expect(within(dialog).getByText('#goElite Secure')).toBeInTheDocument()
+    await user.click(
+      within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash\)use partial template$/i }),
+    )
+
+    expect(screen.getAllByText('#goElite Secure (SGD / Open-ended (Cash))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('death-benefit floor logic')
+    expect(seededAlert?.textContent).toContain('Adjusted Single Premium')
+    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(screen.getByLabelText(/current locked-in policy value/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/current adjusted single premium/i)).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds Tokio Marine #goClassic basic-death as a partial catalog product with combined account-fee modeling', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()

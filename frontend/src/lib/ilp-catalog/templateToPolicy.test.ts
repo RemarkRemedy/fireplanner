@@ -5646,35 +5646,57 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:tokio-locked-in-protection-state')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goelite-secure-establishment-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goelite-secure-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-establishment-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-surrender-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-monthly-protection-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-adjusted-single-premium')
     expect(seed.monthlyContribution).toBe(0)
     expect(seed.initialSinglePremium).toBe(0)
     expect(seed.mipBasis).toBe('open-ended')
     expect(seed.exitChargeBasis).toBe('initial-single-premium-base')
     expect(seed.eecTable).toEqual([0.07, 0.056, 0.042, 0.028, 0.014, 0])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('establishment charges'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('current locked-in value and adjusted single premium manually'))).toBe(true)
     expect(seed.accounts.find((account) => account.id === 'policy')?.feeRate).toBe(0.01)
-    expect(seed.chargeRules).toEqual([
-      expect.objectContaining({
-        id: 'single-premium-charge',
-        basis: 'annual-contribution',
-        rate: 0,
-      }),
-      expect.objectContaining({
-        id: 'establishment-charge',
-        basis: 'initial-single-premium-base',
-        rateSchedule: [
-          { startPolicyYear: 1, endPolicyYear: 1, rate: 0.014 },
-          { startPolicyYear: 2, endPolicyYear: 2, rate: 0.014 },
-          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.014 },
-          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.014 },
-          { startPolicyYear: 5, endPolicyYear: 5, rate: 0.014 },
-        ],
-      }),
-    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'single-premium-charge',
+          basis: 'annual-contribution',
+          rate: 0,
+        }),
+        expect.objectContaining({
+          id: 'establishment-charge',
+          basis: 'initial-single-premium-base',
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 0.014 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 0.014 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.014 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.014 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.014 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['policy'],
+          assuranceValueAppliesTo: ['policy'],
+          assuranceConfig: expect.objectContaining({
+            formula: 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium',
+            rateTable: 'tokio-mpc-unzo-death',
+            tokioProtectionState: {
+              mode: 'locked-in-policy-value-with-adjusted-single-premium',
+              trackedValueAccountIds: ['policy'],
+              withdrawalReductionAccountIds: ['policy'],
+            },
+          }),
+          requiresManualInput: true,
+        }),
+      ]),
+    )
   })
 
   it('maps FWD Invest Goal 1 SGD into an open-ended single-premium seed with original-base plan and surrender charges', () => {

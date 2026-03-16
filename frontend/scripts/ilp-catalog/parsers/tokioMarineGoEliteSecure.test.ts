@@ -73,6 +73,26 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
         ],
       },
       {
+        pageNumber: 2,
+        characterCount: 420,
+        text: 'Reduction in locked-in policy value and death benefit',
+        lines: [
+          { y: 700, text: 'Reduction in Locked-in Policy Value' },
+          { y: 680, text: 'The minimum Locked-in Policy Value is 100% of the Adjusted Single Premium.' },
+          { y: 660, text: 'Adjusted Single Premium refers to initial single premium or adjusted single premium following any partial withdrawal made from the Single Premium Units Account, whichever is lower.' },
+          { y: 640, text: 'Death Benefit highest of Single premium adjusted for all partial withdrawal from the Single Premium Units Account, Locked-in Policy Value, or 100% of Single Premium Units Account value, less indebtedness.' },
+        ],
+      },
+      {
+        pageNumber: 5,
+        characterCount: 360,
+        text: 'Partial withdrawal effects',
+        lines: [
+          { y: 700, text: 'Upon each partial withdrawal from the Single Premium Units Account, the Locked-in Policy Value and Adjusted Single Premium will be adjusted.' },
+          { y: 680, text: 'Adjusted Single Premium after partial withdrawal equals Adjusted Single Premium before partial withdrawal times the post-withdrawal Single Premium Units Account ratio.' },
+        ],
+      },
+      {
         pageNumber: 8,
         characterCount: 360,
         text: 'Surrender and switching charges',
@@ -82,8 +102,92 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
           { y: 660, text: 'Switching Charge There are no charges for fund switch.' },
         ],
       },
+      {
+        pageNumber: 11,
+        characterCount: 240,
+        text: 'Appendix A monthly protection charge rates',
+        lines: [
+          { y: 700, text: 'Monthly Rates for Monthly Protection Charges (For Death), Per $1,000 Sum at Risk' },
+        ],
+      },
     ],
   }
+}
+
+function expectSecureMpcVariantShape(variant: ReturnType<typeof parseTokioMarineGoEliteSecure>['variants'][number]) {
+  expect(variant.exitChargeBasis).toBe('initial-single-premium-base')
+  expect(variant.eecTable).toEqual([0.07, 0.056, 0.042, 0.028, 0.014, 0])
+  expect(variant.feeRules.map((rule) => rule.id)).toEqual([
+    'single-premium-charge',
+    'establishment-charge',
+    'administrative-charge',
+    'monthly-protection-charge',
+  ])
+  expect(variant.feeRules).toHaveLength(4)
+  expect(variant.feeRules).toEqual(expect.arrayContaining([
+    expect.objectContaining({
+      id: 'single-premium-charge',
+      rate: 0,
+    }),
+    expect.objectContaining({
+      id: 'establishment-charge',
+      basis: 'initial-single-premium-base',
+      rateSchedule: [
+        { startPolicyYear: 1, endPolicyYear: 1, rate: 0.014 },
+        { startPolicyYear: 2, endPolicyYear: 2, rate: 0.014 },
+        { startPolicyYear: 3, endPolicyYear: 3, rate: 0.014 },
+        { startPolicyYear: 4, endPolicyYear: 4, rate: 0.014 },
+        { startPolicyYear: 5, endPolicyYear: 5, rate: 0.014 },
+      ],
+    }),
+    expect.objectContaining({
+      id: 'administrative-charge',
+      basis: 'account-value',
+      rate: 0.01,
+    }),
+    expect.objectContaining({
+      id: 'monthly-protection-charge',
+      basis: 'assurance-sum-at-risk',
+      rate: 0,
+      amount: 0,
+      activeWindow: 'policy-term',
+      appliesTo: ['policy'],
+      assuranceValueAppliesTo: ['policy'],
+      requiresManualInput: true,
+      assuranceConfig: {
+        formula: 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium',
+        rateTable: 'tokio-mpc-unzo-death',
+        monthlyModalFactor: 1,
+        maxAgeNextBirthday: 99,
+        tokioProtectionState: {
+          mode: 'locked-in-policy-value-with-adjusted-single-premium',
+          trackedValueAccountIds: ['policy'],
+          withdrawalReductionAccountIds: ['policy'],
+        },
+      },
+    }),
+  ]))
+  const mpcRule = variant.feeRules.find((rule) => rule.id === 'monthly-protection-charge')
+  expect(mpcRule).toBeDefined()
+  expect(mpcRule?.notes).toEqual([
+    'Models the published Monthly Protection Charge deducted monthly in advance from the Single Premium Units Account value while the policy remains in force.',
+    'The sum at risk is the published death benefit less the Single Premium Units Account value, where the death-benefit floor is the higher of the Locked-in Policy Value and Adjusted Single Premium.',
+    'The engine uses an annual approximation of the published monthiversary locked-in-value updates and proportional partial-withdrawal reductions to Locked-in Policy Value and Adjusted Single Premium.',
+    'Change-of-life-assured administration and payout handling beyond the modeled Monthly Protection Charge remain metadata-only.',
+  ])
+  expect(mpcRule?.sourceRefs.map((sourceRef) => sourceRef.page)).toEqual([1, 2, 5, 7, 11])
+  expect(mpcRule?.sourceRefs.find((sourceRef) => sourceRef.page === 1)?.excerpt).toContain('#goElite Secure')
+  expect(mpcRule?.sourceRefs.find((sourceRef) => sourceRef.page === 7)?.excerpt).toContain('Administrative Charge')
+  expect(mpcRule?.sourceRefs.find((sourceRef) => sourceRef.page === 11)?.excerpt).toContain('Monthly Rates for Monthly Protection Charges')
+  expect(variant.eventChargeRules.map((rule) => rule.id)).toEqual([
+    'recurring-single-premium-charge',
+    'top-up-premium-charge',
+    'partial-withdrawal-charge',
+  ])
+  expect(variant.warnings).toHaveLength(3)
+  expect(variant.warnings[0]).toContain('adjusted-single-premium protection-state kernel')
+  expect(variant.warnings[1]).toContain('Recurring single premium and top-up availability only after one policy year')
+  expect(variant.warnings[2]).toContain('minimum residual Single Premium Units Account rules')
 }
 
 describe('parseTokioMarineGoEliteSecure', () => {
@@ -102,6 +206,7 @@ describe('parseTokioMarineGoEliteSecure', () => {
       'branch:tokio-marine-goelite-secure-zero-single-premium-charge',
       'branch:tokio-marine-goelite-secure-establishment-charge',
       'branch:tokio-marine-goelite-secure-administrative-charge',
+      'kernel:tokio-locked-in-protection-state',
       'branch:tokio-marine-goelite-secure-recurring-single-and-top-up-charge',
       'branch:tokio-marine-goelite-secure-zero-partial-withdrawal-charge',
       'branch:tokio-marine-goelite-secure-surrender-charge',
@@ -109,8 +214,14 @@ describe('parseTokioMarineGoEliteSecure', () => {
     ])
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-establishment-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-surrender-charge')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-marine-goelite-secure-monthly-protection-charge')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-marine-goelite-secure-locked-in-policy-value')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-monthly-protection-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-locked-in-policy-value')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-adjusted-single-premium')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-marine-goelite-secure-death-benefit')
+    expect(product.warnings).toEqual([
+      expect.stringContaining('cash-vs-SRS distribution-mode support surface'),
+      expect.stringContaining('death-benefit floor logic across Locked-in Policy Value and Adjusted Single Premium'),
+    ])
 
     expect(product.variants).toHaveLength(2)
     expect(product.variants[0]).toMatchObject({
@@ -125,31 +236,26 @@ describe('parseTokioMarineGoEliteSecure', () => {
       mipBasis: 'open-ended',
       mipLength: null,
     })
-    expect(product.variants[0].exitChargeBasis).toBe('initial-single-premium-base')
-    expect(product.variants[0].eecTable).toEqual([0.07, 0.056, 0.042, 0.028, 0.014, 0])
-    expect(product.variants[0].feeRules).toEqual([
+    expectSecureMpcVariantShape(product.variants[0])
+    expectSecureMpcVariantShape(product.variants[1])
+    expect(product.variants[0].eventChargeRules).toEqual([
       expect.objectContaining({
-        id: 'single-premium-charge',
+        id: 'recurring-single-premium-charge',
+        trigger: 'recurring-single-premium',
+        rate: 0.05,
+      }),
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        rate: 0.05,
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
         rate: 0,
       }),
-      expect.objectContaining({
-        id: 'establishment-charge',
-        basis: 'initial-single-premium-base',
-        rateSchedule: [
-          { startPolicyYear: 1, endPolicyYear: 1, rate: 0.014 },
-          { startPolicyYear: 2, endPolicyYear: 2, rate: 0.014 },
-          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.014 },
-          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.014 },
-          { startPolicyYear: 5, endPolicyYear: 5, rate: 0.014 },
-        ],
-      }),
-      expect.objectContaining({
-        id: 'administrative-charge',
-        basis: 'account-value',
-        rate: 0.01,
-      }),
     ])
-    expect(product.variants[0].eventChargeRules).toEqual([
+    expect(product.variants[1].eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'recurring-single-premium-charge',
         trigger: 'recurring-single-premium',
@@ -176,6 +282,55 @@ describe('parseTokioMarineGoEliteSecure', () => {
       cashPayoutAllowedDuringMip: false,
       cashPayoutAllowedAfterMip: false,
     })
+  })
+
+  it('falls back to section-based source excerpts when pages for secure MPC evidence are unavailable', async () => {
+    const document = makeSyntheticDocument()
+    const sparseDocument: ExtractedPdfDocument = {
+      ...document,
+      pageCount: document.pageCount,
+      pages: document.pages.filter((page) => ![2, 5, 11].includes(page.pageNumber)),
+    }
+
+    const product = parseTokioMarineGoEliteSecure({
+      document: sparseDocument,
+      sourceChecksumSha256: '2222222222222222222222222222222222222222222222222222222222222222',
+    })
+
+    expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-monthly-protection-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-locked-in-policy-value')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-adjusted-single-premium')
+    expect(product.warnings).toEqual([
+      expect.stringContaining('cash-vs-SRS distribution-mode support surface'),
+      expect.stringContaining('death-benefit floor logic across Locked-in Policy Value and Adjusted Single Premium'),
+    ])
+    const mpcRule = product.variants[0].feeRules.find((rule) => rule.id === 'monthly-protection-charge')
+    expect(mpcRule).toBeDefined()
+    expect(mpcRule?.assuranceConfig).toEqual({
+      formula: 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium',
+      rateTable: 'tokio-mpc-unzo-death',
+      monthlyModalFactor: 1,
+      maxAgeNextBirthday: 99,
+      tokioProtectionState: {
+        mode: 'locked-in-policy-value-with-adjusted-single-premium',
+        trackedValueAccountIds: ['policy'],
+        withdrawalReductionAccountIds: ['policy'],
+      },
+    })
+    expect(mpcRule?.sourceRefs.map((sourceRef) => sourceRef.page)).toEqual([1, 2, 5, 7, 11])
+    expect(mpcRule?.sourceRefs.find((sourceRef) => sourceRef.page === 1)?.excerpt).toContain('#goElite Secure')
+    expect(mpcRule?.sourceRefs.find((sourceRef) => sourceRef.page === 7)?.excerpt).toContain('Administrative Charge')
+    expect(mpcRule?.sourceRefs.find((sourceRef) => sourceRef.page === 2)?.excerpt).toContain('excerpt unavailable')
+    expect(mpcRule?.sourceRefs.find((sourceRef) => sourceRef.page === 5)?.excerpt).toContain('excerpt unavailable')
+    expect(mpcRule?.sourceRefs.find((sourceRef) => sourceRef.page === 11)?.excerpt).toContain('excerpt unavailable')
+    const srsMpcRule = product.variants[1].feeRules.find((rule) => rule.id === 'monthly-protection-charge')
+    expect(srsMpcRule).toBeDefined()
+    expect(srsMpcRule?.assuranceConfig).toEqual(mpcRule?.assuranceConfig)
+    expect(srsMpcRule?.sourceRefs.map((sourceRef) => sourceRef.page)).toEqual([1, 2, 5, 7, 11])
+    expect(srsMpcRule?.sourceRefs.find((sourceRef) => sourceRef.page === 2)?.excerpt).toContain('excerpt unavailable')
+    expect(srsMpcRule?.sourceRefs.find((sourceRef) => sourceRef.page === 5)?.excerpt).toContain('excerpt unavailable')
+    expect(srsMpcRule?.sourceRefs.find((sourceRef) => sourceRef.page === 11)?.excerpt).toContain('excerpt unavailable')
   })
 
   it.skipIf(!existsSync(SOURCE_PATH))('matches the live source PDF when the local corpus is available', async () => {
