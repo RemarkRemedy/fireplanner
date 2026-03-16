@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseTokioMarineGoWealthEnrich', () => {
-  it('builds a valid open-ended partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid open-ended supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseTokioMarineGoWealthEnrich({
       document,
@@ -23,8 +23,8 @@ describe('parseTokioMarineGoWealthEnrich', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('tokio-marine-gowealth-enrich')
     expect(product.productName).toBe('#goWealth Enrich')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:tokio-marine-gowealth-enrich-zero-single-premium-charge',
       'branch:tokio-marine-gowealth-enrich-establishment-charge',

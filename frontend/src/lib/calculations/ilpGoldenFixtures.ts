@@ -190,6 +190,12 @@ export type GoldenCoverageTag =
   | 'branch:tokio-marine-goelite-secure-recurring-single-and-top-up-charge'
   | 'branch:tokio-marine-goelite-secure-zero-partial-withdrawal-charge'
   | 'branch:tokio-marine-goelite-secure-surrender-charge'
+  | 'branch:tokio-marine-gowealth-enrich-zero-single-premium-charge'
+  | 'branch:tokio-marine-gowealth-enrich-establishment-charge'
+  | 'branch:tokio-marine-gowealth-enrich-administrative-charge'
+  | 'branch:tokio-marine-gowealth-enrich-recurring-single-and-top-up-charge'
+  | 'branch:tokio-marine-gowealth-enrich-single-premium-partial-withdrawal-charge'
+  | 'branch:tokio-marine-gowealth-enrich-surrender-charge'
   | 'branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge'
   | 'branch:fwd-invest-goal-1-zero-single-premium-charge'
   | 'branch:fwd-invest-goal-1-initial-account-charge'
@@ -3060,6 +3066,93 @@ function tokioMarineGoEliteSecureStressPolicy(
       currentLockedInPolicyValue: 96_000,
       currentAdjustedSinglePremium: 86_000,
     },
+  })
+}
+
+function tokioMarineGoWealthEnrichBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-gowealth-enrich', 'sgd-open-ended-cash', id, {
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+
+  return withResolvedManualInputs(withTokioSinglePremiumBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden #goWealth Enrich (SGD / Open-ended Cash)',
+        policyEvents: [],
+        distributionAssumption: {
+          mode: 'cash-payout',
+          source: 'manual-assumption',
+          annualYieldRate: 0.04,
+        },
+        ...overrides,
+      }),
+      funds,
+    ),
+    100_000,
+    0,
+  ))
+}
+
+function tokioMarineGoWealthEnrichBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return tokioMarineGoWealthEnrichBasePolicy(snapshot, id, TOKIO_BALANCED_FUNDS)
+}
+
+function tokioMarineGoWealthEnrichEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return tokioMarineGoWealthEnrichBasePolicy(snapshot, id, TOKIO_BALANCED_FUNDS, {
+    name: 'Golden #goWealth Enrich (SGD / Open-ended Cash Event Heavy)',
+    currentPolicyYear: 2,
+    monthsAlreadyPaid: 12,
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 13,
+        durationMonths: 1,
+        amount: 4_000,
+      },
+      {
+        id: 'rsp-1',
+        type: 'recurring-single-premium',
+        startPolicyMonth: 14,
+        durationMonths: 12,
+        amount: 300,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 18,
+        durationMonths: 1,
+        amount: 3_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function tokioMarineGoWealthEnrichStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return tokioMarineGoWealthEnrichBasePolicy(snapshot, id, HSBC_STRESS_FUNDS, {
+    name: 'Golden #goWealth Enrich (SGD / Open-ended Cash OCF Stress)',
+    currentPolicyYear: 8,
+    monthsAlreadyPaid: 84,
+    postMipYears: 15,
   })
 }
 
@@ -9828,6 +9921,65 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: '#goElite Secure SRS alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'tokio-marine-gowealth-enrich',
+    variantId: 'sgd-open-ended-cash',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'branch:tokio-marine-gowealth-enrich-zero-single-premium-charge',
+      'branch:tokio-marine-gowealth-enrich-establishment-charge',
+      'branch:tokio-marine-gowealth-enrich-administrative-charge',
+      'branch:tokio-marine-gowealth-enrich-surrender-charge',
+    ],
+    description: '#goWealth Enrich cash baseline scenario proving supported zero-charge single-premium seeding, original-base establishment and surrender charging, account-value administration fees, and cash-payout distribution assumptions.',
+    integrityChecks: [
+      {
+        description: 'baseline goWealth Enrich corridor records positive annual withdrawals under the manual cash-payout distribution assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+      {
+        description: 'baseline goWealth Enrich corridor incurs positive gross fees from establishment and administrative charges',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+    ],
+  },
+  {
+    productId: 'tokio-marine-gowealth-enrich',
+    variantId: 'sgd-open-ended-cash',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:tokio-marine-gowealth-enrich-recurring-single-and-top-up-charge',
+      'branch:tokio-marine-gowealth-enrich-single-premium-partial-withdrawal-charge',
+      'tokio-recurring-single-premium-routing',
+      'tokio-top-up-routing',
+      'tokio-top-up-premium-charge',
+      'tokio-recurring-single-premium-charge',
+    ],
+    description: '#goWealth Enrich cash event-heavy scenario proving recurring-single-premium routing, charged top-up allocation, and scheduled single-premium withdrawal charges.',
+    integrityChecks: [
+      {
+        description: 'event-heavy goWealth Enrich corridor records positive annual contribution from seeded top-up and recurring-single-premium events',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > 0),
+      },
+      {
+        description: 'event-heavy goWealth Enrich corridor executes a later withdrawal through the single-premium withdrawal charge path',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'tokio-marine-gowealth-enrich',
+    variantId: 'sgd-open-ended-cash',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: '#goWealth Enrich cash alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'fwd-invest-goal-1',
     variantId: 'sgd-open-ended',
     scenarioId: 'baseline',
@@ -12257,6 +12409,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'tokio-marine-goelite-secure' && definition.scenarioId === 'ocf-stress') {
     return tokioMarineGoEliteSecureStressPolicy(snapshot, definition.variantId as 'sgd-open-ended-cash' | 'sgd-open-ended-srs', id)
+  }
+  if (definition.productId === 'tokio-marine-gowealth-enrich' && definition.scenarioId === 'baseline') {
+    return tokioMarineGoWealthEnrichBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-gowealth-enrich' && definition.scenarioId === 'event-heavy') {
+    return tokioMarineGoWealthEnrichEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-gowealth-enrich' && definition.scenarioId === 'ocf-stress') {
+    return tokioMarineGoWealthEnrichStressPolicy(snapshot, id)
   }
   if (definition.productId === 'fwd-invest-goal-1' && definition.scenarioId === 'baseline') {
     return fwdInvestGoal1BaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended' | 'usd-open-ended', id)

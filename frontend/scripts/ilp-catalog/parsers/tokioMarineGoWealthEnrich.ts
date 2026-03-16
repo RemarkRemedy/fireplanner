@@ -218,8 +218,8 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eecTable: [...SURRENDER_CHARGE_TABLE],
     exitChargeBasis: 'initial-single-premium-base',
     warnings: [
-      '#goWealth Enrich is cataloged as a partial modeled subset in V1. The parser captures the published 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the reinvest-default distribution-mode assumption surface through the open-ended single-premium basis.',
-      'Loyalty bonus and protection benefits remain outside the current engine.',
+      '#goWealth Enrich is cataloged as a supported V1 corridor. The parser captures the published 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the cash-payout-capable manual distribution-mode assumption surface through the open-ended single-premium basis.',
+      'Loyalty bonus, protection benefits, principal-floor handling, and related fund-level charges remain outside the current engine.',
       'The published $50 minimum dividend-payout threshold remains informational only.',
     ],
     unsupportedItems: [
@@ -241,9 +241,9 @@ export function parseTokioMarineGoWealthEnrich(context: ParseContext): IlpCatalo
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:tokio-marine-gowealth-enrich-zero-single-premium-charge',
       'branch:tokio-marine-gowealth-enrich-establishment-charge',
@@ -264,7 +264,7 @@ export function parseTokioMarineGoWealthEnrich(context: ParseContext): IlpCatalo
       'tokio-marine-gowealth-enrich-dividend-payout-threshold',
     ],
     warnings: [
-      '#goWealth Enrich is cataloged as a partial modeled subset in V1. The parser captures the published 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the reinvest-default distribution-mode assumption surface, while loyalty bonus and protection benefits remain outside the current engine.',
+      '#goWealth Enrich is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the cash-payout-capable distribution-mode assumption surface, while loyalty bonus, protection benefits, principal-floor handling, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

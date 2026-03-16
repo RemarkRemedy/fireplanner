@@ -6240,7 +6240,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-gowealth-enrich-establishment-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-gowealth-enrich-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-establishment-charge')
