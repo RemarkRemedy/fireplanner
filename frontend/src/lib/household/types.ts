@@ -166,6 +166,12 @@ export interface ExpenseItem {
   durationYears?: number
   inflationAdjusted?: boolean
   retirementSpendingAdjustment?: number
+  /** Per-category monthly breakdown for base-living expenses. Optional for backward compat. */
+  categoryBreakdown?: {
+    amounts: Record<string, number>        // category key -> monthly amount
+    templateId?: 'frugal' | 'active' | 'none' | 'custom'
+    multipliers?: Record<string, number>   // category key -> retirement multiplier
+  }
   legacySourceId?: string
 }
 
