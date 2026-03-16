@@ -13,7 +13,7 @@ export function RatioCard({ ratio }: { ratio: HealthRatioResult }) {
   const dotColor = ratio.status ? STATUS_COLORS[ratio.status] : 'bg-muted'
 
   return (
-    <Card>
+    <Card className="h-full flex flex-col justify-center">
       <CardContent className="pt-4 pb-4">
         <div className="flex items-start gap-3">
           <div className={cn('mt-1 h-3 w-3 rounded-full shrink-0', dotColor)} />
