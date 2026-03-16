@@ -52,7 +52,11 @@ export function AnimatedNumber({ value, format, delay = 0, className }: Animated
       rafId.current = requestAnimationFrame(animate)
     }
 
-    return () => cancelAnimationFrame(rafId.current)
+    return () => {
+      cancelAnimationFrame(rafId.current)
+      // Reset so StrictMode's re-invocation of the effect doesn't bail out
+      prevValue.current = NaN
+    }
   }, [value, delay])
 
   return (
