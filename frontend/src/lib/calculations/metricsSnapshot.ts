@@ -15,6 +15,12 @@ export interface DeltaSummary {
   isSignificant: boolean
 }
 
+/** Normalize a snapshot value: round to integer, convert non-finite to null */
+function normalize(value: number | null): number | null {
+  if (value === null || !isFinite(value)) return null
+  return Math.round(value)
+}
+
 export function computeDelta(
   before: MetricsSnapshot,
   after: MetricsSnapshot,
@@ -23,12 +29,15 @@ export function computeDelta(
 ): DeltaSummary {
   const deltas: DeltaSummary['deltas'] = []
 
-  if (before.fireAge !== null && after.fireAge !== null) {
-    const diff = after.fireAge - before.fireAge
+  const bAge = normalize(before.fireAge)
+  const aAge = normalize(after.fireAge)
+
+  if (bAge !== null && aAge !== null) {
+    const diff = aAge - bAge
     deltas.push({
       metric: 'FIRE age',
-      before: before.fireAge,
-      after: after.fireAge,
+      before: bAge,
+      after: aAge,
       formatted: diff === 0
         ? 'No change'
         : diff < 0
@@ -37,13 +46,16 @@ export function computeDelta(
     })
   }
 
-  if (before.fireNumber !== null && after.fireNumber !== null) {
-    const diff = after.fireNumber - before.fireNumber
+  const bNum = normalize(before.fireNumber)
+  const aNum = normalize(after.fireNumber)
+
+  if (bNum !== null && aNum !== null) {
+    const diff = aNum - bNum
     const sign = diff >= 0 ? '+' : '-'
     deltas.push({
       metric: 'FIRE number',
-      before: before.fireNumber,
-      after: after.fireNumber,
+      before: bNum,
+      after: aNum,
       formatted: `${sign}$${Math.abs(diff).toLocaleString()}`,
     })
   }
