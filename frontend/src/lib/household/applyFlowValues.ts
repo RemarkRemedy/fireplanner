@@ -273,34 +273,70 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
 
       store.updateExpense(baseExpense.id, expenseUpdates)
 
-      // Create a goal if large future expenses were provided
-      if (values.hasLargeGoals === true && typeof values.goalName === 'string' && values.goalName) {
+      // Batch-apply goals from multi-goal editor (goalDrafts) or legacy single goal
+      if (values.hasLargeGoals === true) {
         const currentYear = new Date().getFullYear()
-        const targetYear = typeof values.goalYear === 'number' ? values.goalYear : currentYear + 5
-        const targetAge = selfAdult.currentAge + (targetYear - currentYear)
+        const goalDrafts = values.goalDrafts as Array<{ id: string; name: string; amount: number; year: number; category: string; isNew?: boolean }> | undefined
 
-        // Avoid creating duplicate goals with the same label
-        const existingGoal = plan.goals.find(
-          (g) => g.label === values.goalName && g.owner === 'self'
-        )
-        if (!existingGoal) {
-          const goal: GoalItem = {
-            id: createId('goal'),
-            owner: 'self',
-            label: values.goalName,
-            kind: 'financial-goal',
-            timing: {
-              kind: 'single-age',
-              owner: 'self',
-              age: targetAge,
-            },
-            amount: typeof values.goalAmount === 'number' ? values.goalAmount : 0,
-            durationYears: 1,
-            priority: 'important',
-            inflationAdjusted: true,
-            category: 'other',
+        if (goalDrafts && goalDrafts.length > 0) {
+          // Multi-goal mode: batch add/update/remove
+          const existingGoalIds = new Set(plan.goals.filter((g) => g.owner === 'self').map((g) => g.id))
+          const draftIds = new Set(goalDrafts.map((d) => d.id))
+
+          const additions: GoalItem[] = []
+          const updates: { id: string; changes: Partial<GoalItem> }[] = []
+          const removals = [...existingGoalIds].filter((id) => !draftIds.has(id))
+
+          for (const draft of goalDrafts) {
+            const targetAge = selfAdult.currentAge + (draft.year - currentYear)
+            if (existingGoalIds.has(draft.id)) {
+              updates.push({
+                id: draft.id,
+                changes: {
+                  label: draft.name,
+                  amount: draft.amount,
+                  timing: { kind: 'single-age', owner: 'self', age: targetAge },
+                  category: (draft.category as GoalCategory) || 'other',
+                },
+              })
+            } else {
+              additions.push({
+                id: draft.id,
+                owner: 'self',
+                label: draft.name,
+                kind: 'financial-goal',
+                timing: { kind: 'single-age', owner: 'self', age: targetAge },
+                amount: draft.amount,
+                durationYears: 1,
+                priority: 'important',
+                inflationAdjusted: true,
+                category: (draft.category as GoalCategory) || 'other',
+              })
+            }
           }
-          store.addGoal(goal)
+
+          store.batchUpdateGoals(additions, updates, removals)
+        } else if (typeof values.goalName === 'string' && values.goalName) {
+          // Legacy single-goal fallback
+          const targetYear = typeof values.goalYear === 'number' ? values.goalYear : currentYear + 5
+          const targetAge = selfAdult.currentAge + (targetYear - currentYear)
+          const existingGoal = plan.goals.find(
+            (g) => g.label === values.goalName && g.owner === 'self'
+          )
+          if (!existingGoal) {
+            store.addGoal({
+              id: createId('goal'),
+              owner: 'self',
+              label: values.goalName,
+              kind: 'financial-goal',
+              timing: { kind: 'single-age', owner: 'self', age: targetAge },
+              amount: typeof values.goalAmount === 'number' ? values.goalAmount : 0,
+              durationYears: 1,
+              priority: 'important',
+              inflationAdjusted: true,
+              category: 'other',
+            })
+          }
         }
       }
       return true

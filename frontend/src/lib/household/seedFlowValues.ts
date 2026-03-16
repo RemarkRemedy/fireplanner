@@ -140,9 +140,18 @@ function seedExpenses(adult: PlanningAdult): Record<string, unknown> {
   }
 
   // Auto-set hasLargeGoals if goals already exist in the plan
-  const hasExistingGoals = plan.goals.some((g) => g.owner === 'self')
-  if (hasExistingGoals) {
+  const existingGoals = plan.goals.filter((g) => g.owner === 'self')
+  if (existingGoals.length > 0) {
     seeds.hasLargeGoals = true
+    // Seed goalDrafts for multi-goal editor
+    const currentYear = new Date().getFullYear()
+    seeds.goalDrafts = existingGoals.map((g) => ({
+      id: g.id,
+      name: g.label,
+      amount: g.amount,
+      year: g.timing.kind === 'single-age' ? currentYear + (g.timing.age - adult.currentAge) : currentYear + 5,
+      category: g.category ?? 'other',
+    }))
   }
 
   // currentAge needed for age-conditional fields

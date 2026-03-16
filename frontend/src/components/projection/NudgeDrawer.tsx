@@ -12,6 +12,8 @@ import {
   ExpenseBenchmarkHints,
   extractBreakdown,
 } from '@/components/setup/ExpenseFlowHelpers'
+import { GoalListEditor } from '@/components/setup/GoalListEditor'
+import type { GoalDraft } from '@/components/setup/GoalListEditor'
 import { DEFAULT_CAREER_PHASES } from '@/lib/calculations/income'
 import { FLOW_FIELD_TO_CATEGORY } from '@/lib/data/retirementTemplates'
 import type { CareerPhase, PromotionJump } from '@/lib/types'
@@ -21,6 +23,7 @@ import { useMetricsSnapshot } from '@/hooks/useMetricsSnapshot'
 import { useUIStore } from '@/stores/useUIStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { applyFlowValues } from '@/lib/household/applyFlowValues'
+import { createId } from '@/lib/household/ids'
 
 /** Flows that need the wider drawer panel for complex content */
 const WIDE_FLOWS: NudgeFlowId[] = ['cpf', 'property', 'expenses', 'healthcare']
@@ -284,6 +287,28 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
                   <ExpenseBenchmarkHints values={values} ownsProperty={ownsProperty} />
                   <ExpenseRunningTotal values={values} />
                 </div>
+              )}
+
+              {/* Expense flow: multi-goal editor on goals screen */}
+              {flowId === 'expenses' && currentScreen.id === 'expenses-goals' && (
+                <GoalListEditor
+                  goals={(values.goalDrafts as GoalDraft[]) ?? []}
+                  onAdd={() => {
+                    const drafts = ((values.goalDrafts as GoalDraft[]) ?? [])
+                    handleChange('goalDrafts', [
+                      ...drafts,
+                      { id: createId('goal'), name: '', amount: 0, year: new Date().getFullYear() + 5, category: 'other', isNew: true },
+                    ])
+                  }}
+                  onUpdate={(id, updates) => {
+                    const drafts = ((values.goalDrafts as GoalDraft[]) ?? [])
+                    handleChange('goalDrafts', drafts.map((d) => d.id === id ? { ...d, ...updates } : d))
+                  }}
+                  onRemove={(id) => {
+                    const drafts = ((values.goalDrafts as GoalDraft[]) ?? [])
+                    handleChange('goalDrafts', drafts.filter((d) => d.id !== id))
+                  }}
+                />
               )}
 
               {/* Expense flow screen 2: retirement template selector */}
