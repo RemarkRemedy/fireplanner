@@ -11,6 +11,7 @@ import { computeWeightedRetirementRatio } from '@/lib/calculations/expenses'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { createId } from '@/lib/household/ids'
+import { createDefaultHouseholdProperty } from '@/lib/household/assetPropertyDefaults'
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
 import type { HouseholdCpfConfig, GoalItem } from '@/lib/household/types'
 import type { AllocationTemplate, CareerPhase, DownsizingConfig, GoalCategory, GrowthModel, HealthcareConfig, IspTierOption, PromotionJump, PropertyType, RebalanceFrequency, SalaryModel } from '@/lib/types'
@@ -119,8 +120,15 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
     }
 
     case 'property': {
-      const property = plan.properties[0]
-      if (!property) return false
+      let property = plan.properties[0]
+      if (!property) {
+        // Create a default property so the flow can populate it
+        const newProperty = createDefaultHouseholdProperty(
+          plan.adults.length > 1 ? 'shared' : 'self'
+        )
+        store.addProperty(newProperty)
+        property = newProperty
+      }
 
       const currentYear = new Date().getFullYear()
       const propertyUpdates: Partial<PropertyPlan> = {}
