@@ -1662,6 +1662,30 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds HSBC Life Wealth Invest (Cash/SRS) cash as a partial catalog product with reinvest-default boundaries', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'HSBC Life Wealth Invest (Cash/SRS)')
+
+    expect(within(dialog).getByText('HSBC Life Wealth Invest (Cash/SRS)')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash\)use partial template$/i }))
+
+    expect(screen.getAllByText('HSBC Life Wealth Invest (Cash/SRS) (SGD / Open-ended (Cash))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('up-to-5% single-premium')
+    expect(seededAlert?.textContent).toContain('reinvest-default or reinvest-only distribution support')
+    expect(seededAlert?.textContent).toContain('nil-redemption-fee withdrawal path')
+    expect(screen.getByDisplayValue('Single Premium Charge (Cash)')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Top-up Premium Charge (Cash)')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Recurring Single Premium Charge (Cash)')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
