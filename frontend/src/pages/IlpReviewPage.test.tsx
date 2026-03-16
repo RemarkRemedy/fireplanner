@@ -1449,6 +1449,28 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds Manulife InvestReady (III) as a partial catalog product with administration-charge and COI warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Manulife InvestReady (III)')
+
+    expect(within(dialog).getAllByText('Manulife InvestReady (III)').length).toBeGreaterThan(0)
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5 \(flexi 4\)use partial template$/i }))
+
+    expect(screen.getAllByText('Manulife InvestReady (III) (SGD / MIP 5 (Flexi 4))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('2.50% / 1.00% administration-charge path')
+    expect(seededAlert?.textContent).toContain('premium-shortfall charge before Flexi Start')
+    expect(seededAlert?.textContent).toContain('protected-base COI formula')
+    expect(screen.getByDisplayValue('Cost of Insurance (Death / TI)')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
