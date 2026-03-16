@@ -327,7 +327,7 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
     },
     eecTable: FLEXI_CONFIG[term].eecSchedule.map(roundRate),
     warnings: [
-      'Wealth Focus is modeled as a partial subset in V1. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.',
+      'Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.',
       'Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1.',
     ],
     unsupportedItems: [
@@ -368,9 +368,9 @@ export function parseHsbcWealthFocus({ document, sourceChecksumSha256 }: ParseCo
     sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics,
     metadataOnlyBehaviors: [
       'wealth-focus-life-replacement-option',
@@ -379,7 +379,7 @@ export function parseHsbcWealthFocus({ document, sourceChecksumSha256 }: ParseCo
       'wealth-focus-death-and-ti-benefits',
     ],
     warnings: [
-      `Wealth Focus Flexi ${flexiTerm} is currently modeled as a partial product in V1. Accumulation charges, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but life-event free withdrawals, the top-up-first regular-withdrawal facility, and protection-side options remain informational only.`,
+      `Wealth Focus Flexi ${flexiTerm} is currently modeled as a supported V1 product. Accumulation charges, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but life-event free withdrawals, the top-up-first regular-withdrawal facility, and protection-side options remain informational only.`,
     ],
     archived: false,
     variants: [

@@ -66,6 +66,15 @@ export type GoldenCoverageTag =
   | 'branch:hsbc-abundance-tiered-brc'
   | 'branch:hsbc-abundance-topup-charge'
   | 'branch:hsbc-abundance-power-up-restoration'
+  | 'branch:wealth-focus-startup-bonus'
+  | 'branch:wealth-focus-premium-contribution-bonus'
+  | 'branch:wealth-focus-loyalty-bonus'
+  | 'branch:wealth-focus-premium-base-amf'
+  | 'branch:wealth-focus-top-up-premium-charge'
+  | 'branch:wealth-focus-partial-withdrawal-charge'
+  | 'branch:wealth-focus-eec'
+  | 'branch:wealth-focus-ad-hoc-top-up-routing'
+  | 'branch:wealth-focus-premium-holiday-charge'
   | 'branch:hsbc-voyage-premium-base-amf'
   | 'branch:hsbc-voyage-tiered-brc'
   | 'branch:hsbc-voyage-topup-charge'
@@ -1279,6 +1288,112 @@ function hsbcVoyageEventHeavyPolicy(
     28_000,
     5_000,
   )
+}
+
+function hsbcWealthFocusBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  productId: 'hsbc-life-wealth-focus-flexi-1' | 'hsbc-life-wealth-focus-flexi-3' | 'hsbc-life-wealth-focus-flexi-5',
+  variantId: 'sgd-mip-10' | 'usd-mip-10',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, productId, variantId, id)
+  const flexiTerm = Number(productId.slice(-1))
+  const isUsd = variantId.startsWith('usd')
+  const monthlyContribution = flexiTerm === 1
+    ? 2_100
+    : flexiTerm === 3
+      ? 1_500
+      : 1_000
+
+  return withHsbcHarvestBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: `Golden HSBC Wealth Focus Flexi ${flexiTerm} (${variantId.toUpperCase()})`,
+        monthlyContribution,
+        currentPolicyYear: Math.max(2, flexiTerm + 1),
+        monthsAlreadyPaid: Math.max(1, flexiTerm) * 12,
+        postMipYears: 5,
+        policyEvents: [],
+        ...overrides,
+      }),
+      funds,
+    ),
+    isUsd ? 20_000 : 28_000,
+    isUsd ? 4_500 : 6_500,
+  )
+}
+
+function hsbcWealthFocusBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  productId: 'hsbc-life-wealth-focus-flexi-1' | 'hsbc-life-wealth-focus-flexi-3' | 'hsbc-life-wealth-focus-flexi-5',
+  variantId: 'sgd-mip-10' | 'usd-mip-10',
+  id: string,
+): IlpPolicyInput {
+  const distributionAssumption = {
+    mode: 'cash-payout' as const,
+    source: 'manual-assumption' as const,
+    annualYieldRate: 0.03,
+  }
+
+  return hsbcWealthFocusBasePolicy(snapshot, productId, variantId, id, HSBC_BALANCED_FUNDS, {
+    distributionAssumption,
+  })
+}
+
+function hsbcWealthFocusEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  productId: 'hsbc-life-wealth-focus-flexi-1' | 'hsbc-life-wealth-focus-flexi-3' | 'hsbc-life-wealth-focus-flexi-5',
+  id: string,
+): IlpPolicyInput {
+  const flexiTerm = Number(productId.slice(-1))
+  const startPolicyMonth = flexiTerm * 12 + 1
+  const policyEvents = [
+    ...(flexiTerm > 1
+      ? [{
+          id: 'holiday-1',
+          type: 'premium-holiday' as const,
+          startPolicyMonth,
+          durationMonths: Math.min(3, flexiTerm),
+          repayMissedPremiums: false,
+        }]
+      : []),
+    {
+      id: 'top-up-1',
+      type: 'top-up' as const,
+      startPolicyMonth: startPolicyMonth + 4,
+      durationMonths: 1,
+      amount: 3_000,
+    },
+    {
+      id: 'withdrawal-1',
+      type: 'partial-withdrawal' as const,
+      startPolicyMonth: startPolicyMonth + 7,
+      durationMonths: 1,
+      amount: 2_500,
+      accountId: 'regular' as const,
+    },
+  ]
+
+  return hsbcWealthFocusBasePolicy(snapshot, productId, 'sgd-mip-10', id, HSBC_BALANCED_FUNDS, {
+    name: `Golden HSBC Wealth Focus Flexi ${flexiTerm} (SGD / MIP 10 Event Heavy)`,
+    currentPolicyYear: flexiTerm + 1,
+    monthsAlreadyPaid: flexiTerm * 12,
+    policyEvents,
+  })
+}
+
+function hsbcWealthFocusStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  productId: 'hsbc-life-wealth-focus-flexi-1' | 'hsbc-life-wealth-focus-flexi-3' | 'hsbc-life-wealth-focus-flexi-5',
+  variantId: 'sgd-mip-10' | 'usd-mip-10',
+  id: string,
+): IlpPolicyInput {
+  return hsbcWealthFocusBasePolicy(snapshot, productId, variantId, id, HSBC_STRESS_FUNDS, {
+    name: `Golden HSBC Wealth Focus ${productId.slice(-1)} (${variantId.toUpperCase()} OCF Stress)`,
+  })
 }
 
 function pruBaselinePolicy(
@@ -5604,6 +5719,182 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     ],
   },
   {
+    productId: 'hsbc-life-wealth-focus-flexi-1',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:wealth-focus-startup-bonus',
+      'branch:wealth-focus-premium-contribution-bonus',
+      'branch:wealth-focus-loyalty-bonus',
+      'branch:wealth-focus-premium-base-amf',
+      'branch:wealth-focus-partial-withdrawal-charge',
+      'branch:wealth-focus-eec',
+      'kernel:distribution-mode-assumption',
+    ],
+    description: 'HSBC Wealth Focus Flexi 1 SGD baseline scenario proving supported bonus, AMF, and surrender-charge mechanics through the two-account corridor.',
+    integrityChecks: [
+      {
+        description: 'baseline Flexi 1 corridor incurs positive gross fees from the premium-base AMF',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+      {
+        description: 'baseline Flexi 1 corridor records positive annual withdrawals from the manual distribution assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'hsbc-life-wealth-focus-flexi-1',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:wealth-focus-top-up-premium-charge',
+      'branch:wealth-focus-partial-withdrawal-charge',
+      'branch:wealth-focus-ad-hoc-top-up-routing',
+    ],
+    description: 'HSBC Wealth Focus Flexi 1 SGD event-heavy scenario proving charged top-up routing and in-MIP regular-account withdrawals.',
+    integrityChecks: [
+      {
+        description: 'event-heavy Flexi 1 corridor credits the charged top-up into the top-up account',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          (row.accounts.find((account) => account.accountId === 'topup')?.contributionAmount ?? 0) > 2_900
+        )),
+      },
+      {
+        description: 'event-heavy Flexi 1 corridor executes the seeded regular-account withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'hsbc-life-wealth-focus-flexi-1',
+    variantId: 'usd-mip-10',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'HSBC Wealth Focus Flexi 1 USD alternate-fund high-OCF stress scenario.',
+  },
+  {
+    productId: 'hsbc-life-wealth-focus-flexi-3',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:wealth-focus-startup-bonus',
+      'branch:wealth-focus-premium-contribution-bonus',
+      'branch:wealth-focus-loyalty-bonus',
+      'branch:wealth-focus-premium-base-amf',
+      'branch:wealth-focus-eec',
+      'kernel:distribution-mode-assumption',
+    ],
+    description: 'HSBC Wealth Focus Flexi 3 SGD baseline scenario proving supported bonus, AMF, surrender-charge, and cash-payout distribution handling.',
+    integrityChecks: [
+      {
+        description: 'baseline Flexi 3 cash-payout corridor records positive annual withdrawals from the manual distribution assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'hsbc-life-wealth-focus-flexi-3',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:wealth-focus-top-up-premium-charge',
+      'branch:wealth-focus-partial-withdrawal-charge',
+      'branch:wealth-focus-ad-hoc-top-up-routing',
+      'branch:wealth-focus-premium-holiday-charge',
+    ],
+    description: 'HSBC Wealth Focus Flexi 3 SGD event-heavy scenario proving premium holiday, charged top-up routing, and in-MIP regular-account withdrawals.',
+    integrityChecks: [
+      {
+        description: 'event-heavy Flexi 3 corridor credits the charged top-up into the top-up account',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          (row.accounts.find((account) => account.accountId === 'topup')?.contributionAmount ?? 0) > 2_900
+        )),
+      },
+      {
+        description: 'event-heavy Flexi 3 corridor executes the seeded regular-account withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'hsbc-life-wealth-focus-flexi-3',
+    variantId: 'usd-mip-10',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'HSBC Wealth Focus Flexi 3 USD alternate-fund high-OCF stress scenario.',
+  },
+  {
+    productId: 'hsbc-life-wealth-focus-flexi-5',
+    variantId: 'usd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:wealth-focus-startup-bonus',
+      'branch:wealth-focus-premium-contribution-bonus',
+      'branch:wealth-focus-loyalty-bonus',
+      'branch:wealth-focus-premium-base-amf',
+      'branch:wealth-focus-eec',
+      'kernel:distribution-mode-assumption',
+    ],
+    description: 'HSBC Wealth Focus Flexi 5 USD baseline scenario proving the supported second-currency corridor and cash-payout distribution handling.',
+    integrityChecks: [
+      {
+        description: 'baseline Flexi 5 USD corridor incurs positive gross fees from the premium-base AMF',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+      {
+        description: 'baseline Flexi 5 USD corridor records positive annual withdrawals from the manual distribution assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'hsbc-life-wealth-focus-flexi-5',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:wealth-focus-top-up-premium-charge',
+      'branch:wealth-focus-partial-withdrawal-charge',
+      'branch:wealth-focus-ad-hoc-top-up-routing',
+      'branch:wealth-focus-premium-holiday-charge',
+    ],
+    description: 'HSBC Wealth Focus Flexi 5 SGD event-heavy scenario proving premium holiday, charged top-up routing, and in-MIP regular-account withdrawals.',
+    integrityChecks: [
+      {
+        description: 'event-heavy Flexi 5 corridor credits the charged top-up into the top-up account',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          (row.accounts.find((account) => account.accountId === 'topup')?.contributionAmount ?? 0) > 2_900
+        )),
+      },
+      {
+        description: 'event-heavy Flexi 5 corridor executes the seeded regular-account withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'hsbc-life-wealth-focus-flexi-5',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'HSBC Wealth Focus Flexi 5 SGD alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'prudential-pruvantage-wealth-ii',
     variantId: 'sgd-mip-5',
     scenarioId: 'baseline',
@@ -8295,6 +8586,50 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'hsbc-life-wealth-voyage' && definition.scenarioId === 'event-heavy') {
     return hsbcVoyageEventHeavyPolicy(snapshot, id)
+  }
+  if (
+    (
+      definition.productId === 'hsbc-life-wealth-focus-flexi-1'
+      || definition.productId === 'hsbc-life-wealth-focus-flexi-3'
+      || definition.productId === 'hsbc-life-wealth-focus-flexi-5'
+    )
+    && definition.scenarioId === 'baseline'
+  ) {
+    return hsbcWealthFocusBaselinePolicy(
+      snapshot,
+      definition.productId as 'hsbc-life-wealth-focus-flexi-1' | 'hsbc-life-wealth-focus-flexi-3' | 'hsbc-life-wealth-focus-flexi-5',
+      definition.variantId as 'sgd-mip-10' | 'usd-mip-10',
+      id,
+    )
+  }
+  if (
+    (
+      definition.productId === 'hsbc-life-wealth-focus-flexi-1'
+      || definition.productId === 'hsbc-life-wealth-focus-flexi-3'
+      || definition.productId === 'hsbc-life-wealth-focus-flexi-5'
+    )
+    && definition.scenarioId === 'event-heavy'
+  ) {
+    return hsbcWealthFocusEventHeavyPolicy(
+      snapshot,
+      definition.productId as 'hsbc-life-wealth-focus-flexi-1' | 'hsbc-life-wealth-focus-flexi-3' | 'hsbc-life-wealth-focus-flexi-5',
+      id,
+    )
+  }
+  if (
+    (
+      definition.productId === 'hsbc-life-wealth-focus-flexi-1'
+      || definition.productId === 'hsbc-life-wealth-focus-flexi-3'
+      || definition.productId === 'hsbc-life-wealth-focus-flexi-5'
+    )
+    && definition.scenarioId === 'ocf-stress'
+  ) {
+    return hsbcWealthFocusStressPolicy(
+      snapshot,
+      definition.productId as 'hsbc-life-wealth-focus-flexi-1' | 'hsbc-life-wealth-focus-flexi-3' | 'hsbc-life-wealth-focus-flexi-5',
+      definition.variantId as 'sgd-mip-10' | 'usd-mip-10',
+      id,
+    )
   }
   if (definition.productId === 'prudential-pruvantage-wealth-ii' && definition.scenarioId === 'baseline') {
     return pruBaselinePolicy(snapshot, definition.variantId, id)

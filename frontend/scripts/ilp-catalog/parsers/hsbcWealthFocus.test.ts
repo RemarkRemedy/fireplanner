@@ -63,7 +63,7 @@ async function sha256(filePath: string): Promise<string> {
 
 describe('parseHsbcWealthFocus', () => {
   for (const testCase of CASES) {
-    it(`builds a valid partial modeled-subset product for ${testCase.productName}`, async () => {
+    it(`builds a valid supported product for ${testCase.productName}`, async () => {
       const document = await extractPdfText(testCase.sourcePath)
       const product = parseHsbcWealthFocus({
         document,
@@ -73,8 +73,8 @@ describe('parseHsbcWealthFocus', () => {
       expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
       expect(product.id).toBe(testCase.productId)
       expect(product.productName).toBe(testCase.productName)
-      expect(product.supportStatus).toBe('partial')
-      expect(product.economicsStatus).toBe('partial-modeled-subset')
+      expect(product.supportStatus).toBe('supported')
+      expect(product.economicsStatus).toBe('supported')
       expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
       expect(product.metadataOnlyBehaviors).toContain('wealth-focus-free-partial-withdrawal-benefit')
       expect(product.metadataOnlyBehaviors).toContain('wealth-focus-regular-withdrawal-facility')

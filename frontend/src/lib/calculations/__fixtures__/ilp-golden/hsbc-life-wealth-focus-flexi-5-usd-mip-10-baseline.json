@@ -1,0 +1,1483 @@
+{
+  "metadata": {
+    "fixtureId": "hsbc-life-wealth-focus-flexi-5-usd-mip-10-baseline",
+    "fixtureClass": "supported",
+    "productId": "hsbc-life-wealth-focus-flexi-5",
+    "variantId": "usd-mip-10",
+    "scenarioId": "baseline",
+    "supportStatus": "supported",
+    "description": "HSBC Wealth Focus Flexi 5 USD baseline scenario proving the supported second-currency corridor and cash-payout distribution handling.",
+    "coverageTags": [
+      "baseline",
+      "branch:wealth-focus-startup-bonus",
+      "branch:wealth-focus-premium-contribution-bonus",
+      "branch:wealth-focus-loyalty-bonus",
+      "branch:wealth-focus-premium-base-amf",
+      "branch:wealth-focus-eec",
+      "kernel:distribution-mode-assumption"
+    ],
+    "catalogVersion": "0.1.0",
+    "sourceFileName": "WF PS v1.51_MIP10Flexi5.pdf",
+    "sourceChecksumSha256": "3f89f45fc35d768ace6f6f68d2fd93a4b55d172fcb93747217c5c657c450116f"
+  },
+  "policyInput": {
+    "id": "hsbc-life-wealth-focus-flexi-5-usd-mip-10-baseline",
+    "name": "Golden HSBC Wealth Focus Flexi 5 (USD-MIP-10)",
+    "insurer": "HSBC Life",
+    "currency": "USD",
+    "monthlyContribution": 1000,
+    "monthsAlreadyPaid": 60,
+    "currentPolicyYear": 6,
+    "icpMonths": 1,
+    "mipLength": 10,
+    "postMipYears": 5,
+    "eecTable": [
+      1,
+      1,
+      0.8,
+      0.65,
+      0.5,
+      0.47,
+      0.44,
+      0.21,
+      0.16,
+      0.08
+    ],
+    "discountRate": 0.07,
+    "inflationRate": 0.025,
+    "alternativeReturn": 0.07,
+    "accounts": [
+      {
+        "id": "regular",
+        "label": "Regular Premium Account",
+        "feeRate": 0,
+        "currentValue": 20000,
+        "contributionShare": 0,
+        "subjectToEec": true,
+        "postMipFeeRate": null,
+        "contributionRules": [
+          {
+            "phase": "during-icp",
+            "contributionShare": 1
+          },
+          {
+            "phase": "after-icp",
+            "contributionShare": 1
+          }
+        ]
+      },
+      {
+        "id": "topup",
+        "label": "Top-up Account",
+        "feeRate": 0,
+        "currentValue": 4500,
+        "contributionShare": 0,
+        "subjectToEec": false,
+        "postMipFeeRate": 0,
+        "contributionRules": [
+          {
+            "phase": "top-up",
+            "contributionShare": 1
+          }
+        ]
+      }
+    ],
+    "funds": [
+      {
+        "name": "Global Equity Blend",
+        "allocation": 0.6,
+        "ocf": 0.013,
+        "grossReturnLow": 0.05,
+        "grossReturnMid": 0.08,
+        "grossReturnHigh": 0.11
+      },
+      {
+        "name": "Asia Income Blend",
+        "allocation": 0.4,
+        "ocf": 0.009,
+        "grossReturnLow": 0.035,
+        "grossReturnMid": 0.06,
+        "grossReturnHigh": 0.08
+      }
+    ],
+    "bonuses": [
+      {
+        "id": "startup-bonus",
+        "type": "allocation",
+        "label": "Start-up Bonus",
+        "mode": "premium-allocation",
+        "rate": 0,
+        "amount": 0,
+        "appliesTo": [
+          "regular"
+        ],
+        "startPolicyYear": 1,
+        "endPolicyYear": 1,
+        "tieredRates": [
+          {
+            "currency": "USD",
+            "minAnnualPremium": 6000,
+            "maxAnnualPremium": 11999.99,
+            "rate": 0.075
+          },
+          {
+            "currency": "USD",
+            "minAnnualPremium": 12000,
+            "maxAnnualPremium": null,
+            "rate": 0.15
+          }
+        ],
+        "suspensionRules": []
+      },
+      {
+        "id": "premium-contribution-bonus",
+        "type": "allocation",
+        "label": "Premium Contribution Bonus",
+        "mode": "premium-allocation",
+        "rate": 0.01,
+        "amount": 0,
+        "appliesTo": [
+          "regular"
+        ],
+        "startPolicyYear": 2,
+        "endPolicyYear": 10,
+        "tieredRates": [],
+        "suspensionRules": [
+          {
+            "trigger": "premium-holiday",
+            "suspensionMonths": 12
+          }
+        ]
+      },
+      {
+        "id": "loyalty-bonus",
+        "type": "loyalty",
+        "label": "Loyalty Bonus",
+        "mode": "annual-rate",
+        "rate": 0.0035,
+        "amount": 0,
+        "appliesTo": [
+          "regular"
+        ],
+        "startPolicyYear": 11,
+        "endPolicyYear": null,
+        "tieredRates": [],
+        "suspensionRules": []
+      }
+    ],
+    "chargeRules": [
+      {
+        "id": "amf",
+        "label": "Account Maintenance Fee",
+        "basis": "premium-base-mip-multiplier",
+        "activeWindow": "policy-term",
+        "yearBasis": "policy-year",
+        "startPolicyYear": 1,
+        "endPolicyYear": null,
+        "appliesTo": [
+          "regular"
+        ],
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 10,
+            "rate": 0.025
+          },
+          {
+            "startPolicyYear": 11,
+            "endPolicyYear": null,
+            "rate": 0.01
+          }
+        ],
+        "rate": 0,
+        "amount": 0,
+        "premiumBaseConfig": {
+          "useHigherOfCommencementAndPrevailing": false,
+          "multiplierSchedule": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 5,
+              "mode": "policy-year"
+            },
+            {
+              "startPolicyYear": 6,
+              "endPolicyYear": null,
+              "mode": "fixed",
+              "multiplier": 5
+            }
+          ]
+        },
+        "allocation": "equal-split"
+      }
+    ],
+    "policyEvents": [],
+    "eventChargeRules": [
+      {
+        "id": "top-up-premium-charge",
+        "label": "Top-up Premium Charge",
+        "trigger": "top-up",
+        "basis": "event-amount",
+        "activeWindow": "policy-term",
+        "appliesTo": [
+          "topup"
+        ],
+        "rate": 0.03,
+        "amount": 0,
+        "allocation": "equal-split"
+      },
+      {
+        "id": "partial-withdrawal-charge",
+        "label": "Partial Withdrawal Charge",
+        "trigger": "partial-withdrawal",
+        "basis": "event-amount",
+        "activeWindow": "during-mip",
+        "appliesTo": [
+          "regular"
+        ],
+        "rate": 0,
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 2,
+            "endPolicyYear": 2,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 3,
+            "endPolicyYear": 3,
+            "rate": 0.8
+          },
+          {
+            "startPolicyYear": 4,
+            "endPolicyYear": 4,
+            "rate": 0.65
+          },
+          {
+            "startPolicyYear": 5,
+            "endPolicyYear": 5,
+            "rate": 0.5
+          },
+          {
+            "startPolicyYear": 6,
+            "endPolicyYear": 6,
+            "rate": 0.47
+          },
+          {
+            "startPolicyYear": 7,
+            "endPolicyYear": 7,
+            "rate": 0.44
+          },
+          {
+            "startPolicyYear": 8,
+            "endPolicyYear": 8,
+            "rate": 0.21
+          },
+          {
+            "startPolicyYear": 9,
+            "endPolicyYear": 9,
+            "rate": 0.16
+          },
+          {
+            "startPolicyYear": 10,
+            "endPolicyYear": 10,
+            "rate": 0.08
+          }
+        ],
+        "amount": 0,
+        "allocation": "equal-split"
+      },
+      {
+        "id": "premium-holiday-charge",
+        "label": "Premium Holiday Charge",
+        "trigger": "premium-holiday",
+        "basis": "annual-premium-with-overlap-months",
+        "activeWindow": "during-mip",
+        "appliesTo": [
+          "regular"
+        ],
+        "rate": 0,
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0
+          },
+          {
+            "startPolicyYear": 2,
+            "endPolicyYear": 2,
+            "rate": 0
+          },
+          {
+            "startPolicyYear": 3,
+            "endPolicyYear": 3,
+            "rate": 0.8
+          },
+          {
+            "startPolicyYear": 4,
+            "endPolicyYear": 4,
+            "rate": 0.65
+          },
+          {
+            "startPolicyYear": 5,
+            "endPolicyYear": 5,
+            "rate": 0.5
+          }
+        ],
+        "amount": 0,
+        "allocation": "equal-split"
+      }
+    ],
+    "catalogSource": {
+      "productId": "hsbc-life-wealth-focus-flexi-5",
+      "productName": "Wealth Focus (Flexi 5)",
+      "variantId": "usd-mip-10",
+      "variantLabel": "USD / MIP 10",
+      "catalogVersion": "0.1.0",
+      "supportStatus": "supported",
+      "economicsStatus": "supported",
+      "structureStatus": "structured",
+      "modeledEconomics": [
+        "branch:wealth-focus-startup-bonus",
+        "branch:wealth-focus-premium-contribution-bonus",
+        "branch:wealth-focus-loyalty-bonus",
+        "branch:wealth-focus-premium-base-amf",
+        "branch:wealth-focus-top-up-premium-charge",
+        "branch:wealth-focus-partial-withdrawal-charge",
+        "branch:wealth-focus-eec",
+        "branch:wealth-focus-ad-hoc-top-up-routing",
+        "kernel:distribution-mode-assumption",
+        "branch:wealth-focus-premium-holiday-charge"
+      ],
+      "metadataOnlyBehaviors": [
+        "wealth-focus-life-replacement-option",
+        "wealth-focus-free-partial-withdrawal-benefit",
+        "wealth-focus-regular-withdrawal-facility",
+        "wealth-focus-death-and-ti-benefits"
+      ]
+    },
+    "catalogWarnings": [
+      "Wealth Focus Flexi 5 is currently modeled as a supported V1 product. Accumulation charges, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but life-event free withdrawals, the top-up-first regular-withdrawal facility, and protection-side options remain informational only.",
+      "Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
+      "Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1.",
+      "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
+      "Life Replacement Option remains informational only.",
+      "Free Partial Withdrawal Benefit remains informational only.",
+      "Regular Withdrawal facility remains informational only.",
+      "Death, terminal illness, and accidental death payout mechanics remain informational only."
+    ]
+  },
+  "expected": {
+    "summary": {
+      "totalPremiumsPaid": 108000,
+      "totalFeesCharged": 6000,
+      "totalBonusesReceived": 480,
+      "netFeeDrag": 5520,
+      "currentSurrenderValue": 15100,
+      "cancelNowPenalty": 9400
+    },
+    "npvAnalysis": {
+      "surrenderNow": {
+        "eecRate": 0.47,
+        "eecCharge": 9400,
+        "npvFees": 9400,
+        "netSurrenderValue": 15100
+      },
+      "futureExitOptions": [
+        {
+          "exitYear": 1,
+          "policyYear": 7,
+          "eecRate": 0.44,
+          "eecCharge": 13705.28,
+          "pvEec": 12808.68,
+          "npvGrossFees": 1401.87,
+          "npvBonuses": 112.15,
+          "totalNpvFees": 14098.4,
+          "netSurrenderValue": 22080.79,
+          "totalContributions": 72000
+        },
+        {
+          "exitYear": 2,
+          "policyYear": 8,
+          "eecRate": 0.21,
+          "eecCharge": 8953.96,
+          "pvEec": 7820.73,
+          "npvGrossFees": 2712.03,
+          "npvBonuses": 216.96,
+          "totalNpvFees": 10315.8,
+          "netSurrenderValue": 38463.54,
+          "totalContributions": 84000
+        },
+        {
+          "exitYear": 3,
+          "policyYear": 9,
+          "eecRate": 0.16,
+          "eecCharge": 8716.64,
+          "pvEec": 7115.37,
+          "npvGrossFees": 3936.47,
+          "npvBonuses": 314.92,
+          "totalNpvFees": 10736.93,
+          "netSurrenderValue": 50688.21,
+          "totalContributions": 96000
+        },
+        {
+          "exitYear": 4,
+          "policyYear": 10,
+          "eecRate": 0.08,
+          "eecCharge": 5334.59,
+          "pvEec": 4069.73,
+          "npvGrossFees": 5080.82,
+          "npvBonuses": 406.47,
+          "totalNpvFees": 8744.09,
+          "netSurrenderValue": 66424.41,
+          "totalContributions": 108000
+        },
+        {
+          "exitYear": 5,
+          "policyYear": 11,
+          "eecRate": 0,
+          "eecCharge": 0,
+          "pvEec": 0,
+          "npvGrossFees": 5508.61,
+          "npvBonuses": 572.87,
+          "totalNpvFees": 4935.74,
+          "netSurrenderValue": 73566,
+          "totalContributions": 108000
+        },
+        {
+          "exitYear": 6,
+          "policyYear": 12,
+          "eecRate": 0,
+          "eecCharge": 0,
+          "pvEec": 0,
+          "npvGrossFees": 5908.41,
+          "npvBonuses": 732.24,
+          "totalNpvFees": 5176.18,
+          "netSurrenderValue": 75434.43,
+          "totalContributions": 108000
+        },
+        {
+          "exitYear": 7,
+          "policyYear": 13,
+          "eecRate": 0,
+          "eecCharge": 0,
+          "pvEec": 0,
+          "npvGrossFees": 6282.06,
+          "npvBonuses": 884.9,
+          "totalNpvFees": 5397.16,
+          "netSurrenderValue": 77366.36,
+          "totalContributions": 108000
+        },
+        {
+          "exitYear": 8,
+          "policyYear": 14,
+          "eecRate": 0,
+          "eecCharge": 0,
+          "pvEec": 0,
+          "npvGrossFees": 6631.27,
+          "npvBonuses": 1031.18,
+          "totalNpvFees": 5600.09,
+          "netSurrenderValue": 79363.98,
+          "totalContributions": 108000
+        },
+        {
+          "exitYear": 9,
+          "policyYear": 15,
+          "eecRate": 0,
+          "eecCharge": 0,
+          "pvEec": 0,
+          "npvGrossFees": 6957.63,
+          "npvBonuses": 1171.37,
+          "totalNpvFees": 5786.26,
+          "netSurrenderValue": 81429.5,
+          "totalContributions": 108000
+        }
+      ],
+      "bestExitYear": 4,
+      "bestExitNpvFees": 8744.09,
+      "holdToMip": {
+        "npvGrossFees": 5080.82,
+        "npvBonuses": 406.47,
+        "totalNpvFees": 8744.09,
+        "finalValue": 71759.01,
+        "totalContributions": 108000
+      }
+    },
+    "opportunityCost": {
+      "alternativePortfolioValue": 73072.34,
+      "ilpValueAtHorizon": 71759.01,
+      "difference": 1313.33,
+      "atBestExit": {
+        "exitYear": 4,
+        "alternativeValue": 66424.41,
+        "ilpValueAtHorizon": 71759.01,
+        "difference": -5334.59
+      }
+    },
+    "projections": {
+      "low": {
+        "blendedNetReturn": 0.0326,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 7,
+            "annualContribution": 12000,
+            "annualWithdrawals": 735,
+            "combinedValue": 35138.71,
+            "eecRate": 0.44,
+            "eecCharge": 13475.89,
+            "surrenderValue": 21662.83,
+            "cumulativePremiums": 72000,
+            "cumulativeGrossFees": 1500,
+            "cumulativeBonuses": 120,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 20000,
+                "contributionAmount": 12000,
+                "grossFee": 1500,
+                "bonusCredit": 120,
+                "netFee": 1380,
+                "withdrawalAmount": 600,
+                "close": 30627.01
+              },
+              {
+                "accountId": "topup",
+                "open": 4500,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 135,
+                "close": 4511.7
+              }
+            ]
+          },
+          {
+            "year": 2,
+            "policyYear": 8,
+            "annualContribution": 12000,
+            "annualWithdrawals": 1054.16,
+            "combinedValue": 45805.08,
+            "eecRate": 0.21,
+            "eecCharge": 8669.15,
+            "surrenderValue": 37135.94,
+            "cumulativePremiums": 84000,
+            "cumulativeGrossFees": 3000,
+            "cumulativeBonuses": 240,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 30627.01,
+                "contributionAmount": 12000,
+                "grossFee": 1500,
+                "bonusCredit": 120,
+                "netFee": 1380,
+                "withdrawalAmount": 918.81,
+                "close": 41281.65
+              },
+              {
+                "accountId": "topup",
+                "open": 4511.7,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 135.35,
+                "close": 4523.43
+              }
+            ]
+          },
+          {
+            "year": 3,
+            "policyYear": 9,
+            "annualContribution": 12000,
+            "annualWithdrawals": 1374.15,
+            "combinedValue": 56499.19,
+            "eecRate": 0.16,
+            "eecCharge": 8314.24,
+            "surrenderValue": 48184.95,
+            "cumulativePremiums": 96000,
+            "cumulativeGrossFees": 4500,
+            "cumulativeBonuses": 360,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 41281.65,
+                "contributionAmount": 12000,
+                "grossFee": 1500,
+                "bonusCredit": 120,
+                "netFee": 1380,
+                "withdrawalAmount": 1238.45,
+                "close": 51964
+              },
+              {
+                "accountId": "topup",
+                "open": 4523.43,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 135.7,
+                "close": 4535.19
+              }
+            ]
+          },
+          {
+            "year": 4,
+            "policyYear": 10,
+            "annualContribution": 12000,
+            "annualWithdrawals": 1694.98,
+            "combinedValue": 67221.1,
+            "eecRate": 0.08,
+            "eecCharge": 5013.93,
+            "surrenderValue": 62207.17,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 6000,
+            "cumulativeBonuses": 480,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 51964,
+                "contributionAmount": 12000,
+                "grossFee": 1500,
+                "bonusCredit": 120,
+                "netFee": 1380,
+                "withdrawalAmount": 1558.92,
+                "close": 62674.12
+              },
+              {
+                "accountId": "topup",
+                "open": 4535.19,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 136.06,
+                "close": 4546.98
+              }
+            ]
+          },
+          {
+            "year": 5,
+            "policyYear": 11,
+            "annualContribution": 0,
+            "annualWithdrawals": 2016.63,
+            "combinedValue": 67002.83,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 67002.83,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 6600,
+            "cumulativeBonuses": 699.36,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 62674.12,
+                "contributionAmount": 0,
+                "grossFee": 600,
+                "bonusCredit": 219.36,
+                "netFee": 380.64,
+                "withdrawalAmount": 1880.22,
+                "close": 62444.02
+              },
+              {
+                "accountId": "topup",
+                "open": 4546.98,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 136.41,
+                "close": 4558.8
+              }
+            ]
+          },
+          {
+            "year": 6,
+            "policyYear": 12,
+            "annualContribution": 0,
+            "annualWithdrawals": 2010.08,
+            "combinedValue": 66783.15,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 66783.15,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 7200,
+            "cumulativeBonuses": 917.91,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 62444.02,
+                "contributionAmount": 0,
+                "grossFee": 600,
+                "bonusCredit": 218.55,
+                "netFee": 381.45,
+                "withdrawalAmount": 1873.32,
+                "close": 62212.49
+              },
+              {
+                "accountId": "topup",
+                "open": 4558.8,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 136.76,
+                "close": 4570.66
+              }
+            ]
+          },
+          {
+            "year": 7,
+            "policyYear": 13,
+            "annualContribution": 0,
+            "annualWithdrawals": 2003.49,
+            "combinedValue": 66562.07,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 66562.07,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 7800,
+            "cumulativeBonuses": 1135.66,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 62212.49,
+                "contributionAmount": 0,
+                "grossFee": 600,
+                "bonusCredit": 217.74,
+                "netFee": 382.26,
+                "withdrawalAmount": 1866.37,
+                "close": 61979.53
+              },
+              {
+                "accountId": "topup",
+                "open": 4570.66,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 137.12,
+                "close": 4582.54
+              }
+            ]
+          },
+          {
+            "year": 8,
+            "policyYear": 14,
+            "annualContribution": 0,
+            "annualWithdrawals": 1996.86,
+            "combinedValue": 66339.57,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 66339.57,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 8400,
+            "cumulativeBonuses": 1352.59,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 61979.53,
+                "contributionAmount": 0,
+                "grossFee": 600,
+                "bonusCredit": 216.93,
+                "netFee": 383.07,
+                "withdrawalAmount": 1859.39,
+                "close": 61745.12
+              },
+              {
+                "accountId": "topup",
+                "open": 4582.54,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 137.48,
+                "close": 4594.46
+              }
+            ]
+          },
+          {
+            "year": 9,
+            "policyYear": 15,
+            "annualContribution": 0,
+            "annualWithdrawals": 1990.19,
+            "combinedValue": 66115.65,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 66115.65,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 9000,
+            "cumulativeBonuses": 1568.69,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 61745.12,
+                "contributionAmount": 0,
+                "grossFee": 600,
+                "bonusCredit": 216.11,
+                "netFee": 383.89,
+                "withdrawalAmount": 1852.35,
+                "close": 61509.25
+              },
+              {
+                "accountId": "topup",
+                "open": 4594.46,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 137.83,
+                "close": 4606.4
+              }
+            ]
+          }
+        ]
+      },
+      "mid": {
+        "blendedNetReturn": 0.0606,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 7,
+            "annualContribution": 12000,
+            "annualWithdrawals": 735,
+            "combinedValue": 35786.07,
+            "eecRate": 0.44,
+            "eecCharge": 13705.28,
+            "surrenderValue": 22080.79,
+            "cumulativePremiums": 72000,
+            "cumulativeGrossFees": 1500,
+            "cumulativeBonuses": 120,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 20000,
+                "contributionAmount": 12000,
+                "grossFee": 1500,
+                "bonusCredit": 120,
+                "netFee": 1380,
+                "withdrawalAmount": 600,
+                "close": 31148.37
+              },
+              {
+                "accountId": "topup",
+                "open": 4500,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 135,
+                "close": 4637.7
+              }
+            ]
+          },
+          {
+            "year": 2,
+            "policyYear": 8,
+            "annualContribution": 12000,
+            "annualWithdrawals": 1073.58,
+            "combinedValue": 47417.5,
+            "eecRate": 0.21,
+            "eecCharge": 8953.96,
+            "surrenderValue": 38463.54,
+            "cumulativePremiums": 84000,
+            "cumulativeGrossFees": 3000,
+            "cumulativeBonuses": 240,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 31148.37,
+                "contributionAmount": 12000,
+                "grossFee": 1500,
+                "bonusCredit": 120,
+                "netFee": 1380,
+                "withdrawalAmount": 934.45,
+                "close": 42637.88
+              },
+              {
+                "accountId": "topup",
+                "open": 4637.7,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 139.13,
+                "close": 4779.61
+              }
+            ]
+          },
+          {
+            "year": 3,
+            "policyYear": 9,
+            "annualContribution": 12000,
+            "annualWithdrawals": 1422.52,
+            "combinedValue": 59404.85,
+            "eecRate": 0.16,
+            "eecCharge": 8716.64,
+            "surrenderValue": 50688.21,
+            "cumulativePremiums": 96000,
+            "cumulativeGrossFees": 4500,
+            "cumulativeBonuses": 360,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 42637.88,
+                "contributionAmount": 12000,
+                "grossFee": 1500,
+                "bonusCredit": 120,
+                "netFee": 1380,
+                "withdrawalAmount": 1279.14,
+                "close": 54478.98
+              },
+              {
+                "accountId": "topup",
+                "open": 4779.61,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 143.39,
+                "close": 4925.87
+              }
+            ]
+          },
+          {
+            "year": 4,
+            "policyYear": 10,
+            "annualContribution": 12000,
+            "annualWithdrawals": 1782.15,
+            "combinedValue": 71759.01,
+            "eecRate": 0.08,
+            "eecCharge": 5334.59,
+            "surrenderValue": 66424.41,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 6000,
+            "cumulativeBonuses": 480,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 54478.98,
+                "contributionAmount": 12000,
+                "grossFee": 1500,
+                "bonusCredit": 120,
+                "netFee": 1380,
+                "withdrawalAmount": 1634.37,
+                "close": 66682.4
+              },
+              {
+                "accountId": "topup",
+                "open": 4925.87,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 147.78,
+                "close": 5076.6
+              }
+            ]
+          },
+          {
+            "year": 5,
+            "policyYear": 11,
+            "annualContribution": 0,
+            "annualWithdrawals": 2152.77,
+            "combinedValue": 73566,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 73566,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 6600,
+            "cumulativeBonuses": 713.39,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 66682.4,
+                "contributionAmount": 0,
+                "grossFee": 600,
+                "bonusCredit": 233.39,
+                "netFee": 366.61,
+                "withdrawalAmount": 2000.47,
+                "close": 68334.06
+              },
+              {
+                "accountId": "topup",
+                "open": 5076.6,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 152.3,
+                "close": 5231.95
+              }
+            ]
+          },
+          {
+            "year": 6,
+            "policyYear": 12,
+            "annualContribution": 0,
+            "annualWithdrawals": 2206.98,
+            "combinedValue": 75434.43,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 75434.43,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 7200,
+            "cumulativeBonuses": 952.56,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 68334.06,
+                "contributionAmount": 0,
+                "grossFee": 600,
+                "bonusCredit": 239.17,
+                "netFee": 360.83,
+                "withdrawalAmount": 2050.02,
+                "close": 70042.38
+              },
+              {
+                "accountId": "topup",
+                "open": 5231.95,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 156.96,
+                "close": 5392.04
+              }
+            ]
+          },
+          {
+            "year": 7,
+            "policyYear": 13,
+            "annualContribution": 0,
+            "annualWithdrawals": 2263.03,
+            "combinedValue": 77366.36,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 77366.36,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 7800,
+            "cumulativeBonuses": 1197.71,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 70042.38,
+                "contributionAmount": 0,
+                "grossFee": 600,
+                "bonusCredit": 245.15,
+                "netFee": 354.85,
+                "withdrawalAmount": 2101.27,
+                "close": 71809.32
+              },
+              {
+                "accountId": "topup",
+                "open": 5392.04,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 161.76,
+                "close": 5557.04
+              }
+            ]
+          },
+          {
+            "year": 8,
+            "policyYear": 14,
+            "annualContribution": 0,
+            "annualWithdrawals": 2320.99,
+            "combinedValue": 79363.98,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 79363.98,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 8400,
+            "cumulativeBonuses": 1449.04,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 71809.32,
+                "contributionAmount": 0,
+                "grossFee": 600,
+                "bonusCredit": 251.33,
+                "netFee": 348.67,
+                "withdrawalAmount": 2154.28,
+                "close": 73636.89
+              },
+              {
+                "accountId": "topup",
+                "open": 5557.04,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 166.71,
+                "close": 5727.08
+              }
+            ]
+          },
+          {
+            "year": 9,
+            "policyYear": 15,
+            "annualContribution": 0,
+            "annualWithdrawals": 2380.92,
+            "combinedValue": 81429.5,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 81429.5,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 9000,
+            "cumulativeBonuses": 1706.77,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 73636.89,
+                "contributionAmount": 0,
+                "grossFee": 600,
+                "bonusCredit": 257.73,
+                "netFee": 342.27,
+                "withdrawalAmount": 2209.11,
+                "close": 75527.17
+              },
+              {
+                "accountId": "topup",
+                "open": 5727.08,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 171.81,
+                "close": 5902.33
+              }
+            ]
+          }
+        ]
+      },
+      "high": {
+        "blendedNetReturn": 0.0866,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 7,
+            "annualContribution": 12000,
+            "annualWithdrawals": 735,
+            "combinedValue": 36387.19,
+            "eecRate": 0.44,
+            "eecCharge": 13918.3,
+            "surrenderValue": 22468.9,
+            "cumulativePremiums": 72000,
+            "cumulativeGrossFees": 1500,
+            "cumulativeBonuses": 120,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 20000,
+                "contributionAmount": 12000,
+                "grossFee": 1500,
+                "bonusCredit": 120,
+                "netFee": 1380,
+                "withdrawalAmount": 600,
+                "close": 31632.49
+              },
+              {
+                "accountId": "topup",
+                "open": 4500,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 135,
+                "close": 4754.7
+              }
+            ]
+          },
+          {
+            "year": 2,
+            "policyYear": 8,
+            "annualContribution": 12000,
+            "annualWithdrawals": 1091.62,
+            "combinedValue": 48947.2,
+            "eecRate": 0.21,
+            "eecCharge": 9223.91,
+            "surrenderValue": 39723.29,
+            "cumulativePremiums": 84000,
+            "cumulativeGrossFees": 3000,
+            "cumulativeBonuses": 240,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 31632.49,
+                "contributionAmount": 12000,
+                "grossFee": 1500,
+                "bonusCredit": 120,
+                "netFee": 1380,
+                "withdrawalAmount": 948.97,
+                "close": 43923.38
+              },
+              {
+                "accountId": "topup",
+                "open": 4754.7,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 142.64,
+                "close": 5023.82
+              }
+            ]
+          },
+          {
+            "year": 3,
+            "policyYear": 9,
+            "annualContribution": 12000,
+            "annualWithdrawals": 1468.42,
+            "combinedValue": 62218.1,
+            "eecRate": 0.16,
+            "eecCharge": 9105.59,
+            "surrenderValue": 53112.51,
+            "cumulativePremiums": 96000,
+            "cumulativeGrossFees": 4500,
+            "cumulativeBonuses": 360,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 43923.38,
+                "contributionAmount": 12000,
+                "grossFee": 1500,
+                "bonusCredit": 120,
+                "netFee": 1380,
+                "withdrawalAmount": 1317.7,
+                "close": 56909.94
+              },
+              {
+                "accountId": "topup",
+                "open": 5023.82,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 150.71,
+                "close": 5308.16
+              }
+            ]
+          },
+          {
+            "year": 4,
+            "policyYear": 10,
+            "annualContribution": 12000,
+            "annualWithdrawals": 1866.54,
+            "combinedValue": 76240.14,
+            "eecRate": 0.08,
+            "eecCharge": 5650.52,
+            "surrenderValue": 70589.62,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 6000,
+            "cumulativeBonuses": 480,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 56909.94,
+                "contributionAmount": 12000,
+                "grossFee": 1500,
+                "bonusCredit": 120,
+                "netFee": 1380,
+                "withdrawalAmount": 1707.3,
+                "close": 70631.53
+              },
+              {
+                "accountId": "topup",
+                "open": 5308.16,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 159.24,
+                "close": 5608.61
+              }
+            ]
+          },
+          {
+            "year": 5,
+            "policyYear": 11,
+            "annualContribution": 0,
+            "annualWithdrawals": 2287.2,
+            "combinedValue": 80171.99,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 80171.99,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 6600,
+            "cumulativeBonuses": 727.21,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 70631.53,
+                "contributionAmount": 0,
+                "grossFee": 600,
+                "bonusCredit": 247.21,
+                "netFee": 352.79,
+                "withdrawalAmount": 2118.95,
+                "close": 74245.94
+              },
+              {
+                "accountId": "topup",
+                "open": 5608.61,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 168.26,
+                "close": 5926.05
+              }
+            ]
+          },
+          {
+            "year": 6,
+            "policyYear": 12,
+            "annualContribution": 0,
+            "annualWithdrawals": 2405.16,
+            "combinedValue": 84340.13,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 84340.13,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 7200,
+            "cumulativeBonuses": 987.07,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 74245.94,
+                "contributionAmount": 0,
+                "grossFee": 600,
+                "bonusCredit": 259.86,
+                "netFee": 340.14,
+                "withdrawalAmount": 2227.38,
+                "close": 78078.66
+              },
+              {
+                "accountId": "topup",
+                "open": 5926.05,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 177.78,
+                "close": 6261.47
+              }
+            ]
+          },
+          {
+            "year": 7,
+            "policyYear": 13,
+            "annualContribution": 0,
+            "annualWithdrawals": 2530.2,
+            "combinedValue": 88758.76,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 88758.76,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 7800,
+            "cumulativeBonuses": 1260.35,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 78078.66,
+                "contributionAmount": 0,
+                "grossFee": 600,
+                "bonusCredit": 273.28,
+                "netFee": 326.72,
+                "withdrawalAmount": 2342.36,
+                "close": 82142.89
+              },
+              {
+                "accountId": "topup",
+                "open": 6261.47,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 187.84,
+                "close": 6615.87
+              }
+            ]
+          },
+          {
+            "year": 8,
+            "policyYear": 14,
+            "annualContribution": 0,
+            "annualWithdrawals": 2662.76,
+            "combinedValue": 93442.94,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 93442.94,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 8400,
+            "cumulativeBonuses": 1547.85,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 82142.89,
+                "contributionAmount": 0,
+                "grossFee": 600,
+                "bonusCredit": 287.5,
+                "netFee": 312.5,
+                "withdrawalAmount": 2464.29,
+                "close": 86452.62
+              },
+              {
+                "accountId": "topup",
+                "open": 6615.87,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 198.48,
+                "close": 6990.32
+              }
+            ]
+          },
+          {
+            "year": 9,
+            "policyYear": 15,
+            "annualContribution": 0,
+            "annualWithdrawals": 2803.29,
+            "combinedValue": 98408.64,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 98408.64,
+            "cumulativePremiums": 108000,
+            "cumulativeGrossFees": 9000,
+            "cumulativeBonuses": 1850.43,
+            "accounts": [
+              {
+                "accountId": "regular",
+                "open": 86452.62,
+                "contributionAmount": 0,
+                "grossFee": 600,
+                "bonusCredit": 302.58,
+                "netFee": 297.42,
+                "withdrawalAmount": 2593.58,
+                "close": 91022.67
+              },
+              {
+                "accountId": "topup",
+                "open": 6990.32,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 209.71,
+                "close": 7385.98
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

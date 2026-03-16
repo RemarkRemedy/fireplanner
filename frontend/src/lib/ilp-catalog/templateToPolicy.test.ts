@@ -275,7 +275,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
-  it('maps HSBC Wealth Focus Flexi 3 into a partial seed with two-account routing and holiday charges', () => {
+  it('maps HSBC Wealth Focus Flexi 3 into a supported seed with two-account routing and holiday charges', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'hsbc-life-wealth-focus-flexi-3')
     expect(product).toBeDefined()
@@ -284,8 +284,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:wealth-focus-premium-base-amf')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:wealth-focus-premium-holiday-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
