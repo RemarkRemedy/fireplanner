@@ -461,7 +461,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
-  it('maps SNACK-Investment into a partial seed with reinvest-only distribution support', () => {
+  it('maps SNACK-Investment into a supported seed with reinvest-only distribution support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'income-snack-investment')
     expect(product).toBeDefined()
@@ -470,10 +470,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-snack-investment-zero-top-up-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('income-snack-investment-single-premium-net-premium-tracking')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-snack-investment-fund-management-fee')
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({

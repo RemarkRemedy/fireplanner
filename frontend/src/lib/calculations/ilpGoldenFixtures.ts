@@ -55,6 +55,9 @@ export type GoldenCoverageTag =
   | 'branch:income-wealthlink-gl3-top-up-premium-charge'
   | 'branch:income-wealthlink-gl3-recurring-single-premium-charge'
   | 'branch:income-wealthlink-gl3-open-ended-zero-surrender-charge'
+  | 'branch:income-snack-investment-zero-single-premium-charge'
+  | 'branch:income-snack-investment-zero-top-up-charge'
+  | 'branch:income-snack-investment-zero-withdrawal-charge'
   | 'branch:hsbc-life-wealth-invest-cpf-zero-single-premium-charge'
   | 'branch:hsbc-life-wealth-invest-cpf-zero-recurring-single-premium-charge'
   | 'branch:hsbc-life-wealth-invest-cpf-zero-top-up-charge'
@@ -1465,6 +1468,72 @@ function manulinkInvestorIiStressPolicy(
 ): IlpPolicyInput {
   return manulinkInvestorIiBasePolicy(snapshot, 'sgd-open-ended-cash', id, MANULIFE_STRESS_FUNDS, {
     name: 'Golden Manulink Investor (II) (SGD / Open-ended Cash OCF Stress)',
+  })
+}
+
+function incomeSnackInvestmentBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'income-snack-investment', 'sgd-open-ended', id, {
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden SNACK-Investment (SGD / Open-ended)',
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function incomeSnackInvestmentBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return incomeSnackInvestmentBasePolicy(snapshot, id, INCOME_BALANCED_FUNDS)
+}
+
+function incomeSnackInvestmentEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return incomeSnackInvestmentBasePolicy(snapshot, id, INCOME_BALANCED_FUNDS, {
+    name: 'Golden SNACK-Investment (SGD / Open-ended Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 6,
+        durationMonths: 1,
+        amount: 10_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 11,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function incomeSnackInvestmentStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return incomeSnackInvestmentBasePolicy(snapshot, id, INCOME_STRESS_FUNDS, {
+    name: 'Golden SNACK-Investment (SGD / Open-ended OCF Stress)',
   })
 }
 
@@ -3780,6 +3849,63 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'PRULink InvestGrowth cash alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'income-snack-investment',
+    variantId: 'sgd-open-ended',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:income-snack-investment-zero-single-premium-charge',
+      'kernel:distribution-mode-assumption',
+    ],
+    description: 'Baseline SNACK-Investment scenario proving zero-charge initial single-premium seeding through the supported open-ended corridor.',
+    integrityChecks: [
+      {
+        description: 'keeps policy-level gross fees at zero under the published nil-charge single-premium path',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) === 0,
+      },
+      {
+        description: 'reinvest-only distribution support does not create payout withdrawals in the baseline seed',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.every((row) => row.annualWithdrawals === 0),
+      },
+    ],
+  },
+  {
+    productId: 'income-snack-investment',
+    variantId: 'sgd-open-ended',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:income-snack-investment-zero-top-up-charge',
+      'branch:income-snack-investment-zero-withdrawal-charge',
+    ],
+    description: 'SNACK-Investment supported event-heavy scenario covering zero-charge top-up routing and nil-charge withdrawals.',
+    integrityChecks: [
+      {
+        description: 'zero-charge top-up credits the full gross top-up amount to the policy account',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          (row.accounts.find((account) => account.accountId === 'policy')?.contributionAmount ?? 0) >= 10_000
+        )),
+      },
+      {
+        description: 'nil-charge withdrawals leave the policy-account gross fee at zero in the withdrawal year',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.annualWithdrawals >= 4_000
+          && (row.accounts.find((account) => account.accountId === 'policy')?.grossFee ?? 0) === 0
+        )),
+      },
+    ],
+  },
+  {
+    productId: 'income-snack-investment',
+    variantId: 'sgd-open-ended',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'SNACK-Investment alternate-fund stress scenario through the supported open-ended corridor.',
+  },
+  {
     productId: 'income-wealthlink-gl3',
     variantId: 'sgd-open-ended-cash-or-srs',
     scenarioId: 'baseline',
@@ -4557,6 +4683,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'manulife-manulink-investor-ii' && definition.scenarioId === 'ocf-stress') {
     return manulinkInvestorIiStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'income-snack-investment' && definition.scenarioId === 'baseline') {
+    return incomeSnackInvestmentBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'income-snack-investment' && definition.scenarioId === 'event-heavy') {
+    return incomeSnackInvestmentEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'income-snack-investment' && definition.scenarioId === 'ocf-stress') {
+    return incomeSnackInvestmentStressPolicy(snapshot, id)
   }
   if (definition.productId === 'prudential-prulink-investgrowth' && definition.scenarioId === 'baseline') {
     return pruInvestGrowthRegularBaselinePolicy(snapshot, definition.variantId, id)

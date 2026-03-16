@@ -132,13 +132,12 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [],
     warnings: [
-      'SNACK-Investment is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial premium, top-up, and no-penalty withdrawal path through the open-ended no-MIP basis.',
-      'The plan reinvests declared distributions and does not support cash payouts in the published corridor; fund-level management fees remain outside the current calculator surface.',
+      'SNACK-Investment is cataloged as a supported V1 product. The parser captures the published zero-charge initial premium, top-up, and no-penalty withdrawal path through the open-ended no-MIP basis.',
+      'The plan reinvests declared distributions and does not support cash payouts in the published corridor; fund-level management fees remain informational only.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
       'Accidental-death protection formulas remain informational only.',
-      'Single-premium and top-up net-premium tracking remain informational only in V1.',
       'Trigger-driven top-up enrollment, weekly cap handling, and Auto Invest behavior remain informational only.',
       'Fund-level annual management fees remain informational only because the product summary publishes them only at fund level and does not give a single policy-level rate.',
       'Suspension, fund closure, and merged-fund handling remain informational only.',
@@ -157,9 +156,9 @@ export function parseIncomeSnackInvestment(context: ParseContext): IlpCatalogPro
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:income-snack-investment-zero-single-premium-charge',
       'branch:income-snack-investment-zero-top-up-charge',
@@ -168,7 +167,6 @@ export function parseIncomeSnackInvestment(context: ParseContext): IlpCatalogPro
     ],
     metadataOnlyBehaviors: [
       'income-snack-investment-accidental-death-benefit',
-      'income-snack-investment-single-premium-net-premium-tracking',
       'income-snack-investment-trigger-driven-top-ups',
       'income-snack-investment-auto-invest-weekly-cap',
       'income-snack-investment-fund-management-fee',
@@ -176,7 +174,7 @@ export function parseIncomeSnackInvestment(context: ParseContext): IlpCatalogPro
       'income-snack-investment-free-look',
     ],
     warnings: [
-      'SNACK-Investment is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial premium, top-up, and no-penalty withdrawal path through the open-ended no-MIP basis, plus the reinvest-only distribution mode published for this product, while accidental-death protection, trigger-driven top-up automation, and fund-level charges remain outside the current engine.',
+      'SNACK-Investment is cataloged as a supported V1 product. The parser captures the published zero-charge initial premium, top-up, and no-penalty withdrawal path through the open-ended no-MIP basis, plus the reinvest-only distribution mode published for this product, while accidental-death protection, trigger-driven top-up automation, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],
