@@ -214,6 +214,9 @@ function isFieldVisible(
   if (showWhen.greaterThanOrEqual !== undefined) {
     return typeof depVal === 'number' && depVal >= showWhen.greaterThanOrEqual
   }
+  if (showWhen.oneOf !== undefined) {
+    return typeof depVal === 'string' && showWhen.oneOf.includes(depVal)
+  }
   return depVal === showWhen.equals
 }
 

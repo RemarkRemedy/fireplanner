@@ -19,7 +19,7 @@ export interface NudgeField {
   options?: Array<{ value: string; label: string }>
   required?: boolean
   /** Only show this field when another field has this value */
-  showWhen?: { field: string; equals?: boolean | string; greaterThanOrEqual?: number }
+  showWhen?: { field: string; equals?: boolean | string; oneOf?: string[]; greaterThanOrEqual?: number }
   /** Helper text shown below the field */
   helperText?: string
   /** Field name for validation lookup — maps to validateSetupField. Defaults to `name`. */
@@ -162,18 +162,20 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
           type: 'select',
           options: [
             { value: 'hdb', label: 'HDB Flat' },
-            { value: 'condo', label: 'Private Condo / EC' },
+            { value: 'ec', label: 'Executive Condo (EC)' },
+            { value: 'condo', label: 'Private Condo' },
             { value: 'landed', label: 'Landed Property' },
           ],
           required: true,
         },
         { name: 'propertyValue', label: 'Current estimated value', type: 'currency', required: true, tooltip: 'Current market value. Check recent HDB or URA transactions.', helperText: 'Check recent HDB or URA transactions' },
         { name: 'leaseStartYear', label: 'Lease start year', type: 'number',
-          showWhen: { field: 'propertyType', equals: 'hdb' } },
+          showWhen: { field: 'propertyType', oneOf: ['hdb', 'ec'] } },
         {
           name: 'leaseTenure',
           label: 'Lease tenure (years)',
           type: 'select',
+          showWhen: { field: 'propertyType', oneOf: ['condo', 'landed'] },
           options: [
             { value: '99', label: '99 years' },
             { value: '999', label: '999 years' },

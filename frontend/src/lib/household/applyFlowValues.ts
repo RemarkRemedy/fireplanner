@@ -125,22 +125,28 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       const currentYear = new Date().getFullYear()
       const propertyUpdates: Partial<PropertyPlan> = {}
 
-      if (typeof values.propertyType === 'string') {
-        const pt = toPropertyType(values.propertyType)
+      // Map UI property type to store type ('ec' → 'condo')
+      const rawType = typeof values.propertyType === 'string' ? values.propertyType : null
+      if (rawType) {
+        const storeType = rawType === 'ec' ? 'condo' : rawType
+        const pt = toPropertyType(storeType)
         if (pt) propertyUpdates.propertyType = pt
       }
-      if (typeof values.leaseTenure === 'string') {
-        // 'freehold' maps to 999 years; numeric strings map directly
+
+      // HDB and EC are always 99-year leasehold
+      const isFixedLease = rawType === 'hdb' || rawType === 'ec'
+      if (isFixedLease) {
+        if (typeof values.leaseStartYear === 'number') {
+          const elapsed = currentYear - values.leaseStartYear
+          propertyUpdates.existingLeaseYears = Math.max(0, 99 - elapsed)
+        } else {
+          propertyUpdates.existingLeaseYears = 99
+        }
+      } else if (typeof values.leaseTenure === 'string') {
+        // Private condo / landed: user picks tenure
         const leaseYears = values.leaseTenure === 'freehold' ? 999 : parseInt(values.leaseTenure as string, 10)
         if (!isNaN(leaseYears)) {
           propertyUpdates.existingLeaseYears = leaseYears
-        }
-      }
-      if (typeof values.leaseStartYear === 'number' && typeof values.leaseTenure === 'string') {
-        const originalLease = values.leaseTenure === 'freehold' ? 999 : parseInt(values.leaseTenure as string, 10)
-        if (!isNaN(originalLease)) {
-          const elapsed = currentYear - values.leaseStartYear
-          propertyUpdates.existingLeaseYears = Math.max(0, originalLease - elapsed)
         }
       }
       if (typeof values.propertyValue === 'number') {
