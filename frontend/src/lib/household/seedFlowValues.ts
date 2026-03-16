@@ -11,6 +11,7 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
 import type { NudgeFlowScreen } from '@/lib/data/nudgeFlows'
 import type { PlanningAdult } from '@/lib/household/types'
+import { FLOW_FIELD_TO_CATEGORY } from '@/lib/data/retirementTemplates'
 import {
   DEFAULT_CPF_PAYOUT_START_AGE,
   DEFAULT_CPF_LIFE_PLAN,
@@ -125,8 +126,9 @@ function seedExpenses(adult: PlanningAdult): Record<string, unknown> {
     }
 
     // Compute _hasAnyExpenseCategory sentinel from seeded values
-    const categoryFields = ['housingExpenses', 'foodExpenses', 'transportExpenses', 'utilitiesExpenses', 'entertainmentExpenses', 'travelExpenses', 'otherExpenses']
-    seeds._hasAnyExpenseCategory = categoryFields.some((f) => typeof seeds[f] === 'number' && (seeds[f] as number) > 0)
+    // Use FLOW_FIELD_TO_CATEGORY keys to stay in sync with RefineFlowPage's reactive update
+    const categoryFlowFields = Object.keys(FLOW_FIELD_TO_CATEGORY)
+    seeds._hasAnyExpenseCategory = categoryFlowFields.some((f) => typeof seeds[f] === 'number' && (seeds[f] as number) > 0)
   }
 
   // currentAge needed for age-conditional fields
