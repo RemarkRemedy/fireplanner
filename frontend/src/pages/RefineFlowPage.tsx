@@ -240,6 +240,12 @@ export function RefineFlowPage() {
             />
           )}
         </SetupScreen>
+
+      {isLastScreen && (
+        <p className="text-xs text-center text-muted-foreground -mt-2">
+          Saving will update your plan with the values entered above.
+        </p>
+      )}
     </div>
   )
 }
