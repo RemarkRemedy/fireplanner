@@ -168,7 +168,49 @@ function buildFeeRules(document: ExtractedPdfDocument): IlpTemplateFeeRule[] {
   ]
 }
 
-function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
+function buildTokioMpcFeeRule(
+  optionPage: IlpCatalogSourceRef,
+  chargePage: IlpCatalogSourceRef,
+  tablePage: IlpCatalogSourceRef,
+): IlpTemplateFeeRule {
+  return {
+    id: 'monthly-protection-charge',
+    label: 'Monthly Protection Charge',
+    basis: 'assurance-sum-at-risk',
+    rate: 0,
+    amount: 0,
+    appliesTo: ['accumulation'],
+    assuranceValueAppliesTo: ['initial', 'accumulation'],
+    fallbackAppliesTo: ['topup', 'initial'],
+    activeWindow: 'during-mip',
+    assuranceConfig: {
+      formula: 'tokio-mpc-net-premium-floor',
+      rateTable: 'tokio-mpc-unzo-death',
+      monthlyModalFactor: 1,
+      maxAgeNextBirthday: 99,
+      accrual: {
+        startPolicyYear: 1,
+        endPolicyYear: 2,
+        settlementPolicyYear: 3,
+      },
+    },
+    requiresManualInput: true,
+    notes: [
+      'Models the published Monthly Protection Charge for the Advanced Death corridor during the 15-year premium payment term.',
+      'The Monthly Protection Charge for policy years 1 to 2 is accrued and collected in one lump sum in policy year 3.',
+      'Sum at risk is the published net premium less 101% of the Initial Units Account value and 101% of the Accumulation Units Account value, floored at zero.',
+      'The charge is deducted monthly in advance from the Accumulation Units Account, with outstanding amounts deducted from the Top-up Units Account and then the Initial Units Account if needed.',
+      'Advanced Death Benefit with Life Benefit Rider remains metadata-only even though the same MPC table family is published for that corridor.',
+    ],
+    sourceRefs: [optionPage, chargePage, tablePage],
+  }
+}
+
+function buildVariant(
+  document: ExtractedPdfDocument,
+  deathBenefitOption: 'basic-death' | 'advanced-death',
+): IlpTemplateVariant {
+  const isAdvancedDeath = deathBenefitOption === 'advanced-death'
   const page1 = sourceRef(1, 'Plan Description', snippetNear(document, 1, 'Affluence@Future', 18))
   const page2 = sourceRef(2, 'Initial Bonus', snippetNear(document, 2, 'Initial Bonus', 24))
   const page5 = sourceRef(5, 'Regular Premium Routing', snippetNear(document, 5, 'Initial Units Account', 24))
@@ -176,7 +218,11 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page8 = sourceRef(8, 'Partial Withdrawal / Regular Withdrawal', snippetNear(document, 8, 'Partial Withdrawal', 24))
   const page10 = sourceRef(10, 'Dividend Distribution / Initial Charge', snippetNear(document, 10, 'Dividend Distribution', 28))
   const page11 = sourceRef(11, 'Policy Charge / top-up charges', snippetNear(document, 11, 'Policy Charge', 32))
-  const page12 = sourceRef(12, 'Partial Withdrawal and Regular Withdrawal Charge', snippetNear(document, 12, 'Partial Withdrawal and Regular Withdrawal Charge', 12))
+  const page12Mpc = sourceRef(12, 'Monthly Protection Charge', snippetNear(document, 12, 'Monthly Protection Charge', 26))
+  const page12Withdrawal = sourceRef(12, 'Partial Withdrawal and Regular Withdrawal Charge', snippetNear(document, 12, 'Partial Withdrawal and Regular Withdrawal Charge', 12))
+  const page16 = isAdvancedDeath
+    ? sourceRef(16, 'Appendix A Monthly Protection Charge Rates', snippetNear(document, 16, 'Monthly Rates for Monthly Protection Charges', 24))
+    : null
   const page18 = sourceRef(18, 'Appendix A Surrender Charge', snippetNear(document, 18, 'Premium Payment Term: 15 – 20 Years', 30))
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
@@ -225,12 +271,17 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
         'The source document publishes nil partial-withdrawal and regular-withdrawal charges.',
         'Minimum withdrawal amount, minimum remaining account value, and during-vs-after-premium-term withdrawal-account gating remain metadata-only constraints in this partial template.',
       ],
-      sourceRefs: [page8, page12],
+      sourceRefs: [page8, page12Withdrawal],
     },
   ]
 
+  const feeRules = buildFeeRules(document)
+  if (isAdvancedDeath && page16) {
+    feeRules.push(buildTokioMpcFeeRule(page1, page12Mpc, page16))
+  }
+
   return {
-    id: 'sgd-mip-15',
+    id: isAdvancedDeath ? 'sgd-mip-15-advanced-death' : 'sgd-mip-15',
     currency: 'SGD',
     mipLength: MIP_LENGTH,
     icpMonths: 24,
@@ -271,7 +322,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       },
     ],
     bonuses: buildBonuses(document),
-    feeRules: buildFeeRules(document),
+    feeRules,
     eventChargeRules,
     distributionSupport: {
       mode: 'manual-assumption',
@@ -302,17 +353,28 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      'This partial template models the SGD / premium-payment-term-15 corridor only.',
+      `This partial template models the SGD / premium-payment-term-15 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
       'This partial template models 24-month initial-versus-accumulation routing, the published initial bonus tiers, the year-scaled initial charge schedule with the policy-year-10 cap, the policy charge premium-base multiplier basis, top-up routing, recurring single premium routing, nil partial-withdrawal charge, the published 15-year surrender charge table, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
+      ...(isAdvancedDeath
+        ? [
+            'The Advanced Death variant also models the published Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.',
+          ]
+        : []),
       'Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount.',
     ],
     unsupportedItems: [
       'Loyalty bonus remains metadata-only because the published adjustment-factor formula and period-band windows are not yet represented directly in the template bonus basis.',
-      'Monthly protection charge, advanced death benefit, life benefit rider, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.',
+      ...(isAdvancedDeath
+        ? [
+            'Advanced Death payout handling beyond the modeled Monthly Protection Charge, together with Advanced Death Benefit with Life Benefit Rider, multiple-life handling, and change-of-life-assured administration, remain metadata-only for this product.',
+          ]
+        : [
+            'Advanced Death selection, Monthly Protection Charge, Advanced Death Benefit with Life Benefit Rider, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.',
+          ]),
       'Regular withdrawal, partial-withdrawal minimum-account-value constraints, premium holiday state handling, and non-SGD or non-25-year variants remain metadata-only for this product.',
       'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1.',
     ],
-    sourceRefs: [page1, page2, page5, page6, page8, page10, page11, page12, page18],
+    sourceRefs: [page1, page2, page5, page6, page8, page10, page11, page12Withdrawal, ...(page16 ? [page16] : []), page18],
   }
 }
 
@@ -340,23 +402,28 @@ export function parseTokioMarineAffluenceAtFuture(context: ParseContext): IlpCat
       'tokio-top-up-premium-charge',
       'tokio-recurring-single-premium-charge',
       'branch:tokio-marine-affluence-atfuture-zero-partial-withdrawal-charge',
+      'branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
       'tokio-initial-account-surrender-charge',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'tokio-affluence-atfuture-loyalty-bonus-adjustment-factor',
-      'tokio-affluence-atfuture-advanced-death-benefit-and-monthly-protection-charge',
+      'tokio-affluence-atfuture-advanced-death-payout-life-benefit-rider-and-life-assured-administration',
       'tokio-affluence-atfuture-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints',
       'tokio-affluence-atfuture-change-of-life-assured-and-multiple-life-handling',
       'tokio-affluence-atfuture-premium-holiday-and-non-sgd-or-non-25-year-variants',
     ],
     warnings: [
       'Structured extraction validated against the Affluence@Future product summary text layer.',
-      'The parser currently covers the SGD / premium-payment-term-15 corridor only.',
+      'The parser currently covers split SGD / premium-payment-term-15 death-benefit-option corridors only.',
       'Initial charge is modeled through the published year-scaled account-value fee schedule on the Initial Units Account with the term-minus-five cap, policy charge is modeled through the published premium-base multiplier formula from the 25th policy month onward, and phase-specific dividend cash-payout account restrictions are modeled through the manual distribution-mode assumption surface.',
+      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-two-policy-years accrual window and policy-year-3 lump-sum settlement using Initial plus Accumulation Units Account value in the sum-at-risk basis.',
       'Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.',
     ],
     archived: false,
-    variants: [buildVariant(context.document)],
+    variants: [
+      buildVariant(context.document, 'basic-death'),
+      buildVariant(context.document, 'advanced-death'),
+    ],
   }
 }

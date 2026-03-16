@@ -23,7 +23,7 @@ const EXPECTED_INITIAL_CHARGE_SCHEDULE = Array.from({ length: 15 }, (_, index) =
 })
 
 describe('parseTokioMarineAffluenceAtFuture', () => {
-  it('builds a valid partial Affluence@Future product from the source PDF', async () => {
+  it('builds valid split Affluence@Future death-benefit variants from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseTokioMarineAffluenceAtFuture({
       document,
@@ -38,20 +38,23 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
     expect(product.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-zero-partial-withdrawal-charge')
+    expect(product.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
 
-    const variant = product.variants[0]
-    expect(variant?.id).toBe('sgd-mip-15')
-    expect(variant?.icpMonths).toBe(24)
-    expect(variant?.accounts.map((account) => account.id)).toEqual(['initial', 'accumulation', 'topup'])
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
+    const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15')
+    const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death')
+
+    expect(product.variants).toHaveLength(2)
+    expect(basicVariant?.icpMonths).toBe(24)
+    expect(basicVariant?.accounts.map((account) => account.id)).toEqual(['initial', 'accumulation', 'topup'])
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.72 },
       { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.8 },
       { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.87 },
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.95 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 1 },
     ])
-    expect(variant?.feeRules).toEqual(
+    expect(basicVariant?.feeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: 'initial-charge',
@@ -84,12 +87,12 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
         }),
       ]),
     )
-    expect(variant?.eventChargeRules).toEqual([
+    expect(basicVariant?.eventChargeRules).toEqual([
       expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.05 }),
       expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
       expect.objectContaining({ id: 'partial-withdrawal-charge', rate: 0 }),
     ])
-    expect(variant?.distributionSupport).toEqual({
+    expect(basicVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
       cashPayoutWindows: [
@@ -105,7 +108,7 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
-    expect(variant?.eecTable).toEqual([
+    expect(basicVariant?.eecTable).toEqual([
       1,
       1,
       0.99,
@@ -122,5 +125,24 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
       0.3,
       0.12,
     ])
+    expect(advancedVariant?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          assuranceConfig: expect.objectContaining({
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 2,
+              settlementPolicyYear: 3,
+            },
+          }),
+        }),
+      ]),
+    )
   }, 30_000)
 })
