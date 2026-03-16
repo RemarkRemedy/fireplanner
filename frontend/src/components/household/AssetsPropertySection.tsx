@@ -437,7 +437,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                           <PercentInput
                             label="Rental expenses %"
                             value={property.rentalExpensesPercent ?? 0}
-                            onChange={(value) => updateProperty(property.id, { rentalExpensesPercent: value })}
+                            onChange={(value) => updateProperty(property.id, { rentalExpensesPercent: Math.min(1, Math.max(0, value)) })}
                             tooltip="Annual expenses as % of rental income (maintenance, agent fees, tax). Net rental yield = rental yield × (1 − expenses%)."
                           />
                           <NumberInput
@@ -690,7 +690,7 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                                 onChange={(value) => updateProperty(property.id, {
                                   downsizing: {
                                     ...property.downsizing,
-                                    proceedsAllocationPercent: value,
+                                    proceedsAllocationPercent: Math.min(1, Math.max(0, value)),
                                   },
                                 })}
                                 tooltip="What percentage of net sale proceeds to add to your investment portfolio. The rest stays as cash."

@@ -8,6 +8,7 @@ import type {
 import { createId } from './ids'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { CPF_HEURISTIC_SPLIT, SG_GROSS_UP_FACTOR } from '@/lib/data/cpfRates'
+import { DEFAULT_LTV } from '@/lib/data/propertyDefaults'
 
 // ---------------------------------------------------------------------------
 // SetupDraft — flat structure for /setup wizard answers
@@ -276,6 +277,16 @@ function applyPropertyDraft(draft: SetupDraft): void {
   const plan = useHouseholdPlanStore.getState().plan
   const existingProperty = plan.properties.find((p) => p.owner === 'self')
 
+  // Clean up auto-created down payment goal when switching away from 'planning'
+  if (draft.ownsProperty !== 'planning') {
+    const existingGoal = useHouseholdPlanStore.getState().plan.goals.find(
+      (g) => g.label === 'Property Down Payment' && g.owner === 'self'
+    )
+    if (existingGoal) {
+      useHouseholdPlanStore.getState().removeGoal(existingGoal.id)
+    }
+  }
+
   if (draft.ownsProperty === 'no') {
     // No property needed — remove seeded property if present
     if (existingProperty) {
@@ -317,8 +328,7 @@ function applyPropertyDraft(draft: SetupDraft): void {
     // Down payment = purchasePrice × (1 - LTV). Default LTV is 75%, so 25% down.
     const selfAdult = useHouseholdPlanStore.getState().plan.adults.find((a) => a.owner === 'self')
     if (selfAdult) {
-      const ltv = 0.75
-      const downPayment = Math.round(purchasePrice * (1 - ltv))
+      const downPayment = Math.round(purchasePrice * (1 - DEFAULT_LTV))
       const targetAge = selfAdult.currentAge + purchaseYearsFromNow
       const existingGoal = useHouseholdPlanStore.getState().plan.goals.find(
         (g) => g.label === 'Property Down Payment' && g.owner === 'self'

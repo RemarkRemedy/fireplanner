@@ -210,7 +210,7 @@ function seedSrs(adult: PlanningAdult): Record<string, unknown> {
   }
   seeds.srsWithdrawalStartAge = adult.srs.drawdownStartAge
 
-  // Reverse-map investmentReturn to strategy label
+  // Reverse-map investmentReturn to strategy label (only if it matches a known rate)
   const returnToStrategy: [number, string][] = [
     [0.005, 'cash'],
     [0.05, 'mixed'],
@@ -218,7 +218,10 @@ function seedSrs(adult: PlanningAdult): Record<string, unknown> {
     [0.08, 'stocks'],
   ]
   const matched = returnToStrategy.find(([rate]) => Math.abs(adult.srs.investmentReturn - rate) < 0.001)
-  seeds.srsInvestmentStrategy = matched ? matched[1] : 'mixed'
+  if (matched) {
+    seeds.srsInvestmentStrategy = matched[1]
+  }
+  // If no match, leave unset so the user must actively choose (avoids silently overwriting custom rates)
 
   return seeds
 }
@@ -240,6 +243,14 @@ function seedAllocation(): Record<string, unknown> {
   const targetTemplate = allocationState.selectedTargetTemplate
   if (targetTemplate && targetTemplate !== 'custom') {
     seeds.glidePathEndTemplate = targetTemplate
+  } else if (targetTemplate === 'custom') {
+    // Check if target weights match the very-conservative preset (applied via setTargetWeights)
+    const veryConservativeWeights = [0.05, 0.03, 0.02, 0.60, 0.10, 0.05, 0.15, 0.00]
+    const tw = allocationState.targetWeights
+    if (tw.length === veryConservativeWeights.length &&
+        tw.every((w, i) => Math.abs(w - veryConservativeWeights[i]) < 0.001)) {
+      seeds.glidePathEndTemplate = 'very-conservative'
+    }
   }
 
   return seeds
