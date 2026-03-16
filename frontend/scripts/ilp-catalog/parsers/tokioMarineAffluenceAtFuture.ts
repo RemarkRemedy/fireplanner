@@ -387,9 +387,9 @@ export function parseTokioMarineAffluenceAtFuture(context: ParseContext): IlpCat
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'tokio-initial-vs-accumulation-regular-premium-routing',
       'tokio-initial-bonus-tiered-premium-allocation',
@@ -414,11 +414,8 @@ export function parseTokioMarineAffluenceAtFuture(context: ParseContext): IlpCat
       'tokio-affluence-atfuture-premium-holiday-and-non-sgd-or-non-25-year-variants',
     ],
     warnings: [
-      'Structured extraction validated against the Affluence@Future product summary text layer.',
-      'The parser currently covers split SGD / premium-payment-term-15 death-benefit-option corridors only.',
-      'Initial charge is modeled through the published year-scaled account-value fee schedule on the Initial Units Account with the term-minus-five cap, policy charge is modeled through the published premium-base multiplier formula from the 25th policy month onward, and phase-specific dividend cash-payout account restrictions are modeled through the manual distribution-mode assumption surface.',
-      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-two-policy-years accrual window and policy-year-3 lump-sum settlement using Initial plus Accumulation Units Account value in the sum-at-risk basis.',
-      'Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.',
+      'Affluence@Future is cataloged as a supported V1 product. The SGD / 15-year premium-payment corridors model regular-premium routing, initial bonus allocation, initial and policy charges, top-up and recurring-single-premium routing / charges, zero-charge partial withdrawals, surrender mechanics, and reinvest-default distribution support; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.',
+      'Loyalty bonus adjustment-factor handling, advanced-death payout handling beyond the modeled Monthly Protection Charge, dividend payout threshold / record-date handling, regular-withdrawal constraints, change-of-life-assured administration, and premium-holiday / non-SGD / non-25-year variants remain informational only.',
     ],
     archived: false,
     variants: [

@@ -4995,7 +4995,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Advanced Death variant also models the published Monthly Protection Charge'))).toBe(true)
   })
 
-  it('maps Tokio Marine Affluence@Future into a partial seed with capped initial-charge and deferred policy-charge rules', () => {
+  it('maps Tokio Marine Affluence@Future into a supported seed with capped initial-charge and deferred policy-charge rules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-affluence-atfuture')
     expect(product).toBeDefined()
@@ -5004,7 +5004,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-zero-partial-withdrawal-charge')
@@ -5061,7 +5061,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-loyalty-bonus-adjustment-factor')
   })
 
-  it('maps Tokio Marine Affluence@Future advanced-death into a partial seed with accrued Tokio MPC inputs', () => {
+  it('maps Tokio Marine Affluence@Future advanced-death into a supported seed with accrued Tokio MPC inputs', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-affluence-atfuture')
     expect(product).toBeDefined()
@@ -5070,7 +5070,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
