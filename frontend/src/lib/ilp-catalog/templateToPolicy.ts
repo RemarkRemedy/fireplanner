@@ -25,8 +25,30 @@ function usesOriginalSinglePremiumBase(variant: IlpTemplateVariant): boolean {
     || variant.exitChargeBasis === 'initial-single-premium-base'
 }
 
+function supportsSeededRecurringContributionRouting(variant: IlpTemplateVariant): boolean {
+  const hasContributionRules = variant.accounts.some((account) => account.contributionRules.length > 0)
+  if (!hasContributionRules) return true
+
+  return variant.accounts.some((account) => (
+    account.contributionRules.some((rule) => rule.phase === 'after-icp')
+  ))
+}
+
+function seedsInitialSinglePremiumRouting(variant: IlpTemplateVariant): boolean {
+  return usesInitialSinglePremiumBase(variant) || variant.feeRules.some((rule) => (
+    !usesInitialSinglePremiumBase(variant)
+    && rule.basis === 'annual-contribution'
+    && rule.id === 'single-premium-charge'
+    && !supportsSeededRecurringContributionRouting(variant)
+  ))
+}
+
 function deriveSeedMonthlyContribution(product: IlpCatalogProduct, variant: IlpTemplateVariant): number {
-  if (usesInitialSinglePremiumBase(variant)) {
+  if (!supportsSeededRecurringContributionRouting(variant)) {
+    return 0
+  }
+
+  if (seedsInitialSinglePremiumRouting(variant)) {
     return 0
   }
 
@@ -66,6 +88,7 @@ function deriveAccountFeeRate(account: IlpTemplateAccount, feeRules: IlpTemplate
 }
 
 function isCoveredByAccountFee(rule: IlpTemplateFeeRule, accounts: IlpTemplateAccount[]): boolean {
+  if (rule.basis !== 'account-value') return false
   if (rule.rate == null || rule.appliesTo.length !== 1) return false
   if (rule.startPolicyYear != null || rule.endPolicyYear != null) return false
 
@@ -101,6 +124,16 @@ function mapFeeRuleBasis(
   }
 }
 
+function shouldSeedAsInitialSinglePremiumCharge(
+  variant: IlpTemplateVariant,
+  rule: IlpTemplateFeeRule,
+): boolean {
+  return !usesInitialSinglePremiumBase(variant)
+    && rule.basis === 'annual-contribution'
+    && rule.id === 'single-premium-charge'
+    && !supportsSeededRecurringContributionRouting(variant)
+}
+
 function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] {
   return variant.feeRules
     .filter((rule) => (
@@ -118,12 +151,16 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
 
       const isAssurance = rule.basis === 'assurance-sum-at-risk'
       const isFixedAnnual = rule.basis === 'fixed-annual'
-      const isInitialSinglePremium = rule.basis === 'initial-single-premium' || rule.basis === 'initial-single-premium-base'
+      const isInitialSinglePremium = rule.basis === 'initial-single-premium'
+        || rule.basis === 'initial-single-premium-base'
+        || shouldSeedAsInitialSinglePremiumCharge(variant, rule)
 
       return {
         id: rule.id,
         label: rule.label,
-        basis: mapFeeRuleBasis(rule.basis),
+        basis: shouldSeedAsInitialSinglePremiumCharge(variant, rule)
+          ? 'initial-single-premium'
+          : mapFeeRuleBasis(rule.basis),
         activeWindow: rule.activeWindow,
         yearBasis: rule.yearBasis,
         startPolicyYear: rule.startPolicyYear,
@@ -244,7 +281,7 @@ export function templateVariantToPolicySeed(
     insurer: product.insurer,
     currency: variant.currency,
     monthlyContribution: deriveSeedMonthlyContribution(product, variant),
-    initialSinglePremium: usesInitialSinglePremiumBase(variant) ? 0 : undefined,
+    initialSinglePremium: seedsInitialSinglePremiumRouting(variant) ? 0 : undefined,
     monthsAlreadyPaid: 0,
     currentPolicyYear: 1,
     icpMonths: variant.icpMonths,

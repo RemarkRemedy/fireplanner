@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
 import type { IlpCatalogManifest, IlpCatalogProduct, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
+import { useIlpStore } from '@/stores/useIlpStore'
 
 describe('templateVariantToPolicySeed', () => {
   it('maps the supported HSBC variant into a seeded ILP policy', () => {
@@ -2940,6 +2941,13 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-wealth-enhancer-cpfis-zero-recurring-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-recurring-single-premium-routing')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-wealth-enhancer-cpfis-regular-top-up-premiums')
+    expect(seed.monthlyContribution).toBe(0)
+    expect(seed.initialSinglePremium).toBe(0)
+    useIlpStore.getState().reset()
+    const addSeedResult = useIlpStore.getState().addPolicyFromSeed(seed)
+    if (!addSeedResult.success) {
+      throw new Error(addSeedResult.errors.join(' | '))
+    }
     expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'top-up', contributionShare: 1 },
@@ -2957,6 +2965,15 @@ describe('templateVariantToPolicySeed', () => {
         id: 'recurring-single-premium-charge',
         trigger: 'recurring-single-premium',
         basis: 'event-amount-with-overlap-months',
+        appliesTo: ['policy'],
+        rate: 0,
+        amount: 0,
+      }),
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'single-premium-charge',
+        basis: 'initial-single-premium',
         appliesTo: ['policy'],
         rate: 0,
         amount: 0,
