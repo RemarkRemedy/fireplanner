@@ -1170,6 +1170,30 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds FWD Invest Goal 1 SGD as a partial catalog product with original-base plan charges', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'FWD Invest Goal 1')
+
+    expect(within(dialog).getByText('FWD Invest Goal 1')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-endeduse partial template$/i }))
+
+    expect(screen.getAllByText('FWD Invest Goal 1 (SGD / Open-ended)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('open-ended single-premium product uses the no-MIP basis')
+    expect(seededAlert?.textContent).toContain('gross commencement lump sum before trusting the seeded starting value')
+    expect(seededAlert?.textContent).toContain('minimum residual account-value rules remain informational only')
+    expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Initial Account Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Plan Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
