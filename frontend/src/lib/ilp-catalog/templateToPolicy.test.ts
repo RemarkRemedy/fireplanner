@@ -2661,7 +2661,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('supports distribution-paying fund elections'))).toBe(true)
   })
 
-  it('maps Goal Builder II into a partial premium-year seed with PAF and surrender schedules', () => {
+  it('maps Goal Builder II into a supported premium-year seed with PAF and surrender schedules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'hsbc-life-goal-builder-ii')
     expect(product).toBeDefined()
@@ -2670,7 +2670,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:goal-builder-ii-premium-year-paf')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:goal-builder-ii-loyalty-bonus-cadence')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')

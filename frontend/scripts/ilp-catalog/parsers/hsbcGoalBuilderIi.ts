@@ -282,7 +282,7 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
     eecTable: [...SURRENDER_CHARGE_BY_TERM[term]],
     eecYearBasis: 'premium-year',
     warnings: [
-      'Goal Builder II is modeled as a partial subset in V1. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, Loyalty Bonus cadence keyed to Premium Year, top-up / recurrent single premium charge, Premium-Year-based surrender / partial-withdrawal penalties, manual regular-withdrawal payout support, and the reinvest-default distribution-mode assumption surface.',
+      'Goal Builder II is cataloged as a supported V1 product. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, Loyalty Bonus cadence keyed to Premium Year, top-up / recurrent single premium charge, Premium-Year-based surrender / partial-withdrawal penalties, manual regular-withdrawal payout support, and the reinvest-default distribution-mode assumption surface.',
       'The Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only in V1.',
       'The published $50 dividend-payout threshold, no-dividend-during-insufficient-NAV rule, and withdrawal minimum-balance gates remain informational only in V1.',
     ],
@@ -308,9 +308,9 @@ export function parseHsbcGoalBuilderIi({ document, sourceChecksumSha256 }: Parse
     sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:goal-builder-ii-welcome-bonus',
       'branch:goal-builder-ii-welcome-bonus-recovery',
@@ -329,7 +329,7 @@ export function parseHsbcGoalBuilderIi({ document, sourceChecksumSha256 }: Parse
       'goal-builder-ii-regular-withdrawal-minimums',
     ],
     warnings: [
-      'Goal Builder II is a partial modeled subset in V1. Premium-Year-based Product Administration Fee, Loyalty Bonus cadence, surrender mechanics, manual regular-withdrawal payout support, and reinvest-default dividend-distribution support are modeled; the 24-month supplementary-premium exclusion inside the Loyalty Bonus formula, the dividend threshold / insufficient-NAV gates, and death/TI payout mechanics are not.',
+      'Goal Builder II is cataloged as a supported V1 product. Premium-Year-based Product Administration Fee, Loyalty Bonus cadence, surrender mechanics, manual regular-withdrawal payout support, and reinvest-default dividend-distribution support are modeled; the 24-month supplementary-premium exclusion inside the Loyalty Bonus formula, the dividend threshold / insufficient-NAV gates, and death/TI payout mechanics remain informational only.',
     ],
     archived: false,
     variants: TERM_OPTIONS.flatMap((term) => [

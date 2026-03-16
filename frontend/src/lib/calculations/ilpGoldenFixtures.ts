@@ -65,6 +65,13 @@ export type GoldenCoverageTag =
   | 'branch:hsbc-voyage-tiered-brc'
   | 'branch:hsbc-voyage-topup-charge'
   | 'branch:hsbc-voyage-premium-holiday-suspension'
+  | 'branch:goal-builder-ii-welcome-bonus'
+  | 'branch:goal-builder-ii-welcome-bonus-recovery'
+  | 'branch:goal-builder-ii-premium-year-paf'
+  | 'branch:goal-builder-ii-loyalty-bonus-cadence'
+  | 'branch:goal-builder-ii-top-up-premium-charge'
+  | 'branch:goal-builder-ii-recurrent-single-premium-charge'
+  | 'branch:goal-builder-ii-premium-year-surrender-charge'
   | 'branch:pru-holiday-refund'
   | 'branch:pru-holiday-fallback'
   | 'branch:pru-top-up-charge'
@@ -2698,6 +2705,115 @@ function hsbcWealthInvestCashSrsStressPolicy(
 ): IlpPolicyInput {
   return hsbcWealthInvestCashSrsBasePolicy(snapshot, variantId, id, HSBC_STRESS_FUNDS, {
     name: `Golden HSBC Life Wealth Invest (Cash/SRS) (${variantId.toUpperCase()} OCF Stress)`,
+  })
+}
+
+function hsbcGoalBuilderIiBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-mip-5' | 'sgd-mip-10' | 'sgd-mip-15' | 'usd-mip-5' | 'usd-mip-10' | 'usd-mip-15',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'hsbc-life-goal-builder-ii', variantId, id, {
+    monthlyContribution: 1_000,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden HSBC Goal Builder II (${variantId.toUpperCase()})`,
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 18_000,
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function hsbcGoalBuilderIiBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-mip-5' | 'sgd-mip-10' | 'sgd-mip-15' | 'usd-mip-5' | 'usd-mip-10' | 'usd-mip-15',
+  id: string,
+): IlpPolicyInput {
+  const payoutStartPolicyYear = variantId.endsWith('mip-5')
+    ? 6
+    : variantId.endsWith('mip-10')
+      ? 11
+      : 16
+
+  return hsbcGoalBuilderIiBasePolicy(snapshot, variantId, id, HSBC_BALANCED_FUNDS, {
+    name: `Golden HSBC Goal Builder II (${variantId.toUpperCase()} Baseline)`,
+    distributionAssumption: {
+      mode: 'cash-payout',
+      source: 'manual-assumption',
+      annualYieldRate: 0.03,
+    },
+    scheduledPayoutAssumption: {
+      mode: 'scheduled-redemption',
+      source: 'manual-assumption',
+      accountId: 'policy',
+      startPolicyYear: payoutStartPolicyYear,
+      durationYears: 8,
+      annualPayoutAmount: 2_400,
+    },
+  })
+}
+
+function hsbcGoalBuilderIiEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return hsbcGoalBuilderIiBasePolicy(snapshot, 'sgd-mip-10', id, HSBC_BALANCED_FUNDS, {
+    name: 'Golden HSBC Goal Builder II (SGD / MIP 10 Event Heavy)',
+    currentPolicyYear: 2,
+    monthsAlreadyPaid: 18,
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 19,
+        durationMonths: 1,
+        amount: 6_000,
+      },
+      {
+        id: 'reduction-1',
+        type: 'regular-premium-reduction',
+        startPolicyMonth: 20,
+        durationMonths: 1,
+        amount: 400,
+      },
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 23,
+        durationMonths: 4,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 30,
+        durationMonths: 1,
+        amount: 1_200,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function hsbcGoalBuilderIiStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return hsbcGoalBuilderIiBasePolicy(snapshot, 'sgd-mip-15', id, HSBC_STRESS_FUNDS, {
+    name: 'Golden HSBC Goal Builder II (SGD / MIP 15 OCF Stress)',
+    currentPolicyYear: 6,
+    monthsAlreadyPaid: 60,
   })
 }
 
@@ -5736,6 +5852,94 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'HSBC Life Wealth Invest (SRS) alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'hsbc-life-goal-builder-ii',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'HSBC Goal Builder II SGD / MIP 5 baseline scenario under supported payout and distribution assumptions.',
+  },
+  {
+    productId: 'hsbc-life-goal-builder-ii',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:scheduled-payout-manual-assumption',
+      'kernel:distribution-mode-assumption',
+      'branch:goal-builder-ii-welcome-bonus',
+      'branch:goal-builder-ii-premium-year-paf',
+      'branch:goal-builder-ii-loyalty-bonus-cadence',
+    ],
+    description: 'HSBC Goal Builder II baseline scenario covering welcome bonus, premium-year PAF and loyalty mechanics, plus manual scheduled-redemption and cash-payout distribution assumptions.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive fees under the premium-year PAF corridor',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+      {
+        description: 'baseline policy produces annual withdrawals under the scheduled-redemption or cash-payout distribution assumptions',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'hsbc-life-goal-builder-ii',
+    variantId: 'usd-mip-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'HSBC Goal Builder II USD / MIP 5 baseline scenario under supported payout and distribution assumptions.',
+  },
+  {
+    productId: 'hsbc-life-goal-builder-ii',
+    variantId: 'usd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'HSBC Goal Builder II USD / MIP 10 baseline scenario under supported payout and distribution assumptions.',
+  },
+  {
+    productId: 'hsbc-life-goal-builder-ii',
+    variantId: 'usd-mip-15',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'HSBC Goal Builder II USD / MIP 15 baseline scenario under supported payout and distribution assumptions.',
+  },
+  {
+    productId: 'hsbc-life-goal-builder-ii',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:goal-builder-ii-welcome-bonus-recovery',
+      'branch:goal-builder-ii-top-up-premium-charge',
+      'branch:goal-builder-ii-premium-year-surrender-charge',
+    ],
+    description: 'HSBC Goal Builder II event-heavy scenario covering premium reduction, top-up charging, premium holiday, and partial withdrawal during the surrender-penalty corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy records annual contribution in excess of the scheduled premium from the seeded top-up event',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+      {
+        description: 'event-heavy policy records a partial withdrawal in projection output',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'hsbc-life-goal-builder-ii',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress', 'branch:goal-builder-ii-recurrent-single-premium-charge'],
+    description: 'HSBC Goal Builder II alternate-fund high-OCF stress scenario. Post-MIP recurrent-single-premium charging remains structurally covered by parser/test support because V1 golden seeds do not admit mature-policy states.',
+  },
+  {
     productId: 'prudential-prulink-investgrowth',
     variantId: 'sgd-open-ended-cash',
     scenarioId: 'baseline',
@@ -7527,6 +7731,19 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'hsbc-life-wealth-invest-cash-srs' && definition.scenarioId === 'ocf-stress') {
     return hsbcWealthInvestCashSrsStressPolicy(snapshot, definition.variantId as 'sgd-open-ended-cash' | 'sgd-open-ended-srs', id)
+  }
+  if (definition.productId === 'hsbc-life-goal-builder-ii' && definition.scenarioId === 'baseline') {
+    return hsbcGoalBuilderIiBaselinePolicy(
+      snapshot,
+      definition.variantId as 'sgd-mip-5' | 'sgd-mip-10' | 'sgd-mip-15' | 'usd-mip-5' | 'usd-mip-10' | 'usd-mip-15',
+      id,
+    )
+  }
+  if (definition.productId === 'hsbc-life-goal-builder-ii' && definition.scenarioId === 'event-heavy') {
+    return hsbcGoalBuilderIiEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'hsbc-life-goal-builder-ii' && definition.scenarioId === 'ocf-stress') {
+    return hsbcGoalBuilderIiStressPolicy(snapshot, id)
   }
   if (definition.productId === 'income-snack-investment' && definition.scenarioId === 'baseline') {
     return incomeSnackInvestmentBaselinePolicy(snapshot, id)
