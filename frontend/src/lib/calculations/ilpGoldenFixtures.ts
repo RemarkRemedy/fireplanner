@@ -3835,6 +3835,124 @@ function manulifeInvestreadyIiiStressPolicy(
   })
 }
 
+const MANULIFE_INVESTREADY_III_SEP_2025_VARIANT_LABELS = {
+  'sgd-mip-5-flexi-4-sep-2025': 'SGD / MIP 5 Flexi 4',
+  'sgd-mip-7-flexi-5-sep-2025': 'SGD / MIP 7 Flexi 5',
+  'sgd-mip-10-flexi-3-sep-2025': 'SGD / MIP 10 Flexi 3',
+  'sgd-mip-10-flexi-5-sep-2025': 'SGD / MIP 10 Flexi 5',
+  'sgd-mip-10-flexi-8-sep-2025': 'SGD / MIP 10 Flexi 8',
+  'sgd-mip-13-flexi-10-sep-2025': 'SGD / MIP 13 Flexi 10',
+} as const
+
+function manulifeInvestreadyIiiSep2025BasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: keyof typeof MANULIFE_INVESTREADY_III_SEP_2025_VARIANT_LABELS,
+  variantLabel: string,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const monthlyContribution = 350
+  const currentPolicyYear = 2
+  const currentNetRegularPremiumBase = monthlyContribution * 12 * (currentPolicyYear - 1)
+  const base = seedPolicy(snapshot, 'manulife-investready-iii-sep-2025', variantId, id, {
+    monthlyContribution,
+    currentPolicyYear,
+    monthsAlreadyPaid: 24,
+    assuranceProfile: {
+      currentAgeNextBirthday: 47,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentNetRegularPremiumBase,
+    },
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden Manulife InvestReady (III) Sep-2025 (${variantLabel})`,
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 18_000,
+      })),
+      distributionAssumption: {
+        mode: 'cash-payout',
+        source: 'manual-assumption',
+        annualYieldRate: 0.03,
+      },
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function manulifeInvestreadyIiiSep2025BaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: keyof typeof MANULIFE_INVESTREADY_III_SEP_2025_VARIANT_LABELS,
+  id: string,
+): IlpPolicyInput {
+  const variantLabel = MANULIFE_INVESTREADY_III_SEP_2025_VARIANT_LABELS[variantId]
+  return manulifeInvestreadyIiiSep2025BasePolicy(snapshot, variantId, variantLabel, id, MANULIFE_BALANCED_FUNDS, {
+    name: `Golden Manulife InvestReady (III) Sep-2025 (${variantLabel} Baseline)`,
+  })
+}
+
+function manulifeInvestreadyIiiSep2025EventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return manulifeInvestreadyIiiSep2025BasePolicy(
+    snapshot,
+    'sgd-mip-5-flexi-4-sep-2025',
+    MANULIFE_INVESTREADY_III_SEP_2025_VARIANT_LABELS['sgd-mip-5-flexi-4-sep-2025'],
+    id,
+    MANULIFE_BALANCED_FUNDS,
+    {
+    name: 'Golden Manulife InvestReady (III) Sep-2025 (SGD / MIP 5 Flexi 4 Event Heavy)',
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 25,
+        durationMonths: 3,
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 30,
+        durationMonths: 1,
+        amount: 8_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 34,
+        durationMonths: 1,
+        amount: 3_500,
+        accountId: 'policy',
+      },
+    ],
+  },
+  )
+}
+
+function manulifeInvestreadyIiiSep2025StressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return manulifeInvestreadyIiiSep2025BasePolicy(
+    snapshot,
+    'sgd-mip-5-flexi-4-sep-2025',
+    MANULIFE_INVESTREADY_III_SEP_2025_VARIANT_LABELS['sgd-mip-5-flexi-4-sep-2025'],
+    id,
+    MANULIFE_STRESS_FUNDS,
+    {
+    name: 'Golden Manulife InvestReady (III) Sep-2025 (SGD / MIP 5 Flexi 4 OCF Stress)',
+  },
+  )
+}
+
 function singlifeLegacyInvestBasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
@@ -9964,6 +10082,109 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Manulife InvestReady (III) alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'manulife-investready-iii-sep-2025',
+    variantId: 'sgd-mip-5-flexi-4-sep-2025',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:protected-base-assurance',
+      'kernel:distribution-mode-assumption',
+      'branch:manulife-investready-iii-administrative-charge',
+      'branch:manulife-investready-iii-full-surrender-charge',
+    ],
+    description: 'Manulife InvestReady (III) Sep-2025 baseline scenario covering the supported administration-charge, full-surrender-charge, protected-base assurance, and post-MIP cash-payout distribution corridors.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the administration-charge corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+      {
+        description: 'baseline policy exposes a positive surrender-charge rate during the MIP corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.eecRate > 0),
+      },
+    ],
+  },
+  {
+    productId: 'manulife-investready-iii-sep-2025',
+    variantId: 'sgd-mip-5-flexi-4-sep-2025',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:manulife-investready-iii-premium-shortfall-charge',
+      'branch:manulife-investready-iii-zero-top-up-charge',
+      'branch:manulife-investready-iii-partial-withdrawal-charge',
+    ],
+    description: 'Manulife InvestReady (III) Sep-2025 event-heavy scenario covering premium holiday, zero-charge top-up, and in-MIP partial withdrawal on the supported corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy records both top-up contribution and later withdrawals',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > 0 && row.annualWithdrawals > 0),
+      },
+      {
+        description: 'premium holiday increases cumulative fees beyond the same policy without the holiday event',
+        test: (fixture, artifact) => {
+          const withoutHoliday = ilpPolicySchema.parse({
+            ...fixture.policy,
+            policyEvents: fixture.policy.policyEvents?.filter((event) => event.type !== 'premium-holiday'),
+          })
+          const withHolidayFees = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutHolidayFees = analyzeIlpPolicy(withoutHoliday).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withHolidayFees > withoutHolidayFees
+        },
+      },
+    ],
+  },
+  {
+    productId: 'manulife-investready-iii-sep-2025',
+    variantId: 'sgd-mip-5-flexi-4-sep-2025',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Manulife InvestReady (III) Sep-2025 alternate-fund high-OCF stress scenario.',
+  },
+  {
+    productId: 'manulife-investready-iii-sep-2025',
+    variantId: 'sgd-mip-7-flexi-5-sep-2025',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Manulife InvestReady (III) Sep-2025 7 Years Flexi 5 baseline scenario under supported post-MIP distribution assumptions.',
+  },
+  {
+    productId: 'manulife-investready-iii-sep-2025',
+    variantId: 'sgd-mip-10-flexi-3-sep-2025',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Manulife InvestReady (III) Sep-2025 10 Years Flexi 3 baseline scenario under supported post-MIP distribution assumptions.',
+  },
+  {
+    productId: 'manulife-investready-iii-sep-2025',
+    variantId: 'sgd-mip-10-flexi-5-sep-2025',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Manulife InvestReady (III) Sep-2025 10 Years Flexi 5 baseline scenario under supported post-MIP distribution assumptions.',
+  },
+  {
+    productId: 'manulife-investready-iii-sep-2025',
+    variantId: 'sgd-mip-10-flexi-8-sep-2025',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Manulife InvestReady (III) Sep-2025 10 Years Flexi 8 baseline scenario under supported post-MIP distribution assumptions.',
+  },
+  {
+    productId: 'manulife-investready-iii-sep-2025',
+    variantId: 'sgd-mip-13-flexi-10-sep-2025',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Manulife InvestReady (III) Sep-2025 13 Years Flexi 10 baseline scenario under supported post-MIP distribution assumptions.',
+  },
+  {
     productId: 'singlife-legacy-invest',
     variantId: 'sgd-mip-10-term-15',
     scenarioId: 'baseline',
@@ -13232,6 +13453,19 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'manulife-investready-iii' && definition.scenarioId === 'ocf-stress') {
     return manulifeInvestreadyIiiStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'manulife-investready-iii-sep-2025' && definition.scenarioId === 'baseline') {
+    return manulifeInvestreadyIiiSep2025BaselinePolicy(
+      snapshot,
+      definition.variantId as keyof typeof MANULIFE_INVESTREADY_III_SEP_2025_VARIANT_LABELS,
+      id,
+    )
+  }
+  if (definition.productId === 'manulife-investready-iii-sep-2025' && definition.scenarioId === 'event-heavy') {
+    return manulifeInvestreadyIiiSep2025EventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'manulife-investready-iii-sep-2025' && definition.scenarioId === 'ocf-stress') {
+    return manulifeInvestreadyIiiSep2025StressPolicy(snapshot, id)
   }
   if (definition.productId === 'singlife-legacy-invest' && definition.scenarioId === 'baseline') {
     return singlifeLegacyInvestBaselinePolicy(snapshot, id)

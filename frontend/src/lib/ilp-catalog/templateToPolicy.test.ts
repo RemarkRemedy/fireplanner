@@ -5698,6 +5698,84 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
+  it('maps Manulife InvestReady (III) Sep-2025 into a supported seed with variant charge schedules', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'manulife-investready-iii-sep-2025')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-5-flexi-4-sep-2025')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-zero-top-up-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-partial-withdrawal-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-full-surrender-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-life-stage-partial-withdrawal')
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.mipLength).toBe(5)
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'policy',
+        feeRate: 0.025,
+        postMipFeeRate: 0.01,
+        subjectToEec: true,
+      }),
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'cost-of-insurance',
+        basis: 'assurance-sum-at-risk',
+        assuranceConfig: expect.objectContaining({
+          formula: 'manulife-investready-iii-death-ti',
+          monthlyModalFactor: 1 / 12,
+        }),
+        requiresManualInput: true,
+      }),
+    ])
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        basis: 'event-amount',
+        rate: 0,
+      }),
+      expect.objectContaining({
+        id: 'premium-shortfall-charge',
+        trigger: 'premium-holiday',
+        basis: 'committed-annual-premium-with-overlap-months',
+        rateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 2, rate: 1 },
+          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.75 },
+          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.4 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
+      }),
+    ])
+    expect(seed.eecTable).toEqual([1, 1, 0.75, 0.4, 0.2])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: false,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('life-stage partial-withdrawal waivers remain outside the current engine'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
+  })
+
   it('maps ManuInvest Duo into a partial seed with protected-base assurance support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'manulife-manuinvest-duo')

@@ -14932,14 +14932,16 @@
     "sourceChecksumSha256": "7aaa348327691d832506b466830475c907b259dc5b53a2c589317768d0eb5b45",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
       "kernel:protected-base-assurance",
       "branch:manulife-investready-iii-administrative-charge",
       "branch:manulife-investready-iii-premium-shortfall-charge",
       "branch:manulife-investready-iii-zero-top-up-charge",
+      "branch:manulife-investready-iii-partial-withdrawal-charge",
+      "branch:manulife-investready-iii-full-surrender-charge",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
@@ -14948,8 +14950,6 @@
       "manulife-investready-iii-annual-premium-bonus",
       "manulife-investready-iii-loyalty-bonus",
       "manulife-investready-iii-step-up-booster-bonus",
-      "manulife-investready-iii-full-surrender-charge",
-      "manulife-investready-iii-partial-withdrawal-charge",
       "manulife-investready-iii-life-stage-partial-withdrawal",
       "manulife-investready-iii-dividend-payout-threshold",
       "manulife-investready-iii-reinvested-dividend-withdrawals",
@@ -14959,7 +14959,7 @@
       "manulife-investready-iii-reinstatement"
     ],
     "warnings": [
-      "Manulife InvestReady (III) Sep-2025 summary cohort is cataloged as a separate partial modeled subset in V1. The parser captures the published administration-charge path, the 101% paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface, while policy-fee thresholds, bonus mechanics, withdrawal / surrender schedules, and fund-level charges remain outside the current engine."
+      "Manulife InvestReady (III) Sep-2025 summary cohort is cataloged as a separate supported corridor set in V1. The parser captures the published administration-charge path, the 101% paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedules, the MIP full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface, while policy-fee thresholds, bonus mechanics, life-stage withdrawal waivers, and fund-level charges remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -14974,7 +14974,7 @@
             "label": "Policy Account",
             "feeRate": 0.025,
             "postMipFeeRate": 0.01,
-            "subjectToEec": false,
+            "subjectToEec": true,
             "contributionRules": [
               {
                 "phase": "during-icp",
@@ -15004,9 +15004,9 @@
                 "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
               },
               {
-                "page": 9,
+                "page": 10,
                 "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
               }
             ]
           }
@@ -15072,9 +15072,9 @@
             ],
             "sourceRefs": [
               {
-                "page": 9,
+                "page": 10,
                 "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
               }
             ]
           },
@@ -15119,8 +15119,64 @@
               },
               {
                 "page": 9,
-                "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "section": "Premium shortfall charge and management charge",
+                "excerpt": "Premium Shortfall Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.2
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published MIP partial-withdrawal charge schedule for the 5 Years Flexi 4 corridor.",
+              "Partial-withdrawal amount limits, minimum residual-account-value rules, and the life-stage waiver corridor remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Surrender and partial withdrawal charge tables",
+                "excerpt": "Partial Withdrawal Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 10"
+              },
+              {
+                "page": 11,
+                "section": "Partial withdrawal and life-stage withdrawal options",
+                "excerpt": "7. Life Stage Partial Withdrawal Starting from policy year 6 and before the end of MIP (excluding MIP 5 Years Flexi 4), you may request for partial withdrawal due to a life stage event and the partial withdrawal charge w"
               }
             ]
           }
@@ -15146,16 +15202,22 @@
             }
           ]
         },
-        "eecTable": [],
+        "eecTable": [
+          1,
+          1,
+          0.75,
+          0.4,
+          0.2
+        ],
         "warnings": [
-          "5 Years Flexi 4 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
-          "Policy-fee thresholds, all bonus mechanics, surrender / partial-withdrawal charge schedules, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "5 Years Flexi 4 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, all bonus mechanics, and life-stage partial-withdrawal waivers remain outside the current engine.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
           "Welcome Bonus, Annual Premium Bonus, Loyalty Bonus, and Step-up Booster Bonus remain informational only.",
-          "Full-surrender and partial-withdrawal charge schedules remain informational only, including the life-stage partial-withdrawal waiver corridor.",
+          "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
@@ -15179,9 +15241,24 @@
             "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
           },
           {
+            "page": 8,
+            "section": "Surrender and partial withdrawal charge tables",
+            "excerpt": "Partial Withdrawal Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 10"
+          },
+          {
             "page": 9,
+            "section": "Premium shortfall charge and management charge",
+            "excerpt": "Premium Shortfall Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100"
+          },
+          {
+            "page": 10,
             "section": "Top-up premium and policy options",
-            "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+            "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
+          },
+          {
+            "page": 11,
+            "section": "Partial withdrawal and life-stage withdrawal options",
+            "excerpt": "7. Life Stage Partial Withdrawal Starting from policy year 6 and before the end of MIP (excluding MIP 5 Years Flexi 4), you may request for partial withdrawal due to a life stage event and the partial withdrawal charge w"
           },
           {
             "page": 12,
@@ -15206,7 +15283,7 @@
             "label": "Policy Account",
             "feeRate": 0.025,
             "postMipFeeRate": 0.01,
-            "subjectToEec": false,
+            "subjectToEec": true,
             "contributionRules": [
               {
                 "phase": "during-icp",
@@ -15236,9 +15313,9 @@
                 "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
               },
               {
-                "page": 9,
+                "page": 10,
                 "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
               }
             ]
           }
@@ -15304,9 +15381,9 @@
             ],
             "sourceRefs": [
               {
-                "page": 9,
+                "page": 10,
                 "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
               }
             ]
           },
@@ -15356,8 +15433,74 @@
               },
               {
                 "page": 9,
-                "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "section": "Premium shortfall charge and management charge",
+                "excerpt": "Premium Shortfall Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.77
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published MIP partial-withdrawal charge schedule for the 7 Years Flexi 5 corridor.",
+              "Partial-withdrawal amount limits, minimum residual-account-value rules, and the life-stage waiver corridor remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Surrender and partial withdrawal charge tables",
+                "excerpt": "Partial Withdrawal Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 10"
+              },
+              {
+                "page": 11,
+                "section": "Partial withdrawal and life-stage withdrawal options",
+                "excerpt": "7. Life Stage Partial Withdrawal Starting from policy year 6 and before the end of MIP (excluding MIP 5 Years Flexi 4), you may request for partial withdrawal due to a life stage event and the partial withdrawal charge w"
               }
             ]
           }
@@ -15383,16 +15526,24 @@
             }
           ]
         },
-        "eecTable": [],
+        "eecTable": [
+          1,
+          1,
+          0.77,
+          0.4,
+          0.2,
+          0.1,
+          0.05
+        ],
         "warnings": [
-          "7 Years Flexi 5 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
-          "Policy-fee thresholds, all bonus mechanics, surrender / partial-withdrawal charge schedules, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "7 Years Flexi 5 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, all bonus mechanics, and life-stage partial-withdrawal waivers remain outside the current engine.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
           "Welcome Bonus, Annual Premium Bonus, Loyalty Bonus, and Step-up Booster Bonus remain informational only.",
-          "Full-surrender and partial-withdrawal charge schedules remain informational only, including the life-stage partial-withdrawal waiver corridor.",
+          "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
@@ -15416,9 +15567,24 @@
             "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
           },
           {
+            "page": 8,
+            "section": "Surrender and partial withdrawal charge tables",
+            "excerpt": "Partial Withdrawal Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 10"
+          },
+          {
             "page": 9,
+            "section": "Premium shortfall charge and management charge",
+            "excerpt": "Premium Shortfall Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100"
+          },
+          {
+            "page": 10,
             "section": "Top-up premium and policy options",
-            "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+            "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
+          },
+          {
+            "page": 11,
+            "section": "Partial withdrawal and life-stage withdrawal options",
+            "excerpt": "7. Life Stage Partial Withdrawal Starting from policy year 6 and before the end of MIP (excluding MIP 5 Years Flexi 4), you may request for partial withdrawal due to a life stage event and the partial withdrawal charge w"
           },
           {
             "page": 12,
@@ -15443,7 +15609,7 @@
             "label": "Policy Account",
             "feeRate": 0.025,
             "postMipFeeRate": 0.007,
-            "subjectToEec": false,
+            "subjectToEec": true,
             "contributionRules": [
               {
                 "phase": "during-icp",
@@ -15473,9 +15639,9 @@
                 "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
               },
               {
-                "page": 9,
+                "page": 10,
                 "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
               }
             ]
           }
@@ -15541,9 +15707,9 @@
             ],
             "sourceRefs": [
               {
-                "page": 9,
+                "page": 10,
                 "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
               }
             ]
           },
@@ -15583,8 +15749,89 @@
               },
               {
                 "page": 9,
-                "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "section": "Premium shortfall charge and management charge",
+                "excerpt": "Premium Shortfall Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.79
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.47
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.44
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.21
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.16
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published MIP partial-withdrawal charge schedule for the 10 Years Flexi 3 corridor.",
+              "Partial-withdrawal amount limits, minimum residual-account-value rules, and the life-stage waiver corridor remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Surrender and partial withdrawal charge tables",
+                "excerpt": "Partial Withdrawal Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 10"
+              },
+              {
+                "page": 11,
+                "section": "Partial withdrawal and life-stage withdrawal options",
+                "excerpt": "7. Life Stage Partial Withdrawal Starting from policy year 6 and before the end of MIP (excluding MIP 5 Years Flexi 4), you may request for partial withdrawal due to a life stage event and the partial withdrawal charge w"
               }
             ]
           }
@@ -15610,16 +15857,27 @@
             }
           ]
         },
-        "eecTable": [],
+        "eecTable": [
+          1,
+          1,
+          0.79,
+          0.6,
+          0.5,
+          0.47,
+          0.44,
+          0.21,
+          0.16,
+          0.08
+        ],
         "warnings": [
-          "10 Years Flexi 3 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
-          "Policy-fee thresholds, all bonus mechanics, surrender / partial-withdrawal charge schedules, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "10 Years Flexi 3 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, all bonus mechanics, and life-stage partial-withdrawal waivers remain outside the current engine.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
           "Welcome Bonus, Annual Premium Bonus, Loyalty Bonus, and Step-up Booster Bonus remain informational only.",
-          "Full-surrender and partial-withdrawal charge schedules remain informational only, including the life-stage partial-withdrawal waiver corridor.",
+          "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
@@ -15643,9 +15901,24 @@
             "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
           },
           {
+            "page": 8,
+            "section": "Surrender and partial withdrawal charge tables",
+            "excerpt": "Partial Withdrawal Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 10"
+          },
+          {
             "page": 9,
+            "section": "Premium shortfall charge and management charge",
+            "excerpt": "Premium Shortfall Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100"
+          },
+          {
+            "page": 10,
             "section": "Top-up premium and policy options",
-            "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+            "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
+          },
+          {
+            "page": 11,
+            "section": "Partial withdrawal and life-stage withdrawal options",
+            "excerpt": "7. Life Stage Partial Withdrawal Starting from policy year 6 and before the end of MIP (excluding MIP 5 Years Flexi 4), you may request for partial withdrawal due to a life stage event and the partial withdrawal charge w"
           },
           {
             "page": 12,
@@ -15670,7 +15943,7 @@
             "label": "Policy Account",
             "feeRate": 0.025,
             "postMipFeeRate": 0.007,
-            "subjectToEec": false,
+            "subjectToEec": true,
             "contributionRules": [
               {
                 "phase": "during-icp",
@@ -15700,9 +15973,9 @@
                 "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
               },
               {
-                "page": 9,
+                "page": 10,
                 "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
               }
             ]
           }
@@ -15768,9 +16041,9 @@
             ],
             "sourceRefs": [
               {
-                "page": 9,
+                "page": 10,
                 "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
               }
             ]
           },
@@ -15820,8 +16093,89 @@
               },
               {
                 "page": 9,
-                "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "section": "Premium shortfall charge and management charge",
+                "excerpt": "Premium Shortfall Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.79
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.47
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.44
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.21
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.16
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published MIP partial-withdrawal charge schedule for the 10 Years Flexi 5 corridor.",
+              "Partial-withdrawal amount limits, minimum residual-account-value rules, and the life-stage waiver corridor remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Surrender and partial withdrawal charge tables",
+                "excerpt": "Partial Withdrawal Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 10"
+              },
+              {
+                "page": 11,
+                "section": "Partial withdrawal and life-stage withdrawal options",
+                "excerpt": "7. Life Stage Partial Withdrawal Starting from policy year 6 and before the end of MIP (excluding MIP 5 Years Flexi 4), you may request for partial withdrawal due to a life stage event and the partial withdrawal charge w"
               }
             ]
           }
@@ -15847,16 +16201,27 @@
             }
           ]
         },
-        "eecTable": [],
+        "eecTable": [
+          1,
+          1,
+          0.79,
+          0.6,
+          0.5,
+          0.47,
+          0.44,
+          0.21,
+          0.16,
+          0.08
+        ],
         "warnings": [
-          "10 Years Flexi 5 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
-          "Policy-fee thresholds, all bonus mechanics, surrender / partial-withdrawal charge schedules, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "10 Years Flexi 5 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, all bonus mechanics, and life-stage partial-withdrawal waivers remain outside the current engine.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
           "Welcome Bonus, Annual Premium Bonus, Loyalty Bonus, and Step-up Booster Bonus remain informational only.",
-          "Full-surrender and partial-withdrawal charge schedules remain informational only, including the life-stage partial-withdrawal waiver corridor.",
+          "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
@@ -15880,9 +16245,24 @@
             "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
           },
           {
+            "page": 8,
+            "section": "Surrender and partial withdrawal charge tables",
+            "excerpt": "Partial Withdrawal Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 10"
+          },
+          {
             "page": 9,
+            "section": "Premium shortfall charge and management charge",
+            "excerpt": "Premium Shortfall Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100"
+          },
+          {
+            "page": 10,
             "section": "Top-up premium and policy options",
-            "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+            "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
+          },
+          {
+            "page": 11,
+            "section": "Partial withdrawal and life-stage withdrawal options",
+            "excerpt": "7. Life Stage Partial Withdrawal Starting from policy year 6 and before the end of MIP (excluding MIP 5 Years Flexi 4), you may request for partial withdrawal due to a life stage event and the partial withdrawal charge w"
           },
           {
             "page": 12,
@@ -15907,7 +16287,7 @@
             "label": "Policy Account",
             "feeRate": 0.025,
             "postMipFeeRate": 0.007,
-            "subjectToEec": false,
+            "subjectToEec": true,
             "contributionRules": [
               {
                 "phase": "during-icp",
@@ -15937,9 +16317,9 @@
                 "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
               },
               {
-                "page": 9,
+                "page": 10,
                 "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
               }
             ]
           }
@@ -16005,9 +16385,9 @@
             ],
             "sourceRefs": [
               {
-                "page": 9,
+                "page": 10,
                 "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
               }
             ]
           },
@@ -16072,8 +16452,89 @@
               },
               {
                 "page": 9,
-                "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "section": "Premium shortfall charge and management charge",
+                "excerpt": "Premium Shortfall Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.79
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.47
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.44
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.21
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.16
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published MIP partial-withdrawal charge schedule for the 10 Years Flexi 8 corridor.",
+              "Partial-withdrawal amount limits, minimum residual-account-value rules, and the life-stage waiver corridor remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Surrender and partial withdrawal charge tables",
+                "excerpt": "Partial Withdrawal Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 10"
+              },
+              {
+                "page": 11,
+                "section": "Partial withdrawal and life-stage withdrawal options",
+                "excerpt": "7. Life Stage Partial Withdrawal Starting from policy year 6 and before the end of MIP (excluding MIP 5 Years Flexi 4), you may request for partial withdrawal due to a life stage event and the partial withdrawal charge w"
               }
             ]
           }
@@ -16099,16 +16560,27 @@
             }
           ]
         },
-        "eecTable": [],
+        "eecTable": [
+          1,
+          1,
+          0.79,
+          0.6,
+          0.5,
+          0.47,
+          0.44,
+          0.21,
+          0.16,
+          0.08
+        ],
         "warnings": [
-          "10 Years Flexi 8 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
-          "Policy-fee thresholds, all bonus mechanics, surrender / partial-withdrawal charge schedules, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "10 Years Flexi 8 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, all bonus mechanics, and life-stage partial-withdrawal waivers remain outside the current engine.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
           "Welcome Bonus, Annual Premium Bonus, Loyalty Bonus, and Step-up Booster Bonus remain informational only.",
-          "Full-surrender and partial-withdrawal charge schedules remain informational only, including the life-stage partial-withdrawal waiver corridor.",
+          "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
@@ -16132,9 +16604,24 @@
             "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
           },
           {
+            "page": 8,
+            "section": "Surrender and partial withdrawal charge tables",
+            "excerpt": "Partial Withdrawal Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 10"
+          },
+          {
             "page": 9,
+            "section": "Premium shortfall charge and management charge",
+            "excerpt": "Premium Shortfall Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100"
+          },
+          {
+            "page": 10,
             "section": "Top-up premium and policy options",
-            "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+            "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
+          },
+          {
+            "page": 11,
+            "section": "Partial withdrawal and life-stage withdrawal options",
+            "excerpt": "7. Life Stage Partial Withdrawal Starting from policy year 6 and before the end of MIP (excluding MIP 5 Years Flexi 4), you may request for partial withdrawal due to a life stage event and the partial withdrawal charge w"
           },
           {
             "page": 12,
@@ -16159,7 +16646,7 @@
             "label": "Policy Account",
             "feeRate": 0.025,
             "postMipFeeRate": 0.007,
-            "subjectToEec": false,
+            "subjectToEec": true,
             "contributionRules": [
               {
                 "phase": "during-icp",
@@ -16189,9 +16676,9 @@
                 "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
               },
               {
-                "page": 9,
+                "page": 10,
                 "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
               }
             ]
           }
@@ -16257,9 +16744,9 @@
             ],
             "sourceRefs": [
               {
-                "page": 9,
+                "page": 10,
                 "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
               }
             ]
           },
@@ -16334,8 +16821,104 @@
               },
               {
                 "page": 9,
-                "section": "Top-up premium and policy options",
-                "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+                "section": "Premium shortfall charge and management charge",
+                "excerpt": "Premium Shortfall Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.81
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.63
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.53
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.49
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.46
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.27
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.22
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.14
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published MIP partial-withdrawal charge schedule for the 13 Years Flexi 10 corridor.",
+              "Partial-withdrawal amount limits, minimum residual-account-value rules, and the life-stage waiver corridor remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Surrender and partial withdrawal charge tables",
+                "excerpt": "Partial Withdrawal Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 10"
+              },
+              {
+                "page": 11,
+                "section": "Partial withdrawal and life-stage withdrawal options",
+                "excerpt": "7. Life Stage Partial Withdrawal Starting from policy year 6 and before the end of MIP (excluding MIP 5 Years Flexi 4), you may request for partial withdrawal due to a life stage event and the partial withdrawal charge w"
               }
             ]
           }
@@ -16361,16 +16944,30 @@
             }
           ]
         },
-        "eecTable": [],
+        "eecTable": [
+          1,
+          1,
+          0.81,
+          0.63,
+          0.53,
+          0.49,
+          0.46,
+          0.27,
+          0.22,
+          0.14,
+          0.08,
+          0.08,
+          0.08
+        ],
         "warnings": [
-          "13 Years Flexi 10 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
-          "Policy-fee thresholds, all bonus mechanics, surrender / partial-withdrawal charge schedules, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "13 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, all bonus mechanics, and life-stage partial-withdrawal waivers remain outside the current engine.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
           "Welcome Bonus, Annual Premium Bonus, Loyalty Bonus, and Step-up Booster Bonus remain informational only.",
-          "Full-surrender and partial-withdrawal charge schedules remain informational only, including the life-stage partial-withdrawal waiver corridor.",
+          "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
@@ -16394,9 +16991,24 @@
             "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
           },
           {
+            "page": 8,
+            "section": "Surrender and partial withdrawal charge tables",
+            "excerpt": "Partial Withdrawal Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 10"
+          },
+          {
             "page": 9,
+            "section": "Premium shortfall charge and management charge",
+            "excerpt": "Premium Shortfall Charge (%) Policy Minimum Investment Period Year 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100"
+          },
+          {
+            "page": 10,
             "section": "Top-up premium and policy options",
-            "excerpt": "Approximate excerpt; keyword \"Top-up Premium\" not found on page. Manulife InvestReady (III) 5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfal"
+            "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
+          },
+          {
+            "page": 11,
+            "section": "Partial withdrawal and life-stage withdrawal options",
+            "excerpt": "7. Life Stage Partial Withdrawal Starting from policy year 6 and before the end of MIP (excluding MIP 5 Years Flexi 4), you may request for partial withdrawal due to a life stage event and the partial withdrawal charge w"
           },
           {
             "page": 12,

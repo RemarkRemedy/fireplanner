@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseManulifeInvestreadyIiiSep2025', () => {
-  it('builds a valid partial product for the Sep-2025 multi-variant cohort', async () => {
+  it('builds a valid supported product for the Sep-2025 multi-variant cohort', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseManulifeInvestreadyIiiSep2025({
       document,
@@ -23,13 +23,15 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('manulife-investready-iii-sep-2025')
     expect(product.productName).toBe('Manulife InvestReady (III)')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'kernel:protected-base-assurance',
       'branch:manulife-investready-iii-administrative-charge',
       'branch:manulife-investready-iii-premium-shortfall-charge',
       'branch:manulife-investready-iii-zero-top-up-charge',
+      'branch:manulife-investready-iii-partial-withdrawal-charge',
+      'branch:manulife-investready-iii-full-surrender-charge',
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-policy-fee')
@@ -51,6 +53,7 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
         id: 'policy',
         feeRate: 0.025,
         postMipFeeRate: 0.01,
+        subjectToEec: true,
       }),
     ])
     expect(firstVariant?.feeRules).toEqual([
@@ -93,7 +96,20 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
           { startPolicyYear: 4, endPolicyYear: 4, rate: 0.4 },
         ],
       }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
+        rateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
+          { startPolicyYear: 2, endPolicyYear: 2, rate: 1 },
+          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.75 },
+          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.4 },
+          { startPolicyYear: 5, endPolicyYear: 5, rate: 0.2 },
+        ],
+      }),
     ])
+    expect(firstVariant?.eecTable).toEqual([1, 1, 0.75, 0.4, 0.2])
 
     const lastVariant = product.variants.at(-1)
     expect(lastVariant?.mipLength).toBe(13)
@@ -113,6 +129,24 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
         { startPolicyYear: 10, endPolicyYear: 10, rate: 0.14 },
       ],
     }))
-    expect(lastVariant?.warnings).toContain('Policy-fee thresholds, all bonus mechanics, surrender / partial-withdrawal charge schedules, and life-stage partial-withdrawal waivers remain outside the current engine.')
+    expect(lastVariant?.eventChargeRules[2]).toEqual(expect.objectContaining({
+      rateSchedule: [
+        { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
+        { startPolicyYear: 2, endPolicyYear: 2, rate: 1 },
+        { startPolicyYear: 3, endPolicyYear: 3, rate: 0.81 },
+        { startPolicyYear: 4, endPolicyYear: 4, rate: 0.63 },
+        { startPolicyYear: 5, endPolicyYear: 5, rate: 0.53 },
+        { startPolicyYear: 6, endPolicyYear: 6, rate: 0.49 },
+        { startPolicyYear: 7, endPolicyYear: 7, rate: 0.46 },
+        { startPolicyYear: 8, endPolicyYear: 8, rate: 0.27 },
+        { startPolicyYear: 9, endPolicyYear: 9, rate: 0.22 },
+        { startPolicyYear: 10, endPolicyYear: 10, rate: 0.14 },
+        { startPolicyYear: 11, endPolicyYear: 11, rate: 0.08 },
+        { startPolicyYear: 12, endPolicyYear: 12, rate: 0.08 },
+        { startPolicyYear: 13, endPolicyYear: 13, rate: 0.08 },
+      ],
+    }))
+    expect(lastVariant?.eecTable).toEqual([1, 1, 0.81, 0.63, 0.53, 0.49, 0.46, 0.27, 0.22, 0.14, 0.08, 0.08, 0.08])
+    expect(lastVariant?.warnings).toContain('Policy-fee thresholds, all bonus mechanics, and life-stage partial-withdrawal waivers remain outside the current engine.')
   }, 30_000)
 })
