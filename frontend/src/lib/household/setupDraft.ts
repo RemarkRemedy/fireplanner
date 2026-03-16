@@ -21,6 +21,7 @@ export interface SetupDraft {
   incomeType: 'gross' | 'take-home'
   annualExpenses: number
   liquidNetWorth: number
+  cashSavings?: number
   // SG Pillars
   residency: 'citizen' | 'pr' | 'foreigner'
   cpfKnown: boolean
@@ -117,6 +118,7 @@ export function applySetupDraft(draft: SetupDraft, planType: HouseholdPlanType):
     annualIncome: grossIncome,
     annualExpenses: draft.annualExpenses,
     liquidNetWorth: draft.liquidNetWorth,
+    cashSavings: draft.cashSavings ?? 0,
     residencyStatus: draft.residency,
     lifeStage: draft.lifeStage ?? 'pre-fire',
     healthcare: {
@@ -653,6 +655,7 @@ export function hydrateSetupFromPlan(plan: HouseholdPlan): SetupDraft {
     incomeType: 'gross',
     annualExpenses: selfExpense?.amount ?? self.annualExpenses,
     liquidNetWorth: selfAsset?.amount ?? self.liquidNetWorth,
+    cashSavings: self.cashSavings > 0 ? self.cashSavings : undefined,
     residency: self.residencyStatus,
     cpfKnown,
     cpfTotal: cpfKnown ? cpfTotal : undefined,

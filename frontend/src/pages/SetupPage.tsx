@@ -393,6 +393,7 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
     incomeType: 'gross', // always gross — take-home conversion done above via grossUpFromTakeHome
     annualExpenses: (values.monthlyExpenses as number) * 12,
     liquidNetWorth: values.liquidNetWorth as number,
+    cashSavings: (values.savingsBank as number) || undefined,
     residency: values.residency as 'citizen' | 'pr' | 'foreigner',
     cpfKnown,
     cpfTotal,
@@ -450,6 +451,7 @@ function hydrateDraftToValues(draft: SetupDraft): Record<string, unknown> {
     bonusMonths: 1,
     monthlyExpenses: Math.round(draft.annualExpenses / 12),
     liquidNetWorth: draft.liquidNetWorth,
+    savingsBank: draft.cashSavings ?? 0,
     residency: draft.residency,
     cpfKnown: draft.cpfKnown,
     cpfMode: (draft.cpfTotal ?? 0) > 0 ? 'know' : 'estimate',
