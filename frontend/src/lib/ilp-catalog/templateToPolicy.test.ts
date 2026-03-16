@@ -4753,7 +4753,6 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goclassic-secure-locked-in-policy-value')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goclassic-secure-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.accounts).toEqual([
       expect.objectContaining({
@@ -4803,8 +4802,47 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-payment-term-25 corridor only'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('Basic Death'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
+  })
+
+  it('maps Tokio Marine #goClassic Secure advanced death into a partial seed with locked-in-value MPC', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-goclassic-secure')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-25-advanced-death')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:tokio-locked-in-protection-state')
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'monthly-protection-charge',
+        basis: 'assurance-sum-at-risk',
+        appliesTo: ['accumulation'],
+        assuranceValueAppliesTo: ['initial', 'accumulation'],
+        assuranceConfig: expect.objectContaining({
+          formula: 'tokio-mpc-locked-in-policy-value',
+          rateTable: 'tokio-mpc-unzo-death',
+          accrual: {
+            startPolicyYear: 1,
+            endPolicyYear: 2,
+            settlementPolicyYear: 3,
+          },
+          disableFutureChargesOnInsufficientDeduction: true,
+          tokioProtectionState: {
+            mode: 'locked-in-policy-value',
+            trackedValueAccountIds: ['initial', 'accumulation'],
+            withdrawalReductionAccountIds: ['initial', 'accumulation'],
+          },
+        }),
+        requiresManualInput: true,
+      }),
+    ])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('Locked-in Policy Value floor'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('current locked-in value manually'))).toBe(true)
   })
 
   it('maps HSBC Life Flexi Protector into a partial seed with premium charges, fixed admin fee, and allocation uplift', () => {

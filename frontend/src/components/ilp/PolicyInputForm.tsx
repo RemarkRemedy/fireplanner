@@ -69,6 +69,15 @@ function requiresCurrentNetSupplementaryPremiumBase(rule: IlpChargeRule): boolea
   return rule.assuranceConfig?.formula === 'hsbc-flexi-choice-death-ti'
 }
 
+function requiresCurrentLockedInPolicyValue(rule: IlpChargeRule): boolean {
+  return rule.assuranceConfig?.formula === 'tokio-mpc-locked-in-policy-value'
+    || rule.assuranceConfig?.formula === 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'
+}
+
+function requiresCurrentAdjustedSinglePremium(rule: IlpChargeRule): boolean {
+  return rule.assuranceConfig?.formula === 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'
+}
+
 export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
   const updatePolicy = useIlpStore((state) => state.updatePolicy)
   const setFund = useIlpStore((state) => state.setFund)
@@ -107,6 +116,10 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
     && assuranceProfile?.currentBasicSumAssured == null
   const missingCurrentNetSupplementaryPremiumBase = assuranceRules.some((rule) => rule.requiresManualInput && requiresCurrentNetSupplementaryPremiumBase(rule))
     && assuranceProfile?.currentNetSupplementaryPremiumBase == null
+  const missingCurrentLockedInPolicyValue = assuranceRules.some((rule) => rule.requiresManualInput && requiresCurrentLockedInPolicyValue(rule))
+    && assuranceProfile?.currentLockedInPolicyValue == null
+  const missingCurrentAdjustedSinglePremium = assuranceRules.some((rule) => rule.requiresManualInput && requiresCurrentAdjustedSinglePremium(rule))
+    && assuranceProfile?.currentAdjustedSinglePremium == null
   const missingInitialSinglePremium = (initialSinglePremiumRules.length > 0 || usesPersistedInitialSinglePremiumBase)
     && policy.currentPolicyYear === 1
     && policy.monthsAlreadyPaid === 0
@@ -162,6 +175,12 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
     ...(missingCurrentNetSupplementaryPremiumBase
       ? ['This product also needs the current net RSP + top-up base before the HSBC Flexi Choice Cover charge can be trusted.']
       : []),
+    ...(missingCurrentLockedInPolicyValue
+      ? ['This product also needs the current Locked-in Policy Value before the Tokio secure-product Monthly Protection Charge can be trusted.']
+      : []),
+    ...(missingCurrentAdjustedSinglePremium
+      ? ['This product also needs the current Adjusted Single Premium before the Tokio secure-product Monthly Protection Charge can be trusted.']
+      : []),
     ...(missingInitialSinglePremium
       ? ['This product uses the gross initial single premium as an inception seed and/or continuing charge base. Enter the one-time gross commencement lump sum before trusting the seeded starting value, establishment charges, or surrender penalties.']
       : []),
@@ -185,6 +204,8 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
       currentWealthAssureValue: assuranceProfile?.currentWealthAssureValue,
       currentBasicSumAssured: assuranceProfile?.currentBasicSumAssured,
       currentNetSupplementaryPremiumBase: assuranceProfile?.currentNetSupplementaryPremiumBase,
+      currentLockedInPolicyValue: assuranceProfile?.currentLockedInPolicyValue,
+      currentAdjustedSinglePremium: assuranceProfile?.currentAdjustedSinglePremium,
       ...patch,
     },
   })
@@ -387,6 +408,20 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                     label={`Current Net RSP + Top-up Base (${policy.currency})`}
                     value={assuranceProfile?.currentNetSupplementaryPremiumBase ?? 0}
                     onChange={(value) => upsertAssuranceProfile({ currentNetSupplementaryPremiumBase: value })}
+                  />
+                )}
+                {assuranceRules.some(requiresCurrentLockedInPolicyValue) && (
+                  <CurrencyInput
+                    label={`Current Locked-in Policy Value (${policy.currency})`}
+                    value={assuranceProfile?.currentLockedInPolicyValue ?? 0}
+                    onChange={(value) => upsertAssuranceProfile({ currentLockedInPolicyValue: value })}
+                  />
+                )}
+                {assuranceRules.some(requiresCurrentAdjustedSinglePremium) && (
+                  <CurrencyInput
+                    label={`Current Adjusted Single Premium (${policy.currency})`}
+                    value={assuranceProfile?.currentAdjustedSinglePremium ?? 0}
+                    onChange={(value) => upsertAssuranceProfile({ currentAdjustedSinglePremium: value })}
                   />
                 )}
               </>

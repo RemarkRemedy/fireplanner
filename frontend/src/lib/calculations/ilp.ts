@@ -147,6 +147,14 @@ export interface IlpAssuranceProfile {
   currentWealthAssureValue?: number
   currentBasicSumAssured?: number
   currentNetSupplementaryPremiumBase?: number
+  currentLockedInPolicyValue?: number
+  currentAdjustedSinglePremium?: number
+}
+
+export interface IlpTokioProtectionStateConfig {
+  mode: 'locked-in-policy-value' | 'locked-in-policy-value-with-adjusted-single-premium'
+  trackedValueAccountIds: string[]
+  withdrawalReductionAccountIds: string[]
 }
 
 export interface IlpAssuranceChargeConfig {
@@ -159,6 +167,8 @@ export interface IlpAssuranceChargeConfig {
     | 'manulife-investready-iii-death-ti'
     | 'manulife-manuinvest-duo-death-ti-tpd'
     | 'tokio-mpc-net-premium-floor'
+    | 'tokio-mpc-locked-in-policy-value'
+    | 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'
   rateTable?:
     | 'tokio-mpc-unzo-death'
   monthlyModalFactor: number
@@ -166,9 +176,10 @@ export interface IlpAssuranceChargeConfig {
   accrual?: {
     startPolicyYear: number
     endPolicyYear: number
-    settlementPolicyYear: number
-  }
+      settlementPolicyYear: number
+    }
   disableFutureChargesOnInsufficientDeduction?: boolean
+  tokioProtectionState?: IlpTokioProtectionStateConfig
 }
 
 export interface IlpPremiumBaseMultiplierTier {
@@ -483,6 +494,13 @@ type IlpAssuranceFormulaFamily =
   | 'protected-base-paid-premium-floor'
   | 'protected-base-sum-assured'
   | 'tokio-mpc-net-premium-floor'
+  | 'tokio-mpc-locked-in-policy-value'
+  | 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'
+
+interface IlpTokioProtectionState {
+  lockedInPolicyValue: number
+  adjustedSinglePremium?: number
+}
 
 interface IlpNormalizedAssuranceRule {
   rule: IlpChargeRule & { assuranceConfig: IlpAssuranceChargeConfig }
@@ -492,6 +510,8 @@ interface IlpNormalizedAssuranceRule {
   assuranceValueAppliesTo: IlpAccount[]
   assuranceValueAppliesToIds: string[]
   fallbackAppliesTo: IlpAccount[]
+  tokioTrackedValueAccountIds: string[]
+  tokioWithdrawalReductionAccountIds: string[]
 }
 
 interface IlpNormalizedAssuranceKernel {
@@ -753,6 +773,14 @@ function buildNormalizedAssuranceKernel(
       )
       const assuranceValueAppliesToIds = assuranceValueAppliesTo.map((account) => account.id)
       const fallbackAppliesTo = resolveAccountsInDisplayOrder(input, rule.fallbackAppliesTo ?? [])
+      const tokioTrackedValueAccountIds = uniqueAccountIdsInDisplayOrder(
+        input.accounts,
+        rule.assuranceConfig.tokioProtectionState?.trackedValueAccountIds ?? [],
+      )
+      const tokioWithdrawalReductionAccountIds = uniqueAccountIdsInDisplayOrder(
+        input.accounts,
+        rule.assuranceConfig.tokioProtectionState?.withdrawalReductionAccountIds ?? [],
+      )
 
       return {
         rule,
@@ -762,6 +790,8 @@ function buildNormalizedAssuranceKernel(
         assuranceValueAppliesTo,
         assuranceValueAppliesToIds,
         fallbackAppliesTo,
+        tokioTrackedValueAccountIds,
+        tokioWithdrawalReductionAccountIds,
       }
     })
     .filter((normalizedRule) => (
@@ -1417,6 +1447,10 @@ function getAssuranceFormulaFamily(
       return 'protected-base-sum-assured'
     case 'tokio-mpc-net-premium-floor':
       return 'tokio-mpc-net-premium-floor'
+    case 'tokio-mpc-locked-in-policy-value':
+      return 'tokio-mpc-locked-in-policy-value'
+    case 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium':
+      return 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'
     default:
       return assertNever(config.formula)
   }
@@ -1449,6 +1483,8 @@ function resolveAssuranceRate(
     case 'manulife-manuinvest-duo-death-ti-tpd':
       return MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE[riskClass][ageIndex] ?? 0
     case 'tokio-mpc-net-premium-floor':
+    case 'tokio-mpc-locked-in-policy-value':
+    case 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium':
       switch (rule.assuranceConfig.rateTable) {
         case 'tokio-mpc-unzo-death':
           return TOKIO_MPC_UNZO_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0
@@ -1550,6 +1586,99 @@ function computeTokioMpcNetPremiumFloorSumAtRisk(
   return Math.max(0, midpointNetPremiumBase - (midpointApplicableValue * TOKIO_MPC_PROTECTED_BASE_FLOOR_MULTIPLIER))
 }
 
+function getInitialTokioProtectionStateForRule(
+  normalized: IlpNormalizedPolicyInput,
+  rule: IlpNormalizedAssuranceRule,
+  openBalances: Map<string, number>,
+): IlpTokioProtectionState | undefined {
+  const tokioProtectionState = rule.rule.assuranceConfig.tokioProtectionState
+  if (!tokioProtectionState) {
+    return undefined
+  }
+
+  const trackedValue = sumBalancesForAccounts(openBalances, rule.tokioTrackedValueAccountIds)
+  const lockedInPolicyValue = Math.max(
+    normalized.assurance.profile?.currentLockedInPolicyValue
+      ?? normalized.input.initialSinglePremium
+      ?? trackedValue,
+    0,
+  )
+  const adjustedSinglePremium = tokioProtectionState.mode === 'locked-in-policy-value-with-adjusted-single-premium'
+    ? Math.max(
+        normalized.assurance.profile?.currentAdjustedSinglePremium
+          ?? normalized.input.initialSinglePremium
+          ?? 0,
+        0,
+      )
+    : undefined
+
+  return {
+    lockedInPolicyValue,
+    adjustedSinglePremium,
+  }
+}
+
+function computeTokioProtectionStateAndRisk(
+  rule: IlpNormalizedAssuranceRule,
+  startState: IlpTokioProtectionState,
+  openBalances: Map<string, number>,
+  provisionalCloseByAccount: Map<string, number>,
+  carriedIndebtedness: number,
+): {
+  sumAtRisk: number
+  nextState: IlpTokioProtectionState
+} {
+  const trackedValueAtOpen = sumBalancesForAccounts(openBalances, rule.tokioTrackedValueAccountIds)
+  const trackedValueAtClose = sumBalancesForAccounts(provisionalCloseByAccount, rule.tokioTrackedValueAccountIds)
+  const withdrawalReductionValueAtOpen = sumBalancesForAccounts(openBalances, rule.tokioWithdrawalReductionAccountIds)
+  const withdrawalReductionValueAtClose = sumBalancesForAccounts(provisionalCloseByAccount, rule.tokioWithdrawalReductionAccountIds)
+
+  const withdrawalRatio = withdrawalReductionValueAtOpen <= CONTRIBUTION_TOLERANCE
+    ? 1
+    : Math.max(0, Math.min(1, withdrawalReductionValueAtClose / withdrawalReductionValueAtOpen))
+  const hasWithdrawalReduction = withdrawalReductionValueAtClose + CONTRIBUTION_TOLERANCE < withdrawalReductionValueAtOpen
+
+  const reducedLockedInPolicyValue = Math.max(0, startState.lockedInPolicyValue * withdrawalRatio)
+  const nextLockedInPolicyValue = hasWithdrawalReduction
+    ? Math.max(reducedLockedInPolicyValue, trackedValueAtClose)
+    : Math.max(reducedLockedInPolicyValue, trackedValueAtOpen, trackedValueAtClose)
+  const nextAdjustedSinglePremium = startState.adjustedSinglePremium == null
+    ? undefined
+    : Math.max(0, startState.adjustedSinglePremium * withdrawalRatio)
+  const midpointTrackedValue = Math.max(0, (trackedValueAtOpen + trackedValueAtClose) / 2)
+  const midpointLockedInPolicyValue = Math.max(0, (startState.lockedInPolicyValue + nextLockedInPolicyValue) / 2)
+  const midpointAdjustedSinglePremium = nextAdjustedSinglePremium == null
+    ? 0
+    : Math.max(0, ((startState.adjustedSinglePremium ?? 0) + nextAdjustedSinglePremium) / 2)
+  const protectedFloor = rule.family === 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'
+    ? Math.max(midpointLockedInPolicyValue, midpointAdjustedSinglePremium)
+    : midpointLockedInPolicyValue
+
+  return {
+    sumAtRisk: Math.max(0, protectedFloor - carriedIndebtedness - midpointTrackedValue),
+    nextState: {
+      lockedInPolicyValue: nextLockedInPolicyValue,
+      adjustedSinglePremium: nextAdjustedSinglePremium,
+    },
+  }
+}
+
+function buildInitialTokioProtectionStateByRule(
+  normalized: IlpNormalizedPolicyInput,
+  openBalances: Map<string, number>,
+): Map<string, IlpTokioProtectionState> {
+  const stateByRule = new Map<string, IlpTokioProtectionState>()
+
+  normalized.assurance.rules.forEach((rule) => {
+    const state = getInitialTokioProtectionStateForRule(normalized, rule, openBalances)
+    if (state) {
+      stateByRule.set(rule.rule.id, state)
+    }
+  })
+
+  return stateByRule
+}
+
 function computePrudentialAssureIiStateAndRisk(
   nextSumAssured: number,
   nextWealthAssureValue: number,
@@ -1638,6 +1767,7 @@ function computeAssuranceChargeByAccount(
   sumAssuredAtStartOfYear: number | undefined,
   wealthAssureValueAtStartOfYear: number | undefined,
   growthFrozenAtStartOfYear: boolean,
+  tokioProtectionStateByRule: Map<string, IlpTokioProtectionState>,
   accruedChargeBalanceByRule: Map<string, number>,
   disabledAssuranceRuleIds: Set<string>,
 ): {
@@ -1645,6 +1775,7 @@ function computeAssuranceChargeByAccount(
   nextSumAssured: number | undefined
   nextWealthAssureValue: number | undefined
   nextGrowthFrozen: boolean
+  nextTokioProtectionStateByRule: Map<string, IlpTokioProtectionState>
   nextAccruedChargeBalanceByRule: Map<string, number>
   nextDisabledAssuranceRuleIds: Set<string>
 } {
@@ -1659,6 +1790,7 @@ function computeAssuranceChargeByAccount(
       nextSumAssured: sumAssuredAtStartOfYear,
       nextWealthAssureValue: wealthAssureValueAtStartOfYear,
       nextGrowthFrozen: growthFrozenAtStartOfYear,
+      nextTokioProtectionStateByRule: new Map(tokioProtectionStateByRule),
       nextAccruedChargeBalanceByRule,
       nextDisabledAssuranceRuleIds,
     }
@@ -1667,17 +1799,20 @@ function computeAssuranceChargeByAccount(
   let nextSumAssured = sumAssuredAtStartOfYear
   let nextWealthAssureValue = wealthAssureValueAtStartOfYear
   let nextGrowthFrozen = growthFrozenAtStartOfYear
+  const nextTokioProtectionStateByRule = new Map(tokioProtectionStateByRule)
   const ageNextBirthday = profile.currentAgeNextBirthday + projectionYear - 1
   const assuranceStateEvents = getAssuranceStateEventsForYear(normalized, context.range)
+  const carriedTotalIndebtedness = Array.from(accruedChargeBalanceByRule.values()).reduce((sum, value) => sum + value, 0)
 
-  for (const {
-    rule,
-    family,
-    appliesTo,
-    appliesToIds,
-    assuranceValueAppliesToIds,
-    fallbackAppliesTo,
-  } of normalized.assurance.rules) {
+  for (const normalizedRule of normalized.assurance.rules) {
+    const {
+      rule,
+      family,
+      appliesTo,
+      appliesToIds,
+      assuranceValueAppliesToIds,
+      fallbackAppliesTo,
+    } = normalizedRule
     const isPostMip = isPostMipPolicyYear(input, policyYear)
     const isActive = rule.activeWindow === 'policy-term'
       || (rule.activeWindow === 'during-mip' && !isPostMip)
@@ -1700,6 +1835,8 @@ function computeAssuranceChargeByAccount(
     )
     const carriedAccruedCharge = nextAccruedChargeBalanceByRule.get(rule.id) ?? 0
     const isDisabledAfterInsufficientDeduction = nextDisabledAssuranceRuleIds.has(rule.id)
+    const currentTokioProtectionState = nextTokioProtectionStateByRule.get(rule.id)
+      ?? getInitialTokioProtectionStateForRule(normalized, normalizedRule, openBalances)
 
     let sumAtRisk = 0
 
@@ -1772,6 +1909,23 @@ function computeAssuranceChargeByAccount(
           midpointApplicableValue,
         )
         break
+
+      case 'tokio-mpc-locked-in-policy-value':
+      case 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium':
+        if (!currentTokioProtectionState) {
+          continue
+        }
+
+        const tokioProtectionResult = computeTokioProtectionStateAndRisk(
+          normalizedRule,
+          currentTokioProtectionState,
+          openBalances,
+          provisionalCloseByAccount,
+          carriedTotalIndebtedness,
+        )
+        sumAtRisk = tokioProtectionResult.sumAtRisk
+        nextTokioProtectionStateByRule.set(rule.id, tokioProtectionResult.nextState)
+        break
     }
 
     const annualizedCharge = resolveAssuranceRate(rule, ageNextBirthday, profile) / 1000
@@ -1834,6 +1988,7 @@ function computeAssuranceChargeByAccount(
     nextSumAssured,
     nextWealthAssureValue,
     nextGrowthFrozen,
+    nextTokioProtectionStateByRule,
     nextAccruedChargeBalanceByRule,
     nextDisabledAssuranceRuleIds,
   }
@@ -3258,6 +3413,7 @@ export function projectIlpPolicy(
     normalized.assurance.rules.map(({ rule }) => [rule.id, 0]),
   )
   let disabledAssuranceRuleIds = new Set<string>()
+  let tokioProtectionStateByRule = buildInitialTokioProtectionStateByRule(normalized, previousClose)
   const assuranceRelevantAccountIds = getAssuranceRelevantAccountIds(normalized)
 
   for (let year = 1; year <= totalYears; year += 1) {
@@ -3379,6 +3535,7 @@ export function projectIlpPolicy(
       assuranceSumAssured,
       assuranceWealthAssureValue,
       assuranceGrowthFrozen,
+      tokioProtectionStateByRule,
       assuranceAccruedChargeBalanceByRule,
       disabledAssuranceRuleIds,
     )
@@ -3386,6 +3543,7 @@ export function projectIlpPolicy(
     assuranceSumAssured = assuranceChargeResult.nextSumAssured
     assuranceWealthAssureValue = assuranceChargeResult.nextWealthAssureValue
     assuranceGrowthFrozen = assuranceChargeResult.nextGrowthFrozen
+    tokioProtectionStateByRule = assuranceChargeResult.nextTokioProtectionStateByRule
     assuranceAccruedChargeBalanceByRule = assuranceChargeResult.nextAccruedChargeBalanceByRule
     disabledAssuranceRuleIds = assuranceChargeResult.nextDisabledAssuranceRuleIds
 

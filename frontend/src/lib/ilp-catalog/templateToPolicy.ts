@@ -135,7 +135,19 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
         amountSchedule: rule.amountSchedule?.map((tier) => ({ ...tier })),
         rate: isFixedAnnual || isAssurance ? 0 : (rule.rate ?? 0),
         amount: isAssurance ? 0 : (rule.amount ?? 0),
-        assuranceConfig: rule.assuranceConfig ? { ...rule.assuranceConfig } : undefined,
+        assuranceConfig: rule.assuranceConfig
+          ? {
+              ...rule.assuranceConfig,
+              accrual: rule.assuranceConfig.accrual ? { ...rule.assuranceConfig.accrual } : undefined,
+              tokioProtectionState: rule.assuranceConfig.tokioProtectionState
+                ? {
+                    ...rule.assuranceConfig.tokioProtectionState,
+                    trackedValueAccountIds: [...rule.assuranceConfig.tokioProtectionState.trackedValueAccountIds],
+                    withdrawalReductionAccountIds: [...rule.assuranceConfig.tokioProtectionState.withdrawalReductionAccountIds],
+                  }
+                : undefined,
+            }
+          : undefined,
         premiumBaseConfig: rule.premiumBaseConfig
             ? {
               useHigherOfCommencementAndPrevailing: rule.premiumBaseConfig.useHigherOfCommencementAndPrevailing,
@@ -325,6 +337,9 @@ export function templateVariantToPolicySeed(
         : []),
       ...(variant.feeRules.some((rule) => rule.basis === 'initial-single-premium') && !usesOriginalSinglePremiumBase(variant)
         ? ['Enter the one-time gross initial single premium lump sum in Policy Details if you want the upfront single-premium deduction to seed the starting policy value honestly.']
+        : []),
+      ...(variant.feeRules.some((rule) => rule.assuranceConfig?.tokioProtectionState)
+        ? ['Tokio secure-product protection-state mechanics use annualized approximations of the published monthiversary locked-in-value updates. Enter the current locked-in value manually if you are starting mid-policy.']
         : []),
       ...(variant.unsupportedItems ?? []),
     ],

@@ -80,6 +80,8 @@ export interface IlpTemplateFeeRule {
       | 'manulife-investready-iii-death-ti'
       | 'manulife-manuinvest-duo-death-ti-tpd'
       | 'tokio-mpc-net-premium-floor'
+      | 'tokio-mpc-locked-in-policy-value'
+      | 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'
     rateTable?:
       | 'tokio-mpc-unzo-death'
     monthlyModalFactor: number
@@ -90,6 +92,11 @@ export interface IlpTemplateFeeRule {
       settlementPolicyYear: number
     }
     disableFutureChargesOnInsufficientDeduction?: boolean
+    tokioProtectionState?: {
+      mode: 'locked-in-policy-value' | 'locked-in-policy-value-with-adjusted-single-premium'
+      trackedValueAccountIds: string[]
+      withdrawalReductionAccountIds: string[]
+    }
   }
   premiumBaseConfig?: {
     useHigherOfCommencementAndPrevailing: boolean

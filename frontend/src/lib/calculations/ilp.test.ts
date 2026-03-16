@@ -3443,6 +3443,246 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[1], 'accumulation').grossFee).toBe(0)
   })
 
+  it('charges Tokio secure MPC against the locked-in policy value floor when it exceeds tracked policy value', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 0,
+      mipLength: 2,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 40_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 30_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-secure-mpc',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-locked-in-policy-value',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+            tokioProtectionState: {
+              mode: 'locked-in-policy-value',
+              trackedValueAccountIds: ['initial', 'accumulation'],
+              withdrawalReductionAccountIds: ['initial', 'accumulation'],
+            },
+          },
+          requiresManualInput: true,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentLockedInPolicyValue: 100_000,
+      },
+    }), 'mid')
+
+    const yearOneRate = TOKIO_MPC_UNZO_DEATH_RATE_TABLE['male-non-smoker'][39] ?? 0
+    const expectedYearOneCharge = yearOneRate * 30_000 / 1000 * 12
+
+    expect(accountRow(result.rows[0], 'accumulation').grossFee).toBeCloseTo(expectedYearOneCharge, 6)
+  })
+
+  it('floors Tokio secure MPC at zero when tracked policy value is already above the locked-in floor', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 0,
+      mipLength: 2,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 40_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 30_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-secure-mpc-zero',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-locked-in-policy-value',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+            tokioProtectionState: {
+              mode: 'locked-in-policy-value',
+              trackedValueAccountIds: ['initial', 'accumulation'],
+              withdrawalReductionAccountIds: ['initial', 'accumulation'],
+            },
+          },
+          requiresManualInput: true,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentLockedInPolicyValue: 60_000,
+      },
+    }), 'mid')
+
+    expect(accountRow(result.rows[0], 'accumulation').grossFee).toBe(0)
+  })
+
+  it('reduces Tokio secure locked-in policy value proportionally after a partial withdrawal', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 0,
+      mipLength: 2,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 100_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 100_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      policyEvents: [
+        {
+          id: 'tokio-secure-withdrawal',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 1,
+          durationMonths: 1,
+          amount: 50_000,
+          accountId: 'accumulation',
+        },
+      ],
+      chargeRules: [
+        {
+          id: 'tokio-secure-mpc-withdrawal',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-locked-in-policy-value',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+            tokioProtectionState: {
+              mode: 'locked-in-policy-value',
+              trackedValueAccountIds: ['initial', 'accumulation'],
+              withdrawalReductionAccountIds: ['initial', 'accumulation'],
+            },
+          },
+          requiresManualInput: true,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentLockedInPolicyValue: 240_000,
+      },
+    }), 'mid')
+
+    // Year two uses the withdrawal-reduced locked-in floor after year-one MPC has
+    // already reduced the tracked policy-value close, so the modeled risk is
+    // slightly above a naive 30,000 remainder.
+    const expectedYearTwoCharge = 26.772527916000012
+
+    expect(accountRow(result.rows[1], 'accumulation').grossFee).toBeCloseTo(expectedYearTwoCharge, 6)
+  })
+
   it('projects the next-year Prudential Assure II combined assurance charge from the current worked-example state', () => {
     const result = projectIlpPolicy(makeDefaultPolicy({
       monthlyContribution: 0,
@@ -5417,7 +5657,7 @@ describe('computeNpvAnalysis', () => {
         smokerStatus: 'non-smoker',
         currentSumAssured: 50_000,
       },
-    }))).toThrow(/only supported for tokio-mpc-net-premium-floor rules/)
+    }))).toThrow(/only supported for Tokio MPC assurance rules/)
   })
 
   it('rejects mid-policy accrued assurance entry before the settlement year', () => {

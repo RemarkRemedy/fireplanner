@@ -77,7 +77,7 @@ describe('IlpReviewPage', () => {
     await user.click(screen.getByRole('button', { name: /choose product/i }))
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Accelerate')
-    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 25/i }))
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 25use template$/i }))
 
     expect(screen.getAllByText('Wealth Accelerate (SGD / MIP 25)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -161,7 +161,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Prosper')
 
-    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 25/i }))
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 25use template$/i }))
 
     expect(screen.getAllByText('PRUVantage Prosper (SGD / MIP 25)').length).toBeGreaterThan(0)
     expect(screen.getByText('Seeded from catalog template')).toBeInTheDocument()
@@ -833,14 +833,35 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goClassic Secure')
 
     expect(within(dialog).getByText('#goClassic Secure')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 25/i }))
+    await user.click(
+      within(dialog).getByRole('button', { name: /^sgd \/ mip 25use partial template$/i }),
+    )
 
     expect(screen.getAllByText('#goClassic Secure (SGD / MIP 25)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Partial template')
-    expect(seededAlert?.textContent).toContain('one honest SGD / premium-payment-term-25 corridor')
+    expect(seededAlert?.textContent).toContain('Basic Death keeps Monthly Protection Charge metadata-only')
     expect(screen.getByDisplayValue('Initial Bonus')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds Tokio Marine #goClassic Secure advanced death with locked-in-value MPC inputs', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goClassic Secure')
+
+    expect(within(dialog).getByText('#goClassic Secure')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /advanced death/i }))
+
+    expect(screen.getAllByText(/#goClassic Secure .*Advanced Death/i).length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Locked-in Policy Value floor')
+    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(screen.getByLabelText(/current locked-in policy value/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds HSBC Life Flexi Protector as a partial catalog product with premium charges and a fixed admin fee', async () => {

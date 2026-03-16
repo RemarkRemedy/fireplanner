@@ -74,6 +74,8 @@ export const ilpTemplateFeeRuleSchema = z.object({
       'manulife-investready-iii-death-ti',
       'manulife-manuinvest-duo-death-ti-tpd',
       'tokio-mpc-net-premium-floor',
+      'tokio-mpc-locked-in-policy-value',
+      'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium',
     ]),
     rateTable: z.enum([
       'tokio-mpc-unzo-death',
@@ -86,6 +88,11 @@ export const ilpTemplateFeeRuleSchema = z.object({
       settlementPolicyYear: z.number().int().min(1).max(100),
     }).optional(),
     disableFutureChargesOnInsufficientDeduction: z.boolean().optional(),
+    tokioProtectionState: z.object({
+      mode: z.enum(['locked-in-policy-value', 'locked-in-policy-value-with-adjusted-single-premium']),
+      trackedValueAccountIds: z.array(z.string().min(1)).min(1).max(10),
+      withdrawalReductionAccountIds: z.array(z.string().min(1)).min(1).max(10),
+    }).optional(),
   }).optional(),
   premiumBaseConfig: z.object({
     useHigherOfCommencementAndPrevailing: z.boolean(),
@@ -134,6 +141,21 @@ export const ilpTemplateFeeRuleSchema = z.object({
   }
 
   const accrual = rule.assuranceConfig?.accrual
+  const tokioProtectionState = rule.assuranceConfig?.tokioProtectionState
+
+  if (
+    tokioProtectionState
+    && rule.assuranceConfig
+    && rule.assuranceConfig.formula !== 'tokio-mpc-locked-in-policy-value'
+    && rule.assuranceConfig.formula !== 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'tokioProtectionState can only be used on Tokio locked-in-policy-value assurance formulas',
+      path: ['assuranceConfig', 'tokioProtectionState'],
+    })
+  }
+
   if (!accrual) return
 
   if (accrual.endPolicyYear < accrual.startPolicyYear) {
@@ -382,6 +404,26 @@ export const ilpTemplateVariantSchema = z.object({
           code: z.ZodIssueCode.custom,
           message: 'feeRules assuranceValueAppliesTo must reference existing accounts',
           path: ['feeRules', ruleIndex, 'assuranceValueAppliesTo', accountIndex],
+        })
+      }
+    })
+
+    rule.assuranceConfig?.tokioProtectionState?.trackedValueAccountIds.forEach((accountId, accountIndex) => {
+      if (!accountIds.has(accountId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'feeRules assuranceConfig.tokioProtectionState trackedValueAccountIds must reference existing accounts',
+          path: ['feeRules', ruleIndex, 'assuranceConfig', 'tokioProtectionState', 'trackedValueAccountIds', accountIndex],
+        })
+      }
+    })
+
+    rule.assuranceConfig?.tokioProtectionState?.withdrawalReductionAccountIds.forEach((accountId, accountIndex) => {
+      if (!accountIds.has(accountId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'feeRules assuranceConfig.tokioProtectionState withdrawalReductionAccountIds must reference existing accounts',
+          path: ['feeRules', ruleIndex, 'assuranceConfig', 'tokioProtectionState', 'withdrawalReductionAccountIds', accountIndex],
         })
       }
     })
