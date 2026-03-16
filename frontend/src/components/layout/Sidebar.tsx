@@ -116,6 +116,7 @@ const AFTER_INPUTS_GROUPS: { title: string; items: NavItem[] }[] = [
     title: 'ANALYSIS',
     items: [
       { label: 'Stress Test', path: '/stress-test', icon: <ShieldAlert className="h-4 w-4" /> },
+      { label: 'Health Check', path: '/health-check', icon: <HeartPulse className="h-4 w-4" /> },
     ],
   },
   {
@@ -185,19 +186,9 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
           },
         ],
       }]
-  const afterInputGroups = (companionMode
+  const afterInputGroups = companionMode
     ? AFTER_INPUTS_GROUPS.filter((group) => group.title === 'PLAN' || group.title === 'ANALYSIS')
     : AFTER_INPUTS_GROUPS
-  ).map((group) => {
-    if (group.title !== 'ANALYSIS' || !protectionEnabled) return group
-    return {
-      ...group,
-      items: [
-        ...group.items,
-        { label: 'Health Check', path: '/health-check', icon: <HeartPulse className="h-4 w-4" /> },
-      ],
-    }
-  })
 
   const expandSection = useUIStore((s) => s.expandSection)
 
