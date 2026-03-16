@@ -1471,6 +1471,30 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds Prestige Portfolio as a partial catalog product with manual premium-charge warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Prestige Portfolio')
+
+    expect(within(dialog).getByText('Prestige Portfolio')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(regular pay cash\)use partial template$/i }))
+
+    expect(screen.getAllByText('Prestige Portfolio (SGD / Open-ended (Regular Pay Cash))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('quote-driven premium-charge surface through manual input')
+    expect(seededAlert?.textContent).toContain('wrap-fee surface through manual input')
+    expect(seededAlert?.textContent).toContain('published 0.2% p.a. policy fee')
+    expect(screen.getByDisplayValue('Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Wrap Fee')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Investment Top-up Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
