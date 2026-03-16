@@ -310,6 +310,7 @@ export const ilpChargeRuleSchema = z.object({
       'prudential-assure-ii-combined',
       'hsbc-flexi-choice-death-ti',
       'hsbc-flexi-max-death-ti',
+      'income-invest-flex-death-ti',
       'manulife-investready-iii-death-ti',
       'manulife-manuinvest-duo-death-ti-tpd',
       'tokio-mpc-net-premium-floor',

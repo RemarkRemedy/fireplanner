@@ -158,7 +158,7 @@ function buildBonuses(term: MipTerm, page2: IlpCatalogSourceRef, page3: IlpCatal
       notes: [
         'Annual loyalty bonus from the 10th policy anniversary or the end of MIP, whichever is later.',
         'If any partial withdrawal is made in the prior 12 months, loyalty bonus eligibility is lost.',
-        'Withdrawals under the Life Events Withdrawal Benefit are not modeled separately in V1.',
+        'Qualifying Life Events Withdrawal Benefit withdrawals can preserve loyalty-bonus eligibility when the event is entered with the bonus-suspension waiver override; source eligibility timing and usage limits remain manual.',
       ],
       sourceRefs: [page3],
     },
@@ -198,6 +198,28 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
       ],
       sourceRefs: [page7],
     },
+    {
+      id: 'death-ti-insurance-cover-charge',
+      label: 'Death / TI Insurance Cover Charge',
+      basis: 'assurance-sum-at-risk',
+      rate: null,
+      amount: null,
+      assuranceConfig: {
+        formula: 'income-invest-flex-death-ti',
+        monthlyModalFactor: 1 / 12,
+        maxAgeNextBirthday: 99,
+      },
+      requiresManualInput: true,
+      appliesTo: ['policy'],
+      activeWindow: 'policy-term',
+      startPolicyYear: 3,
+      endPolicyYear: null,
+      notes: [
+        'Requires insured-life details and the current net regular premiums paid base before the calculator can model the monthly insurance cover charge.',
+        'Models the published 101% of net premiums paid less policy value sum-at-risk formula for the death and terminal-illness benefit.',
+      ],
+      sourceRefs: [page7, page17],
+    },
   ]
 
   return {
@@ -213,6 +235,8 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
         postMipFeeRate: null,
         subjectToEec: true,
         contributionRules: [
+          { phase: 'during-icp', targetAccountId: 'policy', contributionShare: 1 },
+          { phase: 'after-icp', targetAccountId: 'policy', contributionShare: 1 },
           { phase: 'top-up', targetAccountId: 'policy', contributionShare: 1 },
         ],
         sourceRefs: [page1, page2, page3],
@@ -251,7 +275,8 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
         allocation: 'equal-split',
         notes: [
           'Applied to partial withdrawals during the minimum investment period.',
-          'Life Events Withdrawal Benefit free withdrawals remain informational only in V1.',
+          'Qualifying Life Events Withdrawal Benefit withdrawals can be represented by setting both chargeWaived and bonusSuspensionWaived on the event.',
+          'Users must manually stay within the published 10% of prevailing policy value cap, once-per-life-event rule, three-use maximum, and documentary-proof timing conditions.',
         ],
         sourceRefs: [page4, page21],
       },
@@ -279,17 +304,15 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
     },
     eecTable: [...SURRENDER_CHARGE[term]],
     warnings: [
-      'Invest Flex is modeled as a partial subset in V1. The parser captures the policy fee, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support with cash payout allowed from the 5th policy anniversary onward through the manual distribution-mode assumption surface.',
-      'Death/TI insurance cover charges, secondary insured option, and life-events withdrawal benefit remain informational only in V1.',
-      'The published minimum distribution amount, CPF/SRS payout-election exclusions, and future premium option remain informational only in V1.',
+      'Invest Flex is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support with cash payout allowed from the 5th policy anniversary onward through the manual distribution-mode assumption surface.',
+      'Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, while eligibility timing, documentary proof, and usage-count limits remain manual.',
+      'The published minimum distribution amount, CPF/SRS payout-election exclusions, future premium option, and secondary-insured replacement mechanics remain informational only in V1.',
     ],
     unsupportedItems: [
-      'Death and terminal illness insurance cover charges remain informational only.',
-      'Secondary insured option remains informational only.',
-      'Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.',
+      'Secondary insured appointment, removal, and insured-replacement mechanics remain informational only.',
+      'Life Events Withdrawal Benefit eligibility timing, documentary proof, and use-count limits remain manual.',
       'Future Premium Option remains informational only.',
       'The published minimum distribution amount and CPF/SRS payout-election exclusions remain informational only.',
-      'Death benefit continuation after insured replacement remains informational only.',
     ],
     sourceRefs: [page1, page2, page3, page4, page5, page7, page15, page17, page20, page21, page22],
   }
@@ -304,11 +327,13 @@ export function parseIncomeInvestFlex(context: ParseContext): IlpCatalogProduct 
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
+      'kernel:protected-base-assurance',
       'branch:income-vs1-policy-fee',
+      'branch:income-vs1-death-ti-insurance-cover-charge',
       'branch:income-vs1-regular-premium-allocation-uplift',
       'branch:income-vs1-investment-bonus',
       'branch:income-vs1-loyalty-bonus',
@@ -319,14 +344,14 @@ export function parseIncomeInvestFlex(context: ParseContext): IlpCatalogProduct 
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'income-vs1-death-ti-insurance-cover-charge',
       'income-vs1-secondary-insured-option',
-      'income-vs1-life-events-withdrawal-benefit',
+      'income-vs1-life-events-withdrawal-eligibility-and-count-limits',
       'income-vs1-future-premium-option',
       'income-vs1-distribution-payout-threshold-and-cpf-srs-exclusions',
+      'income-vs1-death-benefit-continuation-after-insured-replacement',
     ],
     warnings: [
-      'Invest Flex is currently cataloged as a partial product. The regular-premium fee, charge, and bonus path plus reinvest-default distribution support are modeled, but insurance-cover charges, insured-replacement / life-event options, and fund-level distribution-election constraints remain informational only.',
+      'Invest Flex is cataloged as a supported V1 product. The parser captures the regular-premium fee, protection charge, charge and bonus path, and reinvest-default distribution support, while secondary-insured replacement mechanics, life-event eligibility administration, and fund-level distribution-election constraints remain informational only.',
     ],
     archived: false,
     variants: TERM_OPTIONS.map((term) => buildVariant(context.document, term)),

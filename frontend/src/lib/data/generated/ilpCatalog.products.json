@@ -6213,11 +6213,13 @@
     "sourceChecksumSha256": "b9f3754c8a9268e715e3a3894da3195cd4f0975600e44a3ef9078d5d445f322f",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
+      "kernel:protected-base-assurance",
       "branch:income-vs1-policy-fee",
+      "branch:income-vs1-death-ti-insurance-cover-charge",
       "branch:income-vs1-regular-premium-allocation-uplift",
       "branch:income-vs1-investment-bonus",
       "branch:income-vs1-loyalty-bonus",
@@ -6228,14 +6230,14 @@
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "income-vs1-death-ti-insurance-cover-charge",
       "income-vs1-secondary-insured-option",
-      "income-vs1-life-events-withdrawal-benefit",
+      "income-vs1-life-events-withdrawal-eligibility-and-count-limits",
       "income-vs1-future-premium-option",
-      "income-vs1-distribution-payout-threshold-and-cpf-srs-exclusions"
+      "income-vs1-distribution-payout-threshold-and-cpf-srs-exclusions",
+      "income-vs1-death-benefit-continuation-after-insured-replacement"
     ],
     "warnings": [
-      "Invest Flex is currently cataloged as a partial product. The regular-premium fee, charge, and bonus path plus reinvest-default distribution support are modeled, but insurance-cover charges, insured-replacement / life-event options, and fund-level distribution-election constraints remain informational only."
+      "Invest Flex is cataloged as a supported V1 product. The parser captures the regular-premium fee, protection charge, charge and bonus path, and reinvest-default distribution support, while secondary-insured replacement mechanics, life-event eligibility administration, and fund-level distribution-election constraints remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -6252,6 +6254,16 @@
             "postMipFeeRate": null,
             "subjectToEec": true,
             "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
               {
                 "phase": "top-up",
                 "targetAccountId": "policy",
@@ -6374,7 +6386,7 @@
             "notes": [
               "Annual loyalty bonus from the 10th policy anniversary or the end of MIP, whichever is later.",
               "If any partial withdrawal is made in the prior 12 months, loyalty bonus eligibility is lost.",
-              "Withdrawals under the Life Events Withdrawal Benefit are not modeled separately in V1."
+              "Qualifying Life Events Withdrawal Benefit withdrawals can preserve loyalty-bonus eligibility when the event is entered with the bonus-suspension waiver override; source eligibility timing and usage limits remain manual."
             ],
             "sourceRefs": [
               {
@@ -6418,6 +6430,41 @@
                 "page": 7,
                 "section": "Policy fee and insurance cover charge",
                 "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
+              }
+            ]
+          },
+          {
+            "id": "death-ti-insurance-cover-charge",
+            "label": "Death / TI Insurance Cover Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 3,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details and the current net regular premiums paid base before the calculator can model the monthly insurance cover charge.",
+              "Models the published 101% of net premiums paid less policy value sum-at-risk formula for the death and terminal-illness benefit."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
+              },
+              {
+                "page": 17,
+                "section": "Appendix 1 death and TI insurance cover charge",
+                "excerpt": "Appendix 1 – Yearly insurance cover charge rates for death and TI based on $1,000 sum at risk The table below shows the insurance cover charge rates for age up to 99 years. For age after 99 years, we will apply the rate "
               }
             ]
           }
@@ -6520,7 +6567,8 @@
             "allocation": "equal-split",
             "notes": [
               "Applied to partial withdrawals during the minimum investment period.",
-              "Life Events Withdrawal Benefit free withdrawals remain informational only in V1."
+              "Qualifying Life Events Withdrawal Benefit withdrawals can be represented by setting both chargeWaived and bonusSuspensionWaived on the event.",
+              "Users must manually stay within the published 10% of prevailing policy value cap, once-per-life-event rule, three-use maximum, and documentary-proof timing conditions."
             ],
             "sourceRefs": [
               {
@@ -6575,17 +6623,15 @@
           0.2
         ],
         "warnings": [
-          "Invest Flex is modeled as a partial subset in V1. The parser captures the policy fee, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support with cash payout allowed from the 5th policy anniversary onward through the manual distribution-mode assumption surface.",
-          "Death/TI insurance cover charges, secondary insured option, and life-events withdrawal benefit remain informational only in V1.",
-          "The published minimum distribution amount, CPF/SRS payout-election exclusions, and future premium option remain informational only in V1."
+          "Invest Flex is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support with cash payout allowed from the 5th policy anniversary onward through the manual distribution-mode assumption surface.",
+          "Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, while eligibility timing, documentary proof, and usage-count limits remain manual.",
+          "The published minimum distribution amount, CPF/SRS payout-election exclusions, future premium option, and secondary-insured replacement mechanics remain informational only in V1."
         ],
         "unsupportedItems": [
-          "Death and terminal illness insurance cover charges remain informational only.",
-          "Secondary insured option remains informational only.",
-          "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
+          "Secondary insured appointment, removal, and insured-replacement mechanics remain informational only.",
+          "Life Events Withdrawal Benefit eligibility timing, documentary proof, and use-count limits remain manual.",
           "Future Premium Option remains informational only.",
-          "The published minimum distribution amount and CPF/SRS payout-election exclusions remain informational only.",
-          "Death benefit continuation after insured replacement remains informational only."
+          "The published minimum distribution amount and CPF/SRS payout-election exclusions remain informational only."
         ],
         "sourceRefs": [
           {
@@ -6658,6 +6704,16 @@
             "postMipFeeRate": null,
             "subjectToEec": true,
             "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
               {
                 "phase": "top-up",
                 "targetAccountId": "policy",
@@ -6786,7 +6842,7 @@
             "notes": [
               "Annual loyalty bonus from the 10th policy anniversary or the end of MIP, whichever is later.",
               "If any partial withdrawal is made in the prior 12 months, loyalty bonus eligibility is lost.",
-              "Withdrawals under the Life Events Withdrawal Benefit are not modeled separately in V1."
+              "Qualifying Life Events Withdrawal Benefit withdrawals can preserve loyalty-bonus eligibility when the event is entered with the bonus-suspension waiver override; source eligibility timing and usage limits remain manual."
             ],
             "sourceRefs": [
               {
@@ -6830,6 +6886,41 @@
                 "page": 7,
                 "section": "Policy fee and insurance cover charge",
                 "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
+              }
+            ]
+          },
+          {
+            "id": "death-ti-insurance-cover-charge",
+            "label": "Death / TI Insurance Cover Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 3,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details and the current net regular premiums paid base before the calculator can model the monthly insurance cover charge.",
+              "Models the published 101% of net premiums paid less policy value sum-at-risk formula for the death and terminal-illness benefit."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
+              },
+              {
+                "page": 17,
+                "section": "Appendix 1 death and TI insurance cover charge",
+                "excerpt": "Appendix 1 – Yearly insurance cover charge rates for death and TI based on $1,000 sum at risk The table below shows the insurance cover charge rates for age up to 99 years. For age after 99 years, we will apply the rate "
               }
             ]
           }
@@ -6957,7 +7048,8 @@
             "allocation": "equal-split",
             "notes": [
               "Applied to partial withdrawals during the minimum investment period.",
-              "Life Events Withdrawal Benefit free withdrawals remain informational only in V1."
+              "Qualifying Life Events Withdrawal Benefit withdrawals can be represented by setting both chargeWaived and bonusSuspensionWaived on the event.",
+              "Users must manually stay within the published 10% of prevailing policy value cap, once-per-life-event rule, three-use maximum, and documentary-proof timing conditions."
             ],
             "sourceRefs": [
               {
@@ -7017,17 +7109,15 @@
           0.05
         ],
         "warnings": [
-          "Invest Flex is modeled as a partial subset in V1. The parser captures the policy fee, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support with cash payout allowed from the 5th policy anniversary onward through the manual distribution-mode assumption surface.",
-          "Death/TI insurance cover charges, secondary insured option, and life-events withdrawal benefit remain informational only in V1.",
-          "The published minimum distribution amount, CPF/SRS payout-election exclusions, and future premium option remain informational only in V1."
+          "Invest Flex is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support with cash payout allowed from the 5th policy anniversary onward through the manual distribution-mode assumption surface.",
+          "Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, while eligibility timing, documentary proof, and usage-count limits remain manual.",
+          "The published minimum distribution amount, CPF/SRS payout-election exclusions, future premium option, and secondary-insured replacement mechanics remain informational only in V1."
         ],
         "unsupportedItems": [
-          "Death and terminal illness insurance cover charges remain informational only.",
-          "Secondary insured option remains informational only.",
-          "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
+          "Secondary insured appointment, removal, and insured-replacement mechanics remain informational only.",
+          "Life Events Withdrawal Benefit eligibility timing, documentary proof, and use-count limits remain manual.",
           "Future Premium Option remains informational only.",
-          "The published minimum distribution amount and CPF/SRS payout-election exclusions remain informational only.",
-          "Death benefit continuation after insured replacement remains informational only."
+          "The published minimum distribution amount and CPF/SRS payout-election exclusions remain informational only."
         ],
         "sourceRefs": [
           {
@@ -7100,6 +7190,16 @@
             "postMipFeeRate": null,
             "subjectToEec": true,
             "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
               {
                 "phase": "top-up",
                 "targetAccountId": "policy",
@@ -7228,7 +7328,7 @@
             "notes": [
               "Annual loyalty bonus from the 10th policy anniversary or the end of MIP, whichever is later.",
               "If any partial withdrawal is made in the prior 12 months, loyalty bonus eligibility is lost.",
-              "Withdrawals under the Life Events Withdrawal Benefit are not modeled separately in V1."
+              "Qualifying Life Events Withdrawal Benefit withdrawals can preserve loyalty-bonus eligibility when the event is entered with the bonus-suspension waiver override; source eligibility timing and usage limits remain manual."
             ],
             "sourceRefs": [
               {
@@ -7272,6 +7372,41 @@
                 "page": 7,
                 "section": "Policy fee and insurance cover charge",
                 "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
+              }
+            ]
+          },
+          {
+            "id": "death-ti-insurance-cover-charge",
+            "label": "Death / TI Insurance Cover Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 3,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details and the current net regular premiums paid base before the calculator can model the monthly insurance cover charge.",
+              "Models the published 101% of net premiums paid less policy value sum-at-risk formula for the death and terminal-illness benefit."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
+              },
+              {
+                "page": 17,
+                "section": "Appendix 1 death and TI insurance cover charge",
+                "excerpt": "Appendix 1 – Yearly insurance cover charge rates for death and TI based on $1,000 sum at risk The table below shows the insurance cover charge rates for age up to 99 years. For age after 99 years, we will apply the rate "
               }
             ]
           }
@@ -7474,7 +7609,8 @@
             "allocation": "equal-split",
             "notes": [
               "Applied to partial withdrawals during the minimum investment period.",
-              "Life Events Withdrawal Benefit free withdrawals remain informational only in V1."
+              "Qualifying Life Events Withdrawal Benefit withdrawals can be represented by setting both chargeWaived and bonusSuspensionWaived on the event.",
+              "Users must manually stay within the published 10% of prevailing policy value cap, once-per-life-event rule, three-use maximum, and documentary-proof timing conditions."
             ],
             "sourceRefs": [
               {
@@ -7539,17 +7675,15 @@
           0.05
         ],
         "warnings": [
-          "Invest Flex is modeled as a partial subset in V1. The parser captures the policy fee, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support with cash payout allowed from the 5th policy anniversary onward through the manual distribution-mode assumption surface.",
-          "Death/TI insurance cover charges, secondary insured option, and life-events withdrawal benefit remain informational only in V1.",
-          "The published minimum distribution amount, CPF/SRS payout-election exclusions, and future premium option remain informational only in V1."
+          "Invest Flex is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support with cash payout allowed from the 5th policy anniversary onward through the manual distribution-mode assumption surface.",
+          "Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, while eligibility timing, documentary proof, and usage-count limits remain manual.",
+          "The published minimum distribution amount, CPF/SRS payout-election exclusions, future premium option, and secondary-insured replacement mechanics remain informational only in V1."
         ],
         "unsupportedItems": [
-          "Death and terminal illness insurance cover charges remain informational only.",
-          "Secondary insured option remains informational only.",
-          "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
+          "Secondary insured appointment, removal, and insured-replacement mechanics remain informational only.",
+          "Life Events Withdrawal Benefit eligibility timing, documentary proof, and use-count limits remain manual.",
           "Future Premium Option remains informational only.",
-          "The published minimum distribution amount and CPF/SRS payout-election exclusions remain informational only.",
-          "Death benefit continuation after insured replacement remains informational only."
+          "The published minimum distribution amount and CPF/SRS payout-election exclusions remain informational only."
         ],
         "sourceRefs": [
           {
@@ -7622,6 +7756,16 @@
             "postMipFeeRate": null,
             "subjectToEec": true,
             "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
               {
                 "phase": "top-up",
                 "targetAccountId": "policy",
@@ -7750,7 +7894,7 @@
             "notes": [
               "Annual loyalty bonus from the 10th policy anniversary or the end of MIP, whichever is later.",
               "If any partial withdrawal is made in the prior 12 months, loyalty bonus eligibility is lost.",
-              "Withdrawals under the Life Events Withdrawal Benefit are not modeled separately in V1."
+              "Qualifying Life Events Withdrawal Benefit withdrawals can preserve loyalty-bonus eligibility when the event is entered with the bonus-suspension waiver override; source eligibility timing and usage limits remain manual."
             ],
             "sourceRefs": [
               {
@@ -7794,6 +7938,41 @@
                 "page": 7,
                 "section": "Policy fee and insurance cover charge",
                 "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
+              }
+            ]
+          },
+          {
+            "id": "death-ti-insurance-cover-charge",
+            "label": "Death / TI Insurance Cover Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 3,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details and the current net regular premiums paid base before the calculator can model the monthly insurance cover charge.",
+              "Models the published 101% of net premiums paid less policy value sum-at-risk formula for the death and terminal-illness benefit."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
+              },
+              {
+                "page": 17,
+                "section": "Appendix 1 death and TI insurance cover charge",
+                "excerpt": "Appendix 1 – Yearly insurance cover charge rates for death and TI based on $1,000 sum at risk The table below shows the insurance cover charge rates for age up to 99 years. For age after 99 years, we will apply the rate "
               }
             ]
           }
@@ -8046,7 +8225,8 @@
             "allocation": "equal-split",
             "notes": [
               "Applied to partial withdrawals during the minimum investment period.",
-              "Life Events Withdrawal Benefit free withdrawals remain informational only in V1."
+              "Qualifying Life Events Withdrawal Benefit withdrawals can be represented by setting both chargeWaived and bonusSuspensionWaived on the event.",
+              "Users must manually stay within the published 10% of prevailing policy value cap, once-per-life-event rule, three-use maximum, and documentary-proof timing conditions."
             ],
             "sourceRefs": [
               {
@@ -8116,17 +8296,15 @@
           0.05
         ],
         "warnings": [
-          "Invest Flex is modeled as a partial subset in V1. The parser captures the policy fee, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support with cash payout allowed from the 5th policy anniversary onward through the manual distribution-mode assumption surface.",
-          "Death/TI insurance cover charges, secondary insured option, and life-events withdrawal benefit remain informational only in V1.",
-          "The published minimum distribution amount, CPF/SRS payout-election exclusions, and future premium option remain informational only in V1."
+          "Invest Flex is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support with cash payout allowed from the 5th policy anniversary onward through the manual distribution-mode assumption surface.",
+          "Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, while eligibility timing, documentary proof, and usage-count limits remain manual.",
+          "The published minimum distribution amount, CPF/SRS payout-election exclusions, future premium option, and secondary-insured replacement mechanics remain informational only in V1."
         ],
         "unsupportedItems": [
-          "Death and terminal illness insurance cover charges remain informational only.",
-          "Secondary insured option remains informational only.",
-          "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
+          "Secondary insured appointment, removal, and insured-replacement mechanics remain informational only.",
+          "Life Events Withdrawal Benefit eligibility timing, documentary proof, and use-count limits remain manual.",
           "Future Premium Option remains informational only.",
-          "The published minimum distribution amount and CPF/SRS payout-election exclusions remain informational only.",
-          "Death benefit continuation after insured replacement remains informational only."
+          "The published minimum distribution amount and CPF/SRS payout-election exclusions remain informational only."
         ],
         "sourceRefs": [
           {

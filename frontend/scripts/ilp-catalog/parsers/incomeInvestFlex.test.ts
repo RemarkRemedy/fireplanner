@@ -22,11 +22,15 @@ describe('parseIncomeInvestFlex', () => {
 
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('income-invest-flex')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
-    expect(product.metadataOnlyBehaviors).toContain('income-vs1-death-ti-insurance-cover-charge')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
+    expect(product.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(product.modeledEconomics).toContain('branch:income-vs1-death-ti-insurance-cover-charge')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.metadataOnlyBehaviors).toContain('income-vs1-life-events-withdrawal-eligibility-and-count-limits')
     expect(product.metadataOnlyBehaviors).toContain('income-vs1-distribution-payout-threshold-and-cpf-srs-exclusions')
+    expect(product.metadataOnlyBehaviors).toContain('income-vs1-death-benefit-continuation-after-insured-replacement')
+    expect(product.metadataOnlyBehaviors).not.toContain('income-vs1-death-ti-insurance-cover-charge')
 
     expect(product.variants).toHaveLength(4)
     const variant = product.variants.find((entry) => entry.id === 'sgd-mip-10')
@@ -36,6 +40,16 @@ describe('parseIncomeInvestFlex', () => {
       mipLength: 10,
       icpMonths: 1,
     })
+    expect(variant?.accounts).toEqual([
+      expect.objectContaining({
+        id: 'policy',
+        contributionRules: [
+          { phase: 'during-icp', targetAccountId: 'policy', contributionShare: 1 },
+          { phase: 'after-icp', targetAccountId: 'policy', contributionShare: 1 },
+          { phase: 'top-up', targetAccountId: 'policy', contributionShare: 1 },
+        ],
+      }),
+    ])
     expect(variant?.feeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -46,6 +60,17 @@ describe('parseIncomeInvestFlex', () => {
             { startPolicyYear: 1, endPolicyYear: 10, rate: 0.025 },
             { startPolicyYear: 11, endPolicyYear: null, rate: 0.005 },
           ],
+        }),
+        expect.objectContaining({
+          id: 'death-ti-insurance-cover-charge',
+          basis: 'assurance-sum-at-risk',
+          requiresManualInput: true,
+          startPolicyYear: 3,
+          assuranceConfig: expect.objectContaining({
+            formula: 'income-invest-flex-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          }),
         }),
       ]),
     )

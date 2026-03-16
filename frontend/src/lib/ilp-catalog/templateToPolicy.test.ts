@@ -2095,15 +2095,17 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs1-policy-fee')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs1-death-ti-insurance-cover-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs1-investment-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs1-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs1-premium-holiday-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs1-partial-withdrawal-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs1-death-ti-insurance-cover-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs1-life-events-withdrawal-eligibility-and-count-limits')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs1-distribution-payout-threshold-and-cpf-srs-exclusions')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(10)
@@ -2111,6 +2113,8 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({
         id: 'policy',
         contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+          { phase: 'after-icp', contributionShare: 1 },
           { phase: 'top-up', contributionShare: 1 },
         ],
       }),
@@ -2125,6 +2129,17 @@ describe('templateVariantToPolicySeed', () => {
             { startPolicyYear: 1, endPolicyYear: 10, rate: 0.025 },
             { startPolicyYear: 11, endPolicyYear: null, rate: 0.005 },
           ],
+        }),
+        expect.objectContaining({
+          id: 'death-ti-insurance-cover-charge',
+          basis: 'assurance-sum-at-risk',
+          requiresManualInput: true,
+          startPolicyYear: 3,
+          assuranceConfig: expect.objectContaining({
+            formula: 'income-invest-flex-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          }),
         }),
       ]),
     )
