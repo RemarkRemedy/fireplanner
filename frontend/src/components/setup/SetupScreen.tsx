@@ -218,10 +218,11 @@ export function SetupScreen({
   const validationContext: SetupFieldContext = useMemo(
     () => ({
       currentAge: typeof values.currentAge === 'number' ? values.currentAge : undefined,
+      partnerAge: typeof values.partnerAge === 'number' ? values.partnerAge : undefined,
       retirementAge: typeof values.retirementAge === 'number' ? values.retirementAge : undefined,
       propertyValue: typeof values.propertyValue === 'number' ? values.propertyValue : undefined,
     }),
-    [values.currentAge, values.retirementAge, values.propertyValue],
+    [values.currentAge, values.partnerAge, values.retirementAge, values.propertyValue],
   )
 
   // Compute validation errors for all visible fields on this screen

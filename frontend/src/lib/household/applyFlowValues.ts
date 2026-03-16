@@ -139,6 +139,13 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
           propertyUpdates.existingLeaseYears = leaseYears
         }
       }
+      if (typeof values.leaseStartYear === 'number' && typeof values.leaseTenure === 'string') {
+        const originalLease = values.leaseTenure === 'freehold' ? 999 : parseInt(values.leaseTenure as string, 10)
+        if (!isNaN(originalLease)) {
+          const elapsed = currentYear - values.leaseStartYear
+          propertyUpdates.existingLeaseYears = Math.max(0, originalLease - elapsed)
+        }
+      }
       if (typeof values.propertyValue === 'number') {
         propertyUpdates.existingPropertyValue = values.propertyValue
       }
@@ -247,23 +254,29 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         const targetYear = typeof values.goalYear === 'number' ? values.goalYear : currentYear + 5
         const targetAge = selfAdult.currentAge + (targetYear - currentYear)
 
-        const goal: GoalItem = {
-          id: createId('goal'),
-          owner: 'self',
-          label: values.goalName,
-          kind: 'financial-goal',
-          timing: {
-            kind: 'single-age',
+        // Avoid creating duplicate goals with the same label
+        const existingGoal = plan.goals.find(
+          (g) => g.label === values.goalName && g.owner === 'self'
+        )
+        if (!existingGoal) {
+          const goal: GoalItem = {
+            id: createId('goal'),
             owner: 'self',
-            age: targetAge,
-          },
-          amount: typeof values.goalAmount === 'number' ? values.goalAmount : 0,
-          durationYears: 1,
-          priority: 'important',
-          inflationAdjusted: true,
-          category: 'other',
+            label: values.goalName,
+            kind: 'financial-goal',
+            timing: {
+              kind: 'single-age',
+              owner: 'self',
+              age: targetAge,
+            },
+            amount: typeof values.goalAmount === 'number' ? values.goalAmount : 0,
+            durationYears: 1,
+            priority: 'important',
+            inflationAdjusted: true,
+            category: 'other',
+          }
+          store.addGoal(goal)
         }
-        store.addGoal(goal)
       }
       return true
     }
@@ -413,7 +426,13 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         category,
       }
 
-      store.addGoal(goal)
+      // Avoid creating duplicate goals with the same label
+      const existingGoal = plan.goals.find(
+        (g) => g.label === values.goalName && g.owner === 'self'
+      )
+      if (!existingGoal) {
+        store.addGoal(goal)
+      }
       return true
     }
 

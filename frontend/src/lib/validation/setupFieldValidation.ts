@@ -15,6 +15,7 @@ import {
 
 export interface SetupFieldContext {
   currentAge?: number
+  partnerAge?: number
   retirementAge?: number
   propertyValue?: number
 }
@@ -132,7 +133,7 @@ export function validateSetupField(
       const base = retirementAgeSchema.safeParse(value)
       if (!base.success) return base.error.issues[0]?.message ?? 'Invalid value'
       const refAge =
-        fieldName === 'partnerRetirementAge' ? context?.currentAge : context?.currentAge
+        fieldName === 'partnerRetirementAge' ? context?.partnerAge : context?.currentAge
       if (refAge != null && typeof value === 'number' && value <= refAge) {
         return 'Retirement age must be greater than current age'
       }

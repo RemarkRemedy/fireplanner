@@ -54,6 +54,8 @@ export function AnimatedNumber({ value, format, delay = 0, className }: Animated
 
     return () => {
       cancelAnimationFrame(rafId.current)
+      // Snap display to target so no NaN interpolation on next change
+      setDisplay(value)
       // Reset so StrictMode's re-invocation of the effect doesn't bail out
       prevValue.current = NaN
     }

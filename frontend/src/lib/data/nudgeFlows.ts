@@ -259,7 +259,7 @@ const EXPENSES_FLOW: NudgeFlowDefinition = {
         { name: 'transportExpenses', label: 'Transport', type: 'currency' },
         { name: 'utilitiesExpenses', label: 'Utilities & bills', type: 'currency' },
         { name: 'entertainmentExpenses', label: 'Entertainment & leisure', type: 'currency' },
-        { name: 'travelExpenses', label: 'Travel (annualised)', type: 'currency' },
+        { name: 'travelExpenses', label: 'Travel', type: 'currency' },
         { name: 'otherExpenses', label: 'Other expenses', type: 'currency' },
       ],
     },

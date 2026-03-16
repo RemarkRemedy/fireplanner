@@ -26,7 +26,17 @@ export function CareerPhaseEditor({
   onPromotionJumpsChange,
 }: CareerPhaseEditorProps) {
   const updatePhase = (index: number, updates: Partial<CareerPhase>) => {
-    const next = phases.map((p, i) => (i === index ? { ...p, ...updates } : p))
+    const next = phases.map((p, i) => {
+      if (i !== index) return p
+      const merged = { ...p, ...updates }
+      // Ensure maxAge > minAge
+      if (merged.maxAge <= merged.minAge) {
+        merged.maxAge = merged.minAge + 1
+      }
+      // Clamp growth rate to [-0.5, 0.5] (±50%)
+      merged.growthRate = Math.max(-0.5, Math.min(0.5, merged.growthRate))
+      return merged
+    })
     onPhasesChange(next)
   }
 

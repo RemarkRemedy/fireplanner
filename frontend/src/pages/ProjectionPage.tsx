@@ -173,7 +173,8 @@ export function ProjectionPage() {
       if (status === 'customized' && setupPopulatedSections.includes(sectionId)) return true
       return false
     }).length
-  }, [nudgeSections, setupPopulatedSections, completedNudgeFlows])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- completedNudgeFlows intentionally excluded; count is based on section status only
+  }, [nudgeSections, setupPopulatedSections])
 
   const isPerAdult = isMultiAdult && projectionView !== 'joint'
 

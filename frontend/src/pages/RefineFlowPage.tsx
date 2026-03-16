@@ -7,7 +7,7 @@ import { CareerPhaseEditor } from '@/components/setup/CareerPhaseEditor'
 import { useMetricsSnapshot } from '@/hooks/useMetricsSnapshot'
 import { useUIStore } from '@/stores/useUIStore'
 import { applyFlowValues } from '@/lib/household/applyFlowValues'
-import { seedFlowValues } from '@/lib/household/seedFlowValues'
+import { seedFlowValues, applyFlowDefaults } from '@/lib/household/seedFlowValues'
 import { getNudgeFlow, getFullPageFlowIds } from '@/lib/data/nudgeFlows'
 import { DEFAULT_CAREER_PHASES } from '@/lib/calculations/income'
 import type { NudgeFlowId, NudgeFlowScreen } from '@/lib/data/nudgeFlows'
@@ -36,22 +36,7 @@ export function RefineFlowPage() {
   // Initialize from store data + seed toggle defaults for showWhen logic
   const [values, setValues] = useState<Record<string, unknown>>(() => {
     if (!flow || !flowId) return {}
-    const seeds = seedFlowValues(flowId as NudgeFlowId)
-    for (const screen of flow.screens) {
-      for (const field of screen.fields) {
-        if (field.type === 'toggle' && seeds[field.name] === undefined) {
-          seeds[field.name] = false
-        }
-      }
-    }
-    // Sensible defaults for fields not populated by store data
-    if (seeds.retirementSpendingRatio === undefined) seeds.retirementSpendingRatio = 1.0
-    if (seeds.cpfPayoutStartAge === undefined) seeds.cpfPayoutStartAge = 65
-    if (seeds.cpfLifePlan === undefined) seeds.cpfLifePlan = 'standard'
-    if (seeds.emergencyFundTarget === undefined) seeds.emergencyFundTarget = 6
-    if (seeds.rebalancingFrequency === undefined) seeds.rebalancingFrequency = 'annual'
-    if (seeds.ispTier === undefined) seeds.ispTier = 'basic'
-    if (seeds.careShieldEnrolled === undefined) seeds.careShieldEnrolled = true
+    const seeds = applyFlowDefaults(seedFlowValues(flowId as NudgeFlowId), flow.screens)
     // Pre-populate career phases with defaults if not seeded from store
     if (flowId === 'salary' && !seeds.careerPhases) {
       seeds.careerPhases = DEFAULT_CAREER_PHASES.map((p) => ({ ...p }))
@@ -141,8 +126,8 @@ export function RefineFlowPage() {
   const isLastScreen = currentScreenIndex === visibleScreens.length - 1
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-10 flex items-center gap-3 border-b bg-background/95 backdrop-blur px-4 py-3">
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center gap-3">
         <Button
           variant="ghost"
           size="sm"
@@ -152,15 +137,14 @@ export function RefineFlowPage() {
           <ArrowLeft className="h-4 w-4" />
           Back to projection
         </Button>
-        <h1 className="text-sm font-medium text-muted-foreground">{flow.label}</h1>
-      </header>
+        <span className="text-sm font-medium text-muted-foreground">{flow.label}</span>
+      </div>
 
-      <main className="mx-auto max-w-lg px-4 py-8">
-        {currentScreenIndex === 0 && flow.explanation && (
-          <div className="mb-6 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-            {flow.explanation}
-          </div>
-        )}
+      {currentScreenIndex === 0 && flow.explanation && (
+        <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+          {flow.explanation}
+        </div>
+      )}
         <SetupScreen
           screen={currentScreen}
           values={values}
@@ -180,7 +164,6 @@ export function RefineFlowPage() {
             />
           )}
         </SetupScreen>
-      </main>
     </div>
   )
 }

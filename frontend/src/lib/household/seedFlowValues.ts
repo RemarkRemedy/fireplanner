@@ -9,7 +9,16 @@
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
+import type { NudgeFlowScreen } from '@/lib/data/nudgeFlows'
 import type { PlanningAdult } from '@/lib/household/types'
+import {
+  DEFAULT_CPF_PAYOUT_START_AGE,
+  DEFAULT_CPF_LIFE_PLAN,
+  DEFAULT_EMERGENCY_FUND_MONTHS,
+  DEFAULT_REBALANCING_FREQUENCY,
+  DEFAULT_ISP_TIER,
+  DEFAULT_CARESHIELD_ENROLLED,
+} from '@/lib/data/setupDefaults'
 
 function getSelfAdult(): PlanningAdult | undefined {
   return useHouseholdPlanStore.getState().plan.adults.find((a) => a.owner === 'self')
@@ -206,4 +215,31 @@ export function seedFlowValues(flowId: NudgeFlowId): Record<string, unknown> {
     default:
       return {}
   }
+}
+
+/**
+ * Apply sensible defaults and toggle initialization to seeded flow values.
+ * Shared between RefineFlowPage and NudgeDrawer to avoid duplication.
+ */
+export function applyFlowDefaults(
+  seeds: Record<string, unknown>,
+  screens: NudgeFlowScreen[],
+): Record<string, unknown> {
+  // Initialize toggles to false for showWhen logic
+  for (const screen of screens) {
+    for (const field of screen.fields) {
+      if (field.type === 'toggle' && seeds[field.name] === undefined) {
+        seeds[field.name] = false
+      }
+    }
+  }
+  // Sensible defaults for fields not populated by store data
+  if (seeds.retirementSpendingRatio === undefined) seeds.retirementSpendingRatio = 1.0
+  if (seeds.cpfPayoutStartAge === undefined) seeds.cpfPayoutStartAge = DEFAULT_CPF_PAYOUT_START_AGE
+  if (seeds.cpfLifePlan === undefined) seeds.cpfLifePlan = DEFAULT_CPF_LIFE_PLAN
+  if (seeds.emergencyFundTarget === undefined) seeds.emergencyFundTarget = DEFAULT_EMERGENCY_FUND_MONTHS
+  if (seeds.rebalancingFrequency === undefined) seeds.rebalancingFrequency = DEFAULT_REBALANCING_FREQUENCY
+  if (seeds.ispTier === undefined) seeds.ispTier = DEFAULT_ISP_TIER
+  if (seeds.careShieldEnrolled === undefined) seeds.careShieldEnrolled = DEFAULT_CARESHIELD_ENROLLED
+  return seeds
 }

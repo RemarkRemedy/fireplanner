@@ -3,7 +3,7 @@ import { X } from 'lucide-react'
 import { SetupScreen, shouldSkipScreen } from '@/components/setup/SetupScreen'
 import { getNudgeFlow, NUDGE_FLOWS } from '@/lib/data/nudgeFlows'
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
-import { seedFlowValues } from '@/lib/household/seedFlowValues'
+import { seedFlowValues, applyFlowDefaults } from '@/lib/household/seedFlowValues'
 import { CareerPhaseEditor } from '@/components/setup/CareerPhaseEditor'
 import { DEFAULT_CAREER_PHASES } from '@/lib/calculations/income'
 import type { CareerPhase, PromotionJump } from '@/lib/types'
@@ -56,21 +56,7 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
       // Seed from store data + toggle defaults for skipWhen logic
       const flow = NUDGE_FLOWS.find((f) => f.id === flowId)
       if (flow) {
-        const seeds = seedFlowValues(flowId)
-        for (const screen of flow.screens) {
-          for (const field of screen.fields) {
-            if (field.type === 'toggle' && seeds[field.name] === undefined) {
-              seeds[field.name] = false
-            }
-          }
-        }
-        // Sensible defaults for fields not populated by store data
-        if (seeds.cpfPayoutStartAge === undefined) seeds.cpfPayoutStartAge = 65
-        if (seeds.cpfLifePlan === undefined) seeds.cpfLifePlan = 'standard'
-        if (seeds.emergencyFundTarget === undefined) seeds.emergencyFundTarget = 6
-        if (seeds.rebalancingFrequency === undefined) seeds.rebalancingFrequency = 'annual'
-        if (seeds.ispTier === undefined) seeds.ispTier = 'basic'
-        if (seeds.careShieldEnrolled === undefined) seeds.careShieldEnrolled = true
+        const seeds = applyFlowDefaults(seedFlowValues(flowId), flow.screens)
         if (flowId === 'salary' && !seeds.careerPhases) {
           seeds.careerPhases = DEFAULT_CAREER_PHASES.map((p) => ({ ...p }))
         }
@@ -167,7 +153,7 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
         }
 
         // Store pending completion so the useEffect computes delta after store update
-        pendingCompletion.current = { flowId, before: beforeSnapshotRef.current! }
+        pendingCompletion.current = { flowId, before: beforeSnapshotRef.current ?? currentSnapshot }
       } else {
         console.warn(`[NudgeDrawer] applyFlowValues returned false for flow "${flowId}"`)
         onClose()

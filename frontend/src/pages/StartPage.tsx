@@ -30,7 +30,7 @@ const PATHWAY_CARDS: { key: NonNullable<ActivePathway>; label: string; descripti
   {
     key: 'already-fire',
     label: 'I already have enough',
-    description: 'You\'ve reached or are close to FIRE. Focus on making your money last — withdrawal strategies, allocation, and spending.',
+    description: 'You\'ve reached or are close to FIRE. Focus on making your money last: withdrawal strategies, allocation, and spending.',
     icon: CheckCircle,
   },
 ]
@@ -151,7 +151,7 @@ export function StartPage() {
           <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
           <div className="text-sm text-amber-800 dark:text-amber-200">
             <p>
-              Want to switch your path or mode? Go ahead — your existing inputs are safe.
+              Want to switch your path or mode? Go ahead, your existing inputs are safe.
               To see your results, head to the{' '}
               <Link to="/dashboard" className="font-medium underline hover:no-underline">
                 Dashboard

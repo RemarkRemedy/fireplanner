@@ -214,13 +214,13 @@ describe('validateSetupField', () => {
   // Partner fields
   // -------------------------------------------------------------------
   describe('partnerRetirementAge', () => {
-    it('rejects partner retirement age <= currentAge context', () => {
-      const err = validateSetupField('partnerRetirementAge', 40, { currentAge: 45 })
+    it('rejects partner retirement age <= partnerAge context', () => {
+      const err = validateSetupField('partnerRetirementAge', 40, { partnerAge: 45 })
       expect(err).toBe('Retirement age must be greater than current age')
     })
 
     it('accepts valid partner retirement age', () => {
-      expect(validateSetupField('partnerRetirementAge', 55, { currentAge: 30 })).toBeNull()
+      expect(validateSetupField('partnerRetirementAge', 55, { partnerAge: 30 })).toBeNull()
     })
   })
 
