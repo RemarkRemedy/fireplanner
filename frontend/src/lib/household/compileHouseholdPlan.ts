@@ -968,6 +968,7 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
   const parentSupportExpenseByYear = zeroes(yearCount)
   const dependentExpenseByYear = zeroes(yearCount)
   const baseExpenseAdjustedByYear = zeroes(yearCount)
+  const insurancePremiumsByYear = zeroes(yearCount)
   const portfolioAdjustments: HouseholdPortfolioAdjustment[] = []
   const milestones: HouseholdMilestoneRow[] = []
 
@@ -1007,6 +1008,14 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
           sourceId: `${adultId}:cpf-oa-withdrawal:${row.age}`,
           kind: 'cpf-oa-withdrawal',
         })
+      }
+    }
+
+    // Insurance premiums: flat annual deduction from cash flow while the adult is alive
+    const adultInsurance = adult.annualInsurancePremiums ?? 0
+    if (adultInsurance > 0) {
+      for (let yearOffset = 0; yearOffset <= timing.lifeExpectancyYearOffset && yearOffset < yearCount; yearOffset += 1) {
+        insurancePremiumsByYear[yearOffset] += adultInsurance
       }
     }
 
@@ -1271,6 +1280,7 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
       + dependentExpenseByYear[yearOffset]
       + healthcareCashOutlayByYear[yearOffset]
       + propertyExpenseByYear[yearOffset]
+      + insurancePremiumsByYear[yearOffset]
 
     const totalCashIncome = totalNetIncomeByYear[yearOffset]
       + sharedIncomeByYear[yearOffset]

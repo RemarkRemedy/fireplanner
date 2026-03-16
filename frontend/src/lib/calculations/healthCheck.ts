@@ -136,6 +136,13 @@ function formatValue(value: number | null, unit: HealthRatioMeta['unit']): strin
   }
 }
 
+// ── Overrides ─────────────────────────────────────────────────────────────
+
+export interface HealthCheckOverrides {
+  /** Override default 6-month emergency fund target (months of expenses) */
+  emergencyFundTarget?: number
+}
+
 // ── Public API ─────────────────────────────────────────────────────────────
 
 export function computeRatioValue(ratioId: string, inputs: HealthRatioInputs): number | null {
@@ -151,7 +158,7 @@ export function classifyRatio(ratioId: string, value: number | null): TrafficLig
   return classifyValue(meta, value)
 }
 
-export function computeHealthRatios(inputs: HealthRatioInputs): HealthCheckResult {
+export function computeHealthRatios(inputs: HealthRatioInputs, overrides?: HealthCheckOverrides): HealthCheckResult {
   const ratios: HealthRatioResult[] = HEALTH_RATIOS.map((meta) => {
     const computer = RATIO_COMPUTERS[meta.id]
     if (!computer) {
@@ -166,10 +173,21 @@ export function computeHealthRatios(inputs: HealthRatioInputs): HealthCheckResul
     }
 
     const { value, message } = computer(inputs)
-    const status = value !== null ? classifyValue(meta, value) : null
+
+    // Apply emergency fund target override: patch thresholds for classification
+    let effectiveMeta = meta
+    if (meta.id === 'emergency-fund' && overrides?.emergencyFundTarget != null) {
+      const target = overrides.emergencyFundTarget
+      effectiveMeta = {
+        ...meta,
+        thresholds: { greenBound: target, amberBound: target / 2 },
+      }
+    }
+
+    const status = value !== null ? classifyValue(effectiveMeta, value) : null
     const displayValue = formatValue(value, meta.unit)
 
-    return { id: meta.id, meta, value, status, displayValue, message }
+    return { id: meta.id, meta: effectiveMeta, value, status, displayValue, message }
   })
 
   let greenCount = 0

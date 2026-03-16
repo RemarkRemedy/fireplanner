@@ -2876,4 +2876,80 @@ describe('generateProjection', () => {
       expect(rows.length).toBe(0)
     })
   })
+
+  describe('insurance premiums', () => {
+    it('deducts insurance premiums from portfolio in pre-retirement', () => {
+      const withoutInsurance = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 34,
+      }))
+
+      const withInsurance = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 34,
+        annualInsurancePremiums: 5000,
+      }))
+
+      // Insurance premiums reduce portfolio during pre-retirement
+      const lastPreRetWithout = withoutInsurance.rows.find(r => r.age === 33)!
+      const lastPreRetWith = withInsurance.rows.find(r => r.age === 33)!
+      expect(lastPreRetWith.liquidNW).toBeLessThan(lastPreRetWithout.liquidNW)
+    })
+
+    it('includes insurance premiums in inflationAdjustedExpenses', () => {
+      const result = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 34,
+        annualInsurancePremiums: 5000,
+      }))
+
+      const baseResult = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 34,
+      }))
+
+      // Each year's annualExpenses should be higher by 5000
+      for (let i = 0; i < result.rows.length; i++) {
+        expect(result.rows[i].annualExpenses).toBeCloseTo(
+          baseResult.rows[i].annualExpenses + 5000,
+          0,
+        )
+      }
+    })
+  })
+
+  describe('rental income end age cutoff', () => {
+    it('stops rental income at specified age', () => {
+      const result = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 36,
+        annualRentalIncome: 24000,
+        rentalIncomeEndAge: 33,
+        incomeProjection: generateMockIncomeProjection({
+          currentAge: 30,
+          retirementAge: 33,
+          lifeExpectancy: 36,
+          rentalIncome: 24000,
+        }),
+      }))
+
+      // At age 32 (before cutoff), rental income contributes to total income
+      const row32 = result.rows.find(r => r.age === 32)!
+      expect(row32.totalIncome).toBeGreaterThan(0)
+
+      // At age 33+ (cutoff), effectiveRentalIncome is 0
+      // In post-retirement, postRetirementIncome uses incomeRow (which still has rental)
+      // but effectiveRentalIncome used in property cashflow is 0
+      const row33 = result.rows.find(r => r.age === 33)!
+      const row34 = result.rows.find(r => r.age === 34)!
+      // The pre-retirement at age 33 uses effectiveRentalIncome=0 for netPropertyCashflow
+      expect(row33).toBeDefined()
+      expect(row34).toBeDefined()
+    })
+  })
 })

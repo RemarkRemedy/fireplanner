@@ -476,8 +476,9 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       if (soldProperty && downsizing?.scenario === 'sell-and-rent') {
         estDsRent = dsAnnualRent * Math.pow(1 + (downsizing.rentGrowthRate ?? 0.03), age - dsSellAge)
       }
+      const estInsurance = params.annualInsurancePremiums ?? 0
       const estExpenses = estLeAdj * retirementSpendingAdjustment * Math.pow(1 + inflation, year)
-        + estParentSupport + estDsRent + estHealthCare
+        + estParentSupport + estDsRent + estHealthCare + estInsurance
       const estGap = Math.max(0, estExpenses - estPostRetIncome)
       const estMortgage = age >= mortgageEndAge ? 0 : annualMortgagePayment + incomeRow.cpfOaShortfall
       const totalPreFundNeed = Math.max(0, estGap + estMortgage)
@@ -666,14 +667,15 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     const { adjustedExpense: lifeEventAdjustedBase, lumpSum: lifeEventLumpSum } =
       getLifeEventExpenseImpact(age, effectiveBase, params.lifeEvents ?? [], params.lifeEventsEnabled ?? false)
     const baseExpenses = isRetired ? lifeEventAdjustedBase * retirementSpendingAdjustment : lifeEventAdjustedBase
-    const inflationAdjustedExpenses = baseExpenses * Math.pow(1 + inflation, year) + parentSupportExpense + downsizingRentExpense + healthcareCashOutlay
+    const insurancePremiums = params.annualInsurancePremiums ?? 0
+    const inflationAdjustedExpenses = baseExpenses * Math.pow(1 + inflation, year) + parentSupportExpense + downsizingRentExpense + healthcareCashOutlay + insurancePremiums
 
     if (!isRetired) {
       // Pre-retirement: accumulation
       const netPropertyCashflow = effectiveRentalIncome - effectiveMortgagePayment
-      // Extra expenses (parent support, healthcare, downsizing rent) are computed by the
+      // Extra expenses (parent support, healthcare, downsizing rent, insurance premiums) are computed by the
       // projection but NOT included in income projection's annualSavings — deduct them here.
-      const extraExpenses = parentSupportExpense + healthcareCashOutlay + downsizingRentExpense
+      const extraExpenses = parentSupportExpense + healthcareCashOutlay + downsizingRentExpense + insurancePremiums
       // When income < base expenses, income projection clamps annualSavings to max(0, ...).
       // The shortfall must still be deducted from the portfolio.
       // Use life-event-adjusted base to match income.ts savings calculation.
