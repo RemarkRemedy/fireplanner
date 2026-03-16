@@ -1426,6 +1426,29 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds Manulife InvestReady Growth as a partial catalog product with COI and shortfall warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Manulife InvestReady Growth')
+
+    expect(within(dialog).getByText('Manulife InvestReady Growth')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 15 \(flexi 10\)use partial template$/i }))
+
+    expect(screen.getAllByText('Manulife InvestReady Growth (SGD / MIP 15 (Flexi 10))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('101% paid-premium-floor COI formula')
+    expect(seededAlert?.textContent).toContain('premium-shortfall charge before Flexi Start')
+    expect(seededAlert?.textContent).toContain('reinvest-default distribution-mode assumption surface')
+    expect(screen.getByDisplayValue('Cost of Insurance (Death / TI)')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
