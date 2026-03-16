@@ -160,7 +160,7 @@ function buildVariant(
     eecTable: [...SURRENDER_CHARGE_TABLE],
     exitChargeBasis: 'initial-single-premium-base',
     warnings: [
-      `FWD Invest Goal 1 (${currency}) is cataloged as a partial modeled subset in V1. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, the 1.4% plan charge on the committed initial single premium during the first five policy years, the first-five-policy-years surrender charge on that same original base, and the zero policy-level partial-withdrawal charge through the open-ended single-premium basis.`,
+      `FWD Invest Goal 1 (${currency}) is cataloged as a supported V1 product. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, the 1.4% plan charge on the committed initial single premium during the first five policy years, the first-five-policy-years surrender charge on that same original base, and the zero policy-level partial-withdrawal charge through the open-ended single-premium basis.`,
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
       'The withdrawal minimum transaction amount and minimum residual account-value rules remain informational only in V1.',
     ],
@@ -183,9 +183,9 @@ export function parseFwdInvestGoal1(context: ParseContext): IlpCatalogProduct {
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:fwd-invest-goal-1-zero-single-premium-charge',
       'branch:fwd-invest-goal-1-initial-account-charge',
@@ -205,7 +205,7 @@ export function parseFwdInvestGoal1(context: ParseContext): IlpCatalogProduct {
       'fwd-invest-goal-1-fund-management-fees',
     ],
     warnings: [
-      'FWD Invest Goal 1 is cataloged as a partial modeled subset in V1. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, the 1.4% plan charge on the committed initial single premium during the first five policy years, the first-five-policy-years surrender charge on that same original base, and the zero policy-level partial-withdrawal charge through the open-ended single-premium basis, while protection benefits and principal-tracking remain outside the current engine.',
+      'FWD Invest Goal 1 is cataloged as a supported V1 product. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, the 1.4% plan charge on the committed initial single premium during the first five policy years, the first-five-policy-years surrender charge on that same original base, and the zero policy-level partial-withdrawal charge through the open-ended single-premium basis, while protection benefits and principal-tracking remain outside the current engine.',
     ],
     archived: false,
     variants: [

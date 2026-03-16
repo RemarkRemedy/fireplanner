@@ -81,7 +81,7 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
 }
 
 describe('parseFwdInvestGoal1', () => {
-  it('builds a valid partial modeled-subset product from extracted summary text', async () => {
+  it('builds a valid supported product from extracted summary text', async () => {
     const document = makeSyntheticDocument()
     const product = parseFwdInvestGoal1({
       document,
@@ -91,7 +91,8 @@ describe('parseFwdInvestGoal1', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('fwd-invest-goal-1')
     expect(product.productName).toBe('FWD Invest Goal 1')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:fwd-invest-goal-1-zero-single-premium-charge',
       'branch:fwd-invest-goal-1-initial-account-charge',

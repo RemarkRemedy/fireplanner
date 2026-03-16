@@ -153,6 +153,11 @@ export type GoldenCoverageTag =
   | 'branch:tokio-marine-goelite-recurring-single-and-top-up-charge'
   | 'branch:tokio-marine-goelite-zero-partial-withdrawal-charge'
   | 'branch:tokio-marine-goelite-surrender-charge'
+  | 'branch:fwd-invest-goal-1-zero-single-premium-charge'
+  | 'branch:fwd-invest-goal-1-initial-account-charge'
+  | 'branch:fwd-invest-goal-1-plan-charge'
+  | 'branch:fwd-invest-goal-1-surrender-charge'
+  | 'branch:fwd-invest-goal-1-zero-partial-withdrawal-charge'
   | 'branch:hsbc-life-wealth-invest-cash-srs-max-single-premium-charge'
   | 'branch:hsbc-life-wealth-invest-cash-srs-max-recurring-single-premium-charge'
   | 'branch:hsbc-life-wealth-invest-cash-srs-max-top-up-charge'
@@ -2712,6 +2717,74 @@ function tokioMarineGoEliteStressPolicy(
 ): IlpPolicyInput {
   return tokioMarineGoEliteBasePolicy(snapshot, variantId, id, HSBC_STRESS_FUNDS, {
     name: `Golden #goElite (${variantId.toUpperCase()} OCF Stress)`,
+  })
+}
+
+function fwdInvestGoal1BasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended' | 'usd-open-ended',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'fwd-invest-goal-1', variantId, id, {
+    initialSinglePremium: variantId === 'sgd-open-ended' ? 100_000 : 75_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: variantId === 'sgd-open-ended'
+        ? 'Golden FWD Invest Goal 1 (SGD / Open-ended)'
+        : 'Golden FWD Invest Goal 1 (USD / Open-ended)',
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function fwdInvestGoal1BaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended' | 'usd-open-ended',
+  id: string,
+): IlpPolicyInput {
+  return fwdInvestGoal1BasePolicy(snapshot, variantId, id, HSBC_BALANCED_FUNDS)
+}
+
+function fwdInvestGoal1EventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return fwdInvestGoal1BasePolicy(snapshot, 'sgd-open-ended', id, HSBC_BALANCED_FUNDS, {
+    name: 'Golden FWD Invest Goal 1 (SGD / Open-ended Event Heavy)',
+    currentPolicyYear: 4,
+    monthsAlreadyPaid: 36,
+    policyEvents: [
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 40,
+        durationMonths: 1,
+        amount: 5_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function fwdInvestGoal1StressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended' | 'usd-open-ended',
+  id: string,
+): IlpPolicyInput {
+  return fwdInvestGoal1BasePolicy(snapshot, variantId, id, HSBC_STRESS_FUNDS, {
+    name: variantId === 'sgd-open-ended'
+      ? 'Golden FWD Invest Goal 1 (SGD / Open-ended OCF Stress)'
+      : 'Golden FWD Invest Goal 1 (USD / Open-ended OCF Stress)',
   })
 }
 
@@ -6963,6 +7036,65 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: '#goElite SRS alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'fwd-invest-goal-1',
+    variantId: 'sgd-open-ended',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:fwd-invest-goal-1-zero-single-premium-charge',
+      'branch:fwd-invest-goal-1-initial-account-charge',
+      'branch:fwd-invest-goal-1-plan-charge',
+      'branch:fwd-invest-goal-1-surrender-charge',
+    ],
+    description: 'FWD Invest Goal 1 SGD baseline scenario proving supported zero-charge single-premium seeding, account-value initial-account charges, original-base plan charges, and original-base surrender charges through the open-ended corridor.',
+    integrityChecks: [
+      {
+        description: 'baseline SGD corridor incurs positive gross fees from plan and initial-account charges',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+    ],
+  },
+  {
+    productId: 'fwd-invest-goal-1',
+    variantId: 'usd-open-ended',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'FWD Invest Goal 1 USD baseline scenario proving the supported second-currency open-ended corridor.',
+    integrityChecks: [
+      {
+        description: 'baseline USD corridor also incurs positive gross fees from plan and initial-account charges',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+    ],
+  },
+  {
+    productId: 'fwd-invest-goal-1',
+    variantId: 'sgd-open-ended',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:fwd-invest-goal-1-zero-partial-withdrawal-charge',
+    ],
+    description: 'FWD Invest Goal 1 SGD event-heavy scenario proving the nil-charge partial-withdrawal path through the open-ended corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy SGD corridor executes the seeded partial withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'fwd-invest-goal-1',
+    variantId: 'usd-open-ended',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'FWD Invest Goal 1 USD alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'etiqa-invest-flex-prime-ii',
     variantId: 'sgd-mip-10-flexi-3',
     scenarioId: 'baseline',
@@ -8394,6 +8526,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'tokio-marine-goelite' && definition.scenarioId === 'ocf-stress') {
     return tokioMarineGoEliteStressPolicy(snapshot, definition.variantId as 'sgd-open-ended-cash' | 'sgd-open-ended-srs', id)
+  }
+  if (definition.productId === 'fwd-invest-goal-1' && definition.scenarioId === 'baseline') {
+    return fwdInvestGoal1BaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended' | 'usd-open-ended', id)
+  }
+  if (definition.productId === 'fwd-invest-goal-1' && definition.scenarioId === 'event-heavy') {
+    return fwdInvestGoal1EventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'fwd-invest-goal-1' && definition.scenarioId === 'ocf-stress') {
+    return fwdInvestGoal1StressPolicy(snapshot, definition.variantId as 'sgd-open-ended' | 'usd-open-ended', id)
   }
   if (definition.productId === 'etiqa-invest-flex-prime-ii' && definition.scenarioId === 'baseline') {
     return etiqaFlexBaselinePolicy(snapshot, 'etiqa-invest-flex-prime-ii', definition.variantId as
