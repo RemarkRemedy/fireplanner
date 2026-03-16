@@ -1031,6 +1031,50 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Recurring Premium Charge (Cash)')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds AIA Invest Easy (Cash/SRS) as a partial catalog product with recurring top-up charges', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Invest Easy (Cash/SRS)')
+
+    expect(within(dialog).getByText('AIA Invest Easy (Cash/SRS)')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash srs\)use partial template$/i }))
+
+    expect(screen.getAllByText('AIA Invest Easy (Cash/SRS) (SGD / Open-ended (Cash Srs))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('published 3% single-premium, ad-hoc top-up, and regular top-up premium charges')
+    expect(seededAlert?.textContent).toContain('open-ended no-MIP basis')
+    expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Regular Top-up Premium Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds AIA Invest Easy (CPF) as a partial catalog product with zero-charge recurring top-up routing', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Invest Easy (CPF)')
+
+    expect(within(dialog).getByText('AIA Invest Easy (CPF)')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cpf\)use partial template$/i }))
+
+    expect(screen.getAllByText('AIA Invest Easy (CPF) (SGD / Open-ended (Cpf))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('published zero-charge single-premium, ad-hoc top-up, and regular top-up allocation path')
+    expect(seededAlert?.textContent).toContain('Fund access is limited to CPFIS-eligible ILP sub-funds')
+    expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Regular Top-up Premium Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds Tokio Marine #goClassic basic-death as a partial catalog product with combined account-fee modeling', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
