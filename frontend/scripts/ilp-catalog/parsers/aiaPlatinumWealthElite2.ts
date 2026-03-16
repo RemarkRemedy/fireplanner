@@ -4,6 +4,9 @@ export function parseAiaPlatinumWealthElite2(context: ParseContext) {
   return buildAiaPlatinumWealthProduct(context, {
     id: 'aia-platinum-wealth-elite-2',
     productName: 'AIA Platinum Wealth Elite 2.0',
+    supportStatus: 'supported',
+    economicsStatus: 'supported',
+    catalogWarningLabel: 'supported V1 product for the regular-pay 5-year corridor',
     planKeyword: 'Platinum Wealth Elite 2.0',
     overviewPage: 1,
     premiumPage: 4,
@@ -45,7 +48,7 @@ export function parseAiaPlatinumWealthElite2(context: ParseContext) {
       'aia-platinum-wealth-elite-2-vitality-bonus',
       'aia-platinum-wealth-elite-2-fund-switching-and-rebalancing',
     ],
-    productWarning: 'The parser models only the SGD cash regular-pay 5-year corridor: premium-year regular premium charges, the 3% top-up premium charge, the premium-holiday charge schedule, and the regular-premium withdrawal / surrender charge schedules, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, and protection-side benefits remain outside the current engine.',
+    productWarning: 'The parser captures premium-year regular premium charges, the 3% top-up premium charge, the premium-holiday charge schedule, and the regular-premium withdrawal / surrender charge schedules, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, and protection-side benefits remain informational only.',
     additionalVariantWarnings: [
       'The current executable slice intentionally excludes the optional extension of the regular premium term beyond five years.',
     ],

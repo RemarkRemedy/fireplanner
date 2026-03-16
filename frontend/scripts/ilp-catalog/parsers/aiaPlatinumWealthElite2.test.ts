@@ -82,7 +82,7 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
 }
 
 describe('parseAiaPlatinumWealthElite2', () => {
-  it('builds a valid regular-pay partial modeled-subset product from extracted summary text', async () => {
+  it('builds a valid regular-pay supported product from extracted summary text', async () => {
     const document = makeSyntheticDocument()
     const product = parseAiaPlatinumWealthElite2({
       document,
@@ -92,7 +92,8 @@ describe('parseAiaPlatinumWealthElite2', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('aia-platinum-wealth-elite-2')
     expect(product.productName).toBe('AIA Platinum Wealth Elite 2.0')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:aia-platinum-wealth-elite-2-regular-premium-charge',
       'branch:aia-platinum-wealth-elite-2-top-up-premium-charge',
@@ -101,6 +102,9 @@ describe('parseAiaPlatinumWealthElite2', () => {
       'branch:aia-platinum-wealth-elite-2-full-surrender-charge',
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-platinum-wealth-elite-2-no-lapse-privilege')
+    expect(product.warnings).toContain(
+      'AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge, the premium-holiday charge schedule, and the regular-premium withdrawal / surrender charge schedules, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, and protection-side benefits remain informational only.',
+    )
 
     const variant = product.variants[0]
     expect(variant).toMatchObject({

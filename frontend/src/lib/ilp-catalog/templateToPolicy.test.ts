@@ -5915,7 +5915,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('single-pay corridor'))).toBe(true)
   })
 
-  it('maps AIA Platinum Wealth Elite 2.0 into a regular-pay partial seed', () => {
+  it('maps AIA Platinum Wealth Elite 2.0 into a regular-pay supported seed', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'aia-platinum-wealth-elite-2')
     expect(product).toBeDefined()
@@ -5924,7 +5924,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-wealth-elite-2-no-lapse-privilege')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(5)

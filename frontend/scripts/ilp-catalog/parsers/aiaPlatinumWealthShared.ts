@@ -22,6 +22,9 @@ interface ChargeTier {
 interface AiaPlatinumWealthConfig {
   id: string
   productName: string
+  supportStatus?: IlpCatalogProduct['supportStatus']
+  economicsStatus?: IlpCatalogProduct['economicsStatus']
+  catalogWarningLabel?: string
   regularPremiumChargeSchedule: readonly ChargeTier[]
   premiumHolidayChargeSchedule: readonly ChargeTier[]
   regularFullSurrenderChargeSchedule?: readonly number[]
@@ -81,6 +84,7 @@ function buildRateSchedule(
 }
 
 function buildVariant(document: ExtractedPdfDocument, config: AiaPlatinumWealthConfig): IlpTemplateVariant {
+  const catalogWarningLabel = config.catalogWarningLabel ?? 'partial modeled subset in V1'
   const overviewRef = sourceRef(
     config.overviewPage,
     'Plan overview and product structure',
@@ -215,7 +219,7 @@ function buildVariant(document: ExtractedPdfDocument, config: AiaPlatinumWealthC
       ? [...config.regularFullSurrenderChargeSchedule]
       : [],
     warnings: [
-      `${config.productName} is cataloged as a partial modeled subset in V1. ${config.productWarning}`,
+      `${config.productName} is cataloged as a ${catalogWarningLabel}. ${config.productWarning}`,
       ...(config.additionalVariantWarnings ?? []),
     ],
     unsupportedItems: config.unsupportedItems,
@@ -227,6 +231,10 @@ export function buildAiaPlatinumWealthProduct(
   context: ParseContext,
   config: AiaPlatinumWealthConfig,
 ): IlpCatalogProduct {
+  const supportStatus = config.supportStatus ?? 'partial'
+  const economicsStatus = config.economicsStatus ?? 'partial-modeled-subset'
+  const catalogWarningLabel = config.catalogWarningLabel ?? 'partial modeled subset in V1'
+
   return {
     id: config.id,
     insurer: 'AIA Singapore',
@@ -235,13 +243,13 @@ export function buildAiaPlatinumWealthProduct(
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus,
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus,
     modeledEconomics: config.modeledEconomics,
     metadataOnlyBehaviors: config.metadataOnlyBehaviors,
     warnings: [
-      `${config.productName} is cataloged as a partial modeled subset in V1. ${config.productWarning}`,
+      `${config.productName} is cataloged as a ${catalogWarningLabel}. ${config.productWarning}`,
     ],
     archived: false,
     variants: [buildVariant(context.document, config)],
