@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseManulifeSmartRetireSum', () => {
-  it('builds a valid partial product for the SmartRetire sum cohort', async () => {
+  it('builds a valid supported product for the SmartRetire sum cohort', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseManulifeSmartRetireSum({
       document,
@@ -23,8 +23,8 @@ describe('parseManulifeSmartRetireSum', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('manulife-smartretire-v-sum')
     expect(product.productName).toBe('Manulife SmartRetire (V) - Sum')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:manulife-smartretire-v-administrative-charge',
       'branch:manulife-smartretire-v-withdrawal-and-surrender-charge',

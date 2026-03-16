@@ -95,6 +95,10 @@ export type GoldenCoverageTag =
   | 'branch:goal-builder-ii-top-up-premium-charge'
   | 'branch:goal-builder-ii-recurrent-single-premium-charge'
   | 'branch:goal-builder-ii-premium-year-surrender-charge'
+  | 'branch:manulife-smartretire-v-administrative-charge'
+  | 'branch:manulife-smartretire-v-withdrawal-and-surrender-charge'
+  | 'branch:manulife-smartretire-v-premium-shortfall-charge'
+  | 'branch:manulife-smartretire-v-zero-top-up-charge'
   | 'branch:pru-holiday-refund'
   | 'branch:pru-holiday-fallback'
   | 'branch:pru-top-up-charge'
@@ -3147,6 +3151,90 @@ function hsbcGoalBuilderIiStressPolicy(
     name: 'Golden HSBC Goal Builder II (SGD / MIP 15 OCF Stress)',
     currentPolicyYear: 6,
     monthsAlreadyPaid: 60,
+  })
+}
+
+function manulifeSmartRetireSumBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-mip-8-flexi-3' | 'sgd-mip-8-flexi-5' | 'sgd-mip-12-flexi-8',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'manulife-smartretire-v-sum', variantId, id, {
+    monthlyContribution: 1_000,
+    currentPolicyYear: variantId === 'sgd-mip-12-flexi-8' ? 6 : 4,
+    monthsAlreadyPaid: variantId === 'sgd-mip-12-flexi-8' ? 60 : 36,
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden Manulife SmartRetire (V) - Sum (${variantId.toUpperCase()})`,
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 22_000,
+      })),
+      distributionAssumption: {
+        mode: 'cash-payout',
+        source: 'manual-assumption',
+        annualYieldRate: 0.03,
+      },
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function manulifeSmartRetireSumBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-mip-8-flexi-3' | 'sgd-mip-8-flexi-5' | 'sgd-mip-12-flexi-8',
+  id: string,
+): IlpPolicyInput {
+  return manulifeSmartRetireSumBasePolicy(snapshot, variantId, id, MANULIFE_BALANCED_FUNDS, {
+    name: `Golden Manulife SmartRetire (V) - Sum (${variantId.toUpperCase()} Baseline)`,
+  })
+}
+
+function manulifeSmartRetireSumEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return manulifeSmartRetireSumBasePolicy(snapshot, 'sgd-mip-8-flexi-5', id, MANULIFE_BALANCED_FUNDS, {
+    name: 'Golden Manulife SmartRetire (V) - Sum (SGD / MIP 8 Flexi 5 Event Heavy)',
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 37,
+        durationMonths: 3,
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 41,
+        durationMonths: 1,
+        amount: 8_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 46,
+        durationMonths: 1,
+        amount: 3_500,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function manulifeSmartRetireSumStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return manulifeSmartRetireSumBasePolicy(snapshot, 'sgd-mip-12-flexi-8', id, MANULIFE_STRESS_FUNDS, {
+    name: 'Golden Manulife SmartRetire (V) - Sum (SGD / MIP 12 Flexi 8 OCF Stress)',
   })
 }
 
@@ -7880,6 +7968,76 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'HSBC Goal Builder II alternate-fund high-OCF stress scenario. Post-MIP recurrent-single-premium charging remains structurally covered by parser/test support because V1 golden seeds do not admit mature-policy states.',
   },
   {
+    productId: 'manulife-smartretire-v-sum',
+    variantId: 'sgd-mip-8-flexi-3',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Manulife SmartRetire (V) - Sum 8 Years Flexi 3 baseline scenario under supported distribution assumptions.',
+  },
+  {
+    productId: 'manulife-smartretire-v-sum',
+    variantId: 'sgd-mip-8-flexi-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'branch:manulife-smartretire-v-administrative-charge',
+      'branch:manulife-smartretire-v-withdrawal-and-surrender-charge',
+    ],
+    description: 'Manulife SmartRetire (V) - Sum 8 Years Flexi 5 baseline scenario covering administrative charges, withdrawal / surrender charges, and supported cash-payout distribution assumptions.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the administrative-charge corridor',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+      {
+        description: 'baseline policy produces annual withdrawals under the cash-payout distribution assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'manulife-smartretire-v-sum',
+    variantId: 'sgd-mip-12-flexi-8',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Manulife SmartRetire (V) - Sum 12 Years Flexi 8 baseline scenario under supported distribution assumptions.',
+  },
+  {
+    productId: 'manulife-smartretire-v-sum',
+    variantId: 'sgd-mip-8-flexi-5',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:manulife-smartretire-v-zero-top-up-charge',
+      'branch:manulife-smartretire-v-premium-shortfall-charge',
+      'branch:manulife-smartretire-v-withdrawal-and-surrender-charge',
+    ],
+    description: 'Manulife SmartRetire (V) - Sum event-heavy scenario covering premium holiday, zero-charge top-up, and partial withdrawal during the MIP charge corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy records annual contribution above scheduled premium from the seeded top-up event',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+      {
+        description: 'event-heavy policy records annual withdrawals in projection output',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'manulife-smartretire-v-sum',
+    variantId: 'sgd-mip-12-flexi-8',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Manulife SmartRetire (V) - Sum alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'prudential-prulink-investgrowth',
     variantId: 'sgd-open-ended-cash',
     scenarioId: 'baseline',
@@ -10444,6 +10602,19 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'hsbc-life-goal-builder-ii' && definition.scenarioId === 'ocf-stress') {
     return hsbcGoalBuilderIiStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'manulife-smartretire-v-sum' && definition.scenarioId === 'baseline') {
+    return manulifeSmartRetireSumBaselinePolicy(
+      snapshot,
+      definition.variantId as 'sgd-mip-8-flexi-3' | 'sgd-mip-8-flexi-5' | 'sgd-mip-12-flexi-8',
+      id,
+    )
+  }
+  if (definition.productId === 'manulife-smartretire-v-sum' && definition.scenarioId === 'event-heavy') {
+    return manulifeSmartRetireSumEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'manulife-smartretire-v-sum' && definition.scenarioId === 'ocf-stress') {
+    return manulifeSmartRetireSumStressPolicy(snapshot, id)
   }
   if (definition.productId === 'etiqa-invest-starter' && definition.scenarioId === 'baseline') {
     return etiqaInvestStarterBaselinePolicy(snapshot, id)
