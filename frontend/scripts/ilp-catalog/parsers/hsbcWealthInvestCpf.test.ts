@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseHsbcWealthInvestCpf', () => {
-  it('builds a valid open-ended partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid open-ended supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseHsbcWealthInvestCpf({
       document,
@@ -23,8 +23,8 @@ describe('parseHsbcWealthInvestCpf', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('hsbc-life-wealth-invest-cpf')
     expect(product.productName).toBe('HSBC Life Wealth Invest (CPF)')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:hsbc-life-wealth-invest-cpf-zero-single-premium-charge',
       'branch:hsbc-life-wealth-invest-cpf-zero-recurring-single-premium-charge',
@@ -33,7 +33,7 @@ describe('parseHsbcWealthInvestCpf', () => {
       'tokio-recurring-single-premium-routing',
     ])
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cpf-fund-management-charge')
-    expect(product.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cpf-single-premium-principal-tracking')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cpf-single-premium-principal-tracking')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cpf'])
 
     const variant = product.variants[0]

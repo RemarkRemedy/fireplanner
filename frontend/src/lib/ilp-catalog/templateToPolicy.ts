@@ -375,7 +375,7 @@ export function templateVariantToPolicySeed(
       ...(usesOriginalSinglePremiumBase(variant)
         ? ['Enter the one-time gross initial single premium lump sum in Policy Details if you want the starting policy value, original-base establishment charges, and surrender penalties to be modeled honestly.']
         : []),
-      ...(variant.feeRules.some((rule) => rule.basis === 'initial-single-premium') && !usesOriginalSinglePremiumBase(variant)
+      ...(seedsInitialSinglePremiumRouting(variant) && !usesOriginalSinglePremiumBase(variant)
         ? ['Enter the one-time gross initial single premium lump sum in Policy Details if you want the upfront single-premium deduction to seed the starting policy value honestly.']
         : []),
       ...(variant.feeRules.some((rule) => rule.assuranceConfig?.tokioProtectionState?.mode === 'locked-in-policy-value-with-adjusted-single-premium')

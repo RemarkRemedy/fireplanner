@@ -136,13 +136,12 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eventChargeRules,
     eecTable: [],
     warnings: [
-      'HSBC Life Wealth Invest (CPF) is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge single-premium, recurring-single-premium, approved top-up, and nil-redemption-fee withdrawal path for the CPF corridor through the open-ended no-MIP basis.',
+      'HSBC Life Wealth Invest (CPF) is cataloged as a supported V1 product. The parser captures the published zero-charge single-premium, recurring-single-premium, approved top-up, and nil-redemption-fee withdrawal path for the CPF corridor through the open-ended no-MIP basis.',
       'Switching fees are currently nil, but switching behavior and CPF eligibility constraints remain outside the current calculator surface.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
       'Death and terminal-illness benefit formulas remain informational only.',
-      'Single-premium principal tracking remains informational only in V1.',
       'Recurring single premium enrollment approval, allocation-change requests, and failed-deduction handling remain informational only.',
       'Fund-level management charges and additional ILP-sub-fund charges remain informational only because they depend on the selected fund mix and are not a single product-level rate.',
       'Switching administration and CPF fund-eligibility constraints remain informational only.',
@@ -161,9 +160,9 @@ export function parseHsbcWealthInvestCpf(context: ParseContext): IlpCatalogProdu
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:hsbc-life-wealth-invest-cpf-zero-single-premium-charge',
       'branch:hsbc-life-wealth-invest-cpf-zero-recurring-single-premium-charge',
@@ -174,7 +173,6 @@ export function parseHsbcWealthInvestCpf(context: ParseContext): IlpCatalogProdu
     metadataOnlyBehaviors: [
       'hsbc-life-wealth-invest-cpf-death-benefit',
       'hsbc-life-wealth-invest-cpf-terminal-illness-benefit',
-      'hsbc-life-wealth-invest-cpf-single-premium-principal-tracking',
       'hsbc-life-wealth-invest-cpf-fund-management-charge',
       'hsbc-life-wealth-invest-cpf-additional-ilp-sub-fund-charges',
       'hsbc-life-wealth-invest-cpf-switching-eligibility-constraints',
@@ -182,7 +180,7 @@ export function parseHsbcWealthInvestCpf(context: ParseContext): IlpCatalogProdu
       'hsbc-life-wealth-invest-cpf-termination',
     ],
     warnings: [
-      'HSBC Life Wealth Invest (CPF) is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge single-premium, recurring-single-premium, approved top-up, and nil-redemption-fee withdrawal path for the CPF corridor through the open-ended no-MIP basis, while protection formulas, switching constraints, and fund-level charges remain outside the current engine.',
+      'HSBC Life Wealth Invest (CPF) is cataloged as a supported V1 product. The parser captures the published zero-charge single-premium, recurring-single-premium, approved top-up, and nil-redemption-fee withdrawal path for the CPF corridor through the open-ended no-MIP basis, while protection formulas, switching constraints, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

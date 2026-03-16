@@ -3058,7 +3058,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('gross initial single premium lump sum'))).toBe(true)
   })
 
-  it('maps HSBC Life Wealth Invest (CPF) into a partial seed with zero-charge recurring single premiums', () => {
+  it('maps HSBC Life Wealth Invest (CPF) into a supported seed with zero-charge recurring single premiums', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'hsbc-life-wealth-invest-cpf')
     expect(product).toBeDefined()
@@ -3068,13 +3068,26 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('HSBC Life Wealth Invest (CPF) (SGD / Open-ended (Cpf))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-life-wealth-invest-cpf-zero-recurring-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-recurring-single-premium-routing')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cpf-recurring-single-premium')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cpf-single-premium-principal-tracking')
+    expect(seed.monthlyContribution).toBe(0)
+    expect(seed.initialSinglePremium).toBe(0)
     expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'single-premium-charge',
+        basis: 'initial-single-premium',
+        appliesTo: ['policy'],
+        rate: 0,
+        amount: 0,
+      }),
     ])
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({
@@ -3102,6 +3115,7 @@ describe('templateVariantToPolicySeed', () => {
         amount: 0,
       }),
     ])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('gross initial single premium lump sum'))).toBe(true)
   })
 
   it('maps HSBC Life Wealth Invest (Cash) into a partial seed with recurring single premium charges and distribution support', () => {

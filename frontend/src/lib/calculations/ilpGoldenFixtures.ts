@@ -46,6 +46,10 @@ export type GoldenCoverageTag =
   | 'branch:income-wealthlink-gl3-top-up-premium-charge'
   | 'branch:income-wealthlink-gl3-recurring-single-premium-charge'
   | 'branch:income-wealthlink-gl3-open-ended-zero-surrender-charge'
+  | 'branch:hsbc-life-wealth-invest-cpf-zero-single-premium-charge'
+  | 'branch:hsbc-life-wealth-invest-cpf-zero-recurring-single-premium-charge'
+  | 'branch:hsbc-life-wealth-invest-cpf-zero-top-up-charge'
+  | 'branch:hsbc-life-wealth-invest-cpf-zero-redemption-fee'
   | 'branch:great-eastern-gia-sp-initial-single-premium-charge'
   | 'branch:great-eastern-gia-sp-top-up-premium-charge'
   | 'branch:great-eastern-gia-sp-open-ended-zero-surrender-charge'
@@ -1313,6 +1317,79 @@ function incomeWealthLinkGl3StressPolicy(
 ): IlpPolicyInput {
   return incomeWealthLinkGl3BasePolicy(snapshot, id, INCOME_STRESS_FUNDS, {
     name: 'Golden WealthLink (GL3) (SGD / Open-ended OCF Stress)',
+  })
+}
+
+function hsbcWealthInvestCpfBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'hsbc-life-wealth-invest-cpf', 'sgd-open-ended-cpf', id, {
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden HSBC Life Wealth Invest (CPF) (SGD / Open-ended CPF)',
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function hsbcWealthInvestCpfBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return hsbcWealthInvestCpfBasePolicy(snapshot, id, HSBC_BALANCED_FUNDS)
+}
+
+function hsbcWealthInvestCpfEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return hsbcWealthInvestCpfBasePolicy(snapshot, id, HSBC_BALANCED_FUNDS, {
+    name: 'Golden HSBC Life Wealth Invest (CPF) (SGD / Open-ended CPF Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 6,
+        durationMonths: 1,
+        amount: 10_000,
+      },
+      {
+        id: 'rsp-1',
+        type: 'recurring-single-premium',
+        startPolicyMonth: 7,
+        durationMonths: 6,
+        amount: 500,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 11,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function hsbcWealthInvestCpfStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return hsbcWealthInvestCpfBasePolicy(snapshot, id, HSBC_STRESS_FUNDS, {
+    name: 'Golden HSBC Life Wealth Invest (CPF) (SGD / Open-ended CPF OCF Stress)',
   })
 }
 
@@ -3197,6 +3274,51 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'WealthLink (GL3) alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'hsbc-life-wealth-invest-cpf',
+    variantId: 'sgd-open-ended-cpf',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'branch:hsbc-life-wealth-invest-cpf-zero-single-premium-charge'],
+    description: 'HSBC Life Wealth Invest (CPF) baseline scenario proving zero-charge initial single-premium seeding through the open-ended CPF corridor.',
+  },
+  {
+    productId: 'hsbc-life-wealth-invest-cpf',
+    variantId: 'sgd-open-ended-cpf',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:hsbc-life-wealth-invest-cpf-zero-recurring-single-premium-charge',
+      'branch:hsbc-life-wealth-invest-cpf-zero-top-up-charge',
+      'branch:hsbc-life-wealth-invest-cpf-zero-redemption-fee',
+      'tokio-recurring-single-premium-routing',
+    ],
+    description: 'HSBC Life Wealth Invest (CPF) supported event-heavy scenario covering zero-charge top-up, recurring single premium routing, and nil-redemption-fee withdrawals.',
+    integrityChecks: [
+      {
+        description: 'zero-charge top-up credits the full gross top-up amount to the policy account',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          (row.accounts.find((account) => account.accountId === 'policy')?.contributionAmount ?? 0) >= 10_000
+        )),
+      },
+      {
+        description: 'nil redemption-fee withdrawals leave the policy-account gross fee at zero in the withdrawal year',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.annualWithdrawals >= 4_000
+          && (row.accounts.find((account) => account.accountId === 'policy')?.grossFee ?? 0) === 0
+        )),
+      },
+    ],
+  },
+  {
+    productId: 'hsbc-life-wealth-invest-cpf',
+    variantId: 'sgd-open-ended-cpf',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'HSBC Life Wealth Invest (CPF) alternate-fund stress scenario through the open-ended CPF corridor.',
+  },
+  {
     productId: 'great-eastern-great-invest-advantage-sp',
     variantId: 'sgd-open-ended-cash-or-srs',
     scenarioId: 'baseline',
@@ -3837,6 +3959,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'income-wealthlink-gl3' && definition.scenarioId === 'ocf-stress') {
     return incomeWealthLinkGl3StressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'hsbc-life-wealth-invest-cpf' && definition.scenarioId === 'baseline') {
+    return hsbcWealthInvestCpfBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'hsbc-life-wealth-invest-cpf' && definition.scenarioId === 'event-heavy') {
+    return hsbcWealthInvestCpfEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'hsbc-life-wealth-invest-cpf' && definition.scenarioId === 'ocf-stress') {
+    return hsbcWealthInvestCpfStressPolicy(snapshot, id)
   }
   if (definition.productId === 'great-eastern-great-invest-advantage-sp' && definition.scenarioId === 'baseline') {
     return greatEasternGiaSpBaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended-cash-or-srs' | 'sgd-open-ended-cpfis', id)
