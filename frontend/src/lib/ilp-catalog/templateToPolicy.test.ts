@@ -5097,7 +5097,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Advanced Death variant also models the published Monthly Protection Charge'))).toBe(true)
   })
 
-  it('maps Tokio Marine #goClassic basic-death into a partial seed with combined account-fee modeling and accumulation top-up routing', () => {
+  it('maps Tokio Marine #goClassic basic-death into a supported seed with combined account-fee modeling and accumulation top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-goclassic')
     expect(product).toBeDefined()
@@ -5106,7 +5106,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
@@ -5164,7 +5164,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
   })
 
-  it('maps Tokio Marine #goClassic advanced-death into a partial seed with accrued Tokio MPC disable-on-failure inputs', () => {
+  it('maps Tokio Marine #goClassic advanced-death into a supported seed with accrued Tokio MPC disable-on-failure inputs', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-goclassic')
     expect(product).toBeDefined()
@@ -5173,7 +5173,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-goclassic-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction')
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
