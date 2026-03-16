@@ -387,8 +387,8 @@ function buildVariant(
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      `This partial template models the SGD / MIP 10 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
-      'This partial template models the SGD / MIP 10 corridor with regular-premium routing into the Accumulation Units Account, top-up routing, recurring single premium routing, the published initial charge through the accumulation-account fee rate, the published policy charge premium-base multiplier basis, the published admin charge on regular premium received, the split performance-investment-bonus schedule, and the published surrender, partial-withdrawal, and premium-shortfall charge schedules.',
+      `This supported template models the SGD / MIP 10 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
+      'This supported template models the SGD / MIP 10 corridor with regular-premium routing into the Accumulation Units Account, top-up routing, recurring single premium routing, the published initial charge through the accumulation-account fee rate, the published policy charge premium-base multiplier basis, the published admin charge on regular premium received, the split performance-investment-bonus schedule, and the published surrender, partial-withdrawal, and premium-shortfall charge schedules.',
       ...(isAdvancedDeath
         ? [
             'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
@@ -436,9 +436,9 @@ export function parseTokioMarineHarvestFlexi(context: ParseContext): IlpCatalogP
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'tokio-regular-premium-routing-to-accumulation-account',
       'tokio-initial-bonus-tiered-premium-allocation',
