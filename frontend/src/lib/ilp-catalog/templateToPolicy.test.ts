@@ -6165,7 +6165,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.eecTable).toEqual([0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05])
   })
 
-  it('maps #goAssure into a regular-pay partial seed with policy-charge and shortfall-charge mechanics', () => {
+  it('maps #goAssure into a regular-pay supported seed with policy-charge and shortfall-charge mechanics', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-goassure')
     expect(product).toBeDefined()
@@ -6174,7 +6174,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goassure-policy-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goassure-premium-shortfall-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-marine-goassure-monthly-protection-charge')

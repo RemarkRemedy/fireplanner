@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseTokioMarineGoAssure', () => {
-  it('builds a valid partial #goAssure product from the source PDF', async () => {
+  it('builds a valid supported #goAssure product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseTokioMarineGoAssure({
       document,
@@ -23,8 +23,8 @@ describe('parseTokioMarineGoAssure', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('tokio-marine-goassure')
     expect(product.productName).toBe('#goAssure')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('branch:tokio-marine-goassure-policy-charge')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
 

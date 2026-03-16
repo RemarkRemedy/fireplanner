@@ -196,6 +196,12 @@ export type GoldenCoverageTag =
   | 'branch:tokio-marine-gowealth-enrich-recurring-single-and-top-up-charge'
   | 'branch:tokio-marine-gowealth-enrich-single-premium-partial-withdrawal-charge'
   | 'branch:tokio-marine-gowealth-enrich-surrender-charge'
+  | 'branch:tokio-marine-goassure-initial-charge'
+  | 'branch:tokio-marine-goassure-policy-charge'
+  | 'branch:tokio-marine-goassure-recurring-single-and-top-up-charge'
+  | 'branch:tokio-marine-goassure-partial-withdrawal-charge'
+  | 'branch:tokio-marine-goassure-premium-shortfall-charge'
+  | 'branch:tokio-marine-goassure-surrender-charge'
   | 'branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge'
   | 'branch:fwd-invest-goal-1-zero-single-premium-charge'
   | 'branch:fwd-invest-goal-1-initial-account-charge'
@@ -3153,6 +3159,109 @@ function tokioMarineGoWealthEnrichStressPolicy(
     currentPolicyYear: 8,
     monthsAlreadyPaid: 84,
     postMipYears: 15,
+  })
+}
+
+function tokioMarineGoAssureBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-goassure', 'sgd-mip-10', id)
+  return withFunds(
+    withTokioBalances(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden #goAssure (SGD / MIP 10)',
+        monthlyContribution: 350,
+        currentPolicyYear: 6,
+        monthsAlreadyPaid: 60,
+        policyEvents: [],
+        distributionAssumption: {
+          mode: 'reinvest',
+          source: 'catalog-default',
+        },
+        ...overrides,
+      }),
+      24_000,
+      12_000,
+      4_000,
+    ),
+    funds,
+  )
+}
+
+function tokioMarineGoAssureBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return tokioMarineGoAssureBasePolicy(snapshot, id, TOKIO_BALANCED_FUNDS)
+}
+
+function tokioMarineGoAssureEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return tokioMarineGoAssureBasePolicy(snapshot, id, TOKIO_BALANCED_FUNDS, {
+    name: 'Golden #goAssure (SGD / MIP 10 Event Heavy)',
+    currentPolicyYear: 7,
+    monthsAlreadyPaid: 72,
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 73,
+        durationMonths: 3,
+        repayMissedPremiums: false,
+      },
+      {
+        id: 'reduction-1',
+        type: 'regular-premium-reduction',
+        startPolicyMonth: 77,
+        durationMonths: 1,
+        amount: 1_200,
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 78,
+        durationMonths: 1,
+        amount: 5_000,
+      },
+      {
+        id: 'rsp-1',
+        type: 'recurring-single-premium',
+        startPolicyMonth: 79,
+        durationMonths: 6,
+        amount: 300,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 84,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'accumulation',
+      },
+    ],
+  })
+}
+
+function tokioMarineGoAssureStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return tokioMarineGoAssureBasePolicy(snapshot, id, HSBC_STRESS_FUNDS, {
+    name: 'Golden #goAssure (SGD / MIP 10 OCF Stress)',
+    currentPolicyYear: 9,
+    monthsAlreadyPaid: 96,
+    postMipYears: 5,
+    distributionAssumption: {
+      mode: 'cash-payout',
+      source: 'manual-assumption',
+      annualYieldRate: 0.04,
+    },
   })
 }
 
@@ -9980,6 +10089,61 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: '#goWealth Enrich cash alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'tokio-marine-goassure',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'branch:tokio-marine-goassure-initial-charge',
+      'branch:tokio-marine-goassure-policy-charge',
+      'branch:tokio-marine-goassure-surrender-charge',
+    ],
+    description: '#goAssure baseline scenario proving supported initial-charge, premium-base policy-charge, surrender-charge, and distribution-assumption support through the SGD / MIP 10 corridor.',
+    integrityChecks: [
+      {
+        description: 'baseline goAssure corridor incurs positive gross fees from initial and policy charges',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+    ],
+  },
+  {
+    productId: 'tokio-marine-goassure',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:tokio-marine-goassure-recurring-single-and-top-up-charge',
+      'branch:tokio-marine-goassure-partial-withdrawal-charge',
+      'branch:tokio-marine-goassure-premium-shortfall-charge',
+      'tokio-recurring-single-premium-routing',
+      'tokio-top-up-routing',
+      'tokio-top-up-premium-charge',
+      'tokio-recurring-single-premium-charge',
+    ],
+    description: '#goAssure event-heavy scenario proving recurring-single-premium routing, top-up charging, accumulation-account withdrawal charging, and premium-shortfall mechanics.',
+    integrityChecks: [
+      {
+        description: 'event-heavy goAssure corridor records positive annual contribution from top-up and recurring-single-premium events',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > 0),
+      },
+      {
+        description: 'event-heavy goAssure corridor executes a later partial withdrawal from the accumulation account',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'tokio-marine-goassure',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: '#goAssure alternate-fund high-OCF stress scenario through the SGD / MIP 10 corridor.',
+  },
+  {
     productId: 'fwd-invest-goal-1',
     variantId: 'sgd-open-ended',
     scenarioId: 'baseline',
@@ -12418,6 +12582,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'tokio-marine-gowealth-enrich' && definition.scenarioId === 'ocf-stress') {
     return tokioMarineGoWealthEnrichStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-goassure' && definition.scenarioId === 'baseline') {
+    return tokioMarineGoAssureBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-goassure' && definition.scenarioId === 'event-heavy') {
+    return tokioMarineGoAssureEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-goassure' && definition.scenarioId === 'ocf-stress') {
+    return tokioMarineGoAssureStressPolicy(snapshot, id)
   }
   if (definition.productId === 'fwd-invest-goal-1' && definition.scenarioId === 'baseline') {
     return fwdInvestGoal1BaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended' | 'usd-open-ended', id)
