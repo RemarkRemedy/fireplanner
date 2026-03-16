@@ -51,6 +51,9 @@ type RatioComputer = (inputs: HealthRatioInputs) => { value: number | null; mess
 const RATIO_COMPUTERS: Record<string, RatioComputer> = {
   'emergency-fund': (i) => {
     if (i.monthlyExpenses === 0) return { value: null, message: 'No expenses entered' }
+    if (i.cashSavings === 0 && i.investedAssets > 0) {
+      return { value: null, message: 'Use the expense breakdown to specify your cash savings' }
+    }
     return { value: i.cashSavings / i.monthlyExpenses, message: null }
   },
   'savings-ratio': (i) => {

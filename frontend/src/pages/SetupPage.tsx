@@ -931,15 +931,16 @@ export function SetupPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm">Age</label>
-                <input
-                  type="number"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                <NumberInput
                   value={dep.age}
-                  onChange={(e) => {
+                  onChange={(v) => {
                     const updated = [...dependentsList]
-                    updated[i] = { ...dep, age: parseInt(e.target.value) || 0 }
+                    updated[i] = { ...dep, age: v }
                     handleChange('dependentsList', updated)
                   }}
+                  integer
+                  min={0}
+                  max={100}
                 />
               </div>
               <div className="space-y-2">

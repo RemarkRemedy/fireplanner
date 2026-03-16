@@ -89,17 +89,13 @@ const CPF_FLOW: NudgeFlowDefinition = {
         { name: 'cpfSA', label: 'Special Account (SA)', type: 'currency', required: true, validationKey: 'cpfSA', tooltip: 'For retirement. Earns 4% interest. Cannot be withdrawn before 55.', helperText: 'Check your CPF statement or my.cpf.gov.sg' },
         { name: 'cpfMA', label: 'MediSave Account (MA)', type: 'currency', required: true, validationKey: 'cpfMA', tooltip: 'For healthcare expenses. Capped at Basic Healthcare Sum ($79,000 in 2026).', helperText: 'Check your CPF statement or my.cpf.gov.sg' },
         { name: 'cpfRA', label: 'Retirement Account (RA)', type: 'currency', validationKey: 'cpfRA', tooltip: 'Created at age 55 from SA and OA transfers. Funds CPF LIFE payouts.', showWhen: { field: 'currentAge', greaterThanOrEqual: 55 } },
+        { name: 'hasCpfTopUps', label: 'Do you make voluntary CPF top-ups (RSTU/MediSave)?', type: 'toggle' },
       ],
     },
     {
       id: 'cpf-top-ups',
       title: 'Voluntary CPF Top-Ups',
       fields: [
-        {
-          name: 'hasCpfTopUps',
-          label: 'Do you make voluntary CPF top-ups (RSTU/MediSave)?',
-          type: 'toggle',
-        },
         {
           name: 'annualSaTopUp',
           label: 'Annual SA/RA top-up amount',
@@ -137,19 +133,8 @@ const CPF_FLOW: NudgeFlowDefinition = {
           type: 'number',
           required: true,
         },
+        { name: 'hasCpfis', label: 'Do you invest through CPFIS?', type: 'toggle' },
       ],
-    },
-    {
-      id: 'cpf-investment',
-      title: 'CPF Investment Scheme (CPFIS)',
-      fields: [
-        {
-          name: 'hasCpfis',
-          label: 'Do you invest through CPFIS?',
-          type: 'toggle',
-        },
-      ],
-      skipWhen: { field: 'hasCpfis', equals: false },
     },
   ],
 }
@@ -206,17 +191,14 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
         { name: 'monthlyMortgagePayment', label: 'Monthly repayment', type: 'currency', tooltip: 'Your monthly mortgage repayment amount.' },
         { name: 'mortgageRatePercent', label: 'Mortgage interest rate (%)', type: 'percent', validationKey: 'mortgageRatePercent', tooltip: 'Current annual interest rate on your mortgage.' },
         { name: 'mortgageEndYear', label: 'Loan end year', type: 'number' },
+        { name: 'planToDownsize', label: 'Do you plan to downsize or sell this property?', type: 'toggle' },
+        { name: 'hasRentalIncome', label: 'Do you earn rental income from this property?', type: 'toggle' },
       ],
     },
     {
       id: 'property-downsizing',
       title: 'Downsizing Plans',
       fields: [
-        {
-          name: 'planToDownsize',
-          label: 'Do you plan to downsize or sell this property?',
-          type: 'toggle',
-        },
         { name: 'downsizeYear', label: 'Planned year of sale', type: 'number' },
         { name: 'downsizeProceedsPercent', label: 'Proceeds to invest (%)', type: 'percent' },
         { name: 'replacementPropertyCost', label: 'Replacement property cost', type: 'currency' },
@@ -227,11 +209,6 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
       id: 'property-rental',
       title: 'Rental Income',
       fields: [
-        {
-          name: 'hasRentalIncome',
-          label: 'Do you earn rental income from this property?',
-          type: 'toggle',
-        },
         { name: 'monthlyRentalIncome', label: 'Monthly rental income', type: 'currency' },
         { name: 'rentalExpensesPercent', label: 'Annual expenses as % of rental income', type: 'percent' },
         { name: 'rentalIncomeEndYear', label: 'Rental income end year (optional)', type: 'number' },
@@ -275,17 +252,13 @@ const EXPENSES_FLOW: NudgeFlowDefinition = {
           tooltip: '100% = same spending as now. Most retirees spend 70-80% (no commute, paid-off mortgage). Some spend more early in retirement (travel).',
           helperText: 'Enter 100 to keep current spending. Enter 80 if you expect to spend 20% less.',
         },
+        { name: 'hasLargeGoals', label: 'Do you have large one-off future expenses (wedding, education, renovation)?', type: 'toggle' },
       ],
     },
     {
       id: 'expenses-goals',
       title: 'Large Future Expenses',
       fields: [
-        {
-          name: 'hasLargeGoals',
-          label: 'Do you have large one-off future expenses (wedding, education, renovation)?',
-          type: 'toggle',
-        },
         { name: 'goalName', label: 'Goal name', type: 'text' },
         { name: 'goalAmount', label: 'Target amount', type: 'currency' },
         { name: 'goalYear', label: 'Target year', type: 'number' },
