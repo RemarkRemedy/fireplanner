@@ -254,6 +254,15 @@ export function validateSetupField(
       return null
     }
 
+    // Lease start year: must be in the past or current year
+    case 'leaseStartYear': {
+      const currentYear = new Date().getFullYear()
+      const schema = z.number().int().min(1900).max(currentYear)
+      const result = schema.safeParse(value)
+      if (!result.success) return `Lease start year must be ${currentYear} or earlier`
+      return null
+    }
+
     // Salary stop year: must be current year or later, and within 50 years
     case 'salaryStopYear': {
       const currentYear = new Date().getFullYear()

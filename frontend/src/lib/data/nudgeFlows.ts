@@ -170,6 +170,7 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
         },
         { name: 'propertyValue', label: 'Current estimated value', type: 'currency', required: true, tooltip: 'Current market value. Check recent HDB or URA transactions.', helperText: 'Check recent HDB or URA transactions' },
         { name: 'leaseStartYear', label: 'Lease start year', type: 'number',
+          tooltip: 'The year the 99-year lease began. For HDB, check your lease agreement or HDB portal. Used to calculate remaining lease years.',
           showWhen: { field: 'propertyType', oneOf: ['hdb', 'ec'] } },
         {
           name: 'leaseTenure',
