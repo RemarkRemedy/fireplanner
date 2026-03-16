@@ -40,6 +40,7 @@ export function GoalListEditor({ goals, onAdd, onUpdate, onRemove }: GoalListEdi
               />
             </div>
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               className="shrink-0 h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
@@ -68,6 +69,7 @@ export function GoalListEditor({ goals, onAdd, onUpdate, onRemove }: GoalListEdi
       ))}
 
       <Button
+        type="button"
         variant="outline"
         size="sm"
         onClick={onAdd}

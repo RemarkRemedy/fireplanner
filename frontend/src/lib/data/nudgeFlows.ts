@@ -246,11 +246,7 @@ const EXPENSES_FLOW: NudgeFlowDefinition = {
     {
       id: 'expenses-goals',
       title: 'Large Future Expenses',
-      fields: [
-        { name: 'goalName', label: 'Goal name', type: 'text' },
-        { name: 'goalAmount', label: 'Target amount', type: 'currency' },
-        { name: 'goalYear', label: 'Target year', type: 'number' },
-      ],
+      fields: [],
       skipWhen: { field: 'hasLargeGoals', equals: false },
     },
     {

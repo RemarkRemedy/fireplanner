@@ -283,6 +283,9 @@ function seedProtection(adult: PlanningAdult): Record<string, unknown> {
   seeds.ciCoverageAmount = adult.insuranceCICoverage
   seeds.disabilityCoverageMonthly = adult.insuranceDisabilityMonthly
   seeds.annualInsurancePremiums = adult.annualInsurancePremiums ?? 0
+  if (adult.debtPayoffAge != null) {
+    seeds.debtPayoffAge = adult.debtPayoffAge
+  }
   return seeds
 }
 

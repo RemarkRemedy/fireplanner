@@ -52,7 +52,7 @@ export function useRiskAssessment(): RiskDimension[] {
         recommendation: profile.inflation >= 0.04
           ? 'Consider inflation-linked assets or a higher equity allocation.'
           : 'Your inflation assumption is reasonable for Singapore.',
-        actionTarget: { type: 'route', value: '/inputs#section-fire' },
+        actionTarget: { type: 'route', value: '/inputs#section-fire-settings' },
       },
       {
         id: 'longevity',

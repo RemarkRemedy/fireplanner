@@ -278,7 +278,7 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         const currentYear = new Date().getFullYear()
         const goalDrafts = values.goalDrafts as Array<{ id: string; name: string; amount: number; year: number; category: string; isNew?: boolean }> | undefined
 
-        if (goalDrafts && goalDrafts.length > 0) {
+        if (goalDrafts) {
           // Multi-goal mode: batch add/update/remove
           const existingGoalIds = new Set(plan.goals.filter((g) => g.owner === 'self').map((g) => g.id))
           const draftIds = new Set(goalDrafts.map((d) => d.id))
@@ -617,6 +617,12 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       if (values.hasOutstandingDebt === false) {
         adultUpdates.nonMortgageDebtTotal = 0
         adultUpdates.nonMortgageDebtMonthlyPayment = 0
+        adultUpdates.debtPayoffAge = undefined
+      }
+
+      // Debt payoff age (from nudge flow)
+      if (typeof values.debtPayoffAge === 'number' && values.debtPayoffAge > 0) {
+        adultUpdates.debtPayoffAge = values.debtPayoffAge
       }
 
       // Insurance fields

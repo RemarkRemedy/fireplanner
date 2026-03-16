@@ -204,7 +204,7 @@ export function ProjectionPage() {
         // Sub-categorize adult fields
         const fields = Object.keys(fieldErrors)
         const hasCpf = fields.some((f) => f.includes('cpf'))
-        const hasProtection = fields.some((f) => f.includes('insurance') || f === 'cashSavings' || f.includes('nonMortgageDebt'))
+        const hasProtection = fields.some((f) => f.includes('insurance') || f === 'cashSavings' || f.includes('nonMortgageDebt') || f === 'debtPayoffAge')
         const hasHealthcare = fields.some((f) => f.includes('healthcare'))
         if (hasCpf) addError('CPF', firstMsg)
         if (hasProtection) addError('Protection', firstMsg)
@@ -223,7 +223,9 @@ export function ProjectionPage() {
 
     // Categorize cross-store errors (flat keys from useProjection)
     for (const [key, message] of Object.entries(crossStoreErrors)) {
-      if (key === 'retirementAge' || key === 'lifeExpectancy' || key === 'cpfLifeStartAge' || key === 'cpfMA') {
+      if (key === 'cpfMA') {
+        addError('CPF', message)
+      } else if (key === 'retirementAge' || key === 'lifeExpectancy' || key === 'cpfLifeStartAge') {
         addError('Personal Details', message)
       } else if (key.startsWith('incomeStream_') || key.startsWith('lifeEvent_') || key.startsWith('promotionJump_')) {
         addError('Income', message)
@@ -247,7 +249,7 @@ export function ProjectionPage() {
       'Property': '/inputs#section-property',
       'Protection': '/inputs#section-protection',
       'Healthcare': '/inputs#section-healthcare',
-      'FIRE Settings': '/inputs#section-fire',
+      'FIRE Settings': '/inputs#section-fire-settings',
       'Expenses': '/inputs#section-expenses',
     }
 
