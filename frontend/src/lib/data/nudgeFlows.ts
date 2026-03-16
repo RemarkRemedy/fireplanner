@@ -238,9 +238,9 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
       id: 'property-rental',
       title: 'Rental Income',
       fields: [
-        { name: 'monthlyRentalIncome', label: 'Monthly rental income', type: 'currency' },
-        { name: 'rentalExpensesPercent', label: 'Annual expenses as % of rental income', type: 'percent' },
-        { name: 'rentalIncomeEndYear', label: 'Rental income end year (optional)', type: 'number' },
+        { name: 'monthlyRentalIncome', label: 'Monthly rental income', type: 'currency', tooltip: 'Gross monthly rent you receive before deducting expenses. The projection adds this to your annual income.' },
+        { name: 'rentalExpensesPercent', label: 'Annual expenses as % of rental income', type: 'percent', tooltip: 'Covers property tax, maintenance fees, agent commissions, repairs, and income tax on rental. A typical range is 20-30% for SG condos.' },
+        { name: 'rentalIncomeEndYear', label: 'Rental income end year (optional)', type: 'number', tooltip: 'The year you expect rental income to stop (e.g., when you move back in, sell the property, or the tenant lease ends). Leave at 0 to assume rental income continues indefinitely.' },
       ],
       skipWhen: { field: 'hasRentalIncome', equals: false },
     },
