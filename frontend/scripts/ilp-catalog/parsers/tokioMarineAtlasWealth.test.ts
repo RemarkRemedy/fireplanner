@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseTokioMarineAtlasWealth', () => {
-  it('builds valid split TM Atlas Wealth death-benefit variants from the source PDF', async () => {
+  it('builds valid supported split TM Atlas Wealth death-benefit variants from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseTokioMarineAtlasWealth({
       document,
@@ -23,8 +23,8 @@ describe('parseTokioMarineAtlasWealth', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('tokio-marine-atlas-wealth')
     expect(product.productName).toBe('TM Atlas Wealth')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
     expect(product.modeledEconomics).toContain('branch:tokio-atlas-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
