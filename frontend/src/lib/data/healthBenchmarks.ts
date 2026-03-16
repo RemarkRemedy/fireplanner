@@ -1,6 +1,6 @@
 /**
  * Financial Health Check benchmarks and thresholds.
- * Sources: MoneySense, DBS, MAS, LIA, Karen Tang.
+ * Sources: MoneySense, DBS, MAS, LIA.
  * Downloaded: 2026-03-10
  */
 
@@ -22,6 +22,7 @@ export interface HealthRatioMeta {
   }
   tip: Record<TrafficLight, string>
   source: string
+  sourceUrl?: string
 }
 
 export const HEALTH_RATIOS: HealthRatioMeta[] = [
@@ -40,6 +41,7 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
       red: 'Less than 3 months of expenses in cash. Prioritize building an emergency fund.',
     },
     source: 'MoneySense Basic Financial Planning Guide',
+    sourceUrl: 'https://www.moneysense.gov.sg/planning-your-finances-well/',
   },
   {
     id: 'savings-ratio',
@@ -61,6 +63,7 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
       red: 'Saving less than 10% of take-home income. Review expenses for reduction opportunities.',
     },
     source: 'MoneySense Basic Financial Planning Guide (thresholds adjusted for net income basis)',
+    sourceUrl: 'https://www.moneysense.gov.sg/planning-your-finances-well/',
   },
   {
     id: 'tdsr',
@@ -80,6 +83,7 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
       red: 'TDSR over 50%. Debt payments consume more than half of income. Urgent action needed.',
     },
     source: 'DBS Financial Health Ratios (personal finance thresholds; MAS regulatory limit is 55%)',
+    sourceUrl: 'https://www.dbs.com.sg/personal/articles/nav/financial-planning/7-financial-ratios-to-gauge-your-financial-health',
   },
   {
     id: 'non-mortgage-dsr',
@@ -96,6 +100,7 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
       red: 'Non-mortgage debt over 25% of gross income. High risk of debt spiral.',
     },
     source: 'DBS Financial Health Ratios',
+    sourceUrl: 'https://www.dbs.com.sg/personal/articles/nav/financial-planning/7-financial-ratios-to-gauge-your-financial-health',
   },
   {
     id: 'debt-to-asset',
@@ -112,6 +117,7 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
       red: 'Debt-to-asset over 50%. More than half your assets are financed by debt.',
     },
     source: 'DBS Financial Health Ratios',
+    sourceUrl: 'https://www.dbs.com.sg/personal/articles/nav/financial-planning/7-financial-ratios-to-gauge-your-financial-health',
   },
   {
     id: 'liquid-to-nw',
@@ -127,7 +133,8 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
       amber: '10-15% liquid. Consider increasing accessible cash reserves.',
       red: 'Less than 10% liquid. Wealth is illiquid. May struggle in emergencies.',
     },
-    source: 'Karen Tang Financial Planning',
+    source: 'DBS Financial Health Ratios',
+    sourceUrl: 'https://www.dbs.com.sg/personal/articles/nav/financial-planning/7-financial-ratios-to-gauge-your-financial-health',
   },
   {
     id: 'investment-to-nw',
@@ -143,7 +150,8 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
       amber: '30-50% invested. Consider deploying more idle cash into investments.',
       red: 'Less than 30% invested. Significant wealth sitting idle.',
     },
-    source: 'Karen Tang Financial Planning',
+    source: 'DBS Financial Health Ratios',
+    sourceUrl: 'https://www.dbs.com.sg/personal/articles/nav/financial-planning/7-financial-ratios-to-gauge-your-financial-health',
   },
   {
     id: 'solvency',
@@ -160,6 +168,7 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
       red: 'Solvency under 35%. High leverage. Focus on debt reduction.',
     },
     source: 'DBS Financial Health Ratios',
+    sourceUrl: 'https://www.dbs.com.sg/personal/articles/nav/financial-planning/7-financial-ratios-to-gauge-your-financial-health',
   },
 ]
 

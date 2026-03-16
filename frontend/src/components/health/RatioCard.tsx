@@ -25,6 +25,7 @@ export function RatioCard({ ratio }: { ratio: HealthRatioResult }) {
                   text={ratio.meta.description}
                   formula={ratio.meta.formula}
                   source={ratio.meta.source}
+                  sourceUrl={ratio.meta.sourceUrl}
                 />
               </h4>
               <span className="text-sm font-semibold tabular-nums shrink-0">
