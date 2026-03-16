@@ -806,6 +806,53 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('#goWealth Enrich cash seeds modeled establishment and withdrawal charges', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goWealth Enrich')
+
+    expect(within(dialog).getByText('#goWealth Enrich')).toBeInTheDocument()
+    await user.click(
+      within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash\)use partial template$/i }),
+    )
+
+    expect(screen.getAllByText('#goWealth Enrich (SGD / Open-ended (Cash))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('establishment charge')
+    expect(seededAlert?.textContent).toContain('first-three-policy-years single-premium partial-withdrawal charge schedule')
+    expect(seededAlert?.textContent).toContain('Loyalty bonus and protection benefits remain outside the current engine')
+    expect(screen.getByDisplayValue('Establishment Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('#goElite cash seeds modeled establishment charges with metadata-only protection benefits', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goElite')
+
+    const goEliteCard = within(dialog).getByText('#goElite').closest('.rounded-lg') as HTMLElement | null
+    expect(goEliteCard).not.toBeNull()
+    await user.click(
+      within(goEliteCard!).getByRole('button', { name: /^sgd \/ open-ended \(cash\)use partial template$/i }),
+    )
+
+    expect(screen.getAllByText('#goElite (SGD / Open-ended (Cash))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('protection benefits remain outside the current engine')
+    expect(seededAlert?.textContent).toContain('Recurring single premium and top-up availability only after one policy year')
+    expect(seededAlert?.textContent).toContain('nil partial-withdrawal charge')
+    expect(screen.getByDisplayValue('Establishment Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('#goElite Secure cash seeds locked-in-value and adjusted-single-premium MPC inputs', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
