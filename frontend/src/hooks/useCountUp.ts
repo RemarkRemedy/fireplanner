@@ -22,7 +22,11 @@ export function useCountUp(target: number, duration = 600): number {
       }
     }
     frame = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(frame)
+    return () => {
+      cancelAnimationFrame(frame)
+      // Reset so StrictMode's re-invocation of the effect doesn't bail out
+      prevTarget.current = NaN
+    }
   }, [target, duration])
 
   return value
