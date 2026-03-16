@@ -67,6 +67,13 @@ export type GoldenCoverageTag =
   | 'branch:hsbc-bonus-suspension'
   | 'branch:hsbc-premium-reduction-brc'
   | 'branch:hsbc-top-up-routing'
+  | 'branch:hsbc-life-flexi-protector-regular-premium-charge'
+  | 'branch:hsbc-life-flexi-protector-regular-premium-allocation-uplift'
+  | 'branch:hsbc-life-flexi-protector-additional-bonus-units'
+  | 'branch:hsbc-life-flexi-protector-administration-fee'
+  | 'branch:hsbc-life-flexi-protector-top-up-premium-charge'
+  | 'branch:hsbc-life-flexi-protector-recurring-single-premium-charge'
+  | 'branch:hsbc-life-flexi-protector-zero-partial-withdrawal-charge'
   | 'branch:hsbc-harvest-holiday-charge'
   | 'branch:hsbc-harvest-pwc'
   | 'branch:hsbc-harvest-brc'
@@ -941,70 +948,97 @@ function withTokioSinglePremiumBalances(
   })
 }
 
-function hsbcFlexiChoiceAssurancePolicy(id: string): IlpPolicyInput {
-  return ilpPolicySchema.parse({
-    ...createDefaultPolicy(),
-    id,
-    name: 'Golden HSBC Life Flexi Protector (Choice Death / TI COI)',
-    insurer: 'HSBC Life',
-    currency: 'SGD',
-    monthlyContribution: 0,
-    monthsAlreadyPaid: 72,
-    currentPolicyYear: 7,
-    icpMonths: 0,
-    mipLength: 20,
-    postMipYears: 10,
-    eecTable: Array.from({ length: 20 }, () => 0),
-    accounts: [
+function hsbcFlexiProtectorBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended-choice-cover' | 'sgd-open-ended-max-cover',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'hsbc-life-flexi-protector', variantId, id)
+  const coverLabel = variantId.endsWith('choice-cover') ? 'Choice Cover' : 'Max Cover'
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden HSBC Life Flexi Protector (SGD / Open-ended ${coverLabel})`,
+      monthlyContribution: 500,
+      currentPolicyYear: 7,
+      monthsAlreadyPaid: 72,
+      postMipYears: 10,
+      distributionAssumption: {
+        mode: 'cash-payout',
+        source: 'manual-assumption',
+        annualYieldRate: 0.03,
+      },
+      assuranceProfile: {
+        currentAgeNextBirthday: 35,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentBasicSumAssured: 150_000,
+        currentNetSupplementaryPremiumBase: 24_000,
+      },
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 120_000,
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function hsbcFlexiProtectorBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended-choice-cover' | 'sgd-open-ended-max-cover',
+  id: string,
+): IlpPolicyInput {
+  return hsbcFlexiProtectorBasePolicy(snapshot, variantId, id, HSBC_BALANCED_FUNDS)
+}
+
+function hsbcFlexiProtectorEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return hsbcFlexiProtectorBasePolicy(snapshot, 'sgd-open-ended-choice-cover', id, HSBC_BALANCED_FUNDS, {
+    name: 'Golden HSBC Life Flexi Protector (SGD / Open-ended Choice Cover Event Heavy)',
+    currentPolicyYear: 8,
+    monthsAlreadyPaid: 84,
+    policyEvents: [
       {
-        id: 'policy-value',
-        label: 'Policy Value',
-        feeRate: 0,
-        currentValue: 30_000,
-        contributionShare: 0,
-        subjectToEec: false,
-        postMipFeeRate: null,
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 97,
+        durationMonths: 1,
+        amount: 6_000,
+      },
+      {
+        id: 'rsp-1',
+        type: 'recurring-single-premium',
+        startPolicyMonth: 100,
+        durationMonths: 4,
+        amount: 1_500,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 107,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'policy',
       },
     ],
-    funds: [
-      {
-        name: 'Stable Fund',
-        allocation: 1,
-        ocf: 0,
-        grossReturnLow: 0,
-        grossReturnMid: 0,
-        grossReturnHigh: 0,
-      },
-    ],
-    bonuses: [],
-    chargeRules: [
-      {
-        id: 'flexi-choice-death-ti',
-        label: 'Death / TI COI',
-        basis: 'assurance-sum-at-risk',
-        activeWindow: 'policy-term',
-        appliesTo: ['policy-value'],
-        rate: 0,
-        amount: 0,
-        assuranceConfig: {
-          formula: 'hsbc-flexi-choice-death-ti',
-          monthlyModalFactor: 1 / 12,
-          maxAgeNextBirthday: 99,
-        },
-        allocation: 'pro-rata-by-value',
-      },
-    ],
-    eventChargeRules: [],
-    assuranceProfile: {
-      currentAgeNextBirthday: 30,
-      sex: 'male',
-      smokerStatus: 'non-smoker',
-      currentBasicSumAssured: 100_000,
-      currentNetSupplementaryPremiumBase: 20_000,
-    },
-    discountRate: 0.03,
-    inflationRate: 0.02,
-    alternativeReturn: 0.07,
+  })
+}
+
+function hsbcFlexiProtectorStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended-choice-cover' | 'sgd-open-ended-max-cover',
+  id: string,
+): IlpPolicyInput {
+  return hsbcFlexiProtectorBasePolicy(snapshot, variantId, id, HSBC_STRESS_FUNDS, {
+    name: `Golden HSBC Life Flexi Protector (${variantId.toUpperCase()} OCF Stress)`,
   })
 }
 
@@ -12077,25 +12111,46 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'hsbc-life-flexi-protector',
-    variantId: 'sgd-open-ended-regular-pay',
-    scenarioId: 'assurance-choice-vs-max',
-    fixtureClass: 'partial-modeled-subset',
-    coverageTags: ['baseline', 'branch:hsbc-flexi-choice-max-assurance'],
-    description: 'HSBC Life Flexi Protector bounded manual subset proving the normalized death / TI assurance path distinguishes Choice and Max cover formulas.',
-    manualSource: {
-      supportStatus: 'partial',
-      sourceFileName: 'HSBC Life Flexi Protector Product Summary.pdf',
-      sourceChecksumSha256: '3e6a2d15210a993587f2ec37fce0dc90e5e7f9ac2de3ba99bea98588c634df83',
-    },
+    variantId: 'sgd-open-ended-choice-cover',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:hsbc-life-flexi-protector-regular-premium-charge',
+      'branch:hsbc-life-flexi-protector-regular-premium-allocation-uplift',
+      'branch:hsbc-life-flexi-protector-additional-bonus-units',
+      'branch:hsbc-life-flexi-protector-administration-fee',
+      'branch:hsbc-flexi-choice-max-assurance',
+      'kernel:distribution-mode-assumption',
+    ],
+    description: 'HSBC Life Flexi Protector baseline scenario proving the supported Choice Cover regular-premium, account-value bonus, administration-fee, insurance-charge, and manual distribution corridor.',
     integrityChecks: [
+      {
+        description: 'Choice-cover baseline applies a positive annual-rate Additional Bonus Units credit on the policy account',
+        test: (_, artifact) => {
+          const firstRow = artifact.expected.projections.mid.rows[0]
+          const policyBonus = firstRow?.accounts.find((account) => account.accountId === 'policy')?.bonusCredit ?? 0
+          return policyBonus > 0
+        },
+      },
       {
         description: 'Choice cover applies a non-zero death / TI assurance charge from the normalized path',
         test: (_, artifact) => {
           const firstRow = artifact.expected.projections.mid.rows[0]
-          const policyValueFee = firstRow?.accounts.find((account) => account.accountId === 'policy-value')?.grossFee ?? 0
-          return policyValueFee > 0
+          const policyFee = firstRow?.accounts.find((account) => account.accountId === 'policy')?.grossFee ?? 0
+          return policyFee > 0
         },
       },
+    ],
+  },
+  {
+    productId: 'hsbc-life-flexi-protector',
+    variantId: 'sgd-open-ended-max-cover',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'HSBC Life Flexi Protector baseline scenario proving the supported Max Cover corridor.',
+    integrityChecks: [
       {
         description: 'Max cover produces a higher first-year death / TI assurance charge than Choice from the same balances',
         test: (fixture) => {
@@ -12103,21 +12158,48 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
             ...fixture.policy,
             chargeRules: fixture.policy.chargeRules?.map((rule) => ({
               ...rule,
-              id: 'flexi-max-death-ti',
+              id: 'flexi-choice-death-ti',
               assuranceConfig: rule.assuranceConfig
                 ? {
                     ...rule.assuranceConfig,
-                    formula: 'hsbc-flexi-max-death-ti',
+                    formula: 'hsbc-flexi-choice-death-ti',
                   }
                 : undefined,
             })),
           })
-          const choiceFee = analyzeIlpPolicy(fixture.policy).projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'policy-value')?.grossFee ?? 0
-          const maxFee = analyzeIlpPolicy(maxPolicy).projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'policy-value')?.grossFee ?? 0
+          const maxFee = analyzeIlpPolicy(fixture.policy).projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'policy')?.grossFee ?? 0
+          const choiceFee = analyzeIlpPolicy(maxPolicy).projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'policy')?.grossFee ?? 0
           return maxFee > choiceFee
         },
       },
     ],
+  },
+  {
+    productId: 'hsbc-life-flexi-protector',
+    variantId: 'sgd-open-ended-choice-cover',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:hsbc-life-flexi-protector-top-up-premium-charge',
+      'branch:hsbc-life-flexi-protector-recurring-single-premium-charge',
+      'branch:hsbc-life-flexi-protector-zero-partial-withdrawal-charge',
+    ],
+    description: 'HSBC Life Flexi Protector event-heavy scenario covering top-up, recurring-single-premium, and zero-charge withdrawal behavior on the supported Choice Cover corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy corridor produces both contribution spikes and a later withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0 && row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+    ],
+  },
+  {
+    productId: 'hsbc-life-flexi-protector',
+    variantId: 'sgd-open-ended-max-cover',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'HSBC Life Flexi Protector alternate-fund high-OCF stress scenario through the supported Max Cover corridor.',
   },
   {
     productId: 'tokio-marine-atlas-wealth',
@@ -13931,8 +14013,22 @@ function buildPolicyForDefinition(
   if (definition.productId === 'prudential-pruvantage-assure-ii' && definition.scenarioId === 'assurance-state-override') {
     return assureIiStateOverridePolicy(snapshot, id)
   }
-  if (definition.productId === 'hsbc-life-flexi-protector' && definition.scenarioId === 'assurance-choice-vs-max') {
-    return hsbcFlexiChoiceAssurancePolicy(id)
+  if (definition.productId === 'hsbc-life-flexi-protector' && definition.scenarioId === 'baseline') {
+    return hsbcFlexiProtectorBaselinePolicy(
+      snapshot,
+      definition.variantId as 'sgd-open-ended-choice-cover' | 'sgd-open-ended-max-cover',
+      id,
+    )
+  }
+  if (definition.productId === 'hsbc-life-flexi-protector' && definition.scenarioId === 'event-heavy') {
+    return hsbcFlexiProtectorEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'hsbc-life-flexi-protector' && definition.scenarioId === 'ocf-stress') {
+    return hsbcFlexiProtectorStressPolicy(
+      snapshot,
+      definition.variantId as 'sgd-open-ended-choice-cover' | 'sgd-open-ended-max-cover',
+      id,
+    )
   }
   if (definition.productId === 'tokio-marine-atlas-wealth' && definition.scenarioId === 'baseline') {
     if (definition.variantId === 'sgd-mip-25-advanced-death') {

@@ -5310,19 +5310,22 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current locked-in value manually'))).toBe(true)
   })
 
-  it('maps HSBC Life Flexi Protector into a partial seed with premium charges, fixed admin fee, and allocation uplift', () => {
+  it('maps HSBC Life Flexi Protector into a supported choice-cover seed with insurance charge and account-value bonus tiers', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'hsbc-life-flexi-protector')
     expect(product).toBeDefined()
 
-    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-regular-pay')
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-choice-cover')
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.name).toBe('HSBC Life Flexi Protector (SGD / Open-ended (Choice Cover))')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-life-flexi-protector-regular-premium-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-life-flexi-protector-additional-bonus-units')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-flexi-choice-max-assurance')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-life-flexi-protector-administration-fee')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-insurance-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-tpd-payout-structure')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -5342,6 +5345,16 @@ describe('templateVariantToPolicySeed', () => {
             { startPolicyYear: 1, endPolicyYear: null, amount: 60 },
           ],
         }),
+        expect.objectContaining({
+          id: 'death-ti-insurance-charge',
+          basis: 'assurance-sum-at-risk',
+          assuranceConfig: expect.objectContaining({
+            formula: 'hsbc-flexi-choice-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          }),
+          requiresManualInput: true,
+        }),
       ]),
     )
     expect(seed.bonuses).toEqual(
@@ -5352,6 +5365,16 @@ describe('templateVariantToPolicySeed', () => {
           startPolicyYear: 5,
           endPolicyYear: null,
         }),
+        expect.objectContaining({
+          id: 'additional-bonus-units',
+          startPolicyYear: 1,
+          tieredRates: [
+            { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: null, minAccountValue: 0, maxAccountValue: 29_999, rate: 0 },
+            { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: null, minAccountValue: 30_000, maxAccountValue: 99_999, rate: 0.001 },
+            { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: null, minAccountValue: 100_000, maxAccountValue: 499_999, rate: 0.002 },
+            { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: null, minAccountValue: 500_000, maxAccountValue: null, rate: 0.003 },
+          ],
+        }),
       ]),
     )
     expect(seed.eventChargeRules).toEqual([
@@ -5359,6 +5382,14 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
       expect.objectContaining({ id: 'partial-withdrawal-charge', rate: 0 }),
     ])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
   })
 
   it('maps Singlife Legacy Invest into a supported seed with policy-year shortfall and withdrawal charges', () => {

@@ -3,6 +3,7 @@ import type {
   IlpCatalogProduct,
   IlpCatalogSourceRef,
   IlpTemplateBonus,
+  IlpTemplateBonusTier,
   IlpTemplateEventChargeRule,
   IlpTemplateFeeRule,
   IlpTemplateVariant,
@@ -20,6 +21,15 @@ const REGULAR_PREMIUM_CHARGE_SCHEDULE = [
   { startPolicyYear: 3, endPolicyYear: 3, rate: 0.45 },
   { startPolicyYear: 4, endPolicyYear: null, rate: 0 },
 ] as const
+
+const ADDITIONAL_BONUS_UNIT_TIERS: IlpTemplateBonusTier[] = [
+  { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: null, minAccountValue: 0, maxAccountValue: 29_999, rate: 0 },
+  { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: null, minAccountValue: 30_000, maxAccountValue: 99_999, rate: 0.001 },
+  { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: null, minAccountValue: 100_000, maxAccountValue: 499_999, rate: 0.002 },
+  { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: null, minAccountValue: 500_000, maxAccountValue: null, rate: 0.003 },
+] as const
+
+type CoverOption = 'choice-cover' | 'max-cover'
 
 function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
@@ -46,7 +56,7 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
   return page.lines.slice(lineIndex, lineIndex + lineWindow).map((line) => line.text).join(' ')
 }
 
-function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
+function buildVariant(document: ExtractedPdfDocument, coverOption: CoverOption): IlpTemplateVariant {
   const page4 = sourceRef(4, 'Benefits and additional bonus units', snippetNear(document, 4, 'Additional Bonus Units', 24))
   const page9 = sourceRef(9, 'Distribution of dividend', snippetNear(document, 9, 'Distribution of Dividend', 24))
   const page10 = sourceRef(10, 'Regular premium and premium holiday', snippetNear(document, 10, 'Regular Premium', 28))
@@ -55,6 +65,8 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page16 = sourceRef(16, 'Fees and charges', snippetNear(document, 16, 'PREMIUM CHARGE', 28))
   const page17 = sourceRef(17, 'Partial withdrawal and regular withdrawal', snippetNear(document, 17, 'PARTIAL WITHDRAWAL', 24))
   const page24 = sourceRef(24, 'Surrender and termination', snippetNear(document, 24, 'SURRENDER OF THE POLICY', 24))
+  const insuranceFormula = coverOption === 'choice-cover' ? 'hsbc-flexi-choice-death-ti' : 'hsbc-flexi-max-death-ti'
+  const coverLabel = coverOption === 'choice-cover' ? 'Choice Cover' : 'Max Cover'
 
   const bonuses: IlpTemplateBonus[] = [
     {
@@ -72,6 +84,23 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
         'Models the published increase from 100% to 102% of regular premium units from the fifth policy year onward.',
       ],
       sourceRefs: [page12],
+    },
+    {
+      id: 'additional-bonus-units',
+      type: 'loyalty',
+      label: 'Additional Bonus Units',
+      mode: 'annual-rate',
+      appliesTo: ['policy'],
+      startPolicyYear: 1,
+      endPolicyYear: null,
+      rate: 0,
+      amount: null,
+      tieredRates: ADDITIONAL_BONUS_UNIT_TIERS.map((tier) => ({ ...tier })),
+      notes: [
+        'Modeled as a yearly policy-commencement-day annual-rate bonus based on the published account-value bands.',
+        'Partial and regular withdrawals can reduce future Additional Bonus Units by reducing the account value; there is no separate withdrawal clawback rule.',
+      ],
+      sourceRefs: [page4, page17],
     },
   ]
 
@@ -107,6 +136,26 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
         'Models the published S$5 monthly administration fee as a fixed S$60 annual drag.',
       ],
       sourceRefs: [page16],
+    },
+    {
+      id: 'death-ti-insurance-charge',
+      label: 'Death / TI Insurance Charge',
+      basis: 'assurance-sum-at-risk',
+      rate: null,
+      amount: null,
+      assuranceConfig: {
+        formula: insuranceFormula,
+        monthlyModalFactor: 1 / 12,
+        maxAgeNextBirthday: 99,
+      },
+      requiresManualInput: true,
+      appliesTo: ['policy'],
+      activeWindow: 'policy-term',
+      notes: [
+        `Models the monthly ${coverLabel} death / TI insurance charge using the existing HSBC assurance formula after entering the insured-life details and current basic-sum-assured / supplementary-premium-base inputs.`,
+        'The calculator models the monthly deduction path only; TPD payout treatment and later underwritten sum-assured changes remain informational only.',
+      ],
+      sourceRefs: [page4, page16],
     },
   ]
 
@@ -161,7 +210,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   ]
 
   return {
-    id: 'sgd-open-ended-regular-pay',
+    id: coverOption === 'choice-cover' ? 'sgd-open-ended-choice-cover' : 'sgd-open-ended-max-cover',
     currency: 'SGD',
     mipBasis: 'open-ended',
     mipLength: null,
@@ -199,16 +248,14 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [],
     warnings: [
-      'This partial template models the SGD open-ended regular-pay corridor with the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the fixed S$5 monthly administration fee, the 5% top-up / recurring-single-premium charge path, and the nil withdrawal/redemption-fee path.',
-      'Choice Cover versus Max Cover, insurance charge, and the tiered Additional Bonus Units remain outside the current executable slice.',
+      `This supported template models the SGD open-ended ${coverLabel} corridor with the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the tiered Additional Bonus Units, the fixed S$5 monthly administration fee, the monthly death / TI insurance charge, the 5% top-up / recurring-single-premium charge path, and the nil withdrawal/redemption-fee path.`,
+      'Dividend cash payout remains a manual assumption surface and still depends on fund-level dividend declaration together with the published S$30 minimum payout threshold.',
     ],
     unsupportedItems: [
-      'Choice Cover versus Max Cover death, TI, and TPD payout behavior remains informational only.',
-      'Insurance charge remains informational only because it depends on cover option, attained age, and current sum at risk.',
-      'Additional Bonus Units remain informational only because the published tiering is based on current account-value bands rather than a static premium band.',
+      'TPD payout treatment, terminal-illness claim limits, and cross-policy benefit caps remain informational only.',
       'Premium-holiday lapse sequencing, policy reinstatement, GIO, and life-replacement behavior remain informational only.',
       'USD-specific payment constraints and the no-RSP USD corridor remain informational only.',
-      'Minimum holding amounts, policy-change approval rules, and fund-switching mechanics remain informational only.',
+      'Minimum holding amounts, regular withdrawal facility rules, policy-change approval rules, and fund-switching mechanics remain informational only.',
       'Fund-level management charges and other underlying-fund expenses remain informational only.',
     ],
     sourceRefs: [page4, page9, page10, page11, page12, page16, page17, page24],
@@ -224,35 +271,38 @@ export function parseHsbcLifeFlexiProtector({ document, sourceChecksumSha256 }: 
     sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:hsbc-life-flexi-protector-regular-premium-charge',
       'branch:hsbc-life-flexi-protector-regular-premium-allocation-uplift',
+      'branch:hsbc-life-flexi-protector-additional-bonus-units',
       'branch:hsbc-life-flexi-protector-administration-fee',
+      'branch:hsbc-flexi-choice-max-assurance',
       'branch:hsbc-life-flexi-protector-top-up-premium-charge',
       'branch:hsbc-life-flexi-protector-recurring-single-premium-charge',
       'branch:hsbc-life-flexi-protector-zero-partial-withdrawal-charge',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'hsbc-life-flexi-protector-choice-cover',
-      'hsbc-life-flexi-protector-max-cover',
-      'hsbc-life-flexi-protector-insurance-charge',
-      'hsbc-life-flexi-protector-additional-bonus-units',
+      'hsbc-life-flexi-protector-tpd-payout-structure',
       'hsbc-life-flexi-protector-premium-holiday-lapse-sequencing',
       'hsbc-life-flexi-protector-gio',
       'hsbc-life-flexi-protector-life-replacement-option',
       'hsbc-life-flexi-protector-policy-change-approvals',
       'hsbc-life-flexi-protector-usd-corridor',
+      'hsbc-life-flexi-protector-dividend-payout-threshold',
     ],
     warnings: [
-      'HSBC Life Flexi Protector is cataloged as a partial modeled subset in V1. The parser captures the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the fixed S$5 monthly administration fee, the 5% top-up / recurring-single-premium charge path, and the nil withdrawal/redemption-fee path through the SGD open-ended regular-pay corridor.',
-      'Choice Cover versus Max Cover, insurance charge, and the tiered Additional Bonus Units remain informational only because the current engine does not execute those protection and account-band mechanics.',
+      'HSBC Life Flexi Protector is cataloged as a supported V1 product. The parser captures explicit SGD open-ended Choice Cover and Max Cover variants with the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the tiered Additional Bonus Units, the fixed S$5 monthly administration fee, the Choice/Max death and terminal-illness insurance-charge corridor, the 5% top-up / recurring-single-premium charge path, and the nil withdrawal/redemption-fee path.',
+      'Dividend payout threshold handling, TPD claim treatment, premium-holiday lapse sequencing, reinstatement, policy-change approvals, and USD-specific constraints remain informational only.',
       'Structured extraction validated against the HSBC Life Flexi Protector product summary text layer.',
     ],
     archived: false,
-    variants: [buildVariant(document)],
+    variants: [
+      buildVariant(document, 'choice-cover'),
+      buildVariant(document, 'max-cover'),
+    ],
   }
 }
