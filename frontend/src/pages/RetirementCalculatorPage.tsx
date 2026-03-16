@@ -48,11 +48,31 @@ export function RetirementCalculatorPage() {
   })
 
   useEffect(() => {
-    const script = document.createElement('script')
-    script.type = 'application/ld+json'
-    script.textContent = JSON.stringify(howToSchema)
-    document.head.appendChild(script)
-    return () => { document.head.removeChild(script) }
+    const howToScript = document.createElement('script')
+    howToScript.type = 'application/ld+json'
+    howToScript.textContent = JSON.stringify(howToSchema)
+    document.head.appendChild(howToScript)
+
+    const appSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'WebApplication',
+      name: 'SG FIRE Planner — Retirement Calculator',
+      url: 'https://sgfireplanner.com/retirement-calculator',
+      applicationCategory: 'FinanceApplication',
+      operatingSystem: 'Web',
+      description: 'Free Singapore retirement calculator to estimate your retirement target, timeline, CPF support, and required withdrawals.',
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'SGD' },
+      browserRequirements: 'Requires JavaScript',
+    }
+    const appScript = document.createElement('script')
+    appScript.type = 'application/ld+json'
+    appScript.textContent = JSON.stringify(appSchema)
+    document.head.appendChild(appScript)
+
+    return () => {
+      document.head.removeChild(howToScript)
+      document.head.removeChild(appScript)
+    }
   }, [])
 
   return (

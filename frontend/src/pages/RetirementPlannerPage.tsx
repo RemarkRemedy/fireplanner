@@ -56,11 +56,31 @@ export function RetirementPlannerPage() {
   })
 
   useEffect(() => {
-    const script = document.createElement('script')
-    script.type = 'application/ld+json'
-    script.textContent = JSON.stringify(faqSchema)
-    document.head.appendChild(script)
-    return () => { document.head.removeChild(script) }
+    const faqScript = document.createElement('script')
+    faqScript.type = 'application/ld+json'
+    faqScript.textContent = JSON.stringify(faqSchema)
+    document.head.appendChild(faqScript)
+
+    const appSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'WebApplication',
+      name: 'SG FIRE Planner — Retirement Planner',
+      url: 'https://sgfireplanner.com/retirement-planner',
+      applicationCategory: 'FinanceApplication',
+      operatingSystem: 'Web',
+      description: 'Plan retirement in Singapore with CPF, CPF LIFE, taxes, property, Monte Carlo stress tests, and withdrawal analysis.',
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'SGD' },
+      browserRequirements: 'Requires JavaScript',
+    }
+    const appScript = document.createElement('script')
+    appScript.type = 'application/ld+json'
+    appScript.textContent = JSON.stringify(appSchema)
+    document.head.appendChild(appScript)
+
+    return () => {
+      document.head.removeChild(faqScript)
+      document.head.removeChild(appScript)
+    }
   }, [])
 
   return (

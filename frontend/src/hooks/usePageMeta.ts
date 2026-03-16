@@ -17,6 +17,22 @@ function setMetaContent(selector: string, content: string): string {
   return prev
 }
 
+/** Page name lookup for breadcrumb labels (path → display name) */
+const PAGE_NAMES: Record<string, string> = {
+  '/': 'Home',
+  '/inputs': 'Inputs',
+  '/projection': 'Projection',
+  '/withdrawal': 'Withdrawal Strategies',
+  '/stress-test': 'Stress Test',
+  '/health-check': 'Health Check',
+  '/dashboard': 'Dashboard',
+  '/reference': 'Reference Guide',
+  '/checklist': 'FIRE Checklist',
+  '/privacy': 'Privacy Policy',
+  '/retirement-planner': 'Retirement Planner',
+  '/retirement-calculator': 'Retirement Calculator',
+}
+
 export function usePageMeta({ title, description, path = '/' }: PageMeta) {
   useEffect(() => {
     const prevTitle = document.title
@@ -48,6 +64,28 @@ export function usePageMeta({ title, description, path = '/' }: PageMeta) {
       ? setMetaContent('meta[name="twitter:description"]', description)
       : ''
 
+    // BreadcrumbList structured data
+    const breadcrumbItems = [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: BASE_URL + '/' },
+    ]
+    if (path !== '/') {
+      breadcrumbItems.push({
+        '@type': 'ListItem',
+        position: 2,
+        name: PAGE_NAMES[path] ?? title.split('—')[0].trim(),
+        item: canonicalUrl,
+      })
+    }
+    const breadcrumbScript = document.createElement('script')
+    breadcrumbScript.type = 'application/ld+json'
+    breadcrumbScript.setAttribute('data-page-meta', 'breadcrumb')
+    breadcrumbScript.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: breadcrumbItems,
+    })
+    document.head.appendChild(breadcrumbScript)
+
     return () => {
       document.title = prevTitle
       if (description) {
@@ -59,6 +97,7 @@ export function usePageMeta({ title, description, path = '/' }: PageMeta) {
       setMetaContent('meta[property="og:title"]', prevOgTitle)
       setMetaContent('meta[property="og:url"]', prevOgUrl)
       setMetaContent('meta[name="twitter:title"]', prevTwitterTitle)
+      document.head.removeChild(breadcrumbScript)
     }
   }, [title, description, path])
 }
