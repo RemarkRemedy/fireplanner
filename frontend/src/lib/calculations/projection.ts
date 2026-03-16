@@ -103,6 +103,10 @@ export interface ProjectionParams {
   // Parent support
   parentSupport: ParentSupport[]
   parentSupportEnabled: boolean
+  /** Annual insurance premium deducted from cash flow */
+  annualInsurancePremiums?: number
+  /** Age at which rental income stops */
+  rentalIncomeEndAge?: number
   // Healthcare
   healthcareConfig: HealthcareConfig | null
   /** Pre-computed healthcare cash outlay per year (summed across all adults).

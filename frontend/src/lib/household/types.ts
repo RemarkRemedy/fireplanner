@@ -75,6 +75,10 @@ export interface PlanningAdult {
   insuranceDeathCoverage: number
   insuranceCICoverage: number
   insuranceDisabilityMonthly: number
+  /** Annual insurance premium cost (deducted from cash flow in projection) */
+  annualInsurancePremiums?: number
+  /** Emergency fund target in months of expenses (default: 6) */
+  emergencyFundTarget?: number
   funeralCosts: number
   ciRecoveryYears: number
 }
@@ -213,6 +217,8 @@ export interface PropertyPlan {
   rentalYield: number
   /** Fraction of gross rental income consumed by expenses (0-1); net yield = rentalYield * (1 - rentalExpensesPercent) */
   rentalExpensesPercent?: number
+  /** Age at which rental income stops (converted from calendar year at apply time) */
+  rentalIncomeEndAge?: number
   mortgageRate: number
   mortgageTerm: number
   ltv: number

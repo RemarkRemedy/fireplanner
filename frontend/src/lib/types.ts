@@ -206,6 +206,9 @@ export interface ProfileState {
   parentSupportEnabled: boolean
   parentSupport: ParentSupport[]
 
+  /** Annual insurance premium cost (deducted from cash flow in projection) */
+  annualInsurancePremiums?: number
+
   // Healthcare & Insurance
   healthcareConfig: HealthcareConfig
 
