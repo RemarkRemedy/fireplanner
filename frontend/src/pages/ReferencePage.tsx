@@ -603,8 +603,39 @@ function ChangelogList() {
   )
 }
 
+// ── FAQ structured data for SEO rich results ────────────────────────────
+const FAQ_ITEMS = [
+  { q: 'What is FIRE (Financial Independence, Retire Early)?', a: 'FIRE stands for Financial Independence, Retire Early. It\'s a movement focused on aggressive saving and investing to achieve financial freedom decades before traditional retirement age. The core idea: accumulate enough invested assets that passive income covers living expenses indefinitely. Common variants include Lean FIRE, Fat FIRE, Coast FIRE, and Barista FIRE.' },
+  { q: 'What is the 4% rule for retirement?', a: 'The 4% rule (Bengen\'s Rule) states you can withdraw 4% of your initial portfolio in year one of retirement, then adjust for inflation annually, with a high probability of not running out of money over 30 years. It\'s based on William Bengen\'s 1994 study of US stock/bond returns. Limitations include being based on US market history and assuming a 30-year retirement horizon.' },
+  { q: 'How does CPF work for retirement in Singapore?', a: 'CPF (Central Provident Fund) is a mandatory savings system with up to 37% of salary contributed. It has three accounts: Ordinary Account (OA, 2.5% interest) for housing/education/investment, Special Account (SA, 4%) for retirement, and MediSave Account (MA, 4%) for healthcare. CPF LIFE provides a lifetime annuity from age 65. An extra 1% interest applies on the first $60K of combined balances.' },
+  { q: 'What is Monte Carlo simulation in retirement planning?', a: 'Monte Carlo simulation runs thousands of random scenarios to estimate the probability of retirement success. Each simulation randomly generates annual returns based on historical patterns. Methods include Normal Distribution (parametric bell curve), Historical Bootstrap (sampling real historical years), and Fat-Tail (Student-t distribution for extreme market events). A success rate above 95% indicates a very comfortable margin.' },
+  { q: 'What is sequence of returns risk?', a: 'Sequence risk is the danger that poor market returns in early retirement years permanently deplete your portfolio, even if long-term average returns are adequate. A 30% drop in year 1 of retirement is devastating; the same drop in year 20 has much less impact. Mitigation strategies include bond tents, cash buffers, flexible spending, and guardrails strategies.' },
+  { q: 'How much does healthcare cost in retirement in Singapore?', a: 'Healthcare costs rise significantly with age, roughly doubling every 15 years after 50. MediShield Life premiums range from ~$300/yr at age 40 to ~$2,250/yr at age 90. Nursing home costs range from $1,500-$4,500/month. CareShield Life provides $600/month for severe disability. A rule of thumb is to budget $1,000-$2,000/year in out-of-pocket costs at age 60, scaling up with age.' },
+  { q: 'What is the SRS (Supplementary Retirement Scheme) in Singapore?', a: 'SRS is a voluntary savings scheme that provides tax deductions of up to $15,300/year for Singapore citizens and PRs ($35,700 for foreigners). Contributions reduce taxable income now, and only 50% of withdrawals are taxed after the statutory retirement age. SRS funds can be invested in a wide range of instruments.' },
+]
+
+function useFaqSchema() {
+  useEffect(() => {
+    const schema = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: FAQ_ITEMS.map(({ q, a }) => ({
+        '@type': 'Question',
+        name: q,
+        acceptedAnswer: { '@type': 'Answer', text: a },
+      })),
+    }
+    const script = document.createElement('script')
+    script.type = 'application/ld+json'
+    script.textContent = JSON.stringify(schema)
+    document.head.appendChild(script)
+    return () => { document.head.removeChild(script) }
+  }, [])
+}
+
 export function ReferencePage() {
   usePageMeta({ title: 'Reference Guide — SG FIRE Planner', description: 'Comprehensive reference for Singapore retirement planning: CPF contribution rates, income tax brackets, withdrawal strategy formulas, Monte Carlo methodology, and data sources.', path: '/reference' })
+  useFaqSchema()
   const location = useLocation()
   const hashId = location.hash.slice(1)
   const allIds = [...SECTIONS.map(s => s.id), 'changelog', 'data-sources']
