@@ -2013,7 +2013,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Premium Pause Waiver'))).toBe(true)
   })
 
-  it('maps FWD Invest First Max into a finite-MIP multi-account partial seed', () => {
+  it('maps FWD Invest First Max into a finite-MIP multi-account supported seed', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'fwd-invest-first-max')
     expect(product).toBeDefined()
@@ -2023,8 +2023,8 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('FWD Invest First Max (SGD / MIP 10)')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-first-max-initial-account-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-first-max-accumulation-account-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-first-max-recurring-single-premium-charge')

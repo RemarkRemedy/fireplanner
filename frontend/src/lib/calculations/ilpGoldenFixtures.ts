@@ -269,6 +269,12 @@ export type GoldenCoverageTag =
   | 'branch:fwd-invest-first-horizon-top-up-premium-charge'
   | 'branch:fwd-invest-first-horizon-initial-account-redemption-fee'
   | 'branch:fwd-invest-first-horizon-initial-account-surrender-charge'
+  | 'branch:fwd-invest-first-max-initial-account-charge'
+  | 'branch:fwd-invest-first-max-accumulation-account-charge'
+  | 'branch:fwd-invest-first-max-top-up-premium-charge'
+  | 'branch:fwd-invest-first-max-recurring-single-premium-charge'
+  | 'branch:fwd-invest-first-max-zero-redemption-fee'
+  | 'branch:fwd-invest-first-max-surrender-charge'
   | 'branch:fwd-invest-goal-1-zero-single-premium-charge'
   | 'branch:fwd-invest-goal-1-initial-account-charge'
   | 'branch:fwd-invest-goal-1-plan-charge'
@@ -3768,6 +3774,84 @@ function fwdInvestFirstHorizonStressPolicy(
 ): IlpPolicyInput {
   return fwdInvestFirstHorizonBasePolicy(snapshot, variantId, id, HSBC_STRESS_FUNDS, {
     name: `Golden FWD Invest First Horizon (${variantId.toUpperCase()} OCF Stress)`,
+  })
+}
+
+function fwdInvestFirstMaxBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'fwd-invest-first-max', 'sgd-mip-10', id, {
+    monthlyContribution: 500,
+    currentPolicyYear: 4,
+    monthsAlreadyPaid: 36,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden FWD Invest First Max (SGD / MIP 10)',
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: account.id === 'initial' ? 16_000 : 6_000,
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function fwdInvestFirstMaxBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return fwdInvestFirstMaxBasePolicy(snapshot, id, HSBC_BALANCED_FUNDS)
+}
+
+function fwdInvestFirstMaxEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return fwdInvestFirstMaxBasePolicy(snapshot, id, HSBC_BALANCED_FUNDS, {
+    name: 'Golden FWD Invest First Max (SGD / MIP 10 Event Heavy)',
+    policyEvents: [
+      {
+        id: 'rsp-1',
+        type: 'recurring-single-premium',
+        startPolicyMonth: 37,
+        durationMonths: 6,
+        amount: 400,
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 39,
+        durationMonths: 1,
+        amount: 5_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 42,
+        durationMonths: 1,
+        amount: 2_500,
+        accountId: 'accumulation',
+      },
+    ],
+  })
+}
+
+function fwdInvestFirstMaxStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return fwdInvestFirstMaxBasePolicy(snapshot, id, HSBC_STRESS_FUNDS, {
+    name: 'Golden FWD Invest First Max (SGD / MIP 10 OCF Stress)',
+    currentPolicyYear: 6,
+    monthsAlreadyPaid: 60,
   })
 }
 
@@ -11979,6 +12063,56 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'FWD Invest First Horizon 25-year alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'fwd-invest-first-max',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:fwd-invest-first-max-initial-account-charge',
+      'branch:fwd-invest-first-max-accumulation-account-charge',
+      'branch:fwd-invest-first-max-surrender-charge',
+    ],
+    description: 'FWD Invest First Max baseline scenario proving the supported initial-account charge, accumulation-account charge, and surrender-charge corridor.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the supported account-charge corridors',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+      {
+        description: 'baseline policy exposes a positive surrender-charge rate during the MIP corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.eecRate > 0),
+      },
+    ],
+  },
+  {
+    productId: 'fwd-invest-first-max',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:fwd-invest-first-max-top-up-premium-charge',
+      'branch:fwd-invest-first-max-recurring-single-premium-charge',
+      'branch:fwd-invest-first-max-zero-redemption-fee',
+    ],
+    description: 'FWD Invest First Max event-heavy scenario covering recurring-single-premium routing, charged top-up allocation, and zero-redemption-fee partial withdrawal on the supported corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy records both additional contributions and later withdrawals',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12 && row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'fwd-invest-first-max',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'FWD Invest First Max alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'fwd-invest-goal-1',
     variantId: 'sgd-open-ended',
     scenarioId: 'baseline',
@@ -14720,6 +14854,15 @@ function buildPolicyForDefinition(
       definition.variantId as 'sgd-mip-20' | 'sgd-mip-25',
       id,
     )
+  }
+  if (definition.productId === 'fwd-invest-first-max' && definition.scenarioId === 'baseline') {
+    return fwdInvestFirstMaxBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'fwd-invest-first-max' && definition.scenarioId === 'event-heavy') {
+    return fwdInvestFirstMaxEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'fwd-invest-first-max' && definition.scenarioId === 'ocf-stress') {
+    return fwdInvestFirstMaxStressPolicy(snapshot, id)
   }
   if (definition.productId === 'fwd-invest-goal-1' && definition.scenarioId === 'baseline') {
     return fwdInvestGoal1BaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended' | 'usd-open-ended', id)

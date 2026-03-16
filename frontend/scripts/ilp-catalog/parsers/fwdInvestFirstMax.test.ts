@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseFwdInvestFirstMax', () => {
-  it('builds a valid partial FWD Invest First Max product from the source PDF', async () => {
+  it('builds a valid supported FWD Invest First Max product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseFwdInvestFirstMax({
       document,
@@ -23,7 +23,7 @@ describe('parseFwdInvestFirstMax', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('fwd-invest-first-max')
     expect(product.productName).toBe('FWD Invest First Max')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:fwd-invest-first-max-initial-account-charge',
       'branch:fwd-invest-first-max-accumulation-account-charge',
@@ -32,6 +32,7 @@ describe('parseFwdInvestFirstMax', () => {
       'branch:fwd-invest-first-max-zero-redemption-fee',
       'branch:fwd-invest-first-max-surrender-charge',
     ])
+    expect(product.metadataOnlyBehaviors).toContain('fwd-invest-first-max-multi-life-last-survivor')
 
     const variant = product.variants[0]
     expect(variant?.id).toBe('sgd-mip-10')
