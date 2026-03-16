@@ -783,6 +783,29 @@ describe('IlpReviewPage', () => {
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds Tokio Marine #goAssure as a partial catalog product with modeled charge surfaces and metadata-only MPC', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goAssure')
+
+    expect(within(dialog).getByText('#goAssure')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use partial template$/i }))
+
+    expect(screen.getAllByText('#goAssure (SGD / MIP 10)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
+    expect(seededAlert?.textContent).toContain('Guaranteed Extra Protection')
+    expect(seededAlert?.textContent).toContain('distribution-yield assumption')
+    expect(screen.getByDisplayValue('Initial Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Policy Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('#goElite Secure cash seeds locked-in-value and adjusted-single-premium MPC inputs', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()

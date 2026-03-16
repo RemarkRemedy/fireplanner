@@ -5554,6 +5554,72 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('post-year-10 treatment'))).toBe(true)
   })
 
+  it('maps #goAssure into a regular-pay partial seed with policy-charge and shortfall-charge mechanics', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-goassure')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goassure-policy-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goassure-premium-shortfall-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-marine-goassure-monthly-protection-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-marine-goassure-guaranteed-extra-protection')
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.mipLength).toBe(10)
+    expect(seed.accounts.map((account) => account.id)).toEqual(['initial', 'accumulation', 'topup'])
+    expect(seed.eecTable).toEqual([1, 1, 0.95, 0.95, 0.7, 0.65, 0.6, 0.45, 0.25, 0.08])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('Monthly Protection Charge'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('distribution-yield assumption'))).toBe(true)
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'initial-charge',
+          basis: 'account-value',
+          appliesTo: ['initial'],
+          activeWindow: 'during-mip',
+        }),
+        expect.objectContaining({
+          id: 'policy-charge-during-mip',
+          basis: 'premium-base-mip-multiplier',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['initial', 'topup'],
+          rate: 0.01,
+          activeWindow: 'during-mip',
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          trigger: 'top-up',
+          rate: 0.05,
+        }),
+        expect.objectContaining({
+          id: 'recurring-single-premium-charge',
+          trigger: 'recurring-single-premium',
+          rate: 0.05,
+        }),
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          trigger: 'partial-withdrawal',
+        }),
+        expect.objectContaining({
+          id: 'premium-shortfall-charge-non-payment',
+          trigger: 'premium-holiday',
+        }),
+        expect.objectContaining({
+          id: 'premium-shortfall-charge-reduction',
+          trigger: 'regular-premium-reduction',
+        }),
+      ]),
+    )
+  })
+
   it('maps #goWealth Enrich into an open-ended single-premium seed with original-base establishment and surrender charges', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-gowealth-enrich')
