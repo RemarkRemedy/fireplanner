@@ -359,9 +359,9 @@ export function parseTokioMarineGoLuxe(context: ParseContext): IlpCatalogProduct
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'tokio-initial-vs-accumulation-regular-premium-routing',
       'tokio-initial-bonus-tiered-premium-allocation',
@@ -389,11 +389,8 @@ export function parseTokioMarineGoLuxe(context: ParseContext): IlpCatalogProduct
       'tokio-goluxe-non-sgd-policy-currencies',
     ],
     warnings: [
-      'Structured extraction validated against the #goLuxe product summary text layer.',
-      'The parser currently covers split SGD / minimum-contribution-period-15 death-benefit-option corridors only.',
-      'Initial charge is modeled as a 3.00% p.a. fee on the Initial Units Account during the minimum contribution period, policy charge is modeled as a 1.35% p.a. fee on the Accumulation Units Account throughout the policy term, and phase-specific dividend cash-payout account restrictions are modeled through the manual distribution-mode assumption surface.',
-      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-three-policy-years accrual window and policy-year-4 lump-sum settlement using Initial plus Accumulation Units Account value in the sum-at-risk basis.',
-      'Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.',
+      '#goLuxe is cataloged as a supported V1 product. The SGD / 15-year minimum-contribution corridors model regular-premium routing, initial bonus allocation, initial and policy charges, top-up and recurring-single-premium routing / charges, partial-withdrawal and premium-shortfall charges, surrender mechanics, and reinvest-default distribution support; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.',
+      'Loyalty bonus and achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, dividend payout threshold / record-date handling, regular-withdrawal rules, and non-SGD policy currencies remain informational only.',
     ],
     archived: false,
     variants: [

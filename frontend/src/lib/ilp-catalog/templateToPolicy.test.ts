@@ -4733,7 +4733,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Monthly Protection Charge'))).toBe(true)
   })
 
-  it('maps Tokio Marine #goLuxe basic-death into a partial seed with metadata-only protection charges', () => {
+  it('maps Tokio Marine #goLuxe basic-death into a supported seed with metadata-only protection charges', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-goluxe')
     expect(product).toBeDefined()
@@ -4742,7 +4742,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
@@ -4789,11 +4789,11 @@ describe('templateVariantToPolicySeed', () => {
     })
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-dividend-payout-threshold-record-date-and-regular-withdrawal')
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('Basic Death keeps Monthly Protection Charge metadata-only'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('supported V1 product'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
   })
 
-  it('maps Tokio Marine #goLuxe advanced-death into a partial seed with accrued Tokio MPC valuation accounts', () => {
+  it('maps Tokio Marine #goLuxe advanced-death into a supported seed with accrued Tokio MPC valuation accounts', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-goluxe')
     expect(product).toBeDefined()
@@ -4802,7 +4802,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
