@@ -802,7 +802,12 @@ function compilePropertyCashflows(
   for (let yearOffset = 0; yearOffset < yearCount; yearOffset += 1) {
     const isSold = sellYearOffset != null && yearOffset >= sellYearOffset
     if (!isSold) {
-      incomeByYear[yearOffset] += annualRentalIncome
+      const rentalCutoffAge = property.rentalIncomeEndAge
+      const ageAtOffset = referenceAdult ? referenceAdult.currentAge + yearOffset : undefined
+      const rentalStopped = rentalCutoffAge != null && ageAtOffset != null && ageAtOffset >= rentalCutoffAge
+      if (!rentalStopped) {
+        incomeByYear[yearOffset] += annualRentalIncome
+      }
       if (yearOffset < mortgageYearCount) {
         expenseByYear[yearOffset] += annualCashMortgage
       }

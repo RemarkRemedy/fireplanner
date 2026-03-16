@@ -598,7 +598,9 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     let effectiveMortgagePayment = age >= mortgageEndAge ? 0 : annualMortgagePayment
     // When CPF OA can't cover its mortgage share, the shortfall spills to cash
     effectiveMortgagePayment += incomeRow.cpfOaShortfall
-    let effectiveRentalIncome = annualRentalIncome
+    let effectiveRentalIncome = (params.rentalIncomeEndAge != null && age >= params.rentalIncomeEndAge)
+      ? 0
+      : annualRentalIncome
     let downsizingRentExpense = 0
 
     // Dynamic property value: appreciation +/- Bala's Table leasehold decay
