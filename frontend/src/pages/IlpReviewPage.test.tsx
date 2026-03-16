@@ -921,6 +921,29 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Regular Top-up Premium Charge (CPF)')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds WealthLink (GL3) as a supported catalog product with open-ended single-premium routing', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'WealthLink')
+
+    expect(within(dialog).getByText('WealthLink (GL3)')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+
+    expect(screen.getAllByText('WealthLink (GL3) (SGD / Open-ended (Cash Or Srs))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Supported template')
+    expect(seededAlert?.textContent).toContain('published 3.5% upfront single-premium charge')
+    expect(seededAlert?.textContent).toContain('no policy fee and no insurance cover charge')
+    expect(seededAlert?.textContent).toContain('no-MIP basis')
+    expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds Tokio Marine #goClassic basic-death as a partial catalog product with combined account-fee modeling', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
