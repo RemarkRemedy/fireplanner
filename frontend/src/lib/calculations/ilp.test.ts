@@ -3248,6 +3248,109 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[4], 'accumulation').grossFee).toBeLessThan(400)
   })
 
+  it('disables future Tokio MPC after a failed deduction while still collecting the carried balance later', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 0,
+      mipLength: 5,
+      postMipYears: 0,
+      policyEvents: [
+        {
+          id: 'tokio-recovery-top-up',
+          type: 'top-up',
+          startPolicyMonth: 25,
+          durationMonths: 1,
+          amount: 1_000,
+          accountId: 'accumulation',
+        },
+      ],
+      accounts: [
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 5_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 1,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-mpc-disable-after-failed-deduction',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 2,
+              settlementPolicyYear: 3,
+            },
+            disableFutureChargesOnInsufficientDeduction: true,
+          },
+          requiresManualInput: true,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 70_000,
+      },
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+    const baseline = projectIlpPolicy(makeDefaultPolicy({
+      ...policy,
+      chargeRules: policy.chargeRules?.map((rule) => ({
+        ...rule,
+        assuranceConfig: rule.assuranceConfig
+          ? {
+              ...rule.assuranceConfig,
+              disableFutureChargesOnInsufficientDeduction: false,
+            }
+          : undefined,
+      })),
+    }), 'mid')
+
+    expect(result.rows.map((row) => row.policyYear)).toEqual([1, 2, 3, 4, 5])
+    expect(accountRow(result.rows[2], 'accumulation').grossFee).toBe(1)
+    expect(accountRow(result.rows[3], 'accumulation').grossFee).toBeGreaterThan(100)
+    expect(accountRow(result.rows[3], 'accumulation').grossFee).toBeLessThan(accountRow(baseline.rows[3], 'accumulation').grossFee)
+    expect(accountRow(result.rows[4], 'accumulation').grossFee).toBe(0)
+    expect(accountRow(result.rows[4], 'accumulation').grossFee).toBeLessThan(accountRow(baseline.rows[4], 'accumulation').grossFee)
+  })
+
   it('does not carry unpaid balances forward for non-accrued Tokio MPC rules', () => {
     const result = projectIlpPolicy(makeDefaultPolicy({
       currency: 'SGD',

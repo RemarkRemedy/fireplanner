@@ -89,6 +89,7 @@ export interface IlpTemplateFeeRule {
       endPolicyYear: number
       settlementPolicyYear: number
     }
+    disableFutureChargesOnInsufficientDeduction?: boolean
   }
   premiumBaseConfig?: {
     useHigherOfCommencementAndPrevailing: boolean

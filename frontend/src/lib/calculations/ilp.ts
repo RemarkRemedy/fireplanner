@@ -168,6 +168,7 @@ export interface IlpAssuranceChargeConfig {
     endPolicyYear: number
     settlementPolicyYear: number
   }
+  disableFutureChargesOnInsufficientDeduction?: boolean
 }
 
 export interface IlpPremiumBaseMultiplierTier {
@@ -1638,16 +1639,19 @@ function computeAssuranceChargeByAccount(
   wealthAssureValueAtStartOfYear: number | undefined,
   growthFrozenAtStartOfYear: boolean,
   accruedChargeBalanceByRule: Map<string, number>,
+  disabledAssuranceRuleIds: Set<string>,
 ): {
   charges: Map<string, number>
   nextSumAssured: number | undefined
   nextWealthAssureValue: number | undefined
   nextGrowthFrozen: boolean
   nextAccruedChargeBalanceByRule: Map<string, number>
+  nextDisabledAssuranceRuleIds: Set<string>
 } {
   const { input } = normalized
   const charges = new Map<string, number>(input.accounts.map((account) => [account.id, 0]))
   const nextAccruedChargeBalanceByRule = new Map(accruedChargeBalanceByRule)
+  const nextDisabledAssuranceRuleIds = new Set(disabledAssuranceRuleIds)
   const profile = normalized.assurance.profile
   if (!profile) {
     return {
@@ -1656,6 +1660,7 @@ function computeAssuranceChargeByAccount(
       nextWealthAssureValue: wealthAssureValueAtStartOfYear,
       nextGrowthFrozen: growthFrozenAtStartOfYear,
       nextAccruedChargeBalanceByRule,
+      nextDisabledAssuranceRuleIds,
     }
   }
 
@@ -1693,10 +1698,12 @@ function computeAssuranceChargeByAccount(
       0,
       regularPremiumBaseAtStartOfYear + ((regularPremiumPaidThisYear - currentYearApplicableWithdrawals) / 2),
     )
+    const carriedAccruedCharge = nextAccruedChargeBalanceByRule.get(rule.id) ?? 0
+    const isDisabledAfterInsufficientDeduction = nextDisabledAssuranceRuleIds.has(rule.id)
 
     let sumAtRisk = 0
 
-    switch (family) {
+    if (!isDisabledAfterInsufficientDeduction) switch (family) {
       case 'prudential-prosper':
         sumAtRisk = computePrudentialProsperSumAtRisk(
           rule.assuranceConfig.formula as Extract<IlpAssuranceChargeConfig['formula'], 'prudential-prosper-death' | 'prudential-prosper-accidental-death'>,
@@ -1772,7 +1779,6 @@ function computeAssuranceChargeByAccount(
       * rule.assuranceConfig.monthlyModalFactor
       * 12
 
-    const carriedAccruedCharge = nextAccruedChargeBalanceByRule.get(rule.id) ?? 0
     const accrual = rule.assuranceConfig.accrual
     const isWithinAccrualWindow = accrual != null
       && policyYear >= accrual.startPolicyYear
@@ -1780,14 +1786,16 @@ function computeAssuranceChargeByAccount(
     const isSettlementOrLater = accrual != null
       && policyYear >= accrual.settlementPolicyYear
 
-    if (isWithinAccrualWindow) {
+    if (!isDisabledAfterInsufficientDeduction && isWithinAccrualWindow) {
       nextAccruedChargeBalanceByRule.set(rule.id, carriedAccruedCharge + annualizedCharge)
       continue
     }
 
-    const totalChargeDue = isSettlementOrLater
-      ? annualizedCharge + carriedAccruedCharge
-      : annualizedCharge
+    const totalChargeDue = carriedAccruedCharge + (
+      isDisabledAfterInsufficientDeduction
+        ? 0
+        : (isSettlementOrLater ? annualizedCharge : annualizedCharge)
+    )
     if (totalChargeDue <= CONTRIBUTION_TOLERANCE) {
       nextAccruedChargeBalanceByRule.set(rule.id, 0)
       continue
@@ -1799,13 +1807,26 @@ function computeAssuranceChargeByAccount(
       appliesTo,
       fallbackAppliesTo,
       openBalances,
+      true,
     )
 
     for (const [accountId, amount] of allocations.entries()) {
       charges.set(accountId, (charges.get(accountId) ?? 0) + amount)
     }
 
-    nextAccruedChargeBalanceByRule.set(rule.id, accrual != null ? remainingCharge : 0)
+    if (
+      rule.assuranceConfig.disableFutureChargesOnInsufficientDeduction
+      && remainingCharge > CONTRIBUTION_TOLERANCE
+    ) {
+      nextDisabledAssuranceRuleIds.add(rule.id)
+    }
+
+    nextAccruedChargeBalanceByRule.set(
+      rule.id,
+      (accrual != null || rule.assuranceConfig.disableFutureChargesOnInsufficientDeduction)
+        ? remainingCharge
+        : 0,
+    )
   }
 
   return {
@@ -1814,6 +1835,7 @@ function computeAssuranceChargeByAccount(
     nextWealthAssureValue,
     nextGrowthFrozen,
     nextAccruedChargeBalanceByRule,
+    nextDisabledAssuranceRuleIds,
   }
 }
 
@@ -2733,11 +2755,12 @@ function applyChargeAllocationsWithFallbackDetailed(
   appliesTo: IlpAccount[],
   fallbackAppliesTo: IlpAccount[],
   openBalances: Map<string, number>,
+  capPrimaryAllocationsAtOpenBalances = false,
 ): {
   allocations: Map<string, number>
   remainingCharge: number
 } {
-  if (fallbackAppliesTo.length === 0) {
+  if (fallbackAppliesTo.length === 0 && !capPrimaryAllocationsAtOpenBalances) {
     const allocations = allocateChargeTotal(totalCharge, allocation, appliesTo, openBalances)
     const allocatedAmount = Array.from(allocations.values()).reduce((sum, value) => sum + value, 0)
     return {
@@ -3234,6 +3257,7 @@ export function projectIlpPolicy(
   let assuranceAccruedChargeBalanceByRule = new Map<string, number>(
     normalized.assurance.rules.map(({ rule }) => [rule.id, 0]),
   )
+  let disabledAssuranceRuleIds = new Set<string>()
   const assuranceRelevantAccountIds = getAssuranceRelevantAccountIds(normalized)
 
   for (let year = 1; year <= totalYears; year += 1) {
@@ -3356,12 +3380,14 @@ export function projectIlpPolicy(
       assuranceWealthAssureValue,
       assuranceGrowthFrozen,
       assuranceAccruedChargeBalanceByRule,
+      disabledAssuranceRuleIds,
     )
     const assuranceChargeByAccount = assuranceChargeResult.charges
     assuranceSumAssured = assuranceChargeResult.nextSumAssured
     assuranceWealthAssureValue = assuranceChargeResult.nextWealthAssureValue
     assuranceGrowthFrozen = assuranceChargeResult.nextGrowthFrozen
     assuranceAccruedChargeBalanceByRule = assuranceChargeResult.nextAccruedChargeBalanceByRule
+    disabledAssuranceRuleIds = assuranceChargeResult.nextDisabledAssuranceRuleIds
 
     const accountRows: IlpAccountYearRow[] = []
     let combinedValue = 0

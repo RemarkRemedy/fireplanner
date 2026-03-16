@@ -85,6 +85,7 @@ export const ilpTemplateFeeRuleSchema = z.object({
       endPolicyYear: z.number().int().min(1).max(100),
       settlementPolicyYear: z.number().int().min(1).max(100),
     }).optional(),
+    disableFutureChargesOnInsufficientDeduction: z.boolean().optional(),
   }).optional(),
   premiumBaseConfig: z.object({
     useHigherOfCommencementAndPrevailing: z.boolean(),

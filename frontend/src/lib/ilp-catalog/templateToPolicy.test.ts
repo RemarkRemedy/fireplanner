@@ -4639,7 +4639,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Advanced Death variant also models the published Monthly Protection Charge'))).toBe(true)
   })
 
-  it('maps Tokio Marine #goClassic into a partial seed with combined account-fee modeling and accumulation top-up routing', () => {
+  it('maps Tokio Marine #goClassic basic-death into a partial seed with combined account-fee modeling and accumulation top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-goclassic')
     expect(product).toBeDefined()
@@ -4702,8 +4702,42 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-payment-term-25 corridor only'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-payment-term-25 (Basic Death) corridor only'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
+  })
+
+  it('maps Tokio Marine #goClassic advanced-death into a partial seed with accrued Tokio MPC disable-on-failure inputs', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-goclassic')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-25-advanced-death')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-goclassic-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction')
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'monthly-protection-charge',
+        basis: 'assurance-sum-at-risk',
+        appliesTo: ['accumulation'],
+        assuranceValueAppliesTo: ['initial', 'accumulation'],
+        allocation: 'pro-rata-by-value',
+        assuranceConfig: expect.objectContaining({
+          formula: 'tokio-mpc-net-premium-floor',
+          rateTable: 'tokio-mpc-unzo-death',
+          accrual: {
+            startPolicyYear: 1,
+            endPolicyYear: 2,
+            settlementPolicyYear: 3,
+          },
+          disableFutureChargesOnInsufficientDeduction: true,
+        }),
+        requiresManualInput: true,
+      }),
+    ])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('irreversible downgrade to Basic Death'))).toBe(true)
   })
 
   it('maps Tokio Marine #goClassic Secure into a partial seed with combined account-fee modeling and accumulation top-up routing', () => {
