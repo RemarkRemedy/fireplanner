@@ -240,24 +240,24 @@ const EXPENSES_FLOW: NudgeFlowDefinition = {
         { name: 'entertainmentExpenses', label: 'Entertainment & leisure', type: 'currency' },
         { name: 'travelExpenses', label: 'Travel', type: 'currency' },
         { name: 'otherExpenses', label: 'Other expenses', type: 'currency' },
+        { name: 'hasLargeGoals', label: 'Do you have large one-off future expenses (wedding, education, renovation)?', type: 'toggle' },
       ],
+    },
+    {
+      id: 'expenses-goals',
+      title: 'Large Future Expenses',
+      fields: [
+        { name: 'goalName', label: 'Goal name', type: 'text' },
+        { name: 'goalAmount', label: 'Target amount', type: 'currency' },
+        { name: 'goalYear', label: 'Target year', type: 'number' },
+      ],
+      skipWhen: { field: 'hasLargeGoals', equals: false },
     },
     {
       id: 'expenses-retirement-adjustment',
       title: 'Retirement Spending',
       fields: [],
       skipWhen: { field: '_hasAnyExpenseCategory', equals: false },
-    },
-    {
-      id: 'expenses-goals',
-      title: 'Large Future Expenses (Optional)',
-      subtitle: 'Add one-off lump-sum expenses like a wedding, child education, or home renovation. These are separate from your monthly spending.',
-      fields: [
-        { name: 'hasLargeGoals', label: 'I have large future expenses to plan for', type: 'toggle' },
-        { name: 'goalName', label: 'Goal name', type: 'text', showWhen: { field: 'hasLargeGoals', equals: true } },
-        { name: 'goalAmount', label: 'Target amount', type: 'currency', showWhen: { field: 'hasLargeGoals', equals: true } },
-        { name: 'goalYear', label: 'Target year', type: 'number', showWhen: { field: 'hasLargeGoals', equals: true } },
-      ],
     },
   ],
 }
