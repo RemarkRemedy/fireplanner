@@ -1,4 +1,5 @@
-import { X } from 'lucide-react'
+import { useState } from 'react'
+import { X, ChevronDown, ChevronUp } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { DeltaBadge } from '@/components/shared/DeltaBadge'
 import type { DeltaSummary } from '@/lib/calculations/metricsSnapshot'
@@ -16,7 +17,20 @@ function formatMetricValue(metric: string, value: number): string {
   return String(value)
 }
 
+const fmtDriver = (label: string, value: number): string => {
+  if (label === 'Savings rate' || label === 'Withdrawal rate') {
+    return `${(value * 100).toFixed(1)}%`
+  }
+  if (label === 'Monthly debt payments') {
+    return `$${Math.round(value).toLocaleString()}/mo`
+  }
+  return `$${Math.round(value).toLocaleString()}`
+}
+
 export function DeltaCard({ summary, onDismiss, showMcNote }: DeltaCardProps) {
+  const [showDetails, setShowDetails] = useState(false)
+  const hasDrivers = summary.driverDeltas.length > 0
+
   if (!summary.isSignificant) {
     return (
       <Card
@@ -91,7 +105,46 @@ export function DeltaCard({ summary, onDismiss, showMcNote }: DeltaCardProps) {
           })}
         </div>
 
-        {summary.explanation && (
+        {/* Dynamic driver explanation */}
+        {summary.driverExplanation && (
+          <p className="text-xs text-muted-foreground">
+            <span className="font-medium text-foreground/80">Why: </span>
+            {summary.driverExplanation}
+          </p>
+        )}
+
+        {/* Expandable driver details */}
+        {hasDrivers && (
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowDetails(!showDetails)}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showDetails ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              {showDetails ? 'Hide details' : 'Show what changed'}
+            </button>
+
+            {showDetails && (
+              <div className="mt-2 space-y-1 border-t pt-2">
+                {summary.driverDeltas.map((d) => (
+                  <div key={d.label} className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">{d.label}</span>
+                    <span className="text-muted-foreground tabular-nums">
+                      {fmtDriver(d.label, d.before)}
+                      <span className="mx-1">→</span>
+                      <span className="font-medium text-foreground">
+                        {fmtDriver(d.label, d.after)}
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {summary.explanation && !summary.driverExplanation && (
           <p className="text-xs text-muted-foreground">{summary.explanation}</p>
         )}
 
