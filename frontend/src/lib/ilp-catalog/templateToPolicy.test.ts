@@ -5789,7 +5789,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('initial single-premium charge'))).toBe(true)
   })
 
-  it('maps AIA Elite Secure Income - 5 Pay into a partial seed with payout support and premium-history charges', () => {
+  it('maps AIA Elite Secure Income - 5 Pay into a supported seed with payout support and manual supplementary-charge input', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'aia-elite-secure-income-5-pay')
     expect(product).toBeDefined()
@@ -5798,9 +5798,10 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-elite-secure-income-5p-supplementary-charge-manual-input')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-elite-secure-income-5p-secure-monthly-income-gating')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(5)
@@ -5821,6 +5822,14 @@ describe('templateVariantToPolicySeed', () => {
           { startPolicyYear: 3, endPolicyYear: 3, rate: 0.1 },
           { startPolicyYear: 4, endPolicyYear: null, rate: 0 },
         ],
+      }),
+      expect.objectContaining({
+        id: 'supplementary-charge',
+        basis: 'fixed-annual',
+        amount: 0,
+        requiresManualInput: true,
+        startPolicyYear: 1,
+        endPolicyYear: 10,
       }),
     ])
     expect(seed.eventChargeRules).toEqual([
@@ -5849,6 +5858,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.eecTable).toEqual([0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05, 0])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual payout assumption'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Power-up Bonus'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual-input annual supplementary charge amount'))).toBe(true)
   })
 
   it('maps AIA Platinum Retirement Elite into a supported regular-pay seed with payout support', () => {

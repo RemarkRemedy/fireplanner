@@ -25,6 +25,12 @@ export type GoldenCoverageTag =
   | 'branch:aia-platinum-retirement-elite-premium-holiday-charge'
   | 'branch:aia-platinum-retirement-elite-partial-withdrawal-charge'
   | 'branch:aia-platinum-retirement-elite-full-surrender-charge'
+  | 'branch:aia-elite-secure-income-5p-premium-year-premium-charge'
+  | 'branch:aia-elite-secure-income-5p-supplementary-charge-manual-input'
+  | 'branch:aia-elite-secure-income-5p-top-up-premium-charge'
+  | 'branch:aia-elite-secure-income-5p-premium-holiday-charge'
+  | 'branch:aia-elite-secure-income-5p-partial-withdrawal-charge'
+  | 'branch:aia-elite-secure-income-5p-full-surrender-charge'
   | 'branch:hsbc-holiday-repayment'
   | 'branch:hsbc-holiday-no-repayment'
   | 'branch:hsbc-bonus-suspension'
@@ -2881,6 +2887,104 @@ function aiaPlatinumRetirementEliteStressPolicy(
   })
 }
 
+function aiaEliteSecureIncome5PayBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'aia-elite-secure-income-5-pay', 'sgd-mip-5', id, {
+    monthlyContribution: 900,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden AIA Elite Secure Income - 5 Pay (SGD / MIP 5)',
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 24_000,
+      })),
+      chargeRules: (base.chargeRules ?? []).map((rule) => (
+        rule.id === 'supplementary-charge'
+          ? { ...rule, amount: 180 }
+          : rule
+      )),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function aiaEliteSecureIncome5PayBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaEliteSecureIncome5PayBasePolicy(snapshot, id, AIA_BALANCED_FUNDS, {
+    name: 'Golden AIA Elite Secure Income - 5 Pay (SGD / MIP 5 Baseline)',
+    scheduledPayoutAssumption: {
+      mode: 'scheduled-redemption',
+      source: 'manual-assumption',
+      accountId: 'policy',
+      startPolicyYear: 4,
+      durationYears: 10,
+      annualPayoutAmount: 7_200,
+    },
+  })
+}
+
+function aiaEliteSecureIncome5PayEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaEliteSecureIncome5PayBasePolicy(snapshot, id, AIA_BALANCED_FUNDS, {
+    name: 'Golden AIA Elite Secure Income - 5 Pay (SGD / MIP 5 Event Heavy)',
+    scheduledPayoutAssumption: {
+      mode: 'scheduled-redemption',
+      source: 'manual-assumption',
+      accountId: 'policy',
+      startPolicyYear: 4,
+      durationYears: 10,
+      annualPayoutAmount: 8_400,
+    },
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 14,
+        durationMonths: 4,
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 20,
+        durationMonths: 1,
+        amount: 9_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 28,
+        durationMonths: 1,
+        amount: 4_500,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function aiaEliteSecureIncome5PayStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaEliteSecureIncome5PayBasePolicy(snapshot, id, AIA_STRESS_FUNDS, {
+    name: 'Golden AIA Elite Secure Income - 5 Pay (SGD / MIP 5 OCF Stress)',
+  })
+}
+
 function etiqaTiqInvestBasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
@@ -4168,6 +4272,61 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: ['ocf-stress'],
     description: 'AIA Platinum Retirement Elite alternate-fund high-OCF stress scenario.',
+  },
+  {
+    productId: 'aia-elite-secure-income-5-pay',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:scheduled-payout-manual-assumption',
+      'branch:aia-elite-secure-income-5p-premium-year-premium-charge',
+      'branch:aia-elite-secure-income-5p-supplementary-charge-manual-input',
+      'branch:aia-elite-secure-income-5p-full-surrender-charge',
+    ],
+    description: 'AIA Elite Secure Income - 5 Pay baseline scenario covering the supported regular-pay corridor, manual annual supplementary charge input, and manual scheduled-redemption assumption.',
+    integrityChecks: [
+      {
+        description: 'manual supplementary-charge input produces positive cumulative fees in projection output',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+      {
+        description: 'manual scheduled-redemption assumption produces annual withdrawals in projection output',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'aia-elite-secure-income-5-pay',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:aia-elite-secure-income-5p-top-up-premium-charge',
+      'branch:aia-elite-secure-income-5p-premium-holiday-charge',
+      'branch:aia-elite-secure-income-5p-partial-withdrawal-charge',
+    ],
+    description: 'AIA Elite Secure Income - 5 Pay event-heavy scenario covering premium holiday, top-up, partial withdrawal, and manual scheduled-redemption.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy produces annual withdrawals from the seeded payout and withdrawal events',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+      {
+        description: 'event-heavy policy retains top-up contribution in excess of the scheduled annual premium',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+    ],
+  },
+  {
+    productId: 'aia-elite-secure-income-5-pay',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'AIA Elite Secure Income - 5 Pay alternate-fund high-OCF stress scenario.',
   },
   {
     productId: 'hsbc-life-wealth-accelerate',
@@ -7044,6 +7203,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'aia-platinum-retirement-elite' && definition.scenarioId === 'ocf-stress') {
     return aiaPlatinumRetirementEliteStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-elite-secure-income-5-pay' && definition.scenarioId === 'baseline') {
+    return aiaEliteSecureIncome5PayBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-elite-secure-income-5-pay' && definition.scenarioId === 'event-heavy') {
+    return aiaEliteSecureIncome5PayEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-elite-secure-income-5-pay' && definition.scenarioId === 'ocf-stress') {
+    return aiaEliteSecureIncome5PayStressPolicy(snapshot, id)
   }
   if (definition.productId === 'hsbc-life-wealth-invest-cpf' && definition.scenarioId === 'baseline') {
     return hsbcWealthInvestCpfBaselinePolicy(snapshot, id)

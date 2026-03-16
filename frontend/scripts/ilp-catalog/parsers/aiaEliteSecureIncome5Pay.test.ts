@@ -89,7 +89,7 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
 }
 
 describe('parseAiaEliteSecureIncome5Pay', () => {
-  it('builds a valid payout-state partial modeled-subset product from extracted summary text', async () => {
+  it('builds a valid supported payout-state product from extracted summary text', async () => {
     const document = makeSyntheticDocument()
     const product = parseAiaEliteSecureIncome5Pay({
       document,
@@ -99,10 +99,11 @@ describe('parseAiaEliteSecureIncome5Pay', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('aia-elite-secure-income-5-pay')
     expect(product.productName).toBe('AIA Elite Secure Income - 5 Pay')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:aia-elite-secure-income-5p-premium-year-premium-charge',
+      'branch:aia-elite-secure-income-5p-supplementary-charge-manual-input',
       'branch:aia-elite-secure-income-5p-top-up-premium-charge',
       'branch:aia-elite-secure-income-5p-premium-holiday-charge',
       'branch:aia-elite-secure-income-5p-partial-withdrawal-charge',
@@ -144,6 +145,14 @@ describe('parseAiaEliteSecureIncome5Pay', () => {
           { startPolicyYear: 4, endPolicyYear: null, rate: 0 },
         ],
       }),
+      expect.objectContaining({
+        id: 'supplementary-charge',
+        basis: 'fixed-annual',
+        amount: 0,
+        requiresManualInput: true,
+        startPolicyYear: 1,
+        endPolicyYear: 10,
+      }),
     ])
     expect(variant.eventChargeRules).toEqual([
       expect.objectContaining({
@@ -183,10 +192,10 @@ describe('parseAiaEliteSecureIncome5Pay', () => {
     ])
     expect(variant.eecTable).toEqual([0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05, 0])
     expect(variant.warnings).toContain(
-      'AIA Elite Secure Income - 5 Pay is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, the 3% top-up premium charge, the premium-holiday charge schedule, the full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel.',
+      'AIA Elite Secure Income - 5 Pay is cataloged as supported in V1 for the regular-pay corridor. The parser captures the premium-year regular premium charge schedule, a manual-input annual supplementary charge amount from the policy illustration, the 3% top-up premium charge, the premium-holiday charge schedule, the full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel.',
     )
-    expect(variant.unsupportedItems).toContain(
-      'Secure Monthly Income amount, payout age, and payout period selection remain manual-assumption inputs in V1.',
+    expect(variant.unsupportedItems).not.toContain(
+      'Supplementary charge remains informational only because the annual rate is only stated in the policy illustration.',
     )
   })
 

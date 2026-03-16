@@ -121,6 +121,23 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       ],
       sourceRefs: [page3, page4],
     },
+    {
+      id: 'supplementary-charge',
+      label: 'Supplementary Charge',
+      basis: 'fixed-annual',
+      rate: 0,
+      amount: 0,
+      requiresManualInput: true,
+      appliesTo: ['policy'],
+      activeWindow: 'policy-term',
+      startPolicyYear: 1,
+      endPolicyYear: 10,
+      notes: [
+        'Models the published monthly supplementary-charge formula as a manual annual charge amount for each full in-force policy year.',
+        'Enter the annual supplementary charge amount from the policy illustration because the summary states the formula but not the annual rate.',
+      ],
+      sourceRefs: [page4],
+    },
   ]
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
@@ -211,15 +228,14 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...FULL_SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      'AIA Elite Secure Income - 5 Pay is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, the 3% top-up premium charge, the premium-holiday charge schedule, the full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel.',
+      'AIA Elite Secure Income - 5 Pay is cataloged as supported in V1 for the regular-pay corridor. The parser captures the premium-year regular premium charge schedule, a manual-input annual supplementary charge amount from the policy illustration, the 3% top-up premium charge, the premium-holiday charge schedule, the full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel.',
       'Secure Monthly Income eligibility depends on no premium holiday, no regular-premium-unit or bonus-unit withdrawal, and no prior reinstatement, so payout selection and payout-state gating remain manual or informational inputs in V1.',
-      'Supplementary charge rates are only stated in the policy illustration and therefore remain informational only in V1.',
+      'Supplementary charge requires a manual annual amount from the policy illustration because the summary states the formula but not the annual rate.',
     ],
     unsupportedItems: [
       'Secure Monthly Income amount, payout age, and payout period selection remain manual-assumption inputs in V1.',
       'Secure Monthly Income versus Target Monthly Income gating remains informational only, including payout opt-out, reinvested-unit handling, and resumption after payout suspension.',
       'Power-up Bonus remains informational only because it depends on a withdrawal-adjustment factor after policy year 5.',
-      'Supplementary charge remains informational only because the annual rate is only stated in the policy illustration.',
       'Death, accidental death, and terminal illness benefit formulas remain informational only.',
       'Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.',
       'Minimum withdrawal amount, minimum post-withdrawal policy value, and top-up eligibility while premiums are outstanding remain informational only.',
@@ -239,11 +255,12 @@ export function parseAiaEliteSecureIncome5Pay({ document, sourceChecksumSha256 }
     sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:aia-elite-secure-income-5p-premium-year-premium-charge',
+      'branch:aia-elite-secure-income-5p-supplementary-charge-manual-input',
       'branch:aia-elite-secure-income-5p-top-up-premium-charge',
       'branch:aia-elite-secure-income-5p-premium-holiday-charge',
       'branch:aia-elite-secure-income-5p-partial-withdrawal-charge',
@@ -254,7 +271,6 @@ export function parseAiaEliteSecureIncome5Pay({ document, sourceChecksumSha256 }
       'aia-elite-secure-income-5p-secure-monthly-income-election',
       'aia-elite-secure-income-5p-secure-monthly-income-gating',
       'aia-elite-secure-income-5p-power-up-bonus',
-      'aia-elite-secure-income-5p-supplementary-charge',
       'aia-elite-secure-income-5p-death-benefit',
       'aia-elite-secure-income-5p-accidental-death-benefit',
       'aia-elite-secure-income-5p-terminal-illness-benefit',
@@ -264,7 +280,7 @@ export function parseAiaEliteSecureIncome5Pay({ document, sourceChecksumSha256 }
       'aia-elite-secure-income-5p-no-fund-switching',
     ],
     warnings: [
-      'AIA Elite Secure Income - 5 Pay is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, the 3% top-up premium charge, the premium-holiday charge schedule, the full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel, while payout-election logic, Power-up Bonus, supplementary charge, protection benefits, and fund-level charges remain outside the current engine.',
+      'AIA Elite Secure Income - 5 Pay is cataloged as supported in V1 for the regular-pay corridor. The parser captures the premium-year regular premium charge schedule, a manual-input annual supplementary charge amount from the policy illustration, the 3% top-up premium charge, the premium-holiday charge schedule, the full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel, while payout-election logic, Power-up Bonus, protection benefits, and fund-level charges remain outside the current engine.',
     ],
     archived: false,
     variants: [buildVariant(document)],
