@@ -33,7 +33,9 @@ export function NudgeSidebar({ onOpenDrawer }: NudgeSidebarProps) {
 
   const [showAll, setShowAll] = useState(false)
   const INITIAL_SHOW_COUNT = 3
-  const displayedNudges = showAll ? visibleNudges : visibleNudges.slice(0, INITIAL_SHOW_COUNT)
+  // Sort incomplete first so the initial 3 slots show untouched nudges
+  const sortedNudges = [...visibleNudges].sort((a, b) => Number(a.completed) - Number(b.completed))
+  const displayedNudges = showAll ? sortedNudges : sortedNudges.slice(0, INITIAL_SHOW_COUNT)
   const hiddenCount = visibleNudges.length - INITIAL_SHOW_COUNT
 
   const handleRefine = (flowId: NudgeFlowId) => {
@@ -53,11 +55,9 @@ export function NudgeSidebar({ onOpenDrawer }: NudgeSidebarProps) {
     )
   }
 
-  const sortedNudges = [...displayedNudges].sort((a, b) => Number(a.completed) - Number(b.completed))
-
   return (
     <div className="flex flex-col gap-3">
-      {sortedNudges.map((item) => {
+      {displayedNudges.map((item) => {
         const flow = getNudgeFlow(item.flowId)
         if (!flow) return null
 
