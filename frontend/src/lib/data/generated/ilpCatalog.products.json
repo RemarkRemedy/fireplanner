@@ -14594,21 +14594,22 @@
     "sourceChecksumSha256": "51d311296d3e4f38d3d646dc6fcd14fc845ab6ed3a1cb10a7d8ace96de1f8e07",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
       "kernel:protected-base-assurance",
       "branch:manulife-investready-iii-administrative-charge",
       "branch:manulife-investready-iii-premium-shortfall-charge",
+      "branch:manulife-investready-iii-zero-top-up-charge",
+      "branch:manulife-investready-iii-partial-withdrawal-charge",
+      "branch:manulife-investready-iii-full-surrender-charge",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "manulife-investready-iii-welcome-bonus",
       "manulife-investready-iii-annual-premium-bonus",
       "manulife-investready-iii-loyalty-bonus",
-      "manulife-investready-iii-full-surrender-charge",
-      "manulife-investready-iii-partial-withdrawal-charge",
       "manulife-investready-iii-top-up-underwriting",
       "manulife-investready-iii-dividend-payout-threshold",
       "manulife-investready-iii-reinvested-dividend-withdrawals",
@@ -14618,7 +14619,7 @@
       "manulife-investready-iii-fund-management-charge"
     ],
     "warnings": [
-      "Manulife InvestReady (III) is cataloged as a partial modeled subset in V1. The parser captures the 5 Years Flexi 4 corridor: the published 2.50% / 1.00% administration-charge path, the premium-shortfall charge before Flexi Start, the reinvest-default distribution-mode assumption surface, and the new protected-base COI formula after you enter the insured-life details and current premium bases, while bonuses, surrender/withdrawal schedules, flexi-start premium variation, benefit payouts, and fund-level charges remain outside the current engine."
+      "Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface, while bonuses, flexi-start premium variation, benefit payouts, and fund-level charges remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -14710,6 +14711,29 @@
         ],
         "eventChargeRules": [
           {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published prevailing 0% top-up charge for the 5 Years Flexi 4 corridor."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Top-up premium and flexi options",
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
+              }
+            ]
+          },
+          {
             "id": "premium-shortfall-charge",
             "label": "Premium Shortfall Charge",
             "trigger": "premium-holiday",
@@ -14750,8 +14774,64 @@
               },
               {
                 "page": 8,
-                "section": "Premium shortfall charge table",
-                "excerpt": "5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfall charge will apply starting from the first business day after the end of the grace period o"
+                "section": "Withdrawal and premium shortfall charge tables",
+                "excerpt": "Partial Withdrawal Charge (%) Policy Minimum Investment Period Year 5 Years 5 Years 6 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 1 Flexi 4 Flexi 2 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 15% 100% 100% 100"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.2
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published MIP partial-withdrawal charge schedule for the 5 Years Flexi 4 corridor.",
+              "Partial-withdrawal amount limits and minimum residual-account-value conditions remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Withdrawal and premium shortfall charge tables",
+                "excerpt": "Partial Withdrawal Charge (%) Policy Minimum Investment Period Year 5 Years 5 Years 6 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 1 Flexi 4 Flexi 2 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 15% 100% 100% 100"
+              },
+              {
+                "page": 10,
+                "section": "Partial withdrawal rules",
+                "excerpt": "This feature will be terminated if any fund switch/premium re-direction/partial withdrawal/top-up premium application is made. You need to establish a new automatic fund rebalancing instruction if you want to continue th"
               }
             ]
           }
@@ -14785,19 +14865,18 @@
           0.2
         ],
         "warnings": [
-          "Manulife InvestReady (III) is cataloged as a partial modeled subset in V1. The parser captures the 5 Years Flexi 4 corridor: the published account-value administration charge path, the premium-shortfall charge path before Flexi Start, and the new protected-base COI formula after you enter the insured-life details and current premium bases.",
-          "Flexi-start premium variation, welcome / annual-premium / loyalty bonuses, surrender charges, withdrawal charges, and fund-level management charges remain outside the current engine.",
+          "Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the 5 Years Flexi 4 administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "Flexi-start premium variation, welcome / annual-premium / loyalty bonuses, partial-withdrawal amount limits, dividend threshold behavior, and fund-level management charges remain informational only.",
           "Dividend-paying funds seed reinvestment by default in V1. Cash payout requires a manual annual distribution-yield assumption and the published $40 minimum payout threshold remains informational only."
         ],
         "unsupportedItems": [
           "Welcome Bonus, Annual Premium Bonus, and Loyalty Bonus remain informational only.",
-          "Full-surrender and partial-withdrawal charge schedules remain informational only.",
           "Top-up underwriting remains informational only.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
           "Reinstatement underwriting and pre-existing-condition exclusions remain informational only.",
           "Regular premium variation from Flexi Start onwards remains informational only.",
-          "The zero top-up-premium charge remains implicit and is not authored as a calculator rule.",
+          "Partial-withdrawal amount limits, minimum withdrawal amount, and minimum residual-account-value rules remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund."
         ],
         "sourceRefs": [
@@ -14818,13 +14897,18 @@
           },
           {
             "page": 8,
-            "section": "Premium shortfall charge table",
-            "excerpt": "5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfall charge will apply starting from the first business day after the end of the grace period o"
+            "section": "Withdrawal and premium shortfall charge tables",
+            "excerpt": "Partial Withdrawal Charge (%) Policy Minimum Investment Period Year 5 Years 5 Years 6 Years 7 Years 10 Years 10 Years 10 Years 13 Years Flexi 1 Flexi 4 Flexi 2 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 1 15% 100% 100% 100"
           },
           {
             "page": 9,
             "section": "Top-up premium and flexi options",
             "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
+          },
+          {
+            "page": 10,
+            "section": "Partial withdrawal rules",
+            "excerpt": "This feature will be terminated if any fund switch/premium re-direction/partial withdrawal/top-up premium application is made. You need to establish a new automatic fund rebalancing instruction if you want to continue th"
           },
           {
             "page": 12,

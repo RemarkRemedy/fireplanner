@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseManulifeInvestreadyIii', () => {
-  it('builds a valid partial product for the 5 Years Flexi 4 protected-base corridor', async () => {
+  it('builds a valid supported product for the 5 Years Flexi 4 protected-base corridor', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseManulifeInvestreadyIii({
       document,
@@ -23,12 +23,15 @@ describe('parseManulifeInvestreadyIii', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('manulife-investready-iii')
     expect(product.productName).toBe('Manulife InvestReady (III)')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'kernel:protected-base-assurance',
       'branch:manulife-investready-iii-administrative-charge',
       'branch:manulife-investready-iii-premium-shortfall-charge',
+      'branch:manulife-investready-iii-zero-top-up-charge',
+      'branch:manulife-investready-iii-partial-withdrawal-charge',
+      'branch:manulife-investready-iii-full-surrender-charge',
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-welcome-bonus')
@@ -75,6 +78,12 @@ describe('parseManulifeInvestreadyIii', () => {
     })
     expect(variant?.eventChargeRules).toEqual([
       expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        basis: 'event-amount',
+        rate: 0,
+      }),
+      expect.objectContaining({
         id: 'premium-shortfall-charge',
         trigger: 'premium-holiday',
         basis: 'committed-annual-premium-with-overlap-months',
@@ -84,8 +93,21 @@ describe('parseManulifeInvestreadyIii', () => {
           { startPolicyYear: 4, endPolicyYear: 4, rate: 0.4 },
         ],
       }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
+        rateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
+          { startPolicyYear: 2, endPolicyYear: 2, rate: 1 },
+          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.75 },
+          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.4 },
+          { startPolicyYear: 5, endPolicyYear: 5, rate: 0.2 },
+        ],
+      }),
     ])
-    expect(variant?.warnings).toContain('Flexi-start premium variation, welcome / annual-premium / loyalty bonuses, surrender charges, withdrawal charges, and fund-level management charges remain outside the current engine.')
+    expect(variant?.eecTable).toEqual([1, 1, 0.75, 0.4, 0.2])
+    expect(variant?.warnings).toContain('Flexi-start premium variation, welcome / annual-premium / loyalty bonuses, partial-withdrawal amount limits, dividend threshold behavior, and fund-level management charges remain informational only.')
     expect(variant?.warnings).toContain('Dividend-paying funds seed reinvestment by default in V1. Cash payout requires a manual annual distribution-yield assumption and the published $40 minimum payout threshold remains informational only.')
   }, 30_000)
 })

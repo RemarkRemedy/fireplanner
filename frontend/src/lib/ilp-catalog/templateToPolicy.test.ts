@@ -5621,7 +5621,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('irreversible downgrade to Basic Death'))).toBe(true)
   })
 
-  it('maps Manulife InvestReady (III) into a partial seed with protected-base assurance support', () => {
+  it('maps Manulife InvestReady (III) into a supported seed with protected-base assurance support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'manulife-investready-iii')
     expect(product).toBeDefined()
@@ -5630,10 +5630,13 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-zero-top-up-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-partial-withdrawal-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-full-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-benefit-payout-handling')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(5)
@@ -5657,6 +5660,12 @@ describe('templateVariantToPolicySeed', () => {
     ])
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        basis: 'event-amount',
+        rate: 0,
+      }),
+      expect.objectContaining({
         id: 'premium-shortfall-charge',
         trigger: 'premium-holiday',
         basis: 'committed-annual-premium-with-overlap-months',
@@ -5666,7 +5675,13 @@ describe('templateVariantToPolicySeed', () => {
           { startPolicyYear: 4, endPolicyYear: 4, rate: 0.4 },
         ],
       }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
+      }),
     ])
+    expect(seed.eecTable).toEqual([1, 1, 0.75, 0.4, 0.2])
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['policy'],

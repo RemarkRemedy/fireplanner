@@ -1,0 +1,564 @@
+{
+  "metadata": {
+    "fixtureId": "manulife-investready-iii-sgd-mip-5-flexi-4-ocf-stress",
+    "fixtureClass": "supported",
+    "productId": "manulife-investready-iii",
+    "variantId": "sgd-mip-5-flexi-4",
+    "scenarioId": "ocf-stress",
+    "supportStatus": "supported",
+    "description": "Manulife InvestReady (III) alternate-fund high-OCF stress scenario.",
+    "coverageTags": [
+      "ocf-stress"
+    ],
+    "catalogVersion": "0.1.0",
+    "sourceFileName": "WA_MIR03_PdtSum.pdf",
+    "sourceChecksumSha256": "51d311296d3e4f38d3d646dc6fcd14fc845ab6ed3a1cb10a7d8ace96de1f8e07"
+  },
+  "policyInput": {
+    "id": "manulife-investready-iii-sgd-mip-5-flexi-4-ocf-stress",
+    "name": "Golden Manulife InvestReady (III) (SGD / MIP 5 Flexi 4 OCF Stress)",
+    "insurer": "Manulife Singapore",
+    "currency": "SGD",
+    "monthlyContribution": 350,
+    "monthsAlreadyPaid": 24,
+    "currentPolicyYear": 2,
+    "icpMonths": 1,
+    "assuranceProfile": {
+      "currentAgeNextBirthday": 47,
+      "sex": "male",
+      "smokerStatus": "non-smoker",
+      "currentNetRegularPremiumBase": 4200
+    },
+    "mipLength": 5,
+    "postMipYears": 0,
+    "eecTable": [
+      1,
+      1,
+      0.75,
+      0.4,
+      0.2
+    ],
+    "discountRate": 0.07,
+    "inflationRate": 0.025,
+    "alternativeReturn": 0.07,
+    "accounts": [
+      {
+        "id": "policy",
+        "label": "Policy Account",
+        "feeRate": 0.025,
+        "currentValue": 18000,
+        "contributionShare": 0,
+        "subjectToEec": true,
+        "postMipFeeRate": 0.01,
+        "contributionRules": [
+          {
+            "phase": "during-icp",
+            "contributionShare": 1
+          },
+          {
+            "phase": "after-icp",
+            "contributionShare": 1
+          },
+          {
+            "phase": "top-up",
+            "contributionShare": 1
+          }
+        ]
+      }
+    ],
+    "funds": [
+      {
+        "name": "Manulife Emerging Growth",
+        "allocation": 0.67,
+        "ocf": 0.024,
+        "grossReturnLow": 0.038,
+        "grossReturnMid": 0.08,
+        "grossReturnHigh": 0.115
+      },
+      {
+        "name": "Manulife Strategic Bond",
+        "allocation": 0.33,
+        "ocf": 0.019,
+        "grossReturnLow": 0.028,
+        "grossReturnMid": 0.05,
+        "grossReturnHigh": 0.068
+      }
+    ],
+    "bonuses": [],
+    "chargeRules": [
+      {
+        "id": "cost-of-insurance",
+        "label": "Cost of Insurance (Death / TI)",
+        "basis": "assurance-sum-at-risk",
+        "activeWindow": "policy-term",
+        "startPolicyYear": 1,
+        "endPolicyYear": null,
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "amount": 0,
+        "assuranceConfig": {
+          "formula": "manulife-investready-iii-death-ti",
+          "monthlyModalFactor": 0.083333,
+          "maxAgeNextBirthday": 99
+        },
+        "requiresManualInput": false,
+        "allocation": "pro-rata-by-value"
+      }
+    ],
+    "policyEvents": [],
+    "eventChargeRules": [
+      {
+        "id": "top-up-premium-charge",
+        "label": "Top-up Premium Charge",
+        "trigger": "top-up",
+        "basis": "event-amount",
+        "activeWindow": "policy-term",
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      },
+      {
+        "id": "premium-shortfall-charge",
+        "label": "Premium Shortfall Charge",
+        "trigger": "premium-holiday",
+        "basis": "committed-annual-premium-with-overlap-months",
+        "activeWindow": "during-mip",
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 2,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 3,
+            "endPolicyYear": 3,
+            "rate": 0.75
+          },
+          {
+            "startPolicyYear": 4,
+            "endPolicyYear": 4,
+            "rate": 0.4
+          }
+        ],
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "pro-rata-by-value"
+      },
+      {
+        "id": "partial-withdrawal-charge",
+        "label": "Partial Withdrawal Charge",
+        "trigger": "partial-withdrawal",
+        "basis": "event-amount",
+        "activeWindow": "during-mip",
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 2,
+            "endPolicyYear": 2,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 3,
+            "endPolicyYear": 3,
+            "rate": 0.75
+          },
+          {
+            "startPolicyYear": 4,
+            "endPolicyYear": 4,
+            "rate": 0.4
+          },
+          {
+            "startPolicyYear": 5,
+            "endPolicyYear": 5,
+            "rate": 0.2
+          }
+        ],
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      }
+    ],
+    "catalogSource": {
+      "productId": "manulife-investready-iii",
+      "productName": "Manulife InvestReady (III)",
+      "variantId": "sgd-mip-5-flexi-4",
+      "variantLabel": "SGD / MIP 5 (Flexi 4)",
+      "catalogVersion": "0.1.0",
+      "supportStatus": "supported",
+      "economicsStatus": "supported",
+      "structureStatus": "structured",
+      "modeledEconomics": [
+        "kernel:protected-base-assurance",
+        "branch:manulife-investready-iii-administrative-charge",
+        "branch:manulife-investready-iii-premium-shortfall-charge",
+        "branch:manulife-investready-iii-zero-top-up-charge",
+        "branch:manulife-investready-iii-partial-withdrawal-charge",
+        "branch:manulife-investready-iii-full-surrender-charge",
+        "kernel:distribution-mode-assumption"
+      ],
+      "metadataOnlyBehaviors": [
+        "manulife-investready-iii-welcome-bonus",
+        "manulife-investready-iii-annual-premium-bonus",
+        "manulife-investready-iii-loyalty-bonus",
+        "manulife-investready-iii-top-up-underwriting",
+        "manulife-investready-iii-dividend-payout-threshold",
+        "manulife-investready-iii-reinvested-dividend-withdrawals",
+        "manulife-investready-iii-benefit-payout-handling",
+        "manulife-investready-iii-reinstatement",
+        "manulife-investready-iii-flexi-start-premium-variation",
+        "manulife-investready-iii-fund-management-charge"
+      ]
+    },
+    "catalogWarnings": [
+      "Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface, while bonuses, flexi-start premium variation, benefit payouts, and fund-level charges remain informational only.",
+      "Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the 5 Years Flexi 4 administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+      "Flexi-start premium variation, welcome / annual-premium / loyalty bonuses, partial-withdrawal amount limits, dividend threshold behavior, and fund-level management charges remain informational only.",
+      "Dividend-paying funds seed reinvestment by default in V1. Cash payout requires a manual annual distribution-yield assumption and the published $40 minimum payout threshold remains informational only.",
+      "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
+      "Welcome Bonus, Annual Premium Bonus, and Loyalty Bonus remain informational only.",
+      "Top-up underwriting remains informational only.",
+      "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+      "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
+      "Reinstatement underwriting and pre-existing-condition exclusions remain informational only.",
+      "Regular premium variation from Flexi Start onwards remains informational only.",
+      "Partial-withdrawal amount limits, minimum withdrawal amount, and minimum residual-account-value rules remain informational only.",
+      "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund."
+    ]
+  },
+  "expected": {
+    "summary": {
+      "totalPremiumsPaid": 21000,
+      "totalFeesCharged": 1652.75,
+      "totalBonusesReceived": 0,
+      "netFeeDrag": 1652.75,
+      "currentSurrenderValue": 0,
+      "cancelNowPenalty": 18000
+    },
+    "npvAnalysis": {
+      "surrenderNow": {
+        "eecRate": 1,
+        "eecCharge": 18000,
+        "npvFees": 18000,
+        "netSurrenderValue": 0
+      },
+      "futureExitOptions": [
+        {
+          "exitYear": 1,
+          "policyYear": 3,
+          "eecRate": 0.75,
+          "eecCharge": 16536.01,
+          "pvEec": 15454.21,
+          "npvGrossFees": 420.56,
+          "npvBonuses": 0,
+          "totalNpvFees": 15874.78,
+          "netSurrenderValue": 5512,
+          "totalContributions": 12600
+        },
+        {
+          "exitYear": 2,
+          "policyYear": 4,
+          "eecRate": 0.4,
+          "eecCharge": 10424.74,
+          "pvEec": 9105.37,
+          "npvGrossFees": 902,
+          "npvBonuses": 0,
+          "totalNpvFees": 10007.37,
+          "netSurrenderValue": 15637.11,
+          "totalContributions": 16800
+        },
+        {
+          "exitYear": 3,
+          "policyYear": 5,
+          "eecRate": 0.2,
+          "eecCharge": 6008.36,
+          "pvEec": 4904.61,
+          "npvGrossFees": 1433.86,
+          "npvBonuses": 0,
+          "totalNpvFees": 6338.47,
+          "netSurrenderValue": 24033.43,
+          "totalContributions": 21000
+        }
+      ],
+      "bestExitYear": 3,
+      "bestExitNpvFees": 6338.47,
+      "holdToMip": {
+        "npvGrossFees": 1433.86,
+        "npvBonuses": 0,
+        "totalNpvFees": 6338.47,
+        "finalValue": 30041.78,
+        "totalContributions": 21000
+      }
+    },
+    "opportunityCost": {
+      "alternativePortfolioValue": 13502.58,
+      "ilpValueAtHorizon": 30041.78,
+      "difference": -16539.2,
+      "atBestExit": {
+        "exitYear": 3,
+        "alternativeValue": 24033.43,
+        "ilpValueAtHorizon": 30041.78,
+        "difference": -6008.36
+      }
+    },
+    "projections": {
+      "low": {
+        "blendedNetReturn": 0.01235,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 3,
+            "annualContribution": 4200,
+            "annualWithdrawals": 540,
+            "combinedValue": 21426.74,
+            "eecRate": 0.75,
+            "eecCharge": 16070.06,
+            "surrenderValue": 5356.69,
+            "cumulativePremiums": 12600,
+            "cumulativeGrossFees": 450,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "policy",
+                "open": 18000,
+                "contributionAmount": 4200,
+                "grossFee": 450,
+                "bonusCredit": 0,
+                "netFee": 450,
+                "withdrawalAmount": 540,
+                "close": 21426.74
+              }
+            ]
+          },
+          {
+            "year": 2,
+            "policyYear": 4,
+            "annualContribution": 4200,
+            "annualWithdrawals": 642.8,
+            "combinedValue": 24706.28,
+            "eecRate": 0.4,
+            "eecCharge": 9882.51,
+            "surrenderValue": 14823.77,
+            "cumulativePremiums": 16800,
+            "cumulativeGrossFees": 985.67,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "policy",
+                "open": 21426.74,
+                "contributionAmount": 4200,
+                "grossFee": 535.67,
+                "bonusCredit": 0,
+                "netFee": 535.67,
+                "withdrawalAmount": 642.8,
+                "close": 24706.28
+              }
+            ]
+          },
+          {
+            "year": 3,
+            "policyYear": 5,
+            "annualContribution": 4200,
+            "annualWithdrawals": 741.19,
+            "combinedValue": 27844.93,
+            "eecRate": 0.2,
+            "eecCharge": 5568.99,
+            "surrenderValue": 22275.94,
+            "cumulativePremiums": 21000,
+            "cumulativeGrossFees": 1603.33,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "policy",
+                "open": 24706.28,
+                "contributionAmount": 4200,
+                "grossFee": 617.66,
+                "bonusCredit": 0,
+                "netFee": 617.66,
+                "withdrawalAmount": 741.19,
+                "close": 27844.93
+              }
+            ]
+          }
+        ]
+      },
+      "mid": {
+        "blendedNetReturn": 0.04775,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 3,
+            "annualContribution": 4200,
+            "annualWithdrawals": 540,
+            "combinedValue": 22048.01,
+            "eecRate": 0.75,
+            "eecCharge": 16536.01,
+            "surrenderValue": 5512,
+            "cumulativePremiums": 12600,
+            "cumulativeGrossFees": 450,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "policy",
+                "open": 18000,
+                "contributionAmount": 4200,
+                "grossFee": 450,
+                "bonusCredit": 0,
+                "netFee": 450,
+                "withdrawalAmount": 540,
+                "close": 22048.01
+              }
+            ]
+          },
+          {
+            "year": 2,
+            "policyYear": 4,
+            "annualContribution": 4200,
+            "annualWithdrawals": 661.44,
+            "combinedValue": 26061.84,
+            "eecRate": 0.4,
+            "eecCharge": 10424.74,
+            "surrenderValue": 15637.11,
+            "cumulativePremiums": 16800,
+            "cumulativeGrossFees": 1001.2,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "policy",
+                "open": 22048.01,
+                "contributionAmount": 4200,
+                "grossFee": 551.2,
+                "bonusCredit": 0,
+                "netFee": 551.2,
+                "withdrawalAmount": 661.44,
+                "close": 26061.84
+              }
+            ]
+          },
+          {
+            "year": 3,
+            "policyYear": 5,
+            "annualContribution": 4200,
+            "annualWithdrawals": 781.86,
+            "combinedValue": 30041.78,
+            "eecRate": 0.2,
+            "eecCharge": 6008.36,
+            "surrenderValue": 24033.43,
+            "cumulativePremiums": 21000,
+            "cumulativeGrossFees": 1652.75,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "policy",
+                "open": 26061.84,
+                "contributionAmount": 4200,
+                "grossFee": 651.55,
+                "bonusCredit": 0,
+                "netFee": 651.55,
+                "withdrawalAmount": 781.86,
+                "close": 30041.78
+              }
+            ]
+          }
+        ]
+      },
+      "high": {
+        "blendedNetReturn": 0.07714,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 3,
+            "annualContribution": 4200,
+            "annualWithdrawals": 540,
+            "combinedValue": 22563.81,
+            "eecRate": 0.75,
+            "eecCharge": 16922.86,
+            "surrenderValue": 5640.95,
+            "cumulativePremiums": 12600,
+            "cumulativeGrossFees": 450,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "policy",
+                "open": 18000,
+                "contributionAmount": 4200,
+                "grossFee": 450,
+                "bonusCredit": 0,
+                "netFee": 450,
+                "withdrawalAmount": 540,
+                "close": 22563.81
+              }
+            ]
+          },
+          {
+            "year": 2,
+            "policyYear": 4,
+            "annualContribution": 4200,
+            "annualWithdrawals": 676.91,
+            "combinedValue": 27219.86,
+            "eecRate": 0.4,
+            "eecCharge": 10887.94,
+            "surrenderValue": 16331.91,
+            "cumulativePremiums": 16800,
+            "cumulativeGrossFees": 1014.1,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "policy",
+                "open": 22563.81,
+                "contributionAmount": 4200,
+                "grossFee": 564.1,
+                "bonusCredit": 0,
+                "netFee": 564.1,
+                "withdrawalAmount": 676.91,
+                "close": 27219.86
+              }
+            ]
+          },
+          {
+            "year": 3,
+            "policyYear": 5,
+            "annualContribution": 4200,
+            "annualWithdrawals": 816.6,
+            "combinedValue": 31970.01,
+            "eecRate": 0.2,
+            "eecCharge": 6394,
+            "surrenderValue": 25576.01,
+            "cumulativePremiums": 21000,
+            "cumulativeGrossFees": 1694.59,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "policy",
+                "open": 27219.86,
+                "contributionAmount": 4200,
+                "grossFee": 680.5,
+                "bonusCredit": 0,
+                "netFee": 680.5,
+                "withdrawalAmount": 816.6,
+                "close": 31970.01
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
