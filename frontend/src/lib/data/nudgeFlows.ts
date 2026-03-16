@@ -201,9 +201,9 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
       id: 'property-downsizing',
       title: 'Downsizing Plans',
       fields: [
-        { name: 'downsizeYear', label: 'Planned year of sale', type: 'number' },
-        { name: 'downsizeProceedsPercent', label: 'Proceeds to invest (%)', type: 'percent' },
-        { name: 'replacementPropertyCost', label: 'Replacement property cost', type: 'currency' },
+        { name: 'downsizeYear', label: 'Planned year of sale', type: 'number', tooltip: 'The year you plan to sell your current property. The projection will model your mortgage payments until this year, then calculate sale proceeds.' },
+        { name: 'downsizeProceedsPercent', label: 'Proceeds to invest (%)', type: 'percent', tooltip: 'After selling, what percentage of the leftover cash (sale price minus outstanding mortgage, stamp duties, and new down payment) do you want to add to your investment portfolio? The rest stays as cash.' },
+        { name: 'replacementPropertyCost', label: 'Replacement property cost', type: 'currency', tooltip: 'The price of the smaller property you plan to buy. The engine calculates: sale proceeds minus BSD/ABSD on the new property, minus down payment (25%), then models a new mortgage for the remainder. Any leftover equity goes into your portfolio.' },
       ],
       skipWhen: { field: 'planToDownsize', equals: false },
     },
