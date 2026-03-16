@@ -103,7 +103,7 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
 }
 
 describe('parseEtiqaDashPetPlus', () => {
-  it('builds a valid rider partial modeled-subset product from extracted summary text', async () => {
+  it('builds a valid rider supported product from extracted summary text', async () => {
     const document = makeSyntheticDocument()
     const product = parseEtiqaDashPetPlus({
       document,
@@ -113,7 +113,7 @@ describe('parseEtiqaDashPetPlus', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('etiqa-dash-pet-plus')
     expect(product.productName).toBe('Dash PET Plus')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:etiqa-dash-pet-plus-zero-single-premium-charge',
       'branch:etiqa-dash-pet-plus-management-charge',

@@ -129,6 +129,10 @@ export type GoldenCoverageTag =
   | 'branch:etiqa-invest-plus-sp-top-up-premium-charge'
   | 'branch:etiqa-invest-plus-sp-initial-partial-withdrawal-charge'
   | 'branch:etiqa-invest-plus-sp-initial-surrender-charge'
+  | 'branch:etiqa-dash-pet-plus-zero-single-premium-charge'
+  | 'branch:etiqa-dash-pet-plus-management-charge'
+  | 'branch:etiqa-dash-pet-plus-zero-top-up-charge'
+  | 'branch:etiqa-dash-pet-plus-zero-partial-withdrawal-charge'
   | 'branch:pru-holiday-refund'
   | 'branch:pru-holiday-fallback'
   | 'branch:pru-top-up-charge'
@@ -3979,6 +3983,80 @@ function etiqaInvestPlusSpStressPolicy(
   return etiqaInvestPlusSpBasePolicy(snapshot, id, ETIQA_STRESS_FUNDS, {
     name: 'Golden Etiqa Invest plus SP (SGD / Open-ended Initial Only OCF Stress)',
     currentPolicyYear: 6,
+  })
+}
+
+function etiqaDashPetPlusBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'etiqa-dash-pet-plus', 'sgd-open-ended-rider', id, {
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden Etiqa Dash PET Plus (SGD / Open-ended Rider)',
+      distributionAssumption: {
+        mode: 'cash-payout',
+        source: 'manual-assumption',
+        annualYieldRate: 0.03,
+      },
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function etiqaDashPetPlusBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return etiqaDashPetPlusBasePolicy(snapshot, id, ETIQA_BALANCED_FUNDS, {
+    name: 'Golden Etiqa Dash PET Plus (SGD / Open-ended Rider Baseline)',
+  })
+}
+
+function etiqaDashPetPlusEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return etiqaDashPetPlusBasePolicy(snapshot, id, ETIQA_BALANCED_FUNDS, {
+    name: 'Golden Etiqa Dash PET Plus (SGD / Open-ended Rider Event Heavy)',
+    policyEvents: [
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 4,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'policy',
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 8,
+        durationMonths: 1,
+        amount: 10_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function etiqaDashPetPlusStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return etiqaDashPetPlusBasePolicy(snapshot, id, ETIQA_STRESS_FUNDS, {
+    name: 'Golden Etiqa Dash PET Plus (SGD / Open-ended Rider OCF Stress)',
   })
 }
 
@@ -9290,6 +9368,55 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Etiqa Invest plus SP alternate-fund high-OCF stress scenario through the supported initial corridor.',
   },
   {
+    productId: 'etiqa-dash-pet-plus',
+    variantId: 'sgd-open-ended-rider',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'branch:etiqa-dash-pet-plus-zero-single-premium-charge',
+      'branch:etiqa-dash-pet-plus-management-charge',
+    ],
+    description: 'Etiqa Dash PET Plus baseline scenario covering the supported zero-charge rider corridor, management charge, and cash-payout distribution assumption.',
+    integrityChecks: [
+      {
+        description: 'records positive cumulative fees under the management-charge corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (row.cumulativeGrossFees ?? 0) > 0),
+      },
+      {
+        description: 'pays positive annual distributions under the cash payout assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'etiqa-dash-pet-plus',
+    variantId: 'sgd-open-ended-rider',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:etiqa-dash-pet-plus-zero-top-up-charge',
+      'branch:etiqa-dash-pet-plus-zero-partial-withdrawal-charge',
+    ],
+    description: 'Etiqa Dash PET Plus event-heavy scenario covering a rider-account withdrawal followed by a zero-charge top-up.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy records both a later top-up and an executed withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > 0 && row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'etiqa-dash-pet-plus',
+    variantId: 'sgd-open-ended-rider',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Etiqa Dash PET Plus alternate-fund high-OCF stress scenario through the supported open-ended rider corridor.',
+  },
+  {
     productId: 'manulife-manulink-investor-ii',
     variantId: 'sgd-open-ended-cash',
     scenarioId: 'baseline',
@@ -12960,6 +13087,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'etiqa-invest-plus-sp' && definition.scenarioId === 'ocf-stress') {
     return etiqaInvestPlusSpStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'etiqa-dash-pet-plus' && definition.scenarioId === 'baseline') {
+    return etiqaDashPetPlusBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'etiqa-dash-pet-plus' && definition.scenarioId === 'event-heavy') {
+    return etiqaDashPetPlusEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'etiqa-dash-pet-plus' && definition.scenarioId === 'ocf-stress') {
+    return etiqaDashPetPlusStressPolicy(snapshot, id)
   }
   if (definition.productId === 'etiqa-invest-starter' && definition.scenarioId === 'baseline') {
     return etiqaInvestStarterBaselinePolicy(snapshot, id)

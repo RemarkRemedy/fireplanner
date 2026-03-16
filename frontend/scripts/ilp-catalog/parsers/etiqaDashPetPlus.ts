@@ -151,7 +151,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [],
     warnings: [
-      'Dash PET Plus is cataloged as a partial modeled subset in V1. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, the 0.75% annual management charge through the open-ended rider basis, and reinvest-default distribution support.',
+      'Dash PET Plus is cataloged as a supported V1 rider. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, the 0.75% annual management charge through the open-ended rider basis, and reinvest-default distribution support.',
       'This is a yearly renewable rider attached to a basic policy; rider renewability and basic-policy dependency remain informational only in V1.',
       'This open-ended rider product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
@@ -175,9 +175,9 @@ export function parseEtiqaDashPetPlus(context: ParseContext): IlpCatalogProduct 
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:etiqa-dash-pet-plus-zero-single-premium-charge',
       'branch:etiqa-dash-pet-plus-management-charge',
@@ -198,7 +198,7 @@ export function parseEtiqaDashPetPlus(context: ParseContext): IlpCatalogProduct 
       'etiqa-dash-pet-plus-free-look',
     ],
     warnings: [
-      'Dash PET Plus is cataloged as a partial modeled subset in V1. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, the 0.75% annual management charge through the open-ended rider basis, and reinvest-default distribution support, while protection formulas, yearly renewability, basic-policy dependency, payout-method fees, and Basic-policy crediting remain outside the current engine.',
+      'Dash PET Plus is cataloged as a supported V1 rider. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, the 0.75% annual management charge through the open-ended rider basis, and reinvest-default distribution support, while protection formulas, yearly renewability, basic-policy dependency, payout-method fees, and Basic-policy crediting remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

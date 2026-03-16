@@ -2623,7 +2623,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('supports distribution-paying fund elections'))).toBe(true)
   })
 
-  it('maps Dash PET Plus into a partial rider seed with reinvest-default distribution support', () => {
+  it('maps Dash PET Plus into a supported rider seed with reinvest-default distribution support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-dash-pet-plus')
     expect(product).toBeDefined()
@@ -2632,7 +2632,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-dash-pet-plus-management-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-dash-pet-plus-dividend-crediting-to-basic-policy')
