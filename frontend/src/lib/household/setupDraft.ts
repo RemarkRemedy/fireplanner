@@ -1,4 +1,5 @@
 import type {
+  GoalItem,
   HouseholdPlan,
   HouseholdPlanType,
   PlanningAdult,
@@ -297,10 +298,12 @@ function applyPropertyDraft(draft: SetupDraft): void {
       useHouseholdPlanStore.getState().addProperty(buildPropertyEntry('self', updates))
     }
   } else if (draft.ownsProperty === 'planning') {
+    const purchasePrice = draft.purchasePrice ?? 1_500_000
+    const purchaseYearsFromNow = draft.purchaseYearsFromNow ?? 0
     const updates: Partial<PropertyPlan> = {
       ownsProperty: false,
-      purchasePrice: draft.purchasePrice ?? 1_500_000,
-      purchaseYearsFromNow: draft.purchaseYearsFromNow ?? 0,
+      purchasePrice,
+      purchaseYearsFromNow,
       propertyType: draft.propertyType ?? 'condo',
     }
 
@@ -308,6 +311,39 @@ function applyPropertyDraft(draft: SetupDraft): void {
       useHouseholdPlanStore.getState().updateProperty(existingProperty.id, updates)
     } else {
       useHouseholdPlanStore.getState().addProperty(buildPropertyEntry('self', updates))
+    }
+
+    // Auto-create a down payment goal so the FIRE timeline accounts for this cash outflow.
+    // Down payment = purchasePrice × (1 - LTV). Default LTV is 75%, so 25% down.
+    const selfAdult = useHouseholdPlanStore.getState().plan.adults.find((a) => a.owner === 'self')
+    if (selfAdult) {
+      const ltv = 0.75
+      const downPayment = Math.round(purchasePrice * (1 - ltv))
+      const targetAge = selfAdult.currentAge + purchaseYearsFromNow
+      const existingGoal = useHouseholdPlanStore.getState().plan.goals.find(
+        (g) => g.label === 'Property Down Payment' && g.owner === 'self'
+      )
+      if (!existingGoal && downPayment > 0) {
+        const goal: GoalItem = {
+          id: createId('goal'),
+          owner: 'self',
+          label: 'Property Down Payment',
+          kind: 'financial-goal',
+          timing: { kind: 'single-age', owner: 'self', age: targetAge },
+          amount: downPayment,
+          durationYears: 1,
+          priority: 'important',
+          inflationAdjusted: true,
+          category: 'housing',
+        }
+        useHouseholdPlanStore.getState().addGoal(goal)
+      } else if (existingGoal) {
+        // Update existing goal to match revised property details
+        useHouseholdPlanStore.getState().updateGoal(existingGoal.id, {
+          amount: downPayment,
+          timing: { kind: 'single-age', owner: 'self', age: targetAge },
+        })
+      }
     }
   }
 }

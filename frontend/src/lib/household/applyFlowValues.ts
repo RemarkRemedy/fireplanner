@@ -1,12 +1,9 @@
 /**
- * Known unmapped fields (no store destination yet):
- * - Healthcare: hasRider, careShieldSupplementPlan
- * - Salary: variablePayPercent
- * - SRS: srsInvestmentStrategy
- * - Protection: emergencyFundType, hasTermLife
+ * Known unmapped fields (no store destination yet — collected for future engine features):
+ * - Healthcare: hasRider (needs copayment modelling), careShieldSupplementPlan (needs premium modelling)
+ * - Salary: variablePayPercent (needs income engine support)
+ * - Protection: emergencyFundType (informational), hasTermLife (informational)
  * - Expenses: retirementSpendingModel
- * - Allocation: rebalancingFrequency, glidePathEndTemplate
- * These are collected for future features. Adding store support requires schema changes.
  */
 
 import { FLOW_FIELD_TO_CATEGORY } from '@/lib/data/retirementTemplates'
@@ -16,7 +13,7 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { createId } from '@/lib/household/ids'
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
 import type { HouseholdCpfConfig, GoalItem } from '@/lib/household/types'
-import type { AllocationTemplate, CareerPhase, DownsizingConfig, GoalCategory, GrowthModel, HealthcareConfig, IspTierOption, PromotionJump, PropertyType, SalaryModel } from '@/lib/types'
+import type { AllocationTemplate, CareerPhase, DownsizingConfig, GoalCategory, GrowthModel, HealthcareConfig, IspTierOption, PromotionJump, PropertyType, RebalanceFrequency, SalaryModel } from '@/lib/types'
 import type { ExpenseItem, IncomeSource, PlanningAdult, PropertyPlan } from '@/lib/household/types'
 
 /**
@@ -428,6 +425,18 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         srsUpdates.balance = values.srsBalance
       }
 
+      // Map investment strategy to expected return rate
+      if (typeof values.srsInvestmentStrategy === 'string') {
+        const strategyReturns: Record<string, number> = {
+          cash: 0.005,   // savings account rate
+          etf: 0.06,     // broad market ETFs
+          stocks: 0.08,  // individual stocks (higher risk)
+          mixed: 0.05,   // blended portfolio
+        }
+        const rate = strategyReturns[values.srsInvestmentStrategy]
+        if (rate != null) srsUpdates.investmentReturn = rate
+      }
+
       // Only set contribution values if the toggle is not explicitly off
       if (values.contributeToSrs !== false) {
         if (typeof values.annualSrsContribution === 'number') {
@@ -512,6 +521,35 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         }
         allocationState.setGlidePathConfig(updatedConfig)
         applied = true
+      }
+
+      // Map glide path end template to target allocation weights
+      if (typeof values.glidePathEndTemplate === 'string') {
+        if (values.glidePathEndTemplate === 'very-conservative') {
+          // Very conservative: ~10% equity, ~90% bonds/cash (not a named template)
+          const veryConservativeWeights = [0.05, 0.03, 0.02, 0.60, 0.10, 0.05, 0.15, 0.00]
+          useAllocationStore.getState().setTargetWeights(veryConservativeWeights)
+          applied = true
+        } else {
+          const template = toAllocationTemplate(values.glidePathEndTemplate)
+          if (template) {
+            useAllocationStore.getState().applyTemplate(template, 'target')
+            applied = true
+          }
+        }
+      }
+
+      // Wire rebalancing frequency to household assumptions
+      if (typeof values.rebalancingFrequency === 'string') {
+        const validFrequencies: RebalanceFrequency[] = ['annual', 'semi-annual', 'quarterly']
+        if (validFrequencies.includes(values.rebalancingFrequency as RebalanceFrequency)) {
+          store.updateAssumptions({
+            returns: {
+              rebalanceFrequency: values.rebalancingFrequency as RebalanceFrequency,
+            },
+          })
+          applied = true
+        }
       }
       return applied
     }

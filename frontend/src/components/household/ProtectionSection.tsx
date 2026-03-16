@@ -41,6 +41,15 @@ export function ProtectionSection() {
                   value={adult.nonMortgageDebtMonthlyPayment}
                   onChange={(v) => updateAdult(adult.id, { nonMortgageDebtMonthlyPayment: v })}
                 />
+                <NumberInput
+                  label="Emergency Fund Target (months)"
+                  tooltip="Target emergency fund size in months of expenses. Used by the financial health check to assess adequacy."
+                  value={adult.emergencyFundTarget ?? 6}
+                  onChange={(v) => updateAdult(adult.id, { emergencyFundTarget: Math.round(v) })}
+                  min={0}
+                  max={24}
+                  step={1}
+                />
               </div>
             </div>
 
@@ -65,6 +74,12 @@ export function ProtectionSection() {
                   tooltip="Monthly payout from disability income insurance if you cannot work."
                   value={adult.insuranceDisabilityMonthly}
                   onChange={(v) => updateAdult(adult.id, { insuranceDisabilityMonthly: v })}
+                />
+                <CurrencyInput
+                  label="Annual Insurance Premiums"
+                  tooltip="Total annual premiums for all insurance policies (life, CI, disability). Deducted from cash flow in the projection."
+                  value={adult.annualInsurancePremiums ?? 0}
+                  onChange={(v) => updateAdult(adult.id, { annualInsurancePremiums: v })}
                 />
               </div>
             </div>

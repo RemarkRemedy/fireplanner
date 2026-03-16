@@ -435,6 +435,21 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                             onChange={(value) => updateProperty(property.id, { rentalYield: value })}
                           />
                           <PercentInput
+                            label="Rental expenses %"
+                            value={property.rentalExpensesPercent ?? 0}
+                            onChange={(value) => updateProperty(property.id, { rentalExpensesPercent: value })}
+                            tooltip="Annual expenses as % of rental income (maintenance, agent fees, tax). Net rental yield = rental yield × (1 − expenses%)."
+                          />
+                          <NumberInput
+                            label="Rental income end age"
+                            value={property.rentalIncomeEndAge ?? 0}
+                            onChange={(value) => updateProperty(property.id, { rentalIncomeEndAge: value || undefined })}
+                            integer
+                            min={0}
+                            max={120}
+                            tooltip="Age at which rental income stops (e.g., tenant leaves, unit sold). Leave 0 for indefinite."
+                          />
+                          <PercentInput
                             label="Mortgage rate"
                             value={property.mortgageRate}
                             onChange={(value) => updateProperty(property.id, { mortgageRate: value })}
@@ -668,6 +683,17 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                                     expectedSalePrice: value,
                                   },
                                 })}
+                              />
+                              <PercentInput
+                                label="Proceeds to invest"
+                                value={property.downsizing.proceedsAllocationPercent ?? 1}
+                                onChange={(value) => updateProperty(property.id, {
+                                  downsizing: {
+                                    ...property.downsizing,
+                                    proceedsAllocationPercent: value,
+                                  },
+                                })}
+                                tooltip="What percentage of net sale proceeds to add to your investment portfolio. The rest stays as cash."
                               />
                             </>
                           )}

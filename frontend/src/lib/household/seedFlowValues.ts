@@ -209,13 +209,25 @@ function seedSrs(adult: PlanningAdult): Record<string, unknown> {
     seeds.annualSrsContribution = adult.srs.annualContribution
   }
   seeds.srsWithdrawalStartAge = adult.srs.drawdownStartAge
+
+  // Reverse-map investmentReturn to strategy label
+  const returnToStrategy: [number, string][] = [
+    [0.005, 'cash'],
+    [0.05, 'mixed'],
+    [0.06, 'etf'],
+    [0.08, 'stocks'],
+  ]
+  const matched = returnToStrategy.find(([rate]) => Math.abs(adult.srs.investmentReturn - rate) < 0.001)
+  seeds.srsInvestmentStrategy = matched ? matched[1] : 'mixed'
+
   return seeds
 }
 
 function seedAllocation(): Record<string, unknown> {
   const allocationState = useAllocationStore.getState()
+  const plan = useHouseholdPlanStore.getState().plan
   const seeds: Record<string, unknown> = {}
-  seeds.rebalancingFrequency = 'annual' // informational default
+  seeds.rebalancingFrequency = plan.assumptions.returns.rebalanceFrequency ?? 'annual'
 
   const glide = allocationState.glidePathConfig
   seeds.enableGlidePath = glide.enabled
@@ -223,6 +235,13 @@ function seedAllocation(): Record<string, unknown> {
     seeds.glidePathStartAge = glide.startAge
     seeds.glidePathEndAge = glide.endAge
   }
+
+  // Reverse-seed target template from selectedTargetTemplate
+  const targetTemplate = allocationState.selectedTargetTemplate
+  if (targetTemplate && targetTemplate !== 'custom') {
+    seeds.glidePathEndTemplate = targetTemplate
+  }
+
   return seeds
 }
 
