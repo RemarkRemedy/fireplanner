@@ -2177,6 +2177,144 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[1], 'aua').grossFee).toBeCloseTo(60, 2)
   })
 
+  it('gates premium-year recurring charges on premiums being paid up to date and extends them after premium holiday', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 2,
+      monthsAlreadyPaid: 24,
+      monthlyContribution: 100,
+      postMipYears: 3,
+      accounts: [
+        { ...IUA_ACCOUNT, currentValue: 0, feeRate: 0, postMipFeeRate: 0, contributionShare: 0 },
+        { ...AUA_ACCOUNT, currentValue: 10_000, feeRate: 0, postMipFeeRate: 0, contributionShare: 1 },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 25,
+          durationMonths: 12,
+          repayMissedPremiums: true,
+          repaymentAccountId: 'aua',
+        },
+      ],
+      chargeRules: [
+        {
+          id: 'supplementary-charge',
+          label: 'Supplementary Charge',
+          basis: 'account-value',
+          activeWindow: 'policy-term',
+          yearBasis: 'premium-year',
+          requiresPremiumsPaidUpToDate: true,
+          appliesTo: ['aua'],
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 2, rate: 0.1 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.05 },
+            { startPolicyYear: 4, endPolicyYear: null, rate: 0 },
+          ],
+          rate: 0,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows.slice(0, 3).map((row) => row.policyYear)).toEqual([3, 4, 5])
+    expect(accountRow(result.rows[0], 'aua').grossFee).toBe(0)
+    expect(accountRow(result.rows[1], 'aua').grossFee).toBeCloseTo(500, 6)
+    expect(accountRow(result.rows[2], 'aua').grossFee).toBe(0)
+  })
+
+  it('keeps premium-year recurring charges active when premiums remain current', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 2,
+      monthsAlreadyPaid: 24,
+      monthlyContribution: 100,
+      postMipYears: 2,
+      accounts: [
+        { ...IUA_ACCOUNT, currentValue: 0, feeRate: 0, postMipFeeRate: 0, contributionShare: 0 },
+        { ...AUA_ACCOUNT, currentValue: 10_000, feeRate: 0, postMipFeeRate: 0, contributionShare: 1 },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'supplementary-charge',
+          label: 'Supplementary Charge',
+          basis: 'account-value',
+          activeWindow: 'policy-term',
+          yearBasis: 'premium-year',
+          requiresPremiumsPaidUpToDate: true,
+          appliesTo: ['aua'],
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 2, rate: 0.1 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.05 },
+            { startPolicyYear: 4, endPolicyYear: null, rate: 0 },
+          ],
+          rate: 0,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'aua').grossFee).toBeCloseTo(500, 6)
+    expect(accountRow(result.rows[1], 'aua').grossFee).toBe(0)
+  })
+
+  it('does not change existing recurring charges when the payment-history gate is absent', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 2,
+      monthsAlreadyPaid: 24,
+      monthlyContribution: 100,
+      postMipYears: 2,
+      accounts: [
+        { ...IUA_ACCOUNT, currentValue: 0, feeRate: 0, postMipFeeRate: 0, contributionShare: 0 },
+        { ...AUA_ACCOUNT, currentValue: 10_000, feeRate: 0, postMipFeeRate: 0, contributionShare: 1 },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 25,
+          durationMonths: 12,
+          repayMissedPremiums: true,
+          repaymentAccountId: 'aua',
+        },
+      ],
+      chargeRules: [
+        {
+          id: 'supplementary-charge',
+          label: 'Supplementary Charge',
+          basis: 'account-value',
+          activeWindow: 'policy-term',
+          yearBasis: 'premium-year',
+          appliesTo: ['aua'],
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 2, rate: 0.1 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.05 },
+            { startPolicyYear: 4, endPolicyYear: null, rate: 0 },
+          ],
+          rate: 0,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'aua').grossFee).toBeCloseTo(1_000, 6)
+    expect(accountRow(result.rows[1], 'aua').grossFee).toBeCloseTo(450, 6)
+  })
+
   it('excludes top-up flows from annual-contribution charge rules', () => {
     const policy = makeDefaultPolicy({
       monthsAlreadyPaid: 0,

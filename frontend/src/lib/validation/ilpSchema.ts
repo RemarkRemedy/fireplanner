@@ -286,6 +286,7 @@ export const ilpChargeRuleSchema = z.object({
   basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium', 'initial-single-premium', 'initial-single-premium-base']),
   activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']),
   yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
+  requiresPremiumsPaidUpToDate: z.boolean().optional(),
   startPolicyYear: z.number().int().min(1).max(100).optional(),
   endPolicyYear: z.number().int().min(1).max(100).nullable().optional(),
   appliesTo: z.array(z.string().min(1)).min(1).max(10),

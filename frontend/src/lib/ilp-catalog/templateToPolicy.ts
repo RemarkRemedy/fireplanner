@@ -166,6 +166,7 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
           : mapFeeRuleBasis(rule.basis),
         activeWindow: rule.activeWindow,
         yearBasis: rule.yearBasis,
+        requiresPremiumsPaidUpToDate: rule.requiresPremiumsPaidUpToDate,
         startPolicyYear: rule.startPolicyYear,
         endPolicyYear: rule.endPolicyYear,
         appliesTo: [...rule.appliesTo],

@@ -68,6 +68,7 @@ export interface IlpTemplateFeeRule {
   label: string
   basis?: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium' | 'initial-single-premium' | 'initial-single-premium-base'
   yearBasis?: 'policy-year' | 'premium-year'
+  requiresPremiumsPaidUpToDate?: boolean
   rate: number | null
   amount?: number | null
   assuranceConfig?: {

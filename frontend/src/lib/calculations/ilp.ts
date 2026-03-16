@@ -217,6 +217,7 @@ export interface IlpChargeRule {
   basis: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium' | 'initial-single-premium' | 'initial-single-premium-base'
   activeWindow: 'during-mip' | 'after-mip' | 'policy-term'
   yearBasis?: 'policy-year' | 'premium-year'
+  requiresPremiumsPaidUpToDate?: boolean
   startPolicyYear?: number
   endPolicyYear?: number | null
   appliesTo: string[]
@@ -3106,6 +3107,9 @@ function computeAdditionalChargeByAccount(
   const chargeRules = normalizeRecurringChargeRules(normalized, context)
 
   for (const { rule, appliesTo, fallbackAppliesTo } of chargeRules) {
+    if (rule.requiresPremiumsPaidUpToDate && !context.paymentHistory.premiumsPaidUpToDate) {
+      continue
+    }
 
     switch (rule.basis) {
       case 'account-value':
