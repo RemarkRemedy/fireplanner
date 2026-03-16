@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseManulifeManulinkInvestorIi', () => {
-  it('builds a valid open-ended partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid open-ended supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseManulifeManulinkInvestorIi({
       document,
@@ -23,8 +23,8 @@ describe('parseManulifeManulinkInvestorIi', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('manulife-manulink-investor-ii')
     expect(product.productName).toBe('Manulink Investor (II)')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:manulink-investor-ii-single-premium-charge',
       'branch:manulink-investor-ii-top-up-premium-charge',
@@ -33,7 +33,7 @@ describe('parseManulifeManulinkInvestorIi', () => {
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('manulink-investor-ii-cpf-funding-route')
-    expect(product.metadataOnlyBehaviors).toContain('manulink-investor-ii-single-premium-principal-tracking')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulink-investor-ii-single-premium-principal-tracking')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-open-ended-cash',
       'sgd-open-ended-srs',
@@ -122,5 +122,6 @@ describe('parseManulifeManulinkInvestorIi', () => {
       ],
     })
     expect(srsVariant?.warnings).toContain('CPF funding availability and CPF dividend-crediting behavior remain metadata-only because the product summary does not publish an explicit CPF premium-charge rate in the modeled corridor.')
+    expect(cashVariant?.unsupportedItems).not.toContain('Single-premium principal tracking remains informational only in V1.')
   }, 30_000)
 })

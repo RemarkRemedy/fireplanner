@@ -595,7 +595,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
-  it('maps Manulink Investor (II) cash into a partial seed with reinvest-default distribution support', () => {
+  it('maps Manulink Investor (II) cash into a supported seed with reinvest-default distribution support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'manulife-manulink-investor-ii')
     expect(product).toBeDefined()
@@ -604,10 +604,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulink-investor-ii-top-up-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulink-investor-ii-single-premium-principal-tracking')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulink-investor-ii-cpf-funding-route')
     expect(seed.eventChargeRules).toEqual(
       expect.arrayContaining([
@@ -634,7 +635,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
-  it('maps Manulink Investor (II) SRS into a partial seed with reinvest-default distribution support', () => {
+  it('maps Manulink Investor (II) SRS into a supported seed with reinvest-default distribution support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'manulife-manulink-investor-ii')
     expect(product).toBeDefined()
@@ -643,8 +644,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulink-investor-ii-srs-recurring-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.eventChargeRules).toEqual(
@@ -3250,7 +3251,7 @@ describe('templateVariantToPolicySeed', () => {
     })
   })
 
-  it('maps Manulink Investor (II) SRS seed into a partial policy with recurring single premium charges', () => {
+  it('maps Manulink Investor (II) SRS seed into a supported policy with recurring single premium charges', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'manulife-manulink-investor-ii')
     expect(product).toBeDefined()
@@ -3260,7 +3261,7 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('Manulink Investor (II) (SGD / Open-ended (Srs))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulink-investor-ii-srs-recurring-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-recurring-single-premium-routing')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')

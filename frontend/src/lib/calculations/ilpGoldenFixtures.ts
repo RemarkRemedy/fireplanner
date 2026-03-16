@@ -44,6 +44,9 @@ export type GoldenCoverageTag =
   | 'branch:prulink-investgrowth-sp-premium-assurance-charge'
   | 'branch:prulink-investgrowth-sp-top-up-charge'
   | 'branch:prulink-investgrowth-sp-top-up-assurance-charge'
+  | 'branch:manulink-investor-ii-single-premium-charge'
+  | 'branch:manulink-investor-ii-top-up-premium-charge'
+  | 'branch:manulink-investor-ii-srs-recurring-single-premium-charge'
   | 'branch:prulink-investgrowth-recurring-premium-charge'
   | 'branch:prulink-investgrowth-premium-assurance-charge'
   | 'branch:prulink-investgrowth-top-up-charge'
@@ -196,6 +199,44 @@ const PRU_STRESS_FUNDS: IlpFund[] = [
     grossReturnLow: 0.03,
     grossReturnMid: 0.052,
     grossReturnHigh: 0.07,
+  },
+]
+
+const MANULIFE_BALANCED_FUNDS: IlpFund[] = [
+  {
+    name: 'Manulife Global Equity',
+    allocation: 0.6,
+    ocf: 0.013,
+    grossReturnLow: 0.045,
+    grossReturnMid: 0.074,
+    grossReturnHigh: 0.1,
+  },
+  {
+    name: 'Manulife Income',
+    allocation: 0.4,
+    ocf: 0.01,
+    grossReturnLow: 0.03,
+    grossReturnMid: 0.052,
+    grossReturnHigh: 0.07,
+  },
+]
+
+const MANULIFE_STRESS_FUNDS: IlpFund[] = [
+  {
+    name: 'Manulife Emerging Growth',
+    allocation: 0.67,
+    ocf: 0.024,
+    grossReturnLow: 0.038,
+    grossReturnMid: 0.08,
+    grossReturnHigh: 0.115,
+  },
+  {
+    name: 'Manulife Strategic Bond',
+    allocation: 0.33,
+    ocf: 0.019,
+    grossReturnLow: 0.028,
+    grossReturnMid: 0.05,
+    grossReturnHigh: 0.068,
   },
 ]
 
@@ -1331,6 +1372,99 @@ function pruInvestGrowthRegularStressPolicy(
 ): IlpPolicyInput {
   return pruInvestGrowthRegularBaselinePolicy(snapshot, 'sgd-open-ended-cash', id, PRU_STRESS_FUNDS, {
     name: 'Golden PRULink InvestGrowth (SGD / Open-ended Cash OCF Stress)',
+  })
+}
+
+function manulinkInvestorIiBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended-cash' | 'sgd-open-ended-srs',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'manulife-manulink-investor-ii', variantId, id, {
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+  const distributionAssumption = variantId === 'sgd-open-ended-cash'
+    ? {
+        mode: 'cash-payout' as const,
+        source: 'manual-assumption' as const,
+        annualYieldRate: 0.04,
+      }
+    : base.distributionAssumption
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden Manulink Investor (II) (${variantId.toUpperCase()})`,
+      policyEvents: [],
+      distributionAssumption,
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function manulinkInvestorIiBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended-cash' | 'sgd-open-ended-srs',
+  id: string,
+): IlpPolicyInput {
+  return manulinkInvestorIiBasePolicy(snapshot, variantId, id, MANULIFE_BALANCED_FUNDS)
+}
+
+function manulinkInvestorIiCashEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return manulinkInvestorIiBasePolicy(snapshot, 'sgd-open-ended-cash', id, MANULIFE_BALANCED_FUNDS, {
+    name: 'Golden Manulink Investor (II) (SGD / Open-ended Cash Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 6,
+        durationMonths: 1,
+        amount: 10_000,
+      },
+    ],
+  })
+}
+
+function manulinkInvestorIiSrsEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return manulinkInvestorIiBasePolicy(snapshot, 'sgd-open-ended-srs', id, MANULIFE_BALANCED_FUNDS, {
+    name: 'Golden Manulink Investor (II) (SGD / Open-ended SRS Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 6,
+        durationMonths: 1,
+        amount: 8_000,
+      },
+      {
+        id: 'rsp-1',
+        type: 'recurring-single-premium',
+        startPolicyMonth: 7,
+        durationMonths: 6,
+        amount: 500,
+      },
+    ],
+  })
+}
+
+function manulinkInvestorIiStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return manulinkInvestorIiBasePolicy(snapshot, 'sgd-open-ended-cash', id, MANULIFE_STRESS_FUNDS, {
+    name: 'Golden Manulink Investor (II) (SGD / Open-ended Cash OCF Stress)',
   })
 }
 
@@ -3457,6 +3591,107 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'PRULink InvestGrowth (SP) cash alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'manulife-manulink-investor-ii',
+    variantId: 'sgd-open-ended-cash',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'branch:manulink-investor-ii-single-premium-charge',
+    ],
+    description: 'Baseline Manulink Investor (II) cash scenario proving the supported initial single-premium corridor and cash-payout distribution assumption.',
+    integrityChecks: [
+      {
+        description: 'records a positive upfront single-premium charge at honest inception',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+      {
+        description: 'pays positive annual distributions under the cash payout assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'manulife-manulink-investor-ii',
+    variantId: 'sgd-open-ended-srs',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'branch:manulink-investor-ii-single-premium-charge'],
+    description: 'Baseline Manulink Investor (II) SRS scenario proving the supported initial single-premium corridor without payout elections.',
+    integrityChecks: [
+      {
+        description: 'records a positive upfront single-premium charge at honest inception',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  },
+  {
+    productId: 'manulife-manulink-investor-ii',
+    variantId: 'sgd-open-ended-cash',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: ['event-heavy', 'branch:manulink-investor-ii-top-up-premium-charge'],
+    description: 'Manulink Investor (II) cash event-heavy scenario proving charged top-up routing.',
+    integrityChecks: [
+      {
+        description: 'records positive annual contribution from the seeded top-up event',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > 0),
+      },
+      {
+        description: 'top-up event increases cumulative fees beyond the initial single-premium-only baseline',
+        test: (fixture, artifact) => {
+          const withoutEventCharges = ilpPolicySchema.parse({
+            ...fixture.policy,
+            eventChargeRules: [],
+          })
+          const withEventChargeFees = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutEventChargeFees = analyzeIlpPolicy(withoutEventCharges).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withEventChargeFees > withoutEventChargeFees
+        },
+      },
+    ],
+  },
+  {
+    productId: 'manulife-manulink-investor-ii',
+    variantId: 'sgd-open-ended-srs',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:manulink-investor-ii-top-up-premium-charge',
+      'branch:manulink-investor-ii-srs-recurring-single-premium-charge',
+      'tokio-recurring-single-premium-routing',
+    ],
+    description: 'Manulink Investor (II) SRS event-heavy scenario proving charged top-up and recurring single-premium routing.',
+    integrityChecks: [
+      {
+        description: 'records positive annual contribution from the seeded SRS recurring-single-premium events',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > 0),
+      },
+      {
+        description: 'recurring single-premium events increase cumulative fees beyond the top-up-only baseline',
+        test: (fixture, artifact) => {
+          const withoutRecurring = ilpPolicySchema.parse({
+            ...fixture.policy,
+            policyEvents: fixture.policy.policyEvents?.filter((event) => event.type !== 'recurring-single-premium') ?? [],
+          })
+          const withRecurringFees = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutRecurringFees = analyzeIlpPolicy(withoutRecurring).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withRecurringFees > withoutRecurringFees
+        },
+      },
+    ],
+  },
+  {
+    productId: 'manulife-manulink-investor-ii',
+    variantId: 'sgd-open-ended-cash',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Manulink Investor (II) cash alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'prudential-prulink-investgrowth',
     variantId: 'sgd-open-ended-cash',
     scenarioId: 'baseline',
@@ -4311,6 +4546,17 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'prudential-prulink-investgrowth-sp' && definition.scenarioId === 'ocf-stress') {
     return pruInvestGrowthSpStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'manulife-manulink-investor-ii' && definition.scenarioId === 'baseline') {
+    return manulinkInvestorIiBaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended-cash' | 'sgd-open-ended-srs', id)
+  }
+  if (definition.productId === 'manulife-manulink-investor-ii' && definition.scenarioId === 'event-heavy') {
+    return definition.variantId === 'sgd-open-ended-srs'
+      ? manulinkInvestorIiSrsEventHeavyPolicy(snapshot, id)
+      : manulinkInvestorIiCashEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'manulife-manulink-investor-ii' && definition.scenarioId === 'ocf-stress') {
+    return manulinkInvestorIiStressPolicy(snapshot, id)
   }
   if (definition.productId === 'prudential-prulink-investgrowth' && definition.scenarioId === 'baseline') {
     return pruInvestGrowthRegularBaselinePolicy(snapshot, definition.variantId, id)

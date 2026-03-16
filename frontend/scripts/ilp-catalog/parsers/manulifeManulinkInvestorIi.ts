@@ -150,14 +150,13 @@ function buildVariant(document: ExtractedPdfDocument, fundingMode: FundingMode):
     eecTable: [],
     warnings: [
       isSrs
-        ? 'Manulink Investor (II) (SRS) is cataloged as a partial modeled subset in V1. The parser captures the published 3% single-premium, top-up, and SRS recurring-single-premium charge path plus reinvest-default distribution support through the open-ended no-MIP basis.'
-        : 'Manulink Investor (II) (Cash) is cataloged as a partial modeled subset in V1. The parser captures the published 3% single-premium and top-up charge path plus reinvest-default distribution support through the open-ended no-MIP basis.',
+        ? 'Manulink Investor (II) (SRS) is cataloged as a supported V1 product. The parser captures the published 3% single-premium, top-up, and SRS recurring-single-premium charge path plus reinvest-default distribution support through the open-ended no-MIP basis.'
+        : 'Manulink Investor (II) (Cash) is cataloged as a supported V1 product. The parser captures the published 3% single-premium and top-up charge path plus reinvest-default distribution support through the open-ended no-MIP basis.',
       'CPF funding availability and CPF dividend-crediting behavior remain metadata-only because the product summary does not publish an explicit CPF premium-charge rate in the modeled corridor.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
       'Death and terminal-illness benefit formulas remain informational only.',
-      'Single-premium principal tracking remains informational only in V1.',
       'Partial-withdrawal and full-surrender administration remain informational only.',
       'Fund-level management fees remain informational only because they vary by chosen ILP sub-fund and are published in the fund summaries.',
       'Fund-switching remains informational only.',
@@ -177,9 +176,9 @@ export function parseManulifeManulinkInvestorIi(context: ParseContext): IlpCatal
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:manulink-investor-ii-single-premium-charge',
       'branch:manulink-investor-ii-top-up-premium-charge',
@@ -190,7 +189,6 @@ export function parseManulifeManulinkInvestorIi(context: ParseContext): IlpCatal
     metadataOnlyBehaviors: [
       'manulink-investor-ii-death-benefit',
       'manulink-investor-ii-terminal-illness-benefit',
-      'manulink-investor-ii-single-premium-principal-tracking',
       'manulink-investor-ii-cpf-funding-route',
       'manulink-investor-ii-cpf-dividend-crediting',
       'manulink-investor-ii-partial-withdrawal',
@@ -201,7 +199,7 @@ export function parseManulifeManulinkInvestorIi(context: ParseContext): IlpCatal
       'manulink-investor-ii-lapse-and-termination',
     ],
     warnings: [
-      'Manulink Investor (II) is cataloged as a partial modeled subset in V1. The parser captures separate cash and SRS corridors for the published 3% single-premium and top-up charges, the SRS recurring-single-premium charge path, and reinvest-default distribution support through the open-ended no-MIP basis, while protection formulas, principal-tracking, CPF funding, and fund-level charges remain outside the current engine.',
+      'Manulink Investor (II) is cataloged as a supported V1 product. The parser captures separate cash and SRS corridors for the published 3% single-premium and top-up charges, the SRS recurring-single-premium charge path, and reinvest-default distribution support through the open-ended no-MIP basis, while protection formulas, CPF funding, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [
