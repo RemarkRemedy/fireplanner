@@ -3,12 +3,12 @@ import { trackEvent } from '@/lib/analytics'
 import {
   EMAIL_RE,
   EMAIL_MAX_LENGTH,
-  EMAIL_WORKER_URL,
   SIGNUP_FLAG,
   EMAIL_SUBMITTED_FLAG,
   type EmailSource,
   type FeatureInterest,
 } from '@/lib/validation/emailConstants'
+import { EMAIL_WORKER_URL } from '@/lib/emailWorkerUrl'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
 type Step = 'email' | 'feature' | 'done'

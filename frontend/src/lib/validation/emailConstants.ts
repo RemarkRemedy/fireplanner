@@ -1,8 +1,3 @@
-// Email worker base URL for double opt-in subscribe endpoint.
-// Set VITE_EMAIL_WORKER_URL in .env for local dev (e.g. http://localhost:8787).
-// Production: https://mail.sgfireplanner.com once DNS is configured (SGF-11).
-export const EMAIL_WORKER_URL = import.meta.env.VITE_EMAIL_WORKER_URL as string | undefined ?? ''
-
 // exit_intent triggers the expense tracker modal when the cursor leaves the viewport (useExitIntent hook)
 export const VALID_SOURCES = ['post_simulation', 'landing_page', 'exit_intent', 'contextual_nudge', 'expense_tracker'] as const
 export const VALID_FEATURES = ['cpf_optimization', 'couples_planning', 'insurance_gap', 'general', 'expense_tracker'] as const

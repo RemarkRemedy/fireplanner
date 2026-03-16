@@ -9,10 +9,10 @@ import { trackEvent } from '@/lib/analytics'
 import {
   EMAIL_RE,
   EMAIL_MAX_LENGTH,
-  EMAIL_WORKER_URL,
   SIGNUP_FLAG,
   EMAIL_SUBMITTED_FLAG,
 } from '@/lib/validation/emailConstants'
+import { EMAIL_WORKER_URL } from '@/lib/emailWorkerUrl'
 import { isCompanionMode } from '@/lib/companion/isCompanionMode'
 
 interface ContextualEmailNudgeProps {
