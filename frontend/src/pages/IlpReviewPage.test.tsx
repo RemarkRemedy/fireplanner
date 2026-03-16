@@ -1146,6 +1146,30 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds Dash PET Plus as a partial rider product with reinvest-default distribution support', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Dash PET Plus')
+
+    expect(within(dialog).getByText('Dash PET Plus')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(rider\)use partial template$/i }))
+
+    expect(screen.getAllByText('Dash PET Plus (SGD / Open-ended (Rider))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('zero-charge rider subscription')
+    expect(seededAlert?.textContent).toContain('open-ended rider product uses the no-MIP basis')
+    expect(seededAlert?.textContent).toContain('reinvest-default distribution support')
+    expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Management Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
