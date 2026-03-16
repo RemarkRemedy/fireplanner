@@ -311,6 +311,11 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
                 />
               )}
 
+              {/* Property flow: mortgage end year calculator */}
+              {flowId === 'property' && currentScreen.id === 'property-mortgage' && (
+                <MortgageEndYearHelper values={values} onChange={handleChange} />
+              )}
+
               {/* Expense flow screen 2: retirement template selector */}
               {flowId === 'expenses' && currentScreen.id === 'expenses-retirement-adjustment' && (
                 <RetirementTemplateSelector
@@ -331,5 +336,45 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
         </div>
       </div>
     </div>
+  )
+}
+
+/** Estimate mortgage payoff year from outstanding balance, monthly payment, and interest rate */
+function estimateMortgageEndYear(outstanding: number, monthlyPayment: number, annualRatePercent: number): number | null {
+  if (outstanding <= 0 || monthlyPayment <= 0) return null
+  const monthlyRate = (annualRatePercent / 100) / 12
+  if (monthlyRate <= 0) {
+    // Zero interest: simple division
+    const months = Math.ceil(outstanding / monthlyPayment)
+    return new Date().getFullYear() + Math.ceil(months / 12)
+  }
+  // Check if payment covers interest
+  if (monthlyPayment <= outstanding * monthlyRate) return null
+  const months = -Math.log(1 - (monthlyRate * outstanding / monthlyPayment)) / Math.log(1 + monthlyRate)
+  if (!isFinite(months) || months < 0) return null
+  return new Date().getFullYear() + Math.ceil(months / 12)
+}
+
+function MortgageEndYearHelper({ values, onChange }: { values: Record<string, unknown>; onChange: (field: string, value: unknown) => void }) {
+  const outstanding = typeof values.mortgageOutstanding === 'number' ? values.mortgageOutstanding : 0
+  const monthly = typeof values.monthlyMortgagePayment === 'number' ? values.monthlyMortgagePayment : 0
+  const rate = typeof values.mortgageRatePercent === 'number' ? values.mortgageRatePercent : 0
+  const hasMortgage = values.hasMortgage === true
+
+  if (!hasMortgage || outstanding <= 0 || monthly <= 0) return null
+
+  const estimated = estimateMortgageEndYear(outstanding, monthly, rate)
+
+  return (
+    <button
+      type="button"
+      onClick={() => { if (estimated) onChange('mortgageEndYear', estimated) }}
+      disabled={!estimated}
+      className="w-full text-sm text-blue-600 hover:text-blue-800 disabled:text-muted-foreground disabled:cursor-not-allowed py-1.5 -mt-2 text-left"
+    >
+      {estimated
+        ? `Calculate for me (est. ${estimated})`
+        : 'Monthly payment too low to cover interest'}
+    </button>
   )
 }
