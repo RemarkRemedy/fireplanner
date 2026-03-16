@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseEtiqaInvestWealthPurpose', () => {
-  it('builds a valid partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseEtiqaInvestWealthPurpose({
       document,
@@ -22,10 +22,11 @@ describe('parseEtiqaInvestWealthPurpose', () => {
 
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('etiqa-invest-wealth-purpose')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('branch:etiqa-wealth-purpose-cumulative-paid-policy-charge')
-    expect(product.metadataOnlyBehaviors).toContain('etiqa-wealth-purpose-insurance-charge')
+    expect(product.modeledEconomics).toContain('branch:etiqa-wealth-purpose-insurance-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('etiqa-wealth-purpose-insurance-charge')
     const term20 = product.variants.find((variant) => variant.id === 'sgd-mip-20')
     expect(term20?.feeRules).toEqual(
       expect.arrayContaining([
@@ -53,6 +54,18 @@ describe('parseEtiqaInvestWealthPurpose', () => {
               { minAnnualisedPremiumsPaid: 19, maxAnnualisedPremiumsPaid: 19, rate: 0.0064 },
               { minAnnualisedPremiumsPaid: 20, maxAnnualisedPremiumsPaid: null, rate: 0.006 },
             ],
+          },
+        }),
+        expect.objectContaining({
+          id: 'insurance-charge',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['regular'],
+          assuranceValueAppliesTo: ['regular'],
+          requiresManualInput: true,
+          assuranceConfig: {
+            formula: 'income-invest-flex-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
           },
         }),
       ]),

@@ -2172,7 +2172,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
-  it('maps Invest Wealth Purpose into a partial seed with cumulative-paid policy charges and top-up routing', () => {
+  it('maps Invest Wealth Purpose into a supported seed with cumulative-paid policy charges and top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-wealth-purpose')
     expect(product).toBeDefined()
@@ -2182,14 +2182,24 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('Invest Wealth Purpose (SGD / MIP 20)')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-wealth-purpose-cumulative-paid-policy-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-wealth-purpose-insurance-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('etiqa-wealth-purpose-insurance-charge')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: 'policy-charge-during-premium-term',
           basis: 'cumulative-paid-regular-premium',
           rate: 0.0195,
+        }),
+        expect.objectContaining({
+          id: 'insurance-charge',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['regular'],
+          assuranceValueAppliesTo: ['regular'],
+          requiresManualInput: true,
         }),
       ]),
     )
