@@ -268,7 +268,7 @@ function ExpenseGapBanner({ values }: { values: Record<string, unknown> }) {
 
   return (
     <div className="rounded-md border border-amber-200 bg-amber-50 p-2.5 text-sm text-amber-800">
-      Your breakdown totals {formatCurrency(breakdownTotal)}/mo. Your plan currently uses {formatCurrency(Math.round(storedMonthly))}/mo.
+      Your breakdown totals {formatCurrency(breakdownTotal)}/mo. Your plan currently uses {formatCurrency(Math.round(storedMonthly))}/mo. Saving will update your plan to use the new total.
     </div>
   )
 }

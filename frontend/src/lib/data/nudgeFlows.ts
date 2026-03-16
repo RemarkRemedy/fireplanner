@@ -240,14 +240,13 @@ const EXPENSES_FLOW: NudgeFlowDefinition = {
         { name: 'entertainmentExpenses', label: 'Entertainment & leisure', type: 'currency' },
         { name: 'travelExpenses', label: 'Travel', type: 'currency' },
         { name: 'otherExpenses', label: 'Other expenses', type: 'currency' },
+        { name: 'hasLargeGoals', label: 'Do you have large one-off future expenses (wedding, education, renovation)?', type: 'toggle' },
       ],
     },
     {
       id: 'expenses-retirement-adjustment',
       title: 'Retirement Spending',
-      fields: [
-        { name: 'hasLargeGoals', label: 'Do you have large one-off future expenses (wedding, education, renovation)?', type: 'toggle' },
-      ],
+      fields: [],
       skipWhen: { field: '_hasAnyExpenseCategory', equals: false },
     },
     {
