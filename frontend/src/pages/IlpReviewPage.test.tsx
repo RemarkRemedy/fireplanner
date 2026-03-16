@@ -1331,6 +1331,30 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Initial Account Redemption Fee')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds FWD Invest First Horizon as a partial catalog product with premium-pause and reduction warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'FWD Invest First Horizon')
+
+    expect(within(dialog).getByText('FWD Invest First Horizon')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 20use partial template$/i }))
+
+    expect(screen.getAllByText('FWD Invest First Horizon (SGD / MIP 20)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('published fixed-premium-base initial account charge')
+    expect(seededAlert?.textContent).toContain('Premium Pause Waiver')
+    expect(seededAlert?.textContent).toContain('premium-reduction charge schedule')
+    expect(screen.getByDisplayValue('Initial Account Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Reduction Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Initial Account Redemption Fee')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
