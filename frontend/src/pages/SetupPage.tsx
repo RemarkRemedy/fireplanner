@@ -20,6 +20,7 @@ import { CpfSetupInput } from '@/components/setup/CpfSetupInput'
 import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
 import { estimateCpfBalances } from '@/lib/calculations/cpf'
 import { SG_EXPENSE_BENCHMARKS } from '@/lib/data/expenseBenchmarks'
+import { NumberInput } from '@/components/shared/NumberInput'
 
 // ---------------------------------------------------------------------------
 // Screen definitions
@@ -778,20 +779,42 @@ export function SetupPage() {
       )
     }
     if (currentScreen.id === 'savings') {
+      const breakdownRows = [
+        { key: 'savingsBank', label: 'Bank savings and current accounts' },
+        { key: 'savingsStocks', label: 'Stocks, ETFs, and brokerage' },
+        { key: 'savingsFixed', label: 'Fixed deposits and bonds' },
+        { key: 'savingsRobo', label: 'Robo-advisors (Endowus, Syfe, etc.)' },
+      ] as const
+      const updateTotal = (changedKey: string, newVal: number) => {
+        handleChange(changedKey, newVal)
+        const sum = breakdownRows.reduce((acc, r) => {
+          const v = r.key === changedKey ? newVal : (state.values[r.key] as number) ?? 0
+          return acc + v
+        }, 0)
+        handleChange('liquidNetWorth', sum)
+      }
       return (
         <details className="mt-1 text-sm">
           <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
             Help me add it up
           </summary>
-          <div className="mt-2 space-y-1 text-muted-foreground pl-1">
-            <p>Add together your:</p>
-            <ul className="list-disc pl-4 space-y-0.5">
-              <li>Bank savings and current accounts</li>
-              <li>Stocks, ETFs, and brokerage balances</li>
-              <li>Fixed deposits and bonds</li>
-              <li>Robo-advisor balances (Endowus, Syfe, etc.)</li>
-            </ul>
-            <p className="mt-2 text-xs italic">Don&apos;t include CPF or property value.</p>
+          <div className="mt-3 space-y-3">
+            {breakdownRows.map((row) => (
+              <div key={row.key}>
+                <label className="block text-xs text-muted-foreground mb-1">{row.label}</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                  <NumberInput
+                    value={(state.values[row.key] as number) ?? 0}
+                    onChange={(v) => updateTotal(row.key, v)}
+                    formatWithCommas
+                    min={0}
+                    className="pl-7"
+                  />
+                </div>
+              </div>
+            ))}
+            <p className="text-xs text-muted-foreground italic">Don&apos;t include CPF or property value.</p>
           </div>
         </details>
       )
