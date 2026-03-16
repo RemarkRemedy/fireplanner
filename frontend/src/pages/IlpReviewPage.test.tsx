@@ -1195,6 +1195,82 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds AIA Wealth Venture as a partial catalog product with supplementary-charge and distribution warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Wealth Venture')
+
+    expect(within(dialog).getByText('AIA Wealth Venture')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 8use partial template$/i }))
+
+    expect(screen.getAllByText('AIA Wealth Venture (SGD / MIP 8)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('regular-pay 8-year corridor')
+    expect(seededAlert?.textContent).toContain('3.60% p.a. regular-premium supplementary charge')
+    expect(seededAlert?.textContent).toContain('reinvest-default distribution support')
+    expect(seededAlert?.textContent).toContain('published S$50 dividend cash-out threshold')
+    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Supplementary Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds AIA Pro Achiever 3.0 as a partial catalog product with IIP distribution warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Pro Achiever 3.0')
+
+    expect(within(dialog).getByText('AIA Pro Achiever 3.0')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use partial template$/i }))
+
+    expect(screen.getAllByText('AIA Pro Achiever 3.0 (SGD / MIP 10)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('10-year IIP corridor')
+    expect(seededAlert?.textContent).toContain('5% top-up premium charge')
+    expect(seededAlert?.textContent).toContain('reinvest-default distribution-mode assumption surface')
+    expect(seededAlert?.textContent).toContain('Benefit Charge')
+    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds AIA Pro Lifetime Protector (II) as a partial catalog product with policy-fee and bonus warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Pro Lifetime Protector (II)')
+
+    expect(within(dialog).getByText('AIA Pro Lifetime Protector (II)')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(regular pay\)use partial template$/i }))
+
+    expect(screen.getAllByText('AIA Pro Lifetime Protector (II) (SGD / Open-ended (Regular Pay))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('2% Special Bonus from premium year 10 onward')
+    expect(seededAlert?.textContent).toContain('fixed S$5 monthly policy fee')
+    expect(seededAlert?.textContent).toContain('nil policy-level partial-withdrawal charge path')
+    expect(seededAlert?.textContent).toContain('fixed S$50 monthly premium-holiday charge')
+    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Policy Fee')).toBeInTheDocument()
+    expect(screen.getByDisplayValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Special Bonus')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds GREAT Invest Advantage 2 (SP) as a supported catalog product with open-ended single-premium routing', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
