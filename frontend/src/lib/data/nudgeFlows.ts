@@ -233,7 +233,7 @@ const EXPENSES_FLOW: NudgeFlowDefinition = {
       id: 'expenses-breakdown',
       title: 'Monthly Expense Categories',
       fields: [
-        { name: 'housingExpenses', label: 'Housing (rent/mortgage)', type: 'currency' },
+        { name: 'housingExpenses', label: 'Rent', type: 'currency', showWhen: { field: '_ownsProperty', equals: false } },
         { name: 'foodExpenses', label: 'Food & dining', type: 'currency' },
         { name: 'transportExpenses', label: 'Transport', type: 'currency' },
         { name: 'utilitiesExpenses', label: 'Utilities & bills', type: 'currency' },
@@ -244,18 +244,11 @@ const EXPENSES_FLOW: NudgeFlowDefinition = {
     },
     {
       id: 'expenses-retirement-adjustment',
-      title: 'Retirement Spending Adjustment',
+      title: 'Retirement Spending',
       fields: [
-        {
-          name: 'retirementSpendingRatio',
-          label: 'Expected spending in retirement vs. now (%)',
-          type: 'percent',
-          required: true,
-          tooltip: '100% = same spending as now. Most retirees spend 70-80% (no commute, paid-off mortgage). Some spend more early in retirement (travel).',
-          helperText: 'Enter 100 to keep current spending. Enter 80 if you expect to spend 20% less.',
-        },
         { name: 'hasLargeGoals', label: 'Do you have large one-off future expenses (wedding, education, renovation)?', type: 'toggle' },
       ],
+      skipWhen: { field: '_hasAnyExpenseCategory', equals: false },
     },
     {
       id: 'expenses-goals',
