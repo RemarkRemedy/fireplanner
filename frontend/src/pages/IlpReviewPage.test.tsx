@@ -1194,6 +1194,28 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds Manulink Investor (II) cash as a partial catalog product with reinvest-default distribution support', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Manulink Investor (II)')
+
+    expect(within(dialog).getByText('Manulink Investor (II)')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash\)use partial template$/i }))
+
+    expect(screen.getAllByText('Manulink Investor (II) (SGD / Open-ended (Cash))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('published 3% single-premium and top-up charge path')
+    expect(seededAlert?.textContent).toContain('reinvest-default distribution support')
+    expect(seededAlert?.textContent).toContain('open-ended single-premium product uses the no-MIP basis')
+    expect(screen.getByDisplayValue('Single Premium Charge (Cash)')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Top-up Premium Charge (Cash)')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
