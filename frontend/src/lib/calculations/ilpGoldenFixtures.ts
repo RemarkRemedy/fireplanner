@@ -12,12 +12,19 @@ export type GoldenCoverageTag =
   | 'baseline'
   | 'event-heavy'
   | 'ocf-stress'
+  | 'kernel:scheduled-payout-manual-assumption'
   | 'branch:aia-invest-easy-cash-srs-three-percent-single-premium-charge'
   | 'branch:aia-invest-easy-cash-srs-three-percent-top-up-charge'
   | 'branch:aia-invest-easy-cash-srs-three-percent-recurring-single-premium-charge'
   | 'branch:aia-invest-easy-cpf-zero-single-premium-charge'
   | 'branch:aia-invest-easy-cpf-zero-top-up-charge'
   | 'branch:aia-invest-easy-cpf-zero-recurring-single-premium-charge'
+  | 'branch:aia-platinum-retirement-elite-regular-premium-charge'
+  | 'branch:aia-platinum-retirement-elite-regular-supplementary-charge'
+  | 'branch:aia-platinum-retirement-elite-top-up-premium-charge'
+  | 'branch:aia-platinum-retirement-elite-premium-holiday-charge'
+  | 'branch:aia-platinum-retirement-elite-partial-withdrawal-charge'
+  | 'branch:aia-platinum-retirement-elite-full-surrender-charge'
   | 'branch:hsbc-holiday-repayment'
   | 'branch:hsbc-holiday-no-repayment'
   | 'branch:hsbc-bonus-suspension'
@@ -2172,6 +2179,99 @@ function aiaInvestEasyCpfStressPolicy(
   })
 }
 
+function aiaPlatinumRetirementEliteBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'aia-platinum-retirement-elite', 'sgd-mip-5', id, {
+    monthlyContribution: 900,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden AIA Platinum Retirement Elite (SGD / MIP 5)',
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 24_000,
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function aiaPlatinumRetirementEliteBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaPlatinumRetirementEliteBasePolicy(snapshot, id, AIA_BALANCED_FUNDS, {
+    name: 'Golden AIA Platinum Retirement Elite (SGD / MIP 5 Baseline)',
+    scheduledPayoutAssumption: {
+      mode: 'scheduled-redemption',
+      source: 'manual-assumption',
+      accountId: 'policy',
+      startPolicyYear: 4,
+      durationYears: 10,
+      annualPayoutAmount: 7_200,
+    },
+  })
+}
+
+function aiaPlatinumRetirementEliteEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaPlatinumRetirementEliteBasePolicy(snapshot, id, AIA_BALANCED_FUNDS, {
+    name: 'Golden AIA Platinum Retirement Elite (SGD / MIP 5 Event Heavy)',
+    scheduledPayoutAssumption: {
+      mode: 'scheduled-redemption',
+      source: 'manual-assumption',
+      accountId: 'policy',
+      startPolicyYear: 4,
+      durationYears: 10,
+      annualPayoutAmount: 8_400,
+    },
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 14,
+        durationMonths: 4,
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 20,
+        durationMonths: 1,
+        amount: 9_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 28,
+        durationMonths: 1,
+        amount: 4_500,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function aiaPlatinumRetirementEliteStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaPlatinumRetirementEliteBasePolicy(snapshot, id, AIA_STRESS_FUNDS, {
+    name: 'Golden AIA Platinum Retirement Elite (SGD / MIP 5 OCF Stress)',
+  })
+}
+
 function etiqaTiqInvestBasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
@@ -3190,6 +3290,57 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: ['ocf-stress'],
     description: 'AIA Invest Easy (CPF) alternate-fund stress scenario through the open-ended no-MIP basis.',
+  },
+  {
+    productId: 'aia-platinum-retirement-elite',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:scheduled-payout-manual-assumption',
+      'branch:aia-platinum-retirement-elite-regular-premium-charge',
+      'branch:aia-platinum-retirement-elite-regular-supplementary-charge',
+      'branch:aia-platinum-retirement-elite-full-surrender-charge',
+    ],
+    description: 'AIA Platinum Retirement Elite baseline scenario covering the supported regular-pay corridor and manual scheduled-redemption assumption.',
+    integrityChecks: [
+      {
+        description: 'manual scheduled-redemption assumption produces annual withdrawals in projection output',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'aia-platinum-retirement-elite',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:aia-platinum-retirement-elite-top-up-premium-charge',
+      'branch:aia-platinum-retirement-elite-premium-holiday-charge',
+      'branch:aia-platinum-retirement-elite-partial-withdrawal-charge',
+    ],
+    description: 'AIA Platinum Retirement Elite event-heavy scenario covering premium holiday, top-up, partial withdrawal, and manual scheduled-redemption.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy produces annual withdrawals from the seeded payout and withdrawal events',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+      {
+        description: 'event-heavy policy retains top-up contribution in excess of the scheduled annual premium',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+    ],
+  },
+  {
+    productId: 'aia-platinum-retirement-elite',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'AIA Platinum Retirement Elite alternate-fund high-OCF stress scenario.',
   },
   {
     productId: 'hsbc-life-wealth-accelerate',
@@ -5347,6 +5498,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'aia-invest-easy-cpf' && definition.scenarioId === 'ocf-stress') {
     return aiaInvestEasyCpfStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-platinum-retirement-elite' && definition.scenarioId === 'baseline') {
+    return aiaPlatinumRetirementEliteBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-platinum-retirement-elite' && definition.scenarioId === 'event-heavy') {
+    return aiaPlatinumRetirementEliteEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-platinum-retirement-elite' && definition.scenarioId === 'ocf-stress') {
+    return aiaPlatinumRetirementEliteStressPolicy(snapshot, id)
   }
   if (definition.productId === 'hsbc-life-wealth-invest-cpf' && definition.scenarioId === 'baseline') {
     return hsbcWealthInvestCpfBaselinePolicy(snapshot, id)

@@ -227,7 +227,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...FULL_SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      'AIA Platinum Retirement Elite is cataloged as a partial modeled subset in V1. The current parser models only the regular-pay 5-year corridor: premium-year regular premium charges, the 2.50% p.a. regular-premium supplementary charge, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and scheduled payout capability through the payout-state kernel.',
+      'AIA Platinum Retirement Elite is cataloged as a supported V1 product. The current parser captures the regular-pay 5-year corridor: premium-year regular premium charges, the 2.50% p.a. regular-premium supplementary charge, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and scheduled payout capability once a manual payout assumption is supplied.',
       'Target Monthly Retirement Income amount, payout-age selection, payout-period selection, and stepped-up-income election remain manual or informational inputs in V1.',
       'The single-pay corridor, including 5% initial premium charge, 0.50% p.a. single-premium supplementary charge, and single-premium withdrawal / surrender charge schedules, remains outside the current executable slice.',
     ],
@@ -254,9 +254,9 @@ export function parseAiaPlatinumRetirementElite({ document, sourceChecksumSha256
     sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:aia-platinum-retirement-elite-regular-premium-charge',
       'branch:aia-platinum-retirement-elite-regular-supplementary-charge',
@@ -278,7 +278,7 @@ export function parseAiaPlatinumRetirementElite({ document, sourceChecksumSha256
       'aia-platinum-retirement-elite-reinstatement-and-payout-continuity',
     ],
     warnings: [
-      'AIA Platinum Retirement Elite is cataloged as a partial modeled subset in V1. The current parser models only the regular-pay 5-year corridor: premium-year regular premium charges, the 2.50% p.a. regular-premium supplementary charge, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and scheduled payout capability through the payout-state kernel, while the single-pay corridor, payout-election logic, bonuses, protection benefits, and fund-level charges remain outside the current engine.',
+      'AIA Platinum Retirement Elite is cataloged as a supported V1 product. The parser captures the regular-pay 5-year corridor, the regular-premium supplementary charge, the withdrawal / surrender schedules, and scheduled payout capability once a manual payout assumption is supplied, while the single-pay corridor, payout-election inputs, Power-up Bonus adjustment, protection benefits, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(document)],

@@ -90,7 +90,7 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
 }
 
 describe('parseAiaPlatinumRetirementElite', () => {
-  it('builds a valid regular-pay partial modeled-subset product from extracted summary text', async () => {
+  it('builds a valid supported regular-pay product from extracted summary text', async () => {
     const document = makeSyntheticDocument()
     const product = parseAiaPlatinumRetirementElite({
       document,
@@ -100,7 +100,8 @@ describe('parseAiaPlatinumRetirementElite', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('aia-platinum-retirement-elite')
     expect(product.productName).toBe('AIA Platinum Retirement Elite')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:aia-platinum-retirement-elite-regular-premium-charge',
       'branch:aia-platinum-retirement-elite-regular-supplementary-charge',
@@ -169,6 +170,7 @@ describe('parseAiaPlatinumRetirementElite', () => {
 
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.sourceChecksumSha256).toBe(checksum)
+    expect(product.supportStatus).toBe('supported')
     expect(product.variants[0]?.scheduledPayoutSupport?.mode).toBe('manual-assumption')
   }, 30_000)
 })

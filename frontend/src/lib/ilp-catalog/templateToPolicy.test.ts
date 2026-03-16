@@ -5638,7 +5638,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Power-up Bonus'))).toBe(true)
   })
 
-  it('maps AIA Platinum Retirement Elite into a regular-pay partial seed with payout support', () => {
+  it('maps AIA Platinum Retirement Elite into a supported regular-pay seed with payout support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'aia-platinum-retirement-elite')
     expect(product).toBeDefined()
@@ -5647,7 +5647,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-retirement-elite-single-premium-corridor')
     expect(seed.monthlyContribution).toBe(350)
