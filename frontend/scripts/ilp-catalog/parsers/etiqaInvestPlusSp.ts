@@ -109,6 +109,22 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
     {
+      id: 'top-up-premium-charge',
+      label: 'Top-up Premium Charge',
+      trigger: 'top-up',
+      basis: 'event-amount',
+      appliesTo: ['policy'],
+      rate: 0.04,
+      amount: 0,
+      activeWindow: 'policy-term',
+      allocation: 'equal-split',
+      notes: [
+        'Models the published 4.00% premium charge on each accepted single-premium top-up.',
+        'Top-up-specific policy-charge and surrender-charge clocks remain informational only in V1.',
+      ],
+      sourceRefs: [page9],
+    },
+    {
       id: 'partial-withdrawal-charge',
       label: 'Partial Withdrawal Charge',
       trigger: 'partial-withdrawal',
@@ -165,8 +181,8 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...FULL_SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      'Invest plus SP is cataloged as a partial modeled subset in V1. The parser captures the initial single-premium corridor only: zero initial subscription charge, the initial-account policy-charge schedule, the initial-account surrender / partial-withdrawal charge tables, and reinvest-default distribution support.',
-      'Power-up bonus, representative management charge, death-benefit principal floor, and top-up-specific charging remain informational only in V1.',
+      'Invest plus SP is cataloged as a supported V1 product for the initial single-premium corridor only. The parser captures zero initial subscription charge, the initial-account policy-charge schedule, the 4.00% top-up premium charge, the initial-account surrender / partial-withdrawal charge tables, and reinvest-default distribution support.',
+      'Power-up bonus, representative management charge, death-benefit principal floor, and top-up-specific post-charge accounting remain informational only in V1.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
@@ -190,12 +206,13 @@ export function parseEtiqaInvestPlusSp(context: ParseContext): IlpCatalogProduct
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:etiqa-invest-plus-sp-zero-single-premium-charge',
       'branch:etiqa-invest-plus-sp-policy-charge',
+      'branch:etiqa-invest-plus-sp-top-up-premium-charge',
       'branch:etiqa-invest-plus-sp-initial-partial-withdrawal-charge',
       'branch:etiqa-invest-plus-sp-initial-surrender-charge',
       'kernel:distribution-mode-assumption',
@@ -203,7 +220,6 @@ export function parseEtiqaInvestPlusSp(context: ParseContext): IlpCatalogProduct
     metadataOnlyBehaviors: [
       'etiqa-invest-plus-sp-power-up-bonus',
       'etiqa-invest-plus-sp-death-benefit-floor',
-      'etiqa-invest-plus-sp-top-up-premium-charge',
       'etiqa-invest-plus-sp-top-up-vintage-accounting',
       'etiqa-invest-plus-sp-representative-management-charge',
       'etiqa-invest-plus-sp-fund-management-fee',
@@ -213,7 +229,7 @@ export function parseEtiqaInvestPlusSp(context: ParseContext): IlpCatalogProduct
       'etiqa-invest-plus-sp-free-look',
     ],
     warnings: [
-      'Invest plus SP is cataloged as a partial modeled subset in V1. The parser captures the initial single-premium corridor only: zero initial subscription charge, the initial-account policy-charge schedule, the initial-account surrender / partial-withdrawal charge tables, and reinvest-default distribution support, while power-up bonus, top-up-vintage charging, representative-management charges, and protection formulas remain outside the current engine.',
+      'Invest plus SP is cataloged as a supported V1 product for the initial single-premium corridor only. The parser captures zero initial subscription charge, the initial-account policy-charge schedule, the 4.00% top-up premium charge, the initial-account surrender / partial-withdrawal charge tables, and reinvest-default distribution support, while power-up bonus, representative-management charges, protection formulas, and top-up-vintage post-charge accounting remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

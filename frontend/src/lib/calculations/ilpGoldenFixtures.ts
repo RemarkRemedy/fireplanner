@@ -124,6 +124,11 @@ export type GoldenCoverageTag =
   | 'branch:singlife-savvy-invest-ii-partial-withdrawal-charge'
   | 'branch:singlife-savvy-invest-ii-surrender-charge'
   | 'branch:singlife-savvy-invest-ii-premium-shortfall-charge'
+  | 'branch:etiqa-invest-plus-sp-zero-single-premium-charge'
+  | 'branch:etiqa-invest-plus-sp-policy-charge'
+  | 'branch:etiqa-invest-plus-sp-top-up-premium-charge'
+  | 'branch:etiqa-invest-plus-sp-initial-partial-withdrawal-charge'
+  | 'branch:etiqa-invest-plus-sp-initial-surrender-charge'
   | 'branch:pru-holiday-refund'
   | 'branch:pru-holiday-fallback'
   | 'branch:pru-top-up-charge'
@@ -3899,6 +3904,81 @@ function singlifeSavvyInvestIiStressPolicy(
 ): IlpPolicyInput {
   return singlifeSavvyInvestIiBasePolicy(snapshot, id, MANULIFE_STRESS_FUNDS, {
     name: 'Golden Singlife Savvy Invest II (SGD / MIP 10 Fixed OCF Stress)',
+  })
+}
+
+function etiqaInvestPlusSpBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'etiqa-invest-plus-sp', 'sgd-open-ended-single-premium-initial-only', id, {
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 3,
+    monthsAlreadyPaid: 0,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden Etiqa Invest plus SP (SGD / Open-ended Initial Only)',
+      distributionAssumption: {
+        mode: 'cash-payout',
+        source: 'manual-assumption',
+        annualYieldRate: 0.03,
+      },
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function etiqaInvestPlusSpBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return etiqaInvestPlusSpBasePolicy(snapshot, id, ETIQA_BALANCED_FUNDS, {
+    name: 'Golden Etiqa Invest plus SP (SGD / Open-ended Initial Only Baseline)',
+  })
+}
+
+function etiqaInvestPlusSpEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return etiqaInvestPlusSpBasePolicy(snapshot, id, ETIQA_BALANCED_FUNDS, {
+    name: 'Golden Etiqa Invest plus SP (SGD / Open-ended Initial Only Event Heavy)',
+    policyEvents: [
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 4,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'policy',
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 8,
+        durationMonths: 1,
+        amount: 10_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function etiqaInvestPlusSpStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return etiqaInvestPlusSpBasePolicy(snapshot, id, ETIQA_STRESS_FUNDS, {
+    name: 'Golden Etiqa Invest plus SP (SGD / Open-ended Initial Only OCF Stress)',
+    currentPolicyYear: 6,
   })
 }
 
@@ -9170,6 +9250,46 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'PRULink InvestGrowth (SP) cash alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'etiqa-invest-plus-sp',
+    variantId: 'sgd-open-ended-single-premium-initial-only',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'branch:etiqa-invest-plus-sp-zero-single-premium-charge',
+      'branch:etiqa-invest-plus-sp-policy-charge',
+      'branch:etiqa-invest-plus-sp-initial-surrender-charge',
+    ],
+    description: 'Etiqa Invest plus SP baseline scenario covering the supported initial single-premium corridor with policy-charge, surrender-charge, and cash-payout distribution assumptions.',
+  },
+  {
+    productId: 'etiqa-invest-plus-sp',
+    variantId: 'sgd-open-ended-single-premium-initial-only',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:etiqa-invest-plus-sp-top-up-premium-charge',
+      'branch:etiqa-invest-plus-sp-initial-partial-withdrawal-charge',
+    ],
+    description: 'Etiqa Invest plus SP event-heavy scenario covering an initial-account withdrawal followed by a charged top-up on the supported corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy records both a later top-up and an executed withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > 0 && row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'etiqa-invest-plus-sp',
+    variantId: 'sgd-open-ended-single-premium-initial-only',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Etiqa Invest plus SP alternate-fund high-OCF stress scenario through the supported initial corridor.',
+  },
+  {
     productId: 'manulife-manulink-investor-ii',
     variantId: 'sgd-open-ended-cash',
     scenarioId: 'baseline',
@@ -12831,6 +12951,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'singlife-savvy-invest-ii' && definition.scenarioId === 'ocf-stress') {
     return singlifeSavvyInvestIiStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'etiqa-invest-plus-sp' && definition.scenarioId === 'baseline') {
+    return etiqaInvestPlusSpBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'etiqa-invest-plus-sp' && definition.scenarioId === 'event-heavy') {
+    return etiqaInvestPlusSpEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'etiqa-invest-plus-sp' && definition.scenarioId === 'ocf-stress') {
+    return etiqaInvestPlusSpStressPolicy(snapshot, id)
   }
   if (definition.productId === 'etiqa-invest-starter' && definition.scenarioId === 'baseline') {
     return etiqaInvestStarterBaselinePolicy(snapshot, id)

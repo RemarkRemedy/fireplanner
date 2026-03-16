@@ -2559,7 +2559,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('supports distribution-paying fund elections'))).toBe(true)
   })
 
-  it('maps Invest plus SP into a partial single-premium seed with reinvest-default distribution support', () => {
+  it('maps Invest plus SP into a supported single-premium seed with reinvest-default distribution support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-plus-sp')
     expect(product).toBeDefined()
@@ -2568,8 +2568,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-invest-plus-sp-policy-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-invest-plus-sp-top-up-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-dividend-threshold-and-withdrawal-consequences')
     expect(seed.mipBasis).toBe('open-ended')
@@ -2595,6 +2596,12 @@ describe('templateVariantToPolicySeed', () => {
       ]),
     )
     expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        basis: 'event-amount',
+        rate: 0.04,
+      }),
       expect.objectContaining({
         id: 'partial-withdrawal-charge',
         trigger: 'partial-withdrawal',

@@ -96,7 +96,7 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
 }
 
 describe('parseEtiqaInvestPlusSp', () => {
-  it('builds a valid initial-account partial modeled-subset product from extracted summary text', async () => {
+  it('builds a valid supported initial-account product from extracted summary text', async () => {
     const document = makeSyntheticDocument()
     const product = parseEtiqaInvestPlusSp({
       document,
@@ -106,10 +106,11 @@ describe('parseEtiqaInvestPlusSp', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('etiqa-invest-plus-sp')
     expect(product.productName).toBe('Invest plus SP')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:etiqa-invest-plus-sp-zero-single-premium-charge',
       'branch:etiqa-invest-plus-sp-policy-charge',
+      'branch:etiqa-invest-plus-sp-top-up-premium-charge',
       'branch:etiqa-invest-plus-sp-initial-partial-withdrawal-charge',
       'branch:etiqa-invest-plus-sp-initial-surrender-charge',
       'kernel:distribution-mode-assumption',
@@ -140,6 +141,11 @@ describe('parseEtiqaInvestPlusSp', () => {
       }),
     ])
     expect(variant.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        rate: 0.04,
+      }),
       expect.objectContaining({
         id: 'partial-withdrawal-charge',
         trigger: 'partial-withdrawal',
