@@ -4485,7 +4485,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Monthly Protection Charge'))).toBe(true)
   })
 
-  it('maps Tokio Marine Wealth Builder@Future into a partial seed with split premium-bonus windows and a power-up milestone', () => {
+  it('maps Tokio Marine Wealth Builder@Future into a supported seed with split premium-bonus windows and a power-up milestone', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-wealth-builder-atfuture')
     expect(product).toBeDefined()
@@ -4494,7 +4494,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-premium-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-power-up-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-loyalty-bonus')
@@ -4587,7 +4588,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
   })
 
-  it('maps Tokio Marine Wealth Builder@Future advanced-death into a partial seed with Tokio MPC inputs', () => {
+  it('maps Tokio Marine Wealth Builder@Future advanced-death into a supported seed with Tokio MPC inputs', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-wealth-builder-atfuture')
     expect(product).toBeDefined()
@@ -4596,7 +4597,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([

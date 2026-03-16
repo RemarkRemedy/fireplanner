@@ -162,6 +162,7 @@ export type GoldenCoverageTag =
   | 'branch:tokio-marine-goelite-recurring-single-and-top-up-charge'
   | 'branch:tokio-marine-goelite-zero-partial-withdrawal-charge'
   | 'branch:tokio-marine-goelite-surrender-charge'
+  | 'branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge'
   | 'branch:fwd-invest-goal-1-zero-single-premium-charge'
   | 'branch:fwd-invest-goal-1-initial-account-charge'
   | 'branch:fwd-invest-goal-1-plan-charge'
@@ -4955,6 +4956,7 @@ function tokioBaselinePolicy(
     | 'tokio-marine-harvest-flexi'
     | 'tokio-marine-harvest-max'
     | 'tokio-marine-harvest-pro'
+    | 'tokio-marine-wealth-builder-atfuture'
     | 'tokio-marine-wealth-flexi'
     | 'tokio-marine-wealth-flexi-link-3-12'
     | 'tokio-marine-wealth-flexi-link-5-10'
@@ -5601,6 +5603,111 @@ function tokioWealthFlexiLink312StressPolicy(
         monthlyContribution: 2_000,
         currentPolicyYear: 10,
         monthsAlreadyPaid: 108,
+        policyEvents: [],
+      }),
+      HSBC_STRESS_FUNDS,
+    ),
+    0,
+    14_000,
+    3_000,
+  )
+}
+
+function tokioWealthBuilderAtfutureEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-wealth-builder-atfuture', 'sgd-mip-10', id)
+  return withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Wealth Builder@Future (SGD / MIP 10 Event Heavy)',
+        monthlyContribution: 350,
+        currentPolicyYear: 4,
+        monthsAlreadyPaid: 36,
+        policyEvents: [
+          {
+            id: 'topup-1',
+            type: 'top-up',
+            startPolicyMonth: 37,
+            durationMonths: 1,
+            amount: 1_000,
+          },
+          {
+            id: 'rsp-1',
+            type: 'recurring-single-premium',
+            startPolicyMonth: 38,
+            durationMonths: 12,
+            amount: 100,
+          },
+          {
+            id: 'holiday-1',
+            type: 'premium-holiday',
+            startPolicyMonth: 41,
+            durationMonths: 3,
+          },
+          {
+            id: 'withdrawal-1',
+            type: 'partial-withdrawal',
+            startPolicyMonth: 47,
+            durationMonths: 1,
+            amount: 500,
+            accountId: 'accumulation',
+          },
+        ],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    0,
+    8_000,
+    1_500,
+  )
+}
+
+function tokioWealthBuilderAtfutureAdvancedDeathBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-wealth-builder-atfuture', 'sgd-mip-10-advanced-death', id)
+  return withResolvedManualInputs(withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Wealth Builder@Future (SGD / MIP 10 Advanced Death Baseline)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 4,
+        monthsAlreadyPaid: 36,
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 72_000,
+        },
+        postMipYears: 15,
+        policyEvents: [],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    0,
+    8_000,
+    1_500,
+  ))
+}
+
+function tokioWealthBuilderAtfutureStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-wealth-builder-atfuture', 'sgd-mip-10', id)
+  return withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Wealth Builder@Future (SGD / MIP 10 OCF Stress)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 8,
+        monthsAlreadyPaid: 84,
         policyEvents: [],
       }),
       HSBC_STRESS_FUNDS,
@@ -9146,6 +9253,60 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     ],
   },
   {
+    productId: 'tokio-marine-wealth-builder-atfuture',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'tokio-regular-premium-routing-to-accumulation-account',
+      'tokio-initial-bonus-tiered-premium-allocation',
+      'tokio-premium-bonus',
+      'tokio-power-up-bonus',
+      'tokio-loyalty-bonus',
+      'tokio-policy-charge-on-accumulation-account',
+      'tokio-accumulation-account-surrender-charge',
+      'kernel:distribution-mode-assumption',
+    ],
+    description: 'Tokio Marine Wealth Builder@Future supported baseline proving its accumulation-account routing, split policy-charge windows, and published bonus ladders.',
+  },
+  {
+    productId: 'tokio-marine-wealth-builder-atfuture',
+    variantId: 'sgd-mip-10-advanced-death',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge',
+    ],
+    description: 'Tokio Marine Wealth Builder@Future advanced-death supported baseline proving Monthly Protection Charge handling from insured-life inputs.',
+  },
+  {
+    productId: 'tokio-marine-wealth-builder-atfuture',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'tokio-top-up-routing',
+      'tokio-recurring-single-premium-routing',
+      'tokio-recurring-single-premium-manual-resumption-after-premium-holiday',
+      'tokio-top-up-premium-charge',
+      'tokio-recurring-single-premium-charge',
+      'tokio-accumulation-partial-withdrawal-charge',
+      'tokio-premium-shortfall-charge-non-payment',
+    ],
+    description: 'Tokio Marine Wealth Builder@Future supported scenario covering top-up routing, recurring-single-premium charging, withdrawal charging, and non-payment shortfall deductions.',
+  },
+  {
+    productId: 'tokio-marine-wealth-builder-atfuture',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Tokio Marine Wealth Builder@Future supported OCF stress scenario through the same SGD / MIP 10 corridor.',
+  },
+  {
     productId: 'tokio-marine-wealth-flexi-link-3-12',
     variantId: 'sgd-mip-12',
     scenarioId: 'baseline',
@@ -10406,6 +10567,24 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'hsbc-life-flexi-protector' && definition.scenarioId === 'assurance-choice-vs-max') {
     return hsbcFlexiChoiceAssurancePolicy(id)
+  }
+  if (definition.productId === 'tokio-marine-wealth-builder-atfuture' && definition.scenarioId === 'baseline') {
+    if (definition.variantId === 'sgd-mip-10-advanced-death') {
+      return tokioWealthBuilderAtfutureAdvancedDeathBaselinePolicy(snapshot, id)
+    }
+    return tokioBaselinePolicy(
+      snapshot,
+      'tokio-marine-wealth-builder-atfuture',
+      'sgd-mip-10',
+      id,
+      'Golden Tokio Marine Wealth Builder@Future (SGD / MIP 10 Baseline)',
+    )
+  }
+  if (definition.productId === 'tokio-marine-wealth-builder-atfuture' && definition.scenarioId === 'event-heavy') {
+    return tokioWealthBuilderAtfutureEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-wealth-builder-atfuture' && definition.scenarioId === 'ocf-stress') {
+    return tokioWealthBuilderAtfutureStressPolicy(snapshot, id)
   }
   if (definition.productId === 'tokio-marine-wealth-flexi-link-3-12' && definition.scenarioId === 'baseline') {
     if (definition.variantId === 'sgd-mip-12-advanced-death') {

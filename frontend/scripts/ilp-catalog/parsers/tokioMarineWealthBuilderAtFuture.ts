@@ -412,9 +412,9 @@ export function parseTokioMarineWealthBuilderAtFuture(context: ParseContext): Il
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'tokio-regular-premium-routing-to-accumulation-account',
       'tokio-initial-bonus-tiered-premium-allocation',
