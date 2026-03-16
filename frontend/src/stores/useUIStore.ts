@@ -155,7 +155,7 @@ export const useUIStore = create<UIState & UIActions>()(
     }),
     {
       name: 'fireplanner-ui',
-      version: 13,
+      version: 14,
       partialize: (state) => {
         // Exclude transient fields from persistence
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -213,6 +213,11 @@ export const useUIStore = create<UIState & UIActions>()(
         }
         if (version < 13) {
           state.protectionEnabled = true
+        }
+        if (version < 14) {
+          // healthcareEnabled was introduced as false in v2 and never migrated to true.
+          // protectionEnabled was fixed in v13 but healthcareEnabled was missed.
+          state.healthcareEnabled = true
         }
         return state
       },
