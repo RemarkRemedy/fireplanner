@@ -1,0 +1,484 @@
+{
+  "metadata": {
+    "fixtureId": "income-invest-flex-vantage-sgd-mip-5-baseline",
+    "fixtureClass": "supported",
+    "productId": "income-invest-flex-vantage",
+    "variantId": "sgd-mip-5",
+    "scenarioId": "baseline",
+    "supportStatus": "supported",
+    "description": "Invest Flex Vantage baseline scenario for the SGD / MIP 5 corridor.",
+    "coverageTags": [
+      "baseline",
+      "kernel:protected-base-assurance",
+      "branch:income-vs2-policy-fee",
+      "branch:income-vs2-death-ti-insurance-cover-charge"
+    ],
+    "catalogVersion": "0.1.0",
+    "sourceFileName": "VS2_Summary.pdf",
+    "sourceChecksumSha256": "608707ccf5b408db8bb8f7e9c9696efe0aca38036f22259010d83c6074234da0"
+  },
+  "policyInput": {
+    "id": "income-invest-flex-vantage-sgd-mip-5-baseline",
+    "name": "Golden Invest Flex Vantage (SGD-MIP-5 Baseline)",
+    "insurer": "Income Insurance",
+    "currency": "SGD",
+    "monthlyContribution": 900,
+    "monthsAlreadyPaid": 36,
+    "currentPolicyYear": 4,
+    "icpMonths": 1,
+    "assuranceProfile": {
+      "currentAgeNextBirthday": 45,
+      "sex": "male",
+      "smokerStatus": "non-smoker",
+      "currentNetRegularPremiumBase": 32400
+    },
+    "mipLength": 5,
+    "postMipYears": 0,
+    "eecTable": [
+      1,
+      1,
+      0.75,
+      0.4,
+      0.2
+    ],
+    "discountRate": 0.07,
+    "inflationRate": 0.025,
+    "alternativeReturn": 0.07,
+    "accounts": [
+      {
+        "id": "policy",
+        "label": "Policy Fund Account",
+        "feeRate": 0,
+        "currentValue": 21000,
+        "contributionShare": 0,
+        "subjectToEec": true,
+        "postMipFeeRate": null,
+        "contributionRules": [
+          {
+            "phase": "during-icp",
+            "contributionShare": 1
+          },
+          {
+            "phase": "after-icp",
+            "contributionShare": 1
+          },
+          {
+            "phase": "top-up",
+            "contributionShare": 1
+          }
+        ]
+      }
+    ],
+    "funds": [
+      {
+        "name": "Income Global Opportunities",
+        "allocation": 0.6,
+        "ocf": 0.012,
+        "grossReturnLow": 0.045,
+        "grossReturnMid": 0.072,
+        "grossReturnHigh": 0.098
+      },
+      {
+        "name": "Income Stable Yield",
+        "allocation": 0.4,
+        "ocf": 0.009,
+        "grossReturnLow": 0.03,
+        "grossReturnMid": 0.052,
+        "grossReturnHigh": 0.07
+      }
+    ],
+    "bonuses": [
+      {
+        "id": "regular-premium-allocation-step-2",
+        "type": "allocation",
+        "label": "Regular Premium Allocation Step 2",
+        "mode": "premium-allocation",
+        "rate": 0.02,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 11,
+        "endPolicyYear": 20,
+        "tieredRates": [],
+        "suspensionRules": []
+      },
+      {
+        "id": "regular-premium-allocation-step-3",
+        "type": "allocation",
+        "label": "Regular Premium Allocation Step 3",
+        "mode": "premium-allocation",
+        "rate": 0.05,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 21,
+        "endPolicyYear": null,
+        "tieredRates": [],
+        "suspensionRules": []
+      },
+      {
+        "id": "investment-bonus",
+        "type": "allocation",
+        "label": "Investment Bonus",
+        "mode": "premium-allocation",
+        "rate": 0.04,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 1,
+        "endPolicyYear": 1,
+        "tieredRates": [
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 9600,
+            "maxAnnualPremium": null,
+            "rate": 0.04
+          }
+        ],
+        "suspensionRules": []
+      },
+      {
+        "id": "loyalty-bonus",
+        "type": "loyalty",
+        "label": "Loyalty Bonus",
+        "mode": "annual-rate",
+        "rate": 0.005,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 10,
+        "endPolicyYear": null,
+        "tieredRates": [],
+        "suspensionRules": [
+          {
+            "trigger": "partial-withdrawal",
+            "suspensionMonths": 12
+          }
+        ]
+      }
+    ],
+    "chargeRules": [
+      {
+        "id": "policy-fee",
+        "label": "Policy Fee",
+        "basis": "account-value",
+        "activeWindow": "policy-term",
+        "startPolicyYear": 1,
+        "endPolicyYear": null,
+        "appliesTo": [
+          "policy"
+        ],
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 10,
+            "rate": 0.025
+          },
+          {
+            "startPolicyYear": 11,
+            "endPolicyYear": null,
+            "rate": 0.005
+          }
+        ],
+        "rate": 0,
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      },
+      {
+        "id": "death-ti-insurance-cover-charge",
+        "label": "Death / TI Insurance Cover Charge",
+        "basis": "assurance-sum-at-risk",
+        "activeWindow": "policy-term",
+        "startPolicyYear": 3,
+        "endPolicyYear": null,
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "amount": 0,
+        "assuranceConfig": {
+          "formula": "income-invest-flex-death-ti",
+          "monthlyModalFactor": 0.083333,
+          "maxAgeNextBirthday": 99
+        },
+        "requiresManualInput": false,
+        "allocation": "pro-rata-by-value"
+      }
+    ],
+    "policyEvents": [],
+    "eventChargeRules": [
+      {
+        "id": "premium-holiday-charge",
+        "label": "Premium Holiday Charge",
+        "trigger": "premium-holiday",
+        "basis": "annual-premium-with-overlap-months",
+        "activeWindow": "during-mip",
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 2,
+            "endPolicyYear": 2,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 3,
+            "endPolicyYear": 3,
+            "rate": 0.75
+          },
+          {
+            "startPolicyYear": 4,
+            "endPolicyYear": 4,
+            "rate": 0.4
+          },
+          {
+            "startPolicyYear": 5,
+            "endPolicyYear": 5,
+            "rate": 0.2
+          }
+        ],
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      },
+      {
+        "id": "partial-withdrawal-charge",
+        "label": "Partial Withdrawal Charge",
+        "trigger": "partial-withdrawal",
+        "basis": "event-amount",
+        "activeWindow": "during-mip",
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 2,
+            "endPolicyYear": 2,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 3,
+            "endPolicyYear": 3,
+            "rate": 0.75
+          },
+          {
+            "startPolicyYear": 4,
+            "endPolicyYear": 4,
+            "rate": 0.4
+          },
+          {
+            "startPolicyYear": 5,
+            "endPolicyYear": 5,
+            "rate": 0.2
+          }
+        ],
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      }
+    ],
+    "catalogSource": {
+      "productId": "income-invest-flex-vantage",
+      "productName": "Invest Flex Vantage",
+      "variantId": "sgd-mip-5",
+      "variantLabel": "SGD / MIP 5",
+      "catalogVersion": "0.1.0",
+      "supportStatus": "supported",
+      "economicsStatus": "supported",
+      "structureStatus": "structured",
+      "modeledEconomics": [
+        "kernel:protected-base-assurance",
+        "branch:income-vs2-policy-fee",
+        "branch:income-vs2-death-ti-insurance-cover-charge",
+        "branch:income-vs2-regular-premium-allocation-uplift",
+        "branch:income-vs2-investment-bonus",
+        "branch:income-vs2-loyalty-bonus",
+        "branch:income-vs2-premium-holiday-charge",
+        "branch:income-vs2-partial-withdrawal-charge",
+        "branch:income-vs2-surrender-charge",
+        "branch:income-vs2-ad-hoc-top-up-routing",
+        "kernel:distribution-mode-assumption"
+      ],
+      "metadataOnlyBehaviors": [
+        "income-vs2-secondary-insured-option",
+        "income-vs2-life-events-withdrawal-eligibility-and-count-limits",
+        "income-vs2-future-premium-option",
+        "income-vs2-distribution-payout-threshold",
+        "income-vs2-death-benefit-continuation-after-insured-replacement"
+      ]
+    },
+    "catalogWarnings": [
+      "Invest Flex Vantage is cataloged as a supported V1 product. The parser captures the regular-premium fee, protection charge, charge and bonus path, and reinvest-default distribution support, while secondary-insured replacement mechanics, life-event eligibility administration, and fund-level distribution-election constraints remain informational only.",
+      "Invest Flex Vantage is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.",
+      "Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, while eligibility timing, documentary proof, and usage-count limits remain manual.",
+      "Secondary-insured replacement mechanics, future premium option, and the published minimum distribution amount remain informational only in V1.",
+      "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
+      "Secondary insured appointment, removal, and insured-replacement mechanics remain informational only.",
+      "Life Events Withdrawal Benefit eligibility timing, documentary proof, and use-count limits remain manual.",
+      "Future Premium Option remains informational only.",
+      "The published minimum distribution amount and fund-level payout processing remain informational only."
+    ]
+  },
+  "expected": {
+    "summary": {
+      "totalPremiumsPaid": 43200,
+      "totalFeesCharged": 539.71,
+      "totalBonusesReceived": 0,
+      "netFeeDrag": 539.71,
+      "currentSurrenderValue": 12600,
+      "cancelNowPenalty": 8400
+    },
+    "npvAnalysis": {
+      "surrenderNow": {
+        "eecRate": 0.4,
+        "eecCharge": 8400,
+        "npvFees": 8400,
+        "netSurrenderValue": 12600
+      },
+      "futureExitOptions": [
+        {
+          "exitYear": 1,
+          "policyYear": 5,
+          "eecRate": 0.2,
+          "eecCharge": 6469.75,
+          "pvEec": 6046.5,
+          "npvGrossFees": 504.41,
+          "npvBonuses": 0,
+          "totalNpvFees": 6550.91,
+          "netSurrenderValue": 25879.02,
+          "totalContributions": 43200
+        }
+      ],
+      "bestExitYear": 1,
+      "bestExitNpvFees": 6550.91,
+      "holdToMip": {
+        "npvGrossFees": 504.41,
+        "npvBonuses": 0,
+        "totalNpvFees": 6550.91,
+        "finalValue": 32348.77,
+        "totalContributions": 43200
+      }
+    },
+    "opportunityCost": {
+      "alternativePortfolioValue": 24282,
+      "ilpValueAtHorizon": 32348.77,
+      "difference": -8066.77,
+      "atBestExit": {
+        "exitYear": 1,
+        "alternativeValue": 25879.02,
+        "ilpValueAtHorizon": 32348.77,
+        "difference": -6469.75
+      }
+    },
+    "projections": {
+      "low": {
+        "blendedNetReturn": 0.0282,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 5,
+            "annualContribution": 10800,
+            "annualWithdrawals": 0,
+            "combinedValue": 31836.93,
+            "eecRate": 0.2,
+            "eecCharge": 6367.39,
+            "surrenderValue": 25469.54,
+            "cumulativePremiums": 43200,
+            "cumulativeGrossFees": 540.04,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "policy",
+                "open": 21000,
+                "contributionAmount": 10800,
+                "grossFee": 540.04,
+                "bonusCredit": 0,
+                "netFee": 540.04,
+                "withdrawalAmount": 0,
+                "close": 31836.93
+              }
+            ]
+          }
+        ]
+      },
+      "mid": {
+        "blendedNetReturn": 0.0532,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 5,
+            "annualContribution": 10800,
+            "annualWithdrawals": 0,
+            "combinedValue": 32348.77,
+            "eecRate": 0.2,
+            "eecCharge": 6469.75,
+            "surrenderValue": 25879.02,
+            "cumulativePremiums": 43200,
+            "cumulativeGrossFees": 539.71,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "policy",
+                "open": 21000,
+                "contributionAmount": 10800,
+                "grossFee": 539.71,
+                "bonusCredit": 0,
+                "netFee": 539.71,
+                "withdrawalAmount": 0,
+                "close": 32348.77
+              }
+            ]
+          }
+        ]
+      },
+      "high": {
+        "blendedNetReturn": 0.076,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 5,
+            "annualContribution": 10800,
+            "annualWithdrawals": 0,
+            "combinedValue": 32815.59,
+            "eecRate": 0.2,
+            "eecCharge": 6563.12,
+            "surrenderValue": 26252.47,
+            "cumulativePremiums": 43200,
+            "cumulativeGrossFees": 539.42,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "policy",
+                "open": 21000,
+                "contributionAmount": 10800,
+                "grossFee": 539.42,
+                "bonusCredit": 0,
+                "netFee": 539.42,
+                "withdrawalAmount": 0,
+                "close": 32815.59
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

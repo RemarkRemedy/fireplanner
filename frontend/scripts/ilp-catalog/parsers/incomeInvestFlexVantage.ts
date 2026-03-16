@@ -4,6 +4,7 @@ import type {
   IlpCatalogSourceRef,
   IlpTemplateBonus,
   IlpTemplateBonusTier,
+  IlpTemplateFeeRule,
   IlpTemplateVariant,
 } from '../../../src/lib/ilp-catalog/types.js'
 import type { ExtractedPdfDocument } from '../pdf/extractPdfText.js'
@@ -167,15 +168,59 @@ function buildBonuses(term: MipTerm, page2: IlpCatalogSourceRef, page3: IlpCatal
 function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplateVariant {
   const page1 = sourceRef(1, 'Plan description and MIP', snippetNear(document, 1, 'Minimum Investment Period'))
   const page2 = sourceRef(2, 'Regular premium allocation and investment bonus', snippetNear(document, 2, 'Investment Bonus', 18))
-  const page3 = sourceRef(3, 'Loyalty bonus and top-ups', snippetNear(document, 3, 'Loyalty Bonus', 16))
-  const page4 = sourceRef(4, 'Death and terminal illness benefit', snippetNear(document, 4, 'Death and Terminal Illness'))
-  const page5 = sourceRef(5, 'Secondary insured and life events withdrawal benefit', snippetNear(document, 5, 'Secondary Insured Option', 18))
-  const page7 = sourceRef(7, 'Premium holiday', snippetNear(document, 7, 'Premium Holiday', 16))
-  const page19 = sourceRef(19, 'Appendix 2 surrender charge', snippetNear(document, 19, 'Appendix 2', 18))
-  const page20 = sourceRef(20, 'Appendix 3 partial withdrawal charge', snippetNear(document, 20, 'Appendix 3', 18))
-  const page21 = sourceRef(21, 'Appendix 4 premium holiday charge', snippetNear(document, 21, 'Appendix 4', 18))
-  const page12 = sourceRef(12, 'Appendix 1 death and TI insurance cover charge', snippetNear(document, 12, 'Appendix 1', 16))
-  const page22 = sourceRef(22, 'Declaration and reinvesting of distributions', snippetNear(document, 22, 'Declaration and Reinvesting of Distributions', 18))
+  const page3 = sourceRef(3, 'Loyalty bonus, top-ups, and death / TI benefit', snippetNear(document, 3, 'Death and Terminal Illness', 18))
+  const page4 = sourceRef(4, 'Secondary insured and life events withdrawal benefit', snippetNear(document, 4, 'Secondary Insured Option', 18))
+  const page5 = sourceRef(5, 'Premium holiday and partial withdrawal', snippetNear(document, 5, 'Premium Holiday', 18))
+  const page7 = sourceRef(7, 'Policy fee and insurance cover charge', snippetNear(document, 7, 'Policy Fee', 18))
+  const page15 = sourceRef(15, 'Declaration and reinvesting of distributions', snippetNear(document, 15, 'Declaration and Reinvesting of Distributions', 18))
+  const page17 = sourceRef(17, 'Appendix 1 death and TI insurance cover charge', snippetNear(document, 17, 'Appendix 1', 18))
+  const page20 = sourceRef(20, 'Appendix 2 surrender charge', snippetNear(document, 20, 'Appendix 2', 18))
+  const page21 = sourceRef(21, 'Appendix 3 partial withdrawal charge', snippetNear(document, 21, 'Appendix 3', 18))
+  const page22 = sourceRef(22, 'Appendix 4 premium holiday charge', snippetNear(document, 22, 'Appendix 4', 18))
+
+  const feeRules: IlpTemplateFeeRule[] = [
+    {
+      id: 'policy-fee',
+      label: 'Policy Fee',
+      basis: 'account-value',
+      rate: 0,
+      amount: null,
+      appliesTo: ['policy'],
+      rateSchedule: [
+        { startPolicyYear: 1, endPolicyYear: 10, rate: roundRate(0.025) },
+        { startPolicyYear: 11, endPolicyYear: null, rate: roundRate(0.005) },
+      ],
+      activeWindow: 'policy-term',
+      startPolicyYear: 1,
+      endPolicyYear: null,
+      notes: [
+        'Deducted monthly from policy value throughout the policy term.',
+      ],
+      sourceRefs: [page7],
+    },
+    {
+      id: 'death-ti-insurance-cover-charge',
+      label: 'Death / TI Insurance Cover Charge',
+      basis: 'assurance-sum-at-risk',
+      rate: null,
+      amount: null,
+      assuranceConfig: {
+        formula: 'income-invest-flex-death-ti',
+        monthlyModalFactor: 1 / 12,
+        maxAgeNextBirthday: 99,
+      },
+      requiresManualInput: true,
+      appliesTo: ['policy'],
+      activeWindow: 'policy-term',
+      startPolicyYear: 3,
+      endPolicyYear: null,
+      notes: [
+        'Requires insured-life details and the current net regular premiums paid base before the calculator can model the monthly insurance cover charge.',
+        'Models the published 101% of net premiums paid less policy value sum-at-risk formula for the death and terminal-illness benefit.',
+      ],
+      sourceRefs: [page7, page17],
+    },
+  ]
 
   return {
     id: `sgd-mip-${term}`,
@@ -190,13 +235,15 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
         postMipFeeRate: null,
         subjectToEec: true,
         contributionRules: [
+          { phase: 'during-icp', targetAccountId: 'policy', contributionShare: 1 },
+          { phase: 'after-icp', targetAccountId: 'policy', contributionShare: 1 },
           { phase: 'top-up', targetAccountId: 'policy', contributionShare: 1 },
         ],
         sourceRefs: [page1, page2, page3],
       },
     ],
     bonuses: buildBonuses(term, page2, page3),
-    feeRules: [],
+    feeRules,
     eventChargeRules: [
       {
         id: 'premium-holiday-charge',
@@ -227,9 +274,10 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
         allocation: 'equal-split',
         notes: [
           'Applied to partial withdrawals during the minimum investment period.',
-          'Life Events Withdrawal Benefit free withdrawals remain informational only in V1.',
+          'Qualifying Life Events Withdrawal Benefit withdrawals can be represented by setting both chargeWaived and bonusSuspensionWaived on the event.',
+          'Users must manually stay within the published 10% of prevailing policy value cap, once-per-life-event rule, three-use maximum, and documentary-proof timing conditions.',
         ],
-        sourceRefs: [page5, page20],
+        sourceRefs: [page4, page5, page21],
       },
     ],
     distributionSupport: {
@@ -241,24 +289,24 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
       source: 'distribution-paying-funds',
       notes: [
         'Distribution-paying ILP sub-funds default to reinvestment, and future payouts can be elected by written instruction when the fund-level minimum amount is met.',
-        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published minimum distribution amount remains informational only.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.',
+        'The published minimum distribution amount remains informational only.',
       ],
-      sourceRefs: [page22],
+      sourceRefs: [page15],
     },
     eecTable: [...SURRENDER_CHARGE[term]],
     warnings: [
-      'Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.',
-      'Death/TI insurance cover charges, secondary insured option, life-events withdrawal benefit, and the published minimum distribution amount remain informational only in V1.',
+      'Invest Flex Vantage is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.',
+      'Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, while eligibility timing, documentary proof, and usage-count limits remain manual.',
+      'Secondary-insured replacement mechanics, future premium option, and the published minimum distribution amount remain informational only in V1.',
     ],
     unsupportedItems: [
-      'Death and terminal illness insurance cover charges remain informational only.',
-      'Secondary insured option remains informational only.',
-      'Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.',
+      'Secondary insured appointment, removal, and insured-replacement mechanics remain informational only.',
+      'Life Events Withdrawal Benefit eligibility timing, documentary proof, and use-count limits remain manual.',
       'Future Premium Option remains informational only.',
-      'Death benefit continuation after insured replacement remains informational only.',
       'The published minimum distribution amount and fund-level payout processing remain informational only.',
     ],
-    sourceRefs: [page1, page2, page3, page4, page5, page7, page12, page19, page20, page21, page22],
+    sourceRefs: [page1, page2, page3, page4, page5, page7, page15, page17, page20, page21, page22],
   }
 }
 
@@ -271,10 +319,13 @@ export function parseIncomeInvestFlexVantage(context: ParseContext): IlpCatalogP
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
+      'kernel:protected-base-assurance',
+      'branch:income-vs2-policy-fee',
+      'branch:income-vs2-death-ti-insurance-cover-charge',
       'branch:income-vs2-regular-premium-allocation-uplift',
       'branch:income-vs2-investment-bonus',
       'branch:income-vs2-loyalty-bonus',
@@ -285,14 +336,14 @@ export function parseIncomeInvestFlexVantage(context: ParseContext): IlpCatalogP
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'income-vs2-death-ti-insurance-cover-charge',
       'income-vs2-secondary-insured-option',
-      'income-vs2-life-events-withdrawal-benefit',
+      'income-vs2-life-events-withdrawal-eligibility-and-count-limits',
       'income-vs2-future-premium-option',
       'income-vs2-distribution-payout-threshold',
+      'income-vs2-death-benefit-continuation-after-insured-replacement',
     ],
     warnings: [
-      'Invest Flex Vantage is currently cataloged as a partial product. The regular-premium charge and bonus path plus reinvest-default distribution support are modeled, but insurance-cover charges and insured-replacement / life-event options remain informational only.',
+      'Invest Flex Vantage is cataloged as a supported V1 product. The parser captures the regular-premium fee, protection charge, charge and bonus path, and reinvest-default distribution support, while secondary-insured replacement mechanics, life-event eligibility administration, and fund-level distribution-election constraints remain informational only.',
     ],
     archived: false,
     variants: TERM_OPTIONS.map((term) => buildVariant(context.document, term)),

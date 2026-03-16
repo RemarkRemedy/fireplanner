@@ -555,7 +555,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
-  it('maps Invest Flex Vantage into a partial seed with reinvest-default distribution support', () => {
+  it('maps Invest Flex Vantage into a supported seed with reinvest-default distribution support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'income-invest-flex-vantage')
     expect(product).toBeDefined()
@@ -564,12 +564,16 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs2-policy-fee')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs2-death-ti-insurance-cover-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs2-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs2-future-premium-option')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs2-distribution-payout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs2-life-events-withdrawal-eligibility-and-count-limits')
     expect(seed.eventChargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -2026,7 +2030,7 @@ describe('templateVariantToPolicySeed', () => {
     ])
   })
 
-  it('maps Invest Flex Vantage into a partial regular-premium seed with bonus and MIP-charge schedules', () => {
+  it('maps Invest Flex Vantage into a supported regular-premium seed with policy-fee, bonus, and MIP-charge schedules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'income-invest-flex-vantage')
     expect(product).toBeDefined()
@@ -2035,24 +2039,52 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs2-policy-fee')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs2-death-ti-insurance-cover-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs2-investment-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs2-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs2-premium-holiday-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs2-partial-withdrawal-charge')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs2-death-ti-insurance-cover-charge')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs2-life-events-withdrawal-benefit')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs2-life-events-withdrawal-eligibility-and-count-limits')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(10)
     expect(seed.accounts).toEqual([
       expect.objectContaining({
         id: 'policy',
         contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+          { phase: 'after-icp', contributionShare: 1 },
           { phase: 'top-up', contributionShare: 1 },
         ],
       }),
     ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-fee',
+          basis: 'account-value',
+          appliesTo: ['policy'],
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 10, rate: 0.025 },
+            { startPolicyYear: 11, endPolicyYear: null, rate: 0.005 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'death-ti-insurance-cover-charge',
+          basis: 'assurance-sum-at-risk',
+          requiresManualInput: true,
+          startPolicyYear: 3,
+          assuranceConfig: expect.objectContaining({
+            formula: 'income-invest-flex-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          }),
+        }),
+      ]),
+    )
     expect(seed.bonuses).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

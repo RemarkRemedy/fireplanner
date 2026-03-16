@@ -10280,10 +10280,13 @@
     "sourceChecksumSha256": "608707ccf5b408db8bb8f7e9c9696efe0aca38036f22259010d83c6074234da0",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
+      "kernel:protected-base-assurance",
+      "branch:income-vs2-policy-fee",
+      "branch:income-vs2-death-ti-insurance-cover-charge",
       "branch:income-vs2-regular-premium-allocation-uplift",
       "branch:income-vs2-investment-bonus",
       "branch:income-vs2-loyalty-bonus",
@@ -10294,14 +10297,14 @@
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "income-vs2-death-ti-insurance-cover-charge",
       "income-vs2-secondary-insured-option",
-      "income-vs2-life-events-withdrawal-benefit",
+      "income-vs2-life-events-withdrawal-eligibility-and-count-limits",
       "income-vs2-future-premium-option",
-      "income-vs2-distribution-payout-threshold"
+      "income-vs2-distribution-payout-threshold",
+      "income-vs2-death-benefit-continuation-after-insured-replacement"
     ],
     "warnings": [
-      "Invest Flex Vantage is currently cataloged as a partial product. The regular-premium charge and bonus path plus reinvest-default distribution support are modeled, but insurance-cover charges and insured-replacement / life-event options remain informational only."
+      "Invest Flex Vantage is cataloged as a supported V1 product. The parser captures the regular-premium fee, protection charge, charge and bonus path, and reinvest-default distribution support, while secondary-insured replacement mechanics, life-event eligibility administration, and fund-level distribution-election constraints remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -10318,6 +10321,16 @@
             "postMipFeeRate": null,
             "subjectToEec": true,
             "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
               {
                 "phase": "top-up",
                 "targetAccountId": "policy",
@@ -10337,8 +10350,8 @@
               },
               {
                 "page": 3,
-                "section": "Loyalty bonus and top-ups",
-                "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+                "section": "Loyalty bonus, top-ups, and death / TI benefit",
+                "excerpt": "3.1 Death and Terminal Illness (TI) Benefit During the term of this policy, if the insured becomes terminally ill or dies, we will pay the benefit shown below: Time the insured Benefit event happens Within one year from "
               }
             ]
           }
@@ -10445,13 +10458,84 @@
             "sourceRefs": [
               {
                 "page": 3,
-                "section": "Loyalty bonus and top-ups",
-                "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+                "section": "Loyalty bonus, top-ups, and death / TI benefit",
+                "excerpt": "3.1 Death and Terminal Illness (TI) Benefit During the term of this policy, if the insured becomes terminally ill or dies, we will pay the benefit shown below: Time the insured Benefit event happens Within one year from "
               }
             ]
           }
         ],
-        "feeRules": [],
+        "feeRules": [
+          {
+            "id": "policy-fee",
+            "label": "Policy Fee",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.005
+              }
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Deducted monthly from policy value throughout the policy term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
+              }
+            ]
+          },
+          {
+            "id": "death-ti-insurance-cover-charge",
+            "label": "Death / TI Insurance Cover Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 3,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details and the current net regular premiums paid base before the calculator can model the monthly insurance cover charge.",
+              "Models the published 101% of net premiums paid less policy value sum-at-risk formula for the death and terminal-illness benefit."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
+              },
+              {
+                "page": 17,
+                "section": "Appendix 1 death and TI insurance cover charge",
+                "excerpt": "Appendix 1 – Yearly insurance cover charge rates for death and TI based on $1,000 sum at risk The table below shows the insurance cover charge rates for age up to 99 years. For age after 99 years, we will apply the rate "
+              }
+            ]
+          }
+        ],
         "eventChargeRules": [
           {
             "id": "premium-holiday-charge",
@@ -10498,13 +10582,13 @@
             "sourceRefs": [
               {
                 "page": 7,
-                "section": "Premium holiday",
-                "excerpt": "We will apply any fees and charges applicable even during grace period and premium holiday, until your policy ends. 7.1 Premium Charge We currently do not charge premium charge. However, we may change this at any time by"
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
               },
               {
                 "page": 21,
-                "section": "Appendix 4 premium holiday charge",
-                "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+                "section": "Appendix 3 partial withdrawal charge",
+                "excerpt": "Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 years 15 years 20"
               }
             ]
           },
@@ -10549,18 +10633,24 @@
             "allocation": "equal-split",
             "notes": [
               "Applied to partial withdrawals during the minimum investment period.",
-              "Life Events Withdrawal Benefit free withdrawals remain informational only in V1."
+              "Qualifying Life Events Withdrawal Benefit withdrawals can be represented by setting both chargeWaived and bonusSuspensionWaived on the event.",
+              "Users must manually stay within the published 10% of prevailing policy value cap, once-per-life-event rule, three-use maximum, and documentary-proof timing conditions."
             ],
             "sourceRefs": [
               {
-                "page": 5,
+                "page": 4,
                 "section": "Secondary insured and life events withdrawal benefit",
-                "excerpt": "Version 1.26 When you exercise the free partial withdrawal: • You may withdraw no more than 10% of the prevailing policy value and there will be no partial withdrawal charge for the amount withdrawn. The policy value of "
+                "excerpt": "4.2 Secondary Insured Option You may appoint or remove a secondary insured before the death of the insured provided the following conditions are met: • the premium of this policy is paid only with cash; • no nomination o"
               },
               {
-                "page": 20,
+                "page": 5,
+                "section": "Premium holiday and partial withdrawal",
+                "excerpt": "4.4 Premium Holiday If you still have not paid the premium after the grace period, this policy will enter into a premium holiday. During this premium holiday period, you can stop paying premium provided the policy value "
+              },
+              {
+                "page": 21,
                 "section": "Appendix 3 partial withdrawal charge",
-                "excerpt": "Version 1.26 Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due t"
+                "excerpt": "Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 years 15 years 20"
               }
             ]
           }
@@ -10576,13 +10666,14 @@
           "source": "distribution-paying-funds",
           "notes": [
             "Distribution-paying ILP sub-funds default to reinvestment, and future payouts can be elected by written instruction when the fund-level minimum amount is met.",
-            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published minimum distribution amount remains informational only."
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.",
+            "The published minimum distribution amount remains informational only."
           ],
           "sourceRefs": [
             {
-              "page": 22,
+              "page": 15,
               "section": "Declaration and reinvesting of distributions",
-              "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment "
+              "excerpt": "21.2 Declaration and Reinvesting of Distributions We may declare distributions for certain ILP sub-funds which have a distribution option. You will be entitled to receive these distributions if your policy has not ended "
             }
           ]
         },
@@ -10594,15 +10685,14 @@
           0.2
         ],
         "warnings": [
-          "Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.",
-          "Death/TI insurance cover charges, secondary insured option, life-events withdrawal benefit, and the published minimum distribution amount remain informational only in V1."
+          "Invest Flex Vantage is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.",
+          "Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, while eligibility timing, documentary proof, and usage-count limits remain manual.",
+          "Secondary-insured replacement mechanics, future premium option, and the published minimum distribution amount remain informational only in V1."
         ],
         "unsupportedItems": [
-          "Death and terminal illness insurance cover charges remain informational only.",
-          "Secondary insured option remains informational only.",
-          "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
+          "Secondary insured appointment, removal, and insured-replacement mechanics remain informational only.",
+          "Life Events Withdrawal Benefit eligibility timing, documentary proof, and use-count limits remain manual.",
           "Future Premium Option remains informational only.",
-          "Death benefit continuation after insured replacement remains informational only.",
           "The published minimum distribution amount and fund-level payout processing remain informational only."
         ],
         "sourceRefs": [
@@ -10618,48 +10708,48 @@
           },
           {
             "page": 3,
-            "section": "Loyalty bonus and top-ups",
-            "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+            "section": "Loyalty bonus, top-ups, and death / TI benefit",
+            "excerpt": "3.1 Death and Terminal Illness (TI) Benefit During the term of this policy, if the insured becomes terminally ill or dies, we will pay the benefit shown below: Time the insured Benefit event happens Within one year from "
           },
           {
             "page": 4,
-            "section": "Death and terminal illness benefit",
-            "excerpt": "Version 1.26 4. Flexible Options 4.1 Changing your Regular Premium You may reduce the amount of your regular premium only from the 5th policy anniversary and we will make this change when your next regular premium is due"
+            "section": "Secondary insured and life events withdrawal benefit",
+            "excerpt": "4.2 Secondary Insured Option You may appoint or remove a secondary insured before the death of the insured provided the following conditions are met: • the premium of this policy is paid only with cash; • no nomination o"
           },
           {
             "page": 5,
-            "section": "Secondary insured and life events withdrawal benefit",
-            "excerpt": "Version 1.26 When you exercise the free partial withdrawal: • You may withdraw no more than 10% of the prevailing policy value and there will be no partial withdrawal charge for the amount withdrawn. The policy value of "
+            "section": "Premium holiday and partial withdrawal",
+            "excerpt": "4.4 Premium Holiday If you still have not paid the premium after the grace period, this policy will enter into a premium holiday. During this premium holiday period, you can stop paying premium provided the policy value "
           },
           {
             "page": 7,
-            "section": "Premium holiday",
-            "excerpt": "We will apply any fees and charges applicable even during grace period and premium holiday, until your policy ends. 7.1 Premium Charge We currently do not charge premium charge. However, we may change this at any time by"
+            "section": "Policy fee and insurance cover charge",
+            "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
           },
           {
-            "page": 12,
+            "page": 15,
+            "section": "Declaration and reinvesting of distributions",
+            "excerpt": "21.2 Declaration and Reinvesting of Distributions We may declare distributions for certain ILP sub-funds which have a distribution option. You will be entitled to receive these distributions if your policy has not ended "
+          },
+          {
+            "page": 17,
             "section": "Appendix 1 death and TI insurance cover charge",
-            "excerpt": "Version 1.26 11. SUSPENSION OF DEALINGS We may suspend all transactions on a ILP sub-fund. Transactions include new applications to the ILP sub-fund, top-ups, switching, and cashing-in. We reserve the right to delay the "
-          },
-          {
-            "page": 19,
-            "section": "Appendix 2 surrender charge",
-            "excerpt": "Version 1.26 67 16.68 9.21 68 19.15 10.79 69 21.62 12.37 70 24.10 13.94 71 27.03 16.82 72 29.96 19.70 73 32.89 22.58 74 35.82 25.46 75 38.73 28.32 76 42.86 32.81 77 46.99 37.30 78 51.12 41.79 79 55.25 46.28 80 59.36 50.7"
+            "excerpt": "Appendix 1 – Yearly insurance cover charge rates for death and TI based on $1,000 sum at risk The table below shows the insurance cover charge rates for age up to 99 years. For age after 99 years, we will apply the rate "
           },
           {
             "page": 20,
-            "section": "Appendix 3 partial withdrawal charge",
-            "excerpt": "Version 1.26 Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due t"
+            "section": "Appendix 2 surrender charge",
+            "excerpt": "Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due to reduction o"
           },
           {
             "page": 21,
-            "section": "Appendix 4 premium holiday charge",
-            "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+            "section": "Appendix 3 partial withdrawal charge",
+            "excerpt": "Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 years 15 years 20"
           },
           {
             "page": 22,
-            "section": "Declaration and reinvesting of distributions",
-            "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment "
+            "section": "Appendix 4 premium holiday charge",
+            "excerpt": "Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment on a monthly "
           }
         ]
       },
@@ -10676,6 +10766,16 @@
             "postMipFeeRate": null,
             "subjectToEec": true,
             "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
               {
                 "phase": "top-up",
                 "targetAccountId": "policy",
@@ -10695,8 +10795,8 @@
               },
               {
                 "page": 3,
-                "section": "Loyalty bonus and top-ups",
-                "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+                "section": "Loyalty bonus, top-ups, and death / TI benefit",
+                "excerpt": "3.1 Death and Terminal Illness (TI) Benefit During the term of this policy, if the insured becomes terminally ill or dies, we will pay the benefit shown below: Time the insured Benefit event happens Within one year from "
               }
             ]
           }
@@ -10809,13 +10909,84 @@
             "sourceRefs": [
               {
                 "page": 3,
-                "section": "Loyalty bonus and top-ups",
-                "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+                "section": "Loyalty bonus, top-ups, and death / TI benefit",
+                "excerpt": "3.1 Death and Terminal Illness (TI) Benefit During the term of this policy, if the insured becomes terminally ill or dies, we will pay the benefit shown below: Time the insured Benefit event happens Within one year from "
               }
             ]
           }
         ],
-        "feeRules": [],
+        "feeRules": [
+          {
+            "id": "policy-fee",
+            "label": "Policy Fee",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.005
+              }
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Deducted monthly from policy value throughout the policy term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
+              }
+            ]
+          },
+          {
+            "id": "death-ti-insurance-cover-charge",
+            "label": "Death / TI Insurance Cover Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 3,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details and the current net regular premiums paid base before the calculator can model the monthly insurance cover charge.",
+              "Models the published 101% of net premiums paid less policy value sum-at-risk formula for the death and terminal-illness benefit."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
+              },
+              {
+                "page": 17,
+                "section": "Appendix 1 death and TI insurance cover charge",
+                "excerpt": "Appendix 1 – Yearly insurance cover charge rates for death and TI based on $1,000 sum at risk The table below shows the insurance cover charge rates for age up to 99 years. For age after 99 years, we will apply the rate "
+              }
+            ]
+          }
+        ],
         "eventChargeRules": [
           {
             "id": "premium-holiday-charge",
@@ -10862,13 +11033,13 @@
             "sourceRefs": [
               {
                 "page": 7,
-                "section": "Premium holiday",
-                "excerpt": "We will apply any fees and charges applicable even during grace period and premium holiday, until your policy ends. 7.1 Premium Charge We currently do not charge premium charge. However, we may change this at any time by"
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
               },
               {
                 "page": 21,
-                "section": "Appendix 4 premium holiday charge",
-                "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+                "section": "Appendix 3 partial withdrawal charge",
+                "excerpt": "Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 years 15 years 20"
               }
             ]
           },
@@ -10938,18 +11109,24 @@
             "allocation": "equal-split",
             "notes": [
               "Applied to partial withdrawals during the minimum investment period.",
-              "Life Events Withdrawal Benefit free withdrawals remain informational only in V1."
+              "Qualifying Life Events Withdrawal Benefit withdrawals can be represented by setting both chargeWaived and bonusSuspensionWaived on the event.",
+              "Users must manually stay within the published 10% of prevailing policy value cap, once-per-life-event rule, three-use maximum, and documentary-proof timing conditions."
             ],
             "sourceRefs": [
               {
-                "page": 5,
+                "page": 4,
                 "section": "Secondary insured and life events withdrawal benefit",
-                "excerpt": "Version 1.26 When you exercise the free partial withdrawal: • You may withdraw no more than 10% of the prevailing policy value and there will be no partial withdrawal charge for the amount withdrawn. The policy value of "
+                "excerpt": "4.2 Secondary Insured Option You may appoint or remove a secondary insured before the death of the insured provided the following conditions are met: • the premium of this policy is paid only with cash; • no nomination o"
               },
               {
-                "page": 20,
+                "page": 5,
+                "section": "Premium holiday and partial withdrawal",
+                "excerpt": "4.4 Premium Holiday If you still have not paid the premium after the grace period, this policy will enter into a premium holiday. During this premium holiday period, you can stop paying premium provided the policy value "
+              },
+              {
+                "page": 21,
                 "section": "Appendix 3 partial withdrawal charge",
-                "excerpt": "Version 1.26 Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due t"
+                "excerpt": "Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 years 15 years 20"
               }
             ]
           }
@@ -10965,13 +11142,14 @@
           "source": "distribution-paying-funds",
           "notes": [
             "Distribution-paying ILP sub-funds default to reinvestment, and future payouts can be elected by written instruction when the fund-level minimum amount is met.",
-            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published minimum distribution amount remains informational only."
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.",
+            "The published minimum distribution amount remains informational only."
           ],
           "sourceRefs": [
             {
-              "page": 22,
+              "page": 15,
               "section": "Declaration and reinvesting of distributions",
-              "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment "
+              "excerpt": "21.2 Declaration and Reinvesting of Distributions We may declare distributions for certain ILP sub-funds which have a distribution option. You will be entitled to receive these distributions if your policy has not ended "
             }
           ]
         },
@@ -10988,15 +11166,14 @@
           0.05
         ],
         "warnings": [
-          "Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.",
-          "Death/TI insurance cover charges, secondary insured option, life-events withdrawal benefit, and the published minimum distribution amount remain informational only in V1."
+          "Invest Flex Vantage is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.",
+          "Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, while eligibility timing, documentary proof, and usage-count limits remain manual.",
+          "Secondary-insured replacement mechanics, future premium option, and the published minimum distribution amount remain informational only in V1."
         ],
         "unsupportedItems": [
-          "Death and terminal illness insurance cover charges remain informational only.",
-          "Secondary insured option remains informational only.",
-          "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
+          "Secondary insured appointment, removal, and insured-replacement mechanics remain informational only.",
+          "Life Events Withdrawal Benefit eligibility timing, documentary proof, and use-count limits remain manual.",
           "Future Premium Option remains informational only.",
-          "Death benefit continuation after insured replacement remains informational only.",
           "The published minimum distribution amount and fund-level payout processing remain informational only."
         ],
         "sourceRefs": [
@@ -11012,48 +11189,48 @@
           },
           {
             "page": 3,
-            "section": "Loyalty bonus and top-ups",
-            "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+            "section": "Loyalty bonus, top-ups, and death / TI benefit",
+            "excerpt": "3.1 Death and Terminal Illness (TI) Benefit During the term of this policy, if the insured becomes terminally ill or dies, we will pay the benefit shown below: Time the insured Benefit event happens Within one year from "
           },
           {
             "page": 4,
-            "section": "Death and terminal illness benefit",
-            "excerpt": "Version 1.26 4. Flexible Options 4.1 Changing your Regular Premium You may reduce the amount of your regular premium only from the 5th policy anniversary and we will make this change when your next regular premium is due"
+            "section": "Secondary insured and life events withdrawal benefit",
+            "excerpt": "4.2 Secondary Insured Option You may appoint or remove a secondary insured before the death of the insured provided the following conditions are met: • the premium of this policy is paid only with cash; • no nomination o"
           },
           {
             "page": 5,
-            "section": "Secondary insured and life events withdrawal benefit",
-            "excerpt": "Version 1.26 When you exercise the free partial withdrawal: • You may withdraw no more than 10% of the prevailing policy value and there will be no partial withdrawal charge for the amount withdrawn. The policy value of "
+            "section": "Premium holiday and partial withdrawal",
+            "excerpt": "4.4 Premium Holiday If you still have not paid the premium after the grace period, this policy will enter into a premium holiday. During this premium holiday period, you can stop paying premium provided the policy value "
           },
           {
             "page": 7,
-            "section": "Premium holiday",
-            "excerpt": "We will apply any fees and charges applicable even during grace period and premium holiday, until your policy ends. 7.1 Premium Charge We currently do not charge premium charge. However, we may change this at any time by"
+            "section": "Policy fee and insurance cover charge",
+            "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
           },
           {
-            "page": 12,
+            "page": 15,
+            "section": "Declaration and reinvesting of distributions",
+            "excerpt": "21.2 Declaration and Reinvesting of Distributions We may declare distributions for certain ILP sub-funds which have a distribution option. You will be entitled to receive these distributions if your policy has not ended "
+          },
+          {
+            "page": 17,
             "section": "Appendix 1 death and TI insurance cover charge",
-            "excerpt": "Version 1.26 11. SUSPENSION OF DEALINGS We may suspend all transactions on a ILP sub-fund. Transactions include new applications to the ILP sub-fund, top-ups, switching, and cashing-in. We reserve the right to delay the "
-          },
-          {
-            "page": 19,
-            "section": "Appendix 2 surrender charge",
-            "excerpt": "Version 1.26 67 16.68 9.21 68 19.15 10.79 69 21.62 12.37 70 24.10 13.94 71 27.03 16.82 72 29.96 19.70 73 32.89 22.58 74 35.82 25.46 75 38.73 28.32 76 42.86 32.81 77 46.99 37.30 78 51.12 41.79 79 55.25 46.28 80 59.36 50.7"
+            "excerpt": "Appendix 1 – Yearly insurance cover charge rates for death and TI based on $1,000 sum at risk The table below shows the insurance cover charge rates for age up to 99 years. For age after 99 years, we will apply the rate "
           },
           {
             "page": 20,
-            "section": "Appendix 3 partial withdrawal charge",
-            "excerpt": "Version 1.26 Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due t"
+            "section": "Appendix 2 surrender charge",
+            "excerpt": "Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due to reduction o"
           },
           {
             "page": 21,
-            "section": "Appendix 4 premium holiday charge",
-            "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+            "section": "Appendix 3 partial withdrawal charge",
+            "excerpt": "Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 years 15 years 20"
           },
           {
             "page": 22,
-            "section": "Declaration and reinvesting of distributions",
-            "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment "
+            "section": "Appendix 4 premium holiday charge",
+            "excerpt": "Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment on a monthly "
           }
         ]
       },
@@ -11070,6 +11247,16 @@
             "postMipFeeRate": null,
             "subjectToEec": true,
             "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
               {
                 "phase": "top-up",
                 "targetAccountId": "policy",
@@ -11089,8 +11276,8 @@
               },
               {
                 "page": 3,
-                "section": "Loyalty bonus and top-ups",
-                "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+                "section": "Loyalty bonus, top-ups, and death / TI benefit",
+                "excerpt": "3.1 Death and Terminal Illness (TI) Benefit During the term of this policy, if the insured becomes terminally ill or dies, we will pay the benefit shown below: Time the insured Benefit event happens Within one year from "
               }
             ]
           }
@@ -11203,13 +11390,84 @@
             "sourceRefs": [
               {
                 "page": 3,
-                "section": "Loyalty bonus and top-ups",
-                "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+                "section": "Loyalty bonus, top-ups, and death / TI benefit",
+                "excerpt": "3.1 Death and Terminal Illness (TI) Benefit During the term of this policy, if the insured becomes terminally ill or dies, we will pay the benefit shown below: Time the insured Benefit event happens Within one year from "
               }
             ]
           }
         ],
-        "feeRules": [],
+        "feeRules": [
+          {
+            "id": "policy-fee",
+            "label": "Policy Fee",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.005
+              }
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Deducted monthly from policy value throughout the policy term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
+              }
+            ]
+          },
+          {
+            "id": "death-ti-insurance-cover-charge",
+            "label": "Death / TI Insurance Cover Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 3,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details and the current net regular premiums paid base before the calculator can model the monthly insurance cover charge.",
+              "Models the published 101% of net premiums paid less policy value sum-at-risk formula for the death and terminal-illness benefit."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
+              },
+              {
+                "page": 17,
+                "section": "Appendix 1 death and TI insurance cover charge",
+                "excerpt": "Appendix 1 – Yearly insurance cover charge rates for death and TI based on $1,000 sum at risk The table below shows the insurance cover charge rates for age up to 99 years. For age after 99 years, we will apply the rate "
+              }
+            ]
+          }
+        ],
         "eventChargeRules": [
           {
             "id": "premium-holiday-charge",
@@ -11306,13 +11564,13 @@
             "sourceRefs": [
               {
                 "page": 7,
-                "section": "Premium holiday",
-                "excerpt": "We will apply any fees and charges applicable even during grace period and premium holiday, until your policy ends. 7.1 Premium Charge We currently do not charge premium charge. However, we may change this at any time by"
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
               },
               {
                 "page": 21,
-                "section": "Appendix 4 premium holiday charge",
-                "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+                "section": "Appendix 3 partial withdrawal charge",
+                "excerpt": "Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 years 15 years 20"
               }
             ]
           },
@@ -11407,18 +11665,24 @@
             "allocation": "equal-split",
             "notes": [
               "Applied to partial withdrawals during the minimum investment period.",
-              "Life Events Withdrawal Benefit free withdrawals remain informational only in V1."
+              "Qualifying Life Events Withdrawal Benefit withdrawals can be represented by setting both chargeWaived and bonusSuspensionWaived on the event.",
+              "Users must manually stay within the published 10% of prevailing policy value cap, once-per-life-event rule, three-use maximum, and documentary-proof timing conditions."
             ],
             "sourceRefs": [
               {
-                "page": 5,
+                "page": 4,
                 "section": "Secondary insured and life events withdrawal benefit",
-                "excerpt": "Version 1.26 When you exercise the free partial withdrawal: • You may withdraw no more than 10% of the prevailing policy value and there will be no partial withdrawal charge for the amount withdrawn. The policy value of "
+                "excerpt": "4.2 Secondary Insured Option You may appoint or remove a secondary insured before the death of the insured provided the following conditions are met: • the premium of this policy is paid only with cash; • no nomination o"
               },
               {
-                "page": 20,
+                "page": 5,
+                "section": "Premium holiday and partial withdrawal",
+                "excerpt": "4.4 Premium Holiday If you still have not paid the premium after the grace period, this policy will enter into a premium holiday. During this premium holiday period, you can stop paying premium provided the policy value "
+              },
+              {
+                "page": 21,
                 "section": "Appendix 3 partial withdrawal charge",
-                "excerpt": "Version 1.26 Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due t"
+                "excerpt": "Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 years 15 years 20"
               }
             ]
           }
@@ -11434,13 +11698,14 @@
           "source": "distribution-paying-funds",
           "notes": [
             "Distribution-paying ILP sub-funds default to reinvestment, and future payouts can be elected by written instruction when the fund-level minimum amount is met.",
-            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published minimum distribution amount remains informational only."
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.",
+            "The published minimum distribution amount remains informational only."
           ],
           "sourceRefs": [
             {
-              "page": 22,
+              "page": 15,
               "section": "Declaration and reinvesting of distributions",
-              "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment "
+              "excerpt": "21.2 Declaration and Reinvesting of Distributions We may declare distributions for certain ILP sub-funds which have a distribution option. You will be entitled to receive these distributions if your policy has not ended "
             }
           ]
         },
@@ -11462,15 +11727,14 @@
           0.05
         ],
         "warnings": [
-          "Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.",
-          "Death/TI insurance cover charges, secondary insured option, life-events withdrawal benefit, and the published minimum distribution amount remain informational only in V1."
+          "Invest Flex Vantage is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.",
+          "Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, while eligibility timing, documentary proof, and usage-count limits remain manual.",
+          "Secondary-insured replacement mechanics, future premium option, and the published minimum distribution amount remain informational only in V1."
         ],
         "unsupportedItems": [
-          "Death and terminal illness insurance cover charges remain informational only.",
-          "Secondary insured option remains informational only.",
-          "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
+          "Secondary insured appointment, removal, and insured-replacement mechanics remain informational only.",
+          "Life Events Withdrawal Benefit eligibility timing, documentary proof, and use-count limits remain manual.",
           "Future Premium Option remains informational only.",
-          "Death benefit continuation after insured replacement remains informational only.",
           "The published minimum distribution amount and fund-level payout processing remain informational only."
         ],
         "sourceRefs": [
@@ -11486,48 +11750,48 @@
           },
           {
             "page": 3,
-            "section": "Loyalty bonus and top-ups",
-            "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+            "section": "Loyalty bonus, top-ups, and death / TI benefit",
+            "excerpt": "3.1 Death and Terminal Illness (TI) Benefit During the term of this policy, if the insured becomes terminally ill or dies, we will pay the benefit shown below: Time the insured Benefit event happens Within one year from "
           },
           {
             "page": 4,
-            "section": "Death and terminal illness benefit",
-            "excerpt": "Version 1.26 4. Flexible Options 4.1 Changing your Regular Premium You may reduce the amount of your regular premium only from the 5th policy anniversary and we will make this change when your next regular premium is due"
+            "section": "Secondary insured and life events withdrawal benefit",
+            "excerpt": "4.2 Secondary Insured Option You may appoint or remove a secondary insured before the death of the insured provided the following conditions are met: • the premium of this policy is paid only with cash; • no nomination o"
           },
           {
             "page": 5,
-            "section": "Secondary insured and life events withdrawal benefit",
-            "excerpt": "Version 1.26 When you exercise the free partial withdrawal: • You may withdraw no more than 10% of the prevailing policy value and there will be no partial withdrawal charge for the amount withdrawn. The policy value of "
+            "section": "Premium holiday and partial withdrawal",
+            "excerpt": "4.4 Premium Holiday If you still have not paid the premium after the grace period, this policy will enter into a premium holiday. During this premium holiday period, you can stop paying premium provided the policy value "
           },
           {
             "page": 7,
-            "section": "Premium holiday",
-            "excerpt": "We will apply any fees and charges applicable even during grace period and premium holiday, until your policy ends. 7.1 Premium Charge We currently do not charge premium charge. However, we may change this at any time by"
+            "section": "Policy fee and insurance cover charge",
+            "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
           },
           {
-            "page": 12,
+            "page": 15,
+            "section": "Declaration and reinvesting of distributions",
+            "excerpt": "21.2 Declaration and Reinvesting of Distributions We may declare distributions for certain ILP sub-funds which have a distribution option. You will be entitled to receive these distributions if your policy has not ended "
+          },
+          {
+            "page": 17,
             "section": "Appendix 1 death and TI insurance cover charge",
-            "excerpt": "Version 1.26 11. SUSPENSION OF DEALINGS We may suspend all transactions on a ILP sub-fund. Transactions include new applications to the ILP sub-fund, top-ups, switching, and cashing-in. We reserve the right to delay the "
-          },
-          {
-            "page": 19,
-            "section": "Appendix 2 surrender charge",
-            "excerpt": "Version 1.26 67 16.68 9.21 68 19.15 10.79 69 21.62 12.37 70 24.10 13.94 71 27.03 16.82 72 29.96 19.70 73 32.89 22.58 74 35.82 25.46 75 38.73 28.32 76 42.86 32.81 77 46.99 37.30 78 51.12 41.79 79 55.25 46.28 80 59.36 50.7"
+            "excerpt": "Appendix 1 – Yearly insurance cover charge rates for death and TI based on $1,000 sum at risk The table below shows the insurance cover charge rates for age up to 99 years. For age after 99 years, we will apply the rate "
           },
           {
             "page": 20,
-            "section": "Appendix 3 partial withdrawal charge",
-            "excerpt": "Version 1.26 Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due t"
+            "section": "Appendix 2 surrender charge",
+            "excerpt": "Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due to reduction o"
           },
           {
             "page": 21,
-            "section": "Appendix 4 premium holiday charge",
-            "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+            "section": "Appendix 3 partial withdrawal charge",
+            "excerpt": "Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 years 15 years 20"
           },
           {
             "page": 22,
-            "section": "Declaration and reinvesting of distributions",
-            "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment "
+            "section": "Appendix 4 premium holiday charge",
+            "excerpt": "Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment on a monthly "
           }
         ]
       },
@@ -11544,6 +11808,16 @@
             "postMipFeeRate": null,
             "subjectToEec": true,
             "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
               {
                 "phase": "top-up",
                 "targetAccountId": "policy",
@@ -11563,8 +11837,8 @@
               },
               {
                 "page": 3,
-                "section": "Loyalty bonus and top-ups",
-                "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+                "section": "Loyalty bonus, top-ups, and death / TI benefit",
+                "excerpt": "3.1 Death and Terminal Illness (TI) Benefit During the term of this policy, if the insured becomes terminally ill or dies, we will pay the benefit shown below: Time the insured Benefit event happens Within one year from "
               }
             ]
           }
@@ -11677,13 +11951,84 @@
             "sourceRefs": [
               {
                 "page": 3,
-                "section": "Loyalty bonus and top-ups",
-                "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+                "section": "Loyalty bonus, top-ups, and death / TI benefit",
+                "excerpt": "3.1 Death and Terminal Illness (TI) Benefit During the term of this policy, if the insured becomes terminally ill or dies, we will pay the benefit shown below: Time the insured Benefit event happens Within one year from "
               }
             ]
           }
         ],
-        "feeRules": [],
+        "feeRules": [
+          {
+            "id": "policy-fee",
+            "label": "Policy Fee",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": null,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 10,
+                "rate": 0.025
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": null,
+                "rate": 0.005
+              }
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Deducted monthly from policy value throughout the policy term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
+              }
+            ]
+          },
+          {
+            "id": "death-ti-insurance-cover-charge",
+            "label": "Death / TI Insurance Cover Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 3,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details and the current net regular premiums paid base before the calculator can model the monthly insurance cover charge.",
+              "Models the published 101% of net premiums paid less policy value sum-at-risk formula for the death and terminal-illness benefit."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
+              },
+              {
+                "page": 17,
+                "section": "Appendix 1 death and TI insurance cover charge",
+                "excerpt": "Appendix 1 – Yearly insurance cover charge rates for death and TI based on $1,000 sum at risk The table below shows the insurance cover charge rates for age up to 99 years. For age after 99 years, we will apply the rate "
+              }
+            ]
+          }
+        ],
         "eventChargeRules": [
           {
             "id": "premium-holiday-charge",
@@ -11805,13 +12150,13 @@
             "sourceRefs": [
               {
                 "page": 7,
-                "section": "Premium holiday",
-                "excerpt": "We will apply any fees and charges applicable even during grace period and premium holiday, until your policy ends. 7.1 Premium Charge We currently do not charge premium charge. However, we may change this at any time by"
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
               },
               {
                 "page": 21,
-                "section": "Appendix 4 premium holiday charge",
-                "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+                "section": "Appendix 3 partial withdrawal charge",
+                "excerpt": "Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 years 15 years 20"
               }
             ]
           },
@@ -11931,18 +12276,24 @@
             "allocation": "equal-split",
             "notes": [
               "Applied to partial withdrawals during the minimum investment period.",
-              "Life Events Withdrawal Benefit free withdrawals remain informational only in V1."
+              "Qualifying Life Events Withdrawal Benefit withdrawals can be represented by setting both chargeWaived and bonusSuspensionWaived on the event.",
+              "Users must manually stay within the published 10% of prevailing policy value cap, once-per-life-event rule, three-use maximum, and documentary-proof timing conditions."
             ],
             "sourceRefs": [
               {
-                "page": 5,
+                "page": 4,
                 "section": "Secondary insured and life events withdrawal benefit",
-                "excerpt": "Version 1.26 When you exercise the free partial withdrawal: • You may withdraw no more than 10% of the prevailing policy value and there will be no partial withdrawal charge for the amount withdrawn. The policy value of "
+                "excerpt": "4.2 Secondary Insured Option You may appoint or remove a secondary insured before the death of the insured provided the following conditions are met: • the premium of this policy is paid only with cash; • no nomination o"
               },
               {
-                "page": 20,
+                "page": 5,
+                "section": "Premium holiday and partial withdrawal",
+                "excerpt": "4.4 Premium Holiday If you still have not paid the premium after the grace period, this policy will enter into a premium holiday. During this premium holiday period, you can stop paying premium provided the policy value "
+              },
+              {
+                "page": 21,
                 "section": "Appendix 3 partial withdrawal charge",
-                "excerpt": "Version 1.26 Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due t"
+                "excerpt": "Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 years 15 years 20"
               }
             ]
           }
@@ -11958,13 +12309,14 @@
           "source": "distribution-paying-funds",
           "notes": [
             "Distribution-paying ILP sub-funds default to reinvestment, and future payouts can be elected by written instruction when the fund-level minimum amount is met.",
-            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published minimum distribution amount remains informational only."
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.",
+            "The published minimum distribution amount remains informational only."
           ],
           "sourceRefs": [
             {
-              "page": 22,
+              "page": 15,
               "section": "Declaration and reinvesting of distributions",
-              "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment "
+              "excerpt": "21.2 Declaration and Reinvesting of Distributions We may declare distributions for certain ILP sub-funds which have a distribution option. You will be entitled to receive these distributions if your policy has not ended "
             }
           ]
         },
@@ -11991,15 +12343,14 @@
           0.05
         ],
         "warnings": [
-          "Invest Flex Vantage is modeled as a partial subset in V1. The parser captures regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.",
-          "Death/TI insurance cover charges, secondary insured option, life-events withdrawal benefit, and the published minimum distribution amount remain informational only in V1."
+          "Invest Flex Vantage is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.",
+          "Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, while eligibility timing, documentary proof, and usage-count limits remain manual.",
+          "Secondary-insured replacement mechanics, future premium option, and the published minimum distribution amount remain informational only in V1."
         ],
         "unsupportedItems": [
-          "Death and terminal illness insurance cover charges remain informational only.",
-          "Secondary insured option remains informational only.",
-          "Life Events Withdrawal Benefit free-withdrawal treatment remains informational only.",
+          "Secondary insured appointment, removal, and insured-replacement mechanics remain informational only.",
+          "Life Events Withdrawal Benefit eligibility timing, documentary proof, and use-count limits remain manual.",
           "Future Premium Option remains informational only.",
-          "Death benefit continuation after insured replacement remains informational only.",
           "The published minimum distribution amount and fund-level payout processing remain informational only."
         ],
         "sourceRefs": [
@@ -12015,48 +12366,48 @@
           },
           {
             "page": 3,
-            "section": "Loyalty bonus and top-ups",
-            "excerpt": "Version 1.26 2.4 Top-ups Top-ups can be done anytime and 100% of the top-ups will be used to buy units (at the bid price) in the ILP sub-funds chosen. We may set a minimum amount for each top-up. Top-ups do not form part"
+            "section": "Loyalty bonus, top-ups, and death / TI benefit",
+            "excerpt": "3.1 Death and Terminal Illness (TI) Benefit During the term of this policy, if the insured becomes terminally ill or dies, we will pay the benefit shown below: Time the insured Benefit event happens Within one year from "
           },
           {
             "page": 4,
-            "section": "Death and terminal illness benefit",
-            "excerpt": "Version 1.26 4. Flexible Options 4.1 Changing your Regular Premium You may reduce the amount of your regular premium only from the 5th policy anniversary and we will make this change when your next regular premium is due"
+            "section": "Secondary insured and life events withdrawal benefit",
+            "excerpt": "4.2 Secondary Insured Option You may appoint or remove a secondary insured before the death of the insured provided the following conditions are met: • the premium of this policy is paid only with cash; • no nomination o"
           },
           {
             "page": 5,
-            "section": "Secondary insured and life events withdrawal benefit",
-            "excerpt": "Version 1.26 When you exercise the free partial withdrawal: • You may withdraw no more than 10% of the prevailing policy value and there will be no partial withdrawal charge for the amount withdrawn. The policy value of "
+            "section": "Premium holiday and partial withdrawal",
+            "excerpt": "4.4 Premium Holiday If you still have not paid the premium after the grace period, this policy will enter into a premium holiday. During this premium holiday period, you can stop paying premium provided the policy value "
           },
           {
             "page": 7,
-            "section": "Premium holiday",
-            "excerpt": "We will apply any fees and charges applicable even during grace period and premium holiday, until your policy ends. 7.1 Premium Charge We currently do not charge premium charge. However, we may change this at any time by"
+            "section": "Policy fee and insurance cover charge",
+            "excerpt": "7.2 Policy Fee A policy fee based on the policy value shown below is deducted monthly throughout the policy term. It will be taken from the policy value of the policy by cancelling units at the bid price. Policy Year Pol"
           },
           {
-            "page": 12,
+            "page": 15,
+            "section": "Declaration and reinvesting of distributions",
+            "excerpt": "21.2 Declaration and Reinvesting of Distributions We may declare distributions for certain ILP sub-funds which have a distribution option. You will be entitled to receive these distributions if your policy has not ended "
+          },
+          {
+            "page": 17,
             "section": "Appendix 1 death and TI insurance cover charge",
-            "excerpt": "Version 1.26 11. SUSPENSION OF DEALINGS We may suspend all transactions on a ILP sub-fund. Transactions include new applications to the ILP sub-fund, top-ups, switching, and cashing-in. We reserve the right to delay the "
-          },
-          {
-            "page": 19,
-            "section": "Appendix 2 surrender charge",
-            "excerpt": "Version 1.26 67 16.68 9.21 68 19.15 10.79 69 21.62 12.37 70 24.10 13.94 71 27.03 16.82 72 29.96 19.70 73 32.89 22.58 74 35.82 25.46 75 38.73 28.32 76 42.86 32.81 77 46.99 37.30 78 51.12 41.79 79 55.25 46.28 80 59.36 50.7"
+            "excerpt": "Appendix 1 – Yearly insurance cover charge rates for death and TI based on $1,000 sum at risk The table below shows the insurance cover charge rates for age up to 99 years. For age after 99 years, we will apply the rate "
           },
           {
             "page": 20,
-            "section": "Appendix 3 partial withdrawal charge",
-            "excerpt": "Version 1.26 Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due t"
+            "section": "Appendix 2 surrender charge",
+            "excerpt": "Appendix 2 – Surrender Charge The table below shows the percentage to be applied for surrender charge. • For full surrender, the percentage is applied to policy value withdrawn. • For surrender charges due to reduction o"
           },
           {
             "page": 21,
-            "section": "Appendix 4 premium holiday charge",
-            "excerpt": "Version 1.26 Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 year"
+            "section": "Appendix 3 partial withdrawal charge",
+            "excerpt": "Appendix 3 – Partial Withdrawal Charge The table below shows the percentage to be applied for partial withdrawal charge. • The percentage is applied to policy value withdrawn. MIP Policy Year 5 years 10 years 15 years 20"
           },
           {
             "page": 22,
-            "section": "Declaration and reinvesting of distributions",
-            "excerpt": "Version 1.26 Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment "
+            "section": "Appendix 4 premium holiday charge",
+            "excerpt": "Appendix 4 – Premium Holiday Charge The table below shows the percentage to be applied for premium holiday charge. • The percentage is applied to the annualized regular premium and divided by 12 for payment on a monthly "
           }
         ]
       }

@@ -65,6 +65,15 @@ export type GoldenCoverageTag =
   | 'branch:income-vs1-partial-withdrawal-charge'
   | 'branch:income-vs1-surrender-charge'
   | 'branch:income-vs1-ad-hoc-top-up-routing'
+  | 'branch:income-vs2-policy-fee'
+  | 'branch:income-vs2-death-ti-insurance-cover-charge'
+  | 'branch:income-vs2-regular-premium-allocation-uplift'
+  | 'branch:income-vs2-investment-bonus'
+  | 'branch:income-vs2-loyalty-bonus'
+  | 'branch:income-vs2-premium-holiday-charge'
+  | 'branch:income-vs2-partial-withdrawal-charge'
+  | 'branch:income-vs2-surrender-charge'
+  | 'branch:income-vs2-ad-hoc-top-up-routing'
   | 'branch:income-vs3-policy-fee'
   | 'branch:income-vs3-death-ti-insurance-cover-charge'
   | 'branch:income-vs3-regular-premium-allocation-uplift'
@@ -1743,6 +1752,132 @@ function incomeInvestFlexStressPolicy(
 ): IlpPolicyInput {
   return incomeInvestFlexBasePolicy(snapshot, 'sgd-mip-15', id, INCOME_STRESS_FUNDS, {
     name: 'Golden Invest Flex (SGD / MIP 15 OCF Stress)',
+    currentPolicyYear: 8,
+    monthsAlreadyPaid: 84,
+    monthlyContribution: 850,
+    assuranceProfile: {
+      currentAgeNextBirthday: 43,
+      sex: 'female',
+      smokerStatus: 'non-smoker',
+      currentNetRegularPremiumBase: 71_400,
+    },
+  })
+}
+
+function incomeInvestFlexVantageBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: string,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const term = Number(variantId.replace('sgd-mip-', ''))
+  const currentPolicyYear = Math.min(Math.max(Math.floor(term / 2) + 1, 4), term - 1)
+  const monthlyContribution = term >= 15 ? 850 : 900
+  const currentNetRegularPremiumBase = monthlyContribution * 12 * (currentPolicyYear - 1)
+  const base = seedPolicy(snapshot, 'income-invest-flex-vantage', variantId, id, {
+    monthlyContribution,
+    currentPolicyYear,
+    monthsAlreadyPaid: (currentPolicyYear - 1) * 12,
+    assuranceProfile: {
+      currentAgeNextBirthday: 45,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentNetRegularPremiumBase,
+    },
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden Invest Flex Vantage (${variantId.toUpperCase()})`,
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 12_000 + (term * 1_800),
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function incomeInvestFlexVantageBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: string,
+  id: string,
+): IlpPolicyInput {
+  const distributionAssumption = variantId === 'sgd-mip-20'
+    ? {
+        mode: 'cash-payout' as const,
+        source: 'manual-assumption' as const,
+        annualYieldRate: 0.035,
+      }
+    : undefined
+
+  return incomeInvestFlexVantageBasePolicy(snapshot, variantId, id, INCOME_BALANCED_FUNDS, {
+    name: `Golden Invest Flex Vantage (${variantId.toUpperCase()} Baseline)`,
+    distributionAssumption,
+  })
+}
+
+function incomeInvestFlexVantageEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return incomeInvestFlexVantageBasePolicy(snapshot, 'sgd-mip-20', id, INCOME_BALANCED_FUNDS, {
+    name: 'Golden Invest Flex Vantage (SGD / MIP 20 Event Heavy)',
+    currentPolicyYear: 19,
+    monthsAlreadyPaid: 216,
+    monthlyContribution: 900,
+    assuranceProfile: {
+      currentAgeNextBirthday: 52,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentNetRegularPremiumBase: 194_400,
+    },
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 217,
+        durationMonths: 3,
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 221,
+        durationMonths: 1,
+        amount: 8_000,
+      },
+      {
+        id: 'life-event-withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 223,
+        durationMonths: 1,
+        amount: 3_000,
+        accountId: 'policy',
+        chargeWaived: true,
+        bonusSuspensionWaived: true,
+      },
+      {
+        id: 'charged-withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 229,
+        durationMonths: 1,
+        amount: 2_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function incomeInvestFlexVantageStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return incomeInvestFlexVantageBasePolicy(snapshot, 'sgd-mip-15', id, INCOME_STRESS_FUNDS, {
+    name: 'Golden Invest Flex Vantage (SGD / MIP 15 OCF Stress)',
     currentPolicyYear: 8,
     monthsAlreadyPaid: 84,
     monthlyContribution: 850,
@@ -4289,6 +4424,88 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Invest Flex alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'income-invest-flex-vantage',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:protected-base-assurance',
+      'branch:income-vs2-policy-fee',
+      'branch:income-vs2-death-ti-insurance-cover-charge',
+    ],
+    description: 'Invest Flex Vantage baseline scenario for the SGD / MIP 5 corridor.',
+  },
+  {
+    productId: 'income-invest-flex-vantage',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:income-vs2-regular-premium-allocation-uplift',
+      'branch:income-vs2-investment-bonus',
+    ],
+    description: 'Invest Flex Vantage baseline scenario for the SGD / MIP 10 corridor.',
+  },
+  {
+    productId: 'income-invest-flex-vantage',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:income-vs2-loyalty-bonus',
+      'branch:income-vs2-surrender-charge',
+    ],
+    description: 'Invest Flex Vantage baseline scenario for the SGD / MIP 15 corridor.',
+  },
+  {
+    productId: 'income-invest-flex-vantage',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'kernel:distribution-mode-assumption'],
+    description: 'Invest Flex Vantage baseline scenario for the SGD / MIP 20 corridor with the manual cash-payout distribution assumption.',
+    integrityChecks: [
+      {
+        description: 'cash-payout distribution assumption produces non-zero annual distributions',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'income-invest-flex-vantage',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:income-vs2-premium-holiday-charge',
+      'branch:income-vs2-partial-withdrawal-charge',
+      'branch:income-vs2-ad-hoc-top-up-routing',
+    ],
+    description: 'Invest Flex Vantage event-heavy scenario covering premium holiday, top-up, and waived life-event withdrawal treatment.',
+    integrityChecks: [
+      {
+        description: 'seeded partial withdrawals are present in the projection output',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+      {
+        description: 'event-heavy policy retains top-up contribution in excess of the scheduled annual premium',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+    ],
+  },
+  {
+    productId: 'income-invest-flex-vantage',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Invest Flex Vantage alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'income-invest-flex-trivantage',
     variantId: 'sgd-mip-10',
     scenarioId: 'baseline',
@@ -5094,6 +5311,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'income-invest-flex' && definition.scenarioId === 'ocf-stress') {
     return incomeInvestFlexStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'income-invest-flex-vantage' && definition.scenarioId === 'baseline') {
+    return incomeInvestFlexVantageBaselinePolicy(snapshot, definition.variantId, id)
+  }
+  if (definition.productId === 'income-invest-flex-vantage' && definition.scenarioId === 'event-heavy') {
+    return incomeInvestFlexVantageEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'income-invest-flex-vantage' && definition.scenarioId === 'ocf-stress') {
+    return incomeInvestFlexVantageStressPolicy(snapshot, id)
   }
   if (definition.productId === 'income-invest-flex-trivantage' && definition.scenarioId === 'baseline') {
     return incomeInvestFlexTriVantageBaselinePolicy(snapshot, id)
