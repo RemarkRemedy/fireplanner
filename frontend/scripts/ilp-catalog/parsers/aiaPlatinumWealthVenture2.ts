@@ -250,9 +250,9 @@ export function parseAiaPlatinumWealthVenture2({ document, sourceChecksumSha256 
     sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:aia-platinum-wealth-venture-2-zero-regular-premium-charge',
       'branch:aia-platinum-wealth-venture-2-regular-supplementary-charge',
@@ -276,7 +276,7 @@ export function parseAiaPlatinumWealthVenture2({ document, sourceChecksumSha256 
       'aia-platinum-wealth-venture-2-reinstatement',
     ],
     warnings: [
-      'AIA Platinum Wealth Venture 2.0 is cataloged as a partial modeled subset in V1. The current parser models the regular-pay 5-year corridor: zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support, while bonuses, protection benefits, secondary-insured options, and fund-level charges remain outside the current engine.',
+      'AIA Platinum Wealth Venture 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support, while bonuses, protection benefits, secondary-insured options, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(document)],

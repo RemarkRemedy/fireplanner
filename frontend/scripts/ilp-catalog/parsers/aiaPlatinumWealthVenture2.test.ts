@@ -108,7 +108,7 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
 }
 
 describe('parseAiaPlatinumWealthVenture2', () => {
-  it('builds a valid regular-pay partial modeled-subset product from extracted summary text', async () => {
+  it('builds a valid regular-pay supported product from extracted summary text', async () => {
     const document = makeSyntheticDocument()
     const product = parseAiaPlatinumWealthVenture2({
       document,
@@ -118,7 +118,8 @@ describe('parseAiaPlatinumWealthVenture2', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('aia-platinum-wealth-venture-2')
     expect(product.productName).toBe('AIA Platinum Wealth Venture 2.0')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:aia-platinum-wealth-venture-2-zero-regular-premium-charge',
       'branch:aia-platinum-wealth-venture-2-regular-supplementary-charge',
@@ -188,6 +189,9 @@ describe('parseAiaPlatinumWealthVenture2', () => {
       ],
     })
     expect(variant.eecTable).toEqual([0.6, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0])
+    expect(product.warnings).toContain(
+      'AIA Platinum Wealth Venture 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support, while bonuses, protection benefits, secondary-insured options, and fund-level charges remain informational only.',
+    )
   })
 
   it.skipIf(!existsSync(SOURCE_PATH))('matches the live source PDF when the local corpus is available', async () => {

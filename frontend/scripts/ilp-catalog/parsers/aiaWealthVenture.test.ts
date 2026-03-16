@@ -100,7 +100,7 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
 }
 
 describe('parseAiaWealthVenture', () => {
-  it('builds a valid regular-pay partial modeled-subset product from extracted summary text', async () => {
+  it('builds a valid regular-pay supported product from extracted summary text', async () => {
     const document = makeSyntheticDocument()
     const product = parseAiaWealthVenture({
       document,
@@ -110,7 +110,8 @@ describe('parseAiaWealthVenture', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('aia-wealth-venture')
     expect(product.productName).toBe('AIA Wealth Venture')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:aia-wealth-venture-zero-regular-premium-charge',
       'branch:aia-wealth-venture-regular-supplementary-charge',
@@ -180,6 +181,9 @@ describe('parseAiaWealthVenture', () => {
       ],
     })
     expect(variant.eecTable).toEqual([0.7, 0.65, 0.6, 0.55, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05, 0])
+    expect(product.warnings).toContain(
+      'AIA Wealth Venture is cataloged as a supported V1 product for the regular-pay 8-year corridor. The parser captures zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support, while bonuses, protection benefits, secondary-insured options, and fund-level charges remain informational only.',
+    )
   })
 
   it.skipIf(!existsSync(SOURCE_PATH))('matches the live source PDF when the local corpus is available', async () => {

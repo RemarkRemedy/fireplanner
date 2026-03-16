@@ -31,6 +31,18 @@ export type GoldenCoverageTag =
   | 'branch:aia-elite-secure-income-5p-premium-holiday-charge'
   | 'branch:aia-elite-secure-income-5p-partial-withdrawal-charge'
   | 'branch:aia-elite-secure-income-5p-full-surrender-charge'
+  | 'branch:aia-wealth-venture-zero-regular-premium-charge'
+  | 'branch:aia-wealth-venture-regular-supplementary-charge'
+  | 'branch:aia-wealth-venture-top-up-premium-charge'
+  | 'branch:aia-wealth-venture-premium-holiday-charge'
+  | 'branch:aia-wealth-venture-partial-withdrawal-charge'
+  | 'branch:aia-wealth-venture-full-surrender-charge'
+  | 'branch:aia-platinum-wealth-venture-2-zero-regular-premium-charge'
+  | 'branch:aia-platinum-wealth-venture-2-regular-supplementary-charge'
+  | 'branch:aia-platinum-wealth-venture-2-top-up-premium-charge'
+  | 'branch:aia-platinum-wealth-venture-2-premium-holiday-charge'
+  | 'branch:aia-platinum-wealth-venture-2-partial-withdrawal-charge'
+  | 'branch:aia-platinum-wealth-venture-2-full-surrender-charge'
   | 'branch:hsbc-holiday-repayment'
   | 'branch:hsbc-holiday-no-repayment'
   | 'branch:hsbc-bonus-suspension'
@@ -2985,6 +2997,170 @@ function aiaEliteSecureIncome5PayStressPolicy(
   })
 }
 
+function aiaWealthVentureBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'aia-wealth-venture', 'sgd-mip-8', id, {
+    monthlyContribution: 900,
+    currentPolicyYear: 4,
+    monthsAlreadyPaid: 36,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden AIA Wealth Venture (SGD / MIP 8)',
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 24_000,
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function aiaWealthVentureBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaWealthVentureBasePolicy(snapshot, id, AIA_BALANCED_FUNDS, {
+    name: 'Golden AIA Wealth Venture (SGD / MIP 8 Baseline)',
+    distributionAssumption: {
+      mode: 'cash-payout',
+      source: 'manual-assumption',
+      annualYieldRate: 0.035,
+    },
+  })
+}
+
+function aiaWealthVentureEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaWealthVentureBasePolicy(snapshot, id, AIA_BALANCED_FUNDS, {
+    name: 'Golden AIA Wealth Venture (SGD / MIP 8 Event Heavy)',
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 37,
+        durationMonths: 4,
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 43,
+        durationMonths: 1,
+        amount: 9_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 48,
+        durationMonths: 1,
+        amount: 4_500,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function aiaWealthVentureStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaWealthVentureBasePolicy(snapshot, id, AIA_STRESS_FUNDS, {
+    name: 'Golden AIA Wealth Venture (SGD / MIP 8 OCF Stress)',
+  })
+}
+
+function aiaPlatinumWealthVenture2BasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'aia-platinum-wealth-venture-2', 'sgd-mip-5', id, {
+    monthlyContribution: 900,
+    currentPolicyYear: 3,
+    monthsAlreadyPaid: 24,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden AIA Platinum Wealth Venture 2.0 (SGD / MIP 5)',
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 22_000,
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function aiaPlatinumWealthVenture2BaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaPlatinumWealthVenture2BasePolicy(snapshot, id, AIA_BALANCED_FUNDS, {
+    name: 'Golden AIA Platinum Wealth Venture 2.0 (SGD / MIP 5 Baseline)',
+    distributionAssumption: {
+      mode: 'cash-payout',
+      source: 'manual-assumption',
+      annualYieldRate: 0.035,
+    },
+  })
+}
+
+function aiaPlatinumWealthVenture2EventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaPlatinumWealthVenture2BasePolicy(snapshot, id, AIA_BALANCED_FUNDS, {
+    name: 'Golden AIA Platinum Wealth Venture 2.0 (SGD / MIP 5 Event Heavy)',
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 25,
+        durationMonths: 3,
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 29,
+        durationMonths: 1,
+        amount: 8_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 33,
+        durationMonths: 1,
+        amount: 3_500,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function aiaPlatinumWealthVenture2StressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaPlatinumWealthVenture2BasePolicy(snapshot, id, AIA_STRESS_FUNDS, {
+    name: 'Golden AIA Platinum Wealth Venture 2.0 (SGD / MIP 5 OCF Stress)',
+  })
+}
+
 function etiqaTiqInvestBasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
@@ -4327,6 +4503,108 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: ['ocf-stress'],
     description: 'AIA Elite Secure Income - 5 Pay alternate-fund high-OCF stress scenario.',
+  },
+  {
+    productId: 'aia-wealth-venture',
+    variantId: 'sgd-mip-8',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'branch:aia-wealth-venture-zero-regular-premium-charge',
+      'branch:aia-wealth-venture-regular-supplementary-charge',
+      'branch:aia-wealth-venture-full-surrender-charge',
+    ],
+    description: 'AIA Wealth Venture baseline scenario proving the supported regular-pay corridor and cash-payout distribution assumption.',
+    integrityChecks: [
+      {
+        description: 'records positive annual fees under the supported supplementary-charge corridor',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+      {
+        description: 'pays positive annual distributions under the cash payout assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'aia-wealth-venture',
+    variantId: 'sgd-mip-8',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:aia-wealth-venture-top-up-premium-charge',
+      'branch:aia-wealth-venture-premium-holiday-charge',
+      'branch:aia-wealth-venture-partial-withdrawal-charge',
+    ],
+    description: 'AIA Wealth Venture event-heavy scenario covering premium holiday, top-up, and partial withdrawal on the supported regular-pay corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy produces a later withdrawal and top-up activity',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0 && row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+    ],
+  },
+  {
+    productId: 'aia-wealth-venture',
+    variantId: 'sgd-mip-8',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'AIA Wealth Venture alternate-fund high-OCF stress scenario.',
+  },
+  {
+    productId: 'aia-platinum-wealth-venture-2',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'branch:aia-platinum-wealth-venture-2-zero-regular-premium-charge',
+      'branch:aia-platinum-wealth-venture-2-regular-supplementary-charge',
+      'branch:aia-platinum-wealth-venture-2-full-surrender-charge',
+    ],
+    description: 'AIA Platinum Wealth Venture 2.0 baseline scenario proving the supported regular-pay corridor and cash-payout distribution assumption.',
+    integrityChecks: [
+      {
+        description: 'records positive annual fees under the supported supplementary-charge corridor',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+      {
+        description: 'pays positive annual distributions under the cash payout assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'aia-platinum-wealth-venture-2',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:aia-platinum-wealth-venture-2-top-up-premium-charge',
+      'branch:aia-platinum-wealth-venture-2-premium-holiday-charge',
+      'branch:aia-platinum-wealth-venture-2-partial-withdrawal-charge',
+    ],
+    description: 'AIA Platinum Wealth Venture 2.0 event-heavy scenario covering premium holiday, top-up, and partial withdrawal on the supported regular-pay corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy produces a later withdrawal and top-up activity',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0 && row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+    ],
+  },
+  {
+    productId: 'aia-platinum-wealth-venture-2',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'AIA Platinum Wealth Venture 2.0 alternate-fund high-OCF stress scenario.',
   },
   {
     productId: 'hsbc-life-wealth-accelerate',
@@ -7212,6 +7490,24 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'aia-elite-secure-income-5-pay' && definition.scenarioId === 'ocf-stress') {
     return aiaEliteSecureIncome5PayStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-wealth-venture' && definition.scenarioId === 'baseline') {
+    return aiaWealthVentureBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-wealth-venture' && definition.scenarioId === 'event-heavy') {
+    return aiaWealthVentureEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-wealth-venture' && definition.scenarioId === 'ocf-stress') {
+    return aiaWealthVentureStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-platinum-wealth-venture-2' && definition.scenarioId === 'baseline') {
+    return aiaPlatinumWealthVenture2BaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-platinum-wealth-venture-2' && definition.scenarioId === 'event-heavy') {
+    return aiaPlatinumWealthVenture2EventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-platinum-wealth-venture-2' && definition.scenarioId === 'ocf-stress') {
+    return aiaPlatinumWealthVenture2StressPolicy(snapshot, id)
   }
   if (definition.productId === 'hsbc-life-wealth-invest-cpf' && definition.scenarioId === 'baseline') {
     return hsbcWealthInvestCpfBaselinePolicy(snapshot, id)
