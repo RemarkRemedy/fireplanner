@@ -3896,7 +3896,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Monthly Protection Charge during the minimum investment period'))).toBe(true)
   })
 
-  it('maps Tokio Marine Harvest Max into a partial seed with executable initial, policy, and admin charge surfaces', () => {
+  it('maps Tokio Marine Harvest Max into a supported seed with executable initial, policy, and admin charge surfaces', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-harvest-max')
     expect(product).toBeDefined()
@@ -3905,8 +3905,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-admin-charge-on-initial-account')
@@ -4024,7 +4024,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
   })
 
-  it('maps Tokio Marine Harvest Max advanced-death into a partial seed with accrued Tokio MPC inputs', () => {
+  it('maps Tokio Marine Harvest Max advanced-death into a supported seed with accrued Tokio MPC inputs', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-harvest-max')
     expect(product).toBeDefined()
@@ -4033,7 +4033,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-harvest-max-advanced-death-monthly-protection-charge-accrual')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([

@@ -468,8 +468,8 @@ function buildVariant(
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      `This partial template models the SGD / MIP 15 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
-      'This partial template models regular-premium routing through year 15, top-up routing, recurring single premium routing, initial setup charge, policy charge, admin charge, the published bonus set, surrender charge, partial-withdrawal charge, and premium shortfall charge.',
+      `This supported template models the SGD / MIP 15 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
+      'This supported template models regular-premium routing through year 15, top-up routing, recurring single premium routing, initial setup charge, policy charge, admin charge, the published bonus set, surrender charge, partial-withdrawal charge, and premium shortfall charge.',
       ...(isAdvancedDeath
         ? [
             'The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window and policy-year-4 lump-sum settlement, after you enter the insured-life details and current net premium base.',
@@ -519,9 +519,9 @@ export function parseTokioMarineHarvestMax(context: ParseContext): IlpCatalogPro
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'tokio-initial-vs-accumulation-regular-premium-routing',
       'tokio-initial-bonus-tiered-premium-allocation',
@@ -555,7 +555,7 @@ export function parseTokioMarineHarvestMax(context: ParseContext): IlpCatalogPro
     warnings: [
       'Structured extraction validated against the Harvest Max product summary text layer.',
       'Harvest Max is modeled as split SGD / MIP 15 death-benefit-option variants with published initial setup charge, policy charge, admin charge, bonuses, and appendix charge tables.',
-      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-three-policy-years accrual window and policy-year-4 lump-sum settlement.',
+      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-three-policy-years accrual window and policy-year-4 lump-sum settlement after you enter the insured-life details and current net premium base.',
       'Performance investment bonus retains the published 102% performance-growth-measure gate as a manual review assumption.',
       'Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.',
       'Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary.',

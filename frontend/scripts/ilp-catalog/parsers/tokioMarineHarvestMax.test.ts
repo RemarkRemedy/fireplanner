@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseTokioMarineHarvestMax', () => {
-  it('builds a valid partial Harvest Max product from the source PDF', async () => {
+  it('builds a valid supported Harvest Max product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseTokioMarineHarvestMax({
       document,
@@ -23,8 +23,8 @@ describe('parseTokioMarineHarvestMax', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('tokio-marine-harvest-max')
     expect(product.productName).toBe('Harvest Max')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('tokio-admin-charge-on-initial-account')
     expect(product.modeledEconomics).toContain('branch:tokio-harvest-max-advanced-death-monthly-protection-charge-accrual')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
