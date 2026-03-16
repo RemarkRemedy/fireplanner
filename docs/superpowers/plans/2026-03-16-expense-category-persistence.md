@@ -551,12 +551,38 @@ git commit -m "feat: add retirement template selector with per-category multipli
 
 In `RefineFlowPage.tsx`, inside the `<SetupScreen>` component's children, add conditional rendering for the expenses flow:
 
-**Screen 1 (`expenses-breakdown`):**
+**Screen 1 (`expenses-breakdown`) — above-field content:**
+
+`SetupScreen` renders `{children}` BELOW all fields. The gap banner and property note
+must appear ABOVE the fields. Render them in RefineFlowPage BEFORE the `<SetupScreen>`:
+
 ```tsx
 {flowId === 'expenses' && currentScreen.id === 'expenses-breakdown' && (
-  <div className="space-y-3">
+  <>
+    {/* Property note — above SetupScreen */}
+    {ownsProperty && (
+      <p className="text-sm text-muted-foreground">
+        Housing costs are covered by your property plan (mortgage, maintenance). Enter your other monthly spending below.
+      </p>
+    )}
+    {!ownsProperty && plan.properties.some((p) => !p.ownsProperty) && (
+      <p className="text-sm text-muted-foreground">
+        Once you own property, housing costs will be tracked in your property plan instead.
+      </p>
+    )}
     {/* Gap banner */}
     <ExpenseGapBanner values={values} />
+  </>
+)}
+```
+
+This content goes between the flow explanation banner and the `<SetupScreen>` component.
+
+**Screen 1 — children (below fields):**
+```tsx
+{/* Inside SetupScreen children — renders after fields, before buttons */}
+{flowId === 'expenses' && currentScreen.id === 'expenses-breakdown' && (
+  <div className="space-y-3">
     {/* Running total */}
     <ExpenseRunningTotal values={values} />
   </div>
