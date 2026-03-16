@@ -126,7 +126,8 @@ export function ProjectionPage() {
   }, [location.state])
 
   const normalized = useNormalizedLegacyAnalysisContext()
-  const { rows: jointRows, summary: jointSummary, hasErrors } = useProjection()
+  const { rows: jointRows, summary: jointSummary, hasErrors, errors: crossStoreErrors } = useProjection()
+  const householdValidationErrors = useHouseholdPlanStore((s) => s.validationErrors)
   const { isEligible } = useExpenseTracker()
   useExpenseTrackerDwell(Boolean(jointRows && jointRows.length > 0), 10)
   const plan = useHouseholdPlanStore((s) => s.plan)
@@ -175,6 +176,79 @@ export function ProjectionPage() {
     }).length
   // eslint-disable-next-line react-hooks/exhaustive-deps -- completedNudgeFlows intentionally excluded; count is based on section status only
   }, [nudgeSections, setupPopulatedSections])
+
+  // Section-specific validation error links (Task 1)
+  const validationSections = useMemo(() => {
+    const sectionErrors: Record<string, string[]> = {}
+
+    const addError = (section: string, message: string) => {
+      if (!sectionErrors[section]) sectionErrors[section] = []
+      sectionErrors[section].push(message)
+    }
+
+    // Categorize household store validation errors (entity-keyed)
+    for (const [entityKey, fieldErrors] of Object.entries(householdValidationErrors)) {
+      const messages = Object.values(fieldErrors)
+      if (messages.length === 0) continue
+      const firstMsg = messages[0]
+
+      if (entityKey.startsWith('adult:')) {
+        // Sub-categorize adult fields
+        const fields = Object.keys(fieldErrors)
+        const hasCpf = fields.some((f) => f.includes('cpf'))
+        const hasProtection = fields.some((f) => f.includes('insurance') || f === 'cashSavings' || f.includes('nonMortgageDebt'))
+        const hasHealthcare = fields.some((f) => f.includes('healthcare'))
+        if (hasCpf) addError('CPF', firstMsg)
+        if (hasProtection) addError('Protection', firstMsg)
+        if (hasHealthcare) addError('Healthcare', firstMsg)
+        if (!hasCpf && !hasProtection && !hasHealthcare) addError('Personal Details', firstMsg)
+      } else if (entityKey.startsWith('income:')) {
+        addError('Income', firstMsg)
+      } else if (entityKey.startsWith('assumptions:')) {
+        addError('FIRE Settings', firstMsg)
+      } else if (entityKey.startsWith('property:')) {
+        addError('Property', firstMsg)
+      } else if (entityKey.startsWith('expense:') || entityKey.startsWith('goal:')) {
+        addError('Expenses', firstMsg)
+      }
+    }
+
+    // Categorize cross-store errors (flat keys from useProjection)
+    for (const [key, message] of Object.entries(crossStoreErrors)) {
+      if (key === 'retirementAge' || key === 'lifeExpectancy' || key === 'cpfLifeStartAge' || key === 'cpfMA') {
+        addError('Personal Details', message)
+      } else if (key.startsWith('incomeStream_') || key.startsWith('lifeEvent_') || key.startsWith('promotionJump_')) {
+        addError('Income', message)
+      } else if (key.startsWith('glidePathConfig') || key === 'targetWeights') {
+        addError('Allocation', message)
+      } else if (key.startsWith('goal_')) {
+        addError('Expenses', message)
+      } else if (key.startsWith('healthcareConfig')) {
+        addError('Healthcare', message)
+      } else {
+        addError('Personal Details', message)
+      }
+    }
+
+    // Map sections to route paths
+    const sectionPaths: Record<string, string> = {
+      'Personal Details': '/inputs#section-personal',
+      'Income': '/inputs#section-income',
+      'Allocation': '/inputs#section-allocation',
+      'CPF': '/inputs#section-cpf',
+      'Property': '/inputs#section-property',
+      'Protection': '/inputs#section-protection',
+      'Healthcare': '/inputs#section-healthcare',
+      'FIRE Settings': '/inputs#section-fire',
+      'Expenses': '/inputs#section-expenses',
+    }
+
+    return Object.entries(sectionErrors).map(([label, messages]) => ({
+      label,
+      path: sectionPaths[label] ?? '/inputs',
+      message: messages[0],
+    }))
+  }, [householdValidationErrors, crossStoreErrors])
 
   const isPerAdult = isMultiAdult && projectionView !== 'joint'
 
@@ -679,15 +753,16 @@ export function ProjectionPage() {
             Fix input errors before the projection can be computed.
           </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-            <Link to="/inputs#section-personal" className="text-sm text-destructive hover:underline font-medium">
-              Fix in Personal Details &rarr;
-            </Link>
-            <Link to="/inputs#section-income" className="text-sm text-destructive hover:underline font-medium">
-              Fix in Income &rarr;
-            </Link>
-            <Link to="/inputs#section-allocation" className="text-sm text-destructive hover:underline font-medium">
-              Fix in Allocation &rarr;
-            </Link>
+            {validationSections.map(({ label, path, message }) => (
+              <div key={path} className="flex flex-col">
+                <Link to={path} className="text-sm text-destructive hover:underline font-medium">
+                  Fix in {label} &rarr;
+                </Link>
+                {message && (
+                  <span className="text-xs text-destructive/80">{message}</span>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}
