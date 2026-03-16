@@ -4352,6 +4352,66 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Monthly Protection Charge'))).toBe(true)
   })
 
+  it('maps Tokio Marine #goLuxe basic-death into a partial seed with metadata-only protection charges', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-goluxe')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-15')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({ id: 'initial', feeRate: 0.03, postMipFeeRate: 0 }),
+      expect.objectContaining({ id: 'accumulation', feeRate: 0.0135, postMipFeeRate: 0.0135 }),
+      expect.objectContaining({ id: 'topup', feeRate: 0 }),
+    ])
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.05 }),
+        expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
+        expect.objectContaining({
+          id: 'premium-shortfall-charge-premium-holiday',
+          rateSchedule: [
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.5 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.45 },
+            { startPolicyYear: 6, endPolicyYear: 6, rate: 0.4 },
+            { startPolicyYear: 7, endPolicyYear: 7, rate: 0.35 },
+            { startPolicyYear: 8, endPolicyYear: 8, rate: 0.3 },
+            { startPolicyYear: 9, endPolicyYear: 9, rate: 0.25 },
+            { startPolicyYear: 10, endPolicyYear: 10, rate: 0.15 },
+            { startPolicyYear: 11, endPolicyYear: 15, rate: 0 },
+          ],
+        }),
+      ]),
+    )
+    expect(seed.chargeRules).toEqual([])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation', 'topup'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 15, accountIds: ['accumulation', 'topup'] },
+        { startPolicyYear: 16, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
+      ],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-dividend-payout-threshold-record-date-and-regular-withdrawal')
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('Basic Death keeps Monthly Protection Charge metadata-only'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
+  })
+
   it('maps Tokio Marine #goLuxe advanced-death into a partial seed with accrued Tokio MPC valuation accounts', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-goluxe')
