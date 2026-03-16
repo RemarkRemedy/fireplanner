@@ -13,6 +13,7 @@ interface RiskDimension {
   level: RiskLevel
   description: string
   recommendation: string
+  actionTarget?: { type: 'route' | 'drawer'; value: string }
 }
 
 /**
@@ -41,6 +42,7 @@ export function useRiskAssessment(): RiskDimension[] {
         recommendation: equityWeight > 0.7
           ? 'Consider a bond tent or reducing equity allocation in early retirement.'
           : 'Your equity allocation provides reasonable sequence risk protection.',
+        actionTarget: { type: 'route', value: '/inputs#section-allocation' },
       },
       {
         id: 'inflation',
@@ -50,6 +52,7 @@ export function useRiskAssessment(): RiskDimension[] {
         recommendation: profile.inflation >= 0.04
           ? 'Consider inflation-linked assets or a higher equity allocation.'
           : 'Your inflation assumption is reasonable for Singapore.',
+        actionTarget: { type: 'route', value: '/inputs#section-fire' },
       },
       {
         id: 'longevity',
@@ -59,6 +62,7 @@ export function useRiskAssessment(): RiskDimension[] {
         recommendation: retirementDuration > 35
           ? 'Consider CPF LIFE, annuities, or a lower SWR.'
           : 'Your retirement duration is within typical planning ranges.',
+        actionTarget: { type: 'route', value: '/inputs#section-personal' },
       },
       {
         id: 'currency',
@@ -68,6 +72,7 @@ export function useRiskAssessment(): RiskDimension[] {
         recommendation: allocation.currentWeights[0] > 0.5
           ? 'Diversify with SG equities, REITs, or bonds to reduce USD exposure.'
           : 'Your currency diversification is adequate.',
+        actionTarget: { type: 'route', value: '/inputs#section-allocation' },
       },
       (() => {
         // Use healthcare modeling if enabled, otherwise fall back to naive MA balance check
@@ -83,6 +88,7 @@ export function useRiskAssessment(): RiskDimension[] {
               : avgAnnualCash > 5000
                 ? 'Your healthcare costs are moderate. Review ISP coverage periodically.'
                 : 'Your healthcare costs are well covered by MediSave.',
+            actionTarget: { type: 'drawer' as const, value: 'healthcare' },
           }
         }
         if (profile.healthcareConfig?.enabled) {
@@ -104,6 +110,7 @@ export function useRiskAssessment(): RiskDimension[] {
               : avgAnnualCash > 5000
                 ? 'Your healthcare costs are moderate. Review ISP coverage periodically.'
                 : 'Your healthcare costs are well covered by MediSave.',
+            actionTarget: { type: 'drawer' as const, value: 'healthcare' },
           }
         }
         return {
@@ -114,6 +121,7 @@ export function useRiskAssessment(): RiskDimension[] {
           recommendation: profile.cpfMA < 50000
             ? 'Build up CPF MediSave and consider MediShield Life supplements.'
             : 'Your MediSave balance provides a reasonable buffer.',
+          actionTarget: { type: 'drawer' as const, value: 'healthcare' },
         }
       })(),
       {
@@ -124,6 +132,7 @@ export function useRiskAssessment(): RiskDimension[] {
         recommendation: Math.max(...allocation.currentWeights) > 0.5
           ? 'Diversify across more asset classes to reduce concentration risk.'
           : 'Your portfolio is well diversified.',
+        actionTarget: { type: 'route', value: '/inputs#section-allocation' },
       },
     ]
 
