@@ -6322,7 +6322,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:tokio-locked-in-protection-state')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goelite-secure-establishment-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goelite-secure-surrender-charge')

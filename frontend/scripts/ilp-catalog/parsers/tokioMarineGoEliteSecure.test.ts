@@ -191,7 +191,7 @@ function expectSecureMpcVariantShape(variant: ReturnType<typeof parseTokioMarine
 }
 
 describe('parseTokioMarineGoEliteSecure', () => {
-  it('builds a valid partial modeled-subset product from extracted summary text', async () => {
+  it('builds a valid supported product from extracted summary text', async () => {
     const document = makeSyntheticDocument()
     const product = parseTokioMarineGoEliteSecure({
       document,
@@ -201,7 +201,8 @@ describe('parseTokioMarineGoEliteSecure', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('tokio-marine-goelite-secure')
     expect(product.productName).toBe('#goElite Secure')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:tokio-marine-goelite-secure-zero-single-premium-charge',
       'branch:tokio-marine-goelite-secure-establishment-charge',
@@ -219,7 +220,7 @@ describe('parseTokioMarineGoEliteSecure', () => {
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-adjusted-single-premium')
     expect(product.metadataOnlyBehaviors).toContain('tokio-marine-goelite-secure-death-benefit')
     expect(product.warnings).toEqual([
-      expect.stringContaining('cash-vs-SRS distribution-mode support surface'),
+      expect.stringContaining('supported V1 product'),
       expect.stringContaining('death-benefit floor logic across Locked-in Policy Value and Adjusted Single Premium'),
     ])
 
@@ -302,7 +303,7 @@ describe('parseTokioMarineGoEliteSecure', () => {
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-locked-in-policy-value')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-adjusted-single-premium')
     expect(product.warnings).toEqual([
-      expect.stringContaining('cash-vs-SRS distribution-mode support surface'),
+      expect.stringContaining('supported V1 product'),
       expect.stringContaining('death-benefit floor logic across Locked-in Policy Value and Adjusted Single Premium'),
     ])
     const mpcRule = product.variants[0].feeRules.find((rule) => rule.id === 'monthly-protection-charge')
