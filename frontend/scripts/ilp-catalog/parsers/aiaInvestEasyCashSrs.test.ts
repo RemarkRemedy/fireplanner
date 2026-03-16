@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseAiaInvestEasyCashSrs', () => {
-  it('builds a valid open-ended partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid open-ended supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseAiaInvestEasyCashSrs({
       document,
@@ -23,7 +23,8 @@ describe('parseAiaInvestEasyCashSrs', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('aia-invest-easy-cash-srs')
     expect(product.productName).toBe('AIA Invest Easy (Cash/SRS)')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:aia-invest-easy-cash-srs-three-percent-single-premium-charge',
       'branch:aia-invest-easy-cash-srs-three-percent-top-up-charge',

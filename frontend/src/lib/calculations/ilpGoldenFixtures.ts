@@ -12,6 +12,12 @@ export type GoldenCoverageTag =
   | 'baseline'
   | 'event-heavy'
   | 'ocf-stress'
+  | 'branch:aia-invest-easy-cash-srs-three-percent-single-premium-charge'
+  | 'branch:aia-invest-easy-cash-srs-three-percent-top-up-charge'
+  | 'branch:aia-invest-easy-cash-srs-three-percent-recurring-single-premium-charge'
+  | 'branch:aia-invest-easy-cpf-zero-single-premium-charge'
+  | 'branch:aia-invest-easy-cpf-zero-top-up-charge'
+  | 'branch:aia-invest-easy-cpf-zero-recurring-single-premium-charge'
   | 'branch:hsbc-holiday-repayment'
   | 'branch:hsbc-holiday-no-repayment'
   | 'branch:hsbc-bonus-suspension'
@@ -223,6 +229,44 @@ const INCOME_STRESS_FUNDS: IlpFund[] = [
     grossReturnLow: 0.028,
     grossReturnMid: 0.05,
     grossReturnHigh: 0.068,
+  },
+]
+
+const AIA_BALANCED_FUNDS: IlpFund[] = [
+  {
+    name: 'AIA Global Growth',
+    allocation: 0.6,
+    ocf: 0.013,
+    grossReturnLow: 0.045,
+    grossReturnMid: 0.074,
+    grossReturnHigh: 0.1,
+  },
+  {
+    name: 'AIA Income Opportunities',
+    allocation: 0.4,
+    ocf: 0.01,
+    grossReturnLow: 0.03,
+    grossReturnMid: 0.052,
+    grossReturnHigh: 0.07,
+  },
+]
+
+const AIA_STRESS_FUNDS: IlpFund[] = [
+  {
+    name: 'AIA Emerging Leaders',
+    allocation: 0.68,
+    ocf: 0.024,
+    grossReturnLow: 0.038,
+    grossReturnMid: 0.08,
+    grossReturnHigh: 0.117,
+  },
+  {
+    name: 'AIA Alternative Income',
+    allocation: 0.32,
+    ocf: 0.019,
+    grossReturnLow: 0.027,
+    grossReturnMid: 0.049,
+    grossReturnHigh: 0.067,
   },
 ]
 
@@ -1393,6 +1437,116 @@ function hsbcWealthInvestCpfStressPolicy(
   })
 }
 
+function aiaInvestEasyBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  productId: 'aia-invest-easy-cash-srs' | 'aia-invest-easy-cpf',
+  variantId: 'sgd-open-ended-cash-srs' | 'sgd-open-ended-cpf',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, productId, variantId, id, {
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: productId === 'aia-invest-easy-cpf'
+        ? 'Golden AIA Invest Easy (CPF) (SGD / Open-ended CPF)'
+        : 'Golden AIA Invest Easy (Cash/SRS) (SGD / Open-ended Cash Srs)',
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function aiaInvestEasyCashSrsBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaInvestEasyBasePolicy(snapshot, 'aia-invest-easy-cash-srs', 'sgd-open-ended-cash-srs', id, AIA_BALANCED_FUNDS)
+}
+
+function aiaInvestEasyCashSrsEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaInvestEasyBasePolicy(snapshot, 'aia-invest-easy-cash-srs', 'sgd-open-ended-cash-srs', id, AIA_BALANCED_FUNDS, {
+    name: 'Golden AIA Invest Easy (Cash/SRS) (SGD / Open-ended Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 6,
+        durationMonths: 1,
+        amount: 10_000,
+      },
+      {
+        id: 'rsp-1',
+        type: 'recurring-single-premium',
+        startPolicyMonth: 7,
+        durationMonths: 6,
+        amount: 500,
+      },
+    ],
+  })
+}
+
+function aiaInvestEasyCashSrsStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaInvestEasyBasePolicy(snapshot, 'aia-invest-easy-cash-srs', 'sgd-open-ended-cash-srs', id, AIA_STRESS_FUNDS, {
+    name: 'Golden AIA Invest Easy (Cash/SRS) (SGD / Open-ended OCF Stress)',
+  })
+}
+
+function aiaInvestEasyCpfBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaInvestEasyBasePolicy(snapshot, 'aia-invest-easy-cpf', 'sgd-open-ended-cpf', id, AIA_BALANCED_FUNDS)
+}
+
+function aiaInvestEasyCpfEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaInvestEasyBasePolicy(snapshot, 'aia-invest-easy-cpf', 'sgd-open-ended-cpf', id, AIA_BALANCED_FUNDS, {
+    name: 'Golden AIA Invest Easy (CPF) (SGD / Open-ended Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 6,
+        durationMonths: 1,
+        amount: 10_000,
+      },
+      {
+        id: 'rsp-1',
+        type: 'recurring-single-premium',
+        startPolicyMonth: 7,
+        durationMonths: 6,
+        amount: 500,
+      },
+    ],
+  })
+}
+
+function aiaInvestEasyCpfStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaInvestEasyBasePolicy(snapshot, 'aia-invest-easy-cpf', 'sgd-open-ended-cpf', id, AIA_STRESS_FUNDS, {
+    name: 'Golden AIA Invest Easy (CPF) (SGD / Open-ended OCF Stress)',
+  })
+}
+
 function greatEasternGiaSpBasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   variantId: 'sgd-open-ended-cash-or-srs' | 'sgd-open-ended-cpfis',
@@ -2281,6 +2435,64 @@ function tokioWealthProStructuralProofPolicy(snapshot: Pick<IlpCatalogSnapshot, 
 }
 
 const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
+  {
+    productId: 'aia-invest-easy-cash-srs',
+    variantId: 'sgd-open-ended-cash-srs',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'branch:aia-invest-easy-cash-srs-three-percent-single-premium-charge'],
+    description: 'AIA Invest Easy (Cash/SRS) baseline scenario proving the supported 3% single-premium corridor.',
+  },
+  {
+    productId: 'aia-invest-easy-cash-srs',
+    variantId: 'sgd-open-ended-cash-srs',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:aia-invest-easy-cash-srs-three-percent-top-up-charge',
+      'branch:aia-invest-easy-cash-srs-three-percent-recurring-single-premium-charge',
+      'tokio-recurring-single-premium-routing',
+    ],
+    description: 'AIA Invest Easy (Cash/SRS) supported event-heavy scenario covering 3% top-up and recurring-top-up charges.',
+  },
+  {
+    productId: 'aia-invest-easy-cash-srs',
+    variantId: 'sgd-open-ended-cash-srs',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'AIA Invest Easy (Cash/SRS) alternate-fund stress scenario through the open-ended no-MIP basis.',
+  },
+  {
+    productId: 'aia-invest-easy-cpf',
+    variantId: 'sgd-open-ended-cpf',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'branch:aia-invest-easy-cpf-zero-single-premium-charge'],
+    description: 'AIA Invest Easy (CPF) baseline scenario proving zero-charge initial single-premium seeding.',
+  },
+  {
+    productId: 'aia-invest-easy-cpf',
+    variantId: 'sgd-open-ended-cpf',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:aia-invest-easy-cpf-zero-top-up-charge',
+      'branch:aia-invest-easy-cpf-zero-recurring-single-premium-charge',
+      'tokio-recurring-single-premium-routing',
+    ],
+    description: 'AIA Invest Easy (CPF) supported event-heavy scenario covering zero-charge top-up and recurring-top-up routing.',
+  },
+  {
+    productId: 'aia-invest-easy-cpf',
+    variantId: 'sgd-open-ended-cpf',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'AIA Invest Easy (CPF) alternate-fund stress scenario through the open-ended no-MIP basis.',
+  },
   {
     productId: 'hsbc-life-wealth-accelerate',
     variantId: 'sgd-mip-25',
@@ -3959,6 +4171,24 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'income-wealthlink-gl3' && definition.scenarioId === 'ocf-stress') {
     return incomeWealthLinkGl3StressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-invest-easy-cash-srs' && definition.scenarioId === 'baseline') {
+    return aiaInvestEasyCashSrsBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-invest-easy-cash-srs' && definition.scenarioId === 'event-heavy') {
+    return aiaInvestEasyCashSrsEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-invest-easy-cash-srs' && definition.scenarioId === 'ocf-stress') {
+    return aiaInvestEasyCashSrsStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-invest-easy-cpf' && definition.scenarioId === 'baseline') {
+    return aiaInvestEasyCpfBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-invest-easy-cpf' && definition.scenarioId === 'event-heavy') {
+    return aiaInvestEasyCpfEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-invest-easy-cpf' && definition.scenarioId === 'ocf-stress') {
+    return aiaInvestEasyCpfStressPolicy(snapshot, id)
   }
   if (definition.productId === 'hsbc-life-wealth-invest-cpf' && definition.scenarioId === 'baseline') {
     return hsbcWealthInvestCpfBaselinePolicy(snapshot, id)

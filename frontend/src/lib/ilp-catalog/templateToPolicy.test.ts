@@ -1460,7 +1460,7 @@ describe('templateVariantToPolicySeed', () => {
     )
   })
 
-  it('maps AIA Invest Easy (Cash/SRS) into a partial seed with recurring top-up routing', () => {
+  it('maps AIA Invest Easy (Cash/SRS) into a supported seed with recurring top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'aia-invest-easy-cash-srs')
     expect(product).toBeDefined()
@@ -1470,12 +1470,24 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('AIA Invest Easy (Cash/SRS) (SGD / Open-ended (Cash Srs))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-invest-easy-cash-srs-three-percent-recurring-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-recurring-single-premium-routing')
+    expect(seed.monthlyContribution).toBe(0)
+    expect(seed.initialSinglePremium).toBe(0)
     expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'single-premium-charge',
+        basis: 'initial-single-premium',
+        appliesTo: ['policy'],
+        rate: 0.03,
+        amount: 0,
+      }),
     ])
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({
@@ -1492,9 +1504,10 @@ describe('templateVariantToPolicySeed', () => {
         rate: 0.03,
       }),
     ])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('gross initial single premium'))).toBe(true)
   })
 
-  it('maps AIA Invest Easy (CPF) into a partial seed with zero-charge recurring top-up routing', () => {
+  it('maps AIA Invest Easy (CPF) into a supported seed with zero-charge recurring top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'aia-invest-easy-cpf')
     expect(product).toBeDefined()
@@ -1504,12 +1517,24 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('AIA Invest Easy (CPF) (SGD / Open-ended (Cpf))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-invest-easy-cpf-zero-recurring-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-recurring-single-premium-routing')
+    expect(seed.monthlyContribution).toBe(0)
+    expect(seed.initialSinglePremium).toBe(0)
     expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'single-premium-charge',
+        basis: 'initial-single-premium',
+        appliesTo: ['policy'],
+        rate: 0,
+        amount: 0,
+      }),
     ])
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({
@@ -1526,6 +1551,7 @@ describe('templateVariantToPolicySeed', () => {
         rate: 0,
       }),
     ])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('gross initial single premium'))).toBe(true)
   })
 
   it('maps Tiq Invest into a partial seed with recurring top-up routing', () => {
