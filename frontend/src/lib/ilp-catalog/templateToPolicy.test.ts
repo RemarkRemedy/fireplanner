@@ -4878,7 +4878,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
   })
 
-  it('maps Tokio Marine #goAffluence into a partial seed with executable initial-charge and policy-charge rules', () => {
+  it('maps Tokio Marine #goAffluence into a supported seed with executable initial-charge and policy-charge rules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-goaffluence')
     expect(product).toBeDefined()
@@ -4887,7 +4887,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
@@ -4959,7 +4959,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
   })
 
-  it('maps Tokio Marine #goAffluence advanced-death into a partial seed with accrued Tokio MPC valuation accounts', () => {
+  it('maps Tokio Marine #goAffluence advanced-death into a supported seed with accrued Tokio MPC valuation accounts', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-goaffluence')
     expect(product).toBeDefined()
@@ -4968,7 +4968,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-goaffluence-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
