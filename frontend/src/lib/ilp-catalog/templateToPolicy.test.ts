@@ -5909,7 +5909,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
-  it('maps ManuInvest Duo into a partial seed with protected-base assurance support', () => {
+  it('maps ManuInvest Duo into a supported seed with protected-base assurance and distribution support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'manulife-manuinvest-duo')
     expect(product).toBeDefined()
@@ -5918,9 +5918,12 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manuinvest-duo-partial-withdrawal-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manuinvest-duo-full-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manuinvest-duo-premium-flexibility-benefit')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(10)
@@ -5949,8 +5952,27 @@ describe('templateVariantToPolicySeed', () => {
         basis: 'event-amount',
         rate: 0,
       }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
+      }),
     ])
+    expect(seed.eecTable).toEqual([1, 1, 0.8, 0.63, 0.55, 0.47, 0.4, 0.3, 0.2, 0.08])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current sum insured'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
   it('maps AIA Pro Achiever 3.0 into a supported seed with premium-year charge schedules', () => {

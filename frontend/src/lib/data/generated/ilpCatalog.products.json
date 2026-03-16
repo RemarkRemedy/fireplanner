@@ -17552,29 +17552,33 @@
     "sourceChecksumSha256": "2f0ce16b099d6acfab82b1392cfec23eb5df34bea32a0ab29fd52ed42fffa1ae",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
       "kernel:protected-base-assurance",
       "branch:manuinvest-duo-administrative-charge",
-      "branch:manuinvest-duo-zero-top-up-charge"
+      "branch:manuinvest-duo-zero-top-up-charge",
+      "branch:manuinvest-duo-partial-withdrawal-charge",
+      "branch:manuinvest-duo-full-surrender-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "manuinvest-duo-welcome-bonus",
       "manuinvest-duo-loyalty-bonus",
       "manuinvest-duo-premium-shortfall-charge",
       "manuinvest-duo-premium-flexibility-benefit",
-      "manuinvest-duo-partial-withdrawal-charge",
-      "manuinvest-duo-surrender-charge",
+      "manuinvest-duo-withdrawal-flexibility-charge-threshold",
       "manuinvest-duo-benefit-payout-handling",
+      "manuinvest-duo-dividend-payout-threshold",
+      "manuinvest-duo-reinvested-dividend-withdrawals",
       "manuinvest-duo-fund-management-charge",
       "manuinvest-duo-fund-switching-and-redirection",
       "manuinvest-duo-sum-insured-change",
       "manuinvest-duo-life-insured-change"
     ],
     "warnings": [
-      "ManuInvest Duo is cataloged as a partial modeled subset in V1. The parser captures the published 10-year MIP administration-charge path, the protected-base death / TI / TPD cost-of-insurance formula after you enter insured-life details and current sum insured, and the prevailing 0% top-up charge, while bonus mechanics, premium-flexibility shortfall behavior, withdrawal / surrender charges, and fund-level charges remain outside the current engine."
+      "ManuInvest Duo is cataloged as a supported V1 corridor. The parser captures the published 5.00% / 1.00% administration-charge path, the protected-base death / TI / TPD cost-of-insurance formula after you enter insured-life details and current sum insured, the prevailing 0% top-up charge, the MIP withdrawal / surrender charge schedules, and the reinvest-default distribution-mode assumption surface, while bonus mechanics, premium-flexibility shortfall behavior, withdrawal-flexibility fee handling, dividend thresholds, benefit payouts, and fund-level charges remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -17687,19 +17691,134 @@
                 "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of a regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. "
               }
             ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.63
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.55
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.47
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 10-year MIP partial-withdrawal charge schedule.",
+              "The S$50 withdrawal-flexibility fee corridor after the 5th policy anniversary remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Partial withdrawal charge and surrender charge",
+                "excerpt": "4. Partial Withdrawal Charge Partial withdrawal charge applies if you request for partial withdrawal during the Minimum Investment Period. It will be calculated as a percentage of the account value that you requested to "
+              },
+              {
+                "page": 9,
+                "section": "Premium Flexibility Benefit and withdrawals",
+                "excerpt": "6. Premium Flexibility Benefit th Starting from 6 policy year until the end of Minimum Investment Period, Premium Flexibility Benefit will be activated automatically when regular premium is not paid within the grace peri"
+              }
+            ]
           }
         ],
-        "eecTable": [],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying funds may be reinvested or paid out in cash, subject to the product summary minimum payout amount.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 14,
+              "section": "Distribution of Dividend",
+              "excerpt": "Approximate excerpt; keyword \"If you choose to invest in any fund(s) that pays dividends\" not found on page. ManuInvest Duo (d) riot, insurrection, civil commotion, strikes or terrorist activities, whether or not the lif"
+            }
+          ]
+        },
+        "eecTable": [
+          1,
+          1,
+          0.8,
+          0.63,
+          0.55,
+          0.47,
+          0.4,
+          0.3,
+          0.2,
+          0.08
+        ],
         "warnings": [
-          "ManuInvest Duo is cataloged as a partial modeled subset in V1. The parser captures the 10-year MIP corridor: the published 5.00% / 1.00% administration-charge path, the protected-base cost-of-insurance formula after you enter insured-life details and current sum insured, and the prevailing 0% top-up charge.",
+          "ManuInvest Duo is cataloged as a supported V1 corridor for the 10-year MIP. The parser captures the published 5.00% / 1.00% administration-charge path, the protected-base cost-of-insurance formula after you enter insured-life details and current sum insured, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
           "Premium shortfall charging remains metadata-only because Premium Flexibility Benefit waives the published shortfall charge up to a cumulative missed-premium limit that the current event kernel does not yet track.",
-          "Welcome Bonus, Loyalty Bonus, surrender / partial-withdrawal charges, and fund-level management charges remain outside the current engine."
+          "Welcome Bonus, Loyalty Bonus, withdrawal-flexibility fee handling, dividend threshold behavior, and fund-level management charges remain informational only.",
+          "Dividend-paying funds seed reinvestment by default in V1. Cash payout requires a manual annual distribution-yield assumption and the published $40 minimum payout threshold remains informational only."
         ],
         "unsupportedItems": [
           "Death, terminal-illness, and TPD benefit payout handling remain informational only beyond the modeled cost-of-insurance deduction.",
           "Welcome Bonus and Loyalty Bonus remain informational only.",
           "Premium shortfall charge and Premium Flexibility Benefit remain informational only because they depend on a cumulative missed-premium allowance ledger.",
-          "Full-surrender and partial-withdrawal charge schedules remain informational only, including the S$50 withdrawal-floor rule and withdrawal-flexibility threshold.",
+          "The S$50 withdrawal-flexibility fee corridor and the published aggregate annual withdrawal cap remain informational only.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
           "Fund-switching, premium redirection, automatic rebalancing, and payment-mode changes remain informational only.",
           "Change-of-sum-insured and change-of-life-insured options remain informational only."
@@ -17716,9 +17835,303 @@
             "excerpt": "1. Cost of Insurance The cost of insurance is levied on the policy on a monthly basis by cancelling units of your fund(s) to provide for the insurance coverage. The cost of insurance is based on the attained age, gender,"
           },
           {
-            "page": 7,
-            "section": "Premium shortfall charge and management charge",
-            "excerpt": "5. Premium Shortfall Charge If you miss paying regular basic premium during the Minimum Investment Period, we will apply a premium shortfall charge on a monthly basis starting from the first working day after the end of "
+            "page": 8,
+            "section": "Top-up premium option",
+            "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of a regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. "
+          },
+          {
+            "page": 9,
+            "section": "Premium Flexibility Benefit and withdrawals",
+            "excerpt": "6. Premium Flexibility Benefit th Starting from 6 policy year until the end of Minimum Investment Period, Premium Flexibility Benefit will be activated automatically when regular premium is not paid within the grace peri"
+          },
+          {
+            "page": 14,
+            "section": "Distribution of Dividend",
+            "excerpt": "Approximate excerpt; keyword \"If you choose to invest in any fund(s) that pays dividends\" not found on page. ManuInvest Duo (d) riot, insurrection, civil commotion, strikes or terrorist activities, whether or not the lif"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-15",
+        "currency": "SGD",
+        "mipLength": 15,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.05,
+            "postMipFeeRate": 0.01,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "ManuInvest Duo is a regular-premium investment-linked plan that is designed to give you the dual benefits of insurance cover and investment opportunities. It also gives you the flexibility to choose your own protection c"
+              },
+              {
+                "page": 5,
+                "section": "COI and administrative charge",
+                "excerpt": "1. Cost of Insurance The cost of insurance is levied on the policy on a monthly basis by cancelling units of your fund(s) to provide for the insurance coverage. The cost of insurance is based on the attained age, gender,"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium option",
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of a regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. "
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "cost-of-insurance",
+            "label": "Cost of Insurance (Death / TI / TPD)",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "manulife-manuinvest-duo-death-ti-tpd",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details plus the current sum insured before the calculator can model the annualised cost of insurance.",
+              "Models the published death / terminal illness / TPD NAAR formula of [sum insured less partial withdrawals] less account value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "ManuInvest Duo is a regular-premium investment-linked plan that is designed to give you the dual benefits of insurance cover and investment opportunities. It also gives you the flexibility to choose your own protection c"
+              },
+              {
+                "page": 5,
+                "section": "COI and administrative charge",
+                "excerpt": "1. Cost of Insurance The cost of insurance is levied on the policy on a monthly basis by cancelling units of your fund(s) to provide for the insurance coverage. The cost of insurance is based on the attained age, gender,"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published prevailing 0% top-up charge for the selected 10-year MIP corridor."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Top-up premium option",
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of a regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. "
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.83
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.68
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.61
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.55
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 15-year MIP partial-withdrawal charge schedule.",
+              "The S$50 withdrawal-flexibility fee corridor after the 5th policy anniversary remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Partial withdrawal charge and surrender charge",
+                "excerpt": "4. Partial Withdrawal Charge Partial withdrawal charge applies if you request for partial withdrawal during the Minimum Investment Period. It will be calculated as a percentage of the account value that you requested to "
+              },
+              {
+                "page": 9,
+                "section": "Premium Flexibility Benefit and withdrawals",
+                "excerpt": "6. Premium Flexibility Benefit th Starting from 6 policy year until the end of Minimum Investment Period, Premium Flexibility Benefit will be activated automatically when regular premium is not paid within the grace peri"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying funds may be reinvested or paid out in cash, subject to the product summary minimum payout amount.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 14,
+              "section": "Distribution of Dividend",
+              "excerpt": "Approximate excerpt; keyword \"If you choose to invest in any fund(s) that pays dividends\" not found on page. ManuInvest Duo (d) riot, insurrection, civil commotion, strikes or terrorist activities, whether or not the lif"
+            }
+          ]
+        },
+        "eecTable": [
+          1,
+          1,
+          0.83,
+          0.68,
+          0.61,
+          0.55,
+          0.5,
+          0.45,
+          0.4,
+          0.35,
+          0.3,
+          0.25,
+          0.2,
+          0.15,
+          0.08
+        ],
+        "warnings": [
+          "ManuInvest Duo is cataloged as a supported V1 corridor for the 15-year MIP. The parser captures the published 5.00% / 1.00% administration-charge path, the protected-base cost-of-insurance formula after you enter insured-life details and current sum insured, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "Premium shortfall charging remains metadata-only because Premium Flexibility Benefit waives the published shortfall charge up to a cumulative missed-premium limit that the current event kernel does not yet track.",
+          "Welcome Bonus, Loyalty Bonus, withdrawal-flexibility fee handling, dividend threshold behavior, and fund-level management charges remain informational only.",
+          "Dividend-paying funds seed reinvestment by default in V1. Cash payout requires a manual annual distribution-yield assumption and the published $40 minimum payout threshold remains informational only."
+        ],
+        "unsupportedItems": [
+          "Death, terminal-illness, and TPD benefit payout handling remain informational only beyond the modeled cost-of-insurance deduction.",
+          "Welcome Bonus and Loyalty Bonus remain informational only.",
+          "Premium shortfall charge and Premium Flexibility Benefit remain informational only because they depend on a cumulative missed-premium allowance ledger.",
+          "The S$50 withdrawal-flexibility fee corridor and the published aggregate annual withdrawal cap remain informational only.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
+          "Fund-switching, premium redirection, automatic rebalancing, and payment-mode changes remain informational only.",
+          "Change-of-sum-insured and change-of-life-insured options remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description and death benefit",
+            "excerpt": "ManuInvest Duo is a regular-premium investment-linked plan that is designed to give you the dual benefits of insurance cover and investment opportunities. It also gives you the flexibility to choose your own protection c"
+          },
+          {
+            "page": 5,
+            "section": "COI and administrative charge",
+            "excerpt": "1. Cost of Insurance The cost of insurance is levied on the policy on a monthly basis by cancelling units of your fund(s) to provide for the insurance coverage. The cost of insurance is based on the attained age, gender,"
           },
           {
             "page": 8,
@@ -17729,6 +18142,340 @@
             "page": 9,
             "section": "Premium Flexibility Benefit and withdrawals",
             "excerpt": "6. Premium Flexibility Benefit th Starting from 6 policy year until the end of Minimum Investment Period, Premium Flexibility Benefit will be activated automatically when regular premium is not paid within the grace peri"
+          },
+          {
+            "page": 14,
+            "section": "Distribution of Dividend",
+            "excerpt": "Approximate excerpt; keyword \"If you choose to invest in any fund(s) that pays dividends\" not found on page. ManuInvest Duo (d) riot, insurrection, civil commotion, strikes or terrorist activities, whether or not the lif"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-20",
+        "currency": "SGD",
+        "mipLength": 20,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Policy Account",
+            "feeRate": 0.05,
+            "postMipFeeRate": 0.01,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "ManuInvest Duo is a regular-premium investment-linked plan that is designed to give you the dual benefits of insurance cover and investment opportunities. It also gives you the flexibility to choose your own protection c"
+              },
+              {
+                "page": 5,
+                "section": "COI and administrative charge",
+                "excerpt": "1. Cost of Insurance The cost of insurance is levied on the policy on a monthly basis by cancelling units of your fund(s) to provide for the insurance coverage. The cost of insurance is based on the attained age, gender,"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium option",
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of a regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. "
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "cost-of-insurance",
+            "label": "Cost of Insurance (Death / TI / TPD)",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "manulife-manuinvest-duo-death-ti-tpd",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": null,
+            "notes": [
+              "Requires insured-life details plus the current sum insured before the calculator can model the annualised cost of insurance.",
+              "Models the published death / terminal illness / TPD NAAR formula of [sum insured less partial withdrawals] less account value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Product description and death benefit",
+                "excerpt": "ManuInvest Duo is a regular-premium investment-linked plan that is designed to give you the dual benefits of insurance cover and investment opportunities. It also gives you the flexibility to choose your own protection c"
+              },
+              {
+                "page": 5,
+                "section": "COI and administrative charge",
+                "excerpt": "1. Cost of Insurance The cost of insurance is levied on the policy on a monthly basis by cancelling units of your fund(s) to provide for the insurance coverage. The cost of insurance is based on the attained age, gender,"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published prevailing 0% top-up charge for the selected 10-year MIP corridor."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Top-up premium option",
+                "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of a regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. "
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.9
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.81
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.71
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.65
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.59
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.53
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.48
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.43
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.38
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.34
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.26
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.22
+              },
+              {
+                "startPolicyYear": 16,
+                "endPolicyYear": 16,
+                "rate": 0.18
+              },
+              {
+                "startPolicyYear": 17,
+                "endPolicyYear": 17,
+                "rate": 0.14
+              },
+              {
+                "startPolicyYear": 18,
+                "endPolicyYear": 18,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 19,
+                "endPolicyYear": 19,
+                "rate": 0.09
+              },
+              {
+                "startPolicyYear": 20,
+                "endPolicyYear": 20,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 20-year MIP partial-withdrawal charge schedule.",
+              "The S$50 withdrawal-flexibility fee corridor after the 5th policy anniversary remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Partial withdrawal charge and surrender charge",
+                "excerpt": "4. Partial Withdrawal Charge Partial withdrawal charge applies if you request for partial withdrawal during the Minimum Investment Period. It will be calculated as a percentage of the account value that you requested to "
+              },
+              {
+                "page": 9,
+                "section": "Premium Flexibility Benefit and withdrawals",
+                "excerpt": "6. Premium Flexibility Benefit th Starting from 6 policy year until the end of Minimum Investment Period, Premium Flexibility Benefit will be activated automatically when regular premium is not paid within the grace peri"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "policy"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying funds may be reinvested or paid out in cash, subject to the product summary minimum payout amount.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+          ],
+          "sourceRefs": [
+            {
+              "page": 14,
+              "section": "Distribution of Dividend",
+              "excerpt": "Approximate excerpt; keyword \"If you choose to invest in any fund(s) that pays dividends\" not found on page. ManuInvest Duo (d) riot, insurrection, civil commotion, strikes or terrorist activities, whether or not the lif"
+            }
+          ]
+        },
+        "eecTable": [
+          1,
+          1,
+          0.9,
+          0.81,
+          0.71,
+          0.65,
+          0.59,
+          0.53,
+          0.48,
+          0.43,
+          0.38,
+          0.34,
+          0.3,
+          0.26,
+          0.22,
+          0.18,
+          0.14,
+          0.1,
+          0.09,
+          0.08
+        ],
+        "warnings": [
+          "ManuInvest Duo is cataloged as a supported V1 corridor for the 20-year MIP. The parser captures the published 5.00% / 1.00% administration-charge path, the protected-base cost-of-insurance formula after you enter insured-life details and current sum insured, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "Premium shortfall charging remains metadata-only because Premium Flexibility Benefit waives the published shortfall charge up to a cumulative missed-premium limit that the current event kernel does not yet track.",
+          "Welcome Bonus, Loyalty Bonus, withdrawal-flexibility fee handling, dividend threshold behavior, and fund-level management charges remain informational only.",
+          "Dividend-paying funds seed reinvestment by default in V1. Cash payout requires a manual annual distribution-yield assumption and the published $40 minimum payout threshold remains informational only."
+        ],
+        "unsupportedItems": [
+          "Death, terminal-illness, and TPD benefit payout handling remain informational only beyond the modeled cost-of-insurance deduction.",
+          "Welcome Bonus and Loyalty Bonus remain informational only.",
+          "Premium shortfall charge and Premium Flexibility Benefit remain informational only because they depend on a cumulative missed-premium allowance ledger.",
+          "The S$50 withdrawal-flexibility fee corridor and the published aggregate annual withdrawal cap remain informational only.",
+          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
+          "Fund-switching, premium redirection, automatic rebalancing, and payment-mode changes remain informational only.",
+          "Change-of-sum-insured and change-of-life-insured options remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Product description and death benefit",
+            "excerpt": "ManuInvest Duo is a regular-premium investment-linked plan that is designed to give you the dual benefits of insurance cover and investment opportunities. It also gives you the flexibility to choose your own protection c"
+          },
+          {
+            "page": 5,
+            "section": "COI and administrative charge",
+            "excerpt": "1. Cost of Insurance The cost of insurance is levied on the policy on a monthly basis by cancelling units of your fund(s) to provide for the insurance coverage. The cost of insurance is based on the attained age, gender,"
+          },
+          {
+            "page": 8,
+            "section": "Top-up premium option",
+            "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of a regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application. "
+          },
+          {
+            "page": 9,
+            "section": "Premium Flexibility Benefit and withdrawals",
+            "excerpt": "6. Premium Flexibility Benefit th Starting from 6 policy year until the end of Minimum Investment Period, Premium Flexibility Benefit will be activated automatically when regular premium is not paid within the grace peri"
+          },
+          {
+            "page": 14,
+            "section": "Distribution of Dividend",
+            "excerpt": "Approximate excerpt; keyword \"If you choose to invest in any fund(s) that pays dividends\" not found on page. ManuInvest Duo (d) riot, insurrection, civil commotion, strikes or terrorist activities, whether or not the lif"
           }
         ]
       }

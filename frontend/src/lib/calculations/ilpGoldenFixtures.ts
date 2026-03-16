@@ -128,6 +128,10 @@ export type GoldenCoverageTag =
   | 'branch:manulife-investready-iii-zero-top-up-charge'
   | 'branch:manulife-investready-iii-partial-withdrawal-charge'
   | 'branch:manulife-investready-iii-full-surrender-charge'
+  | 'branch:manuinvest-duo-administrative-charge'
+  | 'branch:manuinvest-duo-zero-top-up-charge'
+  | 'branch:manuinvest-duo-partial-withdrawal-charge'
+  | 'branch:manuinvest-duo-full-surrender-charge'
   | 'branch:singlife-legacy-invest-welcome-bonus'
   | 'branch:singlife-legacy-invest-loyalty-bonus'
   | 'branch:singlife-legacy-invest-administrative-charge'
@@ -4235,6 +4239,100 @@ function manulifeInvestreadyIiiStressPolicy(
 ): IlpPolicyInput {
   return manulifeInvestreadyIiiBasePolicy(snapshot, id, MANULIFE_STRESS_FUNDS, {
     name: 'Golden Manulife InvestReady (III) (SGD / MIP 5 Flexi 4 OCF Stress)',
+  })
+}
+
+const MANULIFE_MANUINVEST_DUO_VARIANT_LABELS = {
+  'sgd-mip-10': 'SGD / MIP 10',
+  'sgd-mip-15': 'SGD / MIP 15',
+  'sgd-mip-20': 'SGD / MIP 20',
+} as const
+
+function manulifeManuinvestDuoBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: keyof typeof MANULIFE_MANUINVEST_DUO_VARIANT_LABELS,
+  variantLabel: string,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const monthlyContribution = 350
+  const currentPolicyYear = 2
+  const base = seedPolicy(snapshot, 'manulife-manuinvest-duo', variantId, id, {
+    monthlyContribution,
+    currentPolicyYear,
+    monthsAlreadyPaid: 24,
+    assuranceProfile: {
+      currentAgeNextBirthday: 47,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentSumAssured: 150_000,
+    },
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden ManuInvest Duo (${variantLabel})`,
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 18_000,
+      })),
+      distributionAssumption: {
+        mode: 'cash-payout',
+        source: 'manual-assumption',
+        annualYieldRate: 0.03,
+      },
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function manulifeManuinvestDuoBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: keyof typeof MANULIFE_MANUINVEST_DUO_VARIANT_LABELS,
+  id: string,
+): IlpPolicyInput {
+  const variantLabel = MANULIFE_MANUINVEST_DUO_VARIANT_LABELS[variantId]
+  return manulifeManuinvestDuoBasePolicy(snapshot, variantId, variantLabel, id, MANULIFE_BALANCED_FUNDS, {
+    name: `Golden ManuInvest Duo (${variantLabel} Baseline)`,
+  })
+}
+
+function manulifeManuinvestDuoEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return manulifeManuinvestDuoBasePolicy(snapshot, 'sgd-mip-10', MANULIFE_MANUINVEST_DUO_VARIANT_LABELS['sgd-mip-10'], id, MANULIFE_BALANCED_FUNDS, {
+    name: 'Golden ManuInvest Duo (SGD / MIP 10 Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 30,
+        durationMonths: 1,
+        amount: 8_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 34,
+        durationMonths: 1,
+        amount: 3_500,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function manulifeManuinvestDuoStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return manulifeManuinvestDuoBasePolicy(snapshot, 'sgd-mip-20', MANULIFE_MANUINVEST_DUO_VARIANT_LABELS['sgd-mip-20'], id, MANULIFE_STRESS_FUNDS, {
+    name: 'Golden ManuInvest Duo (SGD / MIP 20 OCF Stress)',
   })
 }
 
@@ -10485,6 +10583,116 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Manulife InvestReady (III) alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'manulife-manuinvest-duo',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:protected-base-assurance',
+      'kernel:distribution-mode-assumption',
+      'branch:manuinvest-duo-administrative-charge',
+      'branch:manuinvest-duo-full-surrender-charge',
+    ],
+    description: 'ManuInvest Duo 10-year baseline scenario covering the supported administration-charge, full-surrender-charge, protected-base assurance, and cash-payout distribution corridors.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the administration-charge corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+      {
+        description: 'baseline policy produces annual withdrawals under the manual cash-payout distribution assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+      {
+        description: 'baseline policy exposes a positive surrender-charge rate during the MIP corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.eecRate > 0),
+      },
+    ],
+  },
+  {
+    productId: 'manulife-manuinvest-duo',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:protected-base-assurance',
+      'kernel:distribution-mode-assumption',
+      'branch:manuinvest-duo-administrative-charge',
+      'branch:manuinvest-duo-full-surrender-charge',
+    ],
+    description: 'ManuInvest Duo 15-year baseline scenario covering the supported administration-charge, full-surrender-charge, protected-base assurance, and cash-payout distribution corridors.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the administration-charge corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+      {
+        description: 'baseline policy produces annual withdrawals under the manual cash-payout distribution assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+      {
+        description: 'baseline policy exposes a positive surrender-charge rate during the MIP corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.eecRate > 0),
+      },
+    ],
+  },
+  {
+    productId: 'manulife-manuinvest-duo',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:protected-base-assurance',
+      'kernel:distribution-mode-assumption',
+      'branch:manuinvest-duo-administrative-charge',
+      'branch:manuinvest-duo-full-surrender-charge',
+    ],
+    description: 'ManuInvest Duo 20-year baseline scenario covering the supported administration-charge, full-surrender-charge, protected-base assurance, and cash-payout distribution corridors.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the administration-charge corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+      {
+        description: 'baseline policy produces annual withdrawals under the manual cash-payout distribution assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+      {
+        description: 'baseline policy exposes a positive surrender-charge rate during the MIP corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.eecRate > 0),
+      },
+    ],
+  },
+  {
+    productId: 'manulife-manuinvest-duo',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:manuinvest-duo-zero-top-up-charge',
+      'branch:manuinvest-duo-partial-withdrawal-charge',
+    ],
+    description: 'ManuInvest Duo 10-year event-heavy scenario covering zero-charge top-up and in-MIP partial withdrawal on the supported corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy records both top-up contribution and later withdrawals',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > 0 && row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'manulife-manuinvest-duo',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'ManuInvest Duo 20-year alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'manulife-investready-iii-sep-2025',
     variantId: 'sgd-mip-5-flexi-4-sep-2025',
     scenarioId: 'baseline',
@@ -14191,6 +14399,19 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'manulife-investready-iii' && definition.scenarioId === 'ocf-stress') {
     return manulifeInvestreadyIiiStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'manulife-manuinvest-duo' && definition.scenarioId === 'baseline') {
+    return manulifeManuinvestDuoBaselinePolicy(
+      snapshot,
+      definition.variantId as keyof typeof MANULIFE_MANUINVEST_DUO_VARIANT_LABELS,
+      id,
+    )
+  }
+  if (definition.productId === 'manulife-manuinvest-duo' && definition.scenarioId === 'event-heavy') {
+    return manulifeManuinvestDuoEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'manulife-manuinvest-duo' && definition.scenarioId === 'ocf-stress') {
+    return manulifeManuinvestDuoStressPolicy(snapshot, id)
   }
   if (definition.productId === 'manulife-investready-iii-sep-2025' && definition.scenarioId === 'baseline') {
     return manulifeInvestreadyIiiSep2025BaselinePolicy(
