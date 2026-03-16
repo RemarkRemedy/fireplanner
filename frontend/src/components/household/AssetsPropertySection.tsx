@@ -596,11 +596,14 @@ export function AssetsPropertySection({ mode }: AssetsPropertySectionProps) {
                               </SelectContent>
                             </Select>
                           </div>
-                          <CurrencyInput
-                            label="CPF used for housing"
-                            value={property.hdbCpfUsedForHousing}
-                            onChange={(value) => updateProperty(property.id, { hdbCpfUsedForHousing: value })}
-                          />
+                          {property.hdbMonetizationStrategy === 'lbs' && (
+                            <CurrencyInput
+                              label="CPF used for housing"
+                              tooltip="Total CPF OA funds used for your HDB purchase (including accrued interest). This amount must be refunded to CPF from LBS proceeds before you receive the cash payout."
+                              value={property.hdbCpfUsedForHousing}
+                              onChange={(value) => updateProperty(property.id, { hdbCpfUsedForHousing: value })}
+                            />
+                          )}
                           {property.hdbMonetizationStrategy === 'sublet' && (
                             <>
                               <NumberInput
