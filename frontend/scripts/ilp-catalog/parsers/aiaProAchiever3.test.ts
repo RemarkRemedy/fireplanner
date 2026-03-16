@@ -33,7 +33,7 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
 }
 
 describe('parseAiaProAchiever3', () => {
-  it('builds a valid regular-pay partial modeled-subset product from extracted summary text', async () => {
+  it('builds a valid supported regular-pay product from extracted summary text', async () => {
     const document = makeSyntheticDocument()
     const product = parseAiaProAchiever3({
       document,
@@ -43,7 +43,8 @@ describe('parseAiaProAchiever3', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('aia-pro-achiever-3')
     expect(product.productName).toBe('AIA Pro Achiever 3.0')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:aia-pro-achiever-3-regular-premium-charge',
       'branch:aia-pro-achiever-3-top-up-premium-charge',

@@ -52,6 +52,10 @@ export type GoldenCoverageTag =
   | 'branch:aia-platinum-wealth-legacy-premium-holiday-charge'
   | 'branch:aia-platinum-wealth-legacy-partial-withdrawal-charge'
   | 'branch:aia-platinum-wealth-legacy-full-surrender-charge'
+  | 'branch:aia-pro-achiever-3-regular-premium-charge'
+  | 'branch:aia-pro-achiever-3-top-up-premium-charge'
+  | 'branch:aia-pro-achiever-3-partial-withdrawal-charge'
+  | 'branch:aia-pro-achiever-3-full-surrender-charge'
   | 'branch:aia-platinum-wealth-venture-2-zero-regular-premium-charge'
   | 'branch:aia-platinum-wealth-venture-2-regular-supplementary-charge'
   | 'branch:aia-platinum-wealth-venture-2-top-up-premium-charge'
@@ -3784,6 +3788,93 @@ function aiaPlatinumWealthLegacyStressPolicy(
   })
 }
 
+function aiaProAchiever3BasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'aia-pro-achiever-3', 'sgd-iip-10', id, {
+    monthlyContribution: 900,
+    currentPolicyYear: 8,
+    monthsAlreadyPaid: 84,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden AIA Pro Achiever 3.0 (SGD / IIP 10)',
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 26_000,
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function aiaProAchiever3BaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaProAchiever3BasePolicy(snapshot, id, AIA_BALANCED_FUNDS, {
+    name: 'Golden AIA Pro Achiever 3.0 (SGD / IIP 10 Baseline)',
+    currentPolicyYear: 9,
+    monthsAlreadyPaid: 96,
+    postMipYears: 5,
+    distributionAssumption: {
+      mode: 'cash-payout',
+      source: 'manual-assumption',
+      annualYieldRate: 0.035,
+    },
+  })
+}
+
+function aiaProAchiever3EventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaProAchiever3BasePolicy(snapshot, id, AIA_BALANCED_FUNDS, {
+    name: 'Golden AIA Pro Achiever 3.0 (SGD / IIP 10 Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 85,
+        durationMonths: 1,
+        amount: 8_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 93,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function aiaProAchiever3StressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaProAchiever3BasePolicy(snapshot, id, AIA_STRESS_FUNDS, {
+    name: 'Golden AIA Pro Achiever 3.0 (SGD / IIP 10 OCF Stress)',
+    currentPolicyYear: 9,
+    monthsAlreadyPaid: 96,
+    postMipYears: 5,
+    distributionAssumption: {
+      mode: 'cash-payout',
+      source: 'manual-assumption',
+      annualYieldRate: 0.03,
+    },
+  })
+}
+
 function aiaPlatinumWealthVenture2BasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
@@ -6425,6 +6516,51 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: ['ocf-stress'],
     description: 'AIA Platinum Wealth Legacy alternate-fund high-OCF stress scenario.',
+  },
+  {
+    productId: 'aia-pro-achiever-3',
+    variantId: 'sgd-iip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:aia-pro-achiever-3-regular-premium-charge',
+      'branch:aia-pro-achiever-3-full-surrender-charge',
+      'kernel:distribution-mode-assumption',
+    ],
+    description: 'AIA Pro Achiever 3.0 baseline scenario proving the supported regular-pay corridor and post-IIP manual cash-payout distribution assumption.',
+    integrityChecks: [
+      {
+        description: 'manual cash-payout distribution assumption produces annual withdrawals after the IIP',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'aia-pro-achiever-3',
+    variantId: 'sgd-iip-10',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:aia-pro-achiever-3-top-up-premium-charge',
+      'branch:aia-pro-achiever-3-partial-withdrawal-charge',
+    ],
+    description: 'AIA Pro Achiever 3.0 event-heavy scenario covering top-up and partial withdrawal on the supported regular-pay corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy records both top-up contribution and later withdrawals',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0 && row.annualContribution > 0),
+      },
+    ],
+  },
+  {
+    productId: 'aia-pro-achiever-3',
+    variantId: 'sgd-iip-10',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'AIA Pro Achiever 3.0 alternate-fund high-OCF stress scenario.',
   },
   {
     productId: 'aia-platinum-wealth-venture-2',
@@ -10443,6 +10579,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'aia-platinum-wealth-legacy' && definition.scenarioId === 'ocf-stress') {
     return aiaPlatinumWealthLegacyStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-pro-achiever-3' && definition.scenarioId === 'baseline') {
+    return aiaProAchiever3BaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-pro-achiever-3' && definition.scenarioId === 'event-heavy') {
+    return aiaProAchiever3EventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-pro-achiever-3' && definition.scenarioId === 'ocf-stress') {
+    return aiaProAchiever3StressPolicy(snapshot, id)
   }
   if (definition.productId === 'aia-platinum-wealth-venture-2' && definition.scenarioId === 'baseline') {
     return aiaPlatinumWealthVenture2BaselinePolicy(snapshot, id)

@@ -165,7 +165,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...FULL_SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      'AIA Pro Achiever 3.0 is cataloged as a partial modeled subset in V1. The parser models the 10-year IIP corridor: the premium-year regular premium charge schedule, the 5% top-up premium charge, the regular-premium full-surrender / partial-withdrawal charge schedules, and the reinvest-default distribution-mode assumption surface.',
+      'AIA Pro Achiever 3.0 is cataloged as a supported V1 product for the regular-pay corridor. The parser models the 10-year IIP corridor: the premium-year regular premium charge schedule, the 5% top-up premium charge, the regular-premium full-surrender / partial-withdrawal charge schedules, and the reinvest-default distribution-mode assumption surface.',
       'Benefit Charge, Supplementary Charge, Premium Holiday Charge, Premium Pass, Premium Reduction, Premium Reward, and the Welcome / Special Bonus layer remain outside the current engine.',
       'Secondary Insured handling, the published S$50 dividend cash-out threshold, and fund-level charges remain informational only in V1.',
     ],
@@ -190,9 +190,9 @@ export function parseAiaProAchiever3({ document, sourceChecksumSha256 }: ParseCo
     sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:aia-pro-achiever-3-regular-premium-charge',
       'branch:aia-pro-achiever-3-top-up-premium-charge',
@@ -214,7 +214,7 @@ export function parseAiaProAchiever3({ document, sourceChecksumSha256 }: ParseCo
       'aia-pro-achiever-3-fund-management-charge',
     ],
     warnings: [
-      'AIA Pro Achiever 3.0 is cataloged as a partial modeled subset in V1. The parser models the 10-year IIP premium-charge corridor, 5% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default dividend support with cash payout allowed only after IIP, while benefit-charge, premium-pass / premium-holiday interactions, premium-reduction mechanics, premium rewards / bonuses, and protection-side options remain outside the current engine.',
+      'AIA Pro Achiever 3.0 is cataloged as a supported V1 product for the regular-pay corridor. The parser models the 10-year IIP premium-charge corridor, 5% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default dividend support with cash payout allowed only after IIP, while benefit-charge, premium-pass / premium-holiday interactions, premium-reduction mechanics, premium rewards / bonuses, and protection-side options remain outside the current engine.',
     ],
     archived: false,
     variants: [buildVariant(document)],
