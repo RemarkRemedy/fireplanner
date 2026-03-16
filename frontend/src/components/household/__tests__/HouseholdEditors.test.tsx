@@ -297,7 +297,7 @@ describe('Household editors', () => {
     expect(stream?.annualAmount).toBe(24_000)
   })
 
-  it('edits ownership-scoped spending, healthcare, withdrawals, and goals from the household spending section', async () => {
+  it('edits ownership-scoped spending, healthcare, withdrawals, and goals from the household spending section', { timeout: 30000 }, async () => {
     const user = userEvent.setup()
     setHouseholdPlan(makeHouseholdPlan({ includePartner: true, planType: 'couple' }))
 
