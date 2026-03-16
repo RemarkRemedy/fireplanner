@@ -898,17 +898,44 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Harvest Flexi')
 
     expect(within(dialog).getByText('Harvest Flexi')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+    const basicVariantButton = within(dialog)
+      .getAllByRole('button')
+      .find((button) => (
+        button.textContent?.includes('SGD / MIP 10')
+        && !button.textContent.includes('Advanced Death')
+      ))
+    expect(basicVariantButton).toBeDefined()
+    await user.click(basicVariantButton!)
 
     expect(screen.getAllByText('Harvest Flexi (SGD / MIP 10)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Partial template')
     expect(seededAlert?.textContent).toContain('Performance investment bonus is modeled as three published policy-year windows')
-    expect(seededAlert?.textContent).toContain('tokio harvest flexi monthly protection charge')
+    expect(seededAlert?.textContent).toContain('tokio harvest flexi benefit payout handling')
     expect(screen.getByDisplayValue('Policy Charge')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Admin Charge')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Initial Bonus')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds Tokio Marine Harvest Flexi advanced-death as a partial catalog product with Tokio MPC inputs', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Harvest Flexi')
+
+    expect(within(dialog).getByText('Harvest Flexi')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10 \(advanced death\)/i }))
+
+    expect(screen.getAllByText('Harvest Flexi (SGD / MIP 10 (Advanced Death))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('Assurance-charge modeling still needs life-assured inputs')
+    expect(seededAlert?.textContent).toContain('current net regular premium base')
+    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Harvest Pro as a partial catalog product with dividend-mode support on all three accounts', async () => {

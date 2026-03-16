@@ -66993,10 +66993,12 @@
       "tokio-premium-shortfall-charge-regular-premium-reduction",
       "tokio-premium-increase-restores-shortfall-charge-cessation",
       "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only",
+      "branch:tokio-harvest-flexi-advanced-death-monthly-protection-charge",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "tokio-harvest-flexi-monthly-protection-charge",
+      "tokio-harvest-flexi-benefit-payout-handling",
+      "tokio-harvest-flexi-life-benefit-rider",
       "tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions",
       "tokio-harvest-flexi-partial-withdrawal-limit-gates",
       "tokio-harvest-flexi-credit-card-charge",
@@ -67004,6 +67006,8 @@
     ],
     "warnings": [
       "Structured extraction validated against the Harvest Flexi product summary text layer.",
+      "Harvest Flexi is modeled as split SGD / MIP 10 death-benefit-option variants with the published policy investment charge and admin charge on top of the existing routing and shortfall surfaces.",
+      "The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.",
       "Performance investment bonus is modeled as three published policy-year windows: policy years 4 to 6, policy years 7 to 10, and after the minimum investment period.",
       "Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.",
       "Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month."
@@ -67042,8 +67046,8 @@
             "sourceRefs": [
               {
                 "page": 1,
-                "section": "Plan Description",
-                "excerpt": "PRODUCT SUMMARY − Harvest Flexi In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description Harvest Flexi is a non-participating, whole life, regular premium i"
+                "section": "Death Benefit Options",
+                "excerpt": "(i) Basic Death Benefit: 101% of Accumulation Units Account value plus 100% of Top-up Units Account value less *%UWI22* indebtedness; or Product Summary (ii) Advanced Death Benefit: During minimum investment period, high"
               },
               {
                 "page": 2,
@@ -67083,8 +67087,8 @@
             "sourceRefs": [
               {
                 "page": 1,
-                "section": "Plan Description",
-                "excerpt": "PRODUCT SUMMARY − Harvest Flexi In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description Harvest Flexi is a non-participating, whole life, regular premium i"
+                "section": "Death Benefit Options",
+                "excerpt": "(i) Basic Death Benefit: 101% of Accumulation Units Account value plus 100% of Top-up Units Account value less *%UWI22* indebtedness; or Product Summary (ii) Advanced Death Benefit: During minimum investment period, high"
               },
               {
                 "page": 5,
@@ -67542,23 +67546,23 @@
           0.07
         ],
         "warnings": [
-          "This partial template models one SGD / minimum-investment-period-10 corridor only.",
-          "This partial template models one SGD / minimum-investment-period-10 corridor with regular-premium routing into the Accumulation Units Account, top-up routing, recurring single premium routing, the published initial charge through the accumulation-account fee rate, the published policy charge premium-base multiplier basis, the published admin charge on regular premium received, the split performance-investment-bonus schedule, and the published surrender, partial-withdrawal, and premium-shortfall charge schedules.",
+          "This partial template models the SGD / MIP 10 (Basic Death) corridor only.",
+          "This partial template models the SGD / MIP 10 corridor with regular-premium routing into the Accumulation Units Account, top-up routing, recurring single premium routing, the published initial charge through the accumulation-account fee rate, the published policy charge premium-base multiplier basis, the published admin charge on regular premium received, the split performance-investment-bonus schedule, and the published surrender, partial-withdrawal, and premium-shortfall charge schedules.",
           "Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the administrative restart month.",
           "Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD corridor.",
           "Harvest Flexi keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.",
           "Harvest Flexi is modeled with the published policy investment charge tied to the commencement-date premium commitment and the published admin charge on received regular premium."
         ],
         "unsupportedItems": [
-          "Monthly protection charge, partial-withdrawal limit gates, and credit-card charge remain metadata-only for this product.",
-          "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product.",
-          "Advanced death benefit, life benefit rider, life replacement administration, and multiple-life handling remain metadata-only for this product."
+          "Advanced Death Benefit selection, Monthly Protection Charge, Life Benefit Rider, life replacement administration, and multiple-life handling remain metadata-only for this product.",
+          "Partial-withdrawal limit gates and credit-card charge remain metadata-only for this product.",
+          "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product."
         ],
         "sourceRefs": [
           {
             "page": 1,
-            "section": "Plan Description",
-            "excerpt": "PRODUCT SUMMARY − Harvest Flexi In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description Harvest Flexi is a non-participating, whole life, regular premium i"
+            "section": "Death Benefit Options",
+            "excerpt": "(i) Basic Death Benefit: 101% of Accumulation Units Account value plus 100% of Top-up Units Account value less *%UWI22* indebtedness; or Product Summary (ii) Advanced Death Benefit: During minimum investment period, high"
           },
           {
             "page": 2,
@@ -67604,6 +67608,657 @@
             "page": 11,
             "section": "Premium Shortfall Charge",
             "excerpt": "Premium Shortfall Charge A premium shortfall charge will be levied monthly when: (i) there is non-payment of regular premium at the expiry of the grace period; or (ii) there is a reduction in annualised regular premium p"
+          },
+          {
+            "page": 16,
+            "section": "Appendix A Charges",
+            "excerpt": "SURRENDER CHARGE Policy Year Surrender Charge 1 100% 2 100% 3 79% 4 60% 5 50% 6 47% 7 44% 8 21% 9 16% 10 7% PARTIAL WITHDRAWAL CHARGE Policy Year Partial Withdrawal Charge 1 Not applicable as Partial Withdrawal is not al"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-10-advanced-death",
+        "currency": "SGD",
+        "mipLength": 10,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "accumulation",
+            "label": "Accumulation Units Account",
+            "feeRate": 0.012,
+            "postMipFeeRate": 0.012,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Death Benefit Options",
+                "excerpt": "(i) Basic Death Benefit: 101% of Accumulation Units Account value plus 100% of Top-up Units Account value less *%UWI22* indebtedness; or Product Summary (ii) Advanced Death Benefit: During minimum investment period, high"
+              },
+              {
+                "page": 2,
+                "section": "Initial Bonus",
+                "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first policy year upon receipt of each regular premium to boost your investment. Initial bonus = Initial bonus rate x each regular premium "
+              },
+              {
+                "page": 3,
+                "section": "Performance Investment Bonus",
+                "excerpt": "Performance Investment Bonus While the policy is in-force, an annual performance investment bonus will be paid at the end of each policy year, th starting from the end of the fourth (4) policy year, if the performance gr"
+              },
+              {
+                "page": 4,
+                "section": "Regular Premium Routing / Reduction",
+                "excerpt": "Accumulation Units Account: Regular premium will be used to purchase units and allocated to this account. For initial regular premium required for issuance of the policy, we will use the unit price on the next pricing da"
+              },
+              {
+                "page": 9,
+                "section": "Initial Charge / Policy Charge / Admin Charge",
+                "excerpt": "Initial Setup Charge / Initial Charge Initial setup charge is also known as “Initial Charge” and such terms are used interchangeably. While the policy is in-force, an initial setup charge will be deducted monthly in adva"
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Units Account",
+            "feeRate": 0,
+            "postMipFeeRate": 0,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Death Benefit Options",
+                "excerpt": "(i) Basic Death Benefit: 101% of Accumulation Units Account value plus 100% of Top-up Units Account value less *%UWI22* indebtedness; or Product Summary (ii) Advanced Death Benefit: During minimum investment period, high"
+              },
+              {
+                "page": 5,
+                "section": "Recurring Single Premium / Top-up / Non-payment",
+                "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. When there is any reduction in regular premium amount p"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "initial-bonus",
+            "type": "allocation",
+            "label": "Initial Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.075
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.15
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.18
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.2
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.22
+              }
+            ],
+            "notes": [
+              "Tier is based on the published SGD annualised regular premium band.",
+              "Allocated to the Accumulation Units Account in the first policy year."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Initial Bonus",
+                "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first policy year upon receipt of each regular premium to boost your investment. Initial bonus = Initial bonus rate x each regular premium "
+              }
+            ]
+          },
+          {
+            "id": "performance-investment-bonus-policy-years-4-6",
+            "type": "custom",
+            "label": "Performance Investment Bonus (Policy Years 4-6)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 4,
+            "endPolicyYear": 6,
+            "rate": 0.012,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual performance investment bonus on the Accumulation Units Account value from the end of policy year 4 to the end of policy year 6."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Performance Investment Bonus",
+                "excerpt": "Performance Investment Bonus While the policy is in-force, an annual performance investment bonus will be paid at the end of each policy year, th starting from the end of the fourth (4) policy year, if the performance gr"
+              }
+            ]
+          },
+          {
+            "id": "performance-investment-bonus-policy-years-7-10",
+            "type": "custom",
+            "label": "Performance Investment Bonus (Policy Years 7-10)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 7,
+            "endPolicyYear": 10,
+            "rate": 0.017,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual performance investment bonus on the Accumulation Units Account value from the end of policy year 7 to the end of policy year 10."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Performance Investment Bonus",
+                "excerpt": "Performance Investment Bonus While the policy is in-force, an annual performance investment bonus will be paid at the end of each policy year, th starting from the end of the fourth (4) policy year, if the performance gr"
+              }
+            ]
+          },
+          {
+            "id": "performance-investment-bonus-after-mip",
+            "type": "custom",
+            "label": "Performance Investment Bonus (After MIP)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": null,
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Annual performance investment bonus on the Accumulation Units Account value after the minimum investment period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Performance Investment Bonus",
+                "excerpt": "Performance Investment Bonus While the policy is in-force, an annual performance investment bonus will be paid at the end of each policy year, th starting from the end of the fourth (4) policy year, if the performance gr"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "policy-charge-during-mip",
+            "label": "Policy Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.015,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": true,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": 10,
+                  "mode": "policy-year"
+                }
+              ]
+            },
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup"
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published monthly policy investment charge during the minimum investment period using annualised regular premium committed at commencement date multiplied by the current policy year.",
+              "Regular-premium reduction, non-payment, and withdrawals do not change the charge base once the policy is in force."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Initial Charge / Policy Charge / Admin Charge",
+                "excerpt": "Initial Setup Charge / Initial Charge Initial setup charge is also known as “Initial Charge” and such terms are used interchangeably. While the policy is in-force, an initial setup charge will be deducted monthly in adva"
+              }
+            ]
+          },
+          {
+            "id": "admin-charge",
+            "label": "Admin Charge",
+            "basis": "annual-contribution",
+            "rate": 0.05,
+            "amount": 0,
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup"
+            ],
+            "activeWindow": "during-mip",
+            "startPolicyYear": 4,
+            "endPolicyYear": 10,
+            "notes": [
+              "Models the published admin charge as 5% of regular premium received from policy year 4 through the minimum investment period.",
+              "At annual engine granularity, the monthly deduction following each premium receipt is represented as an annual charge on paid regular premium for the year."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Initial Charge / Policy Charge / Admin Charge",
+                "excerpt": "Initial Setup Charge / Initial Charge Initial setup charge is also known as “Initial Charge” and such terms are used interchangeably. While the policy is in-force, an initial setup charge will be deducted monthly in adva"
+              }
+            ]
+          },
+          {
+            "id": "monthly-protection-charge",
+            "label": "Monthly Protection Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": 0,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "tokio-mpc-net-premium-floor",
+              "rateTable": "tokio-mpc-unzo-death",
+              "monthlyModalFactor": 1,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup"
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published Monthly Protection Charge for the Advanced Death Benefit corridor during the 10-year minimum investment period only.",
+              "Sum at risk is the published net premium less 101% of the Accumulation Units Account value, floored at zero.",
+              "The charge is deducted monthly in advance from the Accumulation Units Account, with outstanding amounts deducted from the Top-up Units Account if needed."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Death Benefit Options",
+                "excerpt": "(i) Basic Death Benefit: 101% of Accumulation Units Account value plus 100% of Top-up Units Account value less *%UWI22* indebtedness; or Product Summary (ii) Advanced Death Benefit: During minimum investment period, high"
+              },
+              {
+                "page": 9,
+                "section": "Initial Charge / Policy Charge / Admin Charge",
+                "excerpt": "Initial Setup Charge / Initial Charge Initial setup charge is also known as “Initial Charge” and such terms are used interchangeably. While the policy is in-force, an initial setup charge will be deducted monthly in adva"
+              },
+              {
+                "page": 15,
+                "section": "Appendix A Monthly Protection Charge Rates",
+                "excerpt": "Monthly Rates for Monthly Protection Charges (For Death), Per $1,000 Sum at Risk Age Next Male Female Age Next Male Female Birthday ($) ($) Birthday ($) ($) 1 0.02590 0.02230 51 0.16850 0.12050 2 0.02590 0.02230 52 0.187"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each top-up premium allocation to the Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium / Top-up / Non-payment",
+                "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. When there is any reduction in regular premium amount p"
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge / Surrender / Partial Withdrawal / Shortfall",
+                "excerpt": "We will continue to deduct for the policy investment charge even when there is non-payment of regular premium. Any changes to the Policy such as reduction in regular premium, non-payment of regular premium and/ or withdr"
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurring Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each recurring single premium allocation to the Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium / Top-up / Non-payment",
+                "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. When there is any reduction in regular premium amount p"
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge / Surrender / Partial Withdrawal / Shortfall",
+                "excerpt": "We will continue to deduct for the policy investment charge even when there is non-payment of regular premium. Any changes to the Policy such as reduction in regular premium, non-payment of regular premium and/ or withdr"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 5,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 10,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies only to partial withdrawals from the Accumulation Units Account during the minimum investment period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Partial Withdrawal",
+                "excerpt": "Partial Withdrawal You may request for a partial withdrawal of policy value from the third policy year onwards while the policy is in force provided the minimum amount to be withdrawn is at least $500 (in the policy curr"
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge / Surrender / Partial Withdrawal / Shortfall",
+                "excerpt": "We will continue to deduct for the policy investment charge even when there is non-payment of regular premium. Any changes to the Policy such as reduction in regular premium, non-payment of regular premium and/ or withdr"
+              },
+              {
+                "page": 16,
+                "section": "Appendix A Charges",
+                "excerpt": "SURRENDER CHARGE Policy Year Surrender Charge 1 100% 2 100% 3 79% 4 60% 5 50% 6 47% 7 44% 8 21% 9 16% 10 7% PARTIAL WITHDRAWAL CHARGE Policy Year Partial Withdrawal Charge 1 Not applicable as Partial Withdrawal is not al"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge-non-payment",
+            "label": "Premium Shortfall Charge (Non-payment)",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.79
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 10,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "exclusiveGroup": "tokio-premium-shortfall",
+            "groupResolution": "max-total-charge",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published monthly premium shortfall charge when regular premium is not paid after the grace period during the minimum investment period.",
+              "Deduct from Accumulation Units Account first, then Top-up Units Account.",
+              "Use a premium-holiday event to represent the non-payment period after the grace period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium / Top-up / Non-payment",
+                "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. When there is any reduction in regular premium amount p"
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge / Surrender / Partial Withdrawal / Shortfall",
+                "excerpt": "We will continue to deduct for the policy investment charge even when there is non-payment of regular premium. Any changes to the Policy such as reduction in regular premium, non-payment of regular premium and/ or withdr"
+              },
+              {
+                "page": 11,
+                "section": "Premium Shortfall Charge",
+                "excerpt": "Premium Shortfall Charge A premium shortfall charge will be levied monthly when: (i) there is non-payment of regular premium at the expiry of the grace period; or (ii) there is a reduction in annualised regular premium p"
+              },
+              {
+                "page": 16,
+                "section": "Appendix A Charges",
+                "excerpt": "SURRENDER CHARGE Policy Year Surrender Charge 1 100% 2 100% 3 79% 4 60% 5 50% 6 47% 7 44% 8 21% 9 16% 10 7% PARTIAL WITHDRAWAL CHARGE Policy Year Partial Withdrawal Charge 1 Not applicable as Partial Withdrawal is not al"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge-reduction",
+            "label": "Premium Shortfall Charge (Regular Premium Reduction)",
+            "trigger": "regular-premium-reduction",
+            "basis": "annual-reduction-with-active-months",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.79
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 10,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "exclusiveGroup": "tokio-premium-shortfall",
+            "groupResolution": "max-total-charge",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published monthly premium shortfall charge when annualised regular premium is reduced below the commencement-date commitment during the minimum investment period.",
+              "Uses the annual reduction amount as the charge base and deducts from Accumulation Units Account first, then Top-up Units Account.",
+              "Use a regular-premium-increase event to restore the commencement-date amount and stop this shortfall charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular Premium Routing / Reduction",
+                "excerpt": "Accumulation Units Account: Regular premium will be used to purchase units and allocated to this account. For initial regular premium required for issuance of the policy, we will use the unit price on the next pricing da"
+              },
+              {
+                "page": 10,
+                "section": "Premium Charge / Surrender / Partial Withdrawal / Shortfall",
+                "excerpt": "We will continue to deduct for the policy investment charge even when there is non-payment of regular premium. Any changes to the Policy such as reduction in regular premium, non-payment of regular premium and/ or withdr"
+              },
+              {
+                "page": 11,
+                "section": "Premium Shortfall Charge",
+                "excerpt": "Premium Shortfall Charge A premium shortfall charge will be levied monthly when: (i) there is non-payment of regular premium at the expiry of the grace period; or (ii) there is a reduction in annualised regular premium p"
+              },
+              {
+                "page": 16,
+                "section": "Appendix A Charges",
+                "excerpt": "SURRENDER CHARGE Policy Year Surrender Charge 1 100% 2 100% 3 79% 4 60% 5 50% 6 47% 7 44% 8 21% 9 16% 10 7% PARTIAL WITHDRAWAL CHARGE Policy Year Partial Withdrawal Charge 1 Not applicable as Partial Withdrawal is not al"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "accumulation",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying funds default to reinvestment, while cash payout can be explored through the manual annual distribution-yield assumption.",
+            "The published dividend election applies across the Accumulation Units Account and Top-up Units Account.",
+            "The published $50 minimum payout threshold and 30-day record-date instruction window remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 8,
+              "section": "Dividend Distribution",
+              "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+            }
+          ]
+        },
+        "eecTable": [
+          1,
+          1,
+          0.79,
+          0.6,
+          0.5,
+          0.47,
+          0.44,
+          0.21,
+          0.16,
+          0.07
+        ],
+        "warnings": [
+          "This partial template models the SGD / MIP 10 (Advanced Death) corridor only.",
+          "This partial template models the SGD / MIP 10 corridor with regular-premium routing into the Accumulation Units Account, top-up routing, recurring single premium routing, the published initial charge through the accumulation-account fee rate, the published policy charge premium-base multiplier basis, the published admin charge on regular premium received, the split performance-investment-bonus schedule, and the published surrender, partial-withdrawal, and premium-shortfall charge schedules.",
+          "The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.",
+          "Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the administrative restart month.",
+          "Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD corridor.",
+          "Harvest Flexi keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.",
+          "Harvest Flexi is modeled with the published policy investment charge tied to the commencement-date premium commitment and the published admin charge on received regular premium."
+        ],
+        "unsupportedItems": [
+          "Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider, life replacement administration, and multiple-life handling remain metadata-only for this product.",
+          "Partial-withdrawal limit gates and credit-card charge remain metadata-only for this product.",
+          "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Death Benefit Options",
+            "excerpt": "(i) Basic Death Benefit: 101% of Accumulation Units Account value plus 100% of Top-up Units Account value less *%UWI22* indebtedness; or Product Summary (ii) Advanced Death Benefit: During minimum investment period, high"
+          },
+          {
+            "page": 2,
+            "section": "Initial Bonus",
+            "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first policy year upon receipt of each regular premium to boost your investment. Initial bonus = Initial bonus rate x each regular premium "
+          },
+          {
+            "page": 3,
+            "section": "Performance Investment Bonus",
+            "excerpt": "Performance Investment Bonus While the policy is in-force, an annual performance investment bonus will be paid at the end of each policy year, th starting from the end of the fourth (4) policy year, if the performance gr"
+          },
+          {
+            "page": 4,
+            "section": "Regular Premium Routing / Reduction",
+            "excerpt": "Accumulation Units Account: Regular premium will be used to purchase units and allocated to this account. For initial regular premium required for issuance of the policy, we will use the unit price on the next pricing da"
+          },
+          {
+            "page": 5,
+            "section": "Recurring Single Premium / Top-up / Non-payment",
+            "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. When there is any reduction in regular premium amount p"
+          },
+          {
+            "page": 6,
+            "section": "Partial Withdrawal",
+            "excerpt": "Partial Withdrawal You may request for a partial withdrawal of policy value from the third policy year onwards while the policy is in force provided the minimum amount to be withdrawn is at least $500 (in the policy curr"
+          },
+          {
+            "page": 8,
+            "section": "Dividend Distribution",
+            "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+          },
+          {
+            "page": 9,
+            "section": "Initial Charge / Policy Charge / Admin Charge",
+            "excerpt": "Initial Setup Charge / Initial Charge Initial setup charge is also known as “Initial Charge” and such terms are used interchangeably. While the policy is in-force, an initial setup charge will be deducted monthly in adva"
+          },
+          {
+            "page": 10,
+            "section": "Premium Charge / Surrender / Partial Withdrawal / Shortfall",
+            "excerpt": "We will continue to deduct for the policy investment charge even when there is non-payment of regular premium. Any changes to the Policy such as reduction in regular premium, non-payment of regular premium and/ or withdr"
+          },
+          {
+            "page": 11,
+            "section": "Premium Shortfall Charge",
+            "excerpt": "Premium Shortfall Charge A premium shortfall charge will be levied monthly when: (i) there is non-payment of regular premium at the expiry of the grace period; or (ii) there is a reduction in annualised regular premium p"
+          },
+          {
+            "page": 15,
+            "section": "Appendix A Monthly Protection Charge Rates",
+            "excerpt": "Monthly Rates for Monthly Protection Charges (For Death), Per $1,000 Sum at Risk Age Next Male Female Age Next Male Female Birthday ($) ($) Birthday ($) ($) 1 0.02590 0.02230 51 0.16850 0.12050 2 0.02590 0.02230 52 0.187"
           },
           {
             "page": 16,

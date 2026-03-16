@@ -191,8 +191,42 @@ function buildFeeRules(document: ExtractedPdfDocument): IlpTemplateFeeRule[] {
   ]
 }
 
-function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
-  const page1 = sourceRef(1, 'Plan Description', snippetNear(document, 1, 'Harvest Flexi', 18))
+function buildTokioMpcFeeRule(
+  optionPage: IlpCatalogSourceRef,
+  chargePage: IlpCatalogSourceRef,
+  tablePage: IlpCatalogSourceRef,
+): IlpTemplateFeeRule {
+  return {
+    id: 'monthly-protection-charge',
+    label: 'Monthly Protection Charge',
+    basis: 'assurance-sum-at-risk',
+    rate: 0,
+    amount: 0,
+    appliesTo: ['accumulation'],
+    fallbackAppliesTo: ['topup'],
+    activeWindow: 'during-mip',
+    assuranceConfig: {
+      formula: 'tokio-mpc-net-premium-floor',
+      rateTable: 'tokio-mpc-unzo-death',
+      monthlyModalFactor: 1,
+      maxAgeNextBirthday: 99,
+    },
+    requiresManualInput: true,
+    notes: [
+      'Models the published Monthly Protection Charge for the Advanced Death Benefit corridor during the 10-year minimum investment period only.',
+      'Sum at risk is the published net premium less 101% of the Accumulation Units Account value, floored at zero.',
+      'The charge is deducted monthly in advance from the Accumulation Units Account, with outstanding amounts deducted from the Top-up Units Account if needed.',
+    ],
+    sourceRefs: [optionPage, chargePage, tablePage],
+  }
+}
+
+function buildVariant(
+  document: ExtractedPdfDocument,
+  deathBenefitOption: 'basic-death' | 'advanced-death',
+): IlpTemplateVariant {
+  const isAdvancedDeath = deathBenefitOption === 'advanced-death'
+  const page1 = sourceRef(1, 'Death Benefit Options', snippetNear(document, 1, 'Basic Death Benefit', 24))
   const page2 = sourceRef(2, 'Initial Bonus', snippetNear(document, 2, 'Initial Bonus', 20))
   const page3 = sourceRef(3, 'Performance Investment Bonus', snippetNear(document, 3, 'Performance Investment Bonus', 24))
   const page4 = sourceRef(4, 'Regular Premium Routing / Reduction', snippetNear(document, 4, 'Accumulation Units Account: Regular premium will be used', 26))
@@ -202,6 +236,9 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page9 = sourceRef(9, 'Initial Charge / Policy Charge / Admin Charge', snippetNear(document, 9, 'Initial Setup Charge', 30))
   const page10 = sourceRef(10, 'Premium Charge / Surrender / Partial Withdrawal / Shortfall', snippetNear(document, 10, 'Premium Charge for Recurring Single Premium and Top-up Premium', 30))
   const page11 = sourceRef(11, 'Premium Shortfall Charge', snippetNear(document, 11, 'Premium Shortfall Charge', 28))
+  const page15 = isAdvancedDeath
+    ? sourceRef(15, 'Appendix A Monthly Protection Charge Rates', snippetNear(document, 15, 'Monthly Rates for Monthly Protection Charges', 24))
+    : null
   const page16 = sourceRef(16, 'Appendix A Charges', snippetNear(document, 16, 'SURRENDER CHARGE', 24))
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
@@ -295,8 +332,13 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
   ]
 
+  const feeRules = buildFeeRules(document)
+  if (isAdvancedDeath && page15 != null) {
+    feeRules.push(buildTokioMpcFeeRule(page1, page9, page15))
+  }
+
   return {
-    id: 'sgd-mip-10',
+    id: isAdvancedDeath ? 'sgd-mip-10-advanced-death' : 'sgd-mip-10',
     currency: 'SGD',
     mipLength: MIP_LENGTH,
     icpMonths: 1,
@@ -327,7 +369,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       },
     ],
     bonuses: buildBonuses(document),
-    feeRules: buildFeeRules(document),
+    feeRules,
     eventChargeRules,
     distributionSupport: {
       mode: 'manual-assumption',
@@ -345,19 +387,43 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      'This partial template models one SGD / minimum-investment-period-10 corridor only.',
-      'This partial template models one SGD / minimum-investment-period-10 corridor with regular-premium routing into the Accumulation Units Account, top-up routing, recurring single premium routing, the published initial charge through the accumulation-account fee rate, the published policy charge premium-base multiplier basis, the published admin charge on regular premium received, the split performance-investment-bonus schedule, and the published surrender, partial-withdrawal, and premium-shortfall charge schedules.',
+      `This partial template models the SGD / MIP 10 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
+      'This partial template models the SGD / MIP 10 corridor with regular-premium routing into the Accumulation Units Account, top-up routing, recurring single premium routing, the published initial charge through the accumulation-account fee rate, the published policy charge premium-base multiplier basis, the published admin charge on regular premium received, the split performance-investment-bonus schedule, and the published surrender, partial-withdrawal, and premium-shortfall charge schedules.',
+      ...(isAdvancedDeath
+        ? [
+            'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
+          ]
+        : []),
       'Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the administrative restart month.',
       'Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD corridor.',
       'Harvest Flexi keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
       'Harvest Flexi is modeled with the published policy investment charge tied to the commencement-date premium commitment and the published admin charge on received regular premium.',
     ],
     unsupportedItems: [
-      'Monthly protection charge, partial-withdrawal limit gates, and credit-card charge remain metadata-only for this product.',
+      ...(isAdvancedDeath
+        ? [
+            'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider, life replacement administration, and multiple-life handling remain metadata-only for this product.',
+          ]
+        : [
+            'Advanced Death Benefit selection, Monthly Protection Charge, Life Benefit Rider, life replacement administration, and multiple-life handling remain metadata-only for this product.',
+          ]),
+      'Partial-withdrawal limit gates and credit-card charge remain metadata-only for this product.',
       'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product.',
-      'Advanced death benefit, life benefit rider, life replacement administration, and multiple-life handling remain metadata-only for this product.',
     ],
-    sourceRefs: [page1, page2, page3, page4, page5, page6, page8, page9, page10, page11, page16],
+    sourceRefs: [
+      page1,
+      page2,
+      page3,
+      page4,
+      page5,
+      page6,
+      page8,
+      page9,
+      page10,
+      page11,
+      ...(page15 != null ? [page15] : []),
+      page16,
+    ],
   }
 }
 
@@ -392,10 +458,12 @@ export function parseTokioMarineHarvestFlexi(context: ParseContext): IlpCatalogP
       'tokio-premium-shortfall-charge-regular-premium-reduction',
       'tokio-premium-increase-restores-shortfall-charge-cessation',
       'tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only',
+      'branch:tokio-harvest-flexi-advanced-death-monthly-protection-charge',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-harvest-flexi-monthly-protection-charge',
+      'tokio-harvest-flexi-benefit-payout-handling',
+      'tokio-harvest-flexi-life-benefit-rider',
       'tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions',
       'tokio-harvest-flexi-partial-withdrawal-limit-gates',
       'tokio-harvest-flexi-credit-card-charge',
@@ -403,11 +471,16 @@ export function parseTokioMarineHarvestFlexi(context: ParseContext): IlpCatalogP
     ],
     warnings: [
       'Structured extraction validated against the Harvest Flexi product summary text layer.',
+      'Harvest Flexi is modeled as split SGD / MIP 10 death-benefit-option variants with the published policy investment charge and admin charge on top of the existing routing and shortfall surfaces.',
+      'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
       'Performance investment bonus is modeled as three published policy-year windows: policy years 4 to 6, policy years 7 to 10, and after the minimum investment period.',
       'Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.',
       'Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.',
     ],
     archived: false,
-    variants: [buildVariant(context.document)],
+    variants: [
+      buildVariant(context.document, 'basic-death'),
+      buildVariant(context.document, 'advanced-death'),
+    ],
   }
 }
