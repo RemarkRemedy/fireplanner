@@ -785,13 +785,12 @@ export function SetupPage() {
         { key: 'savingsFixed', label: 'Fixed deposits and bonds' },
         { key: 'savingsRobo', label: 'Robo-advisors (Endowus, Syfe, etc.)' },
       ] as const
+      const allKeys = [...breakdownRows.map((r) => r.key), 'savingsOther'] as const
+      const sumAll = (changedKey: string, newVal: number) =>
+        allKeys.reduce((acc, k) => acc + (k === changedKey ? newVal : (state.values[k] as number) ?? 0), 0)
       const updateTotal = (changedKey: string, newVal: number) => {
         handleChange(changedKey, newVal)
-        const sum = breakdownRows.reduce((acc, r) => {
-          const v = r.key === changedKey ? newVal : (state.values[r.key] as number) ?? 0
-          return acc + v
-        }, 0)
-        handleChange('liquidNetWorth', sum)
+        handleChange('liquidNetWorth', sumAll(changedKey, newVal))
       }
       return (
         <details className="mt-1 text-sm">
@@ -814,6 +813,29 @@ export function SetupPage() {
                 </div>
               </div>
             ))}
+            {/* Custom "Other" row with user-editable label */}
+            <div>
+              <div className="flex items-baseline gap-2 mb-1">
+                <label className="text-xs text-muted-foreground shrink-0">Other:</label>
+                <input
+                  type="text"
+                  value={(state.values.savingsOtherLabel as string) ?? ''}
+                  onChange={(e) => handleChange('savingsOtherLabel', e.target.value)}
+                  placeholder="e.g. crypto, insurance cash value"
+                  className="text-xs bg-transparent border-b border-dashed border-muted-foreground/40 focus:border-primary outline-none py-0.5 w-full text-foreground placeholder:text-muted-foreground/50"
+                />
+              </div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                <NumberInput
+                  value={(state.values.savingsOther as number) ?? 0}
+                  onChange={(v) => updateTotal('savingsOther', v)}
+                  formatWithCommas
+                  min={0}
+                  className="pl-7"
+                />
+              </div>
+            </div>
             <p className="text-xs text-muted-foreground italic">Don&apos;t include CPF or property value.</p>
           </div>
         </details>
