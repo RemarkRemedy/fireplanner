@@ -57,6 +57,11 @@ export const ALLOCATION_TEMPLATES: Record<Exclude<AllocationTemplate, 'custom'>,
   singaporeCentric: [0.15, 0.30, 0.10, 0.20, 0.10, 0.05, 0.10, 0.00],
 }
 
+/** Very conservative glide path end allocation (~10% equity, ~90% bonds/cash).
+ * Not a named AllocationTemplate (too conservative for general use), but used
+ * as a glide path end-state option in the nudge flow. */
+export const VERY_CONSERVATIVE_WEIGHTS = [0.05, 0.03, 0.02, 0.60, 0.10, 0.05, 0.15, 0.00] as const
+
 /** Risk-free rate proxy (Cash return) used for Sharpe ratio calculation */
 export const RISK_FREE_RATE = 0.014
 

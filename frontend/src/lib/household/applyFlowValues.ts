@@ -7,6 +7,8 @@
  */
 
 import { FLOW_FIELD_TO_CATEGORY } from '@/lib/data/retirementTemplates'
+import { SRS_STRATEGY_RETURNS } from '@/lib/data/taxBrackets'
+import { VERY_CONSERVATIVE_WEIGHTS } from '@/lib/data/historicalReturns'
 import { computeWeightedRetirementRatio } from '@/lib/calculations/expenses'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
@@ -98,8 +100,8 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       }
 
       if (typeof values.cpfLifePlan === 'string') {
-        const plan = toCpfLifePlan(values.cpfLifePlan)
-        if (plan) cpfUpdates.lifePlan = plan
+        const lifePlan = toCpfLifePlan(values.cpfLifePlan)
+        if (lifePlan) cpfUpdates.lifePlan = lifePlan
       }
       if (typeof values.cpfPayoutStartAge === 'number') {
         cpfUpdates.lifeStartAge = values.cpfPayoutStartAge
@@ -128,6 +130,13 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         cpfUpdates.cpfisOaReturn = 0
         cpfUpdates.cpfisSaReturn = 0
       }
+      // Toggle-on: restore sensible defaults if returns are 0 (prevents silent 0% assumption)
+      if (values.hasCpfis === true) {
+        const oaReturn = typeof values.cpfisOaReturn === 'number' ? values.cpfisOaReturn : selfAdult.cpf.cpfisOaReturn
+        const saReturn = typeof values.cpfisSaReturn === 'number' ? values.cpfisSaReturn : selfAdult.cpf.cpfisSaReturn
+        if (oaReturn === 0) cpfUpdates.cpfisOaReturn = 0.04
+        if (saReturn === 0) cpfUpdates.cpfisSaReturn = 0.04
+      }
 
       // Toggle-off: clear top-ups when user says they don't make voluntary top-ups
       if (values.hasCpfTopUps === false) {
@@ -143,10 +152,16 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
     case 'property': {
       let property = plan.properties[0]
       if (!property) {
-        // Create a default property so the flow can populate it
+        // Create a blank property — zero out defaults that would distort projection
+        // if the user doesn't explicitly touch those toggles
         const newProperty = createDefaultHouseholdProperty(
           plan.adults.length > 1 ? 'shared' : 'self'
         )
+        newProperty.existingMortgageBalance = 0
+        newProperty.existingMonthlyPayment = 0
+        newProperty.existingMortgageRate = 0
+        newProperty.existingMortgageRemainingYears = 0
+        newProperty.rentalYield = 0
         store.addProperty(newProperty)
         property = newProperty
       }
@@ -331,7 +346,7 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
                   label: draft.name,
                   amount: draft.amount,
                   timing: { kind: 'single-age', owner: 'self', age: targetAge },
-                  category: (draft.category as GoalCategory) || 'other',
+                  category: toGoalCategory(draft.category),
                 },
               })
             } else {
@@ -498,13 +513,7 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
 
       // Map investment strategy to expected return rate
       if (typeof values.srsInvestmentStrategy === 'string') {
-        const strategyReturns: Record<string, number> = {
-          cash: 0.005,   // savings account rate
-          etf: 0.06,     // broad market ETFs
-          stocks: 0.08,  // individual stocks (higher risk)
-          mixed: 0.05,   // blended portfolio
-        }
-        const rate = strategyReturns[values.srsInvestmentStrategy]
+        const rate = SRS_STRATEGY_RETURNS[values.srsInvestmentStrategy]
         if (rate != null) srsUpdates.investmentReturn = rate
       }
 
@@ -597,9 +606,7 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       // Map glide path end template to target allocation weights
       if (typeof values.glidePathEndTemplate === 'string') {
         if (values.glidePathEndTemplate === 'very-conservative') {
-          // Very conservative: ~10% equity, ~90% bonds/cash (not a named template)
-          const veryConservativeWeights = [0.05, 0.03, 0.02, 0.60, 0.10, 0.05, 0.15, 0.00]
-          useAllocationStore.getState().setTargetWeights(veryConservativeWeights)
+          useAllocationStore.getState().setTargetWeights([...VERY_CONSERVATIVE_WEIGHTS])
           applied = true
         } else {
           const template = toAllocationTemplate(values.glidePathEndTemplate)

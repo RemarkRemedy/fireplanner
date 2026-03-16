@@ -120,6 +120,7 @@ function buildDriverExplanation(
       after: a.totalNetWorth,
       change: `${dir} by ${fmtDollar(nwDiff)}`,
     })
+    reasons.push(`net worth ${dir} by ${fmtDollar(nwDiff)}`)
   }
 
   // SWR change

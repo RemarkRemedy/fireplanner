@@ -8,6 +8,8 @@
 
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
+import { SRS_STRATEGY_RETURNS } from '@/lib/data/taxBrackets'
+import { VERY_CONSERVATIVE_WEIGHTS } from '@/lib/data/historicalReturns'
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
 import type { NudgeFlowScreen } from '@/lib/data/nudgeFlows'
 import type { PlanningAdult } from '@/lib/household/types'
@@ -61,6 +63,12 @@ function seedProperty(): Record<string, unknown> {
   const seeds: Record<string, unknown> = {}
   seeds.propertyType = property.propertyType
   seeds.propertyValue = property.existingPropertyValue
+
+  // Seed lease start year for HDB/EC (reverse-compute from remaining lease)
+  if (property.propertyType === 'hdb' && property.existingLeaseYears > 0) {
+    const currentYear = new Date().getFullYear()
+    seeds.leaseStartYear = currentYear - (99 - property.existingLeaseYears)
+  }
 
   const hasMortgage = property.existingMortgageBalance > 0
   seeds.hasMortgage = hasMortgage
@@ -232,12 +240,7 @@ function seedSrs(adult: PlanningAdult): Record<string, unknown> {
   seeds.srsWithdrawalStartAge = adult.srs.drawdownStartAge
 
   // Reverse-map investmentReturn to strategy label (only if it matches a known rate)
-  const returnToStrategy: [number, string][] = [
-    [0.005, 'cash'],
-    [0.05, 'mixed'],
-    [0.06, 'etf'],
-    [0.08, 'stocks'],
-  ]
+  const returnToStrategy = Object.entries(SRS_STRATEGY_RETURNS).map(([k, v]) => [v, k] as [number, string])
   const matched = returnToStrategy.find(([rate]) => Math.abs(adult.srs.investmentReturn - rate) < 0.001)
   if (matched) {
     seeds.srsInvestmentStrategy = matched[1]
@@ -266,10 +269,9 @@ function seedAllocation(): Record<string, unknown> {
     seeds.glidePathEndTemplate = targetTemplate
   } else if (targetTemplate === 'custom') {
     // Check if target weights match the very-conservative preset (applied via setTargetWeights)
-    const veryConservativeWeights = [0.05, 0.03, 0.02, 0.60, 0.10, 0.05, 0.15, 0.00]
     const tw = allocationState.targetWeights
-    if (tw.length === veryConservativeWeights.length &&
-        tw.every((w, i) => Math.abs(w - veryConservativeWeights[i]) < 0.001)) {
+    if (tw.length === VERY_CONSERVATIVE_WEIGHTS.length &&
+        tw.every((w, i) => Math.abs(w - VERY_CONSERVATIVE_WEIGHTS[i]) < 0.001)) {
       seeds.glidePathEndTemplate = 'very-conservative'
     }
   }

@@ -22,7 +22,10 @@ export function useMetricsSnapshot(): MetricsSnapshot {
       savingsRate: fireMetrics.savingsRate,
       totalNetWorth: fireMetrics.totalNetWorth,
       swr: profile.swr,
-      monthlyDebtPayments: ((profile.annualNonMortgageDebtPayment ?? 0) / 12) + (profile.existingMonthlyPayment ?? 0),
+      // Net cash mortgage = gross payment minus CPF OA coverage, scaled by ownership
+      monthlyDebtPayments: ((profile.annualNonMortgageDebtPayment ?? 0) / 12)
+        + Math.max(0, (profile.existingMonthlyPayment ?? 0) - (profile.mortgageCpfMonthly ?? 0))
+          * (profile.ownershipPercent ?? 1),
     } : undefined,
   }
 }

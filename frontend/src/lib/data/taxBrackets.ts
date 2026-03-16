@@ -30,6 +30,16 @@ export const SRS_ANNUAL_CAP = 15300
 // SRS deduction cap (Foreigners)
 export const SRS_ANNUAL_CAP_FOREIGNER = 35700
 
+/** SRS investment strategy → expected annual return mapping.
+ * Used in nudge flow seed/apply for the SRS investment strategy selector.
+ * App-specific assumptions; not from any regulatory source. */
+export const SRS_STRATEGY_RETURNS: Record<string, number> = {
+  cash: 0.005,   // savings account rate
+  etf: 0.06,     // broad market ETFs
+  stocks: 0.08,  // individual stocks (higher risk)
+  mixed: 0.05,   // blended portfolio
+} as const
+
 // ============================================================
 // Tax Relief Breakdown — YA 2025 (IRAS / PWC)
 // ============================================================
