@@ -52,7 +52,7 @@ export function GoalListEditor({ goals, onAdd, onUpdate, onRemove }: GoalListEdi
           </div>
           <div className="grid grid-cols-2 gap-3">
             <CurrencyInput
-              label="Target amount"
+              label="Target amount (today's $)"
               value={goal.amount}
               onChange={(v) => onUpdate(goal.id, { amount: v })}
             />
