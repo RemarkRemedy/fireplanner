@@ -23,10 +23,12 @@ describe('parseFwdInvestFirstHorizon', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('fwd-invest-first-horizon')
     expect(product.productName).toBe('FWD Invest First Horizon')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
+      'kernel:protected-base-assurance',
       'branch:fwd-invest-first-horizon-initial-account-charge',
+      'branch:fwd-invest-first-horizon-insurance-charge',
       'branch:fwd-invest-first-horizon-premium-reduction-charge',
       'branch:fwd-invest-first-horizon-top-up-premium-charge',
       'branch:fwd-invest-first-horizon-initial-account-redemption-fee',
@@ -34,6 +36,7 @@ describe('parseFwdInvestFirstHorizon', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('fwd-invest-first-horizon-premium-shortfall-charge')
     expect(product.metadataOnlyBehaviors).toContain('fwd-invest-first-horizon-premium-pause-waiver')
+    expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-first-horizon-insurance-charge')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-20',
       'sgd-mip-25',
@@ -73,6 +76,19 @@ describe('parseFwdInvestFirstHorizon', () => {
             { startPolicyYear: 20, endPolicyYear: null, mode: 'fixed', multiplier: 20 },
           ],
         }),
+      }),
+      expect.objectContaining({
+        id: 'insurance-charge',
+        basis: 'assurance-sum-at-risk',
+        appliesTo: ['initial'],
+        fallbackAppliesTo: ['accumulation'],
+        assuranceValueAppliesTo: ['initial', 'accumulation'],
+        requiresManualInput: true,
+        assuranceConfig: {
+          formula: 'fwd-invest-flexi-elite-death',
+          monthlyModalFactor: 1 / 12,
+          maxAgeNextBirthday: 99,
+        },
       }),
     ])
     expect(twentyYearVariant?.eventChargeRules).toEqual([

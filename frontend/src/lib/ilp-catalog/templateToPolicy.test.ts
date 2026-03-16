@@ -1857,7 +1857,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Open-ended products use a default 20-year review horizon'))).toBe(true)
   })
 
-  it('maps FWD Invest First Horizon into a finite-MIP multi-account partial seed', () => {
+  it('maps FWD Invest First Horizon into a finite-MIP multi-account supported seed', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'fwd-invest-first-horizon')
     expect(product).toBeDefined()
@@ -1867,10 +1867,13 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('FWD Invest First Horizon (SGD / MIP 20)')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-first-horizon-initial-account-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-first-horizon-insurance-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('fwd-invest-first-horizon-premium-shortfall-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-first-horizon-insurance-charge')
     expect(seed.mipLength).toBe(20)
     expect(seed.accounts).toEqual([
       expect.objectContaining({
@@ -1902,6 +1905,19 @@ describe('templateVariantToPolicySeed', () => {
             ],
           }),
           fallbackAppliesTo: ['accumulation'],
+        }),
+        expect.objectContaining({
+          id: 'insurance-charge',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['initial'],
+          fallbackAppliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          requiresManualInput: true,
+          assuranceConfig: {
+            formula: 'fwd-invest-flexi-elite-death',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
         }),
       ]),
     )

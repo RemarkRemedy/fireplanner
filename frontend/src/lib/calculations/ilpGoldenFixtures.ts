@@ -251,6 +251,12 @@ export type GoldenCoverageTag =
   | 'branch:fwd-invest-flexi-elite-top-up-premium-charge'
   | 'branch:fwd-invest-flexi-elite-initial-account-redemption-fee'
   | 'branch:fwd-invest-flexi-elite-initial-account-surrender-charge'
+  | 'branch:fwd-invest-first-horizon-initial-account-charge'
+  | 'branch:fwd-invest-first-horizon-insurance-charge'
+  | 'branch:fwd-invest-first-horizon-premium-reduction-charge'
+  | 'branch:fwd-invest-first-horizon-top-up-premium-charge'
+  | 'branch:fwd-invest-first-horizon-initial-account-redemption-fee'
+  | 'branch:fwd-invest-first-horizon-initial-account-surrender-charge'
   | 'branch:fwd-invest-goal-1-zero-single-premium-charge'
   | 'branch:fwd-invest-goal-1-initial-account-charge'
   | 'branch:fwd-invest-goal-1-plan-charge'
@@ -3578,6 +3584,96 @@ function fwdInvestFlexiEliteStressPolicy(
     name: `Golden FWD Invest Flexi Elite (${variantId.toUpperCase()} OCF Stress)`,
     currentPolicyYear: 8,
     monthsAlreadyPaid: 84,
+  })
+}
+
+function fwdInvestFirstHorizonBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-mip-20' | 'sgd-mip-25',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'fwd-invest-first-horizon', variantId, id)
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden FWD Invest First Horizon (${variantId.toUpperCase()})`,
+      monthlyContribution: 1_000,
+      currentPolicyYear: variantId === 'sgd-mip-20' ? 8 : 10,
+      monthsAlreadyPaid: variantId === 'sgd-mip-20' ? 84 : 108,
+      postMipYears: 5,
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 100_000,
+        currentNetSupplementaryPremiumBase: 20_000,
+      },
+      accounts: base.accounts.map((account) => {
+        if (account.id === 'initial') {
+          return { ...account, currentValue: 30_000 }
+        }
+        return { ...account, currentValue: 5_000 }
+      }),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function fwdInvestFirstHorizonBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-mip-20' | 'sgd-mip-25',
+  id: string,
+): IlpPolicyInput {
+  return fwdInvestFirstHorizonBasePolicy(snapshot, variantId, id, HSBC_BALANCED_FUNDS)
+}
+
+function fwdInvestFirstHorizonEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return fwdInvestFirstHorizonBasePolicy(snapshot, 'sgd-mip-20', id, HSBC_BALANCED_FUNDS, {
+    name: 'Golden FWD Invest First Horizon (SGD / MIP 20 Event Heavy)',
+    currentPolicyYear: 9,
+    monthsAlreadyPaid: 96,
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 97,
+        durationMonths: 1,
+        amount: 5_000,
+      },
+      {
+        id: 'reduction-1',
+        type: 'regular-premium-reduction',
+        startPolicyMonth: 100,
+        durationMonths: 1,
+        amount: 2_400,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 103,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'initial',
+      },
+    ],
+  })
+}
+
+function fwdInvestFirstHorizonStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-mip-20' | 'sgd-mip-25',
+  id: string,
+): IlpPolicyInput {
+  return fwdInvestFirstHorizonBasePolicy(snapshot, variantId, id, HSBC_STRESS_FUNDS, {
+    name: `Golden FWD Invest First Horizon (${variantId.toUpperCase()} OCF Stress)`,
   })
 }
 
@@ -11518,6 +11614,73 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'FWD Invest Flexi VII alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'fwd-invest-first-horizon',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:protected-base-assurance',
+      'branch:fwd-invest-first-horizon-initial-account-charge',
+      'branch:fwd-invest-first-horizon-insurance-charge',
+      'branch:fwd-invest-first-horizon-initial-account-surrender-charge',
+    ],
+    description: 'FWD Invest First Horizon 20-year baseline scenario proving the supported initial-account charge, Appendix B insurance charge, and initial-account surrender-charge corridor.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the supported initial-account charge and insurance-charge corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+      {
+        description: 'baseline policy charges more with the supported insurance-charge rule than without it',
+        test: (fixture, artifact) => {
+          const withoutInsurance = ilpPolicySchema.parse({
+            ...fixture.policy,
+            chargeRules: fixture.policy.chargeRules?.filter((rule) => rule.id !== 'insurance-charge') ?? [],
+          })
+          const withInsuranceFees = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutInsuranceFees = analyzeIlpPolicy(withoutInsurance).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withInsuranceFees > withoutInsuranceFees
+        },
+      },
+    ],
+  },
+  {
+    productId: 'fwd-invest-first-horizon',
+    variantId: 'sgd-mip-25',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'FWD Invest First Horizon 25-year baseline scenario through the supported alternative surrender-charge corridor.',
+  },
+  {
+    productId: 'fwd-invest-first-horizon',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:fwd-invest-first-horizon-premium-reduction-charge',
+      'branch:fwd-invest-first-horizon-top-up-premium-charge',
+      'branch:fwd-invest-first-horizon-initial-account-redemption-fee',
+    ],
+    description: 'FWD Invest First Horizon 20-year event-heavy scenario covering premium-reduction charge, charged top-up allocation, and in-MIP initial-account withdrawal fees.',
+    integrityChecks: [
+      {
+        description: 'event-heavy First Horizon corridor records a top-up contribution spike and a later withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12 && row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'fwd-invest-first-horizon',
+    variantId: 'sgd-mip-25',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'FWD Invest First Horizon 25-year alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'fwd-invest-goal-1',
     variantId: 'sgd-open-ended',
     scenarioId: 'baseline',
@@ -14146,6 +14309,23 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'fwd-invest-flexi-vii' && definition.scenarioId === 'ocf-stress') {
     return fwdInvestFlexiViiStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'fwd-invest-first-horizon' && definition.scenarioId === 'baseline') {
+    return fwdInvestFirstHorizonBaselinePolicy(
+      snapshot,
+      definition.variantId as 'sgd-mip-20' | 'sgd-mip-25',
+      id,
+    )
+  }
+  if (definition.productId === 'fwd-invest-first-horizon' && definition.scenarioId === 'event-heavy') {
+    return fwdInvestFirstHorizonEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'fwd-invest-first-horizon' && definition.scenarioId === 'ocf-stress') {
+    return fwdInvestFirstHorizonStressPolicy(
+      snapshot,
+      definition.variantId as 'sgd-mip-20' | 'sgd-mip-25',
+      id,
+    )
   }
   if (definition.productId === 'fwd-invest-goal-1' && definition.scenarioId === 'baseline') {
     return fwdInvestGoal1BaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended' | 'usd-open-ended', id)

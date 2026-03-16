@@ -174,6 +174,32 @@ function buildInitialAccountChargeRule(term: PremiumPaymentTerm, page9: IlpCatal
   }
 }
 
+function buildInsuranceChargeRule(page9: IlpCatalogSourceRef): IlpTemplateFeeRule {
+  return {
+    id: 'insurance-charge',
+    label: 'Insurance Charge',
+    basis: 'assurance-sum-at-risk',
+    rate: 0,
+    amount: 0,
+    appliesTo: ['initial'],
+    fallbackAppliesTo: ['accumulation'],
+    assuranceValueAppliesTo: ['initial', 'accumulation'],
+    activeWindow: 'policy-term',
+    requiresManualInput: true,
+    assuranceConfig: {
+      formula: 'fwd-invest-flexi-elite-death',
+      monthlyModalFactor: 1 / 12,
+      maxAgeNextBirthday: 99,
+    },
+    notes: [
+      'Requires insured-life details and the current net regular-premium, top-up-premium, and repayment bases before the calculator can model the monthly insurance charge.',
+      'Models the published Appendix B attained-age / sex / smoker insurance charge using the higher of 101% of paid premium and repayment bases less withdrawals and terminal-illness advances, minus policy value.',
+      'The charge is deducted from the initial units account first, with accumulation units account fallback if the initial account is insufficient.',
+    ],
+    sourceRefs: [page9],
+  }
+}
+
 function buildPremiumReductionChargeRule(term: PremiumPaymentTerm, page12: IlpCatalogSourceRef): IlpTemplateEventChargeRule {
   return {
     id: 'premium-reduction-charge',
@@ -242,6 +268,7 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumPaymentTerm):
     bonuses: [],
     feeRules: [
       buildInitialAccountChargeRule(term, page9),
+      buildInsuranceChargeRule(page9),
     ],
     eventChargeRules: [
       {
@@ -282,15 +309,14 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumPaymentTerm):
     ],
     eecTable: [...SURRENDER_CHARGE_SCHEDULE[term]],
     warnings: [
-      `FWD Invest First Horizon (${term}-year premium payment term) is cataloged as a partial modeled subset in V1. The parser captures the published fixed-premium-base initial account charge, the premium-reduction charge schedule, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.`,
+      `FWD Invest First Horizon (${term}-year premium payment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the Appendix B insurance charge, the premium-reduction charge schedule, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.`,
       'Premium shortfall charge remains informational only because the automatic 24-month Premium Pause Waiver cannot be expressed exactly in the current event kernel without miscounting year-3 missed premiums.',
-      'Booster Bonus, Annual Premium Bonus, Loyalty Bonus, insurance charge, repayment waterfalls, and withdrawal-eligibility gates remain outside the current engine.',
+      'Booster Bonus, Annual Premium Bonus, Loyalty Bonus, repayment waterfalls, and withdrawal-eligibility gates remain metadata-only.',
     ],
     unsupportedItems: [
       'Premium shortfall charge remains informational only because the automatic 24-month Premium Pause Waiver starts only from policy year 4 and is not modeled exactly in V1.',
       'Policy year 3 non-payment behavior, Support Benefit approvals, and Premium Pause Waiver month accounting remain informational only.',
       'Booster Bonus, Annual Premium Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.',
-      'Insurance charge remains informational only because the attained-age / sex / smoker Appendix B rate table is not yet wired for this FWD protection formula.',
       'Top-up repayment precedence for missed premiums, prior withdrawals, and prior premium reductions remains informational only.',
       'Top-up eligibility from policy year 2, total top-up cap, minimum top-up amount, and minimum withdrawal requirements remain informational only.',
       'Initial-units-account withdrawal lockout in the first two policy years, the 50%-minus-prior-withdrawals partial-withdrawal limit, and minimum account-value gates remain informational only.',
@@ -309,11 +335,13 @@ export function parseFwdInvestFirstHorizon(context: ParseContext): IlpCatalogPro
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
+      'kernel:protected-base-assurance',
       'branch:fwd-invest-first-horizon-initial-account-charge',
+      'branch:fwd-invest-first-horizon-insurance-charge',
       'branch:fwd-invest-first-horizon-premium-reduction-charge',
       'branch:fwd-invest-first-horizon-top-up-premium-charge',
       'branch:fwd-invest-first-horizon-initial-account-redemption-fee',
@@ -323,7 +351,6 @@ export function parseFwdInvestFirstHorizon(context: ParseContext): IlpCatalogPro
       'fwd-invest-first-horizon-premium-shortfall-charge',
       'fwd-invest-first-horizon-premium-pause-waiver',
       'fwd-invest-first-horizon-support-benefit-waiver',
-      'fwd-invest-first-horizon-insurance-charge',
       'fwd-invest-first-horizon-booster-bonus',
       'fwd-invest-first-horizon-annual-premium-bonus',
       'fwd-invest-first-horizon-loyalty-bonus',
@@ -337,8 +364,8 @@ export function parseFwdInvestFirstHorizon(context: ParseContext): IlpCatalogPro
       'fwd-invest-first-horizon-fund-level-charges',
     ],
     warnings: [
-      'FWD Invest First Horizon is cataloged as a partial modeled subset in V1. The parser currently covers the published 20-year and 25-year regular-premium corridors that fit the current charge and surrender kernels.',
-      'Premium shortfall / Premium Pause Waiver behavior, bonus mechanics, insurance charge, repayment waterfalls, and withdrawal eligibility gates remain outside the current engine.',
+      'FWD Invest First Horizon is cataloged as a supported V1 product. The parser currently covers the published 20-year and 25-year regular-premium corridors through the fixed-premium-base initial-account charge, Appendix B insurance charge, premium-reduction charge, top-up premium charge, initial-account redemption-fee, and surrender-charge surfaces that fit the existing charge and surrender kernels.',
+      'Premium shortfall / Premium Pause Waiver behavior, bonus mechanics, repayment waterfalls, and withdrawal eligibility gates remain metadata-only.',
     ],
     archived: false,
     variants: [
