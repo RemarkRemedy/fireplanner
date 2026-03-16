@@ -61641,11 +61641,12 @@
       "tokio-top-up-premium-charge",
       "tokio-recurring-single-premium-charge",
       "tokio-initial-account-surrender-charge",
-      "kernel:distribution-mode-assumption"
+      "kernel:distribution-mode-assumption",
+      "branch:tokio-atlas-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction"
     ],
     "metadataOnlyBehaviors": [
       "tokio-atlas-loyalty-bonus-adjustment-factor",
-      "tokio-atlas-advanced-death-benefit-mpc",
+      "tokio-atlas-advanced-death-payout-and-life-assured-administration",
       "tokio-atlas-change-of-life-assured-option",
       "tokio-atlas-premium-holiday-lapse-state",
       "tokio-atlas-regular-withdrawal-facility",
@@ -61653,9 +61654,10 @@
       "tokio-atlas-credit-card-charge"
     ],
     "warnings": [
-      "TM Atlas Wealth is cataloged as a partial modeled subset in V1. The parser captures one honest SGD / premium-payment-term-25 corridor with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
+      "TM Atlas Wealth is cataloged as a partial modeled subset in V1. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
       "Loyalty Bonus remains informational only because the source uses an annual adjustment-factor formula that the current engine does not execute.",
-      "Advanced Death Benefit monthly protection charges, premium-holiday lapse behavior, add/remove/change-of-life-assured handling, regular withdrawal, and other corridors remain outside the current engine.",
+      "Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-policy-year accrual, policy-year-2 settlement, policy-value valuation basis, and irreversible downgrade after failed deduction.",
+      "Premium-holiday lapse behavior, add/remove/change-of-life-assured handling, regular withdrawal, and other corridors remain outside the current engine.",
       "Structured extraction validated against the TM Atlas Wealth product summary text layer."
     ],
     "archived": false,
@@ -61945,12 +61947,12 @@
           0.1
         ],
         "warnings": [
-          "This partial template models the SGD / premium-payment-term-25 corridor only.",
+          "This partial template models the SGD / premium-payment-term-25 (Basic Death) corridor only.",
           "This partial template models 12-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the published 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface."
         ],
         "unsupportedItems": [
           "Loyalty Bonus remains metadata-only because its annual adjustment-factor formula and qualification state are outside the current engine.",
-          "Advanced Death Benefit monthly protection charges, add/remove/change-of-life-assured handling, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.",
+          "Advanced Death selection, Monthly Protection Charge, add/remove/change-of-life-assured handling, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.",
           "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1."
         ],
         "sourceRefs": [
@@ -61993,6 +61995,396 @@
             "page": 14,
             "section": "Appendix A Surrender Charge",
             "excerpt": "Premium Payment Term: 25 -16 Years Policy Premium Payment Term Year 25 24 23 22 21 20 19 18 17 16 1 100% 100% 100% 100% 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100% 100% 100% 100% 100% 100% 100% 3 88% 86% 84% 82% "
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-25-advanced-death",
+        "currency": "SGD",
+        "mipLength": 25,
+        "icpMonths": 12,
+        "accounts": [
+          {
+            "id": "initial",
+            "label": "Initial Units Account",
+            "feeRate": 0.055,
+            "postMipFeeRate": 0.015,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan Description",
+                "excerpt": "PRODUCT SUMMARY − TM ATLAS WEALTH In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description TM Atlas Wealth is a whole life, limited premium investment-linke"
+              },
+              {
+                "page": 2,
+                "section": "Initial Bonus / Loyalty Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the sixth policy anniversary. During premium payment term, loyalty bonus will be paid in accor"
+              },
+              {
+                "page": 4,
+                "section": "Regular Premium Routing",
+                "excerpt": "For initial regular premium required for issuance of the policy, we will use the unit price on the next pricing day following the date we issue the policy. For any subsequent regular premium, we will use the unit price o"
+              },
+              {
+                "page": 8,
+                "section": "Initial Charge / Policy Charge / MPC",
+                "excerpt": "Initial Charge During the premium payment term, an initial charge of 4% p.a. of the Initial Units Account value will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial Units Acc"
+              }
+            ]
+          },
+          {
+            "id": "accumulation",
+            "label": "Accumulation Units Account",
+            "feeRate": 0.015,
+            "postMipFeeRate": 0.015,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "after-icp",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Initial Bonus / Loyalty Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the sixth policy anniversary. During premium payment term, loyalty bonus will be paid in accor"
+              },
+              {
+                "page": 4,
+                "section": "Regular Premium Routing",
+                "excerpt": "For initial regular premium required for issuance of the policy, we will use the unit price on the next pricing day following the date we issue the policy. For any subsequent regular premium, we will use the unit price o"
+              },
+              {
+                "page": 5,
+                "section": "Recurring Single Premium / Top-up Premium / Premium Holiday",
+                "excerpt": "If there is any non-payment of regular premium, you may be allowed to resume paying recurring single premium only if the regular premium payment has resumed and the regular premium amount is equivalent to the annualised "
+              },
+              {
+                "page": 8,
+                "section": "Initial Charge / Policy Charge / MPC",
+                "excerpt": "Initial Charge During the premium payment term, an initial charge of 4% p.a. of the Initial Units Account value will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial Units Acc"
+              },
+              {
+                "page": 9,
+                "section": "Premium Charge / Surrender Charge",
+                "excerpt": "Premium Charge for Recurring Single Premium and Top-up Premium A 5% premium charge will be imposed on each recurring single premium and/or top-up premium. This charge will be deducted prior to the allocation of the recur"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "initial-bonus",
+            "type": "allocation",
+            "label": "Initial Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "initial"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 5,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.075
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.1
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.12
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.14
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.195
+              }
+            ],
+            "notes": [
+              "Tier is based on the published SGD annualised regular premium band for the 25-year premium payment term.",
+              "Allocated to the Initial Units Account upon each regular premium received in the first five policy years."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Initial Bonus",
+                "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first five (5) policy years upon receipt of each regular premium. Initial bonus = Applicable initial bonus rate (based on annualised regula"
+              },
+              {
+                "page": 2,
+                "section": "Initial Bonus Rates",
+                "excerpt": "Initial bonus rates on a per annum basis are set out below: Annualised Regular Premium Payment Term (Years) Premium Band 5-9 10-14 15-19 20-24 25 1 0.90% 2.50% 5.00% 6.00% 7.50% 2 1.50% 4.50% 6.50% 8.00% 10.00% 3 2.50% 6"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "monthly-protection-charge",
+            "label": "Monthly Protection Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": 0,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "tokio-mpc-net-premium-floor",
+              "rateTable": "tokio-mpc-unzo-death",
+              "monthlyModalFactor": 1,
+              "maxAgeNextBirthday": 99,
+              "accrual": {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "settlementPolicyYear": 2
+              },
+              "disableFutureChargesOnInsufficientDeduction": true
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "accumulation"
+            ],
+            "assuranceValueAppliesTo": [
+              "initial",
+              "accumulation"
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published Monthly Protection Charge for the Advanced Death corridor during the 25-year premium payment term.",
+              "The first policy year Monthly Protection Charge is accrued and deducted from the Accumulation Units Account in one lump sum in the second policy year.",
+              "From the second policy year onward, Monthly Protection Charge is deducted monthly in advance from the Accumulation Units Account while the policy remains in force.",
+              "The sum at risk is the published net premium less 101% of policy value, using Initial plus Accumulation Units Account value for the valuation basis.",
+              "If the Accumulation Units Account cannot fully fund Monthly Protection Charge due, the death benefit is downgraded to Basic Death Benefit, future new Monthly Protection Charge stops, and the outstanding amount remains collectible as indebtedness."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan Description",
+                "excerpt": "PRODUCT SUMMARY − TM ATLAS WEALTH In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description TM Atlas Wealth is a whole life, limited premium investment-linke"
+              },
+              {
+                "page": 8,
+                "section": "Initial Charge / Policy Charge / MPC",
+                "excerpt": "Initial Charge During the premium payment term, an initial charge of 4% p.a. of the Initial Units Account value will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial Units Acc"
+              },
+              {
+                "page": 14,
+                "section": "Appendix A Monthly Protection Charge Rates",
+                "excerpt": "Surrender Charge Premium Payment Term: 25 -16 Years Policy Premium Payment Term Year 25 24 23 22 21 20 19 18 17 16 1 100% 100% 100% 100% 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100% 100% 100% 100% 100% 100% 100% 3"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each top-up premium allocation to the Accumulation Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium / Top-up Premium / Premium Holiday",
+                "excerpt": "If there is any non-payment of regular premium, you may be allowed to resume paying recurring single premium only if the regular premium payment has resumed and the regular premium amount is equivalent to the annualised "
+              },
+              {
+                "page": 9,
+                "section": "Premium Charge / Surrender Charge",
+                "excerpt": "Premium Charge for Recurring Single Premium and Top-up Premium A 5% premium charge will be imposed on each recurring single premium and/or top-up premium. This charge will be deducted prior to the allocation of the recur"
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurring Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each recurring single premium allocation to the Accumulation Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Recurring Single Premium / Top-up Premium / Premium Holiday",
+                "excerpt": "If there is any non-payment of regular premium, you may be allowed to resume paying recurring single premium only if the regular premium payment has resumed and the regular premium amount is equivalent to the annualised "
+              },
+              {
+                "page": 9,
+                "section": "Premium Charge / Surrender Charge",
+                "excerpt": "Premium Charge for Recurring Single Premium and Top-up Premium A 5% premium charge will be imposed on each recurring single premium and/or top-up premium. This charge will be deducted prior to the allocation of the recur"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "initial",
+            "accumulation"
+          ],
+          "cashPayoutWindows": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 25,
+              "accountIds": [
+                "accumulation"
+              ]
+            },
+            {
+              "startPolicyYear": 26,
+              "endPolicyYear": null,
+              "accountIds": [
+                "initial",
+                "accumulation"
+              ]
+            }
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.",
+            "During the 25-year premium payment term, only dividends from the Accumulation Units Account may be paid in cash.",
+            "After the premium payment term, dividends from both the Initial Units Account and Accumulation Units Account may be paid in cash.",
+            "The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 8,
+              "section": "Dividend Distribution / Initial Charge / Policy Charge",
+              "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+            }
+          ]
+        },
+        "eecTable": [
+          1,
+          1,
+          0.88,
+          0.86,
+          0.84,
+          0.82,
+          0.8,
+          0.78,
+          0.76,
+          0.73,
+          0.7,
+          0.67,
+          0.64,
+          0.61,
+          0.58,
+          0.54,
+          0.5,
+          0.45,
+          0.4,
+          0.35,
+          0.3,
+          0.25,
+          0.2,
+          0.15,
+          0.1
+        ],
+        "warnings": [
+          "This partial template models the SGD / premium-payment-term-25 (Advanced Death) corridor only.",
+          "This partial template models 12-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the published 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
+          "The Advanced Death variant also models the published first-policy-year Monthly Protection Charge accrual, policy-year-2 settlement, policy-value valuation basis, and irreversible downgrade to Basic Death after failed Accumulation Units Account deduction."
+        ],
+        "unsupportedItems": [
+          "Loyalty Bonus remains metadata-only because its annual adjustment-factor formula and qualification state are outside the current engine.",
+          "Advanced Death payout handling beyond the modeled Monthly Protection Charge, add/remove/change-of-life-assured handling, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.",
+          "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan Description",
+            "excerpt": "PRODUCT SUMMARY − TM ATLAS WEALTH In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description TM Atlas Wealth is a whole life, limited premium investment-linke"
+          },
+          {
+            "page": 2,
+            "section": "Initial Bonus / Loyalty Bonus",
+            "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the sixth policy anniversary. During premium payment term, loyalty bonus will be paid in accor"
+          },
+          {
+            "page": 4,
+            "section": "Regular Premium Routing",
+            "excerpt": "For initial regular premium required for issuance of the policy, we will use the unit price on the next pricing day following the date we issue the policy. For any subsequent regular premium, we will use the unit price o"
+          },
+          {
+            "page": 5,
+            "section": "Recurring Single Premium / Top-up Premium / Premium Holiday",
+            "excerpt": "If there is any non-payment of regular premium, you may be allowed to resume paying recurring single premium only if the regular premium payment has resumed and the regular premium amount is equivalent to the annualised "
+          },
+          {
+            "page": 8,
+            "section": "Dividend Distribution / Initial Charge / Policy Charge",
+            "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+          },
+          {
+            "page": 8,
+            "section": "Initial Charge / Policy Charge / MPC",
+            "excerpt": "Initial Charge During the premium payment term, an initial charge of 4% p.a. of the Initial Units Account value will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial Units Acc"
+          },
+          {
+            "page": 9,
+            "section": "Premium Charge / Surrender Charge",
+            "excerpt": "Premium Charge for Recurring Single Premium and Top-up Premium A 5% premium charge will be imposed on each recurring single premium and/or top-up premium. This charge will be deducted prior to the allocation of the recur"
+          },
+          {
+            "page": 14,
+            "section": "Appendix A Monthly Protection Charge Rates",
+            "excerpt": "Surrender Charge Premium Payment Term: 25 -16 Years Policy Premium Payment Term Year 25 24 23 22 21 20 19 18 17 16 1 100% 100% 100% 100% 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100% 100% 100% 100% 100% 100% 100% 3"
           }
         ]
       }

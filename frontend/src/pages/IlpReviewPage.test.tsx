@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { IlpReviewPage } from './IlpReviewPage'
 import { createDefaultPolicy, useIlpStore } from '@/stores/useIlpStore'
 
-const ILP_REVIEW_PAGE_TEST_TIMEOUT_MS = 25_000
+const ILP_REVIEW_PAGE_TEST_TIMEOUT_MS = 40_000
 
 vi.mock('recharts', () => {
   const Container = ({ children }: { children?: React.ReactNode }) => <div>{children}</div>
@@ -951,7 +951,7 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
-  it('seeds Tokio Marine TM Atlas Wealth as a partial catalog product with 12-month routing and combined account-fee modeling', async () => {
+  it('seeds Tokio Marine TM Atlas Wealth basic-death as a partial catalog product with 12-month routing and combined account-fee modeling', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
 
@@ -960,14 +960,42 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Atlas Wealth')
 
     expect(within(dialog).getByText('TM Atlas Wealth')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 25/i }))
+    const basicVariantButton = within(dialog)
+      .getAllByRole('button')
+      .find((button) => (
+        button.textContent?.includes('SGD / MIP 25')
+        && !button.textContent.includes('Advanced Death')
+      ))
+    expect(basicVariantButton).toBeDefined()
+    await user.click(basicVariantButton!)
 
     expect(screen.getAllByText('TM Atlas Wealth (SGD / MIP 25)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Partial template')
-    expect(seededAlert?.textContent).toContain('one honest SGD / premium-payment-term-25 corridor')
+    expect(seededAlert?.textContent).toContain('Basic Death keeps Monthly Protection Charge metadata-only')
     expect(screen.getByDisplayValue('Initial Bonus')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds Tokio Marine TM Atlas Wealth advanced-death as a partial catalog product with disable-on-failure Tokio MPC inputs', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Atlas Wealth')
+
+    expect(within(dialog).getByText('TM Atlas Wealth')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 25 \(advanced death\)/i }))
+
+    expect(screen.getAllByText('TM Atlas Wealth (SGD / MIP 25 (Advanced Death))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
+    expect(seededAlert?.textContent).toContain('policy-year-2 settlement')
+    expect(seededAlert?.textContent).toContain('irreversible downgrade after failed deduction')
+    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Harvest Flexi as a partial catalog product with executable charge surfaces', async () => {

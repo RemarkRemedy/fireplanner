@@ -5,6 +5,7 @@ import type {
   IlpTemplateBonus,
   IlpTemplateBonusTier,
   IlpTemplateEventChargeRule,
+  IlpTemplateFeeRule,
   IlpTemplateVariant,
 } from '../../../src/lib/ilp-catalog/types.js'
 import type { ExtractedPdfDocument } from '../pdf/extractPdfText.js'
@@ -101,7 +102,49 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
   ]
 }
 
-function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
+function buildTokioMpcFeeRule(
+  optionPage: IlpCatalogSourceRef,
+  chargePage: IlpCatalogSourceRef,
+  tablePage: IlpCatalogSourceRef,
+): IlpTemplateFeeRule {
+  return {
+    id: 'monthly-protection-charge',
+    label: 'Monthly Protection Charge',
+    basis: 'assurance-sum-at-risk',
+    rate: 0,
+    amount: 0,
+    appliesTo: ['accumulation'],
+    assuranceValueAppliesTo: ['initial', 'accumulation'],
+    activeWindow: 'during-mip',
+    requiresManualInput: true,
+    assuranceConfig: {
+      formula: 'tokio-mpc-net-premium-floor',
+      rateTable: 'tokio-mpc-unzo-death',
+      monthlyModalFactor: 1,
+      maxAgeNextBirthday: 99,
+      accrual: {
+        startPolicyYear: 1,
+        endPolicyYear: 1,
+        settlementPolicyYear: 2,
+      },
+      disableFutureChargesOnInsufficientDeduction: true,
+    },
+    notes: [
+      'Models the published Monthly Protection Charge for the Advanced Death corridor during the 25-year premium payment term.',
+      'The first policy year Monthly Protection Charge is accrued and deducted from the Accumulation Units Account in one lump sum in the second policy year.',
+      'From the second policy year onward, Monthly Protection Charge is deducted monthly in advance from the Accumulation Units Account while the policy remains in force.',
+      'The sum at risk is the published net premium less 101% of policy value, using Initial plus Accumulation Units Account value for the valuation basis.',
+      'If the Accumulation Units Account cannot fully fund Monthly Protection Charge due, the death benefit is downgraded to Basic Death Benefit, future new Monthly Protection Charge stops, and the outstanding amount remains collectible as indebtedness.',
+    ],
+    sourceRefs: [optionPage, chargePage, tablePage],
+  }
+}
+
+function buildVariant(
+  document: ExtractedPdfDocument,
+  deathBenefitOption: 'basic-death' | 'advanced-death',
+): IlpTemplateVariant {
+  const isAdvancedDeath = deathBenefitOption === 'advanced-death'
   const page1 = sourceRef(1, 'Plan Description', snippetNear(document, 1, 'TM Atlas Wealth', 18))
   const page2 = sourceRef(2, 'Initial Bonus / Loyalty Bonus', snippetNear(document, 2, 'Loyalty Bonus', 22))
   const page4 = sourceRef(4, 'Regular Premium Routing', snippetNear(document, 4, 'Regular premium due during the first 12 months', 20))
@@ -109,7 +152,11 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page8Dividend = sourceRef(8, 'Dividend Distribution / Initial Charge / Policy Charge', snippetNear(document, 8, 'Dividend Distribution', 32))
   const page8Charges = sourceRef(8, 'Initial Charge / Policy Charge / MPC', snippetNear(document, 8, 'Initial Charge', 28))
   const page9 = sourceRef(9, 'Premium Charge / Surrender Charge', snippetNear(document, 9, 'Premium Charge for Recurring Single Premium and Top-up Premium', 26))
-  const page14 = sourceRef(14, 'Appendix A Surrender Charge', snippetNear(document, 14, 'Premium Payment Term: 25', 24))
+  const page14 = sourceRef(
+    14,
+    isAdvancedDeath ? 'Appendix A Monthly Protection Charge Rates' : 'Appendix A Surrender Charge',
+    snippetNear(document, 14, isAdvancedDeath ? 'Monthly Rates for Monthly Protection Charges' : 'Premium Payment Term: 25', 24),
+  )
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
     {
@@ -144,8 +191,13 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
   ]
 
+  const feeRules: IlpTemplateFeeRule[] = []
+  if (isAdvancedDeath) {
+    feeRules.push(buildTokioMpcFeeRule(page1, page8Charges, page14))
+  }
+
   return {
-    id: 'sgd-mip-25',
+    id: isAdvancedDeath ? 'sgd-mip-25-advanced-death' : 'sgd-mip-25',
     currency: 'SGD',
     mipLength: MIP_LENGTH,
     icpMonths: 12,
@@ -176,7 +228,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       },
     ],
     bonuses: buildBonuses(document),
-    feeRules: [],
+    feeRules,
     eventChargeRules,
     distributionSupport: {
       mode: 'manual-assumption',
@@ -207,12 +259,23 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      'This partial template models the SGD / premium-payment-term-25 corridor only.',
+      `This partial template models the SGD / premium-payment-term-25 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
       'This partial template models 12-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the published 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
+      ...(isAdvancedDeath
+        ? [
+            'The Advanced Death variant also models the published first-policy-year Monthly Protection Charge accrual, policy-year-2 settlement, policy-value valuation basis, and irreversible downgrade to Basic Death after failed Accumulation Units Account deduction.',
+          ]
+        : []),
     ],
     unsupportedItems: [
       'Loyalty Bonus remains metadata-only because its annual adjustment-factor formula and qualification state are outside the current engine.',
-      'Advanced Death Benefit monthly protection charges, add/remove/change-of-life-assured handling, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
+      ...(isAdvancedDeath
+        ? [
+            'Advanced Death payout handling beyond the modeled Monthly Protection Charge, add/remove/change-of-life-assured handling, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
+          ]
+        : [
+            'Advanced Death selection, Monthly Protection Charge, add/remove/change-of-life-assured handling, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
+          ]),
       'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1.',
     ],
     sourceRefs: [page1, page2, page4, page5, page8Dividend, page8Charges, page9, page14],
@@ -242,10 +305,11 @@ export function parseTokioMarineAtlasWealth(context: ParseContext): IlpCatalogPr
       'tokio-recurring-single-premium-charge',
       'tokio-initial-account-surrender-charge',
       'kernel:distribution-mode-assumption',
+      'branch:tokio-atlas-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction',
     ],
     metadataOnlyBehaviors: [
       'tokio-atlas-loyalty-bonus-adjustment-factor',
-      'tokio-atlas-advanced-death-benefit-mpc',
+      'tokio-atlas-advanced-death-payout-and-life-assured-administration',
       'tokio-atlas-change-of-life-assured-option',
       'tokio-atlas-premium-holiday-lapse-state',
       'tokio-atlas-regular-withdrawal-facility',
@@ -253,12 +317,16 @@ export function parseTokioMarineAtlasWealth(context: ParseContext): IlpCatalogPr
       'tokio-atlas-credit-card-charge',
     ],
     warnings: [
-      'TM Atlas Wealth is cataloged as a partial modeled subset in V1. The parser captures one honest SGD / premium-payment-term-25 corridor with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
+      'TM Atlas Wealth is cataloged as a partial modeled subset in V1. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
       'Loyalty Bonus remains informational only because the source uses an annual adjustment-factor formula that the current engine does not execute.',
-      'Advanced Death Benefit monthly protection charges, premium-holiday lapse behavior, add/remove/change-of-life-assured handling, regular withdrawal, and other corridors remain outside the current engine.',
+      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-policy-year accrual, policy-year-2 settlement, policy-value valuation basis, and irreversible downgrade after failed deduction.',
+      'Premium-holiday lapse behavior, add/remove/change-of-life-assured handling, regular withdrawal, and other corridors remain outside the current engine.',
       'Structured extraction validated against the TM Atlas Wealth product summary text layer.',
     ],
     archived: false,
-    variants: [buildVariant(context.document)],
+    variants: [
+      buildVariant(context.document, 'basic-death'),
+      buildVariant(context.document, 'advanced-death'),
+    ],
   }
 }

@@ -5036,7 +5036,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
-  it('maps Tokio Marine TM Atlas Wealth into a partial seed with 12-month routing and combined account-fee modeling', () => {
+  it('maps Tokio Marine TM Atlas Wealth basic-death into a partial seed with 12-month routing and combined account-fee modeling', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-atlas-wealth')
     expect(product).toBeDefined()
@@ -5081,7 +5081,41 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({ id: 'top-up-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
       expect.objectContaining({ id: 'recurring-single-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
     ])
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-payment-term-25 corridor only'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-payment-term-25 (Basic Death) corridor only'))).toBe(true)
+  })
+
+  it('maps Tokio Marine TM Atlas Wealth advanced-death into a partial seed with disable-on-failure Tokio MPC inputs', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-atlas-wealth')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-25-advanced-death')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-atlas-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction')
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'monthly-protection-charge',
+        basis: 'assurance-sum-at-risk',
+        appliesTo: ['accumulation'],
+        assuranceValueAppliesTo: ['initial', 'accumulation'],
+        allocation: 'pro-rata-by-value',
+        assuranceConfig: expect.objectContaining({
+          formula: 'tokio-mpc-net-premium-floor',
+          rateTable: 'tokio-mpc-unzo-death',
+          accrual: {
+            startPolicyYear: 1,
+            endPolicyYear: 1,
+            settlementPolicyYear: 2,
+          },
+          disableFutureChargesOnInsufficientDeduction: true,
+        }),
+        requiresManualInput: true,
+      }),
+    ])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('irreversible downgrade to Basic Death'))).toBe(true)
   })
 
   it('maps Manulife InvestReady (III) into a partial seed with protected-base assurance support', () => {
