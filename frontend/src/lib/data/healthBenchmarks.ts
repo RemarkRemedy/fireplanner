@@ -170,6 +170,23 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
     source: 'DBS Financial Health Ratios',
     sourceUrl: 'https://www.dbs.com.sg/personal/articles/nav/financial-planning/7-financial-ratios-to-gauge-your-financial-health',
   },
+  {
+    id: 'fee-drag',
+    label: 'Investment Fee Drag',
+    shortLabel: 'Fees',
+    description: 'Annual expense ratio on your invested portfolio',
+    formula: 'expenseRatio (set in FIRE Settings)',
+    unit: '%',
+    direction: 'lower-is-better',
+    thresholds: { greenBound: 0.005, amberBound: 0.01 },
+    tip: {
+      green: 'Under 0.5% fees. Low-cost portfolio — more of your returns stay invested.',
+      amber: '0.5-1.0% fees. Consider switching active funds to lower-cost index funds or ETFs.',
+      red: 'Over 1.0% fees. Common with ILPs and actively managed funds. Over 30 years, this can cost 20-30% of your final portfolio value.',
+    },
+    source: 'MoneySense Unit Trusts Guide (Total Expense Ratio)',
+    sourceUrl: 'https://www.moneysense.gov.sg/unit-trusts-guide/',
+  },
 ]
 
 /** Lookup map for O(1) access by ratio id */

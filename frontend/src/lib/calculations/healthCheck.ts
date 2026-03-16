@@ -24,6 +24,7 @@ export interface HealthRatioInputs {
   totalAssets: number
   netWorth: number
   investedAssets: number
+  expenseRatio?: number
 }
 
 export interface HealthRatioResult {
@@ -100,6 +101,14 @@ const RATIO_COMPUTERS: Record<string, RatioComputer> = {
     const ratio = i.netWorth / i.totalAssets
     if (ratio < 0) return { value: ratio, message: 'Net worth is negative' }
     return { value: ratio, message: null }
+  },
+  'fee-drag': (i) => {
+    if (i.expenseRatio == null) return { value: null, message: 'No expense ratio set' }
+    const annualCost = i.investedAssets * i.expenseRatio
+    const message = i.investedAssets > 0
+      ? `$${Math.round(annualCost).toLocaleString()}/yr on your current portfolio`
+      : null
+    return { value: i.expenseRatio, message }
   },
 }
 

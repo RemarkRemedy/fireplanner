@@ -164,9 +164,9 @@ describe('computeHealthRatios', () => {
     expect(result.greenCount).toBe(8)
     expect(result.overallStatus).toBe('green')
   })
-  it('greenCount + amberCount + redCount + nullCount === 8', () => {
+  it('greenCount + amberCount + redCount + nullCount === total ratios', () => {
     const result = computeHealthRatios(midCareerWithMortgage)
-    expect(result.greenCount + result.amberCount + result.redCount + result.nullCount).toBe(8)
+    expect(result.greenCount + result.amberCount + result.redCount + result.nullCount).toBe(result.ratios.length)
   })
   it('no NaN or undefined in any ratio value', () => {
     for (const fixture of [freshGraduate, midCareerWithMortgage, overLeveraged, fireAchieved]) {

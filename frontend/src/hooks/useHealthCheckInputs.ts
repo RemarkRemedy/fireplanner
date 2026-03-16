@@ -142,6 +142,7 @@ export function useHealthCheckInputs(adultId?: string): HealthCheckInputsResult 
       totalAssets,
       netWorth,
       investedAssets,
+      expenseRatio,
     }
 
     const insuranceInputs: InsuranceNeedsInputs = {
