@@ -1,0 +1,513 @@
+{
+  "metadata": {
+    "fixtureId": "income-legacy-flex-solitaire-sgd-regular-mip-5-baseline",
+    "fixtureClass": "supported",
+    "productId": "income-legacy-flex-solitaire",
+    "variantId": "sgd-regular-mip-5",
+    "scenarioId": "baseline",
+    "supportStatus": "supported",
+    "description": "Legacy Flex Solitaire baseline scenario proving the supported regular-premium, manual-input policy-fee, manual-input Appendix 1 insurance-charge, and reinvest-only distribution corridor.",
+    "coverageTags": [
+      "baseline",
+      "branch:income-legacy-flex-solitaire-regular-premium-charge",
+      "branch:income-legacy-flex-solitaire-policy-fee",
+      "branch:income-legacy-flex-solitaire-insurance-cover-charge",
+      "kernel:distribution-mode-assumption"
+    ],
+    "catalogVersion": "0.1.0",
+    "sourceFileName": "VA3R_VA3S_Summary.pdf",
+    "sourceChecksumSha256": "c35fd32f003b4b9e460f2b7778f30f7ac4ebe077c8d09c713df8462ca73d8d14"
+  },
+  "policyInput": {
+    "id": "income-legacy-flex-solitaire-sgd-regular-mip-5-baseline",
+    "name": "Golden Legacy Flex Solitaire (SGD-REGULAR-MIP-5)",
+    "insurer": "Income Insurance",
+    "currency": "SGD",
+    "monthlyContribution": 900,
+    "monthsAlreadyPaid": 36,
+    "currentPolicyYear": 4,
+    "icpMonths": 1,
+    "assuranceProfile": {
+      "currentAgeNextBirthday": 45,
+      "sex": "male",
+      "smokerStatus": "non-smoker",
+      "currentSumAssured": 150000
+    },
+    "mipLength": 5,
+    "postMipYears": 0,
+    "eecTable": [
+      0.9,
+      0.8,
+      0.6,
+      0.4,
+      0.2
+    ],
+    "discountRate": 0.07,
+    "inflationRate": 0.025,
+    "alternativeReturn": 0.07,
+    "accounts": [
+      {
+        "id": "premium",
+        "label": "Premium Account",
+        "feeRate": 0,
+        "currentValue": 28000,
+        "contributionShare": 0,
+        "subjectToEec": true,
+        "postMipFeeRate": null,
+        "contributionRules": [
+          {
+            "phase": "during-icp",
+            "contributionShare": 1
+          },
+          {
+            "phase": "after-icp",
+            "contributionShare": 1
+          }
+        ]
+      },
+      {
+        "id": "topup",
+        "label": "Top-up Account",
+        "feeRate": 0,
+        "currentValue": 4000,
+        "contributionShare": 0,
+        "subjectToEec": false,
+        "postMipFeeRate": null,
+        "contributionRules": [
+          {
+            "phase": "top-up",
+            "contributionShare": 1
+          }
+        ]
+      }
+    ],
+    "funds": [
+      {
+        "name": "Income Global Opportunities",
+        "allocation": 0.6,
+        "ocf": 0.012,
+        "grossReturnLow": 0.045,
+        "grossReturnMid": 0.072,
+        "grossReturnHigh": 0.098
+      },
+      {
+        "name": "Income Stable Yield",
+        "allocation": 0.4,
+        "ocf": 0.009,
+        "grossReturnLow": 0.03,
+        "grossReturnMid": 0.052,
+        "grossReturnHigh": 0.07
+      }
+    ],
+    "bonuses": [],
+    "chargeRules": [
+      {
+        "id": "regular-premium-charge",
+        "label": "Regular Premium Charge",
+        "basis": "annual-contribution",
+        "activeWindow": "policy-term",
+        "yearBasis": "premium-year",
+        "appliesTo": [
+          "premium"
+        ],
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0.28
+          },
+          {
+            "startPolicyYear": 2,
+            "endPolicyYear": 2,
+            "rate": 0.23
+          },
+          {
+            "startPolicyYear": 3,
+            "endPolicyYear": 3,
+            "rate": 0.14
+          },
+          {
+            "startPolicyYear": 4,
+            "endPolicyYear": 4,
+            "rate": 0.07
+          },
+          {
+            "startPolicyYear": 5,
+            "endPolicyYear": 5,
+            "rate": 0.05
+          }
+        ],
+        "rate": 0,
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      },
+      {
+        "id": "policy-fee",
+        "label": "Policy Fee",
+        "basis": "fixed-annual",
+        "activeWindow": "policy-term",
+        "startPolicyYear": 1,
+        "endPolicyYear": 4,
+        "appliesTo": [
+          "premium"
+        ],
+        "fallbackAppliesTo": [
+          "topup"
+        ],
+        "rate": 0,
+        "amount": 480,
+        "requiresManualInput": false,
+        "allocation": "pro-rata-by-value"
+      },
+      {
+        "id": "insurance-cover-charge",
+        "label": "Insurance Cover Charge",
+        "basis": "assurance-sum-at-risk",
+        "activeWindow": "policy-term",
+        "appliesTo": [
+          "premium"
+        ],
+        "assuranceValueAppliesTo": [
+          "premium",
+          "topup"
+        ],
+        "fallbackAppliesTo": [
+          "topup"
+        ],
+        "rate": 0,
+        "amount": 0,
+        "assuranceConfig": {
+          "formula": "income-legacy-flex-solitaire-death-ti",
+          "monthlyModalFactor": 0.083333,
+          "maxAgeNextBirthday": 120
+        },
+        "requiresManualInput": false,
+        "allocation": "pro-rata-by-value"
+      }
+    ],
+    "policyEvents": [],
+    "eventChargeRules": [
+      {
+        "id": "top-up-premium-charge",
+        "label": "Top-up Premium Charge",
+        "trigger": "top-up",
+        "basis": "event-amount",
+        "activeWindow": "policy-term",
+        "appliesTo": [
+          "topup"
+        ],
+        "rate": 0.03,
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      },
+      {
+        "id": "premium-holiday-charge",
+        "label": "Premium Holiday Charge",
+        "trigger": "premium-holiday",
+        "basis": "annual-premium-with-overlap-months",
+        "activeWindow": "during-mip",
+        "appliesTo": [
+          "premium"
+        ],
+        "fallbackAppliesTo": [
+          "topup"
+        ],
+        "rate": 0,
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0.9
+          },
+          {
+            "startPolicyYear": 2,
+            "endPolicyYear": 2,
+            "rate": 0.8
+          },
+          {
+            "startPolicyYear": 3,
+            "endPolicyYear": 3,
+            "rate": 0.6
+          },
+          {
+            "startPolicyYear": 4,
+            "endPolicyYear": 4,
+            "rate": 0.4
+          },
+          {
+            "startPolicyYear": 5,
+            "endPolicyYear": 5,
+            "rate": 0.2
+          }
+        ],
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      },
+      {
+        "id": "partial-withdrawal-charge",
+        "label": "Partial Withdrawal Charge",
+        "trigger": "partial-withdrawal",
+        "basis": "event-amount",
+        "activeWindow": "during-mip",
+        "appliesTo": [
+          "premium"
+        ],
+        "rate": 0,
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0.9
+          },
+          {
+            "startPolicyYear": 2,
+            "endPolicyYear": 2,
+            "rate": 0.8
+          },
+          {
+            "startPolicyYear": 3,
+            "endPolicyYear": 3,
+            "rate": 0.6
+          },
+          {
+            "startPolicyYear": 4,
+            "endPolicyYear": 4,
+            "rate": 0.4
+          },
+          {
+            "startPolicyYear": 5,
+            "endPolicyYear": 5,
+            "rate": 0.2
+          }
+        ],
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      }
+    ],
+    "catalogSource": {
+      "productId": "income-legacy-flex-solitaire",
+      "productName": "Legacy Flex Solitaire (VA3S / VA3R)",
+      "variantId": "sgd-regular-mip-5",
+      "variantLabel": "SGD / MIP 5",
+      "catalogVersion": "0.1.0",
+      "supportStatus": "supported",
+      "economicsStatus": "supported",
+      "structureStatus": "structured",
+      "modeledEconomics": [
+        "branch:income-legacy-flex-solitaire-regular-premium-charge",
+        "branch:income-legacy-flex-solitaire-policy-fee",
+        "branch:income-legacy-flex-solitaire-insurance-cover-charge",
+        "branch:income-legacy-flex-solitaire-top-up-premium-charge",
+        "branch:income-legacy-flex-solitaire-premium-holiday-charge",
+        "branch:income-legacy-flex-solitaire-appendix-2-withdrawal-and-surrender-charge",
+        "kernel:distribution-mode-assumption"
+      ],
+      "metadataOnlyBehaviors": [
+        "income-legacy-flex-solitaire-single-premium-corridor",
+        "income-legacy-flex-solitaire-loyalty-bonus",
+        "income-legacy-flex-solitaire-no-lapse-guarantee",
+        "income-legacy-flex-solitaire-future-premium-option",
+        "income-legacy-flex-solitaire-withdrawal-access-option",
+        "income-legacy-flex-solitaire-retirement-and-distribution-options",
+        "income-legacy-flex-solitaire-secondary-insured-and-bequest-option",
+        "income-legacy-flex-solitaire-top-up-account-first-12-month-charge-window",
+        "income-legacy-flex-solitaire-fund-level-annual-management-fee",
+        "income-legacy-flex-solitaire-fund-switching-and-suspension",
+        "income-legacy-flex-solitaire-protection-benefits"
+      ]
+    },
+    "catalogWarnings": [
+      "Legacy Flex Solitaire (VA3S / VA3R) is cataloged as supported in V1 for the regular-premium 5-year and 10-year corridors. The current parser models the premium-year regular premium charges, manual-input policy-fee and Appendix 1 insurance-cover-charge corridors, the top-up premium charge, premium-holiday charge, premium-account Appendix 2 withdrawal / surrender charges, and the published reinvest-only distribution baseline. The single-premium corridor, loyalty-bonus suspension logic, automatic adjusted-sum-assured updates, No Lapse Guarantee, retirement-option payout elections, and top-up-account first-12-month charge timing remain outside the current engine.",
+      "Legacy Flex Solitaire is cataloged as supported in V1 for the 5-year regular-premium corridor. The parser captures the premium-year regular premium charge schedule, a manual-input policy-fee amount for policy years 1-4, the manual-input Appendix 1 insurance-cover-charge corridor, the top-up premium charge, the premium-holiday charge schedule, the premium-account Appendix 2 partial-withdrawal / surrender charge schedule, and the published reinvest-only distribution baseline.",
+      "Single-premium charging, loyalty-bonus suspension logic, automatic adjusted-sum-assured changes after top-ups and withdrawals, No Lapse Guarantee behavior, top-up-account first-12-month charge timing, and retirement-option distribution payouts remain informational only in V1.",
+      "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
+      "Single-premium corridor remains informational only in V1, including the 4% single-premium charge and the single-premium Appendix 2 charge schedule.",
+      "Loyalty Bonus remains informational only because the current runtime does not distinguish chargeable premium-account withdrawals from top-up-account or withdrawal-access withdrawals for bonus suspension.",
+      "Automatic adjusted-sum-assured updates after top-ups, charged withdrawals, withdrawal-access exceptions, and sum-assured reductions remain informational only, so the current adjusted sum assured must be maintained manually for the insurance-cover-charge corridor.",
+      "Death and terminal-illness benefit settlement, secondary-insured continuation, bequest option behavior, and other protection-side payout mechanics remain informational only beyond the supported insurance-cover-charge corridor.",
+      "No Lapse Guarantee debt carry and termination behavior remain informational only.",
+      "Future Premium Option and recurring top-up enrollment remain informational only.",
+      "Withdrawal Access Option, retirement-option distribution payout elections, and the insurer-set minimum distribution payout threshold remain informational only.",
+      "Fund-level annual management fees, fund switching, and suspension of dealings remain informational only.",
+      "Top-up-account withdrawals and surrenders within the first 12 months remain informational only because the current executable slice treats the top-up account as charge-free throughout."
+    ]
+  },
+  "expected": {
+    "summary": {
+      "totalPremiumsPaid": 43200,
+      "totalFeesCharged": 819.92,
+      "totalBonusesReceived": 0,
+      "netFeeDrag": 819.92,
+      "currentSurrenderValue": 20800,
+      "cancelNowPenalty": 11200
+    },
+    "npvAnalysis": {
+      "surrenderNow": {
+        "eecRate": 0.4,
+        "eecCharge": 11200,
+        "npvFees": 11200,
+        "netSurrenderValue": 20800
+      },
+      "futureExitOptions": [
+        {
+          "exitYear": 1,
+          "policyYear": 5,
+          "eecRate": 0.2,
+          "eecCharge": 7885.21,
+          "pvEec": 7369.36,
+          "npvGrossFees": 766.28,
+          "npvBonuses": 0,
+          "totalNpvFees": 8135.64,
+          "netSurrenderValue": 35753.65,
+          "totalContributions": 43200
+        }
+      ],
+      "bestExitYear": 1,
+      "bestExitNpvFees": 8135.64,
+      "holdToMip": {
+        "npvGrossFees": 766.28,
+        "npvBonuses": 0,
+        "totalNpvFees": 8135.64,
+        "finalValue": 43638.86,
+        "totalContributions": 43200
+      }
+    },
+    "opportunityCost": {
+      "alternativePortfolioValue": 33056,
+      "ilpValueAtHorizon": 43638.86,
+      "difference": -10582.86,
+      "atBestExit": {
+        "exitYear": 1,
+        "alternativeValue": 35753.65,
+        "ilpValueAtHorizon": 43638.86,
+        "difference": -7885.21
+      }
+    },
+    "projections": {
+      "low": {
+        "blendedNetReturn": 0.0282,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 5,
+            "annualContribution": 10800,
+            "annualWithdrawals": 0,
+            "combinedValue": 42859.13,
+            "eecRate": 0.2,
+            "eecCharge": 7749.27,
+            "surrenderValue": 35109.86,
+            "cumulativePremiums": 43200,
+            "cumulativeGrossFees": 820.15,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "premium",
+                "open": 28000,
+                "contributionAmount": 10800,
+                "grossFee": 820.15,
+                "bonusCredit": 0,
+                "netFee": 820.15,
+                "withdrawalAmount": 0,
+                "close": 38746.33
+              },
+              {
+                "accountId": "topup",
+                "open": 4000,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 4112.8
+              }
+            ]
+          }
+        ]
+      },
+      "mid": {
+        "blendedNetReturn": 0.0532,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 5,
+            "annualContribution": 10800,
+            "annualWithdrawals": 0,
+            "combinedValue": 43638.86,
+            "eecRate": 0.2,
+            "eecCharge": 7885.21,
+            "surrenderValue": 35753.65,
+            "cumulativePremiums": 43200,
+            "cumulativeGrossFees": 819.92,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "premium",
+                "open": 28000,
+                "contributionAmount": 10800,
+                "grossFee": 819.92,
+                "bonusCredit": 0,
+                "netFee": 819.92,
+                "withdrawalAmount": 0,
+                "close": 39426.06
+              },
+              {
+                "accountId": "topup",
+                "open": 4000,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 4212.8
+              }
+            ]
+          }
+        ]
+      },
+      "high": {
+        "blendedNetReturn": 0.076,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 5,
+            "annualContribution": 10800,
+            "annualWithdrawals": 0,
+            "combinedValue": 44349.98,
+            "eecRate": 0.2,
+            "eecCharge": 8009.2,
+            "surrenderValue": 36340.78,
+            "cumulativePremiums": 43200,
+            "cumulativeGrossFees": 819.72,
+            "cumulativeBonuses": 0,
+            "accounts": [
+              {
+                "accountId": "premium",
+                "open": 28000,
+                "contributionAmount": 10800,
+                "grossFee": 819.72,
+                "bonusCredit": 0,
+                "netFee": 819.72,
+                "withdrawalAmount": 0,
+                "close": 40045.98
+              },
+              {
+                "accountId": "topup",
+                "open": 4000,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 4304
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -205,6 +205,12 @@ export type GoldenCoverageTag =
   | 'branch:income-vs3-partial-withdrawal-charge'
   | 'branch:income-vs3-surrender-charge'
   | 'branch:income-vs3-ad-hoc-top-up-routing'
+  | 'branch:income-legacy-flex-solitaire-regular-premium-charge'
+  | 'branch:income-legacy-flex-solitaire-policy-fee'
+  | 'branch:income-legacy-flex-solitaire-insurance-cover-charge'
+  | 'branch:income-legacy-flex-solitaire-top-up-premium-charge'
+  | 'branch:income-legacy-flex-solitaire-premium-holiday-charge'
+  | 'branch:income-legacy-flex-solitaire-appendix-2-withdrawal-and-surrender-charge'
   | 'branch:income-snack-investment-zero-single-premium-charge'
   | 'branch:income-snack-investment-zero-top-up-charge'
   | 'branch:income-snack-investment-zero-withdrawal-charge'
@@ -2564,6 +2570,123 @@ function incomeInvestFlexTriVantageStressPolicy(
       smokerStatus: 'non-smoker',
       currentNetRegularPremiumBase: 64_800,
     },
+  })
+}
+
+function incomeLegacyFlexSolitaireBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-regular-mip-5' | 'sgd-regular-mip-10',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const currentPolicyYear = variantId === 'sgd-regular-mip-5' ? 4 : 6
+  const base = seedPolicy(snapshot, 'income-legacy-flex-solitaire', variantId, id, {
+    monthlyContribution: 900,
+    currentPolicyYear,
+    monthsAlreadyPaid: (currentPolicyYear - 1) * 12,
+    assuranceProfile: {
+      currentAgeNextBirthday: 45,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentSumAssured: 150_000,
+    },
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden Legacy Flex Solitaire (${variantId.toUpperCase()})`,
+      chargeRules: (base.chargeRules ?? []).map((rule) => (
+        rule.id === 'policy-fee'
+          ? { ...rule, amount: 480 }
+          : rule
+      )),
+      accounts: base.accounts.map((account) => {
+        if (account.id === 'premium') {
+          return { ...account, currentValue: 28_000 }
+        }
+        return { ...account, currentValue: 4_000 }
+      }),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function incomeLegacyFlexSolitaireBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-regular-mip-5' | 'sgd-regular-mip-10',
+  id: string,
+): IlpPolicyInput {
+  return incomeLegacyFlexSolitaireBasePolicy(snapshot, variantId, id, INCOME_BALANCED_FUNDS)
+}
+
+function incomeLegacyFlexSolitaireEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return incomeLegacyFlexSolitaireBasePolicy(snapshot, 'sgd-regular-mip-10', id, INCOME_BALANCED_FUNDS, {
+    name: 'Golden Legacy Flex Solitaire (SGD / REGULAR MIP 10 Event Heavy)',
+    currentPolicyYear: 8,
+    monthsAlreadyPaid: 84,
+    assuranceProfile: {
+      currentAgeNextBirthday: 49,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentSumAssured: 145_000,
+    },
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 97,
+        durationMonths: 1,
+        amount: 6_000,
+      },
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 99,
+        durationMonths: 3,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 103,
+        durationMonths: 1,
+        amount: 2_500,
+        accountId: 'premium',
+      },
+    ],
+  })
+}
+
+function incomeLegacyFlexSolitaireStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return incomeLegacyFlexSolitaireBasePolicy(snapshot, 'sgd-regular-mip-5', id, INCOME_STRESS_FUNDS, {
+    name: 'Golden Legacy Flex Solitaire (SGD / REGULAR MIP 5 OCF Stress)',
+    currentPolicyYear: 4,
+    monthsAlreadyPaid: 36,
+    assuranceProfile: {
+      currentAgeNextBirthday: 43,
+      sex: 'female',
+      smokerStatus: 'non-smoker',
+      currentSumAssured: 120_000,
+    },
+    accounts: [
+      {
+        ...seedPolicy(snapshot, 'income-legacy-flex-solitaire', 'sgd-regular-mip-5', id).accounts[0]!,
+        currentValue: 18_000,
+      },
+      {
+        ...seedPolicy(snapshot, 'income-legacy-flex-solitaire', 'sgd-regular-mip-5', id).accounts[1]!,
+        currentValue: 3_000,
+      },
+    ],
   })
 }
 
@@ -11402,6 +11525,64 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Invest Flex TriVantage alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'income-legacy-flex-solitaire',
+    variantId: 'sgd-regular-mip-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:income-legacy-flex-solitaire-regular-premium-charge',
+      'branch:income-legacy-flex-solitaire-policy-fee',
+      'branch:income-legacy-flex-solitaire-insurance-cover-charge',
+      'kernel:distribution-mode-assumption',
+    ],
+    description: 'Legacy Flex Solitaire baseline scenario proving the supported regular-premium, manual-input policy-fee, manual-input Appendix 1 insurance-charge, and reinvest-only distribution corridor.',
+    integrityChecks: [
+      {
+        description: 'baseline applies a positive annual policy-value charge on the premium account',
+        test: (_, artifact) => {
+          const firstRow = artifact.expected.projections.mid.rows[0]
+          return (firstRow?.accounts.find((account) => account.accountId === 'premium')?.grossFee ?? 0) > 0
+        },
+      },
+    ],
+  },
+  {
+    productId: 'income-legacy-flex-solitaire',
+    variantId: 'sgd-regular-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Legacy Flex Solitaire baseline scenario for the supported SGD regular MIP 10 corridor.',
+  },
+  {
+    productId: 'income-legacy-flex-solitaire',
+    variantId: 'sgd-regular-mip-10',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:income-legacy-flex-solitaire-top-up-premium-charge',
+      'branch:income-legacy-flex-solitaire-premium-holiday-charge',
+      'branch:income-legacy-flex-solitaire-appendix-2-withdrawal-and-surrender-charge',
+    ],
+    description: 'Legacy Flex Solitaire event-heavy scenario covering top-up, premium-holiday, and premium-account partial-withdrawal charges on the supported regular corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy corridor records both a top-up contribution spike and a later withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12 && row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'income-legacy-flex-solitaire',
+    variantId: 'sgd-regular-mip-5',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Legacy Flex Solitaire alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'hsbc-life-wealth-invest-cpf',
     variantId: 'sgd-open-ended-cpf',
     scenarioId: 'baseline',
@@ -14658,6 +14839,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'income-invest-flex-trivantage' && definition.scenarioId === 'ocf-stress') {
     return incomeInvestFlexTriVantageStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'income-legacy-flex-solitaire' && definition.scenarioId === 'baseline') {
+    return incomeLegacyFlexSolitaireBaselinePolicy(snapshot, definition.variantId as 'sgd-regular-mip-5' | 'sgd-regular-mip-10', id)
+  }
+  if (definition.productId === 'income-legacy-flex-solitaire' && definition.scenarioId === 'event-heavy') {
+    return incomeLegacyFlexSolitaireEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'income-legacy-flex-solitaire' && definition.scenarioId === 'ocf-stress') {
+    return incomeLegacyFlexSolitaireStressPolicy(snapshot, id)
   }
   if (definition.productId === 'aia-invest-easy-cash-srs' && definition.scenarioId === 'baseline') {
     return aiaInvestEasyCashSrsBaselinePolicy(snapshot, id)

@@ -83,6 +83,7 @@ export interface IlpTemplateFeeRule {
       | 'great-eastern-wa4-death-ti'
       | 'fwd-invest-flexi-elite-death'
       | 'income-invest-flex-death-ti'
+      | 'income-legacy-flex-solitaire-death-ti'
       | 'manulife-investready-iii-death-ti'
       | 'manulife-manuinvest-duo-death-ti-tpd'
       | 'tokio-mpc-net-premium-floor'

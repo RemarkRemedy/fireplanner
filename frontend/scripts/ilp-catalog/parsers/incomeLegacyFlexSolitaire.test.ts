@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseIncomeLegacyFlexSolitaire', () => {
-  it('builds a valid partial regular-premium modeled subset from the source PDF', async () => {
+  it('builds a valid supported regular-premium corridor from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseIncomeLegacyFlexSolitaire({
       document,
@@ -23,9 +23,12 @@ describe('parseIncomeLegacyFlexSolitaire', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('income-legacy-flex-solitaire')
     expect(product.productName).toBe('Legacy Flex Solitaire (VA3S / VA3R)')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:income-legacy-flex-solitaire-regular-premium-charge',
+      'branch:income-legacy-flex-solitaire-policy-fee',
+      'branch:income-legacy-flex-solitaire-insurance-cover-charge',
       'branch:income-legacy-flex-solitaire-top-up-premium-charge',
       'branch:income-legacy-flex-solitaire-premium-holiday-charge',
       'branch:income-legacy-flex-solitaire-appendix-2-withdrawal-and-surrender-charge',
@@ -33,6 +36,8 @@ describe('parseIncomeLegacyFlexSolitaire', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('income-legacy-flex-solitaire-single-premium-corridor')
     expect(product.metadataOnlyBehaviors).toContain('income-legacy-flex-solitaire-loyalty-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('income-legacy-flex-solitaire-policy-fee')
+    expect(product.metadataOnlyBehaviors).not.toContain('income-legacy-flex-solitaire-insurance-cover-charge')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-regular-mip-5',
       'sgd-regular-mip-10',
@@ -56,7 +61,7 @@ describe('parseIncomeLegacyFlexSolitaire', () => {
         ],
       }),
     ])
-    expect(term10?.feeRules).toEqual([
+    expect(term10?.feeRules).toEqual(expect.arrayContaining([
       expect.objectContaining({
         id: 'regular-premium-charge',
         basis: 'annual-contribution',
@@ -74,7 +79,29 @@ describe('parseIncomeLegacyFlexSolitaire', () => {
           { startPolicyYear: 10, endPolicyYear: 10, rate: 0.03 },
         ],
       }),
-    ])
+      expect.objectContaining({
+        id: 'policy-fee',
+        basis: 'fixed-annual',
+        requiresManualInput: true,
+        startPolicyYear: 1,
+        endPolicyYear: 4,
+        appliesTo: ['premium'],
+        fallbackAppliesTo: ['topup'],
+      }),
+      expect.objectContaining({
+        id: 'insurance-cover-charge',
+        basis: 'assurance-sum-at-risk',
+        requiresManualInput: true,
+        appliesTo: ['premium'],
+        assuranceValueAppliesTo: ['premium', 'topup'],
+        fallbackAppliesTo: ['topup'],
+        assuranceConfig: expect.objectContaining({
+          formula: 'income-legacy-flex-solitaire-death-ti',
+          monthlyModalFactor: 1 / 12,
+          maxAgeNextBirthday: 120,
+        }),
+      }),
+    ]))
     expect(term10?.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',

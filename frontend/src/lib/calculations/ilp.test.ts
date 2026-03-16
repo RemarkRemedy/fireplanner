@@ -24,7 +24,7 @@ import {
   EEC_PRESET_MIP_30,
 } from '@/lib/data/ilpDefaults'
 import { TOKIO_MPC_PROTECTED_BASE_FLOOR_MULTIPLIER } from '@/lib/data/ilpAssuranceConfig'
-import { AIA_PLP2_DEATH_RATE_TABLE, FWD_FLEXI_ELITE_DEATH_RATE_TABLE, TOKIO_MPC_UNZO_DEATH_RATE_TABLE } from '@/lib/data/ilpAssuranceTables'
+import { AIA_PLP2_DEATH_RATE_TABLE, FWD_FLEXI_ELITE_DEATH_RATE_TABLE, INCOME_LEGACY_FLEX_SOLITAIRE_DEATH_TI_RATE_TABLE, TOKIO_MPC_UNZO_DEATH_RATE_TABLE } from '@/lib/data/ilpAssuranceTables'
 import { ilpPolicySeedSchema } from '@/lib/ilp-catalog/policySeedSchema'
 import { ilpPolicySchema } from '@/lib/validation/ilpSchema'
 
@@ -1270,6 +1270,80 @@ describe('projectIlpPolicy', () => {
     expect(initialFee + accumulationFee).toBeCloseTo(expectedAnnualCharge, 6)
     expect(initialFee).toBeCloseTo(expectedAnnualCharge * (30_000 / 35_000), 6)
     expect(accumulationFee).toBeCloseTo(expectedAnnualCharge * (5_000 / 35_000), 6)
+  })
+
+  it('annualizes Legacy Flex Solitaire insurance charges from the published Appendix 1 table using current adjusted sum assured', () => {
+    const result = projectIlpPolicy(makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      currentPolicyYear: 7,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'premium',
+          label: 'Premium Account',
+          feeRate: 0,
+          currentValue: 30_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Account',
+          feeRate: 0,
+          currentValue: 10_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 150_000,
+      },
+      chargeRules: [
+        {
+          id: 'legacy-flex-insurance-charge',
+          label: 'Insurance Cover Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['premium'],
+          assuranceValueAppliesTo: ['premium', 'topup'],
+          fallbackAppliesTo: ['topup'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'income-legacy-flex-solitaire-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 120,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    }), 'mid')
+
+    const rate = INCOME_LEGACY_FLEX_SOLITAIRE_DEATH_TI_RATE_TABLE['male-non-smoker'][44] ?? 0
+    const openValue = 40_000
+    const provisionalClose = openValue
+    const midpointValue = (openValue + provisionalClose) / 2
+    const sumAtRisk = Math.max(0, 150_000 - midpointValue)
+    const expectedAnnualCharge = sumAtRisk * rate / 1000
+
+    const premiumFee = accountRow(result.rows[0], 'premium').grossFee
+    const topupFee = accountRow(result.rows[0], 'topup').grossFee
+
+    expect(premiumFee + topupFee).toBeCloseTo(expectedAnnualCharge, 6)
+    expect(premiumFee).toBeCloseTo(expectedAnnualCharge, 6)
+    expect(topupFee).toBe(0)
   })
 
   it('reduces FWD Invest Flexi Elite assurance charges when a partial withdrawal reduces the protected base', () => {

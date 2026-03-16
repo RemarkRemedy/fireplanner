@@ -83,9 +83,11 @@ function buildVariant(document: ExtractedPdfDocument, config: LegacyFlexVariantC
   const page1 = sourceRef(1, 'Policy description and product structure', snippetNear(document, 1, 'Legacy Flex Solitaire is a whole life investment-linked plan', 20))
   const page2 = sourceRef(2, 'Loyalty bonus, top-ups, and future premium option', snippetNear(document, 2, 'We will provide an annual loyalty bonus', 22))
   const page9 = sourceRef(9, 'Premium charge schedule and policy fee', snippetNear(document, 9, '7.1 Premium Charge', 24))
+  const page10 = sourceRef(10, 'Policy fee and insurance cover charge', snippetNear(document, 10, '7.2 Policy Fee', 28))
   const page11 = sourceRef(11, 'Partial withdrawal and premium holiday mechanics', snippetNear(document, 11, '7.7 Partial Withdrawal Charge', 24))
   const page12 = sourceRef(12, 'Subscription of premium and top-up units', snippetNear(document, 12, '100% of your regular premium less any premium charge', 22))
   const page17 = sourceRef(17, 'Declaration and Reinvesting of Distributions', snippetNear(document, 17, 'Declaration and Reinvesting of Distributions', 18))
+  const page21 = sourceRef(21, 'Appendix 1 insurance cover charge rates', snippetNear(document, 21, 'Appendix 1', 20))
   const page25 = sourceRef(25, 'Appendix 2 surrender, partial withdrawal, and premium holiday charges', snippetNear(document, 25, 'Appendix 2', 24))
 
   const feeRules: IlpTemplateFeeRule[] = [
@@ -104,6 +106,48 @@ function buildVariant(document: ExtractedPdfDocument, config: LegacyFlexVariantC
         'The separate single-premium corridor remains informational only in V1.',
       ],
       sourceRefs: [page9, page12],
+    },
+    {
+      id: 'policy-fee',
+      label: 'Policy Fee',
+      basis: 'fixed-annual',
+      rate: 0,
+      amount: 0,
+      requiresManualInput: true,
+      appliesTo: ['premium'],
+      fallbackAppliesTo: ['topup'],
+      activeWindow: 'policy-term',
+      startPolicyYear: 1,
+      endPolicyYear: 4,
+      notes: [
+        'Models the published monthly policy fee as a manual annual amount for the first four policy years only.',
+        'Enter the annual policy fee amount using the published sum-assured-at-entry and original-insured entry-age table because the rate depends on policy-entry inputs rather than prevailing account balances.',
+        'The policy fee is deducted from the premium account first and falls back to the top-up account if the premium account is insufficient.',
+      ],
+      sourceRefs: [page10],
+    },
+    {
+      id: 'insurance-cover-charge',
+      label: 'Insurance Cover Charge',
+      basis: 'assurance-sum-at-risk',
+      rate: 0,
+      amount: 0,
+      requiresManualInput: true,
+      appliesTo: ['premium'],
+      assuranceValueAppliesTo: ['premium', 'topup'],
+      fallbackAppliesTo: ['topup'],
+      activeWindow: 'policy-term',
+      assuranceConfig: {
+        formula: 'income-legacy-flex-solitaire-death-ti',
+        monthlyModalFactor: 1 / 12,
+        maxAgeNextBirthday: 120,
+      },
+      notes: [
+        'Models the published Appendix 1 monthly insurance cover charge after entering the insured-life details and the current adjusted sum assured.',
+        'Enter the current adjusted sum assured manually because the published protection base changes after top-ups, charged withdrawals, and other policy alterations outside the current automatic state surface.',
+        'The insurance cover charge is deducted from the premium account first and falls back to the top-up account if the premium account is insufficient.',
+      ],
+      sourceRefs: [page10, page21],
     },
   ]
 
@@ -210,14 +254,14 @@ function buildVariant(document: ExtractedPdfDocument, config: LegacyFlexVariantC
     },
     eecTable: [...config.withdrawalAndSurrenderChargeSchedule],
     warnings: [
-      `Legacy Flex Solitaire is modeled as a partial regular-premium subset in V1 for the ${config.mipLength}-year MIP corridor. The parser captures the premium-year regular premium charge schedule, top-up premium charge, premium-holiday charge, premium-account Appendix 2 partial-withdrawal / surrender charge schedule, and the published reinvest-only distribution baseline.`,
-      'Single-premium charging, loyalty bonus, policy fee, insurance cover charge, No Lapse Guarantee, top-up-account first-12-month charge timing, and retirement-option distribution payouts remain informational only in V1.',
+      `Legacy Flex Solitaire is cataloged as supported in V1 for the ${config.mipLength}-year regular-premium corridor. The parser captures the premium-year regular premium charge schedule, a manual-input policy-fee amount for policy years 1-4, the manual-input Appendix 1 insurance-cover-charge corridor, the top-up premium charge, the premium-holiday charge schedule, the premium-account Appendix 2 partial-withdrawal / surrender charge schedule, and the published reinvest-only distribution baseline.`,
+      'Single-premium charging, loyalty-bonus suspension logic, automatic adjusted-sum-assured changes after top-ups and withdrawals, No Lapse Guarantee behavior, top-up-account first-12-month charge timing, and retirement-option distribution payouts remain informational only in V1.',
     ],
     unsupportedItems: [
       'Single-premium corridor remains informational only in V1, including the 4% single-premium charge and the single-premium Appendix 2 charge schedule.',
       'Loyalty Bonus remains informational only because the current runtime does not distinguish chargeable premium-account withdrawals from top-up-account or withdrawal-access withdrawals for bonus suspension.',
-      'Policy fee remains informational only because it depends on policy-entry sum assured and original insured entry age.',
-      'Insurance cover charge and all protection-benefit formulas remain informational only because they depend on sum at risk plus insured-life inputs.',
+      'Automatic adjusted-sum-assured updates after top-ups, charged withdrawals, withdrawal-access exceptions, and sum-assured reductions remain informational only, so the current adjusted sum assured must be maintained manually for the insurance-cover-charge corridor.',
+      'Death and terminal-illness benefit settlement, secondary-insured continuation, bequest option behavior, and other protection-side payout mechanics remain informational only beyond the supported insurance-cover-charge corridor.',
       'No Lapse Guarantee debt carry and termination behavior remain informational only.',
       'Future Premium Option and recurring top-up enrollment remain informational only.',
       'Withdrawal Access Option, retirement-option distribution payout elections, and the insurer-set minimum distribution payout threshold remain informational only.',
@@ -237,11 +281,13 @@ export function parseIncomeLegacyFlexSolitaire({ document, sourceChecksumSha256 
     sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:income-legacy-flex-solitaire-regular-premium-charge',
+      'branch:income-legacy-flex-solitaire-policy-fee',
+      'branch:income-legacy-flex-solitaire-insurance-cover-charge',
       'branch:income-legacy-flex-solitaire-top-up-premium-charge',
       'branch:income-legacy-flex-solitaire-premium-holiday-charge',
       'branch:income-legacy-flex-solitaire-appendix-2-withdrawal-and-surrender-charge',
@@ -250,8 +296,6 @@ export function parseIncomeLegacyFlexSolitaire({ document, sourceChecksumSha256 
     metadataOnlyBehaviors: [
       'income-legacy-flex-solitaire-single-premium-corridor',
       'income-legacy-flex-solitaire-loyalty-bonus',
-      'income-legacy-flex-solitaire-policy-fee',
-      'income-legacy-flex-solitaire-insurance-cover-charge',
       'income-legacy-flex-solitaire-no-lapse-guarantee',
       'income-legacy-flex-solitaire-future-premium-option',
       'income-legacy-flex-solitaire-withdrawal-access-option',
@@ -263,7 +307,7 @@ export function parseIncomeLegacyFlexSolitaire({ document, sourceChecksumSha256 
       'income-legacy-flex-solitaire-protection-benefits',
     ],
     warnings: [
-      'Legacy Flex Solitaire (VA3S / VA3R) is cataloged as a partial modeled subset in V1. The current parser models only the regular-premium 5-year and 10-year corridors: premium-year regular premium charges, top-up premium charge, premium-holiday charge, premium-account Appendix 2 withdrawal / surrender charges, and the published reinvest-only distribution baseline. The single-premium corridor, loyalty bonus, policy fee, protection-side charges, No Lapse Guarantee, retirement-option payout elections, and top-up-account first-12-month charge timing remain outside the current engine.',
+      'Legacy Flex Solitaire (VA3S / VA3R) is cataloged as supported in V1 for the regular-premium 5-year and 10-year corridors. The current parser models the premium-year regular premium charges, manual-input policy-fee and Appendix 1 insurance-cover-charge corridors, the top-up premium charge, premium-holiday charge, premium-account Appendix 2 withdrawal / surrender charges, and the published reinvest-only distribution baseline. The single-premium corridor, loyalty-bonus suspension logic, automatic adjusted-sum-assured updates, No Lapse Guarantee, retirement-option payout elections, and top-up-account first-12-month charge timing remain outside the current engine.',
     ],
     archived: false,
     variants: VARIANT_CONFIGS.map((config) => buildVariant(document, config)),
