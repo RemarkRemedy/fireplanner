@@ -104,6 +104,29 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       ],
       sourceRefs: [page6, page7],
     },
+    {
+      id: 'insurance-charge',
+      label: 'Insurance Charge',
+      basis: 'assurance-sum-at-risk',
+      rate: 0,
+      amount: 0,
+      appliesTo: ['initial'],
+      fallbackAppliesTo: ['accumulation'],
+      assuranceValueAppliesTo: ['initial', 'accumulation'],
+      activeWindow: 'policy-term',
+      requiresManualInput: true,
+      assuranceConfig: {
+        formula: 'fwd-invest-flexi-elite-death',
+        monthlyModalFactor: 1 / 12,
+        maxAgeNextBirthday: 99,
+      },
+      notes: [
+        'Requires insured-life details and the current net regular-premium, top-up-premium, and repayment bases before the calculator can model the monthly insurance charge.',
+        'Models the published Appendix B attained-age / sex / smoker insurance charge using the higher of 105% of policy value or 101% of paid premium and repayment bases less withdrawals and terminal-illness advances, minus policy value.',
+        'The charge is deducted from the initial units account first, with accumulation units account fallback if the initial account is insufficient.',
+      ],
+      sourceRefs: [page1, page7],
+    },
   ]
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
@@ -179,15 +202,14 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eventChargeRules,
     eecTable: [...SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      'FWD Invest Flexi VII (SGD / 10-year minimum investment term) is cataloged as a partial modeled subset in V1. The parser captures the published fixed-premium-base initial account charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.',
+      'FWD Invest Flexi VII (SGD / 10-year minimum investment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the Appendix B insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.',
       'Premium shortfall charge remains informational only because the automatic 12-month Premium Pause Waiver cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.',
-      'Booster Bonus, Annual Premium Bonus, Loyalty Bonus, insurance charge, repayment waterfalls, and withdrawal eligibility gates remain outside the current engine.',
+      'Booster Bonus, Annual Premium Bonus, Loyalty Bonus, repayment waterfalls, and withdrawal eligibility gates remain outside the current engine.',
     ],
     unsupportedItems: [
       'Premium shortfall charge remains informational only because the automatic 12-month Premium Pause Waiver on missed premiums is not modeled exactly in V1.',
       'Support Benefit approvals and premium-shortfall-charge refund / waiver behavior remain informational only.',
       'Booster Bonus, Annual Premium Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.',
-      'Insurance charge remains informational only because the attained-age / sex / smoker Appendix B rate table is not yet wired for this FWD protection formula.',
       'Top-up repayment precedence for missed premiums, prior withdrawals, and prior regular-premium reductions remains informational only.',
       'Regular-premium reduction and restoration mechanics from policy year 8 onward remain informational only.',
       'Initial-units-account withdrawal lockout in the first two policy years, minimum withdrawal requirements, minimum account-value gates, and regular-withdrawal elections remain informational only.',
@@ -206,11 +228,13 @@ export function parseFwdInvestFlexiVii(context: ParseContext): IlpCatalogProduct
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
+      'kernel:protected-base-assurance',
       'branch:fwd-invest-flexi-vii-initial-account-charge',
+      'branch:fwd-invest-flexi-vii-insurance-charge',
       'branch:fwd-invest-flexi-vii-top-up-premium-charge',
       'branch:fwd-invest-flexi-vii-initial-account-redemption-fee',
       'branch:fwd-invest-flexi-vii-initial-account-surrender-charge',
@@ -219,7 +243,6 @@ export function parseFwdInvestFlexiVii(context: ParseContext): IlpCatalogProduct
       'fwd-invest-flexi-vii-premium-shortfall-charge',
       'fwd-invest-flexi-vii-premium-pause-waiver',
       'fwd-invest-flexi-vii-support-benefit-waiver-and-refund',
-      'fwd-invest-flexi-vii-insurance-charge',
       'fwd-invest-flexi-vii-booster-bonus',
       'fwd-invest-flexi-vii-annual-premium-bonus',
       'fwd-invest-flexi-vii-loyalty-bonus',
@@ -233,8 +256,8 @@ export function parseFwdInvestFlexiVii(context: ParseContext): IlpCatalogProduct
       'fwd-invest-flexi-vii-fund-level-charges',
     ],
     warnings: [
-      'FWD Invest Flexi VII is cataloged as a partial modeled subset in V1. The current parser covers the published charge surfaces that fit the existing two-account and surrender kernels.',
-      'Premium shortfall / Premium Pause Waiver behavior, bonuses, insurance charge, repayment waterfalls, and broader withdrawal / premium-flexibility behavior remain outside the current engine.',
+      'FWD Invest Flexi VII is cataloged as a supported V1 product. The current parser covers the published fixed-premium-base initial-account charge, Appendix B insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule through the existing two-account and surrender kernels.',
+      'Premium shortfall / Premium Pause Waiver behavior, bonuses, repayment waterfalls, and broader withdrawal / premium-flexibility behavior remain metadata-only.',
     ],
     archived: false,
     variants: [

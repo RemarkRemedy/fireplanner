@@ -241,6 +241,11 @@ export type GoldenCoverageTag =
   | 'branch:tokio-marine-goassure-premium-shortfall-charge'
   | 'branch:tokio-marine-goassure-surrender-charge'
   | 'branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge'
+  | 'branch:fwd-invest-flexi-vii-initial-account-charge'
+  | 'branch:fwd-invest-flexi-vii-insurance-charge'
+  | 'branch:fwd-invest-flexi-vii-top-up-premium-charge'
+  | 'branch:fwd-invest-flexi-vii-initial-account-redemption-fee'
+  | 'branch:fwd-invest-flexi-vii-initial-account-surrender-charge'
   | 'branch:fwd-invest-goal-1-zero-single-premium-charge'
   | 'branch:fwd-invest-goal-1-initial-account-charge'
   | 'branch:fwd-invest-goal-1-plan-charge'
@@ -3395,6 +3400,88 @@ function fwdInvestGoal1StressPolicy(
     name: variantId === 'sgd-open-ended'
       ? 'Golden FWD Invest Goal 1 (SGD / Open-ended OCF Stress)'
       : 'Golden FWD Invest Goal 1 (USD / Open-ended OCF Stress)',
+  })
+}
+
+function fwdInvestFlexiViiBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'fwd-invest-flexi-vii', 'sgd-mip-10', id)
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden FWD Invest Flexi VII (SGD / MIP 10)',
+      monthlyContribution: 1_000,
+      currentPolicyYear: 6,
+      monthsAlreadyPaid: 60,
+      postMipYears: 5,
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 100_000,
+        currentNetSupplementaryPremiumBase: 20_000,
+      },
+      accounts: base.accounts.map((account) => {
+        if (account.id === 'initial') {
+          return { ...account, currentValue: 30_000 }
+        }
+        return { ...account, currentValue: 5_000 }
+      }),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function fwdInvestFlexiViiBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return fwdInvestFlexiViiBasePolicy(snapshot, id, HSBC_BALANCED_FUNDS)
+}
+
+function fwdInvestFlexiViiEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return fwdInvestFlexiViiBasePolicy(snapshot, id, HSBC_BALANCED_FUNDS, {
+    name: 'Golden FWD Invest Flexi VII (SGD / MIP 10 Event Heavy)',
+    currentPolicyYear: 7,
+    monthsAlreadyPaid: 72,
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 73,
+        durationMonths: 1,
+        amount: 5_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 78,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'initial',
+      },
+    ],
+  })
+}
+
+function fwdInvestFlexiViiStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return fwdInvestFlexiViiBasePolicy(snapshot, id, HSBC_STRESS_FUNDS, {
+    name: 'Golden FWD Invest Flexi VII (SGD / MIP 10 OCF Stress)',
+    currentPolicyYear: 8,
+    monthsAlreadyPaid: 84,
   })
 }
 
@@ -11198,6 +11285,76 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: '#goAssure alternate-fund high-OCF stress scenario through the SGD / MIP 10 corridor.',
   },
   {
+    productId: 'fwd-invest-flexi-vii',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:protected-base-assurance',
+      'branch:fwd-invest-flexi-vii-initial-account-charge',
+      'branch:fwd-invest-flexi-vii-insurance-charge',
+      'branch:fwd-invest-flexi-vii-initial-account-surrender-charge',
+    ],
+    description: 'FWD Invest Flexi VII baseline scenario proving the supported fixed-premium-base initial-account charge, Appendix B insurance charge, and 10-year initial-account surrender-charge corridor.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the initial-account charge and assurance-charge corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+      {
+        description: 'baseline policy charges more with the supported insurance-charge rule than without it',
+        test: (fixture, artifact) => {
+          const withoutInsurance = ilpPolicySchema.parse({
+            ...fixture.policy,
+            chargeRules: fixture.policy.chargeRules?.filter((rule) => rule.id !== 'insurance-charge') ?? [],
+          })
+          const withInsuranceFees = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutInsuranceFees = analyzeIlpPolicy(withoutInsurance).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withInsuranceFees > withoutInsuranceFees
+        },
+      },
+    ],
+  },
+  {
+    productId: 'fwd-invest-flexi-vii',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:fwd-invest-flexi-vii-top-up-premium-charge',
+      'branch:fwd-invest-flexi-vii-initial-account-redemption-fee',
+    ],
+    description: 'FWD Invest Flexi VII event-heavy scenario covering charged top-up allocation and in-MIP initial-account withdrawal fees on the supported corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy records both a top-up contribution spike and a later withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12 && row.annualWithdrawals > 0),
+      },
+      {
+        description: 'event-heavy initial-account withdrawal increases cumulative fees beyond the same policy without the withdrawal event',
+        test: (fixture, artifact) => {
+          const withoutWithdrawal = ilpPolicySchema.parse({
+            ...fixture.policy,
+            policyEvents: fixture.policy.policyEvents?.filter((event) => event.type !== 'partial-withdrawal') ?? [],
+          })
+          const withWithdrawalFees = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutWithdrawalFees = analyzeIlpPolicy(withoutWithdrawal).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withWithdrawalFees > withoutWithdrawalFees
+        },
+      },
+    ],
+  },
+  {
+    productId: 'fwd-invest-flexi-vii',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'FWD Invest Flexi VII alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'fwd-invest-goal-1',
     variantId: 'sgd-open-ended',
     scenarioId: 'baseline',
@@ -13800,6 +13957,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'tokio-marine-goassure' && definition.scenarioId === 'ocf-stress') {
     return tokioMarineGoAssureStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'fwd-invest-flexi-vii' && definition.scenarioId === 'baseline') {
+    return fwdInvestFlexiViiBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'fwd-invest-flexi-vii' && definition.scenarioId === 'event-heavy') {
+    return fwdInvestFlexiViiEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'fwd-invest-flexi-vii' && definition.scenarioId === 'ocf-stress') {
+    return fwdInvestFlexiViiStressPolicy(snapshot, id)
   }
   if (definition.productId === 'fwd-invest-goal-1' && definition.scenarioId === 'baseline') {
     return fwdInvestGoal1BaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended' | 'usd-open-ended', id)

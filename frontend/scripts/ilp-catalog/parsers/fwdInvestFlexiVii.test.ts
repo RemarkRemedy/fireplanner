@@ -23,14 +23,18 @@ describe('parseFwdInvestFlexiVii', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('fwd-invest-flexi-vii')
     expect(product.productName).toBe('FWD Invest Flexi VII')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
+      'kernel:protected-base-assurance',
       'branch:fwd-invest-flexi-vii-initial-account-charge',
+      'branch:fwd-invest-flexi-vii-insurance-charge',
       'branch:fwd-invest-flexi-vii-top-up-premium-charge',
       'branch:fwd-invest-flexi-vii-initial-account-redemption-fee',
       'branch:fwd-invest-flexi-vii-initial-account-surrender-charge',
     ])
     expect(product.metadataOnlyBehaviors).toContain('fwd-invest-flexi-vii-premium-shortfall-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-vii-insurance-charge')
 
     const variant = product.variants[0]
     expect(variant?.id).toBe('sgd-mip-10')
@@ -53,6 +57,19 @@ describe('parseFwdInvestFlexiVii', () => {
         rate: 0.024,
         fallbackAppliesTo: ['accumulation'],
       }),
+      expect.objectContaining({
+        id: 'insurance-charge',
+        basis: 'assurance-sum-at-risk',
+        appliesTo: ['initial'],
+        fallbackAppliesTo: ['accumulation'],
+        assuranceValueAppliesTo: ['initial', 'accumulation'],
+        requiresManualInput: true,
+        assuranceConfig: {
+          formula: 'fwd-invest-flexi-elite-death',
+          monthlyModalFactor: 1 / 12,
+          maxAgeNextBirthday: 99,
+        },
+      }),
     ])
     expect(variant?.eventChargeRules).toEqual([
       expect.objectContaining({
@@ -68,6 +85,9 @@ describe('parseFwdInvestFlexiVii', () => {
       }),
     ])
     expect(variant?.eecTable).toEqual([1, 1, 0.8, 0.68, 0.58, 0.55, 0.45, 0.3, 0.15, 0.07])
+    expect(variant?.warnings).not.toContain(
+      'Booster Bonus, Annual Premium Bonus, Loyalty Bonus, insurance charge, repayment waterfalls, and withdrawal eligibility gates remain outside the current engine.',
+    )
     expect(variant?.warnings).toContain(
       'Premium shortfall charge remains informational only because the automatic 12-month Premium Pause Waiver cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.',
     )

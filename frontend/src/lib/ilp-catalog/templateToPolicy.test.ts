@@ -2041,7 +2041,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('accumulation-account charge remains informational only'))).toBe(true)
   })
 
-  it('maps FWD Invest Flexi VII into a finite-MIP multi-account partial seed', () => {
+  it('maps FWD Invest Flexi VII into a finite-MIP multi-account supported seed', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'fwd-invest-flexi-vii')
     expect(product).toBeDefined()
@@ -2051,9 +2051,12 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('FWD Invest Flexi VII (SGD / MIP 10)')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-flexi-vii-initial-account-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-flexi-vii-insurance-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('fwd-invest-flexi-vii-premium-shortfall-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-vii-insurance-charge')
     expect(seed.mipLength).toBe(10)
     expect(seed.accounts).toEqual([
       expect.objectContaining({
@@ -2072,6 +2075,19 @@ describe('templateVariantToPolicySeed', () => {
           basis: 'premium-base-mip-multiplier',
           rate: 0.024,
           fallbackAppliesTo: ['accumulation'],
+        }),
+        expect.objectContaining({
+          id: 'insurance-charge',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['initial'],
+          fallbackAppliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          requiresManualInput: true,
+          assuranceConfig: {
+            formula: 'fwd-invest-flexi-elite-death',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
         }),
       ]),
     )
