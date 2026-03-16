@@ -64,6 +64,12 @@ export interface HealthcareConfig {
   ispDowngradeTier?: IspTierOption   // tier to switch to (must be lower than ispTier)
   ispDowngradeAge?: number           // age at which to switch
   premiumInflationRate?: number       // annual rate at which premium schedules increase (default 0.03)
+  /** Override tier-based ISP premium with user-specified annual amount */
+  customIspPremium?: number
+  /** Override default CareShield Life premium with user-specified annual amount */
+  customCareShieldPremium?: number
+  /** Route premiums to MediSave deduction (true) or cash outflow (false). Default: true */
+  useMediSaveForPremiums?: boolean
 }
 
 // ============================================================
