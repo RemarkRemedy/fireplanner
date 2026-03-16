@@ -312,6 +312,7 @@ export const ilpChargeRuleSchema = z.object({
       'hsbc-flexi-choice-death-ti',
       'hsbc-flexi-max-death-ti',
       'great-eastern-wa4-death-ti',
+      'fwd-invest-flexi-elite-death',
       'income-invest-flex-death-ti',
       'manulife-investready-iii-death-ti',
       'manulife-manuinvest-duo-death-ti-tpd',

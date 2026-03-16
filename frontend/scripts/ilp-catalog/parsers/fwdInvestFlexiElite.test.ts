@@ -26,7 +26,9 @@ describe('parseFwdInvestFlexiElite', () => {
     expect(product.supportStatus).toBe('partial')
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toEqual([
+      'kernel:protected-base-assurance',
       'branch:fwd-invest-flexi-elite-initial-account-charge',
+      'branch:fwd-invest-flexi-elite-insurance-charge',
       'branch:fwd-invest-flexi-elite-top-up-premium-charge',
       'branch:fwd-invest-flexi-elite-initial-account-redemption-fee',
       'branch:fwd-invest-flexi-elite-initial-account-surrender-charge',
@@ -34,6 +36,7 @@ describe('parseFwdInvestFlexiElite', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('fwd-invest-flexi-elite-premium-shortfall-charge')
     expect(product.metadataOnlyBehaviors).toContain('fwd-invest-flexi-elite-free-partial-withdrawal-benefit')
+    expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-elite-insurance-charge')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-10-flexi-3',
       'sgd-mip-10-flexi-5',
@@ -66,6 +69,18 @@ describe('parseFwdInvestFlexiElite', () => {
         basis: 'account-value',
         rate: 0.025,
         activeWindow: 'during-mip',
+      }),
+      expect.objectContaining({
+        id: 'insurance-charge',
+        basis: 'assurance-sum-at-risk',
+        appliesTo: ['initial', 'accumulation'],
+        assuranceValueAppliesTo: ['initial', 'accumulation'],
+        requiresManualInput: true,
+        assuranceConfig: {
+          formula: 'fwd-invest-flexi-elite-death',
+          monthlyModalFactor: 1 / 12,
+          maxAgeNextBirthday: 99,
+        },
       }),
     ])
     expect(flexi3?.eventChargeRules).toEqual([
@@ -108,11 +123,17 @@ describe('parseFwdInvestFlexiElite', () => {
     expect(flexi3?.warnings).toContain(
       'Premium shortfall charge remains informational only because the published unemployment waiver, refund, and restart timing cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.',
     )
+    expect(flexi3?.warnings).not.toContain(
+      'Booster Bonus, Annual Premium Bonus, Contribution Bonus, insurance charge, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain outside the current engine.',
+    )
 
     const flexi5 = product.variants.find((variant) => variant.id === 'sgd-mip-10-flexi-5')
     expect(flexi5).toBeDefined()
     expect(flexi5?.mipBasis).toBe('finite')
     expect(flexi5?.mipLength).toBe(10)
     expect(flexi5?.eecTable).toEqual([1, 1, 0.8, 0.68, 0.58, 0.55, 0.45, 0.18, 0.12, 0.03])
+    expect(flexi5?.warnings).not.toContain(
+      'Booster Bonus, Annual Premium Bonus, Contribution Bonus, insurance charge, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain outside the current engine.',
+    )
   }, 30_000)
 })

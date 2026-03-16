@@ -3410,7 +3410,9 @@
     "structureStatus": "structured",
     "economicsStatus": "partial-modeled-subset",
     "modeledEconomics": [
+      "kernel:protected-base-assurance",
       "branch:fwd-invest-flexi-elite-initial-account-charge",
+      "branch:fwd-invest-flexi-elite-insurance-charge",
       "branch:fwd-invest-flexi-elite-top-up-premium-charge",
       "branch:fwd-invest-flexi-elite-initial-account-redemption-fee",
       "branch:fwd-invest-flexi-elite-initial-account-surrender-charge",
@@ -3420,7 +3422,6 @@
       "fwd-invest-flexi-elite-premium-shortfall-charge",
       "fwd-invest-flexi-elite-involuntary-unemployment-benefit",
       "fwd-invest-flexi-elite-premium-shortfall-charge-refund",
-      "fwd-invest-flexi-elite-insurance-charge",
       "fwd-invest-flexi-elite-booster-bonus",
       "fwd-invest-flexi-elite-annual-premium-bonus",
       "fwd-invest-flexi-elite-contribution-bonus",
@@ -3434,8 +3435,8 @@
       "fwd-invest-flexi-elite-change-of-policy-currency"
     ],
     "warnings": [
-      "FWD Invest Flexi Elite is cataloged as a partial modeled subset in V1. The current parser covers the published initial-account-value charge, top-up premium charge, redemption-fee schedule, surrender-charge schedule, and reinvest-default distribution support that fit the existing kernels.",
-      "Premium shortfall / unemployment-waiver behavior, bonuses, insurance charge, Free Partial Withdrawal Benefit, and broader premium-flexibility behavior remain outside the current engine."
+      "FWD Invest Flexi Elite is cataloged as a partial modeled subset in V1. The current parser covers the published initial-account-value charge, monthly insurance charge, top-up premium charge, redemption-fee schedule, surrender-charge schedule, and reinvest-default distribution support that fit the existing kernels.",
+      "Premium shortfall / unemployment-waiver behavior, bonuses, Free Partial Withdrawal Benefit, and broader premium-flexibility behavior remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -3552,6 +3553,40 @@
                 "page": 6,
                 "section": "Initial account charge and insurance charge",
                 "excerpt": "Initial account charge is only payable during the first 10 Policy Years and will be deducted on each 6 Policy Monthiversary. The initial account charge A% p.a. initial units account value as of each Policy x Monthiversar"
+              }
+            ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": 0,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "fwd-invest-flexi-elite-death",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "initial",
+              "accumulation"
+            ],
+            "assuranceValueAppliesTo": [
+              "initial",
+              "accumulation"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Requires insured-life details and the current net regular-premium and top-up-premium bases before the calculator can model the monthly insurance charge.",
+              "Models the published 101% of total regular premiums paid plus total top-up premiums paid, less total withdrawals made, minus policy value sum-at-risk formula.",
+              "The protection-benefit payout path and multi-life administration remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Initial account charge and insurance charge",
+                "excerpt": "Insurance charge is payable throughout the Policy term and will be deducted on each Policy 6 Monthiversary when the Sum At Risk is more than 0. The insurance charge = C Sum at risk Insurance charge x 12 months 1,000 Sum "
               }
             ]
           }
@@ -3684,14 +3719,13 @@
           0.05
         ],
         "warnings": [
-          "FWD Invest Flexi Elite (10 years – (3 flexi)) is cataloged as a partial modeled subset in V1. The parser captures the published initial-account-value charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "FWD Invest Flexi Elite (10 years – (3 flexi)) is cataloged as a partial modeled subset in V1. The parser captures the published initial-account-value charge, monthly insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.",
           "Premium shortfall charge remains informational only because the published unemployment waiver, refund, and restart timing cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.",
-          "Booster Bonus, Annual Premium Bonus, Contribution Bonus, insurance charge, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain outside the current engine."
+          "Booster Bonus, Annual Premium Bonus, Contribution Bonus, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain outside the current engine."
         ],
         "unsupportedItems": [
           "Premium shortfall charge remains informational only because the unemployment waiver, refund, and variant-specific charge periods are not modeled exactly in V1.",
           "Booster Bonus, Annual Premium Bonus, and Contribution Bonus remain informational only.",
-          "Insurance charge remains informational only because the attained-age / sex / smoker appendix table is not yet wired for this FWD protection formula.",
           "Free Partial Withdrawal Benefit eligibility, capped fee waivers, and life-event proof requirements remain informational only.",
           "Partial-withdrawal limit formulas, minimum withdrawal requirements, and minimum account-value gates remain informational only.",
           "Regular-premium reduction and increase windows, top-up eligibility gates, and premium-payment continuation after the minimum investment term remain informational only.",
@@ -3880,6 +3914,40 @@
                 "excerpt": "Initial account charge is only payable during the first 10 Policy Years and will be deducted on each 6 Policy Monthiversary. The initial account charge A% p.a. initial units account value as of each Policy x Monthiversar"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": 0,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "fwd-invest-flexi-elite-death",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "initial",
+              "accumulation"
+            ],
+            "assuranceValueAppliesTo": [
+              "initial",
+              "accumulation"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Requires insured-life details and the current net regular-premium and top-up-premium bases before the calculator can model the monthly insurance charge.",
+              "Models the published 101% of total regular premiums paid plus total top-up premiums paid, less total withdrawals made, minus policy value sum-at-risk formula.",
+              "The protection-benefit payout path and multi-life administration remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Initial account charge and insurance charge",
+                "excerpt": "Insurance charge is payable throughout the Policy term and will be deducted on each Policy 6 Monthiversary when the Sum At Risk is more than 0. The insurance charge = C Sum at risk Insurance charge x 12 months 1,000 Sum "
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -4010,14 +4078,13 @@
           0.03
         ],
         "warnings": [
-          "FWD Invest Flexi Elite (10 years – (5 flexi)) is cataloged as a partial modeled subset in V1. The parser captures the published initial-account-value charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "FWD Invest Flexi Elite (10 years – (5 flexi)) is cataloged as a partial modeled subset in V1. The parser captures the published initial-account-value charge, monthly insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.",
           "Premium shortfall charge remains informational only because the published unemployment waiver, refund, and restart timing cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.",
-          "Booster Bonus, Annual Premium Bonus, Contribution Bonus, insurance charge, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain outside the current engine."
+          "Booster Bonus, Annual Premium Bonus, Contribution Bonus, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain outside the current engine."
         ],
         "unsupportedItems": [
           "Premium shortfall charge remains informational only because the unemployment waiver, refund, and variant-specific charge periods are not modeled exactly in V1.",
           "Booster Bonus, Annual Premium Bonus, and Contribution Bonus remain informational only.",
-          "Insurance charge remains informational only because the attained-age / sex / smoker appendix table is not yet wired for this FWD protection formula.",
           "Free Partial Withdrawal Benefit eligibility, capped fee waivers, and life-event proof requirements remain informational only.",
           "Partial-withdrawal limit formulas, minimum withdrawal requirements, and minimum account-value gates remain informational only.",
           "Regular-premium reduction and increase windows, top-up eligibility gates, and premium-payment continuation after the minimum investment term remain informational only.",

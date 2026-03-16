@@ -77,6 +77,31 @@ function buildInitialAccountChargeRule(page6: IlpCatalogSourceRef): IlpTemplateF
   }
 }
 
+function buildInsuranceChargeRule(page6: IlpCatalogSourceRef): IlpTemplateFeeRule {
+  return {
+    id: 'insurance-charge',
+    label: 'Insurance Charge',
+    basis: 'assurance-sum-at-risk',
+    rate: 0,
+    amount: 0,
+    appliesTo: ['initial', 'accumulation'],
+    assuranceValueAppliesTo: ['initial', 'accumulation'],
+    activeWindow: 'policy-term',
+    requiresManualInput: true,
+    assuranceConfig: {
+      formula: 'fwd-invest-flexi-elite-death',
+      monthlyModalFactor: 1 / 12,
+      maxAgeNextBirthday: 99,
+    },
+    notes: [
+      'Requires insured-life details and the current net regular-premium and top-up-premium bases before the calculator can model the monthly insurance charge.',
+      'Models the published 101% of total regular premiums paid plus total top-up premiums paid, less total withdrawals made, minus policy value sum-at-risk formula.',
+      'The protection-benefit payout path and multi-life administration remain informational only in V1.',
+    ],
+    sourceRefs: [page6],
+  }
+}
+
 function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTemplateVariant {
   const variantLabel = flexModeLabel(flexMode)
   const page1 = sourceRef(1, 'Plan overview and death benefit', snippetNear(document, 1, 'FWD Invest Flexi Elite', 18))
@@ -84,6 +109,7 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
   const page3 = sourceRef(3, 'Contribution Bonus and Involuntary Unemployment Benefit', snippetNear(document, 3, 'Contribution Bonus', 28))
   const page5 = sourceRef(5, 'Regular premium and top-up premium overview', snippetNear(document, 5, 'Regular Premium for FWD Invest Flexi Elite', 30))
   const page6 = sourceRef(6, 'Initial account charge and insurance charge', snippetNear(document, 6, 'Initial account charge', 26))
+  const page6Insurance = sourceRef(6, 'Initial account charge and insurance charge', snippetNear(document, 6, 'Insurance charge is payable', 20))
   const page7 = sourceRef(7, 'Top-up premium charge and premium shortfall charge period', snippetNear(document, 7, 'Premium charge', 28))
   const page8 = sourceRef(8, 'Premium shortfall charge formula', snippetNear(document, 8, 'The premium shortfall charge =', 28))
   const page9 = sourceRef(9, 'Redemption fee', snippetNear(document, 9, 'Redemption fee rate', 24))
@@ -164,6 +190,7 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
     bonuses: [],
     feeRules: [
       buildInitialAccountChargeRule(page6),
+      buildInsuranceChargeRule(page6Insurance),
     ],
     eventChargeRules,
     distributionSupport: {
@@ -181,14 +208,13 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
     },
     eecTable: [...SURRENDER_CHARGE_SCHEDULE[flexMode]],
     warnings: [
-      `FWD Invest Flexi Elite (${variantLabel}) is cataloged as a partial modeled subset in V1. The parser captures the published initial-account-value charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.`,
+      `FWD Invest Flexi Elite (${variantLabel}) is cataloged as a partial modeled subset in V1. The parser captures the published initial-account-value charge, monthly insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.`,
       'Premium shortfall charge remains informational only because the published unemployment waiver, refund, and restart timing cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.',
-      'Booster Bonus, Annual Premium Bonus, Contribution Bonus, insurance charge, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain outside the current engine.',
+      'Booster Bonus, Annual Premium Bonus, Contribution Bonus, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain outside the current engine.',
     ],
     unsupportedItems: [
       'Premium shortfall charge remains informational only because the unemployment waiver, refund, and variant-specific charge periods are not modeled exactly in V1.',
       'Booster Bonus, Annual Premium Bonus, and Contribution Bonus remain informational only.',
-      'Insurance charge remains informational only because the attained-age / sex / smoker appendix table is not yet wired for this FWD protection formula.',
       'Free Partial Withdrawal Benefit eligibility, capped fee waivers, and life-event proof requirements remain informational only.',
       'Partial-withdrawal limit formulas, minimum withdrawal requirements, and minimum account-value gates remain informational only.',
       'Regular-premium reduction and increase windows, top-up eligibility gates, and premium-payment continuation after the minimum investment term remain informational only.',
@@ -211,7 +237,9 @@ export function parseFwdInvestFlexiElite(context: ParseContext): IlpCatalogProdu
     structureStatus: 'structured',
     economicsStatus: 'partial-modeled-subset',
     modeledEconomics: [
+      'kernel:protected-base-assurance',
       'branch:fwd-invest-flexi-elite-initial-account-charge',
+      'branch:fwd-invest-flexi-elite-insurance-charge',
       'branch:fwd-invest-flexi-elite-top-up-premium-charge',
       'branch:fwd-invest-flexi-elite-initial-account-redemption-fee',
       'branch:fwd-invest-flexi-elite-initial-account-surrender-charge',
@@ -221,7 +249,6 @@ export function parseFwdInvestFlexiElite(context: ParseContext): IlpCatalogProdu
       'fwd-invest-flexi-elite-premium-shortfall-charge',
       'fwd-invest-flexi-elite-involuntary-unemployment-benefit',
       'fwd-invest-flexi-elite-premium-shortfall-charge-refund',
-      'fwd-invest-flexi-elite-insurance-charge',
       'fwd-invest-flexi-elite-booster-bonus',
       'fwd-invest-flexi-elite-annual-premium-bonus',
       'fwd-invest-flexi-elite-contribution-bonus',
@@ -235,8 +262,8 @@ export function parseFwdInvestFlexiElite(context: ParseContext): IlpCatalogProdu
       'fwd-invest-flexi-elite-change-of-policy-currency',
     ],
     warnings: [
-      'FWD Invest Flexi Elite is cataloged as a partial modeled subset in V1. The current parser covers the published initial-account-value charge, top-up premium charge, redemption-fee schedule, surrender-charge schedule, and reinvest-default distribution support that fit the existing kernels.',
-      'Premium shortfall / unemployment-waiver behavior, bonuses, insurance charge, Free Partial Withdrawal Benefit, and broader premium-flexibility behavior remain outside the current engine.',
+      'FWD Invest Flexi Elite is cataloged as a partial modeled subset in V1. The current parser covers the published initial-account-value charge, monthly insurance charge, top-up premium charge, redemption-fee schedule, surrender-charge schedule, and reinvest-default distribution support that fit the existing kernels.',
+      'Premium shortfall / unemployment-waiver behavior, bonuses, Free Partial Withdrawal Benefit, and broader premium-flexibility behavior remain outside the current engine.',
     ],
     archived: false,
     variants: [

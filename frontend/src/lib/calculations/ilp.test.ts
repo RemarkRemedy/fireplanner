@@ -24,7 +24,7 @@ import {
   EEC_PRESET_MIP_30,
 } from '@/lib/data/ilpDefaults'
 import { TOKIO_MPC_PROTECTED_BASE_FLOOR_MULTIPLIER } from '@/lib/data/ilpAssuranceConfig'
-import { TOKIO_MPC_UNZO_DEATH_RATE_TABLE } from '@/lib/data/ilpAssuranceTables'
+import { FWD_FLEXI_ELITE_DEATH_RATE_TABLE, TOKIO_MPC_UNZO_DEATH_RATE_TABLE } from '@/lib/data/ilpAssuranceTables'
 import { ilpPolicySeedSchema } from '@/lib/ilp-catalog/policySeedSchema'
 import { ilpPolicySchema } from '@/lib/validation/ilpSchema'
 
@@ -1150,6 +1150,7 @@ describe('projectIlpPolicy', () => {
   it('annualizes GREAT Wealth Advantage 4 assurance charges from the published appendix table', () => {
     const result = projectIlpPolicy(makeOpenEndedPolicy({
       monthlyContribution: 0,
+      monthsAlreadyPaid: 108,
       currentPolicyYear: 10,
       postMipYears: 1,
       accounts: [
@@ -1195,6 +1196,160 @@ describe('projectIlpPolicy', () => {
     }), 'mid')
 
     expect(accountRow(result.rows[0], 'policy').grossFee).toBeCloseTo(88.2816, 4)
+  })
+
+  it('annualizes FWD Invest Flexi Elite assurance charges from the published appendix table', () => {
+    const result = projectIlpPolicy(makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      currentPolicyYear: 10,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 30_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 5_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 100_000,
+        currentNetSupplementaryPremiumBase: 20_000,
+      },
+      chargeRules: [
+        {
+          id: 'fwd-flexi-elite-insurance-charge',
+          label: 'Insurance Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['initial', 'accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'fwd-invest-flexi-elite-death',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    }), 'mid')
+
+    const rate = FWD_FLEXI_ELITE_DEATH_RATE_TABLE['male-non-smoker'][39] ?? 0
+    const openValue = 35_000
+    const provisionalClose = openValue
+    const midpointValue = (openValue + provisionalClose) / 2
+    const sumAtRisk = Math.max(0, ((100_000 + 20_000) * 1.01) - midpointValue)
+    const expectedAnnualCharge = sumAtRisk * rate / 1000
+
+    const initialFee = accountRow(result.rows[0], 'initial').grossFee
+    const accumulationFee = accountRow(result.rows[0], 'accumulation').grossFee
+
+    expect(initialFee + accumulationFee).toBeCloseTo(expectedAnnualCharge, 6)
+    expect(initialFee).toBeCloseTo(expectedAnnualCharge * (30_000 / 35_000), 6)
+    expect(accumulationFee).toBeCloseTo(expectedAnnualCharge * (5_000 / 35_000), 6)
+  })
+
+  it('reduces FWD Invest Flexi Elite assurance charges when a partial withdrawal reduces the protected base', () => {
+    const buildPolicy = (policyEvents?: IlpPolicyInput['policyEvents']) => makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 108,
+      currentPolicyYear: 10,
+      postMipYears: 1,
+      funds: [ZERO_RETURN_FUND],
+      accounts: [
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 30_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 5_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 100_000,
+        currentNetSupplementaryPremiumBase: 20_000,
+      },
+      chargeRules: [
+        {
+          id: 'fwd-flexi-elite-insurance-charge',
+          label: 'Insurance Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['initial', 'accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'fwd-invest-flexi-elite-death',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      policyEvents,
+    })
+
+    const baseline = projectIlpPolicy(buildPolicy(), 'mid')
+    const withdrawn = projectIlpPolicy(buildPolicy([
+      {
+        id: 'partial-withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 109,
+        durationMonths: 1,
+        amount: 10_000,
+        accountId: 'initial',
+      },
+    ]), 'mid')
+
+    const baselineCharge = accountRow(baseline.rows[0], 'initial').grossFee + accountRow(baseline.rows[0], 'accumulation').grossFee
+    const withdrawnCharge = accountRow(withdrawn.rows[0], 'initial').grossFee + accountRow(withdrawn.rows[0], 'accumulation').grossFee
+
+    expect(withdrawnCharge).toBeLessThan(baselineCharge)
   })
 
   it('supports sum-assured protected-base assurance formulas without regressing existing assurance families', () => {
