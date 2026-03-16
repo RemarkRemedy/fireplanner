@@ -187,6 +187,8 @@ export interface GoalItem {
   kind: 'financial-goal'
   timing: TimingRule
   amount: number
+  /** Amount already saved toward this goal; net needed = amount - amountSaved */
+  amountSaved?: number
   durationYears: number
   priority: FinancialGoal['priority']
   inflationAdjusted: boolean
@@ -203,6 +205,8 @@ export interface PropertyPlan {
   leaseYears: number
   appreciationRate: number
   rentalYield: number
+  /** Fraction of gross rental income consumed by expenses (0-1); net yield = rentalYield * (1 - rentalExpensesPercent) */
+  rentalExpensesPercent?: number
   mortgageRate: number
   mortgageTerm: number
   ltv: number

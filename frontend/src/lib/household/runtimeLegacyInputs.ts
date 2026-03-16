@@ -254,7 +254,7 @@ function mapGoals(
       return {
         id: goal.id.replace(/^goal-/, ''),
         label: goal.label,
-        amount: goal.amount,
+        amount: Math.max(0, goal.amount - (goal.amountSaved ?? 0)),
         targetAge: range.startAge + delta,
         durationYears: goal.durationYears,
         priority: goal.priority,
@@ -310,7 +310,7 @@ function mapProperty(
     purchasePrice: property.purchasePrice,
     leaseYears: property.leaseYears,
     appreciationRate: property.appreciationRate,
-    rentalYield: property.rentalYield,
+    rentalYield: property.rentalYield * (1 - (property.rentalExpensesPercent ?? 0)),
     mortgageRate: property.mortgageRate,
     mortgageTerm: property.mortgageTerm,
     ltv: property.ltv,

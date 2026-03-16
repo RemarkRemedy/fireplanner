@@ -855,6 +855,8 @@ export interface DownsizingConfig {
   monthlyRent: number
   // Nominal annual growth applied directly to future rent cashflows after the sale year.
   rentGrowthRate: number
+  /** Fraction of sale proceeds allocated to investment portfolio (0-1); default 1.0 = 100% */
+  proceedsAllocationPercent?: number
 }
 
 export type HdbFlatType = '2-room' | '3-room' | '4-room' | '5-room' | 'executive'

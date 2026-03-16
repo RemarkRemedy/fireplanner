@@ -766,6 +766,7 @@ function compilePropertyCashflows(
           newMortgageTerm: property.downsizing.newMortgageTerm,
           residency: property.residencyForAbsd,
           propertyCount: Math.max(0, property.propertyCount - 1),
+          proceedsAllocationPercent: property.downsizing.proceedsAllocationPercent,
         })
         adjustmentAmount = (result.netEquityToPortfolio - result.shortfall) * ownershipPct
         postSaleAnnualMortgage = result.newMonthlyPayment * 12 * ownershipPct

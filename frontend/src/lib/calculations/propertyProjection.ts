@@ -52,6 +52,7 @@ export interface PropertyProjectionParams {
     newLtv: number
     monthlyRent: number
     rentGrowthRate: number
+    proceedsAllocationPercent?: number
   }
   residencyForAbsd: 'citizen' | 'pr' | 'foreigner'
   /** Pre-sale property count. Function adjusts to post-sale for ABSD. */
@@ -206,6 +207,7 @@ export function generatePropertyProjection(
           newMortgageTerm: downsizing.newMortgageTerm,
           residency: params.residencyForAbsd,
           propertyCount: postSalePropertyCount,
+          proceedsAllocationPercent: downsizing.proceedsAllocationPercent,
         })
         if (result.shortfall > 0) {
           netEquity = -result.shortfall * ownershipPercent

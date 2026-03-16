@@ -74,6 +74,9 @@ function seedProperty(): Record<string, unknown> {
       seeds.downsizeYear = currentYear + (property.downsizing.sellAge - selfAdult.currentAge)
     }
     seeds.replacementPropertyCost = property.downsizing.newPropertyCost
+    if (property.downsizing.proceedsAllocationPercent != null) {
+      seeds.downsizeProceedsPercent = property.downsizing.proceedsAllocationPercent
+    }
   }
 
   const hasRental = property.rentalYield > 0
@@ -82,6 +85,9 @@ function seedProperty(): Record<string, unknown> {
     seeds.monthlyRentalIncome = Math.round(
       (property.rentalYield * property.existingPropertyValue) / 12
     )
+    if (property.rentalExpensesPercent != null && property.rentalExpensesPercent > 0) {
+      seeds.rentalExpensesPercent = property.rentalExpensesPercent
+    }
   }
 
   return seeds
@@ -136,6 +142,14 @@ function seedSalary(): Record<string, unknown> {
   }
   if (salaryIncome.bonusMonths != null) {
     seeds.annualBonusMonths = salaryIncome.bonusMonths
+  }
+  // Reverse-compute salaryStopYear from endAge
+  if (salaryIncome.timing.kind === 'age-range' && salaryIncome.timing.endAge != null) {
+    const selfAdult = getSelfAdult()
+    if (selfAdult) {
+      const currentYear = new Date().getFullYear()
+      seeds.salaryStopYear = currentYear + (salaryIncome.timing.endAge - selfAdult.currentAge)
+    }
   }
   if (salaryIncome.realisticPhases && salaryIncome.realisticPhases.length > 0) {
     seeds.careerPhases = salaryIncome.realisticPhases.map((p) => ({ ...p }))

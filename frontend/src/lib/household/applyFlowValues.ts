@@ -1,12 +1,11 @@
 /**
  * Known unmapped fields (no store destination yet):
  * - Healthcare: hasRider, annualIspPremium, useMediSaveForPremiums, careShieldSupplementPlan, annualCareShieldPremium
- * - Salary: variablePayPercent, salaryStopYear
+ * - Salary: variablePayPercent
  * - SRS: srsInvestmentStrategy
  * - Protection: emergencyFundTarget, emergencyFundType, hasTermLife, annualInsurancePremiums
- * - Property: rentalExpensesPercent, rentalIncomeEndYear
+ * - Property: rentalIncomeEndYear
  * - Expenses: retirementSpendingModel
- * - Goals: goalCurrentSavings
  * - Allocation: rebalancingFrequency, glidePathEndTemplate
  * These are collected for future features. Adding store support requires schema changes.
  */
@@ -173,6 +172,10 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         }
       }
 
+      if (typeof values.rentalExpensesPercent === 'number') {
+        propertyUpdates.rentalExpensesPercent = values.rentalExpensesPercent
+      }
+
       if (values.planToDownsize === true) {
         const downsizing: DownsizingConfig = {
           ...property.downsizing,
@@ -184,6 +187,9 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         }
         if (typeof values.replacementPropertyCost === 'number') {
           downsizing.newPropertyCost = values.replacementPropertyCost
+        }
+        if (typeof values.downsizeProceedsPercent === 'number') {
+          downsizing.proceedsAllocationPercent = values.downsizeProceedsPercent
         }
         propertyUpdates.downsizing = downsizing
       }
@@ -201,9 +207,10 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         propertyUpdates.existingMortgageRemainingYears = 0
       }
 
-      // Toggle-off: clear rental yield when user says no rental income
+      // Toggle-off: clear rental yield and expenses when user says no rental income
       if (values.hasRentalIncome === false) {
         propertyUpdates.rentalYield = 0
+        propertyUpdates.rentalExpensesPercent = 0
       }
 
       store.updateProperty(property.id, propertyUpdates)
@@ -353,6 +360,18 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         incomeUpdates.bonusMonths = values.annualBonusMonths
       }
 
+      // Map salaryStopYear to timing.endAge
+      if (typeof values.salaryStopYear === 'number') {
+        const currentYear = new Date().getFullYear()
+        const endAge = selfAdult.currentAge + (values.salaryStopYear - currentYear)
+        if (endAge > selfAdult.currentAge) {
+          incomeUpdates.timing = {
+            ...salaryIncome.timing,
+            endAge,
+          } as IncomeSource['timing']
+        }
+      }
+
       // Career phases and promotion jumps for "realistic" model
       const effectiveModel = typeof values.salaryModel === 'string'
         ? (values.salaryModel === 'mom' ? 'data-driven' : values.salaryModel)
@@ -420,6 +439,9 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
           age: targetAge,
         },
         amount: typeof values.goalTargetAmount === 'number' ? values.goalTargetAmount : 0,
+        ...(typeof values.goalCurrentSavings === 'number' && values.goalCurrentSavings > 0
+          ? { amountSaved: values.goalCurrentSavings }
+          : {}),
         durationYears: 1,
         priority: 'nice-to-have',
         inflationAdjusted: true,

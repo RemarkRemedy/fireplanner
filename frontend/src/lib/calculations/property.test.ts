@@ -141,6 +141,52 @@ describe('calculateSellAndDownsize', () => {
     })
     expect(result.absdOnNewProperty).toBe(800000 * 0.05) // 40,000
   })
+
+  it('scales net equity by proceedsAllocationPercent', () => {
+    const bsd = calculateBSD(800000)
+    const fullResult = calculateSellAndDownsize({
+      salePrice: 1500000,
+      outstandingMortgage: 300000,
+      newPropertyCost: 800000,
+      newLtv: 0.75,
+      newMortgageRate: 0.035,
+      newMortgageTerm: 20,
+      residency: 'citizen',
+      propertyCount: 0,
+    })
+    const scaledResult = calculateSellAndDownsize({
+      salePrice: 1500000,
+      outstandingMortgage: 300000,
+      newPropertyCost: 800000,
+      newLtv: 0.75,
+      newMortgageRate: 0.035,
+      newMortgageTerm: 20,
+      residency: 'citizen',
+      propertyCount: 0,
+      proceedsAllocationPercent: 0.8,
+    })
+
+    // 80% of full equity goes to portfolio
+    expect(scaledResult.netEquityToPortfolio).toBeCloseTo(fullResult.netEquityToPortfolio * 0.8)
+    // Shortfall is unaffected by allocation percent
+    expect(scaledResult.shortfall).toBe(0)
+  })
+
+  it('defaults to 100% when proceedsAllocationPercent is undefined', () => {
+    const bsd = calculateBSD(800000)
+    const expectedNet = 1500000 - 300000 - bsd - 0 - 200000
+    const result = calculateSellAndDownsize({
+      salePrice: 1500000,
+      outstandingMortgage: 300000,
+      newPropertyCost: 800000,
+      newLtv: 0.75,
+      newMortgageRate: 0.035,
+      newMortgageTerm: 20,
+      residency: 'citizen',
+      propertyCount: 0,
+    })
+    expect(result.netEquityToPortfolio).toBe(expectedNet)
+  })
 })
 
 describe('calculateSellAndRent', () => {

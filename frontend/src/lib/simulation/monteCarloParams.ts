@@ -103,6 +103,7 @@ export function buildLegacyMonteCarloEngineParams({
           newMortgageTerm: ds.newMortgageTerm,
           residency: property.residencyForAbsd,
           propertyCount: Math.max(0, property.propertyCount - 1),
+          proceedsAllocationPercent: ds.proceedsAllocationPercent,
         })
         netEquity = result.netEquityToPortfolio * ownershipPct
         shortfall = result.shortfall * ownershipPct

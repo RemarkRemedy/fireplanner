@@ -366,6 +366,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
         newMortgageTerm: downsizing.newMortgageTerm,
         residency: residencyForAbsd,
         propertyCount: Math.max(0, propertyCount - 1),
+        proceedsAllocationPercent: downsizing.proceedsAllocationPercent,
       })
       dsNetEquity = result.netEquityToPortfolio * propertyOwnershipPct
       dsShortfall = result.shortfall * propertyOwnershipPct
