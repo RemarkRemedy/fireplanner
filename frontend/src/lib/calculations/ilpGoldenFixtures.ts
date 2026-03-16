@@ -88,6 +88,14 @@ export type GoldenCoverageTag =
   | 'branch:hsbc-voyage-tiered-brc'
   | 'branch:hsbc-voyage-topup-charge'
   | 'branch:hsbc-voyage-premium-holiday-suspension'
+  | 'hsbc-voyage-premium-base-amf'
+  | 'hsbc-voyage-startup-bonus-tiered'
+  | 'hsbc-voyage-bonus-recovery-charge'
+  | 'hsbc-voyage-power-up-bonus-modeled-subset'
+  | 'hsbc-voyage-loyalty-bonus-partial-withdrawal-subset'
+  | 'hsbc-voyage-topup-premium-charge'
+  | 'hsbc-voyage-partial-withdrawal-charge'
+  | 'hsbc-voyage-eec'
   | 'branch:goal-builder-ii-welcome-bonus'
   | 'branch:goal-builder-ii-welcome-bonus-recovery'
   | 'branch:goal-builder-ii-premium-year-paf'
@@ -1335,6 +1343,30 @@ function hsbcVoyageEventHeavyPolicy(
     ),
     28_000,
     5_000,
+  )
+}
+
+function hsbcVoyageStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'hsbc-life-wealth-voyage', 'usd-mip-20', id)
+
+  return withHsbcHarvestBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden HSBC Wealth Voyage (USD / MIP 20 OCF Stress)',
+        monthlyContribution: 1_200,
+        currentPolicyYear: 11,
+        monthsAlreadyPaid: 120,
+        postMipYears: 5,
+        policyEvents: [],
+      }),
+      HSBC_STRESS_FUNDS,
+    ),
+    18_500,
+    5_250,
   )
 }
 
@@ -7069,23 +7101,58 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     productId: 'hsbc-life-wealth-voyage',
     variantId: 'sgd-mip-15',
     scenarioId: 'baseline',
-    fixtureClass: 'partial-modeled-subset',
-    coverageTags: ['baseline'],
-    description: 'HSBC Wealth Voyage SGD / MIP 15 baseline scenario.',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'hsbc-voyage-startup-bonus-tiered',
+      'hsbc-voyage-premium-base-amf',
+      'hsbc-voyage-eec',
+      'kernel:distribution-mode-assumption',
+    ],
+    description: 'HSBC Wealth Voyage SGD / MIP 15 baseline scenario proving start-up bonus, premium-base AMF, surrender mechanics, and reinvest-default distribution support.',
   },
   {
     productId: 'hsbc-life-wealth-voyage',
     variantId: 'sgd-mip-20',
     scenarioId: 'baseline',
-    fixtureClass: 'partial-modeled-subset',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'hsbc-voyage-power-up-bonus-modeled-subset',
+      'hsbc-voyage-loyalty-bonus-partial-withdrawal-subset',
+      'hsbc-voyage-partial-withdrawal-charge',
+    ],
+    description: 'HSBC Wealth Voyage SGD / MIP 20 baseline scenario proving the modeled power-up / loyalty bonus subset and withdrawal-charge corridor.',
+  },
+  {
+    productId: 'hsbc-life-wealth-voyage',
+    variantId: 'sgd-mip-25',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
     coverageTags: ['baseline'],
-    description: 'HSBC Wealth Voyage SGD / MIP 20 baseline scenario.',
+    description: 'HSBC Wealth Voyage SGD / MIP 25 baseline scenario.',
+  },
+  {
+    productId: 'hsbc-life-wealth-voyage',
+    variantId: 'usd-mip-15',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'HSBC Wealth Voyage USD / MIP 15 baseline scenario.',
+  },
+  {
+    productId: 'hsbc-life-wealth-voyage',
+    variantId: 'usd-mip-20',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'HSBC Wealth Voyage USD / MIP 20 baseline scenario.',
   },
   {
     productId: 'hsbc-life-wealth-voyage',
     variantId: 'usd-mip-25',
     scenarioId: 'baseline',
-    fixtureClass: 'partial-modeled-subset',
+    fixtureClass: 'supported',
     coverageTags: ['baseline'],
     description: 'HSBC Wealth Voyage USD / MIP 25 baseline scenario.',
   },
@@ -7093,13 +7160,13 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     productId: 'hsbc-life-wealth-voyage',
     variantId: 'sgd-mip-20',
     scenarioId: 'event-heavy',
-    fixtureClass: 'partial-modeled-subset',
+    fixtureClass: 'supported',
     coverageTags: [
       'event-heavy',
-      'branch:hsbc-voyage-premium-base-amf',
-      'branch:hsbc-voyage-tiered-brc',
-      'branch:hsbc-voyage-topup-charge',
-      'branch:hsbc-voyage-premium-holiday-suspension',
+      'hsbc-voyage-premium-base-amf',
+      'hsbc-voyage-bonus-recovery-charge',
+      'hsbc-voyage-topup-premium-charge',
+      'hsbc-voyage-partial-withdrawal-charge',
     ],
     description: 'HSBC Wealth Voyage event-heavy scenario covering premium-base AMF, top-up charge, partial withdrawal charge, regular-premium reduction BRC, and a free-duration premium holiday suspension.',
     integrityChecks: [
@@ -7131,6 +7198,14 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
         )),
       },
     ],
+  },
+  {
+    productId: 'hsbc-life-wealth-voyage',
+    variantId: 'usd-mip-20',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'HSBC Wealth Voyage USD / MIP 20 alternate-fund stress scenario under the V1 reinvestment-default assumption.',
   },
   {
     productId: 'hsbc-life-wealth-focus-flexi-1',
@@ -10662,6 +10737,9 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'hsbc-life-wealth-voyage' && definition.scenarioId === 'event-heavy') {
     return hsbcVoyageEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'hsbc-life-wealth-voyage' && definition.scenarioId === 'ocf-stress') {
+    return hsbcVoyageStressPolicy(snapshot, id)
   }
   if (
     (

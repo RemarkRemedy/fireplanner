@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseHsbcWealthVoyage', () => {
-  it('builds a valid partial Wealth Voyage product with distribution support', async () => {
+  it('builds a valid supported Wealth Voyage product with distribution support', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseHsbcWealthVoyage({
       document,
@@ -22,8 +22,8 @@ describe('parseHsbcWealthVoyage', () => {
 
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('hsbc-life-wealth-voyage')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-dividend-payout-threshold')
 

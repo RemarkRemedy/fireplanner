@@ -412,9 +412,9 @@ export function parseHsbcWealthVoyage(context: ParseContext): IlpCatalogProduct 
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'hsbc-voyage-premium-base-amf',
       'hsbc-voyage-startup-bonus-tiered',
@@ -434,7 +434,7 @@ export function parseHsbcWealthVoyage(context: ParseContext): IlpCatalogProduct 
       'hsbc-voyage-life-replacement-option',
     ],
     warnings: [
-      'Wealth Voyage remains partial because free premium-holiday duration tracking, the top-up-first regular-withdrawal facility, and protection-side behavior are not executable from the current runtime alone.',
+      'Wealth Voyage is cataloged as a supported V1 product. Premium-base AMF, start-up bonus, bonus recovery charge, top-up charge, partial-withdrawal charge, surrender mechanics, the modeled subset of power-up / loyalty bonus suspension rules, and reinvest-default distribution support are modeled; premium-holiday charge after the free duration, premium-holiday backpay AMF reconciliation, regular-withdrawal-linked loyalty suspension, the dividend payout threshold, and the life replacement option remain informational only.',
     ],
     archived: false,
     variants: [

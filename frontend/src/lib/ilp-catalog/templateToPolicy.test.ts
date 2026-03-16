@@ -201,7 +201,7 @@ describe('templateVariantToPolicySeed', () => {
     ])
   })
 
-  it('maps HSBC Wealth Voyage into a partial seed with premium-base AMF and split startup recovery rules', () => {
+  it('maps HSBC Wealth Voyage into a supported seed with premium-base AMF and split startup recovery rules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'hsbc-life-wealth-voyage')
     expect(product).toBeDefined()
@@ -211,8 +211,8 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.monthlyContribution).toBe(350)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-voyage-premium-base-amf')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-voyage-premium-holiday-charge-after-free-duration')
