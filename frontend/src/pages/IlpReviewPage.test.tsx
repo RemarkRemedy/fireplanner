@@ -1566,6 +1566,29 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds PRUActive LinkGuard as a partial catalog product with no-lapse and assurance warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'PRUActive LinkGuard')
+
+    expect(within(dialog).getByText('PRUActive LinkGuard')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use partial template$/i }))
+
+    expect(screen.getAllByText('PRUActive LinkGuard (SGD / Open-ended (Cash Or Srs))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('S$5 monthly administration charge')
+    expect(seededAlert?.textContent).toContain('3% Investment Booster (Lump Sum) premium charge')
+    expect(seededAlert?.textContent).toContain('No Lapse Period debt carry')
+    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Administration Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Investment Booster (Lump Sum) Premium Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
