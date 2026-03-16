@@ -1355,6 +1355,28 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Initial Account Redemption Fee')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds AstraLink (VA2) as a partial catalog product with allocation-uplift and distribution warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AstraLink (VA2)')
+
+    expect(within(dialog).getByText('AstraLink (VA2)')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use partial template$/i }))
+
+    expect(screen.getAllByText('AstraLink (VA2) (SGD / MIP 10)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('105% post-MIP regular-premium allocation uplift')
+    expect(seededAlert?.textContent).toContain('reinvest-only distribution mode')
+    expect(seededAlert?.textContent).toContain('Insurance cover charge, No Lapse Guarantee')
+    expect(screen.getByDisplayValue('Policy Fee')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
