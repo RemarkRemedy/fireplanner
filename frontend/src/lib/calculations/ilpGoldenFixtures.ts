@@ -56,6 +56,11 @@ export type GoldenCoverageTag =
   | 'branch:hsbc-life-wealth-invest-cpf-zero-recurring-single-premium-charge'
   | 'branch:hsbc-life-wealth-invest-cpf-zero-top-up-charge'
   | 'branch:hsbc-life-wealth-invest-cpf-zero-redemption-fee'
+  | 'branch:etiqa-tiq-invest-zero-single-premium-charge'
+  | 'branch:etiqa-tiq-invest-management-charge'
+  | 'branch:etiqa-tiq-invest-zero-top-up-charge'
+  | 'branch:etiqa-tiq-invest-zero-recurring-single-premium-charge'
+  | 'branch:etiqa-tiq-invest-zero-partial-withdrawal-charge'
   | 'branch:great-eastern-gia-sp-initial-single-premium-charge'
   | 'branch:great-eastern-gia-sp-top-up-premium-charge'
   | 'branch:great-eastern-gia-sp-open-ended-zero-surrender-charge'
@@ -267,6 +272,44 @@ const AIA_STRESS_FUNDS: IlpFund[] = [
     grossReturnLow: 0.027,
     grossReturnMid: 0.049,
     grossReturnHigh: 0.067,
+  },
+]
+
+const ETIQA_BALANCED_FUNDS: IlpFund[] = [
+  {
+    name: 'Etiqa Global Opportunity',
+    allocation: 0.58,
+    ocf: 0.012,
+    grossReturnLow: 0.045,
+    grossReturnMid: 0.074,
+    grossReturnHigh: 0.1,
+  },
+  {
+    name: 'Etiqa Income Builder',
+    allocation: 0.42,
+    ocf: 0.009,
+    grossReturnLow: 0.03,
+    grossReturnMid: 0.052,
+    grossReturnHigh: 0.07,
+  },
+]
+
+const ETIQA_STRESS_FUNDS: IlpFund[] = [
+  {
+    name: 'Etiqa Asia Growth',
+    allocation: 0.66,
+    ocf: 0.023,
+    grossReturnLow: 0.038,
+    grossReturnMid: 0.079,
+    grossReturnHigh: 0.112,
+  },
+  {
+    name: 'Etiqa Strategic Income',
+    allocation: 0.34,
+    ocf: 0.018,
+    grossReturnLow: 0.028,
+    grossReturnMid: 0.05,
+    grossReturnHigh: 0.068,
   },
 ]
 
@@ -1544,6 +1587,79 @@ function aiaInvestEasyCpfStressPolicy(
 ): IlpPolicyInput {
   return aiaInvestEasyBasePolicy(snapshot, 'aia-invest-easy-cpf', 'sgd-open-ended-cpf', id, AIA_STRESS_FUNDS, {
     name: 'Golden AIA Invest Easy (CPF) (SGD / Open-ended OCF Stress)',
+  })
+}
+
+function etiqaTiqInvestBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'etiqa-tiq-invest', 'sgd-open-ended', id, {
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden Tiq Invest (SGD / Open-ended)',
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function etiqaTiqInvestBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return etiqaTiqInvestBasePolicy(snapshot, id, ETIQA_BALANCED_FUNDS)
+}
+
+function etiqaTiqInvestEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return etiqaTiqInvestBasePolicy(snapshot, id, ETIQA_BALANCED_FUNDS, {
+    name: 'Golden Tiq Invest (SGD / Open-ended Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 6,
+        durationMonths: 1,
+        amount: 10_000,
+      },
+      {
+        id: 'rsp-1',
+        type: 'recurring-single-premium',
+        startPolicyMonth: 7,
+        durationMonths: 6,
+        amount: 500,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 11,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function etiqaTiqInvestStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return etiqaTiqInvestBasePolicy(snapshot, id, ETIQA_STRESS_FUNDS, {
+    name: 'Golden Tiq Invest (SGD / Open-ended OCF Stress)',
   })
 }
 
@@ -3531,6 +3647,48 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'HSBC Life Wealth Invest (CPF) alternate-fund stress scenario through the open-ended CPF corridor.',
   },
   {
+    productId: 'etiqa-tiq-invest',
+    variantId: 'sgd-open-ended',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'branch:etiqa-tiq-invest-zero-single-premium-charge', 'branch:etiqa-tiq-invest-management-charge'],
+    description: 'Tiq Invest baseline scenario proving zero-charge initial single-premium seeding and annual management-charge drag through the open-ended corridor.',
+  },
+  {
+    productId: 'etiqa-tiq-invest',
+    variantId: 'sgd-open-ended',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:etiqa-tiq-invest-zero-top-up-charge',
+      'branch:etiqa-tiq-invest-zero-recurring-single-premium-charge',
+      'branch:etiqa-tiq-invest-zero-partial-withdrawal-charge',
+      'tokio-recurring-single-premium-routing',
+    ],
+    description: 'Tiq Invest supported event-heavy scenario covering zero-charge top-up, recurring single premium routing, and nil-charge withdrawals.',
+    integrityChecks: [
+      {
+        description: 'zero-charge top-up credits the full gross top-up amount to the policy account',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          (row.accounts.find((account) => account.accountId === 'policy')?.contributionAmount ?? 0) >= 10_000
+        )),
+      },
+      {
+        description: 'the seeded withdrawal executes through the published open-ended withdrawal corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'etiqa-tiq-invest',
+    variantId: 'sgd-open-ended',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Tiq Invest alternate-fund stress scenario through the open-ended corridor.',
+  },
+  {
     productId: 'great-eastern-great-invest-advantage-sp',
     variantId: 'sgd-open-ended-cash-or-srs',
     scenarioId: 'baseline',
@@ -4198,6 +4356,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'hsbc-life-wealth-invest-cpf' && definition.scenarioId === 'ocf-stress') {
     return hsbcWealthInvestCpfStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'etiqa-tiq-invest' && definition.scenarioId === 'baseline') {
+    return etiqaTiqInvestBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'etiqa-tiq-invest' && definition.scenarioId === 'event-heavy') {
+    return etiqaTiqInvestEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'etiqa-tiq-invest' && definition.scenarioId === 'ocf-stress') {
+    return etiqaTiqInvestStressPolicy(snapshot, id)
   }
   if (definition.productId === 'great-eastern-great-invest-advantage-sp' && definition.scenarioId === 'baseline') {
     return greatEasternGiaSpBaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended-cash-or-srs' | 'sgd-open-ended-cpfis', id)

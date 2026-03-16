@@ -1554,7 +1554,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('gross initial single premium'))).toBe(true)
   })
 
-  it('maps Tiq Invest into a partial seed with recurring top-up routing', () => {
+  it('maps Tiq Invest into a supported seed with recurring top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-tiq-invest')
     expect(product).toBeDefined()
@@ -1564,9 +1564,11 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('Tiq Invest (SGD / Open-ended)')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-tiq-invest-zero-recurring-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-recurring-single-premium-routing')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('etiqa-tiq-invest-single-premium-principal-tracking')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('etiqa-tiq-invest-recurring-top-up-enrollment')
     expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },

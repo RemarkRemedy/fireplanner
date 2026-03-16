@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseEtiqaTiqInvest', () => {
-  it('builds a valid partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid open-ended supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseEtiqaTiqInvest({
       document,
@@ -23,8 +23,8 @@ describe('parseEtiqaTiqInvest', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('etiqa-tiq-invest')
     expect(product.productName).toBe('Tiq Invest')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:etiqa-tiq-invest-zero-single-premium-charge',
       'branch:etiqa-tiq-invest-management-charge',
@@ -33,11 +33,11 @@ describe('parseEtiqaTiqInvest', () => {
       'branch:etiqa-tiq-invest-zero-partial-withdrawal-charge',
       'tokio-recurring-single-premium-routing',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('etiqa-tiq-invest-single-premium-principal-tracking')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-tiq-invest-grace-period-reinstatement')
+    expect(product.metadataOnlyBehaviors).not.toContain('etiqa-tiq-invest-single-premium-principal-tracking')
     expect(product.metadataOnlyBehaviors).not.toContain('etiqa-tiq-invest-recurring-top-up-enrollment')
     expect(product.warnings).toContain(
-      'Tiq Invest is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge initial subscription, zero-charge ad-hoc and recurring top-up path, zero-charge withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis, while protection benefits and principal-tracking remain outside the current engine.',
+      'Tiq Invest is cataloged as a supported V1 product. The parser captures the published zero-charge initial subscription, zero-charge ad-hoc and recurring top-up path, zero-charge withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis, while protection benefits, fund-switching administration, and grace-period handling remain informational only.',
     )
 
     expect(product.variants).toHaveLength(1)
@@ -92,6 +92,7 @@ describe('parseEtiqaTiqInvest', () => {
     ])
     expect(variant.warnings).toContain('There is no insurance charge imposed on this policy.')
     expect(variant.unsupportedItems).toContain('Grace-period funding remains informational only.')
+    expect(variant.unsupportedItems).not.toContain('Single-premium principal tracking remains informational only in V1.')
     expect(variant.eecTable).toEqual([])
   }, 30_000)
 })
