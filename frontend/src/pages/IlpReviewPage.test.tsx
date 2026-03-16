@@ -1495,6 +1495,32 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds GREAT Life Advantage 4 as a partial catalog product with premium-holiday refund warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Life Advantage 4')
+
+    expect(within(dialog).getByText('GREAT Life Advantage 4')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(regular pay\)use partial template$/i }))
+
+    expect(screen.getAllByText('GREAT Life Advantage 4 (SGD / Open-ended (Regular Pay))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('premium-holiday charge and refund privilege')
+    expect(seededAlert?.textContent).toContain('fixed S$5 monthly policy fee')
+    expect(seededAlert?.textContent).toContain('Insurance charge, non-lapse guarantee debt carry')
+    expect(screen.getByDisplayValue('Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Policy Fee')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Holiday Charge Refund')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Single Premium Top-up Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
