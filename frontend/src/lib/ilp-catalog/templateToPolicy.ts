@@ -26,8 +26,11 @@ function usesOriginalSinglePremiumBase(variant: IlpTemplateVariant): boolean {
 }
 
 function supportsSeededRecurringContributionRouting(variant: IlpTemplateVariant): boolean {
-  const hasContributionRules = variant.accounts.some((account) => account.contributionRules.length > 0)
-  if (!hasContributionRules) return true
+  const recurringPhases = new Set(['during-icp', 'after-icp', 'after-mip'])
+  const hasRecurringContributionRules = variant.accounts.some((account) => (
+    account.contributionRules.some((rule) => recurringPhases.has(rule.phase))
+  ))
+  if (!hasRecurringContributionRules) return true
 
   return variant.accounts.some((account) => (
     account.contributionRules.some((rule) => rule.phase === 'after-icp')

@@ -331,6 +331,31 @@ describe('IlpReviewPage', () => {
     expect(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i })).toBeEnabled()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds Goal Builder II usd mip-15 as a partial catalog product with loyalty and recovery warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Goal Builder II')
+
+    expect(within(dialog).getByText('Goal Builder II')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^usd \/ mip 15use partial template$/i }))
+
+    expect(screen.getAllByText('Goal Builder II (USD / MIP 15)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('Premium-Year-based Product Administration Fee')
+    expect(seededAlert?.textContent).toContain('Loyalty Bonus cadence')
+    expect(seededAlert?.textContent).toContain('manual regular-withdrawal payout support')
+    expect(seededAlert?.textContent).toContain('reinvest-default dividend-distribution support')
+    expect(screen.getByDisplayValue('Product Administration Fee')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Recurrent Single Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Welcome Bonus Recovery Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('shows Wealth Focus (Flexi 3) as a partial catalog product that can be selected from the picker', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()

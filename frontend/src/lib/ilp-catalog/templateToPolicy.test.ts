@@ -108,6 +108,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.monthlyContribution).toBe(350)
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-harvest-holiday-charge')
@@ -143,6 +144,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.monthlyContribution).toBe(350)
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-abundance-tiered-brc')
@@ -208,6 +210,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.monthlyContribution).toBe(350)
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
     expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-voyage-premium-base-amf')
@@ -472,7 +475,13 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-snack-investment-zero-top-up-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-snack-investment-fund-management-fee')
-    expect(seed.chargeRules).toEqual([])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'single-premium-charge',
+        basis: 'initial-single-premium',
+        rate: 0,
+      }),
+    ])
     expect(seed.eventChargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -737,6 +746,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.monthlyContribution).toBe(350)
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:prosper-assurance-charge')
@@ -1537,6 +1547,11 @@ describe('templateVariantToPolicySeed', () => {
       { phase: 'top-up', contributionShare: 1 },
     ])
     expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'single-premium-charge',
+        basis: 'initial-single-premium',
+        rate: 0,
+      }),
       expect.objectContaining({
         id: 'management-charge-fee',
         basis: 'account-value',

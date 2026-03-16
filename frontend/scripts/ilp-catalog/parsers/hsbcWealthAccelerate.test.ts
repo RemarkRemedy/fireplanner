@@ -27,6 +27,16 @@ describe('parseHsbcWealthAccelerate', () => {
     expect(product.metadataOnlyBehaviors).toContain('hsbc-accelerate-dividend-payout-threshold')
 
     const sgdVariant = product.variants.find((entry) => entry.id === 'sgd-mip-25')
+    expect(sgdVariant?.feeRules).toEqual([
+      expect.objectContaining({
+        id: 'amf',
+        basis: 'account-value',
+      }),
+      expect.objectContaining({
+        id: 'imf',
+        basis: 'account-value',
+      }),
+    ])
     expect(sgdVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['iua', 'aua'],

@@ -227,6 +227,7 @@ function buildVariant(
     {
       id: 'amf',
       label: 'Account Maintenance Fee',
+      basis: 'account-value',
       rate: roundRate(rates.amf),
       appliesTo: ['iua'],
       activeWindow: 'during-mip',
@@ -236,6 +237,7 @@ function buildVariant(
     {
       id: 'imf',
       label: 'Investment Management Fee',
+      basis: 'account-value',
       rate: roundRate(rates.imf),
       appliesTo: ['aua'],
       activeWindow: 'policy-term',
