@@ -5993,7 +5993,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-term extension'))).toBe(true)
   })
 
-  it('maps AIA Platinum Wealth Legacy into a regular-pay partial seed', () => {
+  it('maps AIA Platinum Wealth Legacy into a supported regular-pay seed', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'aia-platinum-wealth-legacy')
     expect(product).toBeDefined()
@@ -6002,8 +6002,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-wealth-legacy-partial-withdrawal-surrender-charge')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(5)
     expect(seed.chargeRules).toEqual([
@@ -6024,9 +6024,12 @@ describe('templateVariantToPolicySeed', () => {
         trigger: 'premium-holiday',
         basis: 'annual-premium-with-overlap-months',
       }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+      }),
     ])
-    expect(seed.eecTable).toEqual([])
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('post-year-10 treatment'))).toBe(true)
+    expect(seed.eecTable).toEqual([0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05])
   })
 
   it('maps #goAssure into a regular-pay partial seed with policy-charge and shortfall-charge mechanics', () => {

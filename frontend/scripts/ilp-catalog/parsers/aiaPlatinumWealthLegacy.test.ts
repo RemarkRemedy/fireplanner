@@ -72,7 +72,7 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
 }
 
 describe('parseAiaPlatinumWealthLegacy', () => {
-  it('builds a valid regular-pay partial modeled-subset product from extracted summary text', async () => {
+  it('builds a valid supported regular-pay product from extracted summary text', async () => {
     const document = makeSyntheticDocument()
     const product = parseAiaPlatinumWealthLegacy({
       document,
@@ -82,19 +82,21 @@ describe('parseAiaPlatinumWealthLegacy', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('aia-platinum-wealth-legacy')
     expect(product.productName).toBe('AIA Platinum Wealth Legacy')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:aia-platinum-wealth-legacy-regular-premium-charge',
       'branch:aia-platinum-wealth-legacy-top-up-premium-charge',
       'branch:aia-platinum-wealth-legacy-premium-holiday-charge',
+      'branch:aia-platinum-wealth-legacy-partial-withdrawal-charge',
+      'branch:aia-platinum-wealth-legacy-full-surrender-charge',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('aia-platinum-wealth-legacy-partial-withdrawal-surrender-charge')
 
     const variant = product.variants[0]
     expect(variant).toMatchObject({
       id: 'sgd-mip-5',
       mipLength: 5,
-      eecTable: [],
+      eecTable: [0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05],
     })
     expect(variant.feeRules).toEqual([
       expect.objectContaining({
@@ -112,6 +114,22 @@ describe('parseAiaPlatinumWealthLegacy', () => {
         id: 'premium-holiday-charge',
         trigger: 'premium-holiday',
       }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        rateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 1, rate: 0.5 },
+          { startPolicyYear: 2, endPolicyYear: 2, rate: 0.45 },
+          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.4 },
+          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.35 },
+          { startPolicyYear: 5, endPolicyYear: 5, rate: 0.3 },
+          { startPolicyYear: 6, endPolicyYear: 6, rate: 0.25 },
+          { startPolicyYear: 7, endPolicyYear: 7, rate: 0.2 },
+          { startPolicyYear: 8, endPolicyYear: 8, rate: 0.15 },
+          { startPolicyYear: 9, endPolicyYear: 9, rate: 0.1 },
+          { startPolicyYear: 10, endPolicyYear: 10, rate: 0.05 },
+        ],
+      }),
     ])
   })
 
@@ -125,6 +143,6 @@ describe('parseAiaPlatinumWealthLegacy', () => {
 
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.sourceChecksumSha256).toBe(checksum)
-    expect(product.variants[0]?.eecTable).toEqual([])
+    expect(product.variants[0]?.eecTable).toEqual([0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05])
   }, 30_000)
 })

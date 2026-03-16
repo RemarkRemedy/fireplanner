@@ -2236,17 +2236,18 @@
     "sourceChecksumSha256": "31a90090e9fc499c5128b2f452803a534f8b7e4e97e352b0b9b94bdceca7af55",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
       "branch:aia-platinum-wealth-legacy-regular-premium-charge",
       "branch:aia-platinum-wealth-legacy-top-up-premium-charge",
-      "branch:aia-platinum-wealth-legacy-premium-holiday-charge"
+      "branch:aia-platinum-wealth-legacy-premium-holiday-charge",
+      "branch:aia-platinum-wealth-legacy-partial-withdrawal-charge",
+      "branch:aia-platinum-wealth-legacy-full-surrender-charge"
     ],
     "metadataOnlyBehaviors": [
       "aia-platinum-wealth-legacy-single-premium-corridor",
-      "aia-platinum-wealth-legacy-partial-withdrawal-surrender-charge",
       "aia-platinum-wealth-legacy-administration-charge",
       "aia-platinum-wealth-legacy-insurance-risk-charge",
       "aia-platinum-wealth-legacy-no-lapse-privilege",
@@ -2257,7 +2258,7 @@
       "aia-platinum-wealth-legacy-no-fund-switching"
     ],
     "warnings": [
-      "AIA Platinum Wealth Legacy is cataloged as a partial modeled subset in V1. The parser models only the cash regular-pay 5-year corridor: premium-year regular premium charges, the 3% top-up premium charge, and the premium-holiday charge schedule, while the single-pay corridor, partial-withdrawal / surrender schedule, administration charge, insurance risk charge, no-lapse mechanics, and protection-side benefits remain outside the current engine."
+      "AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge, the premium-holiday charge schedule, and the published regular-premium partial-withdrawal / surrender charge schedules, while the single-pay corridor, administration charge, insurance risk charge, no-lapse mechanics, and protection-side benefits remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -2272,7 +2273,7 @@
             "label": "Regular Premium Policy Account",
             "feeRate": null,
             "postMipFeeRate": null,
-            "subjectToEec": false,
+            "subjectToEec": true,
             "contributionRules": [
               {
                 "phase": "during-icp",
@@ -2438,16 +2439,106 @@
                 "excerpt": "Premium Holiday. When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements will be deducted by cancellation of units. Your policy will remain on Premium Holiday until yo"
               }
             ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.05
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published partial withdrawal charge factor on withdrawn regular-premium policy value.",
+              "Single-premium and top-up withdrawal behavior remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium holiday and surrender mechanics",
+                "excerpt": "5.4. Premium Holiday Charge (applicable to Regular Premium only) If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the premium p"
+              },
+              {
+                "page": 6,
+                "section": "Top-up premium mechanics",
+                "excerpt": "6.2. Top-Up Premium Policyholder can avoid the policy lapsing by topping up additional premium. Top-ups can be either paid on an ad hoc basis or regularly. Top ups increase the Policy Value but they do not affect the Ins"
+              }
+            ]
           }
         ],
-        "eecTable": [],
+        "eecTable": [
+          0.5,
+          0.45,
+          0.4,
+          0.35,
+          0.3,
+          0.25,
+          0.2,
+          0.15,
+          0.1,
+          0.05
+        ],
         "warnings": [
-          "AIA Platinum Wealth Legacy is cataloged as a partial modeled subset in V1. The parser models only the cash regular-pay 5-year corridor: premium-year regular premium charges, the 3% top-up premium charge, and the premium-holiday charge schedule, while the single-pay corridor, partial-withdrawal / surrender schedule, administration charge, insurance risk charge, no-lapse mechanics, and protection-side benefits remain outside the current engine.",
-          "The published partial-withdrawal / surrender table is left informational only because the summary shows policy years 1 to 10 but does not state the post-year-10 treatment explicitly."
+          "AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge, the premium-holiday charge schedule, and the published regular-premium partial-withdrawal / surrender charge schedules, while the single-pay corridor, administration charge, insurance risk charge, no-lapse mechanics, and protection-side benefits remain informational only."
         ],
         "unsupportedItems": [
           "Single-pay corridor and the 5% single-premium charge remain informational only in V1.",
-          "Published partial-withdrawal / surrender charge tables remain informational only because the summary does not state the post-year-10 treatment explicitly.",
           "Administration charge remains informational only because the applicable rates live in the policy illustration rather than the product summary.",
           "Insurance Risk Charge, No Lapse Privilege, and expiry-age election mechanics remain informational only.",
           "Adjusted partial withdrawal, layer creation from insured-amount changes, and minimum-insured-amount gating remain informational only.",
