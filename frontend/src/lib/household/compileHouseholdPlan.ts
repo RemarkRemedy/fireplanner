@@ -969,6 +969,7 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
   const dependentExpenseByYear = zeroes(yearCount)
   const baseExpenseAdjustedByYear = zeroes(yearCount)
   const insurancePremiumsByYear = zeroes(yearCount)
+  const debtPaymentsByYear = zeroes(yearCount)
   const portfolioAdjustments: HouseholdPortfolioAdjustment[] = []
   const milestones: HouseholdMilestoneRow[] = []
 
@@ -1016,6 +1017,19 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
     if (adultInsurance > 0) {
       for (let yearOffset = 0; yearOffset <= timing.lifeExpectancyYearOffset && yearOffset < yearCount; yearOffset += 1) {
         insurancePremiumsByYear[yearOffset] += adultInsurance
+      }
+    }
+
+    // Non-mortgage debt payments: annual deduction from cash flow, stops at debtPayoffAge
+    const adultDebtAnnual = adult.nonMortgageDebtMonthlyPayment * 12
+    if (adultDebtAnnual > 0) {
+      const debtPayoffYearOffset = adult.debtPayoffAge != null
+        ? adult.debtPayoffAge - adult.currentAge
+        : timing.lifeExpectancyYearOffset + 1 // no payoff age → deduct until death
+      for (let yearOffset = 0; yearOffset < Math.min(debtPayoffYearOffset, yearCount); yearOffset += 1) {
+        if (yearOffset <= timing.lifeExpectancyYearOffset) {
+          debtPaymentsByYear[yearOffset] += adultDebtAnnual
+        }
       }
     }
 
@@ -1281,6 +1295,7 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
       + healthcareCashOutlayByYear[yearOffset]
       + propertyExpenseByYear[yearOffset]
       + insurancePremiumsByYear[yearOffset]
+      + debtPaymentsByYear[yearOffset]
 
     const totalCashIncome = totalNetIncomeByYear[yearOffset]
       + sharedIncomeByYear[yearOffset]

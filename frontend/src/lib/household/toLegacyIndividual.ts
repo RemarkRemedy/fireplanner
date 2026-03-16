@@ -313,6 +313,8 @@ export function toLegacyIndividual(plan: HouseholdPlan): LegacyIndividualSnapsho
   snapshot.profile.parentSupport = parentSupport.filter((entry) => entry !== null)
   snapshot.profile.parentSupportEnabled = adult.parentSupportEnabled || snapshot.profile.parentSupport.length > 0
   snapshot.profile.annualInsurancePremiums = adult.annualInsurancePremiums ?? 0
+  snapshot.profile.annualNonMortgageDebtPayment = adult.nonMortgageDebtMonthlyPayment * 12
+  snapshot.profile.debtPayoffAge = adult.debtPayoffAge
 
   const expenseAdjustments = plan.expenses
     .filter((entry) => entry.kind === 'expense-adjustment')

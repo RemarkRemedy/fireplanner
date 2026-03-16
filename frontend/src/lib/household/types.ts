@@ -77,6 +77,8 @@ export interface PlanningAdult {
   insuranceDisabilityMonthly: number
   /** Annual insurance premium cost (deducted from cash flow in projection) */
   annualInsurancePremiums?: number
+  /** Age at which non-mortgage debt is fully repaid (deduction stops) */
+  debtPayoffAge?: number
   /** Emergency fund target in months of expenses (default: 6) */
   emergencyFundTarget?: number
   funeralCosts: number

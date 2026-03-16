@@ -576,6 +576,7 @@ const PROTECTION_FLOW: NudgeFlowDefinition = {
         { name: 'personalLoanOutstanding', label: 'Personal loan outstanding', type: 'currency' },
         { name: 'creditCardDebt', label: 'Credit card debt', type: 'currency' },
         { name: 'otherDebt', label: 'Other debt', type: 'currency' },
+        { name: 'debtPayoffAge', label: 'Age debt is fully repaid', type: 'number' },
       ],
     },
     {

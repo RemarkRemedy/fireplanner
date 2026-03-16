@@ -36,6 +36,17 @@ export function ProtectionSection() {
                   value={adult.nonMortgageDebtMonthlyPayment}
                   onChange={(v) => updateAdult(adult.id, { nonMortgageDebtMonthlyPayment: v })}
                 />
+                {adult.nonMortgageDebtMonthlyPayment > 0 && (
+                  <NumberInput
+                    label="Age debt is fully repaid"
+                    tooltip="Age when all non-mortgage debt is paid off. Debt deduction stops at this age. Leave empty if unsure."
+                    value={adult.debtPayoffAge ?? 0}
+                    onChange={(v) => updateAdult(adult.id, { debtPayoffAge: v > 0 ? v : undefined })}
+                    min={0}
+                    max={120}
+                    step={1}
+                  />
+                )}
               </div>
             </div>
 

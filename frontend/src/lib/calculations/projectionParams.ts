@@ -272,6 +272,8 @@ export function buildFullProjectionParams(
     parentSupport: profile.parentSupport,
     parentSupportEnabled: profile.parentSupportEnabled,
     annualInsurancePremiums: profile.annualInsurancePremiums,
+    annualNonMortgageDebtPayment: profile.annualNonMortgageDebtPayment,
+    debtPayoffAge: profile.debtPayoffAge,
     healthcareConfig: profile.healthcareConfig?.enabled ? profile.healthcareConfig : null,
     healthcareCashOutlayByYear,
     retirementWithdrawals: profile.retirementWithdrawals,

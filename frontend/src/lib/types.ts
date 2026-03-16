@@ -208,6 +208,10 @@ export interface ProfileState {
 
   /** Annual insurance premium cost (deducted from cash flow in projection) */
   annualInsurancePremiums?: number
+  /** Annual non-mortgage debt payment (deducted from cash flow in projection) */
+  annualNonMortgageDebtPayment?: number
+  /** Age at which non-mortgage debt is fully repaid (deduction stops) */
+  debtPayoffAge?: number
 
   // Healthcare & Insurance
   healthcareConfig: HealthcareConfig

@@ -77,6 +77,8 @@ Normative rules for PR 2:
 - `cpfVirtualRebalancing` -> `adults[0].cpf.virtualRebalancing` -> `adultsById["adult-self"].cpf.virtualRebalancing`
 - `cpfVirtualRebalancingMode` -> `adults[0].cpf.virtualRebalancingMode` -> `adultsById["adult-self"].cpf.virtualRebalancingMode`
 - `annualInsurancePremiums` -> `adults[0].annualInsurancePremiums` -> `adultsById["adult-self"].annualInsurancePremiums` (annual cost, deducted from projection cash flow)
+- `annualNonMortgageDebtPayment` -> derived from `adults[0].nonMortgageDebtMonthlyPayment * 12` -> `adultsById["adult-self"].nonMortgageDebtMonthlyPayment * 12` (annual debt payment, deducted from projection cash flow)
+- `debtPayoffAge` -> `adults[0].debtPayoffAge` -> `adultsById["adult-self"].debtPayoffAge` (age at which debt deduction stops)
 - `parentSupportEnabled` -> `adults[0].parentSupportEnabled` -> `adultsById["adult-self"].parentSupportEnabled`
 - `parentSupport` -> `expenses["expense-parent-support-*"]` with one monthly item per legacy entry -> `expenseOrder` and `expensesById["expense-parent-support-*"]`
 - `healthcareConfig` -> `adults[0].healthcare` -> `adultsById["adult-self"].healthcare`

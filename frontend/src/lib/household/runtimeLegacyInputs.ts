@@ -463,6 +463,14 @@ function buildAggregateRuntimeSnapshot(
   defaults.profile.annualInsurancePremiums = plan.adults.reduce(
     (sum, adult) => sum + (adult.annualInsurancePremiums ?? 0), 0
   )
+  defaults.profile.annualNonMortgageDebtPayment = plan.adults.reduce(
+    (sum, adult) => sum + (adult.nonMortgageDebtMonthlyPayment * 12), 0
+  )
+  // Legacy path: take max debtPayoffAge across adults (conservative — deduction continues until last adult finishes)
+  const adultPayoffAges = plan.adults
+    .filter((adult) => adult.debtPayoffAge != null && adult.nonMortgageDebtMonthlyPayment > 0)
+    .map((adult) => adult.debtPayoffAge!)
+  defaults.profile.debtPayoffAge = adultPayoffAges.length > 0 ? Math.max(...adultPayoffAges) : undefined
   defaults.profile.parentSupportEnabled = plan.expenses.some((expense) => expense.kind === 'parent-support')
   defaults.profile.parentSupport = mapParentSupport(
     plan.expenses,

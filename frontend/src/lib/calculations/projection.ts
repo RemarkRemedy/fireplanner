@@ -105,6 +105,10 @@ export interface ProjectionParams {
   parentSupportEnabled: boolean
   /** Annual insurance premium deducted from cash flow */
   annualInsurancePremiums?: number
+  /** Annual non-mortgage debt payment deducted from cash flow */
+  annualNonMortgageDebtPayment?: number
+  /** Age at which non-mortgage debt is fully repaid (deduction stops) */
+  debtPayoffAge?: number
   /** Age at which rental income stops */
   rentalIncomeEndAge?: number
   // Healthcare
@@ -668,14 +672,18 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       getLifeEventExpenseImpact(age, effectiveBase, params.lifeEvents ?? [], params.lifeEventsEnabled ?? false)
     const baseExpenses = isRetired ? lifeEventAdjustedBase * retirementSpendingAdjustment : lifeEventAdjustedBase
     const insurancePremiums = params.annualInsurancePremiums ?? 0
-    const inflationAdjustedExpenses = baseExpenses * Math.pow(1 + inflation, year) + parentSupportExpense + downsizingRentExpense + healthcareCashOutlay + insurancePremiums
+    const debtPayment = (params.annualNonMortgageDebtPayment ?? 0) > 0
+      && (params.debtPayoffAge == null || age < params.debtPayoffAge)
+      ? (params.annualNonMortgageDebtPayment ?? 0)
+      : 0
+    const inflationAdjustedExpenses = baseExpenses * Math.pow(1 + inflation, year) + parentSupportExpense + downsizingRentExpense + healthcareCashOutlay + insurancePremiums + debtPayment
 
     if (!isRetired) {
       // Pre-retirement: accumulation
       const netPropertyCashflow = effectiveRentalIncome - effectiveMortgagePayment
       // Extra expenses (parent support, healthcare, downsizing rent, insurance premiums) are computed by the
       // projection but NOT included in income projection's annualSavings — deduct them here.
-      const extraExpenses = parentSupportExpense + healthcareCashOutlay + downsizingRentExpense + insurancePremiums
+      const extraExpenses = parentSupportExpense + healthcareCashOutlay + downsizingRentExpense + insurancePremiums + debtPayment
       // When income < base expenses, income projection clamps annualSavings to max(0, ...).
       // The shortfall must still be deducted from the portfolio.
       // Use life-event-adjusted base to match income.ts savings calculation.

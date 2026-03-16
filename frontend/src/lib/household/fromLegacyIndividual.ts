@@ -190,6 +190,8 @@ function mapPlanningAdult(snapshot: LegacyIndividualSnapshot): PlanningAdult {
     insuranceDeathCoverage: 0,
     insuranceCICoverage: 0,
     insuranceDisabilityMonthly: 0,
+    annualInsurancePremiums: snapshot.profile.annualInsurancePremiums ?? 0,
+    debtPayoffAge: snapshot.profile.debtPayoffAge,
     funeralCosts: 15_000,
     ciRecoveryYears: 5,
   }

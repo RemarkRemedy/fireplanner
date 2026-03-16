@@ -162,6 +162,14 @@ function validateAdult(adult: PlanningAdult, errors: HouseholdValidationErrors) 
   if (adult.nonMortgageDebtMonthlyPayment < 0) {
     addEntityError(errors, 'adult', adult.id, 'nonMortgageDebtMonthlyPayment', 'Debt payment cannot be negative.')
   }
+  if (adult.debtPayoffAge != null) {
+    if (adult.debtPayoffAge <= adult.currentAge) {
+      addEntityError(errors, 'adult', adult.id, 'debtPayoffAge', 'Debt payoff age must be later than current age.')
+    }
+    if (adult.debtPayoffAge > adult.lifeExpectancy) {
+      addEntityError(errors, 'adult', adult.id, 'debtPayoffAge', 'Debt payoff age cannot exceed life expectancy.')
+    }
+  }
   if (adult.insuranceDeathCoverage < 0) {
     addEntityError(errors, 'adult', adult.id, 'insuranceDeathCoverage', 'Coverage cannot be negative.')
   }
