@@ -56,15 +56,31 @@ function FieldRenderer({ field, values, onChange, error }: FieldRendererProps) {
   }
 
   if (field.type === 'number') {
+    const computeAction = field.computeFrom
+    const computed = computeAction?.compute(values)
+    const canCompute = computed !== null && computed !== undefined
     return (
-      <NumberInput
-        label={field.label}
-        tooltip={field.tooltip}
-        value={typeof currentValue === 'number' ? currentValue : 0}
-        onChange={(v) => onChange(field.name, v)}
-        integer
-        error={error ?? undefined}
-      />
+      <div>
+        <div className="relative">
+          <NumberInput
+            label={field.label}
+            tooltip={field.tooltip}
+            value={typeof currentValue === 'number' ? currentValue : 0}
+            onChange={(v) => onChange(field.name, v)}
+            integer
+            error={error ?? undefined}
+          />
+          {computeAction && canCompute && (
+            <button
+              type="button"
+              onClick={() => onChange(field.name, computed)}
+              className="absolute right-2 bottom-[7px] rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-[11px] font-medium text-blue-600 hover:bg-blue-100 transition-colors"
+            >
+              {computeAction.label} (est. {computed})
+            </button>
+          )}
+        </div>
+      </div>
     )
   }
 

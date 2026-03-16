@@ -26,6 +26,12 @@ export interface NudgeField {
   validationKey?: string
   /** Tooltip text shown via InfoTooltip (i) icon next to the label */
   tooltip?: string
+  /** Show a "calculate" action button that computes this field's value from other fields */
+  computeFrom?: {
+    label: string
+    fields: string[]
+    compute: (values: Record<string, unknown>) => number | null
+  }
 }
 
 export interface NudgeFlowScreen {
@@ -188,7 +194,27 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
         { name: 'mortgageOutstanding', label: 'Outstanding loan amount', type: 'currency', tooltip: 'Remaining loan principal.' },
         { name: 'monthlyMortgagePayment', label: 'Monthly repayment', type: 'currency', tooltip: 'Your monthly mortgage repayment amount.' },
         { name: 'mortgageRatePercent', label: 'Mortgage interest rate (%)', type: 'percent', validationKey: 'mortgageRatePercent', tooltip: 'Current annual interest rate on your mortgage.' },
-        { name: 'mortgageEndYear', label: 'Loan end year', type: 'number' },
+        {
+          name: 'mortgageEndYear',
+          label: 'Loan end year',
+          type: 'number',
+          computeFrom: {
+            label: 'Calculate for me',
+            fields: ['mortgageOutstanding', 'monthlyMortgagePayment', 'mortgageRatePercent'],
+            compute: (values) => {
+              const outstanding = typeof values.mortgageOutstanding === 'number' ? values.mortgageOutstanding : 0
+              const monthly = typeof values.monthlyMortgagePayment === 'number' ? values.monthlyMortgagePayment : 0
+              const ratePercent = typeof values.mortgageRatePercent === 'number' ? values.mortgageRatePercent : 0
+              if (outstanding <= 0 || monthly <= 0) return null
+              const monthlyRate = (ratePercent / 100) / 12
+              if (monthlyRate <= 0) return new Date().getFullYear() + Math.ceil(outstanding / monthly / 12)
+              if (monthly <= outstanding * monthlyRate) return null
+              const months = -Math.log(1 - (monthlyRate * outstanding / monthly)) / Math.log(1 + monthlyRate)
+              if (!isFinite(months) || months < 0) return null
+              return new Date().getFullYear() + Math.ceil(months / 12)
+            },
+          },
+        },
         { name: 'planToDownsize', label: 'Do you plan to downsize or sell this property?', type: 'toggle' },
         { name: 'hasRentalIncome', label: 'Do you earn rental income from this property?', type: 'toggle' },
       ],
