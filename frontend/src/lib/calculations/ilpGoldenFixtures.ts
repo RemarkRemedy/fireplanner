@@ -106,6 +106,10 @@ export type GoldenCoverageTag =
   | 'branch:tokio-marine-wealth-enhancer-cpfis-zero-top-up-charge'
   | 'branch:tokio-marine-wealth-enhancer-cpfis-zero-recurring-single-premium-charge'
   | 'branch:tokio-marine-wealth-enhancer-cpfis-zero-partial-withdrawal-charge'
+  | 'branch:hsbc-life-wealth-invest-cash-srs-max-single-premium-charge'
+  | 'branch:hsbc-life-wealth-invest-cash-srs-max-recurring-single-premium-charge'
+  | 'branch:hsbc-life-wealth-invest-cash-srs-max-top-up-charge'
+  | 'branch:hsbc-life-wealth-invest-cash-srs-zero-redemption-fee'
   | 'branch:etiqa-flex-prime-ii-startup-bonus'
   | 'branch:etiqa-flex-prime-ii-special-bonus'
   | 'branch:etiqa-flex-prime-ii-loyalty-bonus'
@@ -2580,6 +2584,100 @@ function tokioMarineWealthEnhancerCpfisStressPolicy(
   })
 }
 
+function hsbcWealthInvestCashSrsBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended-cash' | 'sgd-open-ended-srs',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'hsbc-life-wealth-invest-cash-srs', variantId, id, {
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+  const distributionAssumption = variantId === 'sgd-open-ended-cash'
+    ? {
+        mode: 'cash-payout' as const,
+        source: 'manual-assumption' as const,
+        annualYieldRate: 0.04,
+      }
+    : base.distributionAssumption
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden HSBC Life Wealth Invest (Cash/SRS) (${variantId.toUpperCase()})`,
+      chargeRules: (base.chargeRules ?? []).map((rule) => (
+        rule.id === 'single-premium-charge'
+          ? { ...rule, rate: 0.05 }
+          : rule
+      )),
+      eventChargeRules: (base.eventChargeRules ?? []).map((rule) => (
+        rule.id === 'top-up-premium-charge' || rule.id === 'recurring-single-premium-charge'
+          ? { ...rule, rate: 0.05 }
+          : rule
+      )),
+      policyEvents: [],
+      distributionAssumption,
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function hsbcWealthInvestCashSrsBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended-cash' | 'sgd-open-ended-srs',
+  id: string,
+): IlpPolicyInput {
+  return hsbcWealthInvestCashSrsBasePolicy(snapshot, variantId, id, HSBC_BALANCED_FUNDS)
+}
+
+function hsbcWealthInvestCashEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return hsbcWealthInvestCashSrsBasePolicy(snapshot, 'sgd-open-ended-cash', id, HSBC_BALANCED_FUNDS, {
+    name: 'Golden HSBC Life Wealth Invest (Cash/SRS) (SGD / Open-ended Cash Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 6,
+        durationMonths: 1,
+        amount: 10_000,
+      },
+      {
+        id: 'rsp-1',
+        type: 'recurring-single-premium',
+        startPolicyMonth: 7,
+        durationMonths: 6,
+        amount: 500,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 11,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function hsbcWealthInvestCashSrsStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended-cash' | 'sgd-open-ended-srs',
+  id: string,
+): IlpPolicyInput {
+  return hsbcWealthInvestCashSrsBasePolicy(snapshot, variantId, id, HSBC_STRESS_FUNDS, {
+    name: `Golden HSBC Life Wealth Invest (Cash/SRS) (${variantId.toUpperCase()} OCF Stress)`,
+  })
+}
+
 function aiaInvestEasyBasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   productId: 'aia-invest-easy-cash-srs' | 'aia-invest-easy-cpf',
@@ -5020,6 +5118,60 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Manulink Investor (II) cash alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'hsbc-life-wealth-invest-cash-srs',
+    variantId: 'sgd-open-ended-cash',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'branch:hsbc-life-wealth-invest-cash-srs-max-single-premium-charge',
+    ],
+    description: 'HSBC Life Wealth Invest (Cash) baseline scenario proving supported manual-input single-premium charging and cash-payout distribution support.',
+    integrityChecks: [
+      {
+        description: 'records a positive inception single-premium charge under the supported cash corridor',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+      {
+        description: 'pays positive annual distributions under the cash payout assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'hsbc-life-wealth-invest-cash-srs',
+    variantId: 'sgd-open-ended-cash',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:hsbc-life-wealth-invest-cash-srs-max-top-up-charge',
+      'branch:hsbc-life-wealth-invest-cash-srs-max-recurring-single-premium-charge',
+      'branch:hsbc-life-wealth-invest-cash-srs-zero-redemption-fee',
+      'tokio-recurring-single-premium-routing',
+    ],
+    description: 'HSBC Life Wealth Invest (Cash) event-heavy scenario proving manual-input top-up and recurring-single-premium charges plus nil-redemption-fee withdrawals.',
+    integrityChecks: [
+      {
+        description: 'records positive annual contribution from seeded top-up and recurring-single-premium events',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > 0),
+      },
+      {
+        description: 'event-heavy corridor executes a later withdrawal through the nil-redemption-fee path',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'hsbc-life-wealth-invest-cash-srs',
+    variantId: 'sgd-open-ended-srs',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'HSBC Life Wealth Invest (SRS) alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'prudential-prulink-investgrowth',
     variantId: 'sgd-open-ended-cash',
     scenarioId: 'baseline',
@@ -6802,6 +6954,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'manulife-manulink-investor-ii' && definition.scenarioId === 'ocf-stress') {
     return manulinkInvestorIiStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'hsbc-life-wealth-invest-cash-srs' && definition.scenarioId === 'baseline') {
+    return hsbcWealthInvestCashSrsBaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended-cash' | 'sgd-open-ended-srs', id)
+  }
+  if (definition.productId === 'hsbc-life-wealth-invest-cash-srs' && definition.scenarioId === 'event-heavy') {
+    return hsbcWealthInvestCashEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'hsbc-life-wealth-invest-cash-srs' && definition.scenarioId === 'ocf-stress') {
+    return hsbcWealthInvestCashSrsStressPolicy(snapshot, definition.variantId as 'sgd-open-ended-cash' | 'sgd-open-ended-srs', id)
   }
   if (definition.productId === 'income-snack-investment' && definition.scenarioId === 'baseline') {
     return incomeSnackInvestmentBaselinePolicy(snapshot, id)

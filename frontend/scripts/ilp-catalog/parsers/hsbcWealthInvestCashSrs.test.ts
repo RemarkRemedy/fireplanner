@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseHsbcWealthInvestCashSrs', () => {
-  it('builds a valid open-ended partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid open-ended supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseHsbcWealthInvestCashSrs({
       document,
@@ -23,8 +23,8 @@ describe('parseHsbcWealthInvestCashSrs', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('hsbc-life-wealth-invest-cash-srs')
     expect(product.productName).toBe('HSBC Life Wealth Invest (Cash/SRS)')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:hsbc-life-wealth-invest-cash-srs-max-single-premium-charge',
       'branch:hsbc-life-wealth-invest-cash-srs-max-recurring-single-premium-charge',
@@ -68,6 +68,7 @@ describe('parseHsbcWealthInvestCashSrs', () => {
         basis: 'event-amount',
         activeWindow: 'policy-term',
         rate: 0.05,
+        requiresManualInput: true,
       }),
       expect.objectContaining({
         id: 'recurring-single-premium-charge',
@@ -75,6 +76,7 @@ describe('parseHsbcWealthInvestCashSrs', () => {
         basis: 'event-amount-with-overlap-months',
         activeWindow: 'policy-term',
         rate: 0.05,
+        requiresManualInput: true,
       }),
       expect.objectContaining({
         id: 'partial-withdrawal-charge',
@@ -110,6 +112,7 @@ describe('parseHsbcWealthInvestCashSrs', () => {
         basis: 'event-amount',
         activeWindow: 'policy-term',
         rate: 0.05,
+        requiresManualInput: true,
       }),
       expect.objectContaining({
         id: 'recurring-single-premium-charge',
@@ -117,6 +120,7 @@ describe('parseHsbcWealthInvestCashSrs', () => {
         basis: 'event-amount-with-overlap-months',
         activeWindow: 'policy-term',
         rate: 0.05,
+        requiresManualInput: true,
       }),
       expect.objectContaining({
         id: 'partial-withdrawal-charge',

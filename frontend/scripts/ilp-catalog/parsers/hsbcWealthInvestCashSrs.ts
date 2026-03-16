@@ -57,12 +57,14 @@ function buildVariant(document: ExtractedPdfDocument, fundingMode: FundingMode):
       basis: 'annual-contribution',
       rate: 0.05,
       amount: 0,
+      requiresManualInput: true,
       appliesTo: ['policy'],
       activeWindow: 'policy-term',
       notes: [
         isSrs
-          ? 'Models the published up-to-5% premium-charge corridor applied after allocating the initial single premium into units for the SRS corridor.'
-          : 'Models the published up-to-5% premium-charge corridor applied after allocating the initial single premium into units for the cash corridor.',
+          ? 'Enter the actual distributor-selected single-premium charge for the SRS corridor before trusting the projection.'
+          : 'Enter the actual distributor-selected single-premium charge for the cash corridor before trusting the projection.',
+        'The product summary publishes only the maximum premium-charge corridor of up to 5%.',
       ],
       sourceRefs: [page6],
     },
@@ -77,12 +79,14 @@ function buildVariant(document: ExtractedPdfDocument, fundingMode: FundingMode):
       appliesTo: ['policy'],
       rate: 0.05,
       amount: 0,
+      requiresManualInput: true,
       activeWindow: 'policy-term',
       allocation: 'equal-split',
       notes: [
         isSrs
-          ? 'Models the published up-to-5% premium-charge corridor applied after allocating each approved top-up premium into units for the SRS corridor.'
-          : 'Models the published up-to-5% premium-charge corridor applied after allocating each approved top-up premium into units for the cash corridor.',
+          ? 'Enter the actual distributor-selected top-up premium charge for the SRS corridor before trusting top-up scenarios.'
+          : 'Enter the actual distributor-selected top-up premium charge for the cash corridor before trusting top-up scenarios.',
+        'The product summary publishes only the maximum premium-charge corridor of up to 5%.',
       ],
       sourceRefs: [page6],
     },
@@ -94,13 +98,15 @@ function buildVariant(document: ExtractedPdfDocument, fundingMode: FundingMode):
       appliesTo: ['policy'],
       rate: 0.05,
       amount: 0,
+      requiresManualInput: true,
       activeWindow: 'policy-term',
       allocation: 'equal-split',
       notes: [
         isSrs
-          ? 'Models the published up-to-5% premium-charge corridor applied after allocating each approved recurring single premium into units for the SRS corridor.'
-          : 'Models the published up-to-5% premium-charge corridor applied after allocating each approved recurring single premium into units for the cash corridor.',
+          ? 'Enter the actual distributor-selected recurring single premium charge for the SRS corridor before trusting the projection.'
+          : 'Enter the actual distributor-selected recurring single premium charge for the cash corridor before trusting the projection.',
         'Use recurring-single-premium events to represent the approved annual, half-yearly, or quarterly cadence.',
+        'The product summary publishes only the maximum premium-charge corridor of up to 5%.',
       ],
       sourceRefs: [page6],
     },
@@ -165,8 +171,9 @@ function buildVariant(document: ExtractedPdfDocument, fundingMode: FundingMode):
     eecTable: [],
     warnings: [
       isSrs
-        ? 'HSBC Life Wealth Invest (SRS) is cataloged as a partial modeled subset in V1. The parser captures the published up-to-5% premium-charge corridor for initial single premiums, recurring single premiums, and top-ups plus reinvest-only distribution support and the nil-redemption-fee withdrawal path through the open-ended no-MIP basis.'
-        : 'HSBC Life Wealth Invest (Cash) is cataloged as a partial modeled subset in V1. The parser captures the published up-to-5% premium-charge corridor for initial single premiums, recurring single premiums, and top-ups plus reinvest-default distribution support and the nil-redemption-fee withdrawal path through the open-ended no-MIP basis.',
+        ? 'HSBC Life Wealth Invest (SRS) is cataloged as a supported V1 product. The parser captures the distributor-selected premium-charge surface through manual input for initial single premiums, recurring single premiums, and top-ups, plus reinvest-only distribution support and the nil-redemption-fee withdrawal path through the open-ended no-MIP basis.'
+        : 'HSBC Life Wealth Invest (Cash) is cataloged as a supported V1 product. The parser captures the distributor-selected premium-charge surface through manual input for initial single premiums, recurring single premiums, and top-ups, plus reinvest-default distribution support and the nil-redemption-fee withdrawal path through the open-ended no-MIP basis.',
+      'Enter the actual single-premium, recurring-single-premium, and top-up premium-charge percentages from the issued policy or quotation before trusting the analysis.',
       'Switching fees are currently nil, while switching behavior, dividend cash-payout operations, and bank-routing edge cases remain outside the current calculator surface.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
@@ -192,9 +199,9 @@ export function parseHsbcWealthInvestCashSrs(context: ParseContext): IlpCatalogP
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:hsbc-life-wealth-invest-cash-srs-max-single-premium-charge',
       'branch:hsbc-life-wealth-invest-cash-srs-max-recurring-single-premium-charge',
@@ -216,7 +223,7 @@ export function parseHsbcWealthInvestCashSrs(context: ParseContext): IlpCatalogP
       'hsbc-life-wealth-invest-cash-srs-termination',
     ],
     warnings: [
-      'HSBC Life Wealth Invest (Cash/SRS) is cataloged as a partial modeled subset in V1. The parser captures separate cash and SRS corridors for the published up-to-5% single-premium, recurring-single-premium, and top-up charge paths, reinvest-default or reinvest-only distribution support, and the nil-redemption-fee withdrawal path through the open-ended no-MIP basis, while protection formulas, single-premium principal tracking, and fund-level charges remain outside the current engine.',
+      'HSBC Life Wealth Invest (Cash/SRS) is cataloged as a supported V1 product. The parser captures separate cash and SRS corridors for the distributor-selected single-premium, recurring-single-premium, and top-up charge paths through manual input, reinvest-default or reinvest-only distribution support, and the nil-redemption-fee withdrawal path through the open-ended no-MIP basis, while protection formulas, single-premium principal tracking, fund-level charges, and payout operations remain informational only.',
     ],
     archived: false,
     variants: [

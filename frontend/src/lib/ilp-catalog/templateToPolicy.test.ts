@@ -3433,7 +3433,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('gross initial single premium lump sum'))).toBe(true)
   })
 
-  it('maps HSBC Life Wealth Invest (Cash) into a partial seed with recurring single premium charges and distribution support', () => {
+  it('maps HSBC Life Wealth Invest (Cash) into a supported seed with recurring single premium charges and distribution support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'hsbc-life-wealth-invest-cash-srs')
     expect(product).toBeDefined()
@@ -3443,7 +3443,8 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('HSBC Life Wealth Invest (Cash/SRS) (SGD / Open-ended (Cash))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-life-wealth-invest-cash-srs-max-recurring-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-recurring-single-premium-routing')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
@@ -3460,6 +3461,7 @@ describe('templateVariantToPolicySeed', () => {
         appliesTo: ['policy'],
         rate: 0.05,
         amount: 0,
+        requiresManualInput: true,
       }),
       expect.objectContaining({
         id: 'recurring-single-premium-charge',
@@ -3468,6 +3470,7 @@ describe('templateVariantToPolicySeed', () => {
         appliesTo: ['policy'],
         rate: 0.05,
         amount: 0,
+        requiresManualInput: true,
       }),
       expect.objectContaining({
         id: 'partial-withdrawal-charge',
@@ -3488,7 +3491,7 @@ describe('templateVariantToPolicySeed', () => {
     })
   })
 
-  it('maps HSBC Life Wealth Invest (SRS) into a partial seed with reinvest-only distribution support', () => {
+  it('maps HSBC Life Wealth Invest (SRS) into a supported seed with reinvest-only distribution support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'hsbc-life-wealth-invest-cash-srs')
     expect(product).toBeDefined()
@@ -3498,7 +3501,8 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('HSBC Life Wealth Invest (Cash/SRS) (SGD / Open-ended (Srs))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-life-wealth-invest-cash-srs-max-recurring-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.eventChargeRules).toEqual([
@@ -3509,6 +3513,7 @@ describe('templateVariantToPolicySeed', () => {
         appliesTo: ['policy'],
         rate: 0.05,
         amount: 0,
+        requiresManualInput: true,
       }),
       expect.objectContaining({
         id: 'recurring-single-premium-charge',
@@ -3517,6 +3522,7 @@ describe('templateVariantToPolicySeed', () => {
         appliesTo: ['policy'],
         rate: 0.05,
         amount: 0,
+        requiresManualInput: true,
       }),
       expect.objectContaining({
         id: 'partial-withdrawal-charge',
