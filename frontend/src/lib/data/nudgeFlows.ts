@@ -132,6 +132,8 @@ const CPF_FLOW: NudgeFlowDefinition = {
           label: 'CPF LIFE payout start age',
           type: 'number',
           required: true,
+          validationKey: 'cpfPayoutStartAge',
+          tooltip: 'Payouts start at 65. Auto-included members (born 1958+) can defer up to 70 for higher payouts (~7%/yr). Members born before 1958 can voluntarily enrol from 65 to 80.',
         },
         { name: 'hasCpfis', label: 'Do you invest through CPFIS?', type: 'toggle' },
       ],

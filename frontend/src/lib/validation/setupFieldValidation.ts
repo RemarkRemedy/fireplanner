@@ -262,11 +262,16 @@ export function validateSetupField(
       return null
     }
 
-    // CPF LIFE payout start age: 65-75
+    // CPF LIFE payout start age:
+    // Auto-included (born 1958+): can defer 65-70
+    // Not auto-included (born before 1958): can enrol 65-80
     case 'cpfPayoutStartAge': {
-      const schema = z.number().int().min(65).max(75)
+      const currentYear = new Date().getFullYear()
+      const birthYear = context?.currentAge != null ? currentYear - context.currentAge : 1990
+      const maxAge = birthYear < 1958 ? 80 : 70
+      const schema = z.number().int().min(65).max(maxAge)
       const result = schema.safeParse(value)
-      if (!result.success) return 'CPF LIFE payout start age must be between 65 and 75'
+      if (!result.success) return `CPF LIFE payout start age must be between 65 and ${maxAge}`
       return null
     }
 

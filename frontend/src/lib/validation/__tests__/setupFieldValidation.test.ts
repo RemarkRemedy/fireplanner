@@ -246,12 +246,25 @@ describe('validateSetupField', () => {
       expect(validateSetupField('cpfPayoutStartAge', 60)).not.toBeNull()
     })
 
-    it('rejects age above 75', () => {
-      expect(validateSetupField('cpfPayoutStartAge', 80)).not.toBeNull()
+    it('rejects age above 70 for auto-included (born 1958+)', () => {
+      // Age 30 in 2026 = born ~1996, auto-included
+      expect(validateSetupField('cpfPayoutStartAge', 71, { currentAge: 30 })).not.toBeNull()
+    })
+
+    it('accepts age 70 for auto-included', () => {
+      expect(validateSetupField('cpfPayoutStartAge', 70, { currentAge: 30 })).toBeNull()
     })
 
     it('accepts age 65', () => {
       expect(validateSetupField('cpfPayoutStartAge', 65)).toBeNull()
+    })
+
+    it('allows up to 80 for members born before 1958', () => {
+      // Use an age that guarantees birth year < 1958 regardless of test year
+      const ageForPre1958 = new Date().getFullYear() - 1957 + 1 // e.g., 69 in 2026
+      expect(validateSetupField('cpfPayoutStartAge', 75, { currentAge: ageForPre1958 })).toBeNull()
+      expect(validateSetupField('cpfPayoutStartAge', 80, { currentAge: ageForPre1958 })).toBeNull()
+      expect(validateSetupField('cpfPayoutStartAge', 81, { currentAge: ageForPre1958 })).not.toBeNull()
     })
   })
 })

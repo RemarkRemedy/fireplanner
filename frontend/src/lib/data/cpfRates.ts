@@ -159,7 +159,8 @@ export const CPF_LIFE_BASIC_RATE = 0.054 // ~5.4%
 export const CPF_LIFE_STANDARD_RATE = 0.063 // ~6.3%
 export const CPF_LIFE_ESCALATING_RATE = 0.048 // ~4.8% initial, increases 2%/yr
 export const CPF_LIFE_ESCALATING_INCREASE = 0.02 // 2% annual increase for escalating plan
-export const CPF_LIFE_START_AGE = 65 // Default; user can configure 65-75 via cpfLifeStartAge
+export const CPF_LIFE_START_AGE = 65 // Default payout start age
+export const CPF_LIFE_MAX_DEFERRAL_AGE = 70 // Auto-included members can defer payouts up to 70
 
 // Basic Plan: only ~15% of RA goes to annuity premium (CPF says 10-20%)
 // The remaining ~85% stays in RA for direct drawdown until ~age 90
