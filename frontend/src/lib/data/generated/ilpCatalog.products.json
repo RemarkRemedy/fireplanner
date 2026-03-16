@@ -427,20 +427,20 @@
     "sourceChecksumSha256": "616ace0c1624e25df7914e86b875a0299126c062b8daf828c4a50ac757fa2b39",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
+      "branch:aia-elite-secure-income-sp-single-premium-charge",
+      "branch:aia-elite-secure-income-sp-supplementary-charge-manual-input",
       "branch:aia-elite-secure-income-sp-top-up-premium-charge",
+      "branch:aia-elite-secure-income-sp-full-surrender-charge",
+      "branch:aia-elite-secure-income-sp-partial-withdrawal-charge",
       "kernel:scheduled-payout-manual-assumption"
     ],
     "metadataOnlyBehaviors": [
       "aia-elite-secure-income-sp-secure-monthly-income-election",
-      "aia-elite-secure-income-sp-single-premium-charge",
       "aia-elite-secure-income-sp-single-premium-principal-tracking",
-      "aia-elite-secure-income-sp-supplementary-charge",
-      "aia-elite-secure-income-sp-full-surrender-charge",
-      "aia-elite-secure-income-sp-partial-withdrawal-charge",
       "aia-elite-secure-income-sp-death-benefit",
       "aia-elite-secure-income-sp-accidental-death-benefit",
       "aia-elite-secure-income-sp-terminal-illness-benefit",
@@ -449,7 +449,7 @@
       "aia-elite-secure-income-sp-no-fund-switching"
     ],
     "warnings": [
-      "AIA Elite Secure Income - Single Premium is cataloged as a partial modeled subset in V1. The parser captures the published 3% top-up premium charge and scheduled payout capability through the payout-state kernel, while the initial single-premium charge, payout selection, single-premium principal tracking, protection benefits, and fund-level charges remain outside the current engine."
+      "AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel; payout selection, principal tracking, protection benefits, and fund-level charges remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -493,7 +493,59 @@
           }
         ],
         "bonuses": [],
-        "feeRules": [],
+        "feeRules": [
+          {
+            "id": "single-premium-charge",
+            "label": "Single Premium Charge",
+            "basis": "annual-contribution",
+            "rate": 0.05,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 5% premium charge deducted from the initial single premium before units are purchased."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Premium and top-up allocation",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 4.2. Top-Up Premium 100% of Top-Up Premium less Premium Charge will be used "
+              },
+              {
+                "page": 4,
+                "section": "Charges and premium charge",
+                "excerpt": "5.1. Premium Charge Single Premium Premium Charge = 5% of Single Premium Top-Up Premium Premium Charge = 3% of each Top-Up Premium The following fees and charges are deducted by cancelling units at bid price. 5.2. Supple"
+              }
+            ]
+          },
+          {
+            "id": "supplementary-charge",
+            "label": "Supplementary Charge",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 10,
+            "notes": [
+              "Models the published monthly supplementary-charge formula as a manual annual charge amount for each full in-force policy year.",
+              "Enter the annual supplementary charge amount from the policy illustration because the summary states the formula but not the annual rate."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Charges and premium charge",
+                "excerpt": "5.1. Premium Charge Single Premium Premium Charge = 5% of Single Premium Top-Up Premium Premium Charge = 3% of each Top-Up Premium The following fees and charges are deducted by cancelling units at bid price. 5.2. Supple"
+              }
+            ]
+          }
+        ],
         "eventChargeRules": [
           {
             "id": "top-up-premium-charge",
@@ -520,6 +572,92 @@
                 "page": 5,
                 "section": "Top-up premium charge and charge notes",
                 "excerpt": "Top-up Premium Units Not Applicable. 5.6. Fund Management Charge The fees and charges payable through deduction from the net asset value of each ILP sub-fund are set out in the AIA Investment Fund Product Summary. 6. Pol"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.124
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.111
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.099
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.087
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.075
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.064
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.053
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.042
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.031
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published policy-year partial withdrawal charge factor on withdrawn single premium policy value.",
+              "Partial withdrawals affect Secure Monthly Income and Power-up Bonus, but those downstream effects remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Top-up premium charge and charge notes",
+                "excerpt": "Top-up Premium Units Not Applicable. 5.6. Fund Management Charge The fees and charges payable through deduction from the net asset value of each ILP sub-fund are set out in the AIA Investment Fund Product Summary. 6. Pol"
+              },
+              {
+                "page": 6,
+                "section": "Partial withdrawals and surrender",
+                "excerpt": "Approximate excerpt; keyword \"Partial Withdrawals\" not found on page. Number of = Gross = Net Units to be X Bid Price Redemption - Surrender Redemption Redeemed Proceeds Charge Proceeds First policy 5,000 X $2.00 = $10,0"
               }
             ]
           }
@@ -549,17 +687,27 @@
             }
           ]
         },
-        "eecTable": [],
+        "eecTable": [
+          0.12,
+          0.11,
+          0.1,
+          0.09,
+          0.08,
+          0.07,
+          0.06,
+          0.05,
+          0.04,
+          0.03,
+          0
+        ],
+        "exitChargeBasis": "account-value",
         "warnings": [
-          "AIA Elite Secure Income - Single Premium is cataloged as a partial modeled subset in V1. The parser captures the published 3% top-up premium charge and scheduled payout capability through the payout-state kernel, while the initial single-premium charge and payout amount remain manual or informational inputs.",
+          "AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel.",
           "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
         ],
         "unsupportedItems": [
           "Secure Monthly Income amount, payout age, and payout period selection remain manual-assumption inputs in V1.",
-          "The published 5% charge on the initial single premium remains informational only until V1 supports explicit single-premium seeding.",
           "Single-premium principal tracking remains informational only in V1.",
-          "Supplementary charge deductions remain informational only.",
-          "Full-surrender and partial-withdrawal charge schedules remain informational only.",
           "Death, accidental-death, and terminal-illness benefit formulas remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
           "Reinstatement effects on payout continuity remain informational only.",

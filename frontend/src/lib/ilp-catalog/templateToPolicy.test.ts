@@ -5753,7 +5753,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
-  it('maps AIA Elite Secure Income - Single Premium into a partial seed with manual scheduled-payout support', () => {
+  it('maps AIA Elite Secure Income - Single Premium into a supported seed with manual scheduled-payout support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'aia-elite-secure-income-single-premium')
     expect(product).toBeDefined()
@@ -5762,20 +5762,36 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-elite-secure-income-sp-single-premium-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-elite-secure-income-sp-supplementary-charge-manual-input')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-secure-monthly-income-election')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-single-premium-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-single-premium-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-single-premium-principal-tracking')
     expect(seed.monthlyContribution).toBe(0)
+    expect(seed.exitChargeBasis).toBe('account-value')
     expect(seed.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
       accountId: 'policy',
       source: 'policy-redemption',
     })
     expect(seed.scheduledPayoutAssumption).toBeUndefined()
-    expect(seed.chargeRules).toEqual([])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'single-premium-charge',
+        basis: 'initial-single-premium',
+        rate: 0.05,
+      }),
+      expect.objectContaining({
+        id: 'supplementary-charge',
+        basis: 'fixed-annual',
+        requiresManualInput: true,
+        startPolicyYear: 1,
+        endPolicyYear: 10,
+      }),
+    ])
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
@@ -5784,9 +5800,14 @@ describe('templateVariantToPolicySeed', () => {
         rate: 0.03,
         appliesTo: ['policy'],
       }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
+      }),
     ])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual payout assumption'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('initial single-premium charge'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('single-premium charge'))).toBe(true)
   })
 
   it('maps AIA Elite Secure Income - 5 Pay into a supported seed with payout support and manual supplementary-charge input', () => {
