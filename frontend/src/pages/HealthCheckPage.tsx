@@ -151,7 +151,7 @@ export function HealthCheckPage() {
       {insuranceNeeds && (
         <div>
           <h2 className="text-lg font-semibold mb-4">Insurance Needs</h2>
-          <InsuranceNeedsPanel result={insuranceNeeds} />
+          <InsuranceNeedsPanel result={insuranceNeeds} inputs={inputs.insuranceInputs} />
         </div>
       )}
     </div>
