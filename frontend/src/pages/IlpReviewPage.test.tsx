@@ -944,6 +944,50 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds GREAT Invest Advantage (SP) as a supported catalog product with open-ended single-premium routing', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Invest Advantage (SP)')
+
+    expect(within(dialog).getByText('GREAT Invest Advantage (SP)')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+
+    expect(screen.getAllByText('GREAT Invest Advantage (SP) (SGD / Open-ended (Cash Or Srs))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Supported template')
+    expect(seededAlert?.textContent).toContain('upfront initial single-premium charge')
+    expect(seededAlert?.textContent).toContain('no-surrender-charge structure')
+    expect(seededAlert?.textContent).toContain('open-ended no-MIP basis')
+    expect(screen.getByDisplayValue('Initial Single Premium Charge (Cash / SRS)')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Top-up Premium Charge (Cash / SRS)')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds GREAT Invest Advantage (RSP) as a supported catalog product with open-ended recurrent-premium routing', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Invest Advantage (RSP)')
+
+    expect(within(dialog).getByText('GREAT Invest Advantage (RSP)')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+
+    expect(screen.getAllByText('GREAT Invest Advantage (RSP) (SGD / Open-ended (Cash Or Srs))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Supported template')
+    expect(seededAlert?.textContent).toContain('published recurrent-premium charge path')
+    expect(seededAlert?.textContent).toContain('no-surrender-charge structure')
+    expect(seededAlert?.textContent).toContain('open-ended no-MIP basis')
+    expect(screen.getByDisplayValue('Recurring Premium Charge (Cash / SRS)')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Top-up Premium Charge (Cash / SRS)')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds Tokio Marine #goClassic basic-death as a partial catalog product with combined account-fee modeling', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
