@@ -1147,6 +1147,56 @@ describe('projectIlpPolicy', () => {
     expect(resumedYearFee).toBeGreaterThan(frozenYearFee)
   })
 
+  it('annualizes GREAT Wealth Advantage 4 assurance charges from the published appendix table', () => {
+    const result = projectIlpPolicy(makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      currentPolicyYear: 10,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 30_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 30,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 100_000,
+        currentNetSupplementaryPremiumBase: 20_000,
+      },
+      chargeRules: [
+        {
+          id: 'great-eastern-wa4-insurance-charge',
+          label: 'Death / TI Insurance Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'great-eastern-wa4-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    }), 'mid')
+
+    expect(accountRow(result.rows[0], 'policy').grossFee).toBeCloseTo(88.2816, 4)
+  })
+
   it('supports sum-assured protected-base assurance formulas without regressing existing assurance families', () => {
     const duoResult = projectIlpPolicy(makeOpenEndedPolicy({
       monthlyContribution: 0,

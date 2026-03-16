@@ -1325,6 +1325,79 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('default 20-year review horizon'))).toBe(true)
   })
 
+  it('maps GREAT Wealth Advantage 4 into a supported MIP seed with appendix-based assurance charge', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'great-eastern-wealth-advantage-4')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10-choice-10-under-6000')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('GREAT Wealth Advantage 4 (SGD / MIP 10 (Choice 10 Under 6000))')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-wa4-insurance-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('great-eastern-wa4-insurance-charge')
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.mipBasis).toBeUndefined()
+    expect(seed.mipLength).toBe(10)
+    expect(seed.eecTable).toEqual([1, 1, 0.75, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.05])
+    expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
+      { phase: 'during-icp', contributionShare: 1 },
+      { phase: 'after-icp', contributionShare: 1 },
+      { phase: 'after-mip', contributionShare: 1 },
+      { phase: 'top-up', contributionShare: 1 },
+    ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-fee-rate',
+          basis: 'account-value',
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 10, rate: 0.025 },
+            { startPolicyYear: 11, endPolicyYear: null, rate: 0.007 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'policy-fee-fixed-low-annualised-premium',
+          basis: 'fixed-annual',
+          amountSchedule: [{ startPolicyYear: 1, endPolicyYear: null, amount: 60 }],
+        }),
+        expect.objectContaining({
+          id: 'death-ti-insurance-charge',
+          basis: 'assurance-sum-at-risk',
+          requiresManualInput: true,
+          assuranceConfig: {
+            formula: 'great-eastern-wa4-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'premium-holiday-charge-refund',
+          trigger: 'premium-holiday-repayment',
+          basis: 'premium-holiday-charge-refund',
+        }),
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          trigger: 'top-up',
+          rate: 0.03,
+        }),
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          trigger: 'partial-withdrawal',
+        }),
+      ]),
+    )
+    expect(seed.assuranceProfile).toBeUndefined()
+  })
+
   it('maps PRULink InvestGrowth (SP) cash into a supported seed with direct-income distribution support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'prudential-prulink-investgrowth-sp')

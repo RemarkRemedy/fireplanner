@@ -32683,15 +32683,17 @@
     "sourceChecksumSha256": "97c31141588f51c7e3201c4709cf191cb3beb33e5d33dd9410021d33eba72d2b",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
+      "kernel:protected-base-assurance",
       "branch:great-eastern-wa4-welcome-bonus",
       "branch:great-eastern-wa4-premium-bonus",
       "branch:great-eastern-wa4-loyalty-bonus",
       "branch:great-eastern-wa4-policy-fee-rate",
       "branch:great-eastern-wa4-fixed-policy-fee",
+      "branch:great-eastern-wa4-insurance-charge",
       "branch:great-eastern-wa4-premium-holiday-charge",
       "branch:great-eastern-wa4-premium-holiday-charge-refund",
       "branch:great-eastern-wa4-top-up-premium-charge",
@@ -32699,7 +32701,6 @@
       "branch:great-eastern-wa4-surrender-charge"
     ],
     "metadataOnlyBehaviors": [
-      "great-eastern-wa4-insurance-charge",
       "great-eastern-wa4-tpd-continuation-event",
       "great-eastern-wa4-rider-premium-deduction-treatment",
       "great-eastern-wa4-fixed-fee-threshold-transition",
@@ -32707,7 +32708,7 @@
       "great-eastern-wa4-automatic-fund-rebalancing-administration"
     ],
     "warnings": [
-      "GREAT Wealth Advantage 4 is cataloged as a partial modeled subset in V1. The parser captures the published bonus path, policy fee, premium-holiday charge, the premium-holiday-charge refund path, top-up charge, and partial-withdrawal / surrender schedules, while insurance-charge and broader application-gated mechanics remain outside the current engine."
+      "GREAT Wealth Advantage 4 is cataloged as a supported V1 corridor. The parser captures the published bonus path, policy fee, monthly insurance charge, premium-holiday charge, the premium-holiday-charge refund path, top-up charge, and partial-withdrawal / surrender schedules, while application-gated mechanics such as TPD continuation events, change-of-life-assured handling, and AFR administration remain metadata only."
     ],
     "archived": false,
     "variants": [
@@ -32901,6 +32902,44 @@
                 "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
               }
             ]
+          },
+          {
+            "id": "death-ti-insurance-charge",
+            "label": "Death / TI Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "great-eastern-wa4-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Requires insured-life details plus the current net regular-premium and top-up premium bases before the calculator can model the monthly insurance charge.",
+              "Models the published 101% of total basic regular premiums paid plus 101% of total single premium top-ups paid, less 101% of total partial withdrawals including charges, minus policy value sum-at-risk formula."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Insurance charge",
+                "excerpt": "We will deduct a monthly insurance charge based on the net sum assured of the policy Insurance from the start of the policy, by cancelling units to the value equivalent to the insurance charge. The number of units to be "
+              },
+              {
+                "page": 16,
+                "section": "Appendix insurance charge rates 1-78",
+                "excerpt": "Appendix Rates of insurance charge for GREAT Wealth Advantage 4 Standard rates of insurance charge per annum per S$1,000 net sum assured Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Fe"
+              },
+              {
+                "page": 17,
+                "section": "Appendix insurance charge rates 79-99",
+                "excerpt": "Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Female Preceding Male Female Non- Non- Non- Non- (or Coincident) Smoker Smoker (or Coincident) Smoker Smoker Smoker Smoker Smoker Smoker Po"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -33077,11 +33116,9 @@
           0.05
         ],
         "warnings": [
-          "GREAT Wealth Advantage 4 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, the premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
-          "Insurance charge, TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1."
+          "GREAT Wealth Advantage 4 is modeled as a supported V1 corridor. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, monthly insurance charge, premium-holiday charge, the premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules."
         ],
         "unsupportedItems": [
-          "Insurance charge remains informational only.",
           "Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only."
         ],
         "sourceRefs": [
@@ -33119,6 +33156,21 @@
             "page": 10,
             "section": "Policy fee",
             "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+          },
+          {
+            "page": 11,
+            "section": "Insurance charge",
+            "excerpt": "We will deduct a monthly insurance charge based on the net sum assured of the policy Insurance from the start of the policy, by cancelling units to the value equivalent to the insurance charge. The number of units to be "
+          },
+          {
+            "page": 16,
+            "section": "Appendix insurance charge rates 1-78",
+            "excerpt": "Appendix Rates of insurance charge for GREAT Wealth Advantage 4 Standard rates of insurance charge per annum per S$1,000 net sum assured Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Fe"
+          },
+          {
+            "page": 17,
+            "section": "Appendix insurance charge rates 79-99",
+            "excerpt": "Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Female Preceding Male Female Non- Non- Non- Non- (or Coincident) Smoker Smoker (or Coincident) Smoker Smoker Smoker Smoker Smoker Smoker Po"
           }
         ]
       },
@@ -33322,6 +33374,44 @@
                 "page": 10,
                 "section": "Policy fee",
                 "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+              }
+            ]
+          },
+          {
+            "id": "death-ti-insurance-charge",
+            "label": "Death / TI Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "great-eastern-wa4-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Requires insured-life details plus the current net regular-premium and top-up premium bases before the calculator can model the monthly insurance charge.",
+              "Models the published 101% of total basic regular premiums paid plus 101% of total single premium top-ups paid, less 101% of total partial withdrawals including charges, minus policy value sum-at-risk formula."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Insurance charge",
+                "excerpt": "We will deduct a monthly insurance charge based on the net sum assured of the policy Insurance from the start of the policy, by cancelling units to the value equivalent to the insurance charge. The number of units to be "
+              },
+              {
+                "page": 16,
+                "section": "Appendix insurance charge rates 1-78",
+                "excerpt": "Appendix Rates of insurance charge for GREAT Wealth Advantage 4 Standard rates of insurance charge per annum per S$1,000 net sum assured Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Fe"
+              },
+              {
+                "page": 17,
+                "section": "Appendix insurance charge rates 79-99",
+                "excerpt": "Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Female Preceding Male Female Non- Non- Non- Non- (or Coincident) Smoker Smoker (or Coincident) Smoker Smoker Smoker Smoker Smoker Smoker Po"
               }
             ]
           },
@@ -33575,12 +33665,10 @@
           0.05
         ],
         "warnings": [
-          "GREAT Wealth Advantage 4 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, the premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
-          "Insurance charge, TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1.",
+          "GREAT Wealth Advantage 4 is modeled as a supported V1 corridor. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, monthly insurance charge, premium-holiday charge, the premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
           "This low-annualised-premium variant assumes the additional S$5 monthly policy fee applies throughout the modeled path unless you manually switch variants after a premium change."
         ],
         "unsupportedItems": [
-          "Insurance charge remains informational only.",
           "Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only.",
           "Prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction."
         ],
@@ -33619,6 +33707,21 @@
             "page": 10,
             "section": "Policy fee",
             "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+          },
+          {
+            "page": 11,
+            "section": "Insurance charge",
+            "excerpt": "We will deduct a monthly insurance charge based on the net sum assured of the policy Insurance from the start of the policy, by cancelling units to the value equivalent to the insurance charge. The number of units to be "
+          },
+          {
+            "page": 16,
+            "section": "Appendix insurance charge rates 1-78",
+            "excerpt": "Appendix Rates of insurance charge for GREAT Wealth Advantage 4 Standard rates of insurance charge per annum per S$1,000 net sum assured Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Fe"
+          },
+          {
+            "page": 17,
+            "section": "Appendix insurance charge rates 79-99",
+            "excerpt": "Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Female Preceding Male Female Non- Non- Non- Non- (or Coincident) Smoker Smoker (or Coincident) Smoker Smoker Smoker Smoker Smoker Smoker Po"
           }
         ]
       },
@@ -33822,6 +33925,44 @@
                 "page": 10,
                 "section": "Policy fee",
                 "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+              }
+            ]
+          },
+          {
+            "id": "death-ti-insurance-charge",
+            "label": "Death / TI Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "great-eastern-wa4-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Requires insured-life details plus the current net regular-premium and top-up premium bases before the calculator can model the monthly insurance charge.",
+              "Models the published 101% of total basic regular premiums paid plus 101% of total single premium top-ups paid, less 101% of total partial withdrawals including charges, minus policy value sum-at-risk formula."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Insurance charge",
+                "excerpt": "We will deduct a monthly insurance charge based on the net sum assured of the policy Insurance from the start of the policy, by cancelling units to the value equivalent to the insurance charge. The number of units to be "
+              },
+              {
+                "page": 16,
+                "section": "Appendix insurance charge rates 1-78",
+                "excerpt": "Appendix Rates of insurance charge for GREAT Wealth Advantage 4 Standard rates of insurance charge per annum per S$1,000 net sum assured Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Fe"
+              },
+              {
+                "page": 17,
+                "section": "Appendix insurance charge rates 79-99",
+                "excerpt": "Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Female Preceding Male Female Non- Non- Non- Non- (or Coincident) Smoker Smoker (or Coincident) Smoker Smoker Smoker Smoker Smoker Smoker Po"
               }
             ]
           }
@@ -34046,12 +34187,10 @@
           0.05
         ],
         "warnings": [
-          "GREAT Wealth Advantage 4 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, the premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
-          "Insurance charge, TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1.",
+          "GREAT Wealth Advantage 4 is modeled as a supported V1 corridor. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, monthly insurance charge, premium-holiday charge, the premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
           "This high-annualised-premium variant assumes the additional S$5 monthly policy fee does not apply throughout the modeled path unless you manually switch variants after a premium change."
         ],
         "unsupportedItems": [
-          "Insurance charge remains informational only.",
           "Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only.",
           "Prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction."
         ],
@@ -34090,6 +34229,21 @@
             "page": 10,
             "section": "Policy fee",
             "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+          },
+          {
+            "page": 11,
+            "section": "Insurance charge",
+            "excerpt": "We will deduct a monthly insurance charge based on the net sum assured of the policy Insurance from the start of the policy, by cancelling units to the value equivalent to the insurance charge. The number of units to be "
+          },
+          {
+            "page": 16,
+            "section": "Appendix insurance charge rates 1-78",
+            "excerpt": "Appendix Rates of insurance charge for GREAT Wealth Advantage 4 Standard rates of insurance charge per annum per S$1,000 net sum assured Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Fe"
+          },
+          {
+            "page": 17,
+            "section": "Appendix insurance charge rates 79-99",
+            "excerpt": "Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Female Preceding Male Female Non- Non- Non- Non- (or Coincident) Smoker Smoker (or Coincident) Smoker Smoker Smoker Smoker Smoker Smoker Po"
           }
         ]
       },
@@ -34303,6 +34457,44 @@
             ]
           },
           {
+            "id": "death-ti-insurance-charge",
+            "label": "Death / TI Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "great-eastern-wa4-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Requires insured-life details plus the current net regular-premium and top-up premium bases before the calculator can model the monthly insurance charge.",
+              "Models the published 101% of total basic regular premiums paid plus 101% of total single premium top-ups paid, less 101% of total partial withdrawals including charges, minus policy value sum-at-risk formula."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Insurance charge",
+                "excerpt": "We will deduct a monthly insurance charge based on the net sum assured of the policy Insurance from the start of the policy, by cancelling units to the value equivalent to the insurance charge. The number of units to be "
+              },
+              {
+                "page": 16,
+                "section": "Appendix insurance charge rates 1-78",
+                "excerpt": "Appendix Rates of insurance charge for GREAT Wealth Advantage 4 Standard rates of insurance charge per annum per S$1,000 net sum assured Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Fe"
+              },
+              {
+                "page": 17,
+                "section": "Appendix insurance charge rates 79-99",
+                "excerpt": "Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Female Preceding Male Female Non- Non- Non- Non- (or Coincident) Smoker Smoker (or Coincident) Smoker Smoker Smoker Smoker Smoker Smoker Po"
+              }
+            ]
+          },
+          {
             "id": "policy-fee-fixed-low-annualised-premium",
             "label": "Additional Fixed Policy Fee",
             "basis": "fixed-annual",
@@ -34607,12 +34799,10 @@
           0.07
         ],
         "warnings": [
-          "GREAT Wealth Advantage 4 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, the premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
-          "Insurance charge, TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1.",
+          "GREAT Wealth Advantage 4 is modeled as a supported V1 corridor. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, monthly insurance charge, premium-holiday charge, the premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
           "This low-annualised-premium variant assumes the additional S$5 monthly policy fee applies throughout the modeled path unless you manually switch variants after a premium change."
         ],
         "unsupportedItems": [
-          "Insurance charge remains informational only.",
           "Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only.",
           "Prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction."
         ],
@@ -34651,6 +34841,21 @@
             "page": 10,
             "section": "Policy fee",
             "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+          },
+          {
+            "page": 11,
+            "section": "Insurance charge",
+            "excerpt": "We will deduct a monthly insurance charge based on the net sum assured of the policy Insurance from the start of the policy, by cancelling units to the value equivalent to the insurance charge. The number of units to be "
+          },
+          {
+            "page": 16,
+            "section": "Appendix insurance charge rates 1-78",
+            "excerpt": "Appendix Rates of insurance charge for GREAT Wealth Advantage 4 Standard rates of insurance charge per annum per S$1,000 net sum assured Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Fe"
+          },
+          {
+            "page": 17,
+            "section": "Appendix insurance charge rates 79-99",
+            "excerpt": "Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Female Preceding Male Female Non- Non- Non- Non- (or Coincident) Smoker Smoker (or Coincident) Smoker Smoker Smoker Smoker Smoker Smoker Po"
           }
         ]
       },
@@ -34860,6 +35065,44 @@
                 "page": 10,
                 "section": "Policy fee",
                 "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+              }
+            ]
+          },
+          {
+            "id": "death-ti-insurance-charge",
+            "label": "Death / TI Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "great-eastern-wa4-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Requires insured-life details plus the current net regular-premium and top-up premium bases before the calculator can model the monthly insurance charge.",
+              "Models the published 101% of total basic regular premiums paid plus 101% of total single premium top-ups paid, less 101% of total partial withdrawals including charges, minus policy value sum-at-risk formula."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Insurance charge",
+                "excerpt": "We will deduct a monthly insurance charge based on the net sum assured of the policy Insurance from the start of the policy, by cancelling units to the value equivalent to the insurance charge. The number of units to be "
+              },
+              {
+                "page": 16,
+                "section": "Appendix insurance charge rates 1-78",
+                "excerpt": "Appendix Rates of insurance charge for GREAT Wealth Advantage 4 Standard rates of insurance charge per annum per S$1,000 net sum assured Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Fe"
+              },
+              {
+                "page": 17,
+                "section": "Appendix insurance charge rates 79-99",
+                "excerpt": "Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Female Preceding Male Female Non- Non- Non- Non- (or Coincident) Smoker Smoker (or Coincident) Smoker Smoker Smoker Smoker Smoker Smoker Po"
               }
             ]
           }
@@ -35139,12 +35382,10 @@
           0.07
         ],
         "warnings": [
-          "GREAT Wealth Advantage 4 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, the premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
-          "Insurance charge, TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1.",
+          "GREAT Wealth Advantage 4 is modeled as a supported V1 corridor. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, monthly insurance charge, premium-holiday charge, the premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
           "This high-annualised-premium variant assumes the additional S$5 monthly policy fee does not apply throughout the modeled path unless you manually switch variants after a premium change."
         ],
         "unsupportedItems": [
-          "Insurance charge remains informational only.",
           "Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only.",
           "Prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction."
         ],
@@ -35183,6 +35424,21 @@
             "page": 10,
             "section": "Policy fee",
             "excerpt": "We will deduct a policy fee equivalent to a percentage of the account value monthly from Policy fee the start of the policy by cancelling units to the value equivalent to the policy fee. The number of units to be cancell"
+          },
+          {
+            "page": 11,
+            "section": "Insurance charge",
+            "excerpt": "We will deduct a monthly insurance charge based on the net sum assured of the policy Insurance from the start of the policy, by cancelling units to the value equivalent to the insurance charge. The number of units to be "
+          },
+          {
+            "page": 16,
+            "section": "Appendix insurance charge rates 1-78",
+            "excerpt": "Appendix Rates of insurance charge for GREAT Wealth Advantage 4 Standard rates of insurance charge per annum per S$1,000 net sum assured Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Fe"
+          },
+          {
+            "page": 17,
+            "section": "Appendix insurance charge rates 79-99",
+            "excerpt": "Age Next Age Next Birthday on Birthday on Male Female Male Female Preceding Male Female Preceding Male Female Non- Non- Non- Non- (or Coincident) Smoker Smoker (or Coincident) Smoker Smoker Smoker Smoker Smoker Smoker Po"
           }
         ]
       }

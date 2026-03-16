@@ -194,6 +194,9 @@ function buildBonuses(
 function buildFeeRules(
   choice: GreatWealthChoice,
   page10: IlpCatalogSourceRef,
+  page11: IlpCatalogSourceRef,
+  page16: IlpCatalogSourceRef,
+  page17: IlpCatalogSourceRef,
 ): IlpTemplateFeeRule[] {
   const rateSchedule = isChoice15(choice) ? CHOICE_15_POLICY_FEE_RATE_SCHEDULE : DEFAULT_POLICY_FEE_RATE_SCHEDULE
   const feeRules: IlpTemplateFeeRule[] = [
@@ -210,6 +213,26 @@ function buildFeeRules(
         'Modeled as the published percentage-based monthly policy fee on account value.',
       ],
       sourceRefs: [page10],
+    },
+    {
+      id: 'death-ti-insurance-charge',
+      label: 'Death / TI Insurance Charge',
+      basis: 'assurance-sum-at-risk',
+      rate: null,
+      amount: null,
+      assuranceConfig: {
+        formula: 'great-eastern-wa4-death-ti',
+        monthlyModalFactor: 1 / 12,
+        maxAgeNextBirthday: 99,
+      },
+      requiresManualInput: true,
+      appliesTo: ['policy'],
+      activeWindow: 'policy-term',
+      notes: [
+        'Requires insured-life details plus the current net regular-premium and top-up premium bases before the calculator can model the monthly insurance charge.',
+        'Models the published 101% of total basic regular premiums paid plus 101% of total single premium top-ups paid, less 101% of total partial withdrawals including charges, minus policy value sum-at-risk formula.',
+      ],
+      sourceRefs: [page11, page16, page17],
     },
   ]
 
@@ -339,6 +362,9 @@ function buildVariant(
   const page6 = sourceRef(6, 'Single premium top-ups', snippetNear(document, 6, 'Single premium top-ups', 18))
   const page8 = sourceRef(8, 'Partial withdrawal and surrender charges', snippetNear(document, 8, 'Partial withdrawal charge', 24))
   const page10 = sourceRef(10, 'Policy fee', snippetNear(document, 10, 'Policy fee', 20))
+  const page11 = sourceRef(11, 'Insurance charge', snippetNear(document, 11, 'Insurance charge', 24))
+  const page16 = sourceRef(16, 'Appendix insurance charge rates 1-78', snippetNear(document, 16, 'Appendix', 18))
+  const page17 = sourceRef(17, 'Appendix insurance charge rates 79-99', snippetNear(document, 17, 'Age Next', 18))
 
   const choiceSuffix = choice
   const mipLength = isChoice15(choice) ? 15 : 10
@@ -370,12 +396,11 @@ function buildVariant(
       },
     ],
     bonuses: buildBonuses(choice, page3, page4),
-    feeRules: buildFeeRules(choice, page10),
+    feeRules: buildFeeRules(choice, page10, page11, page16, page17),
     eventChargeRules: buildEventChargeRules(choice, page4, page5, page6, page8),
     eecTable: [...eecTable],
     warnings: [
-      'GREAT Wealth Advantage 4 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, the premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.',
-      'Insurance charge, TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1.',
+      'GREAT Wealth Advantage 4 is modeled as a supported V1 corridor. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, monthly insurance charge, premium-holiday charge, the premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.',
       ...(needsFixedPolicyFee(choice)
         ? ['This low-annualised-premium variant assumes the additional S$5 monthly policy fee applies throughout the modeled path unless you manually switch variants after a premium change.']
         : isChoice10(choice) || isChoice15(choice)
@@ -383,13 +408,12 @@ function buildVariant(
           : []),
     ],
     unsupportedItems: [
-      'Insurance charge remains informational only.',
       'Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only.',
       ...(isChoice10(choice) || isChoice15(choice)
         ? ['Prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction.']
         : []),
     ],
-    sourceRefs: [page1, page3, page4, page5, page6, page8, page10],
+    sourceRefs: [page1, page3, page4, page5, page6, page8, page10, page11, page16, page17],
   }
 }
 
@@ -402,15 +426,17 @@ export function parseGreatEasternWealthAdvantage4(context: ParseContext): IlpCat
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
+      'kernel:protected-base-assurance',
       'branch:great-eastern-wa4-welcome-bonus',
       'branch:great-eastern-wa4-premium-bonus',
       'branch:great-eastern-wa4-loyalty-bonus',
       'branch:great-eastern-wa4-policy-fee-rate',
       'branch:great-eastern-wa4-fixed-policy-fee',
+      'branch:great-eastern-wa4-insurance-charge',
       'branch:great-eastern-wa4-premium-holiday-charge',
       'branch:great-eastern-wa4-premium-holiday-charge-refund',
       'branch:great-eastern-wa4-top-up-premium-charge',
@@ -418,7 +444,6 @@ export function parseGreatEasternWealthAdvantage4(context: ParseContext): IlpCat
       'branch:great-eastern-wa4-surrender-charge',
     ],
     metadataOnlyBehaviors: [
-      'great-eastern-wa4-insurance-charge',
       'great-eastern-wa4-tpd-continuation-event',
       'great-eastern-wa4-rider-premium-deduction-treatment',
       'great-eastern-wa4-fixed-fee-threshold-transition',
@@ -426,7 +451,7 @@ export function parseGreatEasternWealthAdvantage4(context: ParseContext): IlpCat
       'great-eastern-wa4-automatic-fund-rebalancing-administration',
     ],
     warnings: [
-      'GREAT Wealth Advantage 4 is cataloged as a partial modeled subset in V1. The parser captures the published bonus path, policy fee, premium-holiday charge, the premium-holiday-charge refund path, top-up charge, and partial-withdrawal / surrender schedules, while insurance-charge and broader application-gated mechanics remain outside the current engine.',
+      'GREAT Wealth Advantage 4 is cataloged as a supported V1 corridor. The parser captures the published bonus path, policy fee, monthly insurance charge, premium-holiday charge, the premium-holiday-charge refund path, top-up charge, and partial-withdrawal / surrender schedules, while application-gated mechanics such as TPD continuation events, change-of-life-assured handling, and AFR administration remain metadata only.',
     ],
     archived: false,
     variants: [

@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseGreatEasternWealthAdvantage4', () => {
-  it('builds a valid partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseGreatEasternWealthAdvantage4({
       document,
@@ -22,11 +22,13 @@ describe('parseGreatEasternWealthAdvantage4', () => {
 
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('great-eastern-wealth-advantage-4')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
+    expect(product.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(product.modeledEconomics).toContain('branch:great-eastern-wa4-insurance-charge')
     expect(product.modeledEconomics).toContain('branch:great-eastern-wa4-premium-holiday-charge')
     expect(product.modeledEconomics).toContain('branch:great-eastern-wa4-premium-holiday-charge-refund')
-    expect(product.metadataOnlyBehaviors).toContain('great-eastern-wa4-insurance-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('great-eastern-wa4-insurance-charge')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-10-choice-5',
       'sgd-mip-10-choice-10-under-6000',
@@ -59,16 +61,28 @@ describe('parseGreatEasternWealthAdvantage4', () => {
         }),
       ]),
     )
-    expect(choice15High?.feeRules).toEqual([
-      expect.objectContaining({
-        id: 'policy-fee-rate',
-        basis: 'account-value',
-        rateSchedule: [
-          { startPolicyYear: 1, endPolicyYear: 15, rate: 0.015 },
-          { startPolicyYear: 16, endPolicyYear: null, rate: 0.007 },
-        ],
-      }),
-    ])
+    expect(choice15High?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-fee-rate',
+          basis: 'account-value',
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 15, rate: 0.015 },
+            { startPolicyYear: 16, endPolicyYear: null, rate: 0.007 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'death-ti-insurance-charge',
+          basis: 'assurance-sum-at-risk',
+          assuranceConfig: {
+            formula: 'great-eastern-wa4-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          requiresManualInput: true,
+        }),
+      ]),
+    )
     expect(choice15High?.eventChargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -131,6 +145,12 @@ describe('parseGreatEasternWealthAdvantage4', () => {
           amountSchedule: [
             { startPolicyYear: 1, endPolicyYear: null, amount: 60 },
           ],
+        }),
+        expect.objectContaining({
+          id: 'death-ti-insurance-charge',
+          assuranceConfig: expect.objectContaining({
+            formula: 'great-eastern-wa4-death-ti',
+          }),
         }),
       ]),
     )
