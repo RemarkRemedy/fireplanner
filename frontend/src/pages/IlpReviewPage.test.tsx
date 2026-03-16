@@ -1402,6 +1402,30 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds Legacy Flex Solitaire (VA3S / VA3R) as a partial catalog product with premium-holiday and retirement warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Legacy Flex Solitaire')
+
+    expect(within(dialog).getByText('Legacy Flex Solitaire (VA3S / VA3R)')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use partial template$/i }))
+
+    expect(screen.getAllByText('Legacy Flex Solitaire (VA3S / VA3R) (SGD / MIP 5)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('premium-year regular premium charge schedule')
+    expect(seededAlert?.textContent).toContain('reinvest-only distribution baseline')
+    expect(seededAlert?.textContent).toContain('Single-premium charging, loyalty bonus, policy fee')
+    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
