@@ -397,7 +397,7 @@ const SRS_FLOW: NudgeFlowDefinition = {
   estimatedMinutes: 2,
   container: 'drawer',
   explanation:
-    'SRS contributions reduce taxable income dollar-for-dollar (up to $15,300/year for Singapore Citizens/PRs). Withdrawals at retirement are 50% taxable, making SRS highly efficient for high earners.',
+    'SRS contributions reduce taxable income dollar-for-dollar (up to $15,300/year for Singapore Citizens/PRs). Withdrawals at retirement are 50% taxable, making SRS efficient for high earners. Note: SRS funds are locked until statutory retirement age (62). If you plan to FIRE earlier, contributions reduce your accessible portfolio and may delay your FIRE date despite the tax benefit.',
   screens: [
     {
       id: 'srs-toggle',
@@ -494,8 +494,8 @@ const ALLOCATION_FLOW: NudgeFlowDefinition = {
             { value: 'conservative', label: 'Conservative (30/70 equity/bonds)' },
             { value: 'balanced', label: 'Balanced (60/40 equity/bonds)' },
             { value: 'aggressive', label: 'Aggressive (80/20 equity/bonds)' },
-            { value: 'custom', label: 'Custom (I will set weights manually)' },
           ],
+          helperText: 'Want custom weights? Set them in the Allocation section on the Inputs page.',
           required: true,
         },
         {
