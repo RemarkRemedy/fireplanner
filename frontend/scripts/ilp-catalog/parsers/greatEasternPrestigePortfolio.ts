@@ -13,7 +13,10 @@ interface ParseContext {
   sourceChecksumSha256: string
 }
 
-type VariantId = 'sgd-open-ended-regular-pay-cash' | 'sgd-open-ended-recurrent-single-premium-srs'
+type VariantId =
+  | 'sgd-open-ended-single-premium-cash'
+  | 'sgd-open-ended-single-premium-srs'
+  | 'sgd-open-ended-recurrent-single-premium-srs'
 
 function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
@@ -41,10 +44,16 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
 }
 
 function buildVariant(document: ExtractedPdfDocument, variantId: VariantId): IlpTemplateVariant {
-  const isRegularPay = variantId === 'sgd-open-ended-regular-pay-cash'
-  const premiumModeLabel = isRegularPay ? 'regular premium' : 'recurrent single premium'
-  const premiumDocumentLabel = isRegularPay ? 'policy illustration' : 'product quotation'
-  const variantWarningLabel = isRegularPay ? 'Prestige Portfolio (Regular Premium / Cash)' : 'Prestige Portfolio (Recurrent Single Premium / SRS)'
+  const isSinglePremium = variantId === 'sgd-open-ended-single-premium-cash' || variantId === 'sgd-open-ended-single-premium-srs'
+  const isRecurringSinglePremium = variantId === 'sgd-open-ended-recurrent-single-premium-srs'
+  const premiumModeLabel = isSinglePremium ? 'single premium' : 'recurrent single premium'
+  const premiumDocumentLabel = 'product quotation'
+  const variantWarningLabel =
+    variantId === 'sgd-open-ended-single-premium-cash'
+      ? 'Prestige Portfolio (Single Premium / Cash)'
+      : variantId === 'sgd-open-ended-single-premium-srs'
+        ? 'Prestige Portfolio (Single Premium / SRS)'
+        : 'Prestige Portfolio (Recurrent Single Premium / SRS)'
 
   const page2 = sourceRef(2, 'Benefits and premium types', snippetNear(document, 2, 'Premium type', 20))
   const page3 = sourceRef(3, 'Premium charge, wrap fee, and policy fee', snippetNear(document, 3, 'Premium charge', 28))
@@ -52,9 +61,9 @@ function buildVariant(document: ExtractedPdfDocument, variantId: VariantId): Ilp
 
   const feeRules: IlpTemplateFeeRule[] = [
     {
-      id: 'premium-charge',
+      id: isSinglePremium ? 'premium-charge' : 'recurrent-single-premium-charge',
       label: 'Premium Charge',
-      basis: 'annual-contribution',
+      basis: isSinglePremium ? 'initial-single-premium' : 'annual-contribution',
       rate: 0,
       amount: 0,
       requiresManualInput: true,
@@ -114,6 +123,25 @@ function buildVariant(document: ExtractedPdfDocument, variantId: VariantId): Ilp
       ],
       sourceRefs: [page3, page4],
     },
+    ...(isRecurringSinglePremium
+      ? [{
+          id: 'recurring-single-premium-charge',
+          label: 'Recurring Single Premium Charge',
+          trigger: 'recurring-single-premium' as const,
+          basis: 'event-amount-with-overlap-months' as const,
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          requiresManualInput: true,
+          activeWindow: 'policy-term' as const,
+          allocation: 'equal-split' as const,
+          notes: [
+            `Enter the actual recurrent single premium-charge percentage from the issued ${premiumDocumentLabel} before trusting the projection.`,
+            'Use recurring-single-premium events to represent the approved monthly, quarterly, half-yearly, or yearly SRS stream.',
+          ],
+          sourceRefs: [page2, page3],
+        }]
+      : []),
     {
       id: 'partial-withdrawal-charge',
       label: 'Partial Withdrawal Charge',
@@ -147,7 +175,7 @@ function buildVariant(document: ExtractedPdfDocument, variantId: VariantId): Ilp
         subjectToEec: false,
         contributionRules: [
           { phase: 'during-icp', targetAccountId: 'policy', contributionShare: 1 },
-          { phase: 'after-icp', targetAccountId: 'policy', contributionShare: 1 },
+          ...(isRecurringSinglePremium ? [{ phase: 'after-icp' as const, targetAccountId: 'policy', contributionShare: 1 }] : []),
           { phase: 'top-up', targetAccountId: 'policy', contributionShare: 1 },
         ],
         sourceRefs: [page2, page3, page4],
@@ -158,15 +186,12 @@ function buildVariant(document: ExtractedPdfDocument, variantId: VariantId): Ilp
     eventChargeRules,
     eecTable: [],
     warnings: [
-      `${variantWarningLabel} is cataloged as a partial modeled subset in V1. The parser captures the quote-driven premium-charge surface through manual input, the quote-driven wrap-fee surface through manual input, the published 0.2% p.a. policy fee, the quote-driven top-up premium-charge surface through manual input, and the nil policy-level partial-withdrawal charge path through the open-ended basis.`,
+      `${variantWarningLabel} is cataloged as a supported V1 corridor. The parser captures the quote-driven premium-charge surface through manual input, the quote-driven wrap-fee surface through manual input, the published 0.2% p.a. policy fee, the quote-driven top-up premium-charge surface through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis.`,
       `Enter the actual premium-charge and wrap-fee percentages from the issued ${premiumDocumentLabel} before trusting the analysis.`,
     ],
     unsupportedItems: [
-      'Single-premium corridor remains informational only in this parser slice.',
+      'Regular-premium cash corridor remains informational only because the early-surrender deductions are shown only in the policy illustration rather than as a published fixed catalog schedule.',
       'Death-benefit and accidental-death-benefit payout handling remain informational only, including basic-sum-assured state tracking for recurrent single premium.',
-      ...(isRegularPay
-        ? ['Regular-premium early-surrender deductions remain informational only because they are shown only in the policy illustration rather than as a published fixed catalog schedule.']
-        : []),
       'SRS return-destination handling on withdrawals and surrender remains informational only.',
       'Fund switching, premium-apportionment changes, and minimum-transaction guards remain informational only.',
       'Post-issue fee changes, newly introduced fees, and fund-level charges remain informational only.',
@@ -184,18 +209,20 @@ export function parseGreatEasternPrestigePortfolio(context: ParseContext): IlpCa
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:great-eastern-prestige-portfolio-premium-charge-manual-input',
+      'branch:great-eastern-prestige-portfolio-recurrent-single-premium-charge-manual-input',
       'branch:great-eastern-prestige-portfolio-wrap-fee-manual-input',
       'branch:great-eastern-prestige-portfolio-policy-fee',
       'branch:great-eastern-prestige-portfolio-top-up-premium-charge-manual-input',
       'branch:great-eastern-prestige-portfolio-partial-withdrawal-zero-charge',
+      'branch:great-eastern-prestige-portfolio-open-ended-zero-surrender-charge',
     ],
     metadataOnlyBehaviors: [
-      'great-eastern-prestige-portfolio-single-premium-corridor',
+      'great-eastern-prestige-portfolio-regular-premium-corridor',
       'great-eastern-prestige-portfolio-regular-premium-surrender-deductions',
       'great-eastern-prestige-portfolio-death-and-accidental-death-benefits',
       'great-eastern-prestige-portfolio-basic-sum-assured-state',
@@ -206,12 +233,13 @@ export function parseGreatEasternPrestigePortfolio(context: ParseContext): IlpCa
       'great-eastern-prestige-portfolio-fund-level-fees',
     ],
     warnings: [
-      'Prestige Portfolio is cataloged as a partial modeled subset in V1. The parser currently covers only the recurring-pay corridors that fit the existing seed model: regular premium (cash) and recurrent single premium (SRS).',
-      'Quoted premium-charge and wrap-fee percentages remain manual inputs, while single-premium handling, protection-side benefits, and regular-premium surrender deductions remain outside the current engine.',
+      'Prestige Portfolio is cataloged as a supported V1 corridor for the single-premium cash, single-premium SRS, and recurrent-single-premium SRS paths. The parser captures the quote-driven premium-charge and wrap-fee surfaces through manual input, the published 0.2% p.a. policy fee, the quote-driven top-up and recurrent-single-premium charge paths through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis.',
+      'Protection-side benefits, basic-sum-assured state tracking, and the regular-premium cash corridor with policy-illustration-specific surrender deductions remain informational only.',
     ],
     archived: false,
     variants: [
-      buildVariant(context.document, 'sgd-open-ended-regular-pay-cash'),
+      buildVariant(context.document, 'sgd-open-ended-single-premium-cash'),
+      buildVariant(context.document, 'sgd-open-ended-single-premium-srs'),
       buildVariant(context.document, 'sgd-open-ended-recurrent-single-premium-srs'),
     ],
   }

@@ -136,6 +136,13 @@ export type GoldenCoverageTag =
   | 'branch:great-eastern-ilp2-top-up-premium-charge'
   | 'branch:great-eastern-ilp2-loyalty-bonus'
   | 'branch:great-eastern-ilp2-surrender-charge'
+  | 'branch:great-eastern-prestige-portfolio-premium-charge-manual-input'
+  | 'branch:great-eastern-prestige-portfolio-recurrent-single-premium-charge-manual-input'
+  | 'branch:great-eastern-prestige-portfolio-wrap-fee-manual-input'
+  | 'branch:great-eastern-prestige-portfolio-policy-fee'
+  | 'branch:great-eastern-prestige-portfolio-top-up-premium-charge-manual-input'
+  | 'branch:great-eastern-prestige-portfolio-partial-withdrawal-zero-charge'
+  | 'branch:great-eastern-prestige-portfolio-open-ended-zero-surrender-charge'
   | 'tokio-recurring-single-premium-routing'
   | 'branch:prosper-assurance-charge'
   | 'kernel:distribution-mode-assumption'
@@ -2253,6 +2260,110 @@ function greatEasternInvestmentLinkedInsurancePlan2StressPolicy(
       currentNetRegularPremiumBase: 76_800,
       currentNetSupplementaryPremiumBase: 12_000,
     },
+  })
+}
+
+function greatEasternPrestigePortfolioBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId:
+    | 'sgd-open-ended-single-premium-cash'
+    | 'sgd-open-ended-single-premium-srs'
+    | 'sgd-open-ended-recurrent-single-premium-srs',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const isSinglePremium = variantId !== 'sgd-open-ended-recurrent-single-premium-srs'
+  const base = seedPolicy(snapshot, 'great-eastern-prestige-portfolio', variantId, id, {
+    initialSinglePremium: isSinglePremium ? 100_000 : 0,
+    monthlyContribution: isSinglePremium ? 0 : 650,
+    currentPolicyYear: isSinglePremium ? 1 : 4,
+    monthsAlreadyPaid: isSinglePremium ? 0 : 36,
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden Prestige Portfolio (${variantId.toUpperCase()})`,
+      chargeRules: (base.chargeRules ?? []).map((rule) => {
+        if (rule.id === 'premium-charge' || rule.id === 'recurrent-single-premium-charge') {
+          return { ...rule, rate: 0.03 }
+        }
+        if (rule.id === 'wrap-fee') {
+          return { ...rule, rate: 0.015 }
+        }
+        return rule
+      }),
+      eventChargeRules: (base.eventChargeRules ?? []).map((rule) => {
+        if (rule.id === 'top-up-premium-charge' || rule.id === 'recurring-single-premium-charge') {
+          return { ...rule, rate: 0.03 }
+        }
+        return rule
+      }),
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        ...(isSinglePremium ? {} : { currentValue: 34_000 }),
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function greatEasternPrestigePortfolioBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId:
+    | 'sgd-open-ended-single-premium-cash'
+    | 'sgd-open-ended-single-premium-srs'
+    | 'sgd-open-ended-recurrent-single-premium-srs',
+  id: string,
+): IlpPolicyInput {
+  return greatEasternPrestigePortfolioBasePolicy(snapshot, variantId, id, GREAT_BALANCED_FUNDS)
+}
+
+function greatEasternPrestigePortfolioEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return greatEasternPrestigePortfolioBasePolicy(snapshot, 'sgd-open-ended-recurrent-single-premium-srs', id, GREAT_BALANCED_FUNDS, {
+    name: 'Golden Prestige Portfolio (SGD / Open-ended Recurrent Single Premium Srs Event Heavy)',
+    monthlyContribution: 650,
+    currentPolicyYear: 5,
+    monthsAlreadyPaid: 48,
+    policyEvents: [
+      {
+        id: 'rsp-1',
+        type: 'recurring-single-premium',
+        startPolicyMonth: 49,
+        durationMonths: 6,
+        amount: 650,
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 52,
+        durationMonths: 1,
+        amount: 8_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 57,
+        durationMonths: 1,
+        amount: 6_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function greatEasternPrestigePortfolioStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return greatEasternPrestigePortfolioBasePolicy(snapshot, 'sgd-open-ended-single-premium-srs', id, GREAT_STRESS_FUNDS, {
+    name: 'Golden Prestige Portfolio (SGD / Open-ended Single Premium Srs OCF Stress)',
   })
 }
 
@@ -5165,6 +5276,55 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Investment-linked Insurance Plan 2 alternate-fund high-OCF stress scenario through the supported Choice 10 corridor.',
   },
   {
+    productId: 'great-eastern-prestige-portfolio',
+    variantId: 'sgd-open-ended-single-premium-cash',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:great-eastern-prestige-portfolio-premium-charge-manual-input',
+      'branch:great-eastern-prestige-portfolio-wrap-fee-manual-input',
+      'branch:great-eastern-prestige-portfolio-policy-fee',
+    ],
+    description: 'Baseline Prestige Portfolio single-premium cash scenario proving the supported upfront premium-charge, wrap-fee, and policy-fee corridor.',
+    integrityChecks: [
+      {
+        description: 'records positive inception fees under the supported single-premium corridor',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  },
+  {
+    productId: 'great-eastern-prestige-portfolio',
+    variantId: 'sgd-open-ended-recurrent-single-premium-srs',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:great-eastern-prestige-portfolio-recurrent-single-premium-charge-manual-input',
+      'branch:great-eastern-prestige-portfolio-top-up-premium-charge-manual-input',
+      'branch:great-eastern-prestige-portfolio-partial-withdrawal-zero-charge',
+    ],
+    description: 'Prestige Portfolio event-heavy recurrent-single-premium SRS scenario proving manual-input recurrent-charge handling plus top-up and nil-charge withdrawal behavior.',
+    integrityChecks: [
+      {
+        description: 'event-heavy corridor produces both recurring-single-premium activity and a later withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0 && row.annualContribution > 0),
+      },
+    ],
+  },
+  {
+    productId: 'great-eastern-prestige-portfolio',
+    variantId: 'sgd-open-ended-single-premium-srs',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'ocf-stress',
+      'branch:great-eastern-prestige-portfolio-open-ended-zero-surrender-charge',
+    ],
+    description: 'Prestige Portfolio alternate-fund stress scenario through the supported single-premium SRS corridor.',
+  },
+  {
     productId: 'great-eastern-great-invest-advantage-sp',
     variantId: 'sgd-open-ended-cash-or-srs',
     scenarioId: 'baseline',
@@ -5923,6 +6083,18 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'great-eastern-investment-linked-insurance-plan-2' && definition.scenarioId === 'ocf-stress') {
     return greatEasternInvestmentLinkedInsurancePlan2StressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'great-eastern-prestige-portfolio' && definition.scenarioId === 'baseline') {
+    return greatEasternPrestigePortfolioBaselinePolicy(snapshot, definition.variantId as
+      | 'sgd-open-ended-single-premium-cash'
+      | 'sgd-open-ended-single-premium-srs'
+      | 'sgd-open-ended-recurrent-single-premium-srs', id)
+  }
+  if (definition.productId === 'great-eastern-prestige-portfolio' && definition.scenarioId === 'event-heavy') {
+    return greatEasternPrestigePortfolioEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'great-eastern-prestige-portfolio' && definition.scenarioId === 'ocf-stress') {
+    return greatEasternPrestigePortfolioStressPolicy(snapshot, id)
   }
   if (definition.productId === 'great-eastern-great-invest-advantage-sp' && definition.scenarioId === 'baseline') {
     return greatEasternGiaSpBaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended-cash-or-srs' | 'sgd-open-ended-cpfis', id)

@@ -1769,25 +1769,27 @@ describe('templateVariantToPolicySeed', () => {
     ])
   })
 
-  it('maps Prestige Portfolio into a partial seed with quote-driven manual-input charges', () => {
+  it('maps Prestige Portfolio into a supported single-premium seed with quote-driven manual-input charges', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'great-eastern-prestige-portfolio')
     expect(product).toBeDefined()
 
-    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-regular-pay-cash')
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-single-premium-cash')
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.name).toBe('Prestige Portfolio (SGD / Open-ended (Regular Pay Cash))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.name).toBe('Prestige Portfolio (SGD / Open-ended (Single Premium Cash))')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-prestige-portfolio-premium-charge-manual-input')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-prestige-portfolio-open-ended-zero-surrender-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-prestige-portfolio-wrap-fee-manual-input')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-single-premium-corridor')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-regular-premium-corridor')
     expect(seed.mipBasis).toBe('open-ended')
     expect(seed.mipLength).toBeNull()
     expect(seed.postMipYears).toBe(20)
-    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.monthlyContribution).toBe(0)
+    expect(seed.initialSinglePremium).toBe(0)
     expect(seed.eecTable).toEqual([])
     expect(seed.accounts).toEqual([
       expect.objectContaining({
@@ -1795,7 +1797,6 @@ describe('templateVariantToPolicySeed', () => {
         feeRate: 0.002,
         contributionRules: [
           { phase: 'during-icp', contributionShare: 1 },
-          { phase: 'after-icp', contributionShare: 1 },
           { phase: 'top-up', contributionShare: 1 },
         ],
       }),
@@ -1804,7 +1805,7 @@ describe('templateVariantToPolicySeed', () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: 'premium-charge',
-          basis: 'annual-contribution',
+          basis: 'initial-single-premium',
           rate: 0,
           requiresManualInput: true,
         }),
@@ -1831,7 +1832,8 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('issued policy illustration'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('issued product quotation'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('gross initial single premium'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Open-ended products use a default 20-year review horizon'))).toBe(true)
   })
 
