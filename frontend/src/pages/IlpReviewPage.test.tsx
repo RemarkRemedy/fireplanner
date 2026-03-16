@@ -1239,6 +1239,29 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds Manulife SmartRetire (V) - Income as a partial catalog product with payout-state and shortfall warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Manulife SmartRetire (V) - Income')
+
+    expect(within(dialog).getByText('Manulife SmartRetire (V) - Income')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 8 \(flexi 3\)use partial template$/i }))
+
+    expect(screen.getAllByText('Manulife SmartRetire (V) - Income (SGD / MIP 8 (Flexi 3))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('scheduled retirement-income capability through the payout-state kernel')
+    expect(seededAlert?.textContent).toContain('premium-shortfall charge before Flexi Start')
+    expect(seededAlert?.textContent).toContain('reinvest-default distribution-mode assumption surface')
+    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
