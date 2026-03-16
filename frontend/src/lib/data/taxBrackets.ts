@@ -38,7 +38,7 @@ export const SRS_STRATEGY_RETURNS: Record<string, number> = {
   etf: 0.06,     // broad market ETFs
   stocks: 0.08,  // individual stocks (higher risk)
   mixed: 0.05,   // blended portfolio
-} as const
+}
 
 // ============================================================
 // Tax Relief Breakdown — YA 2025 (IRAS / PWC)

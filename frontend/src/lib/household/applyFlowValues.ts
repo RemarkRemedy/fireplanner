@@ -360,7 +360,7 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
                 durationYears: 1,
                 priority: 'important',
                 inflationAdjusted: true,
-                category: (draft.category as GoalCategory) || 'other',
+                category: toGoalCategory(draft.category),
               })
             }
           }
