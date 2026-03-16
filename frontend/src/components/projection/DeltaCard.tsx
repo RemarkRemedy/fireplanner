@@ -64,6 +64,7 @@ export function DeltaCard({ summary, onDismiss, showMcNote }: DeltaCardProps) {
         <div className="space-y-1.5">
           {summary.deltas.map((delta) => {
             const isFireAge = delta.metric === 'FIRE age'
+            const isFireNumber = delta.metric === 'FIRE number'
             const diff = delta.after - delta.before
             return (
               <div key={delta.metric} className="flex items-center justify-between text-sm">
@@ -82,7 +83,7 @@ export function DeltaCard({ summary, onDismiss, showMcNote }: DeltaCardProps) {
                       ? `${Math.abs(v)} yr${Math.abs(v) !== 1 ? 's' : ''}`
                       : `$${Math.abs(v).toLocaleString()}`
                     }
-                    invert={isFireAge}
+                    invert={isFireAge || isFireNumber}
                   />
                 </div>
               </div>
