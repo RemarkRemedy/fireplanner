@@ -134,7 +134,7 @@ function seedExpenses(adult: PlanningAdult): Record<string, unknown> {
     }
 
     // Compute _hasAnyExpenseCategory sentinel from seeded values
-    // Use FLOW_FIELD_TO_CATEGORY keys to stay in sync with RefineFlowPage's reactive update
+    // Use FLOW_FIELD_TO_CATEGORY keys to stay in sync with NudgeDrawer's reactive update
     const categoryFlowFields = Object.keys(FLOW_FIELD_TO_CATEGORY)
     seeds._hasAnyExpenseCategory = categoryFlowFields.some((f) => typeof seeds[f] === 'number' && (seeds[f] as number) > 0)
   }
@@ -323,7 +323,7 @@ export function seedFlowValues(flowId: NudgeFlowId): Record<string, unknown> {
 
 /**
  * Apply sensible defaults and toggle initialization to seeded flow values.
- * Shared between RefineFlowPage and NudgeDrawer to avoid duplication.
+ * Shared across nudge flows to avoid duplication.
  */
 export function applyFlowDefaults(
   seeds: Record<string, unknown>,

@@ -67,7 +67,7 @@ function toAllocationTemplate(value: string): Exclude<AllocationTemplate, 'custo
 
 /**
  * Apply the collected values from a nudge flow to the appropriate stores.
- * Shared between RefineFlowPage (full-page flows) and NudgeDrawer (drawer flows).
+ * Used by NudgeDrawer to persist nudge flow values to the household plan store.
  */
 export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unknown>): boolean {
   const store = useHouseholdPlanStore.getState()

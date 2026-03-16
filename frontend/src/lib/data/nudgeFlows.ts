@@ -11,7 +11,6 @@ export type NudgeFlowId =
   | 'allocation'
   | 'protection'
 
-export type NudgeContainer = 'full-page' | 'drawer'
 
 export interface NudgeField {
   name: string
@@ -42,7 +41,6 @@ export interface NudgeFlowDefinition {
   label: string
   description: string
   estimatedMinutes: number
-  container: NudgeContainer
   explanation: string
   screens: NudgeFlowScreen[]
 }
@@ -77,7 +75,6 @@ const CPF_FLOW: NudgeFlowDefinition = {
   label: 'CPF Details',
   description: 'Unlock a more accurate projection by including your CPF balances and LIFE payouts.',
   estimatedMinutes: 5,
-  container: 'drawer',
   explanation:
     'CPF is a major retirement asset for most Singaporeans. Accurate balances and payout settings significantly improve projection accuracy.',
   screens: [
@@ -146,7 +143,6 @@ const PROPERTY_FLOW: NudgeFlowDefinition = {
   label: 'Property Details',
   description: 'See how your mortgage, rental income, or downsizing plans impact your net worth.',
   estimatedMinutes: 5,
-  container: 'drawer',
   explanation:
     'Property equity is often the largest asset outside CPF. Capturing mortgage obligations and future plans improves your net worth and FIRE timeline accuracy.',
   screens: [
@@ -225,7 +221,6 @@ const EXPENSES_FLOW: NudgeFlowDefinition = {
   label: 'Expense Breakdown',
   description: 'Break down your spending to model post-retirement expense changes more accurately.',
   estimatedMinutes: 4,
-  container: 'drawer',
   explanation:
     'Knowing how your spending is allocated lets us model post-retirement expense changes more accurately (e.g., reduced commuting costs, healthcare increasing with age).',
   screens: [
@@ -263,7 +258,6 @@ const HEALTHCARE_FLOW: NudgeFlowDefinition = {
   label: 'Healthcare Coverage',
   description: 'Factor in ISP premiums and MediSave to prevent medical costs from derailing your plan.',
   estimatedMinutes: 3,
-  container: 'drawer',
   explanation:
     'Healthcare is one of the largest retirement expenses in Singapore. Capturing your ISP tier and MediSave balance improves long-term cost projections.',
   screens: [
@@ -346,7 +340,6 @@ const SALARY_FLOW: NudgeFlowDefinition = {
   label: 'Salary Model',
   description: 'Model your income growth to see its compound effect on your FIRE date.',
   estimatedMinutes: 2,
-  container: 'drawer',
   explanation:
     'A more realistic salary model improves CPF contribution estimates and FIRE timeline accuracy, especially for younger users with decades of career growth ahead.',
   screens: [
@@ -390,7 +383,6 @@ const SRS_FLOW: NudgeFlowDefinition = {
   label: 'SRS Contributions',
   description: 'Model SRS tax relief and withdrawals for a more complete retirement picture.',
   estimatedMinutes: 2,
-  container: 'drawer',
   explanation:
     'SRS contributions reduce taxable income dollar-for-dollar (up to $15,300/year for Singapore Citizens/PRs). Withdrawals at retirement are 50% taxable, making SRS efficient for high earners. Note: SRS funds are locked until statutory retirement age (62). If you plan to FIRE earlier, contributions reduce your accessible portfolio and may delay your FIRE date despite the tax benefit.',
   screens: [
@@ -435,7 +427,6 @@ const GOALS_FLOW: NudgeFlowDefinition = {
   label: 'Financial Goals',
   description: 'Add lump-sum future expenses that could shift your FIRE timeline.',
   estimatedMinutes: 2,
-  container: 'drawer',
   explanation:
     'Goals like a home purchase, child education, or dream holiday are lump-sum cash outflows that affect your FIRE timeline. Capturing them gives a more realistic projection.',
   screens: [
@@ -473,7 +464,6 @@ const ALLOCATION_FLOW: NudgeFlowDefinition = {
   label: 'Investment Allocation',
   description: 'Your asset mix is the biggest driver of long-term returns and volatility.',
   estimatedMinutes: 2,
-  container: 'drawer',
   explanation:
     'Asset allocation is the biggest driver of long-term returns and volatility. Getting this right matters more than picking individual investments.',
   screens: [
@@ -535,7 +525,6 @@ const PROTECTION_FLOW: NudgeFlowDefinition = {
   label: 'Protection & Debt',
   description: 'Calculate your true net worth by factoring in emergency funds, loans, and insurance.',
   estimatedMinutes: 3,
-  container: 'drawer',
   explanation:
     'Adequate emergency reserves and insurance protect your FIRE plan from being derailed by unexpected events. Outstanding debt reduces your effective net worth.',
   screens: [

@@ -659,6 +659,70 @@ describe('compileHouseholdPlan', () => {
     expect(() => compileHouseholdPlan(plan)).toThrow('Unknown owner "pet" at income-salary-self.owner. Expected "self", "partner", or "shared".')
   })
 
+  describe('non-mortgage debt per-adult deduction', () => {
+    it('deducts debt from household expenses', () => {
+      const plan = makeCouplePlan()
+      plan.adults[0].nonMortgageDebtMonthlyPayment = 500
+
+      const base = compileHouseholdPlan(makeCouplePlan())
+      const withDebt = compileHouseholdPlan(plan)
+
+      // Year 0 savings should be reduced by 500*12 = 6000
+      expect(withDebt.annualSavingsByYear[0]).toBeCloseTo(
+        base.annualSavingsByYear[0] - 6000,
+        0,
+      )
+    })
+
+    it('stops deduction at adult debtPayoffAge', () => {
+      const plan = makeCouplePlan()
+      const self = plan.adults[0]
+      self.nonMortgageDebtMonthlyPayment = 500
+      self.debtPayoffAge = self.currentAge + 3 // pay off after 3 years
+
+      const compiled = compileHouseholdPlan(plan)
+      const base = compileHouseholdPlan(makeCouplePlan())
+
+      // Years 0-2: debt deducted (6000/yr less savings)
+      for (let y = 0; y < 3; y++) {
+        expect(compiled.annualSavingsByYear[y]).toBeCloseTo(
+          base.annualSavingsByYear[y] - 6000,
+          0,
+        )
+      }
+
+      // Year 3+: no deduction (savings match base)
+      expect(compiled.annualSavingsByYear[3]).toBeCloseTo(
+        base.annualSavingsByYear[3],
+        0,
+      )
+    })
+
+    it('handles different payoff ages per adult', () => {
+      const plan = makeCouplePlan()
+      plan.adults[0].nonMortgageDebtMonthlyPayment = 500
+      plan.adults[0].debtPayoffAge = plan.adults[0].currentAge + 2 // 2 years
+
+      plan.adults[1].nonMortgageDebtMonthlyPayment = 300
+      plan.adults[1].debtPayoffAge = plan.adults[1].currentAge + 5 // 5 years
+
+      const compiled = compileHouseholdPlan(plan)
+      const base = compileHouseholdPlan(makeCouplePlan())
+
+      // Year 0-1: both adults' debt deducted (6000 + 3600 = 9600)
+      expect(compiled.annualSavingsByYear[0]).toBeCloseTo(
+        base.annualSavingsByYear[0] - 9600,
+        0,
+      )
+
+      // Year 2: only partner's debt (3600)
+      expect(compiled.annualSavingsByYear[2]).toBeCloseTo(
+        base.annualSavingsByYear[2] - 3600,
+        0,
+      )
+    })
+  })
+
   it('treats income with undefined isActive as active (backward compat)', () => {
     const plan = makeCouplePlan()
     // Compile with isActive present to get baseline
