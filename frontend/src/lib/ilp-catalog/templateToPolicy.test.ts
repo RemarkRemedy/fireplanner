@@ -3246,7 +3246,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('first-three-policy-years accrual window'))).toBe(true)
   })
 
-  it('maps TM Wealth Enhancer (CPFIS) into a partial seed with zero-charge regular top-up routing', () => {
+  it('maps TM Wealth Enhancer (CPFIS) into a supported seed with zero-charge regular top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-wealth-enhancer-cpfis')
     expect(product).toBeDefined()
@@ -3256,10 +3256,13 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('TM Wealth Enhancer (CPFIS) (SGD / Open-ended (Cpf))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-wealth-enhancer-cpfis-zero-recurring-single-premium-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-wealth-enhancer-cpfis-zero-partial-withdrawal-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-recurring-single-premium-routing')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-wealth-enhancer-cpfis-regular-top-up-premiums')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-wealth-enhancer-cpfis-partial-withdrawal')
     expect(seed.monthlyContribution).toBe(0)
     expect(seed.initialSinglePremium).toBe(0)
     useIlpStore.getState().reset()
@@ -3284,6 +3287,14 @@ describe('templateVariantToPolicySeed', () => {
         id: 'recurring-single-premium-charge',
         trigger: 'recurring-single-premium',
         basis: 'event-amount-with-overlap-months',
+        appliesTo: ['policy'],
+        rate: 0,
+        amount: 0,
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
         appliesTo: ['policy'],
         rate: 0,
         amount: 0,

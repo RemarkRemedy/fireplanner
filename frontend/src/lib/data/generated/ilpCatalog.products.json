@@ -64467,27 +64467,26 @@
     "sourceChecksumSha256": "344fc1b46fadb9022e5ee142046460334f0da6e7f99f4b2a53dc50b15c2d17a9",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
       "branch:tokio-marine-wealth-enhancer-cpfis-zero-single-premium-charge",
       "branch:tokio-marine-wealth-enhancer-cpfis-zero-top-up-charge",
       "branch:tokio-marine-wealth-enhancer-cpfis-zero-recurring-single-premium-charge",
+      "branch:tokio-marine-wealth-enhancer-cpfis-zero-partial-withdrawal-charge",
       "tokio-recurring-single-premium-routing"
     ],
     "metadataOnlyBehaviors": [
       "tokio-marine-wealth-enhancer-cpfis-death-benefit",
       "tokio-marine-wealth-enhancer-cpfis-single-premium-policy-value-tracking",
-      "tokio-marine-wealth-enhancer-cpfis-partial-withdrawal",
-      "tokio-marine-wealth-enhancer-cpfis-full-surrender",
       "tokio-marine-wealth-enhancer-cpfis-fund-management-fee",
       "tokio-marine-wealth-enhancer-cpfis-accounting-and-custody-fees",
       "tokio-marine-wealth-enhancer-cpfis-fund-switching",
       "tokio-marine-wealth-enhancer-cpfis-lapse-and-termination"
     ],
     "warnings": [
-      "TM Wealth Enhancer (CPFIS) is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge single-premium, ad-hoc top-up, and regular top-up allocation path for the CPF-funded corridor through the open-ended no-MIP basis, while protection formulas, withdrawal administration, and fund-level charges remain outside the current engine."
+      "TM Wealth Enhancer (CPFIS) is cataloged as a supported V1 product. The parser captures the published zero-charge single-premium, ad-hoc top-up, regular top-up, and nil-charge withdrawal path for the CPF-funded corridor through the open-ended no-MIP basis, while protection formulas, policy-value tracking for death-benefit purposes, fund-level charges, and switching administration remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -64596,18 +64595,45 @@
                 "excerpt": "TM Wealth Enhancer is a whole life single premium investment-linked plan that allows you to invest in a range of investment-linked funds while providing protection against death as long as the policy is in force. The pre"
               }
             ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published nil-charge redemption corridor for partial withdrawals while the policy is in force."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Fees and charges",
+                "excerpt": "Fees and Charges Fund Management Fee The fund management fee for each of the funds is set out in the fund documents available on our website. It is expressed as a percentage of the asset value under the respective funds "
+              },
+              {
+                "page": 3,
+                "section": "Administrative charge and termination",
+                "excerpt": "Administrative Charge Administrative charge is not applicable. Switching Charge There is no charge for fund switch. Right to Vary Fees and Charges We reserve the right to vary any fees and charges, by giving you 30 days "
+              }
+            ]
           }
         ],
         "eecTable": [],
         "warnings": [
-          "TM Wealth Enhancer (CPFIS) is cataloged as a partial modeled subset in V1. The parser captures the published zero-charge single-premium, ad-hoc top-up, and regular top-up allocation path for the CPF-funded corridor through the open-ended no-MIP basis.",
+          "TM Wealth Enhancer (CPFIS) is cataloged as a supported V1 product. The parser captures the published zero-charge single-premium, ad-hoc top-up, regular top-up, and nil-charge withdrawal path for the CPF-funded corridor through the open-ended no-MIP basis.",
           "Administrative charge is not applicable and switching is published as free, but switching behavior itself remains outside the current calculator surface.",
           "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
         ],
         "unsupportedItems": [
           "Death-benefit protection formulas remain informational only.",
           "Single-premium and top-up policy-value tracking remain informational only in V1.",
-          "Partial-withdrawal and full-surrender administration remain informational only.",
           "Fund-level management fees and embedded custody or bank charges remain informational only because they are reflected through fund pricing rather than the policy charge surface.",
           "Fund-switching behavior remains informational only.",
           "Lapse and termination behavior remains informational only."

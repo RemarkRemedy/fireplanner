@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseTokioMarineWealthEnhancerCpfis', () => {
-  it('builds a valid open-ended partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid open-ended supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseTokioMarineWealthEnhancerCpfis({
       document,
@@ -23,15 +23,18 @@ describe('parseTokioMarineWealthEnhancerCpfis', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('tokio-marine-wealth-enhancer-cpfis')
     expect(product.productName).toBe('TM Wealth Enhancer (CPFIS)')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:tokio-marine-wealth-enhancer-cpfis-zero-single-premium-charge',
       'branch:tokio-marine-wealth-enhancer-cpfis-zero-top-up-charge',
       'branch:tokio-marine-wealth-enhancer-cpfis-zero-recurring-single-premium-charge',
+      'branch:tokio-marine-wealth-enhancer-cpfis-zero-partial-withdrawal-charge',
       'tokio-recurring-single-premium-routing',
     ])
     expect(product.metadataOnlyBehaviors).toContain('tokio-marine-wealth-enhancer-cpfis-single-premium-policy-value-tracking')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-wealth-enhancer-cpfis-partial-withdrawal')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-wealth-enhancer-cpfis-full-surrender')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cpf'])
 
     const variant = product.variants[0]
@@ -67,6 +70,13 @@ describe('parseTokioMarineWealthEnhancerCpfis', () => {
         id: 'recurring-single-premium-charge',
         trigger: 'recurring-single-premium',
         basis: 'event-amount-with-overlap-months',
+        activeWindow: 'policy-term',
+        rate: 0,
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
         activeWindow: 'policy-term',
         rate: 0,
       }),

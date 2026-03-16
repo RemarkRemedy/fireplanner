@@ -102,6 +102,10 @@ export type GoldenCoverageTag =
   | 'branch:etiqa-tiq-invest-zero-top-up-charge'
   | 'branch:etiqa-tiq-invest-zero-recurring-single-premium-charge'
   | 'branch:etiqa-tiq-invest-zero-partial-withdrawal-charge'
+  | 'branch:tokio-marine-wealth-enhancer-cpfis-zero-single-premium-charge'
+  | 'branch:tokio-marine-wealth-enhancer-cpfis-zero-top-up-charge'
+  | 'branch:tokio-marine-wealth-enhancer-cpfis-zero-recurring-single-premium-charge'
+  | 'branch:tokio-marine-wealth-enhancer-cpfis-zero-partial-withdrawal-charge'
   | 'branch:etiqa-flex-prime-ii-startup-bonus'
   | 'branch:etiqa-flex-prime-ii-special-bonus'
   | 'branch:etiqa-flex-prime-ii-loyalty-bonus'
@@ -2500,6 +2504,79 @@ function hsbcWealthInvestCpfStressPolicy(
 ): IlpPolicyInput {
   return hsbcWealthInvestCpfBasePolicy(snapshot, id, HSBC_STRESS_FUNDS, {
     name: 'Golden HSBC Life Wealth Invest (CPF) (SGD / Open-ended CPF OCF Stress)',
+  })
+}
+
+function tokioMarineWealthEnhancerCpfisBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-wealth-enhancer-cpfis', 'sgd-open-ended-cpf', id, {
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden TM Wealth Enhancer (CPFIS) (SGD / Open-ended CPF)',
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function tokioMarineWealthEnhancerCpfisBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return tokioMarineWealthEnhancerCpfisBasePolicy(snapshot, id, HSBC_BALANCED_FUNDS)
+}
+
+function tokioMarineWealthEnhancerCpfisEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return tokioMarineWealthEnhancerCpfisBasePolicy(snapshot, id, HSBC_BALANCED_FUNDS, {
+    name: 'Golden TM Wealth Enhancer (CPFIS) (SGD / Open-ended CPF Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 6,
+        durationMonths: 1,
+        amount: 10_000,
+      },
+      {
+        id: 'rsp-1',
+        type: 'recurring-single-premium',
+        startPolicyMonth: 7,
+        durationMonths: 6,
+        amount: 500,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 11,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function tokioMarineWealthEnhancerCpfisStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return tokioMarineWealthEnhancerCpfisBasePolicy(snapshot, id, HSBC_STRESS_FUNDS, {
+    name: 'Golden TM Wealth Enhancer (CPFIS) (SGD / Open-ended CPF OCF Stress)',
   })
 }
 
@@ -5445,6 +5522,48 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Tiq Invest alternate-fund stress scenario through the open-ended corridor.',
   },
   {
+    productId: 'tokio-marine-wealth-enhancer-cpfis',
+    variantId: 'sgd-open-ended-cpf',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'branch:tokio-marine-wealth-enhancer-cpfis-zero-single-premium-charge'],
+    description: 'TM Wealth Enhancer (CPFIS) baseline scenario proving zero-charge initial single-premium seeding through the open-ended CPF corridor.',
+  },
+  {
+    productId: 'tokio-marine-wealth-enhancer-cpfis',
+    variantId: 'sgd-open-ended-cpf',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:tokio-marine-wealth-enhancer-cpfis-zero-top-up-charge',
+      'branch:tokio-marine-wealth-enhancer-cpfis-zero-recurring-single-premium-charge',
+      'branch:tokio-marine-wealth-enhancer-cpfis-zero-partial-withdrawal-charge',
+      'tokio-recurring-single-premium-routing',
+    ],
+    description: 'TM Wealth Enhancer (CPFIS) supported event-heavy scenario covering zero-charge top-up, recurring single premium routing, and nil-charge withdrawals.',
+    integrityChecks: [
+      {
+        description: 'zero-charge top-up credits the full gross top-up amount to the policy account',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          (row.accounts.find((account) => account.accountId === 'policy')?.contributionAmount ?? 0) >= 10_000
+        )),
+      },
+      {
+        description: 'the seeded withdrawal executes through the published open-ended withdrawal corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'tokio-marine-wealth-enhancer-cpfis',
+    variantId: 'sgd-open-ended-cpf',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'TM Wealth Enhancer (CPFIS) alternate-fund stress scenario through the open-ended CPF corridor.',
+  },
+  {
     productId: 'etiqa-invest-flex-prime-ii',
     variantId: 'sgd-mip-10-flexi-3',
     scenarioId: 'baseline',
@@ -6782,6 +6901,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'etiqa-tiq-invest' && definition.scenarioId === 'ocf-stress') {
     return etiqaTiqInvestStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-wealth-enhancer-cpfis' && definition.scenarioId === 'baseline') {
+    return tokioMarineWealthEnhancerCpfisBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-wealth-enhancer-cpfis' && definition.scenarioId === 'event-heavy') {
+    return tokioMarineWealthEnhancerCpfisEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-wealth-enhancer-cpfis' && definition.scenarioId === 'ocf-stress') {
+    return tokioMarineWealthEnhancerCpfisStressPolicy(snapshot, id)
   }
   if (definition.productId === 'etiqa-invest-flex-prime-ii' && definition.scenarioId === 'baseline') {
     return etiqaFlexBaselinePolicy(snapshot, 'etiqa-invest-flex-prime-ii', definition.variantId as
