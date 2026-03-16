@@ -29,22 +29,26 @@ describe('parseTokioMarineWealthProIi', () => {
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('tokio-admin-charge-on-initial-account')
     expect(product.modeledEconomics).toContain('tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events')
+    expect(product.modeledEconomics).toContain('branch:tokio-wealth-pro-ii-advanced-death-monthly-protection-charge-accrual')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-pro-ii-monthly-protection-charge')
     expect(product.metadataOnlyBehaviors).toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
 
-    const variant = product.variants[0]
-    expect(variant?.id).toBe('sgd-mip-10')
-    expect(variant?.icpMonths).toBe(36)
-    expect(variant?.accounts.map((account) => account.id)).toEqual(['initial', 'accumulation', 'topup'])
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
+    const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10')
+    const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10-advanced-death')
+
+    expect(product.variants).toHaveLength(2)
+    expect(basicVariant?.icpMonths).toBe(36)
+    expect(advancedVariant?.icpMonths).toBe(36)
+    expect(basicVariant?.accounts.map((account) => account.id)).toEqual(['initial', 'accumulation', 'topup'])
+    expect(advancedVariant?.accounts.map((account) => account.id)).toEqual(['initial', 'accumulation', 'topup'])
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.17 },
       { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.35 },
       { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.37 },
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.41 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.43 },
     ])
-    expect(variant?.feeRules).toEqual(
+    expect(basicVariant?.feeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: 'initial-charge',
@@ -82,7 +86,29 @@ describe('parseTokioMarineWealthProIi', () => {
         }),
       ]),
     )
-    expect(variant?.eventChargeRules).toEqual(
+    expect(basicVariant?.feeRules.some((rule) => rule.id === 'monthly-protection-charge')).toBe(false)
+    expect(advancedVariant?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 3,
+              settlementPolicyYear: 4,
+            },
+          },
+        }),
+      ]),
+    )
+    expect(basicVariant?.eventChargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: 'partial-withdrawal-charge',
@@ -102,7 +128,7 @@ describe('parseTokioMarineWealthProIi', () => {
         }),
       ]),
     )
-    expect(variant?.distributionSupport).toEqual({
+    expect(basicVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
       cashPayoutWindows: [
@@ -118,6 +144,15 @@ describe('parseTokioMarineWealthProIi', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
-    expect(variant?.eecTable).toEqual([1, 1, 1, 0.99, 0.99, 0.96, 0.93, 0.89, 0.8, 0.1])
+    expect(advancedVariant?.distributionSupport).toEqual(basicVariant?.distributionSupport)
+    expect(advancedVariant?.eventChargeRules).toEqual(basicVariant?.eventChargeRules)
+    expect(basicVariant?.unsupportedItems).toContain(
+      'Advanced Death selection, Monthly Protection Charge, and multiple-life and capital-guarantee option administration remain metadata-only for this product.',
+    )
+    expect(advancedVariant?.warnings).toContain(
+      'The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window and policy-year-4 lump-sum settlement, after you enter the insured-life details and current net premium base.',
+    )
+    expect(basicVariant?.eecTable).toEqual([1, 1, 1, 0.99, 0.99, 0.96, 0.93, 0.89, 0.8, 0.1])
+    expect(advancedVariant?.eecTable).toEqual([1, 1, 1, 0.99, 0.99, 0.96, 0.93, 0.89, 0.8, 0.1])
   }, 30_000)
 })

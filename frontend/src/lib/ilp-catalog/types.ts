@@ -84,6 +84,11 @@ export interface IlpTemplateFeeRule {
       | 'tokio-mpc-unzo-death'
     monthlyModalFactor: number
     maxAgeNextBirthday?: number
+    accrual?: {
+      startPolicyYear: number
+      endPolicyYear: number
+      settlementPolicyYear: number
+    }
   }
   premiumBaseConfig?: {
     useHigherOfCommencementAndPrevailing: boolean

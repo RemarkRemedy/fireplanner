@@ -163,6 +163,11 @@ export interface IlpAssuranceChargeConfig {
     | 'tokio-mpc-unzo-death'
   monthlyModalFactor: number
   maxAgeNextBirthday?: number
+  accrual?: {
+    startPolicyYear: number
+    endPolicyYear: number
+    settlementPolicyYear: number
+  }
 }
 
 export interface IlpPremiumBaseMultiplierTier {
@@ -1187,6 +1192,20 @@ function assertDistributionConfiguration(input: IlpPolicyInput): void {
   }
 }
 
+function assertAccruedAssuranceEntryPoint(input: IlpPolicyInput): void {
+  const hasUnsupportedMidPolicyAccrual = input.chargeRules?.some((rule) => (
+    rule.assuranceConfig?.accrual != null
+    && (input.currentPolicyYear > 1 || input.monthsAlreadyPaid > 0)
+    && input.currentPolicyYear < rule.assuranceConfig.accrual.settlementPolicyYear
+  )) ?? false
+
+  if (hasUnsupportedMidPolicyAccrual) {
+    throw new Error(
+      `Cannot analyze ILP policy "${input.name}": accrued assurance rules currently require inception-state inputs, so mid-policy entry before settlement is not supported.`,
+    )
+  }
+}
+
 function resolveDistributionPayoutAccountIds(
   input: IlpPolicyInput,
   policyYear: number,
@@ -1606,14 +1625,17 @@ function computeAssuranceChargeByAccount(
   sumAssuredAtStartOfYear: number | undefined,
   wealthAssureValueAtStartOfYear: number | undefined,
   growthFrozenAtStartOfYear: boolean,
+  accruedChargeBalanceByRule: Map<string, number>,
 ): {
   charges: Map<string, number>
   nextSumAssured: number | undefined
   nextWealthAssureValue: number | undefined
   nextGrowthFrozen: boolean
+  nextAccruedChargeBalanceByRule: Map<string, number>
 } {
   const { input } = normalized
   const charges = new Map<string, number>(input.accounts.map((account) => [account.id, 0]))
+  const nextAccruedChargeBalanceByRule = new Map(accruedChargeBalanceByRule)
   const profile = normalized.assurance.profile
   if (!profile) {
     return {
@@ -1621,6 +1643,7 @@ function computeAssuranceChargeByAccount(
       nextSumAssured: sumAssuredAtStartOfYear,
       nextWealthAssureValue: wealthAssureValueAtStartOfYear,
       nextGrowthFrozen: growthFrozenAtStartOfYear,
+      nextAccruedChargeBalanceByRule,
     }
   }
 
@@ -1730,8 +1753,29 @@ function computeAssuranceChargeByAccount(
       * rule.assuranceConfig.monthlyModalFactor
       * 12
 
-    const allocations = applyChargeAllocationsWithFallback(
-      annualizedCharge,
+    const carriedAccruedCharge = nextAccruedChargeBalanceByRule.get(rule.id) ?? 0
+    const accrual = rule.assuranceConfig.accrual
+    const isWithinAccrualWindow = accrual != null
+      && policyYear >= accrual.startPolicyYear
+      && policyYear <= accrual.endPolicyYear
+    const isSettlementOrLater = accrual != null
+      && policyYear >= accrual.settlementPolicyYear
+
+    if (isWithinAccrualWindow) {
+      nextAccruedChargeBalanceByRule.set(rule.id, carriedAccruedCharge + annualizedCharge)
+      continue
+    }
+
+    const totalChargeDue = isSettlementOrLater
+      ? annualizedCharge + carriedAccruedCharge
+      : annualizedCharge
+    if (totalChargeDue <= CONTRIBUTION_TOLERANCE) {
+      nextAccruedChargeBalanceByRule.set(rule.id, 0)
+      continue
+    }
+
+    const { allocations, remainingCharge } = applyChargeAllocationsWithFallbackDetailed(
+      totalChargeDue,
       rule.allocation,
       appliesTo,
       fallbackAppliesTo,
@@ -1741,9 +1785,17 @@ function computeAssuranceChargeByAccount(
     for (const [accountId, amount] of allocations.entries()) {
       charges.set(accountId, (charges.get(accountId) ?? 0) + amount)
     }
+
+    nextAccruedChargeBalanceByRule.set(rule.id, accrual != null ? remainingCharge : 0)
   }
 
-  return { charges, nextSumAssured, nextWealthAssureValue, nextGrowthFrozen }
+  return {
+    charges,
+    nextSumAssured,
+    nextWealthAssureValue,
+    nextGrowthFrozen,
+    nextAccruedChargeBalanceByRule,
+  }
 }
 
 function resolveTieredBonusRate(
@@ -2656,15 +2708,23 @@ function computeCumulativePaidRegularPremiumCharge(
   return total
 }
 
-function applyChargeAllocationsWithFallback(
+function applyChargeAllocationsWithFallbackDetailed(
   totalCharge: number,
   allocation: IlpChargeRule['allocation'] | IlpEventChargeRule['allocation'],
   appliesTo: IlpAccount[],
   fallbackAppliesTo: IlpAccount[],
   openBalances: Map<string, number>,
-): Map<string, number> {
+): {
+  allocations: Map<string, number>
+  remainingCharge: number
+} {
   if (fallbackAppliesTo.length === 0) {
-    return allocateChargeTotal(totalCharge, allocation, appliesTo, openBalances)
+    const allocations = allocateChargeTotal(totalCharge, allocation, appliesTo, openBalances)
+    const allocatedAmount = Array.from(allocations.values()).reduce((sum, value) => sum + value, 0)
+    return {
+      allocations,
+      remainingCharge: Math.max(0, totalCharge - allocatedAmount),
+    }
   }
 
   const allocations = new Map<string, number>()
@@ -2713,7 +2773,27 @@ function applyChargeAllocationsWithFallback(
     applyCappedAllocations(overflowCharge, fallbackAppliesTo)
   }
 
-  return allocations
+  const allocatedAmount = Array.from(allocations.values()).reduce((sum, value) => sum + value, 0)
+  return {
+    allocations,
+    remainingCharge: Math.max(0, totalCharge - allocatedAmount),
+  }
+}
+
+function applyChargeAllocationsWithFallback(
+  totalCharge: number,
+  allocation: IlpChargeRule['allocation'] | IlpEventChargeRule['allocation'],
+  appliesTo: IlpAccount[],
+  fallbackAppliesTo: IlpAccount[],
+  openBalances: Map<string, number>,
+): Map<string, number> {
+  return applyChargeAllocationsWithFallbackDetailed(
+    totalCharge,
+    allocation,
+    appliesTo,
+    fallbackAppliesTo,
+    openBalances,
+  ).allocations
 }
 
 function computePremiumHolidayChargeForEvent(
@@ -3109,6 +3189,7 @@ export function projectIlpPolicy(
   scenario: ReturnScenario,
 ): IlpProjectionResult {
   assertBeforeMip(input)
+  assertAccruedAssuranceEntryPoint(input)
   assertScheduledPayoutConfiguration(input)
   assertDistributionConfiguration(input)
   const normalized = buildNormalizedPolicyInput(input)
@@ -3131,6 +3212,9 @@ export function projectIlpPolicy(
   let assuranceSumAssured = input.assuranceProfile?.currentSumAssured
   let assuranceWealthAssureValue = input.assuranceProfile?.currentWealthAssureValue
   let assuranceGrowthFrozen = false
+  let assuranceAccruedChargeBalanceByRule = new Map<string, number>(
+    normalized.assurance.rules.map(({ rule }) => [rule.id, 0]),
+  )
   const assuranceRelevantAccountIds = getAssuranceRelevantAccountIds(normalized)
 
   for (let year = 1; year <= totalYears; year += 1) {
@@ -3252,11 +3336,13 @@ export function projectIlpPolicy(
       assuranceSumAssured,
       assuranceWealthAssureValue,
       assuranceGrowthFrozen,
+      assuranceAccruedChargeBalanceByRule,
     )
     const assuranceChargeByAccount = assuranceChargeResult.charges
     assuranceSumAssured = assuranceChargeResult.nextSumAssured
     assuranceWealthAssureValue = assuranceChargeResult.nextWealthAssureValue
     assuranceGrowthFrozen = assuranceChargeResult.nextGrowthFrozen
+    assuranceAccruedChargeBalanceByRule = assuranceChargeResult.nextAccruedChargeBalanceByRule
 
     const accountRows: IlpAccountYearRow[] = []
     let combinedValue = 0

@@ -23,6 +23,8 @@ import {
   DEFAULT_IUA_FEE_RATE,
   EEC_PRESET_MIP_30,
 } from '@/lib/data/ilpDefaults'
+import { TOKIO_MPC_PROTECTED_BASE_FLOOR_MULTIPLIER } from '@/lib/data/ilpAssuranceConfig'
+import { TOKIO_MPC_UNZO_DEATH_RATE_TABLE } from '@/lib/data/ilpAssuranceTables'
 import { ilpPolicySeedSchema } from '@/lib/ilp-catalog/policySeedSchema'
 import { ilpPolicySchema } from '@/lib/validation/ilpSchema'
 
@@ -2648,6 +2650,394 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[0], 'topup').grossFee).toBe(800)
   })
 
+  it('accrues Tokio MPC for policy years 1 to 3 and settles the carried balance in policy year 4', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 0,
+      mipLength: 5,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 5_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 5_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-mpc-accrued',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 3,
+              settlementPolicyYear: 4,
+            },
+          },
+          requiresManualInput: true,
+          allocation: 'equal-split',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 1_200,
+      },
+    }), 'mid')
+
+    const tokioRates = TOKIO_MPC_UNZO_DEATH_RATE_TABLE['male-non-smoker']
+    const expectedSettlementCharge = [40, 41, 42, 43]
+      .map((age) => (tokioRates[age - 1] ?? 0) * 1_200 / 1000 * 12)
+      .reduce((sum, value) => sum + value, 0)
+    const expectedYearFiveCharge = (tokioRates[43] ?? 0) * 1_200 / 1000 * 12
+
+    expect(result.rows.map((row) => row.policyYear)).toEqual([1, 2, 3, 4, 5])
+    expect(accountRow(result.rows[0], 'accumulation').grossFee).toBe(0)
+    expect(accountRow(result.rows[1], 'accumulation').grossFee).toBe(0)
+    expect(accountRow(result.rows[2], 'accumulation').grossFee).toBe(0)
+    expect(accountRow(result.rows[3], 'topup').grossFee).toBeCloseTo(expectedSettlementCharge / 2, 9)
+    expect(accountRow(result.rows[3], 'initial').grossFee).toBeCloseTo(expectedSettlementCharge / 2, 9)
+    expect(accountRow(result.rows[4], 'topup').grossFee).toBeCloseTo(expectedYearFiveCharge / 2, 9)
+    expect(accountRow(result.rows[4], 'initial').grossFee).toBeCloseTo(expectedYearFiveCharge / 2, 9)
+  })
+
+  it('settles accrued Tokio MPC through accumulation, then topup, then initial', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 0,
+      mipLength: 4,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 1,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 1,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 10,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-mpc-accrued',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 3,
+              settlementPolicyYear: 4,
+            },
+          },
+          requiresManualInput: true,
+          allocation: 'equal-split',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 1_200,
+      },
+    }), 'mid')
+
+    const settlementRow = result.rows[3]
+    const tokioRates = TOKIO_MPC_UNZO_DEATH_RATE_TABLE['male-non-smoker']
+    const midpointSumAtRisk = Math.max(0, 1_200 - (1 * TOKIO_MPC_PROTECTED_BASE_FLOOR_MULTIPLIER))
+    const expectedSettlementCharge = [40, 41, 42, 43]
+      .map((age) => (tokioRates[age - 1] ?? 0) * midpointSumAtRisk / 1000 * 12)
+      .reduce((sum, value) => sum + value, 0)
+
+    expect(accountRow(settlementRow, 'accumulation').grossFee).toBe(1)
+    expect(accountRow(settlementRow, 'topup').grossFee).toBe(1)
+    expect(accountRow(settlementRow, 'initial').grossFee).toBeCloseTo(expectedSettlementCharge - 2, 9)
+  })
+
+  it('carries unpaid accrued Tokio MPC forward after the settlement year until balances recover', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 100,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 0,
+      mipLength: 5,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 1,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      policyEvents: [
+        {
+          id: 'tokio-accrual-holiday',
+          type: 'premium-holiday',
+          startPolicyMonth: 1,
+          durationMonths: 36,
+        },
+      ],
+      chargeRules: [
+        {
+          id: 'tokio-mpc-accrued',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 3,
+              settlementPolicyYear: 4,
+            },
+          },
+          requiresManualInput: true,
+          allocation: 'equal-split',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 70_000,
+      },
+    }), 'mid')
+
+    expect(accountRow(result.rows[3], 'accumulation').grossFee).toBe(1)
+    expect(accountRow(result.rows[4], 'accumulation').grossFee).toBeGreaterThan(300)
+    expect(accountRow(result.rows[4], 'accumulation').grossFee).toBeLessThan(400)
+  })
+
+  it('does not carry unpaid balances forward for non-accrued Tokio MPC rules', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 100,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 0,
+      mipLength: 2,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 1,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      policyEvents: [
+        {
+          id: 'tokio-immediate-holiday',
+          type: 'premium-holiday',
+          startPolicyMonth: 1,
+          durationMonths: 12,
+        },
+      ],
+      chargeRules: [
+        {
+          id: 'tokio-mpc-immediate',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+          },
+          requiresManualInput: true,
+          allocation: 'equal-split',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 70_000,
+      },
+    }), 'mid')
+
+    expect(accountRow(result.rows[0], 'accumulation').grossFee).toBe(1)
+    expect(accountRow(result.rows[1], 'accumulation').grossFee).toBe(0)
+  })
+
   it('projects the next-year Prudential Assure II combined assurance charge from the current worked-example state', () => {
     const result = projectIlpPolicy(makeDefaultPolicy({
       monthlyContribution: 0,
@@ -4489,6 +4879,175 @@ describe('computeNpvAnalysis', () => {
         smokerStatus: 'non-smoker',
       },
     }))).toThrow(/120/)
+  })
+
+  it('rejects invalid assurance accrual windows where settlement does not immediately follow the accrual period', () => {
+    expect(() => ilpPolicySchema.parse(makeDefaultPolicy({
+      chargeRules: [
+        {
+          id: 'tokio-mpc-accrual-invalid',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['aua'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 3,
+              settlementPolicyYear: 5,
+            },
+          },
+          allocation: 'equal-split',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 1_200,
+      },
+    }))).toThrow(/exactly one policy year after/)
+  })
+
+  it('rejects invalid assurance accrual windows where the end year precedes the start year', () => {
+    expect(() => ilpPolicySchema.parse(makeDefaultPolicy({
+      chargeRules: [
+        {
+          id: 'tokio-mpc-accrual-window-invalid',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['aua'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            accrual: {
+              startPolicyYear: 3,
+              endPolicyYear: 2,
+              settlementPolicyYear: 3,
+            },
+          },
+          allocation: 'equal-split',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 1_200,
+      },
+    }))).toThrow(/greater than or equal to startPolicyYear/)
+  })
+
+  it('rejects during-MIP assurance accrual settlement years beyond mipLength', () => {
+    expect(() => ilpPolicySchema.parse(makeDefaultPolicy({
+      currentPolicyYear: 1,
+      monthsAlreadyPaid: 0,
+      mipLength: 4,
+      chargeRules: [
+        {
+          id: 'tokio-mpc-accrual-outside-mip',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['aua'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 4,
+              settlementPolicyYear: 5,
+            },
+          },
+          allocation: 'equal-split',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 1_200,
+      },
+    }))).toThrow(/within the policy mipLength/)
+  })
+
+  it('rejects assurance accrual on non-Tokio assurance formulas', () => {
+    expect(() => ilpPolicySchema.parse(makeDefaultPolicy({
+      chargeRules: [
+        {
+          id: 'prudential-accrual-invalid',
+          label: 'Death Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['aua'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'prudential-prosper-death',
+            monthlyModalFactor: 1,
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 3,
+              settlementPolicyYear: 4,
+            },
+          },
+          allocation: 'equal-split',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 50_000,
+      },
+    }))).toThrow(/only supported for tokio-mpc-net-premium-floor rules/)
+  })
+
+  it('rejects mid-policy accrued assurance entry before the settlement year', () => {
+    expect(() => projectIlpPolicy(makeDefaultPolicy({
+      currentPolicyYear: 2,
+      monthsAlreadyPaid: 24,
+      chargeRules: [
+        {
+          id: 'tokio-mpc-accrual-mid-policy',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['aua'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 3,
+              settlementPolicyYear: 4,
+            },
+          },
+          allocation: 'equal-split',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 1_200,
+      },
+    }), 'mid')).toThrow(/mid-policy entry before settlement is not supported/)
   })
 
   it('rejects open-ended policies without a positive postMipYears horizon', () => {

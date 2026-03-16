@@ -304,6 +304,11 @@ export const ilpChargeRuleSchema = z.object({
     ]).optional(),
     monthlyModalFactor: z.number().min(0).max(1),
     maxAgeNextBirthday: z.number().int().min(1).max(120).optional(),
+    accrual: z.object({
+      startPolicyYear: z.number().int().min(1).max(100),
+      endPolicyYear: z.number().int().min(1).max(100),
+      settlementPolicyYear: z.number().int().min(1).max(100),
+    }).optional(),
   }).optional(),
   premiumBaseConfig: z.object({
     useHigherOfCommencementAndPrevailing: z.boolean(),
@@ -480,6 +485,34 @@ export const ilpChargeRuleSchema = z.object({
       message: 'Tokio MPC assurance rules must declare a rateTable',
       path: ['assuranceConfig', 'rateTable'],
     })
+  }
+
+  if (rule.assuranceConfig?.accrual) {
+    if (rule.assuranceConfig.formula !== 'tokio-mpc-net-premium-floor') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Assurance accrual is only supported for tokio-mpc-net-premium-floor rules',
+        path: ['assuranceConfig', 'accrual'],
+      })
+    }
+
+    const { startPolicyYear, endPolicyYear, settlementPolicyYear } = rule.assuranceConfig.accrual
+
+    if (endPolicyYear < startPolicyYear) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Assurance accrual endPolicyYear must be greater than or equal to startPolicyYear',
+        path: ['assuranceConfig', 'accrual', 'endPolicyYear'],
+      })
+    }
+
+    if (settlementPolicyYear !== endPolicyYear + 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Assurance accrual settlementPolicyYear must be exactly one policy year after accrual endPolicyYear',
+        path: ['assuranceConfig', 'accrual', 'settlementPolicyYear'],
+      })
+    }
   }
 })
 
@@ -915,6 +948,32 @@ export const ilpPolicySchema = z.object({
         code: z.ZodIssueCode.custom,
         message: 'Charge rule fallbackAppliesTo must reference valid account IDs',
         path: ['chargeRules', index, 'fallbackAppliesTo'],
+      })
+    }
+
+    if (
+      mipBasis === 'finite'
+      && policy.mipLength != null
+      && rule.activeWindow === 'during-mip'
+      && rule.assuranceConfig?.accrual
+      && rule.assuranceConfig.accrual.settlementPolicyYear > policy.mipLength
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'During-MIP assurance accrual settlementPolicyYear must be within the policy mipLength',
+        path: ['chargeRules', index, 'assuranceConfig', 'accrual', 'settlementPolicyYear'],
+      })
+    }
+
+    if (
+      rule.assuranceConfig?.accrual
+      && (policy.currentPolicyYear > 1 || policy.monthsAlreadyPaid > 0)
+      && policy.currentPolicyYear < rule.assuranceConfig.accrual.settlementPolicyYear
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Accrued assurance rules currently require inception-state inputs; mid-policy entry before settlement is not supported',
+        path: ['currentPolicyYear'],
       })
     }
   })

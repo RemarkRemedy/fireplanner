@@ -80,6 +80,11 @@ export const ilpTemplateFeeRuleSchema = z.object({
     ]).optional(),
     monthlyModalFactor: z.number().min(0).max(1),
     maxAgeNextBirthday: z.number().int().min(1).max(120).optional(),
+    accrual: z.object({
+      startPolicyYear: z.number().int().min(1).max(100),
+      endPolicyYear: z.number().int().min(1).max(100),
+      settlementPolicyYear: z.number().int().min(1).max(100),
+    }).optional(),
   }).optional(),
   premiumBaseConfig: z.object({
     useHigherOfCommencementAndPrevailing: z.boolean(),
@@ -117,6 +122,25 @@ export const ilpTemplateFeeRuleSchema = z.object({
   endPolicyYear: z.number().int().min(1).max(100).nullable().optional(),
   notes: z.array(z.string()),
   sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
+}).superRefine((rule, ctx) => {
+  const accrual = rule.assuranceConfig?.accrual
+  if (!accrual) return
+
+  if (accrual.endPolicyYear < accrual.startPolicyYear) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Assurance accrual endPolicyYear must be greater than or equal to startPolicyYear',
+      path: ['assuranceConfig', 'accrual', 'endPolicyYear'],
+    })
+  }
+
+  if (accrual.settlementPolicyYear !== accrual.endPolicyYear + 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Assurance accrual settlementPolicyYear must be exactly one policy year after accrual endPolicyYear',
+      path: ['assuranceConfig', 'accrual', 'settlementPolicyYear'],
+    })
+  }
 })
 
 export const ilpTemplateEventChargeRuleSchema = z.object({
@@ -330,6 +354,22 @@ export const ilpTemplateVariantSchema = z.object({
       path: ['eecTable'],
     })
   }
+
+  variant.feeRules.forEach((rule, ruleIndex) => {
+    if (
+      mipBasis === 'finite'
+      && variant.mipLength != null
+      && rule.activeWindow === 'during-mip'
+      && rule.assuranceConfig?.accrual
+      && rule.assuranceConfig.accrual.settlementPolicyYear > variant.mipLength
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'During-MIP assurance accrual settlementPolicyYear must be within the variant mipLength',
+        path: ['feeRules', ruleIndex, 'assuranceConfig', 'accrual', 'settlementPolicyYear'],
+      })
+    }
+  })
 })
 
 export const ilpCatalogProductSchema = z.object({
