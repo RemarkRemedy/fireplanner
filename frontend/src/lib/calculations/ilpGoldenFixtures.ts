@@ -108,6 +108,13 @@ export type GoldenCoverageTag =
   | 'branch:manulife-smartretire-v-withdrawal-and-surrender-charge'
   | 'branch:manulife-smartretire-v-premium-shortfall-charge'
   | 'branch:manulife-smartretire-v-zero-top-up-charge'
+  | 'branch:singlife-legacy-invest-welcome-bonus'
+  | 'branch:singlife-legacy-invest-loyalty-bonus'
+  | 'branch:singlife-legacy-invest-administrative-charge'
+  | 'branch:singlife-legacy-invest-top-up-charge'
+  | 'branch:singlife-legacy-invest-partial-withdrawal-charge'
+  | 'branch:singlife-legacy-invest-surrender-charge'
+  | 'branch:singlife-legacy-invest-premium-shortfall-charge'
   | 'branch:pru-holiday-refund'
   | 'branch:pru-holiday-fallback'
   | 'branch:pru-top-up-charge'
@@ -3711,6 +3718,96 @@ function manulifeSmartRetireIncomeStressPolicy(
 ): IlpPolicyInput {
   return manulifeSmartRetireIncomeBasePolicy(snapshot, 'sgd-mip-12-flexi-8', id, MANULIFE_STRESS_FUNDS, {
     name: 'Golden Manulife SmartRetire (V) - Income (SGD / MIP 12 Flexi 8 OCF Stress)',
+  })
+}
+
+function singlifeLegacyInvestBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'singlife-legacy-invest', 'sgd-mip-10-term-15', id, {
+    monthlyContribution: 1_500,
+    currentPolicyYear: 9,
+    monthsAlreadyPaid: 96,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden Singlife Legacy Invest (SGD / MIP 10 Term 15)',
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 42_000,
+      })),
+      distributionAssumption: {
+        mode: 'cash-payout',
+        source: 'manual-assumption',
+        annualYieldRate: 0.03,
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        source: 'manual-assumption',
+        accountId: 'policy',
+        startPolicyYear: 11,
+        durationYears: 5,
+        annualPayoutAmount: 6_000,
+      },
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function singlifeLegacyInvestBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return singlifeLegacyInvestBasePolicy(snapshot, id, MANULIFE_BALANCED_FUNDS, {
+    name: 'Golden Singlife Legacy Invest (SGD / MIP 10 Term 15 Baseline)',
+  })
+}
+
+function singlifeLegacyInvestEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return singlifeLegacyInvestBasePolicy(snapshot, id, MANULIFE_BALANCED_FUNDS, {
+    name: 'Golden Singlife Legacy Invest (SGD / MIP 10 Term 15 Event Heavy)',
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 97,
+        durationMonths: 6,
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 102,
+        durationMonths: 1,
+        amount: 12_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 106,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function singlifeLegacyInvestStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return singlifeLegacyInvestBasePolicy(snapshot, id, MANULIFE_STRESS_FUNDS, {
+    name: 'Golden Singlife Legacy Invest (SGD / MIP 10 Term 15 OCF Stress)',
   })
 }
 
@@ -9366,6 +9463,59 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Manulife SmartRetire (V) - Income alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'singlife-legacy-invest',
+    variantId: 'sgd-mip-10-term-15',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:scheduled-payout-manual-assumption',
+      'kernel:distribution-mode-assumption',
+      'branch:singlife-legacy-invest-welcome-bonus',
+      'branch:singlife-legacy-invest-loyalty-bonus',
+      'branch:singlife-legacy-invest-administrative-charge',
+    ],
+    description: 'Singlife Legacy Invest baseline scenario covering the supported SGD / regular-pay-10-years / policy-term-15-years corridor with scheduled-redemption and cash-payout distribution assumptions.',
+    integrityChecks: [
+      {
+        description: 'baseline policy produces annual withdrawals under the scheduled-redemption assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'singlife-legacy-invest',
+    variantId: 'sgd-mip-10-term-15',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:singlife-legacy-invest-top-up-charge',
+      'branch:singlife-legacy-invest-partial-withdrawal-charge',
+      'branch:singlife-legacy-invest-surrender-charge',
+      'branch:singlife-legacy-invest-premium-shortfall-charge',
+    ],
+    description: 'Singlife Legacy Invest event-heavy scenario covering premium holiday, charged top-up, charged withdrawal, and the same supported payout corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy records annual contribution above scheduled premium from the seeded top-up event',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+      {
+        description: 'event-heavy policy records annual withdrawals in projection output',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'singlife-legacy-invest',
+    variantId: 'sgd-mip-10-term-15',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Singlife Legacy Invest alternate-fund high-OCF stress scenario through the supported SGD corridor.',
+  },
+  {
     productId: 'prudential-prulink-investgrowth',
     variantId: 'sgd-open-ended-cash',
     scenarioId: 'baseline',
@@ -12518,6 +12668,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'manulife-smartretire-v-income' && definition.scenarioId === 'ocf-stress') {
     return manulifeSmartRetireIncomeStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'singlife-legacy-invest' && definition.scenarioId === 'baseline') {
+    return singlifeLegacyInvestBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'singlife-legacy-invest' && definition.scenarioId === 'event-heavy') {
+    return singlifeLegacyInvestEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'singlife-legacy-invest' && definition.scenarioId === 'ocf-stress') {
+    return singlifeLegacyInvestStressPolicy(snapshot, id)
   }
   if (definition.productId === 'etiqa-invest-starter' && definition.scenarioId === 'baseline') {
     return etiqaInvestStarterBaselinePolicy(snapshot, id)

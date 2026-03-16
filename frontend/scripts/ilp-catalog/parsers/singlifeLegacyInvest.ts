@@ -249,8 +249,8 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: SURRENDER_AND_WITHDRAWAL_CHARGE_SCHEDULE.map((tier) => tier.rate),
     warnings: [
-      'This partial template models the SGD / regular-pay-10-years / policy-term-15-years corridor only.',
-      'This partial template models the welcome bonus tiers, the 0.30% annual loyalty bonus from policy years 11 to 14, the first-10-policy-years administrative charge, the 3% single-premium top-up charge, the published Appendix A surrender / withdrawal / premium-shortfall charge schedules, manual regular-withdrawal payout support, and the reinvest-default distribution-mode assumption surface.',
+      'This supported template models the SGD / regular-pay-10-years / policy-term-15-years corridor only.',
+      'This supported template models the welcome bonus tiers, the 0.30% annual loyalty bonus from policy years 11 to 14, the first-10-policy-years administrative charge, the 3% single-premium top-up charge, the published Appendix A surrender / withdrawal / premium-shortfall charge schedules, manual regular-withdrawal payout support, and the reinvest-default distribution-mode assumption surface.',
       'Special Booster, Maturity Bonus, Free Partial Withdrawal Benefit sequencing, the $40 dividend cash-out threshold, and regular-withdrawal operational constraints remain informational only in V1.',
     ],
     unsupportedItems: [
@@ -278,9 +278,9 @@ export function parseSinglifeLegacyInvest({ document, sourceChecksumSha256 }: Pa
     sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:singlife-legacy-invest-welcome-bonus',
       'branch:singlife-legacy-invest-loyalty-bonus',
@@ -305,8 +305,8 @@ export function parseSinglifeLegacyInvest({ document, sourceChecksumSha256 }: Pa
       'singlife-legacy-invest-non-sgd-and-other-term-corridors',
     ],
     warnings: [
-      'Singlife Legacy Invest is cataloged as a partial modeled subset in V1. The parser captures the SGD / regular-pay-10-years / policy-term-15-years corridor: welcome bonus tiers, annual loyalty bonus, administrative charge, single-premium top-up charge, the Appendix A surrender / withdrawal / premium-shortfall schedules, manual regular-withdrawal payout support, and reinvest-default distribution support.',
-      'Special Booster, Maturity Bonus, Free Partial Withdrawal Benefit sequencing, and protection-side benefits remain informational only because the current engine does not yet execute those one-time or stateful mechanics.',
+      'Singlife Legacy Invest is cataloged as a supported V1 product for the SGD / regular-pay-10-years / policy-term-15-years corridor. The parser captures welcome bonus tiers, annual loyalty bonus, administrative charge, single-premium top-up charge, the Appendix A surrender / withdrawal / premium-shortfall schedules, manual regular-withdrawal payout support, and reinvest-default distribution support.',
+      'Special Booster, Maturity Bonus, Free Partial Withdrawal Benefit sequencing, protection-side benefits, and non-SGD or alternate-term corridors remain informational only.',
       'Structured extraction validated against the Singlife Legacy Invest product summary text layer.',
     ],
     archived: false,

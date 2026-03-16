@@ -5354,7 +5354,7 @@ describe('templateVariantToPolicySeed', () => {
     ])
   })
 
-  it('maps Singlife Legacy Invest into a partial seed with policy-year shortfall and withdrawal charges', () => {
+  it('maps Singlife Legacy Invest into a supported seed with policy-year shortfall and withdrawal charges', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'singlife-legacy-invest')
     expect(product).toBeDefined()
@@ -5364,7 +5364,7 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('Singlife Legacy Invest (SGD / MIP 10 (Term 15))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:singlife-legacy-invest-welcome-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:singlife-legacy-invest-premium-shortfall-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
