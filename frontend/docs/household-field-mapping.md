@@ -76,6 +76,7 @@ Normative rules for PR 2:
 - `cpfAutoFallbackIncludeSA` -> `adults[0].cpf.autoFallbackIncludeSA` -> `adultsById["adult-self"].cpf.autoFallbackIncludeSA`
 - `cpfVirtualRebalancing` -> `adults[0].cpf.virtualRebalancing` -> `adultsById["adult-self"].cpf.virtualRebalancing`
 - `cpfVirtualRebalancingMode` -> `adults[0].cpf.virtualRebalancingMode` -> `adultsById["adult-self"].cpf.virtualRebalancingMode`
+- `annualInsurancePremiums` -> `adults[0].annualInsurancePremiums` -> `adultsById["adult-self"].annualInsurancePremiums` (annual cost, deducted from projection cash flow)
 - `parentSupportEnabled` -> `adults[0].parentSupportEnabled` -> `adultsById["adult-self"].parentSupportEnabled`
 - `parentSupport` -> `expenses["expense-parent-support-*"]` with one monthly item per legacy entry -> `expenseOrder` and `expensesById["expense-parent-support-*"]`
 - `healthcareConfig` -> `adults[0].healthcare` -> `adultsById["adult-self"].healthcare`
@@ -138,6 +139,7 @@ Normative notes:
 - `existingAppreciationRate` -> `properties[0].existingAppreciationRate` -> `propertiesById["property-primary"].existingAppreciationRate`
 - `existingLeaseYears` -> `properties[0].existingLeaseYears` -> `propertiesById["property-primary"].existingLeaseYears`
 - `existingApplyBalaDecay` -> `properties[0].existingApplyBalaDecay` -> `propertiesById["property-primary"].existingApplyBalaDecay`
+- `rentalIncomeEndAge` -> `properties[0].rentalIncomeEndAge` -> `propertiesById["property-primary"].rentalIncomeEndAge` (age at which rental income stops)
 - `downsizing` -> `properties[0].downsizing` -> `propertiesById["property-primary"].downsizing`
 - `hdbFlatType` -> `properties[0].hdbFlatType` -> `propertiesById["property-primary"].hdbFlatType`
 - `hdbMonetizationStrategy` -> `properties[0].hdbMonetizationStrategy` -> `propertiesById["property-primary"].hdbMonetizationStrategy`

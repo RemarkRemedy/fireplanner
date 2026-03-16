@@ -1,10 +1,9 @@
 /**
  * Known unmapped fields (no store destination yet):
- * - Healthcare: hasRider, annualIspPremium, useMediSaveForPremiums, careShieldSupplementPlan, annualCareShieldPremium
+ * - Healthcare: hasRider, careShieldSupplementPlan
  * - Salary: variablePayPercent
  * - SRS: srsInvestmentStrategy
- * - Protection: emergencyFundTarget, emergencyFundType, hasTermLife, annualInsurancePremiums
- * - Property: rentalIncomeEndYear
+ * - Protection: emergencyFundType, hasTermLife
  * - Expenses: retirementSpendingModel
  * - Allocation: rebalancingFrequency, glidePathEndTemplate
  * These are collected for future features. Adding store support requires schema changes.
@@ -177,6 +176,13 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       if (typeof values.rentalExpensesPercent === 'number') {
         propertyUpdates.rentalExpensesPercent = values.rentalExpensesPercent
       }
+      // Convert calendar year to age at apply boundary (engine works in age-space)
+      if (typeof values.rentalIncomeEndYear === 'number') {
+        const endAge = selfAdult.currentAge + (values.rentalIncomeEndYear - currentYear)
+        if (endAge > selfAdult.currentAge) {
+          propertyUpdates.rentalIncomeEndAge = endAge
+        }
+      }
 
       if (values.planToDownsize === true) {
         const downsizing: DownsizingConfig = {
@@ -209,10 +215,11 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         propertyUpdates.existingMortgageRemainingYears = 0
       }
 
-      // Toggle-off: clear rental yield and expenses when user says no rental income
+      // Toggle-off: clear rental yield, expenses, and end age when user says no rental income
       if (values.hasRentalIncome === false) {
         propertyUpdates.rentalYield = 0
         propertyUpdates.rentalExpensesPercent = 0
+        propertyUpdates.rentalIncomeEndAge = undefined
       }
 
       store.updateProperty(property.id, propertyUpdates)
@@ -317,6 +324,15 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       }
       if (typeof values.mediSaveTopUpAnnual === 'number') {
         healthcareUpdates.mediSaveTopUpAnnual = values.mediSaveTopUpAnnual
+      }
+      if (typeof values.annualIspPremium === 'number') {
+        healthcareUpdates.customIspPremium = values.annualIspPremium
+      }
+      if (typeof values.annualCareShieldPremium === 'number') {
+        healthcareUpdates.customCareShieldPremium = values.annualCareShieldPremium
+      }
+      if (typeof values.useMediSaveForPremiums === 'boolean') {
+        healthcareUpdates.useMediSaveForPremiums = values.useMediSaveForPremiums
       }
 
       store.updateAdult(selfAdult.id, {
@@ -538,6 +554,12 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       }
       if (typeof values.disabilityCoverageMonthly === 'number') {
         adultUpdates.insuranceDisabilityMonthly = values.disabilityCoverageMonthly
+      }
+      if (typeof values.annualInsurancePremiums === 'number') {
+        adultUpdates.annualInsurancePremiums = values.annualInsurancePremiums
+      }
+      if (typeof values.emergencyFundTarget === 'number') {
+        adultUpdates.emergencyFundTarget = values.emergencyFundTarget
       }
 
       if (Object.keys(adultUpdates).length > 0) {

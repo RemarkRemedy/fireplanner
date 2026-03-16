@@ -311,6 +311,7 @@ function mapProperty(
     leaseYears: property.leaseYears,
     appreciationRate: property.appreciationRate,
     rentalYield: property.rentalYield * (1 - (property.rentalExpensesPercent ?? 0)),
+    rentalIncomeEndAge: property.rentalIncomeEndAge,
     mortgageRate: property.mortgageRate,
     mortgageTerm: property.mortgageTerm,
     ltv: property.ltv,
@@ -458,6 +459,9 @@ function buildAggregateRuntimeSnapshot(
       ? adult.cpf.retirementSum
       : best,
     plan.adults[0].cpf.retirementSum,
+  )
+  defaults.profile.annualInsurancePremiums = plan.adults.reduce(
+    (sum, adult) => sum + (adult.annualInsurancePremiums ?? 0), 0
   )
   defaults.profile.parentSupportEnabled = plan.expenses.some((expense) => expense.kind === 'parent-support')
   defaults.profile.parentSupport = mapParentSupport(

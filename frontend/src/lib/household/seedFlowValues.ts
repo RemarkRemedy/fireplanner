@@ -89,6 +89,14 @@ function seedProperty(): Record<string, unknown> {
     if (property.rentalExpensesPercent != null && property.rentalExpensesPercent > 0) {
       seeds.rentalExpensesPercent = property.rentalExpensesPercent
     }
+    // Reverse-compute calendar year from stored age
+    if (property.rentalIncomeEndAge != null) {
+      const selfAdult = getSelfAdult()
+      if (selfAdult) {
+        const currentYear = new Date().getFullYear()
+        seeds.rentalIncomeEndYear = currentYear + (property.rentalIncomeEndAge - selfAdult.currentAge)
+      }
+    }
   }
 
   return seeds
@@ -142,6 +150,13 @@ function seedHealthcare(adult: PlanningAdult): Record<string, unknown> {
   seeds.careShieldEnrolled = adult.healthcare.careShieldLifeEnabled
   seeds.mediSaveBalance = adult.cpf.balances.ma
   seeds.mediSaveTopUpAnnual = adult.healthcare.mediSaveTopUpAnnual ?? 0
+  if (adult.healthcare.customIspPremium != null) {
+    seeds.annualIspPremium = adult.healthcare.customIspPremium
+  }
+  if (adult.healthcare.customCareShieldPremium != null) {
+    seeds.annualCareShieldPremium = adult.healthcare.customCareShieldPremium
+  }
+  seeds.useMediSaveForPremiums = adult.healthcare.useMediSaveForPremiums ?? true
   return seeds
 }
 
@@ -214,7 +229,7 @@ function seedAllocation(): Record<string, unknown> {
 function seedProtection(adult: PlanningAdult): Record<string, unknown> {
   const seeds: Record<string, unknown> = {}
   seeds.emergencyFundBalance = adult.cashSavings
-  seeds.emergencyFundTarget = 6 // sensible default
+  seeds.emergencyFundTarget = adult.emergencyFundTarget ?? 6
 
   const hasDebt = adult.nonMortgageDebtTotal > 0
   seeds.hasOutstandingDebt = hasDebt
@@ -222,6 +237,7 @@ function seedProtection(adult: PlanningAdult): Record<string, unknown> {
   seeds.lifeCoverageAmount = adult.insuranceDeathCoverage
   seeds.ciCoverageAmount = adult.insuranceCICoverage
   seeds.disabilityCoverageMonthly = adult.insuranceDisabilityMonthly
+  seeds.annualInsurancePremiums = adult.annualInsurancePremiums ?? 0
   return seeds
 }
 

@@ -43,6 +43,7 @@ export const PROPERTY_DATA_KEYS = [
   'mortgageCpfMonthly',
   'ownershipPercent',
   'existingAppreciationRate', 'existingLeaseYears', 'existingApplyBalaDecay',
+  'rentalIncomeEndAge',
   'downsizing',
   'hdbFlatType', 'hdbMonetizationStrategy', 'hdbLbsRetainedLease',
   'hdbSublettingRooms', 'hdbSublettingRate', 'hdbCpfUsedForHousing',

@@ -52,7 +52,7 @@ export const PROFILE_DATA_KEYS = [
   'cpfOaWithdrawals', 'cpfisEnabled', 'cpfisOaReturn', 'cpfisSaReturn',
   'cpfAutoFallback', 'cpfAutoFallbackIncludeSA',
   'cpfVirtualRebalancing', 'cpfVirtualRebalancingMode',
-  'parentSupportEnabled', 'parentSupport',
+  'parentSupportEnabled', 'parentSupport', 'annualInsurancePremiums',
   'healthcareConfig',
   'retirementWithdrawals',
   'expenseAdjustments',

@@ -895,6 +895,7 @@ export interface PropertyState {
   existingAppreciationRate: number   // annual appreciation rate for existing property (separate from new purchase analysis)
   existingLeaseYears: number         // remaining lease years for existing property
   existingApplyBalaDecay: boolean    // when true, Bala's Table lease decay multiplies the appreciated value each year rather than acting as a separate cashflow
+  rentalIncomeEndAge?: number        // age at which rental income stops
   // Downsizing
   downsizing: DownsizingConfig
   // HDB monetization
