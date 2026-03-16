@@ -411,7 +411,7 @@ describe('applySetupDraft — redo path', () => {
       timing: { kind: 'single-age', owner: 'self', age: 35 },
       amount: 50_000,
       durationYears: 1,
-      priority: 'want',
+      priority: 'nice-to-have',
       inflationAdjusted: true,
       category: 'vehicle',
     })

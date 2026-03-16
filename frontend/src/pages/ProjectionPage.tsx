@@ -171,7 +171,6 @@ export function ProjectionPage() {
 
   // Nudge count for mobile bar — mirrors filtering logic in NudgeSidebar
   const setupPopulatedSections = useUIStore((s) => s.setupPopulatedSections)
-  const completedNudgeFlows = useUIStore((s) => s.completedNudgeFlows)
   const { sections: nudgeSections } = useSectionCompletion()
   const visibleNudgeCount = useMemo(() => {
     return NUDGE_PRIORITY.filter((flowId) => {
@@ -182,7 +181,7 @@ export function ProjectionPage() {
       if (status === 'customized' && setupPopulatedSections.includes(sectionId)) return true
       return false
     }).length
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- completedNudgeFlows intentionally excluded; count is based on section status only
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nudgeSections, setupPopulatedSections])
 
   // Section-specific validation error links (Task 1)

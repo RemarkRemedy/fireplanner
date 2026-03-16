@@ -533,7 +533,7 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       }
 
       store.updateAdult(selfAdult.id, {
-        srs: srsUpdates,
+        srs: { ...selfAdult.srs, ...srsUpdates },
       })
       return true
     }

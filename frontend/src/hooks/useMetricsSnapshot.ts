@@ -1,6 +1,7 @@
 import { useDashboardMetrics } from '@/hooks/useDashboardMetrics'
 import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
+// Note: mortgage data lives on property store, not profile. Only non-mortgage debt is captured here.
 import type { MetricsSnapshot } from '@/lib/calculations/metricsSnapshot'
 
 export function useMetricsSnapshot(): MetricsSnapshot {
@@ -22,10 +23,9 @@ export function useMetricsSnapshot(): MetricsSnapshot {
       savingsRate: fireMetrics.savingsRate,
       totalNetWorth: fireMetrics.totalNetWorth,
       swr: profile.swr,
-      // Net cash mortgage = gross payment minus CPF OA coverage, scaled by ownership
-      monthlyDebtPayments: ((profile.annualNonMortgageDebtPayment ?? 0) / 12)
-        + Math.max(0, (profile.existingMonthlyPayment ?? 0) - (profile.mortgageCpfMonthly ?? 0))
-          * (profile.ownershipPercent ?? 1),
+      // Non-mortgage debt only — mortgage data lives on property store, not profile.
+      // This underreports total debt but avoids cross-store reads in a derived hook.
+      monthlyDebtPayments: (profile.annualNonMortgageDebtPayment ?? 0) / 12,
     } : undefined,
   }
 }

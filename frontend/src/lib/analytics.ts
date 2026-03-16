@@ -40,6 +40,7 @@ type AnalyticsEvent =
   | 'telegram_join_clicked'
   | 'life_event_added'
   | 'life_event_removed'
+  | 'setup_completed'
   | 'withdrawal_basis_changed'
   | 'section_mode_changed'
   | 'scenario_deleted'

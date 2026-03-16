@@ -67,7 +67,7 @@ function MoneySenseTab({ result, inputs }: { result: InsuranceNeedsResult; input
                   <td className="py-2">
                     <div className="flex items-center gap-1">
                       {row.label}
-                      <InfoTooltip content={row.tooltip} />
+                      <InfoTooltip text={row.tooltip} />
                     </div>
                     {'note' in row && row.note && (
                       <div className="text-xs text-muted-foreground mt-0.5">{row.note}</div>
