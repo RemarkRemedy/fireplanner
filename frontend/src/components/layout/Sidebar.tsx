@@ -476,10 +476,18 @@ export function Sidebar() {
       if (sectionId === 'section-goals' || sectionId === 'section-healthcare' || sectionId === 'section-protection') {
         expandSection('section-expenses')
       }
-      // Small delay to let the page render
-      requestAnimationFrame(() => {
-        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
-      })
+      // Wait for the section to appear in the DOM (accordion may need time to expand)
+      let attempts = 0
+      const tryScroll = () => {
+        const el = document.getElementById(sectionId)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' })
+        } else if (attempts < 10) {
+          attempts++
+          requestAnimationFrame(tryScroll)
+        }
+      }
+      requestAnimationFrame(tryScroll)
     }
   }, [location.pathname, location.hash, expandSection])
 
