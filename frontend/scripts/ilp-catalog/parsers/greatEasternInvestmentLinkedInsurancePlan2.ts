@@ -153,6 +153,9 @@ function buildBonuses(
 function buildFeeRules(
   choice: Ilp2Choice,
   page10: IlpCatalogSourceRef,
+  page11: IlpCatalogSourceRef,
+  page16: IlpCatalogSourceRef,
+  page17: IlpCatalogSourceRef,
 ): IlpTemplateFeeRule[] {
   const feeRules: IlpTemplateFeeRule[] = [
     {
@@ -168,6 +171,26 @@ function buildFeeRules(
         'Modeled as the published percentage-based monthly policy fee on account value.',
       ],
       sourceRefs: [page10],
+    },
+    {
+      id: 'death-ti-insurance-charge',
+      label: 'Death / TI Insurance Charge',
+      basis: 'assurance-sum-at-risk',
+      rate: null,
+      amount: null,
+      assuranceConfig: {
+        formula: 'great-eastern-wa4-death-ti',
+        monthlyModalFactor: 1 / 12,
+        maxAgeNextBirthday: 99,
+      },
+      requiresManualInput: true,
+      appliesTo: ['policy'],
+      activeWindow: 'policy-term',
+      notes: [
+        'Requires insured-life details plus the current net regular-premium and top-up premium bases before the calculator can model the monthly insurance charge.',
+        'Models the published 101% of total basic regular premiums paid plus 101% of total single premium top-ups paid, less 101% of total partial withdrawals including charges, minus policy value sum-at-risk formula.',
+      ],
+      sourceRefs: [page11, page16, page17],
     },
   ]
 
@@ -289,6 +312,9 @@ function buildVariant(
   const page5 = sourceRef(5, 'Premium holiday charge refund and top-ups', snippetNear(document, 5, 'Premium holiday charge refund', 22))
   const page8 = sourceRef(8, 'Partial withdrawal and surrender charges', snippetNear(document, 8, 'Partial withdrawal charge', 24))
   const page10 = sourceRef(10, 'Policy fee', snippetNear(document, 10, 'Policy fee', 18))
+  const page11 = sourceRef(11, 'Insurance charge', snippetNear(document, 11, 'insurance charge', 18))
+  const page16 = sourceRef(16, 'Appendix insurance charge rates 1-78', snippetNear(document, 16, 'Rates of insurance charge', 18))
+  const page17 = sourceRef(17, 'Appendix insurance charge rates 79-99', snippetNear(document, 17, '79', 18))
 
   const isChoice5 = choice === 'choice-5'
   const variantId = isChoice5
@@ -320,12 +346,12 @@ function buildVariant(
       },
     ],
     bonuses: buildBonuses(choice, page2, page3),
-    feeRules: buildFeeRules(choice, page10),
+    feeRules: buildFeeRules(choice, page10, page11, page16, page17),
     eventChargeRules: buildEventChargeRules(choice, page4, page5, page8),
     eecTable: [...eecTable],
     warnings: [
-      'Investment-linked Insurance Plan 2 is modeled as a partial subset in V1. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, premium-holiday charge, the Choice 10 premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.',
-      'Insurance charge, TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1.',
+      'Investment-linked Insurance Plan 2 is modeled as a supported V1 corridor. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, monthly insurance charge, premium-holiday charge, the Choice 10 premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.',
+      'TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1.',
       ...(choice === 'choice-10-under-6000'
         ? ['This Choice 10 low-annualised-premium variant assumes the additional S$5 monthly policy fee applies throughout the modeled path unless you manually switch variants after a premium change.']
         : choice === 'choice-10-6000-and-above'
@@ -333,13 +359,12 @@ function buildVariant(
           : []),
     ],
     unsupportedItems: [
-      'Insurance charge remains informational only.',
       'Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only.',
       ...(choice === 'choice-10-under-6000' || choice === 'choice-10-6000-and-above'
         ? ['Choice 10 prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction.']
         : []),
     ],
-    sourceRefs: [page1, page2, page3, page4, page5, page8, page10],
+    sourceRefs: [page1, page2, page3, page4, page5, page8, page10, page11, page16, page17],
   }
 }
 
@@ -352,15 +377,17 @@ export function parseGreatEasternInvestmentLinkedInsurancePlan2(context: ParseCo
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
+      'kernel:protected-base-assurance',
       'branch:great-eastern-ilp2-welcome-bonus',
       'branch:great-eastern-ilp2-premium-bonus',
       'branch:great-eastern-ilp2-loyalty-bonus',
       'branch:great-eastern-ilp2-policy-fee-rate',
       'branch:great-eastern-ilp2-choice10-fixed-policy-fee',
+      'branch:great-eastern-ilp2-insurance-charge',
       'branch:great-eastern-ilp2-premium-holiday-charge',
       'branch:great-eastern-ilp2-premium-holiday-charge-refund',
       'branch:great-eastern-ilp2-top-up-premium-charge',
@@ -368,7 +395,6 @@ export function parseGreatEasternInvestmentLinkedInsurancePlan2(context: ParseCo
       'branch:great-eastern-ilp2-surrender-charge',
     ],
     metadataOnlyBehaviors: [
-      'great-eastern-ilp2-insurance-charge',
       'great-eastern-ilp2-tpd-continuation-event',
       'great-eastern-ilp2-rider-premium-deduction-treatment',
       'great-eastern-ilp2-choice10-fixed-fee-threshold-transition',
@@ -376,7 +402,7 @@ export function parseGreatEasternInvestmentLinkedInsurancePlan2(context: ParseCo
       'great-eastern-ilp2-automatic-fund-rebalancing-administration',
     ],
     warnings: [
-      'Investment-linked Insurance Plan 2 is cataloged as a partial modeled subset in V1. The parser captures the published bonus path, policy fee, premium-holiday charge, the Choice 10 premium-holiday-charge refund path, top-up charge, and partial-withdrawal / surrender schedules, while insurance-charge and broader application-gated mechanics remain outside the current engine.',
+      'Investment-linked Insurance Plan 2 is cataloged as a supported V1 corridor. The parser captures the published bonus path, policy fee, monthly insurance charge, premium-holiday charge, the Choice 10 premium-holiday-charge refund path, top-up charge, and partial-withdrawal / surrender schedules, while application-gated mechanics such as TPD continuation events, change-of-life-assured handling, and AFR administration remain metadata only.',
     ],
     archived: false,
     variants: [

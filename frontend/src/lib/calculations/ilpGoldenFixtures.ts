@@ -125,6 +125,17 @@ export type GoldenCoverageTag =
   | 'branch:great-eastern-wa4-top-up-premium-charge'
   | 'branch:great-eastern-wa4-loyalty-bonus'
   | 'branch:great-eastern-wa4-surrender-charge'
+  | 'branch:great-eastern-ilp2-policy-fee-rate'
+  | 'branch:great-eastern-ilp2-choice10-fixed-policy-fee'
+  | 'branch:great-eastern-ilp2-insurance-charge'
+  | 'branch:great-eastern-ilp2-welcome-bonus'
+  | 'branch:great-eastern-ilp2-premium-bonus'
+  | 'branch:great-eastern-ilp2-premium-holiday-charge'
+  | 'branch:great-eastern-ilp2-premium-holiday-charge-refund'
+  | 'branch:great-eastern-ilp2-partial-withdrawal-charge'
+  | 'branch:great-eastern-ilp2-top-up-premium-charge'
+  | 'branch:great-eastern-ilp2-loyalty-bonus'
+  | 'branch:great-eastern-ilp2-surrender-charge'
   | 'tokio-recurring-single-premium-routing'
   | 'branch:prosper-assurance-charge'
   | 'kernel:distribution-mode-assumption'
@@ -2123,6 +2134,123 @@ function greatEasternWealthAdvantage4StressPolicy(
       sex: 'female',
       smokerStatus: 'non-smoker',
       currentNetRegularPremiumBase: 96_000,
+      currentNetSupplementaryPremiumBase: 12_000,
+    },
+  })
+}
+
+function greatEasternInvestmentLinkedInsurancePlan2BasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId:
+    | 'sgd-mip-10-choice-5'
+    | 'sgd-mip-10-choice-10-under-6000'
+    | 'sgd-mip-10-choice-10-6000-and-above',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const currentPolicyYear = variantId === 'sgd-mip-10-choice-5' ? 6 : 8
+  const monthlyContribution = variantId.endsWith('6000-and-above')
+    ? 800
+    : variantId === 'sgd-mip-10-choice-5'
+      ? 900
+      : 350
+  const currentNetRegularPremiumBase = monthlyContribution * 12 * (currentPolicyYear - 1)
+  const base = seedPolicy(snapshot, 'great-eastern-investment-linked-insurance-plan-2', variantId, id, {
+    monthlyContribution,
+    currentPolicyYear,
+    monthsAlreadyPaid: (currentPolicyYear - 1) * 12,
+    assuranceProfile: {
+      currentAgeNextBirthday: 44,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentNetRegularPremiumBase,
+      currentNetSupplementaryPremiumBase: 0,
+    },
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden Investment-linked Insurance Plan 2 (${variantId.toUpperCase()})`,
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: variantId === 'sgd-mip-10-choice-5' ? 28_000 : 41_000,
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function greatEasternInvestmentLinkedInsurancePlan2BaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId:
+    | 'sgd-mip-10-choice-5'
+    | 'sgd-mip-10-choice-10-under-6000'
+    | 'sgd-mip-10-choice-10-6000-and-above',
+  id: string,
+): IlpPolicyInput {
+  return greatEasternInvestmentLinkedInsurancePlan2BasePolicy(snapshot, variantId, id, HSBC_BALANCED_FUNDS)
+}
+
+function greatEasternInvestmentLinkedInsurancePlan2EventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return greatEasternInvestmentLinkedInsurancePlan2BasePolicy(snapshot, 'sgd-mip-10-choice-10-under-6000', id, HSBC_BALANCED_FUNDS, {
+    name: 'Golden Investment-linked Insurance Plan 2 (SGD / MIP 10 Choice 10 Under 6000 Event Heavy)',
+    currentPolicyYear: 8,
+    monthsAlreadyPaid: 84,
+    assuranceProfile: {
+      currentAgeNextBirthday: 47,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentNetRegularPremiumBase: 29_400,
+      currentNetSupplementaryPremiumBase: 4_500,
+    },
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 85,
+        durationMonths: 2,
+        repayMissedPremiums: true,
+        repaymentAccountId: 'policy',
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 88,
+        durationMonths: 1,
+        amount: 4_500,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 91,
+        durationMonths: 1,
+        amount: 1_800,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function greatEasternInvestmentLinkedInsurancePlan2StressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return greatEasternInvestmentLinkedInsurancePlan2BasePolicy(snapshot, 'sgd-mip-10-choice-10-6000-and-above', id, HSBC_STRESS_FUNDS, {
+    name: 'Golden Investment-linked Insurance Plan 2 (SGD / MIP 10 Choice 10 6000 And Above OCF Stress)',
+    currentPolicyYear: 9,
+    monthsAlreadyPaid: 96,
+    assuranceProfile: {
+      currentAgeNextBirthday: 49,
+      sex: 'female',
+      smokerStatus: 'non-smoker',
+      currentNetRegularPremiumBase: 76_800,
       currentNetSupplementaryPremiumBase: 12_000,
     },
   })
@@ -4989,6 +5117,54 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'GREAT Wealth Advantage 4 alternate-fund high-OCF stress scenario through the long-MIP supported corridor.',
   },
   {
+    productId: 'great-eastern-investment-linked-insurance-plan-2',
+    variantId: 'sgd-mip-10-choice-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:protected-base-assurance',
+      'branch:great-eastern-ilp2-welcome-bonus',
+      'branch:great-eastern-ilp2-premium-bonus',
+      'branch:great-eastern-ilp2-policy-fee-rate',
+      'branch:great-eastern-ilp2-insurance-charge',
+    ],
+    description: 'Baseline Investment-linked Insurance Plan 2 scenario proving the supported monthly insurance-charge corridor on the Choice 5 MIP path.',
+  },
+  {
+    productId: 'great-eastern-investment-linked-insurance-plan-2',
+    variantId: 'sgd-mip-10-choice-10-under-6000',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:great-eastern-ilp2-choice10-fixed-policy-fee',
+      'branch:great-eastern-ilp2-premium-holiday-charge',
+      'branch:great-eastern-ilp2-premium-holiday-charge-refund',
+      'branch:great-eastern-ilp2-partial-withdrawal-charge',
+      'branch:great-eastern-ilp2-top-up-premium-charge',
+    ],
+    description: 'Investment-linked Insurance Plan 2 event-heavy scenario proving the low-annualised-premium fixed fee plus holiday refund and top-up handling.',
+    integrityChecks: [
+      {
+        description: 'event-heavy corridor produces both a premium-holiday repayment and a later withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0 && row.annualContribution > 4_200),
+      },
+    ],
+  },
+  {
+    productId: 'great-eastern-investment-linked-insurance-plan-2',
+    variantId: 'sgd-mip-10-choice-10-6000-and-above',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'ocf-stress',
+      'branch:great-eastern-ilp2-loyalty-bonus',
+      'branch:great-eastern-ilp2-surrender-charge',
+    ],
+    description: 'Investment-linked Insurance Plan 2 alternate-fund high-OCF stress scenario through the supported Choice 10 corridor.',
+  },
+  {
     productId: 'great-eastern-great-invest-advantage-sp',
     variantId: 'sgd-open-ended-cash-or-srs',
     scenarioId: 'baseline',
@@ -5735,6 +5911,18 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'great-eastern-wealth-advantage-4' && definition.scenarioId === 'ocf-stress') {
     return greatEasternWealthAdvantage4StressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'great-eastern-investment-linked-insurance-plan-2' && definition.scenarioId === 'baseline') {
+    return greatEasternInvestmentLinkedInsurancePlan2BaselinePolicy(snapshot, definition.variantId as
+      | 'sgd-mip-10-choice-5'
+      | 'sgd-mip-10-choice-10-under-6000'
+      | 'sgd-mip-10-choice-10-6000-and-above', id)
+  }
+  if (definition.productId === 'great-eastern-investment-linked-insurance-plan-2' && definition.scenarioId === 'event-heavy') {
+    return greatEasternInvestmentLinkedInsurancePlan2EventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'great-eastern-investment-linked-insurance-plan-2' && definition.scenarioId === 'ocf-stress') {
+    return greatEasternInvestmentLinkedInsurancePlan2StressPolicy(snapshot, id)
   }
   if (definition.productId === 'great-eastern-great-invest-advantage-sp' && definition.scenarioId === 'baseline') {
     return greatEasternGiaSpBaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended-cash-or-srs' | 'sgd-open-ended-cpfis', id)
