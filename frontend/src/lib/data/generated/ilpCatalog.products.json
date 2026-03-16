@@ -21716,14 +21716,15 @@
     "sourceChecksumSha256": "d55d88594c854d7f41553cd083a399ed497b348a67564b7df04a5d3ce7d2874c",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
       "branch:etiqa-flex-wealth-ii-startup-bonus",
       "branch:etiqa-flex-wealth-ii-special-bonus",
       "branch:etiqa-flex-wealth-ii-loyalty-bonus",
       "branch:etiqa-flex-wealth-ii-cumulative-paid-policy-charge",
+      "branch:etiqa-flex-wealth-ii-insurance-charge",
       "branch:etiqa-flex-wealth-ii-top-up-premium-charge",
       "branch:etiqa-flex-wealth-ii-startup-bonus-recovery",
       "branch:etiqa-flex-wealth-ii-surrender-charge",
@@ -21733,13 +21734,12 @@
       "etiqa-flex-wealth-ii-premium-free-period-entitlement",
       "etiqa-flex-wealth-ii-premium-shortfall-charge",
       "etiqa-flex-wealth-ii-free-partial-withdrawal-limit",
-      "etiqa-flex-wealth-ii-insurance-charge",
       "etiqa-flex-wealth-ii-change-of-life-insured",
       "etiqa-flex-wealth-ii-optional-riders"
     ],
     "warnings": [
-      "Invest flex wealth II is currently modeled as a partial product in V1. The regular-premium / top-up account structure, cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, Start-up Bonus recovery charge, and surrender-charge schedule are modeled.",
-      "Premium-Free Period entitlement months, premium shortfall charges after entitlement exhaustion, free partial withdrawal allowances, and insurance-charge behavior remain informational only."
+      "Invest flex wealth II is currently modeled as a supported product in V1. The regular-premium / top-up account structure, cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge schedule are modeled.",
+      "Premium-Free Period entitlement months, premium shortfall charges after entitlement exhaustion, free partial withdrawal allowances, and change-of-life-insured behavior remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -21996,6 +21996,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 23,
+                "section": "Start-up Bonus Recovery Charge and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 27,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "No guarantee is given, express or implied, that You will receive any amount invested. All investments involve risks and there can be no guarantee against loss resulting from an investment in any of the ILP Sub-Fund(s), n"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -22070,16 +22107,15 @@
           0.08
         ],
         "warnings": [
-          "Invest flex wealth II is modeled as a partial subset in V1. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, Start-up Bonus recovery charge, and surrender-charge horizon.",
+          "Invest flex wealth II is modeled as a supported V1 corridor. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge horizon.",
           "Up to 60 months of Premium-Free Period may be accumulated across the 10-year premium payment term.",
           "Premium-Free Period entitlement months, premium shortfall charges after that entitlement is exhausted, and free partial withdrawal allowances remain informational only in V1.",
-          "Death / terminal illness insurance charge and change-of-life-insured effects remain informational only in V1."
+          "Change-of-life-insured effects remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period entitlement tracking remains informational only.",
           "Premium shortfall charge remains informational only.",
           "Free partial withdrawal allowance from the Regular Premium Account remains informational only.",
-          "Death and terminal illness insurance charge remains informational only.",
           "Change of Life Insured remains informational only.",
           "Optional riders remain informational only."
         ],
@@ -22148,6 +22184,11 @@
             "page": 23,
             "section": "Start-up Bonus Recovery Charge and Insurance Charge",
             "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+          },
+          {
+            "page": 27,
+            "section": "Appendix A insurance charge table",
+            "excerpt": "No guarantee is given, express or implied, that You will receive any amount invested. All investments involve risks and there can be no guarantee against loss resulting from an investment in any of the ILP Sub-Fund(s), n"
           }
         ]
       },
@@ -22414,6 +22455,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 23,
+                "section": "Start-up Bonus Recovery Charge and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 27,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "No guarantee is given, express or implied, that You will receive any amount invested. All investments involve risks and there can be no guarantee against loss resulting from an investment in any of the ILP Sub-Fund(s), n"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -22493,16 +22571,15 @@
           0.08
         ],
         "warnings": [
-          "Invest flex wealth II is modeled as a partial subset in V1. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, Start-up Bonus recovery charge, and surrender-charge horizon.",
+          "Invest flex wealth II is modeled as a supported V1 corridor. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge horizon.",
           "Up to 84 months of Premium-Free Period may be accumulated across the 15-year premium payment term.",
           "Premium-Free Period entitlement months, premium shortfall charges after that entitlement is exhausted, and free partial withdrawal allowances remain informational only in V1.",
-          "Death / terminal illness insurance charge and change-of-life-insured effects remain informational only in V1."
+          "Change-of-life-insured effects remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period entitlement tracking remains informational only.",
           "Premium shortfall charge remains informational only.",
           "Free partial withdrawal allowance from the Regular Premium Account remains informational only.",
-          "Death and terminal illness insurance charge remains informational only.",
           "Change of Life Insured remains informational only.",
           "Optional riders remain informational only."
         ],
@@ -22571,6 +22648,11 @@
             "page": 23,
             "section": "Start-up Bonus Recovery Charge and Insurance Charge",
             "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+          },
+          {
+            "page": 27,
+            "section": "Appendix A insurance charge table",
+            "excerpt": "No guarantee is given, express or implied, that You will receive any amount invested. All investments involve risks and there can be no guarantee against loss resulting from an investment in any of the ILP Sub-Fund(s), n"
           }
         ]
       },
@@ -22857,6 +22939,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 23,
+                "section": "Start-up Bonus Recovery Charge and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 27,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "No guarantee is given, express or implied, that You will receive any amount invested. All investments involve risks and there can be no guarantee against loss resulting from an investment in any of the ILP Sub-Fund(s), n"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -22941,16 +23060,15 @@
           0.08
         ],
         "warnings": [
-          "Invest flex wealth II is modeled as a partial subset in V1. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, Start-up Bonus recovery charge, and surrender-charge horizon.",
+          "Invest flex wealth II is modeled as a supported V1 corridor. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge horizon.",
           "Up to 132 months of Premium-Free Period may be accumulated across the 20-year premium payment term.",
           "Premium-Free Period entitlement months, premium shortfall charges after that entitlement is exhausted, and free partial withdrawal allowances remain informational only in V1.",
-          "Death / terminal illness insurance charge and change-of-life-insured effects remain informational only in V1."
+          "Change-of-life-insured effects remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period entitlement tracking remains informational only.",
           "Premium shortfall charge remains informational only.",
           "Free partial withdrawal allowance from the Regular Premium Account remains informational only.",
-          "Death and terminal illness insurance charge remains informational only.",
           "Change of Life Insured remains informational only.",
           "Optional riders remain informational only."
         ],
@@ -23019,6 +23137,11 @@
             "page": 23,
             "section": "Start-up Bonus Recovery Charge and Insurance Charge",
             "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+          },
+          {
+            "page": 27,
+            "section": "Appendix A insurance charge table",
+            "excerpt": "No guarantee is given, express or implied, that You will receive any amount invested. All investments involve risks and there can be no guarantee against loss resulting from an investment in any of the ILP Sub-Fund(s), n"
           }
         ]
       }
@@ -23300,14 +23423,15 @@
     "sourceChecksumSha256": "d2c0ea7bc24e7f7f0c9ef58fbf74823f0ab03322f9b288c9a6db410db2ca47bb",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
       "branch:etiqa-smart-flex-ii-startup-bonus",
       "branch:etiqa-smart-flex-ii-special-bonus",
       "branch:etiqa-smart-flex-ii-loyalty-bonus",
       "branch:etiqa-smart-flex-ii-cumulative-paid-policy-charge",
+      "branch:etiqa-smart-flex-ii-insurance-charge",
       "branch:etiqa-smart-flex-ii-top-up-premium-charge",
       "branch:etiqa-smart-flex-ii-startup-bonus-recovery",
       "branch:etiqa-smart-flex-ii-surrender-charge",
@@ -23317,13 +23441,12 @@
       "etiqa-smart-flex-ii-premium-free-period-entitlement",
       "etiqa-smart-flex-ii-premium-shortfall-charge",
       "etiqa-smart-flex-ii-free-partial-withdrawal-limit",
-      "etiqa-smart-flex-ii-insurance-charge",
       "etiqa-smart-flex-ii-change-of-life-insured",
       "etiqa-smart-flex-ii-optional-riders"
     ],
     "warnings": [
-      "Invest smart flex II is currently modeled as a partial product in V1. The regular-premium / top-up account structure, cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, Start-up Bonus recovery charge, and surrender-charge schedule are modeled.",
-      "Premium-Free Period entitlement months, premium shortfall charges after entitlement exhaustion, free partial withdrawal allowances, and insurance-charge behavior remain informational only."
+      "Invest smart flex II is currently modeled as a supported product in V1. The regular-premium / top-up account structure, cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge schedule are modeled.",
+      "Premium-Free Period entitlement months, premium shortfall charges after entitlement exhaustion, free partial withdrawal allowances, and change-of-life-insured behavior remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -23580,6 +23703,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 22,
+                "section": "Start-up Bonus Recovery Charge and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 26,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "Impact of Early Surrender As buying a life insurance Policy is a long-term commitment, an early termination of the Policy usually involves high costs and the surrender value, if any, that is payable to You may be less th"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -23654,16 +23814,15 @@
           0.08
         ],
         "warnings": [
-          "Invest smart flex II is modeled as a partial subset in V1. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, Start-up Bonus recovery charge, and surrender-charge horizon.",
+          "Invest smart flex II is modeled as a supported V1 corridor. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge horizon.",
           "Up to 60 months of Premium-Free Period may be accumulated across the 10-year premium payment term.",
           "Premium-Free Period entitlement months, premium shortfall charges after that entitlement is exhausted, and free partial withdrawal allowances remain informational only in V1.",
-          "Death / terminal illness insurance charge and change-of-life-insured effects remain informational only in V1."
+          "Change-of-life-insured effects remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period entitlement tracking remains informational only.",
           "Premium shortfall charge remains informational only.",
           "Free partial withdrawal allowance from the Regular Premium Account remains informational only.",
-          "Death and terminal illness insurance charge remains informational only.",
           "Change of Life Insured remains informational only.",
           "Optional riders remain informational only."
         ],
@@ -23727,6 +23886,11 @@
             "page": 22,
             "section": "Start-up Bonus Recovery Charge and Insurance Charge",
             "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+          },
+          {
+            "page": 26,
+            "section": "Appendix A insurance charge table",
+            "excerpt": "Impact of Early Surrender As buying a life insurance Policy is a long-term commitment, an early termination of the Policy usually involves high costs and the surrender value, if any, that is payable to You may be less th"
           }
         ]
       },
@@ -23993,6 +24157,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 22,
+                "section": "Start-up Bonus Recovery Charge and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 26,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "Impact of Early Surrender As buying a life insurance Policy is a long-term commitment, an early termination of the Policy usually involves high costs and the surrender value, if any, that is payable to You may be less th"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -24072,16 +24273,15 @@
           0.08
         ],
         "warnings": [
-          "Invest smart flex II is modeled as a partial subset in V1. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, Start-up Bonus recovery charge, and surrender-charge horizon.",
+          "Invest smart flex II is modeled as a supported V1 corridor. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge horizon.",
           "Up to 84 months of Premium-Free Period may be accumulated across the 15-year premium payment term.",
           "Premium-Free Period entitlement months, premium shortfall charges after that entitlement is exhausted, and free partial withdrawal allowances remain informational only in V1.",
-          "Death / terminal illness insurance charge and change-of-life-insured effects remain informational only in V1."
+          "Change-of-life-insured effects remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period entitlement tracking remains informational only.",
           "Premium shortfall charge remains informational only.",
           "Free partial withdrawal allowance from the Regular Premium Account remains informational only.",
-          "Death and terminal illness insurance charge remains informational only.",
           "Change of Life Insured remains informational only.",
           "Optional riders remain informational only."
         ],
@@ -24145,6 +24345,11 @@
             "page": 22,
             "section": "Start-up Bonus Recovery Charge and Insurance Charge",
             "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+          },
+          {
+            "page": 26,
+            "section": "Appendix A insurance charge table",
+            "excerpt": "Impact of Early Surrender As buying a life insurance Policy is a long-term commitment, an early termination of the Policy usually involves high costs and the surrender value, if any, that is payable to You may be less th"
           }
         ]
       },
@@ -24431,6 +24636,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 22,
+                "section": "Start-up Bonus Recovery Charge and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 26,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "Impact of Early Surrender As buying a life insurance Policy is a long-term commitment, an early termination of the Policy usually involves high costs and the surrender value, if any, that is payable to You may be less th"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -24515,16 +24757,15 @@
           0.08
         ],
         "warnings": [
-          "Invest smart flex II is modeled as a partial subset in V1. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, Start-up Bonus recovery charge, and surrender-charge horizon.",
+          "Invest smart flex II is modeled as a supported V1 corridor. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge horizon.",
           "Up to 132 months of Premium-Free Period may be accumulated across the 20-year premium payment term.",
           "Premium-Free Period entitlement months, premium shortfall charges after that entitlement is exhausted, and free partial withdrawal allowances remain informational only in V1.",
-          "Death / terminal illness insurance charge and change-of-life-insured effects remain informational only in V1."
+          "Change-of-life-insured effects remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period entitlement tracking remains informational only.",
           "Premium shortfall charge remains informational only.",
           "Free partial withdrawal allowance from the Regular Premium Account remains informational only.",
-          "Death and terminal illness insurance charge remains informational only.",
           "Change of Life Insured remains informational only.",
           "Optional riders remain informational only."
         ],
@@ -24588,6 +24829,11 @@
             "page": 22,
             "section": "Start-up Bonus Recovery Charge and Insurance Charge",
             "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+          },
+          {
+            "page": 26,
+            "section": "Appendix A insurance charge table",
+            "excerpt": "Impact of Early Surrender As buying a life insurance Policy is a long-term commitment, an early termination of the Policy usually involves high costs and the surrender value, if any, that is payable to You may be less th"
           }
         ]
       }
@@ -24601,14 +24847,15 @@
     "sourceChecksumSha256": "dcbcae81ed53a670bb38efac9f9218e1bf37603dc1be608ae08702607c567e0d",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
       "branch:etiqa-smart-vista-startup-bonus",
       "branch:etiqa-smart-vista-special-bonus",
       "branch:etiqa-smart-vista-loyalty-bonus",
       "branch:etiqa-smart-vista-cumulative-paid-policy-charge",
+      "branch:etiqa-smart-vista-insurance-charge",
       "branch:etiqa-smart-vista-top-up-premium-charge",
       "branch:etiqa-smart-vista-startup-bonus-recovery",
       "branch:etiqa-smart-vista-surrender-charge",
@@ -24618,14 +24865,13 @@
       "etiqa-smart-vista-premium-free-period-entitlement",
       "etiqa-smart-vista-premium-shortfall-charge",
       "etiqa-smart-vista-free-partial-withdrawal-limit",
-      "etiqa-smart-vista-insurance-charge",
       "etiqa-smart-vista-change-of-life-insured",
       "etiqa-smart-vista-optional-riders",
       "etiqa-smart-vista-shariah-fund-availability"
     ],
     "warnings": [
-      "Invest Smart Vista is currently modeled as a partial product in V1. The regular-premium / top-up account structure, cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, Start-up Bonus recovery charge, and surrender-charge schedule are modeled.",
-      "Premium-Free Period entitlement months, premium shortfall charges after entitlement exhaustion, free partial withdrawal allowances, and insurance-charge behavior remain informational only.",
+      "Invest Smart Vista is currently modeled as a supported product in V1. The regular-premium / top-up account structure, cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge schedule are modeled.",
+      "Premium-Free Period entitlement months, premium shortfall charges after entitlement exhaustion, free partial withdrawal allowances, and change-of-life-insured behavior remain informational only.",
       "Only Shariah-compliant ILP Sub-Funds are available for subscription, switching, premium redirection, and redemptions under this policy."
     ],
     "archived": false,
@@ -24883,6 +25129,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 22,
+                "section": "Start-up Bonus Recovery Charge and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 26,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "Important Notes: Financial Shariah Advisory and Consultancy of Singapore Islamic Scholars & Religious Teachers Association (Pergas) Singapore has certified this plan and its structure as Shariah compliant under the conce"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -24957,16 +25240,15 @@
           0.08
         ],
         "warnings": [
-          "Invest smart flex II is modeled as a partial subset in V1. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, Start-up Bonus recovery charge, and surrender-charge horizon.",
+          "Invest smart flex II is modeled as a supported V1 corridor. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge horizon.",
           "Up to 60 months of Premium-Free Period may be accumulated across the 10-year premium payment term.",
           "Premium-Free Period entitlement months, premium shortfall charges after that entitlement is exhausted, and free partial withdrawal allowances remain informational only in V1.",
-          "Death / terminal illness insurance charge and change-of-life-insured effects remain informational only in V1."
+          "Change-of-life-insured effects remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period entitlement tracking remains informational only.",
           "Premium shortfall charge remains informational only.",
           "Free partial withdrawal allowance from the Regular Premium Account remains informational only.",
-          "Death and terminal illness insurance charge remains informational only.",
           "Change of Life Insured remains informational only.",
           "Optional riders remain informational only."
         ],
@@ -25030,6 +25312,11 @@
             "page": 22,
             "section": "Start-up Bonus Recovery Charge and Insurance Charge",
             "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+          },
+          {
+            "page": 26,
+            "section": "Appendix A insurance charge table",
+            "excerpt": "Important Notes: Financial Shariah Advisory and Consultancy of Singapore Islamic Scholars & Religious Teachers Association (Pergas) Singapore has certified this plan and its structure as Shariah compliant under the conce"
           }
         ]
       },
@@ -25296,6 +25583,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 22,
+                "section": "Start-up Bonus Recovery Charge and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 26,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "Important Notes: Financial Shariah Advisory and Consultancy of Singapore Islamic Scholars & Religious Teachers Association (Pergas) Singapore has certified this plan and its structure as Shariah compliant under the conce"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -25375,16 +25699,15 @@
           0.08
         ],
         "warnings": [
-          "Invest smart flex II is modeled as a partial subset in V1. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, Start-up Bonus recovery charge, and surrender-charge horizon.",
+          "Invest smart flex II is modeled as a supported V1 corridor. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge horizon.",
           "Up to 84 months of Premium-Free Period may be accumulated across the 15-year premium payment term.",
           "Premium-Free Period entitlement months, premium shortfall charges after that entitlement is exhausted, and free partial withdrawal allowances remain informational only in V1.",
-          "Death / terminal illness insurance charge and change-of-life-insured effects remain informational only in V1."
+          "Change-of-life-insured effects remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period entitlement tracking remains informational only.",
           "Premium shortfall charge remains informational only.",
           "Free partial withdrawal allowance from the Regular Premium Account remains informational only.",
-          "Death and terminal illness insurance charge remains informational only.",
           "Change of Life Insured remains informational only.",
           "Optional riders remain informational only."
         ],
@@ -25448,6 +25771,11 @@
             "page": 22,
             "section": "Start-up Bonus Recovery Charge and Insurance Charge",
             "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+          },
+          {
+            "page": 26,
+            "section": "Appendix A insurance charge table",
+            "excerpt": "Important Notes: Financial Shariah Advisory and Consultancy of Singapore Islamic Scholars & Religious Teachers Association (Pergas) Singapore has certified this plan and its structure as Shariah compliant under the conce"
           }
         ]
       },
@@ -25734,6 +26062,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 22,
+                "section": "Start-up Bonus Recovery Charge and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 26,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "Important Notes: Financial Shariah Advisory and Consultancy of Singapore Islamic Scholars & Religious Teachers Association (Pergas) Singapore has certified this plan and its structure as Shariah compliant under the conce"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -25818,16 +26183,15 @@
           0.08
         ],
         "warnings": [
-          "Invest smart flex II is modeled as a partial subset in V1. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, Start-up Bonus recovery charge, and surrender-charge horizon.",
+          "Invest smart flex II is modeled as a supported V1 corridor. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge horizon.",
           "Up to 132 months of Premium-Free Period may be accumulated across the 20-year premium payment term.",
           "Premium-Free Period entitlement months, premium shortfall charges after that entitlement is exhausted, and free partial withdrawal allowances remain informational only in V1.",
-          "Death / terminal illness insurance charge and change-of-life-insured effects remain informational only in V1."
+          "Change-of-life-insured effects remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period entitlement tracking remains informational only.",
           "Premium shortfall charge remains informational only.",
           "Free partial withdrawal allowance from the Regular Premium Account remains informational only.",
-          "Death and terminal illness insurance charge remains informational only.",
           "Change of Life Insured remains informational only.",
           "Optional riders remain informational only."
         ],
@@ -25891,6 +26255,11 @@
             "page": 22,
             "section": "Start-up Bonus Recovery Charge and Insurance Charge",
             "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+          },
+          {
+            "page": 26,
+            "section": "Appendix A insurance charge table",
+            "excerpt": "Important Notes: Financial Shariah Advisory and Consultancy of Singapore Islamic Scholars & Religious Teachers Association (Pergas) Singapore has certified this plan and its structure as Shariah compliant under the conce"
           }
         ]
       }

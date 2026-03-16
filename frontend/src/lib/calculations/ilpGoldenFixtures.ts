@@ -129,6 +129,33 @@ export type GoldenCoverageTag =
   | 'branch:etiqa-vista-startup-bonus-recovery'
   | 'branch:etiqa-vista-partial-withdrawal-charge'
   | 'branch:etiqa-vista-surrender-charge'
+  | 'branch:etiqa-flex-wealth-ii-startup-bonus'
+  | 'branch:etiqa-flex-wealth-ii-special-bonus'
+  | 'branch:etiqa-flex-wealth-ii-loyalty-bonus'
+  | 'branch:etiqa-flex-wealth-ii-cumulative-paid-policy-charge'
+  | 'branch:etiqa-flex-wealth-ii-insurance-charge'
+  | 'branch:etiqa-flex-wealth-ii-top-up-premium-charge'
+  | 'branch:etiqa-flex-wealth-ii-startup-bonus-recovery'
+  | 'branch:etiqa-flex-wealth-ii-surrender-charge'
+  | 'branch:etiqa-flex-wealth-ii-top-up-account-routing'
+  | 'branch:etiqa-smart-flex-ii-startup-bonus'
+  | 'branch:etiqa-smart-flex-ii-special-bonus'
+  | 'branch:etiqa-smart-flex-ii-loyalty-bonus'
+  | 'branch:etiqa-smart-flex-ii-cumulative-paid-policy-charge'
+  | 'branch:etiqa-smart-flex-ii-insurance-charge'
+  | 'branch:etiqa-smart-flex-ii-top-up-premium-charge'
+  | 'branch:etiqa-smart-flex-ii-startup-bonus-recovery'
+  | 'branch:etiqa-smart-flex-ii-surrender-charge'
+  | 'branch:etiqa-smart-flex-ii-top-up-account-routing'
+  | 'branch:etiqa-smart-vista-startup-bonus'
+  | 'branch:etiqa-smart-vista-special-bonus'
+  | 'branch:etiqa-smart-vista-loyalty-bonus'
+  | 'branch:etiqa-smart-vista-cumulative-paid-policy-charge'
+  | 'branch:etiqa-smart-vista-insurance-charge'
+  | 'branch:etiqa-smart-vista-top-up-premium-charge'
+  | 'branch:etiqa-smart-vista-startup-bonus-recovery'
+  | 'branch:etiqa-smart-vista-surrender-charge'
+  | 'branch:etiqa-smart-vista-top-up-account-routing'
   | 'branch:great-eastern-gia-sp-initial-single-premium-charge'
   | 'branch:great-eastern-gia-sp-top-up-premium-charge'
   | 'branch:great-eastern-gia-sp-open-ended-zero-surrender-charge'
@@ -2857,6 +2884,110 @@ function etiqaFlexStressPolicy(
   })
 }
 
+function etiqaCumulativeSupportedBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  productId: 'etiqa-invest-flex-wealth-ii' | 'etiqa-invest-smart-flex-ii' | 'etiqa-invest-smart-vista',
+  variantId: 'sgd-mip-10' | 'sgd-mip-15' | 'sgd-mip-20',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const term = Number(variantId.replace('sgd-mip-', ''))
+  const currentPolicyYear = term === 10 ? 6 : term === 15 ? 9 : 11
+  const monthlyContribution = term === 20 ? 450 : 750
+  const currentNetRegularPremiumBase = monthlyContribution * 12 * (currentPolicyYear - 1)
+  const base = seedPolicy(snapshot, productId, variantId, id, {
+    monthlyContribution,
+    currentPolicyYear,
+    monthsAlreadyPaid: (currentPolicyYear - 1) * 12,
+    assuranceProfile: {
+      currentAgeNextBirthday: term >= 20 ? 46 : 43,
+      sex: term >= 20 ? 'female' : 'male',
+      smokerStatus: 'non-smoker',
+      currentNetRegularPremiumBase,
+    },
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden ${productId} (${variantId.toUpperCase()})`,
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: account.id === 'regular'
+          ? (term >= 20 ? 29_000 : term === 15 ? 24_000 : 18_000)
+          : (term >= 20 ? 7_000 : 4_500),
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function etiqaCumulativeBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  productId: 'etiqa-invest-flex-wealth-ii' | 'etiqa-invest-smart-flex-ii' | 'etiqa-invest-smart-vista',
+  variantId: 'sgd-mip-10' | 'sgd-mip-15' | 'sgd-mip-20',
+  id: string,
+): IlpPolicyInput {
+  return etiqaCumulativeSupportedBasePolicy(snapshot, productId, variantId, id, ETIQA_BALANCED_FUNDS)
+}
+
+function etiqaCumulativeEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  productId: 'etiqa-invest-flex-wealth-ii' | 'etiqa-invest-smart-flex-ii' | 'etiqa-invest-smart-vista',
+  id: string,
+): IlpPolicyInput {
+  return etiqaCumulativeSupportedBasePolicy(snapshot, productId, 'sgd-mip-20', id, ETIQA_BALANCED_FUNDS, {
+    name: `Golden ${productId} (SGD / MIP 20 Event Heavy)`,
+    currentPolicyYear: 12,
+    monthsAlreadyPaid: 132,
+    monthlyContribution: 450,
+    assuranceProfile: {
+      currentAgeNextBirthday: 48,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentNetRegularPremiumBase: 59_400,
+    },
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 133,
+        durationMonths: 1,
+        amount: 7_500,
+      },
+      {
+        id: 'reduction-1',
+        type: 'regular-premium-reduction',
+        startPolicyMonth: 136,
+        durationMonths: 1,
+        amount: 1_800,
+      },
+    ],
+  })
+}
+
+function etiqaCumulativeStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  productId: 'etiqa-invest-flex-wealth-ii' | 'etiqa-invest-smart-flex-ii' | 'etiqa-invest-smart-vista',
+  id: string,
+): IlpPolicyInput {
+  return etiqaCumulativeSupportedBasePolicy(snapshot, productId, 'sgd-mip-15', id, ETIQA_STRESS_FUNDS, {
+    name: `Golden ${productId} (SGD / MIP 15 OCF Stress)`,
+    currentPolicyYear: 9,
+    monthsAlreadyPaid: 96,
+    monthlyContribution: 750,
+    assuranceProfile: {
+      currentAgeNextBirthday: 45,
+      sex: 'female',
+      smokerStatus: 'non-smoker',
+      currentNetRegularPremiumBase: 72_000,
+    },
+  })
+}
+
 function greatEasternGiaSpBasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   variantId: 'sgd-open-ended-cash-or-srs' | 'sgd-open-ended-cpfis',
@@ -5497,6 +5628,195 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Etiqa Invest Vista alternate-fund stress scenario through the supported 20-year corridor.',
   },
   {
+    productId: 'etiqa-invest-flex-wealth-ii',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:etiqa-flex-wealth-ii-startup-bonus',
+      'branch:etiqa-flex-wealth-ii-special-bonus',
+      'branch:etiqa-flex-wealth-ii-cumulative-paid-policy-charge',
+      'branch:etiqa-flex-wealth-ii-insurance-charge',
+    ],
+    description: 'Etiqa Invest Flex Wealth II baseline scenario for the SGD / MIP 10 corridor.',
+  },
+  {
+    productId: 'etiqa-invest-flex-wealth-ii',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:etiqa-flex-wealth-ii-loyalty-bonus',
+    ],
+    description: 'Etiqa Invest Flex Wealth II baseline scenario for the SGD / MIP 15 corridor.',
+  },
+  {
+    productId: 'etiqa-invest-flex-wealth-ii',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:etiqa-flex-wealth-ii-surrender-charge',
+    ],
+    description: 'Etiqa Invest Flex Wealth II baseline scenario for the SGD / MIP 20 corridor.',
+  },
+  {
+    productId: 'etiqa-invest-flex-wealth-ii',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:etiqa-flex-wealth-ii-top-up-premium-charge',
+      'branch:etiqa-flex-wealth-ii-startup-bonus-recovery',
+      'branch:etiqa-flex-wealth-ii-top-up-account-routing',
+    ],
+    description: 'Etiqa Invest Flex Wealth II event-heavy scenario covering top-up routing and start-up bonus recovery.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy retains top-up contribution in excess of the scheduled annual premium',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+    ],
+  },
+  {
+    productId: 'etiqa-invest-flex-wealth-ii',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Etiqa Invest Flex Wealth II alternate-fund stress scenario through the supported 15-year corridor.',
+  },
+  {
+    productId: 'etiqa-invest-smart-flex-ii',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:etiqa-smart-flex-ii-startup-bonus',
+      'branch:etiqa-smart-flex-ii-special-bonus',
+      'branch:etiqa-smart-flex-ii-cumulative-paid-policy-charge',
+      'branch:etiqa-smart-flex-ii-insurance-charge',
+    ],
+    description: 'Etiqa Invest Smart Flex II baseline scenario for the SGD / MIP 10 corridor.',
+  },
+  {
+    productId: 'etiqa-invest-smart-flex-ii',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:etiqa-smart-flex-ii-loyalty-bonus',
+    ],
+    description: 'Etiqa Invest Smart Flex II baseline scenario for the SGD / MIP 15 corridor.',
+  },
+  {
+    productId: 'etiqa-invest-smart-flex-ii',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:etiqa-smart-flex-ii-surrender-charge',
+    ],
+    description: 'Etiqa Invest Smart Flex II baseline scenario for the SGD / MIP 20 corridor.',
+  },
+  {
+    productId: 'etiqa-invest-smart-flex-ii',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:etiqa-smart-flex-ii-top-up-premium-charge',
+      'branch:etiqa-smart-flex-ii-startup-bonus-recovery',
+      'branch:etiqa-smart-flex-ii-top-up-account-routing',
+    ],
+    description: 'Etiqa Invest Smart Flex II event-heavy scenario covering top-up routing and start-up bonus recovery.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy retains top-up contribution in excess of the scheduled annual premium',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+    ],
+  },
+  {
+    productId: 'etiqa-invest-smart-flex-ii',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Etiqa Invest Smart Flex II alternate-fund stress scenario through the supported 15-year corridor.',
+  },
+  {
+    productId: 'etiqa-invest-smart-vista',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:etiqa-smart-vista-startup-bonus',
+      'branch:etiqa-smart-vista-special-bonus',
+      'branch:etiqa-smart-vista-cumulative-paid-policy-charge',
+      'branch:etiqa-smart-vista-insurance-charge',
+    ],
+    description: 'Etiqa Invest Smart Vista baseline scenario for the SGD / MIP 10 corridor.',
+  },
+  {
+    productId: 'etiqa-invest-smart-vista',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:etiqa-smart-vista-loyalty-bonus',
+    ],
+    description: 'Etiqa Invest Smart Vista baseline scenario for the SGD / MIP 15 corridor.',
+  },
+  {
+    productId: 'etiqa-invest-smart-vista',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:etiqa-smart-vista-surrender-charge',
+    ],
+    description: 'Etiqa Invest Smart Vista baseline scenario for the SGD / MIP 20 corridor.',
+  },
+  {
+    productId: 'etiqa-invest-smart-vista',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:etiqa-smart-vista-top-up-premium-charge',
+      'branch:etiqa-smart-vista-startup-bonus-recovery',
+      'branch:etiqa-smart-vista-top-up-account-routing',
+    ],
+    description: 'Etiqa Invest Smart Vista event-heavy scenario covering top-up routing and start-up bonus recovery.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy retains top-up contribution in excess of the scheduled annual premium',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+    ],
+  },
+  {
+    productId: 'etiqa-invest-smart-vista',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Etiqa Invest Smart Vista alternate-fund stress scenario through the supported 15-year corridor.',
+  },
+  {
     productId: 'great-eastern-wealth-advantage-4',
     variantId: 'sgd-mip-10-choice-5',
     scenarioId: 'baseline',
@@ -6444,6 +6764,42 @@ function buildPolicyForDefinition(
       | 'sgd-mip-10-flexi-3'
       | 'sgd-mip-10-flexi-5'
       | 'sgd-mip-20', id)
+  }
+  if (definition.productId === 'etiqa-invest-flex-wealth-ii' && definition.scenarioId === 'baseline') {
+    return etiqaCumulativeBaselinePolicy(snapshot, 'etiqa-invest-flex-wealth-ii', definition.variantId as
+      | 'sgd-mip-10'
+      | 'sgd-mip-15'
+      | 'sgd-mip-20', id)
+  }
+  if (definition.productId === 'etiqa-invest-flex-wealth-ii' && definition.scenarioId === 'event-heavy') {
+    return etiqaCumulativeEventHeavyPolicy(snapshot, 'etiqa-invest-flex-wealth-ii', id)
+  }
+  if (definition.productId === 'etiqa-invest-flex-wealth-ii' && definition.scenarioId === 'ocf-stress') {
+    return etiqaCumulativeStressPolicy(snapshot, 'etiqa-invest-flex-wealth-ii', id)
+  }
+  if (definition.productId === 'etiqa-invest-smart-flex-ii' && definition.scenarioId === 'baseline') {
+    return etiqaCumulativeBaselinePolicy(snapshot, 'etiqa-invest-smart-flex-ii', definition.variantId as
+      | 'sgd-mip-10'
+      | 'sgd-mip-15'
+      | 'sgd-mip-20', id)
+  }
+  if (definition.productId === 'etiqa-invest-smart-flex-ii' && definition.scenarioId === 'event-heavy') {
+    return etiqaCumulativeEventHeavyPolicy(snapshot, 'etiqa-invest-smart-flex-ii', id)
+  }
+  if (definition.productId === 'etiqa-invest-smart-flex-ii' && definition.scenarioId === 'ocf-stress') {
+    return etiqaCumulativeStressPolicy(snapshot, 'etiqa-invest-smart-flex-ii', id)
+  }
+  if (definition.productId === 'etiqa-invest-smart-vista' && definition.scenarioId === 'baseline') {
+    return etiqaCumulativeBaselinePolicy(snapshot, 'etiqa-invest-smart-vista', definition.variantId as
+      | 'sgd-mip-10'
+      | 'sgd-mip-15'
+      | 'sgd-mip-20', id)
+  }
+  if (definition.productId === 'etiqa-invest-smart-vista' && definition.scenarioId === 'event-heavy') {
+    return etiqaCumulativeEventHeavyPolicy(snapshot, 'etiqa-invest-smart-vista', id)
+  }
+  if (definition.productId === 'etiqa-invest-smart-vista' && definition.scenarioId === 'ocf-stress') {
+    return etiqaCumulativeStressPolicy(snapshot, 'etiqa-invest-smart-vista', id)
   }
   if (definition.productId === 'great-eastern-wealth-advantage-4' && definition.scenarioId === 'baseline') {
     return greatEasternWealthAdvantage4BaselinePolicy(snapshot, definition.variantId as

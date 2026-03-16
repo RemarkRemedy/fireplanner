@@ -287,6 +287,7 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
   const page19 = sourceRef(19, 'Premium Shortfall Charge', snippetNear(document, 19, 'Premium shortfall charge', 18))
   const page21 = sourceRef(21, 'Surrender Charge', snippetNear(document, 21, 'Surrender charge', 18))
   const page22 = sourceRef(22, 'Start-up Bonus Recovery Charge and Insurance Charge', snippetNear(document, 22, 'Start-up Bonus recovery charge', 18))
+  const page26 = sourceRef(26, 'Appendix A insurance charge table', snippetNear(document, 26, 'Appendix A', 18))
 
   return {
     id: `sgd-mip-${term}`,
@@ -319,24 +320,47 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
       },
     ],
     bonuses: buildBonuses(config, page2, page3),
-    feeRules: buildFeeRules(config, page17),
+    feeRules: [
+      ...buildFeeRules(config, page17),
+      {
+        id: 'insurance-charge',
+        label: 'Insurance Charge',
+        basis: 'assurance-sum-at-risk',
+        rate: null,
+        amount: 0,
+        assuranceConfig: {
+          formula: 'income-invest-flex-death-ti',
+          monthlyModalFactor: 1 / 12,
+          maxAgeNextBirthday: 99,
+        },
+        requiresManualInput: true,
+        appliesTo: ['regular'],
+        assuranceValueAppliesTo: ['regular'],
+        activeWindow: 'policy-term',
+        notes: [
+          'Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.',
+          'Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.',
+          'If the net sum at risk is zero or negative, no insurance charge is due.',
+        ],
+        sourceRefs: [page22, page26],
+      },
+    ],
     eventChargeRules: buildEventChargeRules(page7, page17, page22),
     eecTable: [...config.surrenderRates],
     warnings: [
-      'Invest smart flex II is modeled as a partial subset in V1. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, Start-up Bonus recovery charge, and surrender-charge horizon.',
+      'Invest smart flex II is modeled as a supported V1 corridor. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge horizon.',
       config.premiumFreePeriodNote,
       'Premium-Free Period entitlement months, premium shortfall charges after that entitlement is exhausted, and free partial withdrawal allowances remain informational only in V1.',
-      'Death / terminal illness insurance charge and change-of-life-insured effects remain informational only in V1.',
+      'Change-of-life-insured effects remain informational only in V1.',
     ],
     unsupportedItems: [
       'Premium-Free Period entitlement tracking remains informational only.',
       'Premium shortfall charge remains informational only.',
       'Free partial withdrawal allowance from the Regular Premium Account remains informational only.',
-      'Death and terminal illness insurance charge remains informational only.',
       'Change of Life Insured remains informational only.',
       'Optional riders remain informational only.',
     ],
-    sourceRefs: [page1, page2, page3, page4, page6, page7, page8, page9, page17, page19, page21, page22],
+    sourceRefs: [page1, page2, page3, page4, page6, page7, page8, page9, page17, page19, page21, page22, page26],
   }
 }
 
@@ -349,14 +373,15 @@ export function parseEtiqaInvestSmartFlexIi(context: ParseContext): IlpCatalogPr
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:etiqa-smart-flex-ii-startup-bonus',
       'branch:etiqa-smart-flex-ii-special-bonus',
       'branch:etiqa-smart-flex-ii-loyalty-bonus',
       'branch:etiqa-smart-flex-ii-cumulative-paid-policy-charge',
+      'branch:etiqa-smart-flex-ii-insurance-charge',
       'branch:etiqa-smart-flex-ii-top-up-premium-charge',
       'branch:etiqa-smart-flex-ii-startup-bonus-recovery',
       'branch:etiqa-smart-flex-ii-surrender-charge',
@@ -366,13 +391,12 @@ export function parseEtiqaInvestSmartFlexIi(context: ParseContext): IlpCatalogPr
       'etiqa-smart-flex-ii-premium-free-period-entitlement',
       'etiqa-smart-flex-ii-premium-shortfall-charge',
       'etiqa-smart-flex-ii-free-partial-withdrawal-limit',
-      'etiqa-smart-flex-ii-insurance-charge',
       'etiqa-smart-flex-ii-change-of-life-insured',
       'etiqa-smart-flex-ii-optional-riders',
     ],
     warnings: [
-      'Invest smart flex II is currently modeled as a partial product in V1. The regular-premium / top-up account structure, cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, Start-up Bonus recovery charge, and surrender-charge schedule are modeled.',
-      'Premium-Free Period entitlement months, premium shortfall charges after entitlement exhaustion, free partial withdrawal allowances, and insurance-charge behavior remain informational only.',
+      'Invest smart flex II is currently modeled as a supported product in V1. The regular-premium / top-up account structure, cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge schedule are modeled.',
+      'Premium-Free Period entitlement months, premium shortfall charges after entitlement exhaustion, free partial withdrawal allowances, and change-of-life-insured behavior remain informational only.',
     ],
     archived: false,
     variants: TERM_OPTIONS.map((term) => buildVariant(context.document, term)),

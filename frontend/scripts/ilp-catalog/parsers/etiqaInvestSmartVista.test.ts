@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseEtiqaInvestSmartVista', () => {
-  it('builds a valid partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseEtiqaInvestSmartVista({
       document,
@@ -23,20 +23,21 @@ describe('parseEtiqaInvestSmartVista', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('etiqa-invest-smart-vista')
     expect(product.productName).toBe('Invest Smart Vista')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:etiqa-smart-vista-startup-bonus',
       'branch:etiqa-smart-vista-special-bonus',
       'branch:etiqa-smart-vista-loyalty-bonus',
       'branch:etiqa-smart-vista-cumulative-paid-policy-charge',
+      'branch:etiqa-smart-vista-insurance-charge',
       'branch:etiqa-smart-vista-top-up-premium-charge',
       'branch:etiqa-smart-vista-startup-bonus-recovery',
       'branch:etiqa-smart-vista-surrender-charge',
       'branch:etiqa-smart-vista-top-up-account-routing',
     ])
     expect(product.metadataOnlyBehaviors).toContain('etiqa-smart-vista-premium-shortfall-charge')
-    expect(product.metadataOnlyBehaviors).toContain('etiqa-smart-vista-insurance-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('etiqa-smart-vista-insurance-charge')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-smart-vista-shariah-fund-availability')
     expect(product.warnings).toContain(
       'Only Shariah-compliant ILP Sub-Funds are available for subscription, switching, premium redirection, and redemptions under this policy.',
@@ -72,6 +73,18 @@ describe('parseEtiqaInvestSmartVista', () => {
             { minAnnualisedPremiumsPaid: 9, maxAnnualisedPremiumsPaid: 9, rate: 0.0067 },
             { minAnnualisedPremiumsPaid: 10, maxAnnualisedPremiumsPaid: null, rate: 0.006 },
           ],
+        },
+      }),
+      expect.objectContaining({
+        id: 'insurance-charge',
+        basis: 'assurance-sum-at-risk',
+        appliesTo: ['regular'],
+        assuranceValueAppliesTo: ['regular'],
+        requiresManualInput: true,
+        assuranceConfig: {
+          formula: 'income-invest-flex-death-ti',
+          monthlyModalFactor: 1 / 12,
+          maxAgeNextBirthday: 99,
         },
       }),
     ])

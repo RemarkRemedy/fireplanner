@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseEtiqaInvestFlexWealthIi', () => {
-  it('builds a valid partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseEtiqaInvestFlexWealthIi({
       document,
@@ -22,20 +22,21 @@ describe('parseEtiqaInvestFlexWealthIi', () => {
 
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('etiqa-invest-flex-wealth-ii')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:etiqa-flex-wealth-ii-startup-bonus',
       'branch:etiqa-flex-wealth-ii-special-bonus',
       'branch:etiqa-flex-wealth-ii-loyalty-bonus',
       'branch:etiqa-flex-wealth-ii-cumulative-paid-policy-charge',
+      'branch:etiqa-flex-wealth-ii-insurance-charge',
       'branch:etiqa-flex-wealth-ii-top-up-premium-charge',
       'branch:etiqa-flex-wealth-ii-startup-bonus-recovery',
       'branch:etiqa-flex-wealth-ii-surrender-charge',
       'branch:etiqa-flex-wealth-ii-top-up-account-routing',
     ])
     expect(product.metadataOnlyBehaviors).toContain('etiqa-flex-wealth-ii-premium-shortfall-charge')
-    expect(product.metadataOnlyBehaviors).toContain('etiqa-flex-wealth-ii-insurance-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('etiqa-flex-wealth-ii-insurance-charge')
     expect(product.variants).toHaveLength(3)
 
     const term10 = product.variants.find((variant) => variant.id === 'sgd-mip-10')
@@ -67,6 +68,18 @@ describe('parseEtiqaInvestFlexWealthIi', () => {
             { minAnnualisedPremiumsPaid: 9, maxAnnualisedPremiumsPaid: 9, rate: 0.0067 },
             { minAnnualisedPremiumsPaid: 10, maxAnnualisedPremiumsPaid: null, rate: 0.006 },
           ],
+        },
+      }),
+      expect.objectContaining({
+        id: 'insurance-charge',
+        basis: 'assurance-sum-at-risk',
+        appliesTo: ['regular'],
+        assuranceValueAppliesTo: ['regular'],
+        requiresManualInput: true,
+        assuranceConfig: {
+          formula: 'income-invest-flex-death-ti',
+          monthlyModalFactor: 1 / 12,
+          maxAgeNextBirthday: 99,
         },
       }),
     ])

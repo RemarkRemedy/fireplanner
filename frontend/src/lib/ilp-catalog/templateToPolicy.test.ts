@@ -1006,7 +1006,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.bonuses).toEqual([])
   })
 
-  it('maps Etiqa Invest smart flex II into a partial seed with cumulative-paid policy charges', () => {
+  it('maps Etiqa Invest smart flex II into a supported seed with cumulative-paid policy charges', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-smart-flex-ii')
     expect(product).toBeDefined()
@@ -1016,9 +1016,12 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('Invest smart flex II (SGD / MIP 10)')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-smart-flex-ii-cumulative-paid-policy-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-smart-flex-ii-insurance-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-smart-flex-ii-premium-shortfall-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('etiqa-smart-flex-ii-insurance-charge')
     expect(seed.accounts.find((account) => account.id === 'regular')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'after-icp', contributionShare: 1 },
@@ -1051,6 +1054,13 @@ describe('templateVariantToPolicySeed', () => {
               { minAnnualisedPremiumsPaid: 10, maxAnnualisedPremiumsPaid: null, rate: 0.006 },
             ],
           },
+        }),
+        expect.objectContaining({
+          id: 'insurance-charge',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['regular'],
+          assuranceValueAppliesTo: ['regular'],
+          requiresManualInput: true,
         }),
       ]),
     )
@@ -1580,7 +1590,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.distributionSupport).toBeUndefined()
   })
 
-  it('maps Invest flex wealth II into a partial seed with cumulative-paid policy charges and top-up routing', () => {
+  it('maps Invest flex wealth II into a supported seed with cumulative-paid policy charges and top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-flex-wealth-ii')
     expect(product).toBeDefined()
@@ -1590,8 +1600,11 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('Invest flex wealth II (SGD / MIP 10)')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-flex-wealth-ii-cumulative-paid-policy-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-flex-wealth-ii-insurance-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('etiqa-flex-wealth-ii-insurance-charge')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -1601,6 +1614,13 @@ describe('templateVariantToPolicySeed', () => {
           cumulativePaidPremiumConfig: {
             annualisedPremiumAtIssue: 4800,
           },
+        }),
+        expect.objectContaining({
+          id: 'insurance-charge',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['regular'],
+          assuranceValueAppliesTo: ['regular'],
+          requiresManualInput: true,
         }),
       ]),
     )
