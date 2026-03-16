@@ -584,12 +584,12 @@ const PROTECTION_FLOW: NudgeFlowDefinition = {
       subtitle: 'Debt totals power the health check. Monthly debt repayment and payoff age affect your projection by reducing cash flow each year.',
       fields: [
         { name: 'hasOutstandingDebt', label: 'Do you have outstanding debt (excluding mortgage)?', type: 'toggle' },
-        { name: 'carLoanOutstanding', label: 'Car loan outstanding', type: 'currency' },
-        { name: 'studentLoanOutstanding', label: 'Student loan outstanding', type: 'currency' },
-        { name: 'personalLoanOutstanding', label: 'Personal loan outstanding', type: 'currency' },
-        { name: 'creditCardDebt', label: 'Credit card debt', type: 'currency' },
-        { name: 'otherDebt', label: 'Other debt', type: 'currency' },
-        { name: 'debtPayoffAge', label: 'Age debt is fully repaid', type: 'number' },
+        { name: 'carLoanOutstanding', label: 'Car loan outstanding', type: 'currency', showWhen: { field: 'hasOutstandingDebt', equals: true } },
+        { name: 'studentLoanOutstanding', label: 'Student loan outstanding', type: 'currency', showWhen: { field: 'hasOutstandingDebt', equals: true } },
+        { name: 'personalLoanOutstanding', label: 'Personal loan outstanding', type: 'currency', showWhen: { field: 'hasOutstandingDebt', equals: true } },
+        { name: 'creditCardDebt', label: 'Credit card debt', type: 'currency', showWhen: { field: 'hasOutstandingDebt', equals: true } },
+        { name: 'otherDebt', label: 'Other debt', type: 'currency', showWhen: { field: 'hasOutstandingDebt', equals: true } },
+        { name: 'debtPayoffAge', label: 'Age debt is fully repaid', type: 'number', showWhen: { field: 'hasOutstandingDebt', equals: true } },
       ],
     },
     {

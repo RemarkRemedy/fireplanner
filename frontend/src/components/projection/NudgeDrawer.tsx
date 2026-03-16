@@ -153,6 +153,8 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
   const isLastStep = stepIndex === totalSteps - 1
   const isWide = WIDE_FLOWS.includes(flowId)
 
+  const DEBT_FIELDS = ['carLoanOutstanding', 'studentLoanOutstanding', 'personalLoanOutstanding', 'creditCardDebt', 'otherDebt']
+
   function handleChange(field: string, value: unknown) {
     setValues((prev) => {
       const next = { ...prev, [field]: value }
@@ -162,6 +164,10 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
         next._hasAnyExpenseCategory = categoryFields.some(
           (f) => typeof next[f] === 'number' && (next[f] as number) > 0
         )
+      }
+      // Auto-toggle hasOutstandingDebt when a debt amount is entered
+      if (flowId === 'protection' && DEBT_FIELDS.includes(field) && typeof value === 'number' && value > 0) {
+        next.hasOutstandingDebt = true
       }
       return next
     })
