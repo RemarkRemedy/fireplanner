@@ -139,6 +139,12 @@ function seedExpenses(adult: PlanningAdult): Record<string, unknown> {
     seeds._hasAnyExpenseCategory = categoryFlowFields.some((f) => typeof seeds[f] === 'number' && (seeds[f] as number) > 0)
   }
 
+  // Auto-set hasLargeGoals if goals already exist in the plan
+  const hasExistingGoals = plan.goals.some((g) => g.owner === 'self')
+  if (hasExistingGoals) {
+    seeds.hasLargeGoals = true
+  }
+
   // currentAge needed for age-conditional fields
   seeds.currentAge = adult.currentAge
   return seeds
