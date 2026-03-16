@@ -107,6 +107,27 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       if (typeof values.hasCpfis === 'boolean') {
         cpfUpdates.cpfisEnabled = values.hasCpfis
       }
+      if (typeof values.cpfisOaReturn === 'number') {
+        cpfUpdates.cpfisOaReturn = values.cpfisOaReturn
+      }
+      if (typeof values.cpfisSaReturn === 'number') {
+        cpfUpdates.cpfisSaReturn = values.cpfisSaReturn
+      }
+      if (typeof values.cpfVirtualRebalancing === 'boolean') {
+        cpfUpdates.virtualRebalancing = values.cpfVirtualRebalancing
+      }
+      if (typeof values.cpfVirtualRebalancingMode === 'string') {
+        const mode = values.cpfVirtualRebalancingMode
+        if (mode === 'from55' || mode === 'always') {
+          cpfUpdates.virtualRebalancingMode = mode
+        }
+      }
+
+      // Toggle-off: clear CPFIS returns when user says they don't invest through CPFIS
+      if (values.hasCpfis === false) {
+        cpfUpdates.cpfisOaReturn = 0
+        cpfUpdates.cpfisSaReturn = 0
+      }
 
       // Toggle-off: clear top-ups when user says they don't make voluntary top-ups
       if (values.hasCpfTopUps === false) {

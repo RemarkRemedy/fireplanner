@@ -44,6 +44,12 @@ function seedCpf(adult: PlanningAdult): Record<string, unknown> {
   }
 
   seeds.hasCpfis = adult.cpf.cpfisEnabled
+  if (adult.cpf.cpfisEnabled) {
+    seeds.cpfisOaReturn = adult.cpf.cpfisOaReturn
+    seeds.cpfisSaReturn = adult.cpf.cpfisSaReturn
+  }
+  seeds.cpfVirtualRebalancing = adult.cpf.virtualRebalancing
+  seeds.cpfVirtualRebalancingMode = adult.cpf.virtualRebalancingMode
   return seeds
 }
 

@@ -212,6 +212,15 @@ export function validateSetupField(
       return null
     }
 
+    // CPFIS return rates: 0 to 20%
+    case 'cpfisOaReturn':
+    case 'cpfisSaReturn': {
+      const schema = z.number().min(0).max(0.20)
+      const result = schema.safeParse(value)
+      if (!result.success) return 'CPFIS return must be between 0% and 20%'
+      return null
+    }
+
     // Mortgage / interest rates: 0 to 20%
     case 'interestRate':
     case 'mortgageRate':
