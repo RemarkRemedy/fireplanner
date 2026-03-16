@@ -1613,6 +1613,31 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds GREAT Wealth Advantage 4 as a partial catalog product with premium-holiday refund warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Wealth Advantage 4')
+
+    expect(within(dialog).getByText('GREAT Wealth Advantage 4')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(choice 10 6000 and above\)use partial template$/i }))
+
+    expect(screen.getAllByText('GREAT Wealth Advantage 4 (SGD / MIP 10 (Choice 10 6000 And Above))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('published bonus path')
+    expect(seededAlert?.textContent).toContain('policy fee')
+    expect(seededAlert?.textContent).toContain('premium-holiday-charge refund path')
+    expect(screen.getByDisplayValue('Policy Fee')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Holiday Charge Refund')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Single Premium Top-up Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
