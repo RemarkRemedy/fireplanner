@@ -21,7 +21,7 @@ function collectLegacyAuthoringImporters(root: string): string[] {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const fullPath = path.join(dir, entry.name)
       if (entry.isDirectory()) {
-        if (entry.name === '__tests__' || entry.name === '__mocks__') continue
+        if (entry.name === '__tests__' || entry.name === '__mocks__' || entry.name === 'test-helpers') continue
         walk(fullPath)
         continue
       }
