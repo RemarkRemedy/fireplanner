@@ -5,13 +5,25 @@ import { getNudgeFlow, NUDGE_FLOWS } from '@/lib/data/nudgeFlows'
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
 import { seedFlowValues, applyFlowDefaults } from '@/lib/household/seedFlowValues'
 import { CareerPhaseEditor } from '@/components/setup/CareerPhaseEditor'
+import { RetirementTemplateSelector } from '@/components/setup/RetirementTemplateSelector'
+import {
+  ExpenseGapBanner,
+  ExpenseRunningTotal,
+  ExpenseBenchmarkHints,
+  extractBreakdown,
+} from '@/components/setup/ExpenseFlowHelpers'
 import { DEFAULT_CAREER_PHASES } from '@/lib/calculations/income'
+import { FLOW_FIELD_TO_CATEGORY } from '@/lib/data/retirementTemplates'
 import type { CareerPhase, PromotionJump } from '@/lib/types'
 import { computeDelta } from '@/lib/calculations/metricsSnapshot'
 import type { DeltaSummary, MetricsSnapshot } from '@/lib/calculations/metricsSnapshot'
 import { useMetricsSnapshot } from '@/hooks/useMetricsSnapshot'
 import { useUIStore } from '@/stores/useUIStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { applyFlowValues } from '@/lib/household/applyFlowValues'
+
+/** Flows that need the wider drawer panel for complex content */
+const WIDE_FLOWS: NudgeFlowId[] = ['cpf', 'property', 'expenses', 'healthcare']
 
 interface NudgeDrawerProps {
   flowId: NudgeFlowId | null
@@ -28,7 +40,9 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
   const [stepIndex, setStepIndex] = useState(0)
   const [values, setValues] = useState<Record<string, unknown>>({})
 
-  const setField = useUIStore((s) => s.setField)
+  const setUIField = useUIStore((s) => s.setField)
+  const plan = useHouseholdPlanStore((s) => s.plan)
+  const ownsProperty = plan.properties.some((p) => p.ownsProperty)
 
   // Escape key handler to close drawer
   useEffect(() => {
@@ -134,9 +148,20 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
   const currentScreen = visibleScreens[stepIndex]
   const totalSteps = visibleScreens.length
   const isLastStep = stepIndex === totalSteps - 1
+  const isWide = WIDE_FLOWS.includes(flowId)
 
   function handleChange(field: string, value: unknown) {
-    setValues((prev) => ({ ...prev, [field]: value }))
+    setValues((prev) => {
+      const next = { ...prev, [field]: value }
+      // Update _hasAnyExpenseCategory sentinel when category fields change
+      if (flowId === 'expenses' && field in FLOW_FIELD_TO_CATEGORY) {
+        const categoryFields = Object.keys(FLOW_FIELD_TO_CATEGORY)
+        next._hasAnyExpenseCategory = categoryFields.some(
+          (f) => typeof next[f] === 'number' && (next[f] as number) > 0
+        )
+      }
+      return next
+    })
   }
 
   function handleNext() {
@@ -149,7 +174,7 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
         // Mark flow as completed in UIStore
         const completed = useUIStore.getState().completedNudgeFlows
         if (!completed.includes(flowId)) {
-          setField('completedNudgeFlows', [...completed, flowId])
+          setUIField('completedNudgeFlows', [...completed, flowId])
         }
 
         // Store pending completion so the useEffect computes delta after store update
@@ -185,8 +210,12 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
         onClick={onClose}
       />
 
-      {/* Panel */}
-      <div ref={drawerRef} tabIndex={-1} className="relative flex h-full w-full md:max-w-md md:ml-auto flex-col bg-background shadow-xl outline-none">
+      {/* Panel — wider for complex flows */}
+      <div
+        ref={drawerRef}
+        tabIndex={-1}
+        className={`relative flex h-full w-full ${isWide ? 'md:max-w-2xl' : 'md:max-w-md'} md:ml-auto flex-col bg-background shadow-xl outline-none`}
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
           <div>
@@ -210,6 +239,24 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
               {flow.explanation}
             </div>
           )}
+
+          {/* Expense flow: above-field content (property note + gap banner) */}
+          {flowId === 'expenses' && currentScreen?.id === 'expenses-breakdown' && (
+            <div className="space-y-2 mb-4">
+              {ownsProperty && (
+                <p className="text-sm text-muted-foreground">
+                  Housing costs are covered by your property plan (mortgage, maintenance). Enter your other monthly spending below.
+                </p>
+              )}
+              {!ownsProperty && plan.properties.some((p) => !p.ownsProperty) && (
+                <p className="text-sm text-muted-foreground">
+                  Once you own property, housing costs will be tracked in your property plan instead.
+                </p>
+              )}
+              <ExpenseGapBanner values={values} />
+            </div>
+          )}
+
           {currentScreen && (
             <SetupScreen
               screen={currentScreen}
@@ -221,12 +268,32 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
               totalSteps={totalSteps}
               submitLabel={isLastStep ? 'Save' : 'Continue'}
             >
+              {/* Salary flow: career phase editor */}
               {flowId === 'salary' && currentScreen.id === 'salary-model' && values.salaryModel === 'realistic' && (
                 <CareerPhaseEditor
                   phases={(values.careerPhases as CareerPhase[]) ?? DEFAULT_CAREER_PHASES}
                   onPhasesChange={(phases) => handleChange('careerPhases', phases)}
                   promotionJumps={(values.promotionJumps as PromotionJump[]) ?? []}
                   onPromotionJumpsChange={(jumps) => handleChange('promotionJumps', jumps)}
+                />
+              )}
+
+              {/* Expense flow screen 1: benchmark hints + running total */}
+              {flowId === 'expenses' && currentScreen.id === 'expenses-breakdown' && (
+                <div className="space-y-2">
+                  <ExpenseBenchmarkHints values={values} ownsProperty={ownsProperty} />
+                  <ExpenseRunningTotal values={values} />
+                </div>
+              )}
+
+              {/* Expense flow screen 2: retirement template selector */}
+              {flowId === 'expenses' && currentScreen.id === 'expenses-retirement-adjustment' && (
+                <RetirementTemplateSelector
+                  breakdown={extractBreakdown(values)}
+                  templateId={(values.templateId as string) ?? 'none'}
+                  multipliers={(values.multipliers as Record<string, number>) ?? {}}
+                  ownsProperty={ownsProperty}
+                  onChange={handleChange}
                 />
               )}
             </SetupScreen>
