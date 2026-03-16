@@ -115,6 +115,15 @@ export type GoldenCoverageTag =
   | 'branch:singlife-legacy-invest-partial-withdrawal-charge'
   | 'branch:singlife-legacy-invest-surrender-charge'
   | 'branch:singlife-legacy-invest-premium-shortfall-charge'
+  | 'branch:singlife-savvy-invest-ii-welcome-bonus'
+  | 'branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift'
+  | 'branch:singlife-savvy-invest-ii-loyalty-bonus'
+  | 'branch:singlife-savvy-invest-ii-administrative-charge'
+  | 'branch:singlife-savvy-invest-ii-supplementary-charge'
+  | 'branch:singlife-savvy-invest-ii-zero-top-up-charge'
+  | 'branch:singlife-savvy-invest-ii-partial-withdrawal-charge'
+  | 'branch:singlife-savvy-invest-ii-surrender-charge'
+  | 'branch:singlife-savvy-invest-ii-premium-shortfall-charge'
   | 'branch:pru-holiday-refund'
   | 'branch:pru-holiday-fallback'
   | 'branch:pru-top-up-charge'
@@ -3808,6 +3817,88 @@ function singlifeLegacyInvestStressPolicy(
 ): IlpPolicyInput {
   return singlifeLegacyInvestBasePolicy(snapshot, id, MANULIFE_STRESS_FUNDS, {
     name: 'Golden Singlife Legacy Invest (SGD / MIP 10 Term 15 OCF Stress)',
+  })
+}
+
+function singlifeSavvyInvestIiBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'singlife-savvy-invest-ii', 'sgd-mip-10-fixed', id, {
+    monthlyContribution: 1_000,
+    currentPolicyYear: 9,
+    monthsAlreadyPaid: 96,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden Singlife Savvy Invest II (SGD / MIP 10 Fixed)',
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 30_000,
+      })),
+      distributionAssumption: {
+        mode: 'cash-payout',
+        source: 'manual-assumption',
+        annualYieldRate: 0.03,
+      },
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function singlifeSavvyInvestIiBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return singlifeSavvyInvestIiBasePolicy(snapshot, id, MANULIFE_BALANCED_FUNDS, {
+    name: 'Golden Singlife Savvy Invest II (SGD / MIP 10 Fixed Baseline)',
+  })
+}
+
+function singlifeSavvyInvestIiEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return singlifeSavvyInvestIiBasePolicy(snapshot, id, MANULIFE_BALANCED_FUNDS, {
+    name: 'Golden Singlife Savvy Invest II (SGD / MIP 10 Fixed Event Heavy)',
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 97,
+        durationMonths: 6,
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 101,
+        durationMonths: 1,
+        amount: 8_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 105,
+        durationMonths: 1,
+        amount: 3_500,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function singlifeSavvyInvestIiStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return singlifeSavvyInvestIiBasePolicy(snapshot, id, MANULIFE_STRESS_FUNDS, {
+    name: 'Golden Singlife Savvy Invest II (SGD / MIP 10 Fixed OCF Stress)',
   })
 }
 
@@ -9516,6 +9607,60 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Singlife Legacy Invest alternate-fund high-OCF stress scenario through the supported SGD corridor.',
   },
   {
+    productId: 'singlife-savvy-invest-ii',
+    variantId: 'sgd-mip-10-fixed',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'branch:singlife-savvy-invest-ii-welcome-bonus',
+      'branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift',
+      'branch:singlife-savvy-invest-ii-loyalty-bonus',
+      'branch:singlife-savvy-invest-ii-administrative-charge',
+      'branch:singlife-savvy-invest-ii-supplementary-charge',
+    ],
+    description: 'Singlife Savvy Invest II baseline scenario covering the supported SGD / 10 years (Fixed) corridor with allocation uplifts, loyalty windows, and cash-payout distribution assumption support.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the administrative and supplementary charge corridor',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  },
+  {
+    productId: 'singlife-savvy-invest-ii',
+    variantId: 'sgd-mip-10-fixed',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:singlife-savvy-invest-ii-zero-top-up-charge',
+      'branch:singlife-savvy-invest-ii-partial-withdrawal-charge',
+      'branch:singlife-savvy-invest-ii-surrender-charge',
+      'branch:singlife-savvy-invest-ii-premium-shortfall-charge',
+    ],
+    description: 'Singlife Savvy Invest II event-heavy scenario covering premium holiday, nil-charge top-up, charged withdrawal, and the same supported distribution corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy records annual contribution above scheduled premium from the seeded top-up event',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+      {
+        description: 'event-heavy policy records annual withdrawals in projection output',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'singlife-savvy-invest-ii',
+    variantId: 'sgd-mip-10-fixed',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Singlife Savvy Invest II alternate-fund high-OCF stress scenario through the supported fixed-10 corridor.',
+  },
+  {
     productId: 'prudential-prulink-investgrowth',
     variantId: 'sgd-open-ended-cash',
     scenarioId: 'baseline',
@@ -12677,6 +12822,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'singlife-legacy-invest' && definition.scenarioId === 'ocf-stress') {
     return singlifeLegacyInvestStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'singlife-savvy-invest-ii' && definition.scenarioId === 'baseline') {
+    return singlifeSavvyInvestIiBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'singlife-savvy-invest-ii' && definition.scenarioId === 'event-heavy') {
+    return singlifeSavvyInvestIiEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'singlife-savvy-invest-ii' && definition.scenarioId === 'ocf-stress') {
+    return singlifeSavvyInvestIiStressPolicy(snapshot, id)
   }
   if (definition.productId === 'etiqa-invest-starter' && definition.scenarioId === 'baseline') {
     return etiqaInvestStarterBaselinePolicy(snapshot, id)

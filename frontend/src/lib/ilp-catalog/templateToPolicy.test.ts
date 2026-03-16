@@ -5441,7 +5441,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
-  it('maps Singlife Savvy Invest II into a partial seed with fixed-10 allocation uplifts and loyalty windows', () => {
+  it('maps Singlife Savvy Invest II into a supported seed with fixed-10 allocation uplifts and loyalty windows', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'singlife-savvy-invest-ii')
     expect(product).toBeDefined()
@@ -5451,7 +5451,7 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('Singlife Savvy Invest II (SGD / MIP 10 (Fixed))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:singlife-savvy-invest-ii-zero-top-up-charge')

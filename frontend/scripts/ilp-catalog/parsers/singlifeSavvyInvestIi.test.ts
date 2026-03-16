@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseSinglifeSavvyInvestIi', () => {
-  it('builds a valid partial Singlife Savvy Invest II product from the source PDF', async () => {
+  it('builds a valid supported Singlife Savvy Invest II product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseSinglifeSavvyInvestIi({
       document,
@@ -23,7 +23,7 @@ describe('parseSinglifeSavvyInvestIi', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('singlife-savvy-invest-ii')
     expect(product.productName).toBe('Singlife Savvy Invest II')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.modeledEconomics).toContain('branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift')
     expect(product.modeledEconomics).toContain('branch:singlife-savvy-invest-ii-premium-shortfall-charge')

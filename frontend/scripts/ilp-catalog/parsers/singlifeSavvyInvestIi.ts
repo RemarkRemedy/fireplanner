@@ -328,8 +328,8 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: SURRENDER_CHARGE_SCHEDULE.map((tier) => tier.rate),
     warnings: [
-      'This partial template models the SGD / 10 years (Fixed) corridor only.',
-      'This partial template models the welcome bonus tiers, the 100% / 102% / 105% regular-premium allocation ladder, the published loyalty-bonus payment windows, the 0.60% administrative charge, the first-10-policy-years 1.90% supplementary charge, the currently nil top-up charge, the Appendix A surrender / withdrawal / premium-shortfall schedules, and the reinvest-default distribution-mode assumption surface.',
+      'This supported template models the SGD / 10 years (Fixed) corridor only.',
+      'This supported template models the welcome bonus tiers, the 100% / 102% / 105% regular-premium allocation ladder, the published loyalty-bonus payment windows, the 0.60% administrative charge, the first-10-policy-years 1.90% supplementary charge, the currently nil top-up charge, the Appendix A surrender / withdrawal / premium-shortfall schedules, and the reinvest-default distribution-mode assumption surface.',
       'Life Stage Benefit, cost of insurance, and other minimum-investment-period variants remain informational only in V1.',
     ],
     unsupportedItems: [
@@ -353,9 +353,9 @@ export function parseSinglifeSavvyInvestIi({ document, sourceChecksumSha256 }: P
     sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:singlife-savvy-invest-ii-welcome-bonus',
       'branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift',
@@ -379,8 +379,8 @@ export function parseSinglifeSavvyInvestIi({ document, sourceChecksumSha256 }: P
       'singlife-savvy-invest-ii-fund-management-and-switching',
     ],
     warnings: [
-      'Singlife Savvy Invest II is cataloged as a partial modeled subset in V1. The parser captures the SGD / 10 years (Fixed) corridor: welcome bonus tiers, regular-premium allocation uplifts, loyalty-bonus windows, administrative and supplementary charges, the currently nil top-up charge, the Appendix A surrender / withdrawal / premium-shortfall schedules, and reinvest-default distribution support.',
-      'Life Stage Benefit waivers, cost of insurance, and protection-side benefits remain informational only because the current engine does not yet execute those stateful or insured-life-dependent mechanics.',
+      'Singlife Savvy Invest II is cataloged as a supported V1 product for the SGD / 10 years (Fixed) corridor. The parser captures welcome bonus tiers, regular-premium allocation uplifts, loyalty-bonus windows, administrative and supplementary charges, the currently nil top-up charge, the Appendix A surrender / withdrawal / premium-shortfall schedules, and reinvest-default distribution support.',
+      'Life Stage Benefit waivers, cost of insurance, protection-side benefits, allowable partial-withdrawal limits, and other MIP corridors remain informational only.',
       'Structured extraction validated against the Singlife Savvy Invest II product summary text layer.',
     ],
     archived: false,
