@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseTokioMarineGoLuxe', () => {
-  it('builds a valid partial #goLuxe product from the source PDF', async () => {
+  it('builds valid split #goLuxe death-benefit variants from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseTokioMarineGoLuxe({
       document,
@@ -27,26 +27,30 @@ describe('parseTokioMarineGoLuxe', () => {
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(product.modeledEconomics).toContain('branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-dividend-payout-threshold-record-date-and-regular-withdrawal')
 
-    const variant = product.variants[0]
-    expect(variant?.id).toBe('sgd-mip-15')
-    expect(variant?.icpMonths).toBe(36)
-    expect(variant?.accounts).toEqual([
+    const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15')
+    const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death')
+
+    expect(product.variants).toHaveLength(2)
+    expect(basicVariant?.icpMonths).toBe(36)
+    expect(basicVariant?.accounts).toEqual([
       expect.objectContaining({ id: 'initial', feeRate: 0.03, postMipFeeRate: 0, subjectToEec: true }),
       expect.objectContaining({ id: 'accumulation', feeRate: 0.0135, postMipFeeRate: 0.0135, subjectToEec: false }),
       expect.objectContaining({ id: 'topup', feeRate: 0, postMipFeeRate: 0, subjectToEec: false }),
     ])
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.045 },
       { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.06 },
       { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.085 },
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.11 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.125 },
     ])
-    expect(variant?.eventChargeRules).toEqual(
+    expect(basicVariant?.feeRules).toEqual([])
+    expect(basicVariant?.eventChargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: 'partial-withdrawal-charge',
@@ -71,7 +75,7 @@ describe('parseTokioMarineGoLuxe', () => {
         }),
       ]),
     )
-    expect(variant?.distributionSupport).toEqual({
+    expect(basicVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
       cashPayoutWindows: [
@@ -87,6 +91,23 @@ describe('parseTokioMarineGoLuxe', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
-    expect(variant?.eecTable).toEqual([1, 1, 1, 0.95, 0.76, 0.76, 0.76, 0.73, 0.73, 0.73, 0.7, 0.6, 0.45, 0.25, 0.07])
+    expect(basicVariant?.eecTable).toEqual([1, 1, 1, 0.95, 0.76, 0.76, 0.76, 0.73, 0.73, 0.73, 0.7, 0.6, 0.45, 0.25, 0.07])
+    expect(advancedVariant?.feeRules).toEqual([
+      expect.objectContaining({
+        id: 'monthly-protection-charge',
+        appliesTo: ['accumulation'],
+        assuranceValueAppliesTo: ['initial', 'accumulation'],
+        fallbackAppliesTo: ['initial', 'topup'],
+        assuranceConfig: expect.objectContaining({
+          formula: 'tokio-mpc-net-premium-floor',
+          rateTable: 'tokio-mpc-unzo-death',
+          accrual: {
+            startPolicyYear: 1,
+            endPolicyYear: 3,
+            settlementPolicyYear: 4,
+          },
+        }),
+      }),
+    ])
   }, 30_000)
 })

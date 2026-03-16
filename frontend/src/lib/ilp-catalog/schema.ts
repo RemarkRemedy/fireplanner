@@ -106,6 +106,7 @@ export const ilpTemplateFeeRuleSchema = z.object({
   }).optional(),
   requiresManualInput: z.boolean().optional(),
   appliesTo: z.array(z.string().min(1)).max(20),
+  assuranceValueAppliesTo: z.array(z.string().min(1)).min(1).max(10).optional(),
   fallbackAppliesTo: z.array(z.string().min(1)).max(20).optional(),
   rateSchedule: z.array(z.object({
     startPolicyYear: z.number().int().min(1).max(100),
@@ -123,6 +124,14 @@ export const ilpTemplateFeeRuleSchema = z.object({
   notes: z.array(z.string()),
   sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
 }).superRefine((rule, ctx) => {
+  if (rule.basis !== 'assurance-sum-at-risk' && rule.assuranceValueAppliesTo) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'assuranceValueAppliesTo can only be used on assurance-sum-at-risk fee rules',
+      path: ['assuranceValueAppliesTo'],
+    })
+  }
+
   const accrual = rule.assuranceConfig?.accrual
   if (!accrual) return
 
@@ -356,6 +365,36 @@ export const ilpTemplateVariantSchema = z.object({
   }
 
   variant.feeRules.forEach((rule, ruleIndex) => {
+    rule.appliesTo.forEach((accountId, accountIndex) => {
+      if (!accountIds.has(accountId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'feeRules appliesTo must reference existing accounts',
+          path: ['feeRules', ruleIndex, 'appliesTo', accountIndex],
+        })
+      }
+    })
+
+    rule.assuranceValueAppliesTo?.forEach((accountId, accountIndex) => {
+      if (!accountIds.has(accountId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'feeRules assuranceValueAppliesTo must reference existing accounts',
+          path: ['feeRules', ruleIndex, 'assuranceValueAppliesTo', accountIndex],
+        })
+      }
+    })
+
+    rule.fallbackAppliesTo?.forEach((accountId, accountIndex) => {
+      if (!accountIds.has(accountId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'feeRules fallbackAppliesTo must reference existing accounts',
+          path: ['feeRules', ruleIndex, 'fallbackAppliesTo', accountIndex],
+        })
+      }
+    })
+
     if (
       mipBasis === 'finite'
       && variant.mipLength != null

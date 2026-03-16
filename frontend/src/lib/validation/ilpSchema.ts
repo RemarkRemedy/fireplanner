@@ -275,6 +275,7 @@ export const ilpChargeRuleSchema = z.object({
   startPolicyYear: z.number().int().min(1).max(100).optional(),
   endPolicyYear: z.number().int().min(1).max(100).nullable().optional(),
   appliesTo: z.array(z.string().min(1)).min(1).max(10),
+  assuranceValueAppliesTo: z.array(z.string().min(1)).min(1).max(10).optional(),
   fallbackAppliesTo: z.array(z.string().min(1)).min(1).max(10).optional(),
   rateSchedule: z.array(z.object({
     startPolicyYear: z.number().int().min(1).max(100),
@@ -388,6 +389,14 @@ export const ilpChargeRuleSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'Assurance configuration can only be used on assurance-sum-at-risk charge rules',
       path: ['assuranceConfig'],
+    })
+  }
+
+  if (rule.basis !== 'assurance-sum-at-risk' && rule.assuranceValueAppliesTo) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'assuranceValueAppliesTo can only be used on assurance-sum-at-risk charge rules',
+      path: ['assuranceValueAppliesTo'],
     })
   }
 
@@ -940,6 +949,14 @@ export const ilpPolicySchema = z.object({
         code: z.ZodIssueCode.custom,
         message: 'Charge rule appliesTo must reference valid account IDs',
         path: ['chargeRules', index, 'appliesTo'],
+      })
+    }
+
+    if (rule.assuranceValueAppliesTo?.some((accountId) => !validAccountIds.has(accountId))) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Charge rule assuranceValueAppliesTo must reference valid account IDs',
+        path: ['chargeRules', index, 'assuranceValueAppliesTo'],
       })
     }
 

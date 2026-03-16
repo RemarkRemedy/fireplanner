@@ -110,6 +110,7 @@ export interface IlpTemplateFeeRule {
   }
   requiresManualInput?: boolean
   appliesTo: string[]
+  assuranceValueAppliesTo?: string[]
   fallbackAppliesTo?: string[]
   rateSchedule?: Array<{
     startPolicyYear: number

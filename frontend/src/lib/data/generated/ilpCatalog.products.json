@@ -66005,18 +66005,20 @@
       "tokio-premium-shortfall-charge-regular-premium-reduction",
       "tokio-premium-increase-restores-shortfall-charge-cessation",
       "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only",
+      "branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "tokio-goluxe-loyalty-and-achievement-bonuses",
-      "tokio-goluxe-monthly-protection-charge-and-death-options",
+      "tokio-goluxe-advanced-death-payout-handling-and-life-assured-administration",
       "tokio-goluxe-dividend-payout-threshold-record-date-and-regular-withdrawal",
       "tokio-goluxe-non-sgd-policy-currencies"
     ],
     "warnings": [
       "Structured extraction validated against the #goLuxe product summary text layer.",
-      "The parser currently covers the SGD / minimum-contribution-period-15 corridor only.",
+      "The parser currently covers split SGD / minimum-contribution-period-15 death-benefit-option corridors only.",
       "Initial charge is modeled as a 3.00% p.a. fee on the Initial Units Account during the minimum contribution period, policy charge is modeled as a 1.35% p.a. fee on the Accumulation Units Account throughout the policy term, and phase-specific dividend cash-payout account restrictions are modeled through the manual distribution-mode assumption surface.",
+      "Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-three-policy-years accrual window and policy-year-4 lump-sum settlement using Initial plus Accumulation Units Account value in the sum-at-risk basis.",
       "Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge."
     ],
     "archived": false,
@@ -66524,13 +66526,630 @@
           0.07
         ],
         "warnings": [
-          "This partial template models the SGD / minimum-contribution-period-15 corridor only.",
+          "This partial template models the SGD / minimum-contribution-period-15 (Basic Death) corridor only.",
           "This partial template models regular-premium routing through year 15, the published initial charge and policy charge through account fee rates, top-up routing, recurring single premium routing, the published surrender charge on the Initial Units Account, the published partial-withdrawal and premium-shortfall charge schedules, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
           "Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount."
         ],
         "unsupportedItems": [
           "Loyalty bonus and achievement bonus remain metadata-only because the published adjustment-factor and first-ten-policy-years qualification gates are not yet represented directly in the template bonus basis.",
-          "Monthly protection charge, advanced death benefit, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.",
+          "Advanced Death selection, Monthly Protection Charge, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.",
+          "Regular withdrawal, partial-withdrawal limit caps, and non-SGD policy currencies remain metadata-only for this product.",
+          "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan Description",
+            "excerpt": "PRODUCT SUMMARY − #GOLUXE In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description #goLuxe is a multi-currency, whole of life, investment-linked insurance P"
+          },
+          {
+            "page": 2,
+            "section": "Initial Bonus / Loyalty Bonus / Achievement Bonus",
+            "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. Loyalty bonus will be paid in accordance to the formula below d"
+          },
+          {
+            "page": 4,
+            "section": "Regular Premium / Reduction / Recurring Single Premium",
+            "excerpt": "Regular premium due during the first 36 months of the policy from the commencement date will be used to th purchase initial units and allocated to the Initial Units Account. Regular premium due from the 37 month of the c"
+          },
+          {
+            "page": 5,
+            "section": "Top-up Premium / Premium Holiday",
+            "excerpt": "During premium holiday, you may be allowed to resume paying recurring single premium only if the regular premium payment has resumed and the regular premium amount is equivalent to the annualised regular premium amount c"
+          },
+          {
+            "page": 6,
+            "section": "Partial Withdrawal",
+            "excerpt": "Partial Withdrawal You may request for a partial withdrawal of policy value from the fourth policy year onwards while the policy is in force provided the minimum amount to be withdrawn is at least $500 (in the policy cur"
+          },
+          {
+            "page": 8,
+            "section": "Dividend Distribution",
+            "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+          },
+          {
+            "page": 9,
+            "section": "Initial Charge / Policy Charge / Monthly Protection Charge",
+            "excerpt": "Initial Charge During the minimum contribution period, an initial charge of 3.0% p.a. of the Initial Units Account value will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial "
+          },
+          {
+            "page": 10,
+            "section": "Top-up Charge / Surrender / Partial Withdrawal / Premium Shortfall",
+            "excerpt": "Administrative Charge Nil Surrender Charge A surrender charge will be levied upon the surrender on or before the end of the minimum contribution period. The Surrender Charge is calculated by multiplying the Initial Units"
+          },
+          {
+            "page": 15,
+            "section": "Appendix A Charges",
+            "excerpt": "Surrender Charge Policy Year Surrender Charge 1 100% 2 100% 3 100% 4 95% 5 76% 6 76% 7 76% 8 73% 9 73% 10 73% 11 70% 12 60% 13 45% 14 25% 15 7% Partial Withdrawal Charge Policy Year Partial Withdrawal Charge 1 Not applic"
+          },
+          {
+            "page": 16,
+            "section": "Appendix A Premium Shortfall Charge",
+            "excerpt": "Premium Shortfall Charge Policy Year Premium Shortfall Charge 1 Not applicable as Premium Holiday and reduction in Regular Premium 2 are not allowed in the first three 3 (3) policy years 4 50% 5 45% 6 40% 7 35% 8 30% 9 2"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-15-advanced-death",
+        "currency": "SGD",
+        "mipLength": 15,
+        "icpMonths": 36,
+        "accounts": [
+          {
+            "id": "initial",
+            "label": "Initial Units Account",
+            "feeRate": 0.03,
+            "postMipFeeRate": 0,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan Description",
+                "excerpt": "PRODUCT SUMMARY − #GOLUXE In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description #goLuxe is a multi-currency, whole of life, investment-linked insurance P"
+              },
+              {
+                "page": 4,
+                "section": "Regular Premium / Reduction / Recurring Single Premium",
+                "excerpt": "Regular premium due during the first 36 months of the policy from the commencement date will be used to th purchase initial units and allocated to the Initial Units Account. Regular premium due from the 37 month of the c"
+              },
+              {
+                "page": 9,
+                "section": "Initial Charge / Policy Charge / Monthly Protection Charge",
+                "excerpt": "Initial Charge During the minimum contribution period, an initial charge of 3.0% p.a. of the Initial Units Account value will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial "
+              }
+            ]
+          },
+          {
+            "id": "accumulation",
+            "label": "Accumulation Units Account",
+            "feeRate": 0.0135,
+            "postMipFeeRate": 0.0135,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "after-icp",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan Description",
+                "excerpt": "PRODUCT SUMMARY − #GOLUXE In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description #goLuxe is a multi-currency, whole of life, investment-linked insurance P"
+              },
+              {
+                "page": 4,
+                "section": "Regular Premium / Reduction / Recurring Single Premium",
+                "excerpt": "Regular premium due during the first 36 months of the policy from the commencement date will be used to th purchase initial units and allocated to the Initial Units Account. Regular premium due from the 37 month of the c"
+              },
+              {
+                "page": 9,
+                "section": "Initial Charge / Policy Charge / Monthly Protection Charge",
+                "excerpt": "Initial Charge During the minimum contribution period, an initial charge of 3.0% p.a. of the Initial Units Account value will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial "
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Units Account",
+            "feeRate": 0,
+            "postMipFeeRate": 0,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan Description",
+                "excerpt": "PRODUCT SUMMARY − #GOLUXE In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description #goLuxe is a multi-currency, whole of life, investment-linked insurance P"
+              },
+              {
+                "page": 4,
+                "section": "Regular Premium / Reduction / Recurring Single Premium",
+                "excerpt": "Regular premium due during the first 36 months of the policy from the commencement date will be used to th purchase initial units and allocated to the Initial Units Account. Regular premium due from the 37 month of the c"
+              },
+              {
+                "page": 5,
+                "section": "Top-up Premium / Premium Holiday",
+                "excerpt": "During premium holiday, you may be allowed to resume paying recurring single premium only if the regular premium payment has resumed and the regular premium amount is equivalent to the annualised regular premium amount c"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "initial-bonus",
+            "type": "allocation",
+            "label": "Initial Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "initial"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 3,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.045
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.06
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.085
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.11
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.125
+              }
+            ],
+            "notes": [
+              "Tier is based on the published SGD annualised regular premium band for the 15-year minimum contribution period.",
+              "Allocated to the Initial Units Account upon each regular premium received in the first three policy years."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Initial Bonus",
+                "excerpt": "first 36 months of the policy from the commencement date and units purchased with the Initial Bonus shall be allocated. 2 Accumulation Units Account refers to the account to which units purchased with the regular premium"
+              },
+              {
+                "page": 2,
+                "section": "Initial Bonus Rates",
+                "excerpt": "Initial bonus rates on a per annum basis are set out below: Minimum Contribution Annualised Regular Period Premium Band 15 years 1 4.50% 2 6.00% 3 8.50% 4 11.00% 5 12.50% The initial bonus will be allocated to the policy"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "monthly-protection-charge",
+            "label": "Monthly Protection Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": 0,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "tokio-mpc-net-premium-floor",
+              "rateTable": "tokio-mpc-unzo-death",
+              "monthlyModalFactor": 1,
+              "maxAgeNextBirthday": 99,
+              "accrual": {
+                "startPolicyYear": 1,
+                "endPolicyYear": 3,
+                "settlementPolicyYear": 4
+              }
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "accumulation"
+            ],
+            "assuranceValueAppliesTo": [
+              "initial",
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "initial",
+              "topup"
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published Monthly Protection Charge for the Advanced Death corridor during the 15-year minimum contribution period.",
+              "The Monthly Protection Charge for policy years 1 to 3 is accrued and collected in one lump sum in policy year 4.",
+              "Sum at risk is the published net premium less 101% of the Initial Units Account value and 101% of the Accumulation Units Account value, floored at zero.",
+              "The charge is deducted monthly in advance from the Accumulation Units Account, with outstanding amounts deducted from the Initial Units Account and/or Top-up Units Account if needed."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan Description",
+                "excerpt": "PRODUCT SUMMARY − #GOLUXE In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description #goLuxe is a multi-currency, whole of life, investment-linked insurance P"
+              },
+              {
+                "page": 9,
+                "section": "Initial Charge / Policy Charge / Monthly Protection Charge",
+                "excerpt": "Initial Charge During the minimum contribution period, an initial charge of 3.0% p.a. of the Initial Units Account value will be deducted monthly on each Policy Monthiversary* through deduction of units from the Initial "
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each top-up premium allocation to the Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Top-up Premium / Premium Holiday",
+                "excerpt": "During premium holiday, you may be allowed to resume paying recurring single premium only if the regular premium payment has resumed and the regular premium amount is equivalent to the annualised regular premium amount c"
+              },
+              {
+                "page": 10,
+                "section": "Top-up Charge / Surrender / Partial Withdrawal / Premium Shortfall",
+                "excerpt": "Administrative Charge Nil Surrender Charge A surrender charge will be levied upon the surrender on or before the end of the minimum contribution period. The Surrender Charge is calculated by multiplying the Initial Units"
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurring Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each recurring single premium allocation to the Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular Premium / Reduction / Recurring Single Premium",
+                "excerpt": "Regular premium due during the first 36 months of the policy from the commencement date will be used to th purchase initial units and allocated to the Initial Units Account. Regular premium due from the 37 month of the c"
+              },
+              {
+                "page": 10,
+                "section": "Top-up Charge / Surrender / Partial Withdrawal / Premium Shortfall",
+                "excerpt": "Administrative Charge Nil Surrender Charge A surrender charge will be levied upon the surrender on or before the end of the minimum contribution period. The Surrender Charge is calculated by multiplying the Initial Units"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.95
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.76
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 15,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies only to partial withdrawals from the Accumulation Units Account during the minimum contribution period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Partial Withdrawal",
+                "excerpt": "Partial Withdrawal You may request for a partial withdrawal of policy value from the fourth policy year onwards while the policy is in force provided the minimum amount to be withdrawn is at least $500 (in the policy cur"
+              },
+              {
+                "page": 10,
+                "section": "Top-up Charge / Surrender / Partial Withdrawal / Premium Shortfall",
+                "excerpt": "Administrative Charge Nil Surrender Charge A surrender charge will be levied upon the surrender on or before the end of the minimum contribution period. The Surrender Charge is calculated by multiplying the Initial Units"
+              },
+              {
+                "page": 15,
+                "section": "Appendix A Charges",
+                "excerpt": "Surrender Charge Policy Year Surrender Charge 1 100% 2 100% 3 100% 4 95% 5 76% 6 76% 7 76% 8 73% 9 73% 10 73% 11 70% 12 60% 13 45% 14 25% 15 7% Partial Withdrawal Charge Policy Year Partial Withdrawal Charge 1 Not applic"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge-premium-holiday",
+            "label": "Premium Shortfall Charge (Premium Holiday)",
+            "trigger": "premium-holiday",
+            "basis": "committed-annual-premium-with-overlap-months",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "initial",
+              "topup"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 15,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "exclusiveGroup": "tokio-premium-shortfall",
+            "groupResolution": "max-total-charge",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published monthly premium shortfall charge when the policy is on premium holiday during the first ten policy years.",
+              "Deduct from Accumulation Units Account first, then Initial Units Account and/or Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Top-up Premium / Premium Holiday",
+                "excerpt": "During premium holiday, you may be allowed to resume paying recurring single premium only if the regular premium payment has resumed and the regular premium amount is equivalent to the annualised regular premium amount c"
+              },
+              {
+                "page": 10,
+                "section": "Top-up Charge / Surrender / Partial Withdrawal / Premium Shortfall",
+                "excerpt": "Administrative Charge Nil Surrender Charge A surrender charge will be levied upon the surrender on or before the end of the minimum contribution period. The Surrender Charge is calculated by multiplying the Initial Units"
+              },
+              {
+                "page": 16,
+                "section": "Appendix A Premium Shortfall Charge",
+                "excerpt": "Premium Shortfall Charge Policy Year Premium Shortfall Charge 1 Not applicable as Premium Holiday and reduction in Regular Premium 2 are not allowed in the first three 3 (3) policy years 4 50% 5 45% 6 40% 7 35% 8 30% 9 2"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge-reduction",
+            "label": "Premium Shortfall Charge (Regular Premium Reduction)",
+            "trigger": "regular-premium-reduction",
+            "basis": "annual-reduction-with-active-months",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "initial",
+              "topup"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 15,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "exclusiveGroup": "tokio-premium-shortfall",
+            "groupResolution": "max-total-charge",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published monthly premium shortfall charge when annualised regular premium is reduced below the commencement-date commitment during the first ten policy years.",
+              "Uses the annual reduction amount as the charge base and deducts from Accumulation Units Account first, then Initial Units Account and/or Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular Premium / Reduction / Recurring Single Premium",
+                "excerpt": "Regular premium due during the first 36 months of the policy from the commencement date will be used to th purchase initial units and allocated to the Initial Units Account. Regular premium due from the 37 month of the c"
+              },
+              {
+                "page": 10,
+                "section": "Top-up Charge / Surrender / Partial Withdrawal / Premium Shortfall",
+                "excerpt": "Administrative Charge Nil Surrender Charge A surrender charge will be levied upon the surrender on or before the end of the minimum contribution period. The Surrender Charge is calculated by multiplying the Initial Units"
+              },
+              {
+                "page": 16,
+                "section": "Appendix A Premium Shortfall Charge",
+                "excerpt": "Premium Shortfall Charge Policy Year Premium Shortfall Charge 1 Not applicable as Premium Holiday and reduction in Regular Premium 2 are not allowed in the first three 3 (3) policy years 4 50% 5 45% 6 40% 7 35% 8 30% 9 2"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "initial",
+            "accumulation",
+            "topup"
+          ],
+          "cashPayoutWindows": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15,
+              "accountIds": [
+                "accumulation",
+                "topup"
+              ]
+            },
+            {
+              "startPolicyYear": 16,
+              "endPolicyYear": null,
+              "accountIds": [
+                "initial",
+                "accumulation",
+                "topup"
+              ]
+            }
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.",
+            "During the 15-year minimum contribution period, only dividends from the Accumulation Units Account and Top-up Units Account may be paid in cash.",
+            "After the minimum contribution period, dividends from the Initial Units Account, Accumulation Units Account, and Top-up Units Account may be paid in cash.",
+            "The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 8,
+              "section": "Dividend Distribution",
+              "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+            }
+          ]
+        },
+        "eecTable": [
+          1,
+          1,
+          1,
+          0.95,
+          0.76,
+          0.76,
+          0.76,
+          0.73,
+          0.73,
+          0.73,
+          0.7,
+          0.6,
+          0.45,
+          0.25,
+          0.07
+        ],
+        "warnings": [
+          "This partial template models the SGD / minimum-contribution-period-15 (Advanced Death) corridor only.",
+          "This partial template models regular-premium routing through year 15, the published initial charge and policy charge through account fee rates, top-up routing, recurring single premium routing, the published surrender charge on the Initial Units Account, the published partial-withdrawal and premium-shortfall charge schedules, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
+          "The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.",
+          "Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount."
+        ],
+        "unsupportedItems": [
+          "Loyalty bonus and achievement bonus remain metadata-only because the published adjustment-factor and first-ten-policy-years qualification gates are not yet represented directly in the template bonus basis.",
+          "Advanced Death payout handling beyond the modeled Monthly Protection Charge, together with multiple-life handling and change-of-life-assured administration, remains metadata-only for this product.",
           "Regular withdrawal, partial-withdrawal limit caps, and non-SGD policy currencies remain metadata-only for this product.",
           "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1."
         ],

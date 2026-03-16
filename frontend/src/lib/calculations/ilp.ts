@@ -203,6 +203,7 @@ export interface IlpChargeRule {
   startPolicyYear?: number
   endPolicyYear?: number | null
   appliesTo: string[]
+  assuranceValueAppliesTo?: string[]
   fallbackAppliesTo?: string[]
   rateSchedule?: IlpChargeRateTier[]
   amountSchedule?: IlpChargeAmountTier[]
@@ -487,6 +488,8 @@ interface IlpNormalizedAssuranceRule {
   family: IlpAssuranceFormulaFamily
   appliesTo: IlpAccount[]
   appliesToIds: string[]
+  assuranceValueAppliesTo: IlpAccount[]
+  assuranceValueAppliesToIds: string[]
   fallbackAppliesTo: IlpAccount[]
 }
 
@@ -743,6 +746,11 @@ function buildNormalizedAssuranceKernel(
     .map((rule) => {
       const appliesTo = resolveAccountsInDisplayOrder(input, rule.appliesTo)
       const appliesToIds = appliesTo.map((account) => account.id)
+      const assuranceValueAppliesTo = resolveAccountsInDisplayOrder(
+        input,
+        rule.assuranceValueAppliesTo ?? rule.appliesTo,
+      )
+      const assuranceValueAppliesToIds = assuranceValueAppliesTo.map((account) => account.id)
       const fallbackAppliesTo = resolveAccountsInDisplayOrder(input, rule.fallbackAppliesTo ?? [])
 
       return {
@@ -750,10 +758,14 @@ function buildNormalizedAssuranceKernel(
         family: getAssuranceFormulaFamily(rule.assuranceConfig),
         appliesTo,
         appliesToIds,
+        assuranceValueAppliesTo,
+        assuranceValueAppliesToIds,
         fallbackAppliesTo,
       }
     })
-    .filter((normalizedRule) => normalizedRule.appliesTo.length > 0)
+    .filter((normalizedRule) => (
+      normalizedRule.appliesTo.length > 0 && normalizedRule.assuranceValueAppliesTo.length > 0
+    ))
 
   return {
     profile: input.assuranceProfile,
@@ -1653,7 +1665,14 @@ function computeAssuranceChargeByAccount(
   const ageNextBirthday = profile.currentAgeNextBirthday + projectionYear - 1
   const assuranceStateEvents = getAssuranceStateEventsForYear(normalized, context.range)
 
-  for (const { rule, family, appliesTo, appliesToIds, fallbackAppliesTo } of normalized.assurance.rules) {
+  for (const {
+    rule,
+    family,
+    appliesTo,
+    appliesToIds,
+    assuranceValueAppliesToIds,
+    fallbackAppliesTo,
+  } of normalized.assurance.rules) {
     const isPostMip = isPostMipPolicyYear(input, policyYear)
     const isActive = rule.activeWindow === 'policy-term'
       || (rule.activeWindow === 'during-mip' && !isPostMip)
@@ -1663,8 +1682,8 @@ function computeAssuranceChargeByAccount(
     if (rule.endPolicyYear != null && policyYear > rule.endPolicyYear) continue
     if (rule.assuranceConfig.maxAgeNextBirthday != null && ageNextBirthday > rule.assuranceConfig.maxAgeNextBirthday) continue
 
-    const openApplicableValue = sumBalancesForAccounts(openBalances, appliesToIds)
-    const provisionalApplicableValue = sumBalancesForAccounts(provisionalCloseByAccount, appliesToIds)
+    const openApplicableValue = sumBalancesForAccounts(openBalances, assuranceValueAppliesToIds)
+    const provisionalApplicableValue = sumBalancesForAccounts(provisionalCloseByAccount, assuranceValueAppliesToIds)
     const midpointApplicableValue = Math.max(0, (openApplicableValue + provisionalApplicableValue) / 2)
     const currentYearApplicableWithdrawals = sumWithdrawalsForAccounts(withdrawalByAccount, appliesToIds)
     const supplementaryApplicableWithdrawals = normalized.multiAccount.supplementaryPremiumAccountIds.length > 0

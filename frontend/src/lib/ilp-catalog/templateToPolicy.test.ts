@@ -4303,18 +4303,19 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Monthly Protection Charge'))).toBe(true)
   })
 
-  it('maps Tokio Marine #goLuxe into a partial seed with executable fee and shortfall rules', () => {
+  it('maps Tokio Marine #goLuxe advanced-death into a partial seed with accrued Tokio MPC valuation accounts', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-goluxe')
     expect(product).toBeDefined()
 
-    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-15')
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-15-advanced-death')
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.catalogSource?.supportStatus).toBe('partial')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.accounts).toEqual([
       expect.objectContaining({ id: 'initial', feeRate: 0.03, postMipFeeRate: 0 }),
@@ -4345,6 +4346,26 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'monthly-protection-charge',
+        basis: 'assurance-sum-at-risk',
+        appliesTo: ['accumulation'],
+        assuranceValueAppliesTo: ['initial', 'accumulation'],
+        fallbackAppliesTo: ['initial', 'topup'],
+        allocation: 'pro-rata-by-value',
+        assuranceConfig: expect.objectContaining({
+          formula: 'tokio-mpc-net-premium-floor',
+          rateTable: 'tokio-mpc-unzo-death',
+          accrual: {
+            startPolicyYear: 1,
+            endPolicyYear: 3,
+            settlementPolicyYear: 4,
+          },
+        }),
+        requiresManualInput: true,
+      }),
+    ])
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
@@ -4363,6 +4384,7 @@ describe('templateVariantToPolicySeed', () => {
     })
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-dividend-payout-threshold-record-date-and-regular-withdrawal')
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('Advanced Death variant also models the published Monthly Protection Charge'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
   })
 

@@ -129,6 +129,7 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
         startPolicyYear: rule.startPolicyYear,
         endPolicyYear: rule.endPolicyYear,
         appliesTo: [...rule.appliesTo],
+        assuranceValueAppliesTo: rule.assuranceValueAppliesTo ? [...rule.assuranceValueAppliesTo] : undefined,
         fallbackAppliesTo: rule.fallbackAppliesTo ? [...rule.fallbackAppliesTo] : undefined,
         rateSchedule: rule.rateSchedule?.map((tier) => ({ ...tier })),
         amountSchedule: rule.amountSchedule?.map((tier) => ({ ...tier })),
