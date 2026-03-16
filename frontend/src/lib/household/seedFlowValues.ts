@@ -100,9 +100,33 @@ function seedExpenses(adult: PlanningAdult): Record<string, unknown> {
   )
   const seeds: Record<string, unknown> = {}
 
+  // Sentinel fields for showWhen/skipWhen (not persisted, computed at seed time)
+  const ownsProperty = plan.properties.some((p) => p.ownsProperty)
+  seeds._ownsProperty = ownsProperty
+
   if (baseExpense) {
     seeds.retirementSpendingRatio =
       baseExpense.retirementSpendingAdjustment ?? 1.0
+
+    // Seed category breakdown if persisted
+    const bd = baseExpense.categoryBreakdown
+    if (bd) {
+      const amounts = bd.amounts ?? {}
+      // Suppress rent for property owners
+      if (!ownsProperty && amounts.rent != null) seeds.housingExpenses = amounts.rent
+      if (amounts.food != null) seeds.foodExpenses = amounts.food
+      if (amounts.transport != null) seeds.transportExpenses = amounts.transport
+      if (amounts.utilities != null) seeds.utilitiesExpenses = amounts.utilities
+      if (amounts.entertainment != null) seeds.entertainmentExpenses = amounts.entertainment
+      if (amounts.travel != null) seeds.travelExpenses = amounts.travel
+      if (amounts.other != null) seeds.otherExpenses = amounts.other
+      if (bd.templateId) seeds.templateId = bd.templateId
+      if (bd.multipliers) seeds.multipliers = { ...bd.multipliers }
+    }
+
+    // Compute _hasAnyExpenseCategory sentinel from seeded values
+    const categoryFields = ['housingExpenses', 'foodExpenses', 'transportExpenses', 'utilitiesExpenses', 'entertainmentExpenses', 'travelExpenses', 'otherExpenses']
+    seeds._hasAnyExpenseCategory = categoryFields.some((f) => typeof seeds[f] === 'number' && (seeds[f] as number) > 0)
   }
 
   // currentAge needed for age-conditional fields

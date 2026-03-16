@@ -10,6 +10,8 @@
  * These are collected for future features. Adding store support requires schema changes.
  */
 
+import { FLOW_FIELD_TO_CATEGORY } from '@/lib/data/retirementTemplates'
+import { computeWeightedRetirementRatio } from '@/lib/calculations/expenses'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { createId } from '@/lib/household/ids'
@@ -223,33 +225,44 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       )
       if (!baseExpense) return false
 
-      const categoryFields = [
-        'housingExpenses',
-        'foodExpenses',
-        'transportExpenses',
-        'utilitiesExpenses',
-        'entertainmentExpenses',
-        'travelExpenses',
-        'otherExpenses',
-      ] as const
+      // Build canonical breakdown from nudge flow field names
+      const breakdown: Record<string, number> = {}
+      for (const [flowField, catKey] of Object.entries(FLOW_FIELD_TO_CATEGORY)) {
+        const val = values[flowField]
+        if (typeof val === 'number' && val >= 0) {
+          breakdown[catKey] = val
+        }
+      }
 
-      const total = categoryFields.reduce((sum, field) => {
-        const val = values[field]
-        return sum + (typeof val === 'number' && val > 0 ? val : 0)
-      }, 0)
+      const filledCategories = Object.values(breakdown).filter((v) => v > 0)
+      const total = filledCategories.reduce((sum, v) => sum + v, 0)
 
       const expenseUpdates: Partial<ExpenseItem> = {}
-      // Only overwrite expense total if user filled in at least one category
-      // and the computed sum is meaningful. This avoids understating the total
-      // when only a partial breakdown is provided.
-      const filledCount = categoryFields.filter(
-        (f) => typeof values[f] === 'number' && (values[f] as number) > 0,
-      ).length
-      if (filledCount >= 2 && total > 0) {
-        // Category values are monthly; convert to annual
-        expenseUpdates.amount = total * 12
-      }
-      if (typeof values.retirementSpendingRatio === 'number') {
+
+      if (filledCategories.length >= 1 && total > 0) {
+        // Persist category breakdown
+        const multipliers = (typeof values.multipliers === 'object' && values.multipliers != null)
+          ? values.multipliers as Record<string, number>
+          : {}
+        const templateId = typeof values.templateId === 'string'
+          ? values.templateId as 'frugal' | 'active' | 'none' | 'custom'
+          : 'none'
+
+        expenseUpdates.categoryBreakdown = {
+          amounts: breakdown,
+          templateId,
+          multipliers,
+        }
+
+        // Compute weighted retirement ratio
+        expenseUpdates.retirementSpendingAdjustment = computeWeightedRetirementRatio(breakdown, multipliers)
+
+        // Only overwrite total if 2+ categories filled (avoid understating with partial entry)
+        if (filledCategories.length >= 2) {
+          expenseUpdates.amount = total * 12
+        }
+      } else if (typeof values.retirementSpendingRatio === 'number') {
+        // Fallback: scalar ratio if no categories (e.g., re-entering with old data)
         expenseUpdates.retirementSpendingAdjustment = values.retirementSpendingRatio
       }
 
