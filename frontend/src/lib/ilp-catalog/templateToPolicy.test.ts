@@ -517,8 +517,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs3-policy-fee')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs3-death-ti-insurance-cover-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs3-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs3-future-premium-option')
@@ -2199,8 +2202,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs3-policy-fee')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs3-death-ti-insurance-cover-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs3-investment-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-vs3-loyalty-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-vs3-future-premium-option')
@@ -2210,10 +2216,35 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({
         id: 'policy',
         contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+          { phase: 'after-icp', contributionShare: 1 },
           { phase: 'top-up', contributionShare: 1 },
         ],
       }),
     ])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-fee',
+          basis: 'account-value',
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 10, rate: 0.025 },
+            { startPolicyYear: 11, endPolicyYear: null, rate: 0.005 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'death-ti-insurance-cover-charge',
+          basis: 'assurance-sum-at-risk',
+          requiresManualInput: true,
+          startPolicyYear: 3,
+          assuranceConfig: expect.objectContaining({
+            formula: 'income-invest-flex-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          }),
+        }),
+      ]),
+    )
     expect(seed.bonuses).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

@@ -65,6 +65,15 @@ export type GoldenCoverageTag =
   | 'branch:income-vs1-partial-withdrawal-charge'
   | 'branch:income-vs1-surrender-charge'
   | 'branch:income-vs1-ad-hoc-top-up-routing'
+  | 'branch:income-vs3-policy-fee'
+  | 'branch:income-vs3-death-ti-insurance-cover-charge'
+  | 'branch:income-vs3-regular-premium-allocation-uplift'
+  | 'branch:income-vs3-investment-bonus'
+  | 'branch:income-vs3-loyalty-bonus'
+  | 'branch:income-vs3-premium-holiday-charge'
+  | 'branch:income-vs3-partial-withdrawal-charge'
+  | 'branch:income-vs3-surrender-charge'
+  | 'branch:income-vs3-ad-hoc-top-up-routing'
   | 'branch:income-snack-investment-zero-single-premium-charge'
   | 'branch:income-snack-investment-zero-top-up-charge'
   | 'branch:income-snack-investment-zero-withdrawal-charge'
@@ -1742,6 +1751,105 @@ function incomeInvestFlexStressPolicy(
       sex: 'female',
       smokerStatus: 'non-smoker',
       currentNetRegularPremiumBase: 71_400,
+    },
+  })
+}
+
+function incomeInvestFlexTriVantageBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'income-invest-flex-trivantage', 'sgd-mip-10', id, {
+    monthlyContribution: 900,
+    currentPolicyYear: 6,
+    monthsAlreadyPaid: 60,
+    assuranceProfile: {
+      currentAgeNextBirthday: 45,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentNetRegularPremiumBase: 54_000,
+    },
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden Invest Flex TriVantage (SGD / MIP 10)',
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 30_000,
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function incomeInvestFlexTriVantageBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return incomeInvestFlexTriVantageBasePolicy(snapshot, id, INCOME_BALANCED_FUNDS)
+}
+
+function incomeInvestFlexTriVantageEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return incomeInvestFlexTriVantageBasePolicy(snapshot, id, INCOME_BALANCED_FUNDS, {
+    name: 'Golden Invest Flex TriVantage (SGD / MIP 10 Event Heavy)',
+    currentPolicyYear: 9,
+    monthsAlreadyPaid: 96,
+    assuranceProfile: {
+      currentAgeNextBirthday: 49,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentNetRegularPremiumBase: 86_400,
+    },
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 97,
+        durationMonths: 2,
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 100,
+        durationMonths: 1,
+        amount: 8_000,
+      },
+      {
+        id: 'life-event-withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 103,
+        durationMonths: 1,
+        amount: 2_500,
+        accountId: 'policy',
+        chargeWaived: true,
+        bonusSuspensionWaived: true,
+      },
+    ],
+  })
+}
+
+function incomeInvestFlexTriVantageStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return incomeInvestFlexTriVantageBasePolicy(snapshot, id, INCOME_STRESS_FUNDS, {
+    name: 'Golden Invest Flex TriVantage (SGD / MIP 10 OCF Stress)',
+    currentPolicyYear: 7,
+    monthsAlreadyPaid: 72,
+    assuranceProfile: {
+      currentAgeNextBirthday: 43,
+      sex: 'female',
+      smokerStatus: 'non-smoker',
+      currentNetRegularPremiumBase: 64_800,
     },
   })
 }
@@ -4181,6 +4289,55 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Invest Flex alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'income-invest-flex-trivantage',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:protected-base-assurance',
+      'branch:income-vs3-policy-fee',
+      'branch:income-vs3-death-ti-insurance-cover-charge',
+      'branch:income-vs3-regular-premium-allocation-uplift',
+      'branch:income-vs3-investment-bonus',
+      'branch:income-vs3-loyalty-bonus',
+      'branch:income-vs3-surrender-charge',
+      'kernel:distribution-mode-assumption',
+    ],
+    description: 'Invest Flex TriVantage baseline scenario for the SGD / MIP 10 corridor.',
+  },
+  {
+    productId: 'income-invest-flex-trivantage',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:income-vs3-premium-holiday-charge',
+      'branch:income-vs3-partial-withdrawal-charge',
+      'branch:income-vs3-ad-hoc-top-up-routing',
+    ],
+    description: 'Invest Flex TriVantage event-heavy scenario covering premium holiday, top-up, and waived life-event withdrawal treatment.',
+    integrityChecks: [
+      {
+        description: 'seeded partial withdrawals are present in the projection output',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+      {
+        description: 'event-heavy policy retains top-up contribution in excess of the scheduled annual premium',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+    ],
+  },
+  {
+    productId: 'income-invest-flex-trivantage',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Invest Flex TriVantage alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'hsbc-life-wealth-invest-cpf',
     variantId: 'sgd-open-ended-cpf',
     scenarioId: 'baseline',
@@ -4937,6 +5094,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'income-invest-flex' && definition.scenarioId === 'ocf-stress') {
     return incomeInvestFlexStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'income-invest-flex-trivantage' && definition.scenarioId === 'baseline') {
+    return incomeInvestFlexTriVantageBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'income-invest-flex-trivantage' && definition.scenarioId === 'event-heavy') {
+    return incomeInvestFlexTriVantageEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'income-invest-flex-trivantage' && definition.scenarioId === 'ocf-stress') {
+    return incomeInvestFlexTriVantageStressPolicy(snapshot, id)
   }
   if (definition.productId === 'aia-invest-easy-cash-srs' && definition.scenarioId === 'baseline') {
     return aiaInvestEasyCashSrsBaselinePolicy(snapshot, id)
