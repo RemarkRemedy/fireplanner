@@ -230,11 +230,11 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
                 />
               )}
             </SetupScreen>
-            {isLastStep && (
-              <p className="text-xs text-center text-muted-foreground mt-2">
-                Saving will update your plan with the values entered above.
-              </p>
-            )}
+          )}
+          {isLastStep && (
+            <p className="text-xs text-center text-muted-foreground mt-2">
+              Saving will update your plan with the values entered above.
+            </p>
           )}
         </div>
       </div>
