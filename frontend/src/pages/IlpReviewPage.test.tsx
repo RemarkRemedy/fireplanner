@@ -1377,6 +1377,31 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds AIA Platinum Wealth Venture 2.0 as a partial catalog product with supplementary-charge warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Venture 2.0')
+
+    expect(within(dialog).getByText('AIA Platinum Wealth Venture 2.0')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use partial template$/i }))
+
+    expect(screen.getAllByText('AIA Platinum Wealth Venture 2.0 (SGD / MIP 5)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('3.60% p.a. regular-premium supplementary charge')
+    expect(seededAlert?.textContent).toContain('reinvest-default distribution support')
+    expect(seededAlert?.textContent).toContain('Welcome Bonus, Investment Bonus, Performance Bonus')
+    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Supplementary Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Top-Up Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
