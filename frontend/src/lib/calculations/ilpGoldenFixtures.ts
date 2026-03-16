@@ -305,6 +305,7 @@ export type GoldenCoverageTag =
   | 'branch:hsbc-flexi-choice-max-assurance'
   | 'branch:tokio-bonus-ladder'
   | 'branch:tokio-post-mip-routing'
+  | 'branch:tokio-wealth-max-ii-advanced-death-monthly-protection-charge-accrual'
   | 'branch:tokio-wealth-pro-ii-advanced-death-monthly-protection-charge-accrual'
   | 'branch:tokio-multi-account-structure'
   | 'branch:tokio-rsp-manual-resumption'
@@ -4833,30 +4834,45 @@ function tokioEventHeavyPolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | '
         monthsAlreadyPaid: 36,
         policyEvents: [
           {
+            id: 'topup-1',
+            type: 'top-up',
+            startPolicyMonth: 49,
+            durationMonths: 1,
+            amount: 1_200,
+          },
+          {
             id: 'rsp-1',
             type: 'recurring-single-premium',
-            startPolicyMonth: 37,
+            startPolicyMonth: 38,
             durationMonths: 12,
             amount: 100,
           },
           {
             id: 'reduction-1',
             type: 'regular-premium-reduction',
-            startPolicyMonth: 39,
+            startPolicyMonth: 40,
             durationMonths: 1,
             amount: 600,
           },
           {
             id: 'holiday-1',
             type: 'premium-holiday',
-            startPolicyMonth: 40,
+            startPolicyMonth: 41,
             durationMonths: 3,
           },
           {
             id: 'rsp-resume-1',
             type: 'recurring-single-premium-resumption',
-            startPolicyMonth: 45,
+            startPolicyMonth: 46,
             durationMonths: 1,
+          },
+          {
+            id: 'withdrawal-1',
+            type: 'partial-withdrawal',
+            startPolicyMonth: 50,
+            durationMonths: 1,
+            amount: 600,
+            accountId: 'accumulation',
           },
         ],
       }),
@@ -4864,6 +4880,60 @@ function tokioEventHeavyPolicy(snapshot: Pick<IlpCatalogSnapshot, 'manifest' | '
     ),
     1_500,
     8_000,
+    0,
+  )
+}
+
+function tokioWealthMaxAdvancedDeathBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-wealth-max-ii', 'sgd-mip-15-advanced-death', id)
+  return withResolvedManualInputs(withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Wealth Max (II) (SGD / MIP 15 Advanced Death Baseline)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 4,
+        monthsAlreadyPaid: 36,
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 72_000,
+        },
+        postMipYears: 15,
+        policyEvents: [],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    1_500,
+    8_000,
+    0,
+  ))
+}
+
+function tokioWealthMaxStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-wealth-max-ii', 'sgd-mip-15', id)
+  return withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Wealth Max (II) (SGD / MIP 15 OCF Stress)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 8,
+        monthsAlreadyPaid: 84,
+        postMipYears: 15,
+        policyEvents: [],
+      }),
+      HSBC_STRESS_FUNDS,
+    ),
+    3_000,
+    14_000,
     0,
   )
 }
@@ -8360,9 +8430,24 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     productId: 'tokio-marine-wealth-max-ii',
     variantId: 'sgd-mip-15',
     scenarioId: 'baseline',
-    fixtureClass: 'partial-modeled-subset',
-    coverageTags: ['baseline', 'branch:tokio-bonus-ladder', 'branch:tokio-post-mip-routing'],
-    description: 'Tokio Marine Wealth Max (II) modeled-subset baseline proving later performance, loyalty, and power-up bonus credit on top of the seeded bonus ladder.',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:tokio-bonus-ladder',
+      'branch:tokio-post-mip-routing',
+      'tokio-initial-vs-accumulation-regular-premium-routing',
+      'tokio-initial-bonus-tiered-premium-allocation',
+      'tokio-performance-investment-bonus',
+      'tokio-loyalty-bonus',
+      'tokio-power-up-bonus',
+      'tokio-post-mip-regular-premium-routing-back-to-initial-account',
+      'tokio-initial-charge-on-initial-account',
+      'tokio-policy-charge-on-accumulation-account',
+      'tokio-admin-charge-on-initial-account',
+      'tokio-initial-account-surrender-charge',
+      'kernel:distribution-mode-assumption',
+    ],
+    description: 'Tokio Marine Wealth Max (II) supported baseline proving later performance, loyalty, and power-up bonus credit on top of the seeded bonus ladder.',
     integrityChecks: [
       {
         description: 'performance investment bonus eventually credits the Accumulation Units Account after the ICP routing phase',
@@ -8397,16 +8482,38 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'tokio-marine-wealth-max-ii',
+    variantId: 'sgd-mip-15-advanced-death',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:tokio-wealth-max-ii-advanced-death-monthly-protection-charge-accrual',
+    ],
+    description: 'Tokio Marine Wealth Max (II) advanced-death supported baseline proving accrued Monthly Protection Charge handling.',
+  },
+  {
+    productId: 'tokio-marine-wealth-max-ii',
     variantId: 'sgd-mip-15',
     scenarioId: 'event-heavy',
-    fixtureClass: 'partial-modeled-subset',
+    fixtureClass: 'supported',
     coverageTags: [
       'event-heavy',
       'branch:tokio-rsp-manual-resumption',
       'branch:tokio-shortfall-exclusive',
       'branch:tokio-reduction-consumes-rsp-first',
+      'tokio-top-up-routing',
+      'tokio-recurring-single-premium-routing',
+      'tokio-recurring-single-premium-manual-resumption-after-premium-holiday',
+      'tokio-regular-premium-reduction-consumes-recurring-single-premium-first',
+      'tokio-top-up-premium-charge',
+      'tokio-recurring-single-premium-charge',
+      'tokio-accumulation-partial-withdrawal-charge',
+      'tokio-premium-shortfall-charge-non-payment',
+      'tokio-premium-shortfall-charge-regular-premium-reduction',
+      'tokio-premium-increase-restores-shortfall-charge-cessation',
+      'tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only',
     ],
-    description: 'Tokio Marine Wealth Max (II) modeled-subset scenario covering recurring-single-premium resumption, shortfall exclusivity, and reduction ordering.',
+    description: 'Tokio Marine Wealth Max (II) supported scenario covering recurring-single-premium resumption, shortfall exclusivity, and reduction ordering.',
     integrityChecks: [
       {
         description: 'manual recurring-single-premium resumption restores additional top-up contribution after the holiday window',
@@ -8444,6 +8551,14 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
         },
       },
     ],
+  },
+  {
+    productId: 'tokio-marine-wealth-max-ii',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Tokio Marine Wealth Max (II) supported OCF stress scenario through the same SGD / MIP 15 corridor.',
   },
   {
     productId: 'tokio-marine-wealth-pro-ii',
@@ -9204,6 +9319,9 @@ function buildPolicyForDefinition(
     return hsbcFlexiChoiceAssurancePolicy(id)
   }
   if (definition.productId === 'tokio-marine-wealth-max-ii' && definition.scenarioId === 'baseline') {
+    if (definition.variantId === 'sgd-mip-15-advanced-death') {
+      return tokioWealthMaxAdvancedDeathBaselinePolicy(snapshot, id)
+    }
     return tokioBaselinePolicy(
       snapshot,
       'tokio-marine-wealth-max-ii',
@@ -9214,6 +9332,9 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'tokio-marine-wealth-max-ii' && definition.scenarioId === 'event-heavy') {
     return tokioEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-wealth-max-ii' && definition.scenarioId === 'ocf-stress') {
+    return tokioWealthMaxStressPolicy(snapshot, id)
   }
   if (definition.productId === 'tokio-marine-wealth-pro-ii' && definition.scenarioId === 'baseline') {
     if (definition.variantId === 'sgd-mip-10-advanced-death') {
