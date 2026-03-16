@@ -1,18 +1,8 @@
 import { useState } from 'react'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { cn, formatCurrency } from '@/lib/utils'
-import { RETIREMENT_TEMPLATES, EXPENSE_CATEGORY_KEYS } from '@/lib/data/retirementTemplates'
+import { RETIREMENT_TEMPLATES, EXPENSE_CATEGORY_KEYS, CATEGORY_LABELS } from '@/lib/data/retirementTemplates'
 import { computeWeightedRetirementRatio } from '@/lib/calculations/expenses'
-
-const CATEGORY_LABELS: Record<string, string> = {
-  rent: 'Housing / Rent',
-  food: 'Food & Groceries',
-  transport: 'Transport',
-  utilities: 'Utilities',
-  entertainment: 'Entertainment',
-  travel: 'Travel',
-  other: 'Other',
-}
 
 interface RetirementTemplateSelectorProps {
   breakdown: Record<string, number>
@@ -49,11 +39,17 @@ export function RetirementTemplateSelector({
     return (breakdown[key] ?? 0) > 0
   })
 
-  const totalMonthly = Object.values(breakdown).reduce(
+  // Filter breakdown to active categories only (exclude rent for property owners)
+  const activeBreakdown: Record<string, number> = {}
+  for (const key of activeCategories) {
+    activeBreakdown[key] = breakdown[key] ?? 0
+  }
+
+  const totalMonthly = Object.values(activeBreakdown).reduce(
     (sum, v) => sum + Math.max(0, v),
     0,
   )
-  const ratio = computeWeightedRetirementRatio(breakdown, multipliers)
+  const ratio = computeWeightedRetirementRatio(activeBreakdown, multipliers)
   const retirementMonthly = Math.round(totalMonthly * ratio)
 
   return (

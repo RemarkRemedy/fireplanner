@@ -42,6 +42,17 @@ export const EXPENSE_CATEGORY_KEYS = [
 
 export type ExpenseCategoryKey = typeof EXPENSE_CATEGORY_KEYS[number]
 
+/** Canonical display labels for each category */
+export const CATEGORY_LABELS: Record<ExpenseCategoryKey, string> = {
+  rent: 'Rent',
+  food: 'Food & dining',
+  transport: 'Transport',
+  utilities: 'Utilities',
+  entertainment: 'Entertainment',
+  travel: 'Travel',
+  other: 'Other',
+}
+
 /** Map nudge flow field names to canonical category keys */
 export const FLOW_FIELD_TO_CATEGORY: Record<string, ExpenseCategoryKey> = {
   housingExpenses: 'rent',

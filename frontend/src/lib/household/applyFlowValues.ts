@@ -258,6 +258,7 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
         expenseUpdates.retirementSpendingAdjustment = computeWeightedRetirementRatio(breakdown, multipliers)
 
         // Only overwrite total if 2+ categories filled (avoid understating with partial entry)
+        // Categories are monthly; ExpenseItem.amount is annual
         if (filledCategories.length >= 2) {
           expenseUpdates.amount = total * 12
         }
