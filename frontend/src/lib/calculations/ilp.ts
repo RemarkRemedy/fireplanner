@@ -1,4 +1,5 @@
 import {
+  AIA_PLP2_DEATH_RATE_TABLE,
   FWD_FLEXI_ELITE_DEATH_RATE_TABLE,
   GREAT_EASTERN_WA4_DEATH_TI_RATE_TABLE,
   HSBC_FLEXI_DEATH_TI_RATE_TABLE,
@@ -166,6 +167,8 @@ export interface IlpAssuranceChargeConfig {
     | 'prudential-prosper-death'
     | 'prudential-prosper-accidental-death'
     | 'prudential-assure-ii-combined'
+    | 'aia-plp2-plus-death'
+    | 'aia-plp2-max-death'
     | 'hsbc-flexi-choice-death-ti'
     | 'hsbc-flexi-max-death-ti'
     | 'great-eastern-wa4-death-ti'
@@ -180,6 +183,16 @@ export interface IlpAssuranceChargeConfig {
     | 'tokio-mpc-unzo-death'
   monthlyModalFactor: number
   maxAgeNextBirthday?: number
+  policyYearRateMultiplierSchedule?: Array<{
+    startPolicyYear: number
+    endPolicyYear: number | null
+    multiplier: number
+  }>
+  sumAssuredRateMultiplierTiers?: Array<{
+    minSumAssured: number
+    maxSumAssured: number | null
+    multiplier: number
+  }>
   accrual?: {
     startPolicyYear: number
     endPolicyYear: number
@@ -498,6 +511,7 @@ interface IlpNormalizedEventChargeRule {
 type IlpAssuranceFormulaFamily =
   | 'prudential-prosper'
   | 'prudential-assure-ii'
+  | 'aia-plp2'
   | 'hsbc-flexi'
   | 'protected-base-paid-premium-floor'
   | 'protected-base-sum-assured'
@@ -1446,6 +1460,9 @@ function getAssuranceFormulaFamily(
       return 'prudential-prosper'
     case 'prudential-assure-ii-combined':
       return 'prudential-assure-ii'
+    case 'aia-plp2-plus-death':
+    case 'aia-plp2-max-death':
+      return 'aia-plp2'
     case 'hsbc-flexi-choice-death-ti':
     case 'hsbc-flexi-max-death-ti':
       return 'hsbc-flexi'
@@ -1472,6 +1489,8 @@ function resolveAssuranceRate(
   rule: IlpChargeRule,
   ageNextBirthday: number,
   profile: IlpAssuranceProfile,
+  policyYear: number,
+  currentSumAssured?: number,
 ): number {
   if (!rule.assuranceConfig) {
     return 0
@@ -1482,36 +1501,71 @@ function resolveAssuranceRate(
 
   switch (rule.assuranceConfig.formula) {
     case 'prudential-prosper-death':
-      return PRUVANTAGE_PROSPER_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0
+      return applyAssuranceRateMultipliers(rule, PRUVANTAGE_PROSPER_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
     case 'prudential-prosper-accidental-death':
-      return PRUVANTAGE_PROSPER_ACCIDENTAL_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0
+      return applyAssuranceRateMultipliers(rule, PRUVANTAGE_PROSPER_ACCIDENTAL_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
     case 'prudential-assure-ii-combined':
-      return PRUVANTAGE_ASSURE_II_COMBINED_RATE_TABLE[riskClass][ageIndex] ?? 0
+      return applyAssuranceRateMultipliers(rule, PRUVANTAGE_ASSURE_II_COMBINED_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+    case 'aia-plp2-plus-death':
+    case 'aia-plp2-max-death':
+      return applyAssuranceRateMultipliers(rule, AIA_PLP2_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
     case 'hsbc-flexi-choice-death-ti':
     case 'hsbc-flexi-max-death-ti':
-      return HSBC_FLEXI_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0
+      return applyAssuranceRateMultipliers(rule, HSBC_FLEXI_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
     case 'great-eastern-wa4-death-ti':
-      return GREAT_EASTERN_WA4_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0
+      return applyAssuranceRateMultipliers(rule, GREAT_EASTERN_WA4_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
     case 'fwd-invest-flexi-elite-death':
-      return FWD_FLEXI_ELITE_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0
+      return applyAssuranceRateMultipliers(rule, FWD_FLEXI_ELITE_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
     case 'income-invest-flex-death-ti':
-      return INCOME_INVEST_FLEX_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0
+      return applyAssuranceRateMultipliers(rule, INCOME_INVEST_FLEX_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
     case 'manulife-investready-iii-death-ti':
-      return MANULIFE_INVESTREADY_III_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0
+      return applyAssuranceRateMultipliers(rule, MANULIFE_INVESTREADY_III_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
     case 'manulife-manuinvest-duo-death-ti-tpd':
-      return MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE[riskClass][ageIndex] ?? 0
+      return applyAssuranceRateMultipliers(rule, MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
     case 'tokio-mpc-net-premium-floor':
     case 'tokio-mpc-locked-in-policy-value':
     case 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium':
       switch (rule.assuranceConfig.rateTable) {
         case 'tokio-mpc-unzo-death':
-          return TOKIO_MPC_UNZO_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0
+          return applyAssuranceRateMultipliers(rule, TOKIO_MPC_UNZO_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
         default:
           return 0
       }
     default:
       return assertNever(rule.assuranceConfig.formula)
   }
+}
+
+function applyAssuranceRateMultipliers(
+  rule: IlpChargeRule,
+  baseRate: number,
+  policyYear: number,
+  currentSumAssured?: number,
+): number {
+  const config = rule.assuranceConfig
+  if (!config) {
+    return baseRate
+  }
+
+  let multiplier = 1
+
+  for (const tier of config.policyYearRateMultiplierSchedule ?? []) {
+    if (policyYear >= tier.startPolicyYear && (tier.endPolicyYear == null || policyYear <= tier.endPolicyYear)) {
+      multiplier *= tier.multiplier
+      break
+    }
+  }
+
+  if (currentSumAssured != null) {
+    for (const tier of config.sumAssuredRateMultiplierTiers ?? []) {
+      if (currentSumAssured >= tier.minSumAssured && (tier.maxSumAssured == null || currentSumAssured <= tier.maxSumAssured)) {
+        multiplier *= tier.multiplier
+        break
+      }
+    }
+  }
+
+  return baseRate * multiplier
 }
 
 function getAssuranceRelevantAccountIds(normalized: IlpNormalizedPolicyInput): string[] {
@@ -1554,6 +1608,19 @@ function computeHsbcFlexiSumAtRisk(
   }
 
   return Math.max(0, (profile.currentBasicSumAssured ?? 0) + midpointSupplementaryPremiumBase - midpointApplicableValue)
+}
+
+function computeAiaPlp2SumAtRisk(
+  formula: Extract<IlpAssuranceChargeConfig['formula'], 'aia-plp2-plus-death' | 'aia-plp2-max-death'>,
+  profile: IlpAssuranceProfile,
+  midpointApplicableValue: number,
+  midpointSupplementaryPremiumBase: number,
+): number {
+  if (formula === 'aia-plp2-plus-death') {
+    return Math.max(0, profile.currentSumAssured ?? 0)
+  }
+
+  return Math.max(0, (profile.currentSumAssured ?? 0) + midpointSupplementaryPremiumBase - midpointApplicableValue)
 }
 
 function computeProtectedBaseSumAtRisk(
@@ -1884,6 +1951,20 @@ function computeAssuranceChargeByAccount(
         break
       }
 
+      case 'aia-plp2': {
+        const midpointSupplementaryPremiumBase = Math.max(
+          0,
+          supplementaryPremiumBaseAtStartOfYear + ((supplementaryPremiumPaidThisYear - currentYearApplicableWithdrawals) / 2),
+        )
+        sumAtRisk = computeAiaPlp2SumAtRisk(
+          rule.assuranceConfig.formula as Extract<IlpAssuranceChargeConfig['formula'], 'aia-plp2-plus-death' | 'aia-plp2-max-death'>,
+          profile,
+          midpointApplicableValue,
+          midpointSupplementaryPremiumBase,
+        )
+        break
+      }
+
       case 'prudential-assure-ii': {
         if (nextWealthAssureValue == null || nextSumAssured == null) {
           continue
@@ -1949,7 +2030,13 @@ function computeAssuranceChargeByAccount(
         break
     }
 
-    const annualizedCharge = resolveAssuranceRate(rule, ageNextBirthday, profile) / 1000
+    const annualizedCharge = resolveAssuranceRate(
+      rule,
+      ageNextBirthday,
+      profile,
+      policyYear,
+      nextSumAssured ?? profile.currentSumAssured ?? profile.currentBasicSumAssured,
+    ) / 1000
       * sumAtRisk
       * rule.assuranceConfig.monthlyModalFactor
       * 12

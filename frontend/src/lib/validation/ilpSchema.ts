@@ -309,6 +309,8 @@ export const ilpChargeRuleSchema = z.object({
       'prudential-prosper-death',
       'prudential-prosper-accidental-death',
       'prudential-assure-ii-combined',
+      'aia-plp2-plus-death',
+      'aia-plp2-max-death',
       'hsbc-flexi-choice-death-ti',
       'hsbc-flexi-max-death-ti',
       'great-eastern-wa4-death-ti',
@@ -325,6 +327,16 @@ export const ilpChargeRuleSchema = z.object({
     ]).optional(),
     monthlyModalFactor: z.number().min(0).max(1),
     maxAgeNextBirthday: z.number().int().min(1).max(120).optional(),
+    policyYearRateMultiplierSchedule: z.array(z.object({
+      startPolicyYear: z.number().int().min(1).max(100),
+      endPolicyYear: z.number().int().min(1).max(100).nullable(),
+      multiplier: z.number().min(0).max(2),
+    })).max(20).optional(),
+    sumAssuredRateMultiplierTiers: z.array(z.object({
+      minSumAssured: z.number().min(0).max(100_000_000),
+      maxSumAssured: z.number().min(0).max(100_000_000).nullable(),
+      multiplier: z.number().min(0).max(2),
+    })).max(20).optional(),
     accrual: z.object({
       startPolicyYear: z.number().int().min(1).max(100),
       endPolicyYear: z.number().int().min(1).max(100),
@@ -570,6 +582,26 @@ export const ilpChargeRuleSchema = z.object({
         code: z.ZodIssueCode.custom,
         message: 'Assurance accrual settlementPolicyYear must be exactly one policy year after accrual endPolicyYear',
         path: ['assuranceConfig', 'accrual', 'settlementPolicyYear'],
+      })
+    }
+  }
+
+  for (const [index, tier] of (rule.assuranceConfig?.policyYearRateMultiplierSchedule ?? []).entries()) {
+    if (tier.endPolicyYear != null && tier.endPolicyYear < tier.startPolicyYear) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Assurance policy-year rate multiplier endPolicyYear must be greater than or equal to startPolicyYear',
+        path: ['assuranceConfig', 'policyYearRateMultiplierSchedule', index, 'endPolicyYear'],
+      })
+    }
+  }
+
+  for (const [index, tier] of (rule.assuranceConfig?.sumAssuredRateMultiplierTiers ?? []).entries()) {
+    if (tier.maxSumAssured != null && tier.maxSumAssured < tier.minSumAssured) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Assurance sum-assured rate multiplier maxSumAssured must be greater than or equal to minSumAssured',
+        path: ['assuranceConfig', 'sumAssuredRateMultiplierTiers', index, 'maxSumAssured'],
       })
     }
   }

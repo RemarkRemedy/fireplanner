@@ -70,6 +70,8 @@ export const ilpTemplateFeeRuleSchema = z.object({
       'prudential-prosper-death',
       'prudential-prosper-accidental-death',
       'prudential-assure-ii-combined',
+      'aia-plp2-plus-death',
+      'aia-plp2-max-death',
       'hsbc-flexi-choice-death-ti',
       'hsbc-flexi-max-death-ti',
       'great-eastern-wa4-death-ti',
@@ -86,6 +88,16 @@ export const ilpTemplateFeeRuleSchema = z.object({
     ]).optional(),
     monthlyModalFactor: z.number().min(0).max(1),
     maxAgeNextBirthday: z.number().int().min(1).max(120).optional(),
+    policyYearRateMultiplierSchedule: z.array(z.object({
+      startPolicyYear: z.number().int().min(1).max(100),
+      endPolicyYear: z.number().int().min(1).max(100).nullable(),
+      multiplier: z.number().min(0).max(2),
+    })).max(20).optional(),
+    sumAssuredRateMultiplierTiers: z.array(z.object({
+      minSumAssured: z.number().min(0).max(100_000_000),
+      maxSumAssured: z.number().min(0).max(100_000_000).nullable(),
+      multiplier: z.number().min(0).max(2),
+    })).max(20).optional(),
     accrual: z.object({
       startPolicyYear: z.number().int().min(1).max(100),
       endPolicyYear: z.number().int().min(1).max(100),

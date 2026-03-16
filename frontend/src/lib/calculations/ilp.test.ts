@@ -24,7 +24,7 @@ import {
   EEC_PRESET_MIP_30,
 } from '@/lib/data/ilpDefaults'
 import { TOKIO_MPC_PROTECTED_BASE_FLOOR_MULTIPLIER } from '@/lib/data/ilpAssuranceConfig'
-import { FWD_FLEXI_ELITE_DEATH_RATE_TABLE, TOKIO_MPC_UNZO_DEATH_RATE_TABLE } from '@/lib/data/ilpAssuranceTables'
+import { AIA_PLP2_DEATH_RATE_TABLE, FWD_FLEXI_ELITE_DEATH_RATE_TABLE, TOKIO_MPC_UNZO_DEATH_RATE_TABLE } from '@/lib/data/ilpAssuranceTables'
 import { ilpPolicySeedSchema } from '@/lib/ilp-catalog/policySeedSchema'
 import { ilpPolicySchema } from '@/lib/validation/ilpSchema'
 
@@ -4310,6 +4310,193 @@ describe('projectIlpPolicy', () => {
     expect(reductionYearFee).toBeGreaterThan(frozenYearFee)
     expect(frozenYearFee).toBeCloseTo(120.726765, 4)
     expect(resumedYearFee).toBeGreaterThan(frozenYearFee)
+  })
+
+  it('projects the AIA PLP II Plus benefit charge with the first-policy-year and insured-amount discounts', () => {
+    const result = projectIlpPolicy(makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      currentPolicyYear: 0,
+      monthsAlreadyPaid: 0,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 50_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      chargeRules: [
+        {
+          id: 'benefit-charge',
+          label: 'Benefit Charge (Plus)',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'aia-plp2-plus-death',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+            policyYearRateMultiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 1, multiplier: 0.5 },
+            ],
+            sumAssuredRateMultiplierTiers: [
+              { minSumAssured: 0, maxSumAssured: 119_999.99, multiplier: 1 },
+              { minSumAssured: 120_000, maxSumAssured: 249_999.99, multiplier: 0.95 },
+              { minSumAssured: 250_000, maxSumAssured: null, multiplier: 0.92 },
+            ],
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 150_000,
+      },
+      bonuses: [],
+    }), 'mid')
+
+    const age40Rate = AIA_PLP2_DEATH_RATE_TABLE['male-non-smoker'][39] ?? 0
+    const expectedCharge = age40Rate / 1000 * 150_000 * 0.5 * 0.95
+
+    expect(accountRow(result.rows[0], 'policy').grossFee).toBeCloseTo(expectedCharge, 6)
+  })
+
+  it('projects the AIA PLP II Plus benefit charge without the first-policy-year discount from policy year 2 onward', () => {
+    const result = projectIlpPolicy(makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      currentPolicyYear: 1,
+      monthsAlreadyPaid: 12,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 50_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      chargeRules: [
+        {
+          id: 'benefit-charge',
+          label: 'Benefit Charge (Plus)',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'aia-plp2-plus-death',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+            policyYearRateMultiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 1, multiplier: 0.5 },
+            ],
+            sumAssuredRateMultiplierTiers: [
+              { minSumAssured: 0, maxSumAssured: 119_999.99, multiplier: 1 },
+              { minSumAssured: 120_000, maxSumAssured: 249_999.99, multiplier: 0.95 },
+              { minSumAssured: 250_000, maxSumAssured: null, multiplier: 0.92 },
+            ],
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 150_000,
+      },
+      bonuses: [],
+    }), 'mid')
+
+    const age40Rate = AIA_PLP2_DEATH_RATE_TABLE['male-non-smoker'][39] ?? 0
+    const expectedCharge = age40Rate / 1000 * 150_000 * 0.95
+
+    expect(accountRow(result.rows[0], 'policy').grossFee).toBeCloseTo(expectedCharge, 6)
+  })
+
+  it('projects the AIA PLP II Max benefit charge on the insured amount plus net top-up base less policy value', () => {
+    const result = projectIlpPolicy(makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      currentPolicyYear: 7,
+      monthsAlreadyPaid: 72,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 80_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      chargeRules: [
+        {
+          id: 'benefit-charge',
+          label: 'Benefit Charge (Max)',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'aia-plp2-max-death',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+            policyYearRateMultiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 1, multiplier: 0.5 },
+            ],
+            sumAssuredRateMultiplierTiers: [
+              { minSumAssured: 0, maxSumAssured: 119_999.99, multiplier: 1 },
+              { minSumAssured: 120_000, maxSumAssured: 249_999.99, multiplier: 0.95 },
+              { minSumAssured: 250_000, maxSumAssured: null, multiplier: 0.92 },
+            ],
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 260_000,
+        currentNetSupplementaryPremiumBase: 24_000,
+      },
+      bonuses: [],
+    }), 'mid')
+
+    const age40Rate = AIA_PLP2_DEATH_RATE_TABLE['male-non-smoker'][39] ?? 0
+    const expectedCharge = age40Rate / 1000 * (260_000 + 24_000 - 80_000) * 0.92
+
+    expect(accountRow(result.rows[0], 'policy').grossFee).toBeCloseTo(expectedCharge, 6)
   })
 
   it('reduces annual contributions during premium-holiday months', () => {

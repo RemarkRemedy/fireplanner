@@ -14,6 +14,8 @@ interface ParseContext {
   sourceChecksumSha256: string
 }
 
+type DeathBenefitOption = 'plus' | 'max'
+
 const REGULAR_PREMIUM_CHARGE_SCHEDULE = [
   { startPolicyYear: 1, endPolicyYear: 1, rate: 0.8 },
   { startPolicyYear: 2, endPolicyYear: 2, rate: 0.55 },
@@ -49,14 +51,57 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
   return page.lines.slice(lineIndex, lineIndex + lineWindow).map((line) => line.text).join(' ')
 }
 
-function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
-  const page1 = sourceRef(1, 'Plan overview and death benefit options', snippetNear(document, 1, 'AIA Pro Lifetime Protector (II)', 22))
+function buildBenefitChargeRule(
+  deathBenefitOption: DeathBenefitOption,
+  page1: IlpCatalogSourceRef,
+  page3: IlpCatalogSourceRef,
+  page13: IlpCatalogSourceRef,
+): IlpTemplateFeeRule {
+  const isPlus = deathBenefitOption === 'plus'
+
+  return {
+    id: 'benefit-charge',
+    label: `Benefit Charge (${isPlus ? 'Plus' : 'Max'})`,
+    basis: 'assurance-sum-at-risk',
+    rate: 0,
+    amount: 0,
+    appliesTo: ['policy'],
+    activeWindow: 'policy-term',
+    requiresManualInput: true,
+    assuranceConfig: {
+      formula: isPlus ? 'aia-plp2-plus-death' : 'aia-plp2-max-death',
+      monthlyModalFactor: 1 / 12,
+      maxAgeNextBirthday: 99,
+      policyYearRateMultiplierSchedule: [
+        { startPolicyYear: 1, endPolicyYear: 1, multiplier: 0.5 },
+      ],
+      sumAssuredRateMultiplierTiers: [
+        { minSumAssured: 0, maxSumAssured: 119_999.99, multiplier: 1 },
+        { minSumAssured: 120_000, maxSumAssured: 249_999.99, multiplier: 0.95 },
+        { minSumAssured: 250_000, maxSumAssured: null, multiplier: 0.92 },
+      ],
+    },
+    notes: [
+      `Models the published monthly Appendix A Benefit Charge for the ${isPlus ? 'Plus' : 'Max'} Death Benefit option after entering the insured-life details and current insured amount.`,
+      isPlus
+        ? 'The Plus option uses the published insured-amount-only sum-at-risk basis.'
+        : 'The Max option uses the published insured amount plus total top-up premiums less total withdrawals less policy value sum-at-risk basis.',
+      'The first policy year receives the published 50% monthly Benefit Charge reduction, and insured-amount bands apply the published 5% / 8% monthly Benefit Charge reduction at S$120,000 / S$250,000 and above.',
+      'No Lapse Privilege debt carry, extra-mortality revisions, and claim-side payout settlement remain informational only.',
+    ],
+    sourceRefs: [page1, page3, page13],
+  }
+}
+
+function buildVariant(document: ExtractedPdfDocument, deathBenefitOption: DeathBenefitOption): IlpTemplateVariant {
+  const page1 = sourceRef(1, 'Plan overview and death benefit options', snippetNear(document, 1, 'Death Benefit payable', 22))
   const page2 = sourceRef(2, 'Special Bonus and maturity', snippetNear(document, 2, 'Special Bonus', 18))
-  const page3 = sourceRef(3, 'Regular premium, top-up, and charge schedules', snippetNear(document, 3, 'Number of Full Regular Premiums paid to and accepted by us', 24))
+  const page3 = sourceRef(3, 'Regular premium, top-up, and charge schedules', snippetNear(document, 3, '5.5. Benefit Charge', 28))
   const page4 = sourceRef(4, 'Policy flexibility and premium variation', snippetNear(document, 4, 'Vary Regular Premium', 22))
   const page5 = sourceRef(5, 'Top-up, full surrender, and partial withdrawal', snippetNear(document, 5, 'Partial Withdrawal', 22))
   const page6 = sourceRef(6, 'Premium holiday and no lapse privilege', snippetNear(document, 6, 'No Lapse Privilege', 22))
-  const page12 = sourceRef(12, 'Appendix A annual benefit charge schedule', snippetNear(document, 12, 'APPENDIX A', 22))
+  const page13 = sourceRef(13, 'Appendix A annual benefit charge schedule', snippetNear(document, 13, 'Current annual Benefit Charge per S$1,000 Sum-at-Risk', 26))
+  const coverLabel = deathBenefitOption === 'plus' ? 'Plus' : 'Max'
 
   const bonuses: IlpTemplateBonus[] = [
     {
@@ -113,6 +158,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       ],
       sourceRefs: [page3],
     },
+    buildBenefitChargeRule(deathBenefitOption, page1, page3, page13),
   ]
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
@@ -151,7 +197,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   ]
 
   return {
-    id: 'sgd-open-ended-regular-pay',
+    id: deathBenefitOption === 'plus' ? 'sgd-open-ended-plus' : 'sgd-open-ended-max',
     currency: 'SGD',
     mipBasis: 'open-ended',
     mipLength: null,
@@ -176,20 +222,19 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eventChargeRules,
     eecTable: [...FULL_SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      'AIA Pro Lifetime Protector (II) is cataloged as a partial modeled subset in V1. The parser captures the published premium-year regular premium charge schedule, the 2% Special Bonus from premium year 10 onward, the fixed S$5 monthly policy fee, the 5% top-up premium charge, the nil policy-level partial-withdrawal charge path, and the first-two-policy-years full-surrender charge schedule through the open-ended regular-premium basis.',
-      'The fixed S$50 monthly premium-holiday charge, AIA Appendix A benefit-charge curve, death-benefit option differences, and no-lapse privilege remain outside the current executable slice.',
+      `This supported template models the SGD open-ended ${coverLabel} corridor with the published premium-year regular premium charge schedule, the 2% Special Bonus from premium year 10 onward, the fixed S$5 monthly policy fee, the Appendix A Benefit Charge, the 5% top-up premium charge, the nil policy-level partial-withdrawal charge path, and the first-two-policy-years full-surrender charge schedule.`,
+      'The fixed S$50 monthly premium-holiday charge, No Lapse Privilege debt carry, policy-variation approval rules, and claim-side payout settlement remain informational only.',
     ],
     unsupportedItems: [
       'The S$50 monthly premium-holiday charge in the first two policy years remains informational only because the current event kernel does not author fixed-per-month premium-holiday deductions.',
-      'Benefit Charge remains informational only because the current assurance kernel does not yet include the AIA Appendix A rate table and its insurer-specific discount overlays.',
-      'Plus versus Max death-benefit payout handling remains informational only beyond the modeled charge surface.',
       'No Lapse Privilege debt carry and post-depletion fee accrual remain informational only.',
       'Partial-withdrawal eligibility timing, minimum withdrawal amount, and minimum residual policy-value rules remain informational only.',
       'Insured-amount variation, milestone-event increase option, regular-premium variation, and premium-frequency change handling remain informational only.',
       'AIA Vitality PowerUp Dollar, optional riders, fund switching, automatic fund switching, automatic fund re-balancing, and fund-level management charges remain informational only.',
-      'Reinstatement underwriting and termination-side protection payouts remain informational only.',
+      'Reinstatement underwriting, extra-mortality revisions, and termination-side protection payouts remain informational only.',
+      `The ${coverLabel} death-benefit payout settlement itself remains metadata-only beyond the modeled Benefit Charge corridor.`,
     ],
-    sourceRefs: [page1, page2, page3, page4, page5, page6, page12],
+    sourceRefs: [page1, page2, page3, page4, page5, page6, page13],
   }
 }
 
@@ -202,21 +247,21 @@ export function parseAiaProLifetimeProtectorIi({ document, sourceChecksumSha256 
     sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:aia-pro-lifetime-protector-ii-regular-premium-charge',
       'branch:aia-pro-lifetime-protector-ii-special-bonus',
       'branch:aia-pro-lifetime-protector-ii-policy-fee',
+      'branch:aia-pro-lifetime-protector-ii-plus-benefit-charge',
+      'branch:aia-pro-lifetime-protector-ii-max-benefit-charge',
       'branch:aia-pro-lifetime-protector-ii-top-up-premium-charge',
       'branch:aia-pro-lifetime-protector-ii-zero-partial-withdrawal-charge',
       'branch:aia-pro-lifetime-protector-ii-full-surrender-charge',
     ],
     metadataOnlyBehaviors: [
       'aia-pro-lifetime-protector-ii-premium-holiday-charge-fixed-monthly',
-      'aia-pro-lifetime-protector-ii-benefit-charge-plus-option',
-      'aia-pro-lifetime-protector-ii-benefit-charge-max-option',
       'aia-pro-lifetime-protector-ii-death-benefit-plus-option',
       'aia-pro-lifetime-protector-ii-death-benefit-max-option',
       'aia-pro-lifetime-protector-ii-no-lapse-privilege',
@@ -234,9 +279,14 @@ export function parseAiaProLifetimeProtectorIi({ document, sourceChecksumSha256 
       'aia-pro-lifetime-protector-ii-termination-limits',
     ],
     warnings: [
-      'AIA Pro Lifetime Protector (II) is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, the year-10-onward Special Bonus, the fixed S$5 monthly policy fee, the 5% top-up premium charge, the nil policy-level partial-withdrawal charge path, and the first-two-policy-years full-surrender charge schedule, while the fixed monthly premium-holiday charge, benefit-charge curve, death-benefit options, and no-lapse mechanics remain outside the current engine.',
+      'AIA Pro Lifetime Protector (II) is cataloged as a supported V1 product. The parser captures explicit SGD open-ended Plus and Max variants with the published premium-year regular premium charge schedule, the year-10-onward Special Bonus, the fixed S$5 monthly policy fee, the Appendix A Benefit Charge corridor, the 5% top-up premium charge, the nil policy-level partial-withdrawal charge path, and the first-two-policy-years full-surrender charge schedule.',
+      'The fixed monthly premium-holiday charge, No Lapse Privilege debt carry, claim-side death-benefit settlement, milestone insured-amount increases, and AIA Vitality add-on mechanics remain informational only.',
+      'Structured extraction validated against the AIA Pro Lifetime Protector (II) product summary text layer.',
     ],
     archived: false,
-    variants: [buildVariant(document)],
+    variants: [
+      buildVariant(document, 'plus'),
+      buildVariant(document, 'max'),
+    ],
   }
 }

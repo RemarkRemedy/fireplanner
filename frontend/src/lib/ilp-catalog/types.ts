@@ -76,6 +76,8 @@ export interface IlpTemplateFeeRule {
       | 'prudential-prosper-death'
       | 'prudential-prosper-accidental-death'
       | 'prudential-assure-ii-combined'
+      | 'aia-plp2-plus-death'
+      | 'aia-plp2-max-death'
       | 'hsbc-flexi-choice-death-ti'
       | 'hsbc-flexi-max-death-ti'
       | 'great-eastern-wa4-death-ti'
@@ -90,6 +92,16 @@ export interface IlpTemplateFeeRule {
       | 'tokio-mpc-unzo-death'
     monthlyModalFactor: number
     maxAgeNextBirthday?: number
+    policyYearRateMultiplierSchedule?: Array<{
+      startPolicyYear: number
+      endPolicyYear: number | null
+      multiplier: number
+    }>
+    sumAssuredRateMultiplierTiers?: Array<{
+      minSumAssured: number
+      maxSumAssured: number | null
+      multiplier: number
+    }>
     accrual?: {
       startPolicyYear: number
       endPolicyYear: number

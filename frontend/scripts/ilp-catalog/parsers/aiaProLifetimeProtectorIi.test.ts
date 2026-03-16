@@ -18,16 +18,17 @@ async function sha256(filePath: string): Promise<string> {
 function makeSyntheticDocument(): ExtractedPdfDocument {
   return {
     filePath: '/synthetic/WA_Sum_201106386R_PLP(II)_Oct2024.pdf',
-    pageCount: 7,
-    totalCharacters: 1_700,
+    pageCount: 8,
+    totalCharacters: 2_100,
     pages: [
       {
         pageNumber: 1,
-        characterCount: 250,
+        characterCount: 320,
         text: 'Plan overview and death benefit options',
         lines: [
           { y: 720, text: 'AIA Pro Lifetime Protector (II) is a regular premium investment-linked policy.' },
-          { y: 700, text: 'Depending on your level of priority for protection and wealth accumulation, you have the flexibility to choose between 2 different Death Benefit Options.' },
+          { y: 700, text: 'Death Benefit payable is the total of the Insured Amount and the policy value for Plus.' },
+          { y: 680, text: 'For Max, the Death Benefit payable is the higher of the Insured Amount plus total top-up premiums less total withdrawals; or policy value.' },
         ],
       },
       {
@@ -41,17 +42,20 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
       },
       {
         pageNumber: 3,
-        characterCount: 340,
+        characterCount: 420,
         text: 'Regular premium, top-up, and charge schedules',
         lines: [
-          { y: 740, text: 'Number of Full Regular Premiums paid to and accepted by us' },
-          { y: 720, text: '1st annual premium charge 80%' },
-          { y: 700, text: '2nd annual premium charge 55%' },
-          { y: 680, text: '3rd annual premium charge 50%' },
-          { y: 660, text: '4th annual premium charge 8%' },
-          { y: 640, text: '5th & above annual premium charge 0%' },
-          { y: 620, text: 'The Premium Charge deducted shall be an amount of 5% of each Top-Up Premium.' },
-          { y: 600, text: 'A flat fee of S$5 is chargeable on a monthly basis.' },
+          { y: 760, text: 'Number of Full Regular Premiums paid to and accepted by us' },
+          { y: 740, text: '1st annual premium charge 80%' },
+          { y: 720, text: '2nd annual premium charge 55%' },
+          { y: 700, text: '3rd annual premium charge 50%' },
+          { y: 680, text: '4th annual premium charge 8%' },
+          { y: 660, text: '5th & above annual premium charge 0%' },
+          { y: 640, text: 'The Premium Charge deducted shall be an amount of 5% of each Top-Up Premium.' },
+          { y: 620, text: 'A flat fee of S$5 is chargeable on a monthly basis.' },
+          { y: 600, text: 'Benefit Charge = Applicable Monthly Benefit Charge Rate x Sum-at-Risk.' },
+          { y: 580, text: 'A 50% reduction of such monthly benefit charge is given in the first policy year.' },
+          { y: 560, text: 'Additionally, a 5% or 8% reduction applies when the Insured Amount is equal to or more than S$120,000 or S$250,000 respectively.' },
         ],
       },
       {
@@ -85,12 +89,14 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
         ],
       },
       {
-        pageNumber: 12,
-        characterCount: 140,
+        pageNumber: 13,
+        characterCount: 220,
         text: 'Appendix A annual benefit charge schedule',
         lines: [
           { y: 720, text: 'APPENDIX A - Annual Benefit Charge Schedule for Death Benefit' },
           { y: 700, text: 'Current annual Benefit Charge per S$1,000 Sum-at-Risk for Death Benefit' },
+          { y: 680, text: '40 1.97 1.05 1.18 0.89' },
+          { y: 660, text: '41 2.17 1.15 1.31 0.97' },
         ],
       },
     ],
@@ -98,7 +104,7 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
 }
 
 describe('parseAiaProLifetimeProtectorIi', () => {
-  it('builds a valid partial modeled-subset product from extracted summary text', () => {
+  it('builds a valid supported product with explicit Plus and Max variants from extracted summary text', () => {
     const product = parseAiaProLifetimeProtectorIi({
       document: makeSyntheticDocument(),
       sourceChecksumSha256: '3333333333333333333333333333333333333333333333333333333333333333',
@@ -107,29 +113,45 @@ describe('parseAiaProLifetimeProtectorIi', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('aia-pro-lifetime-protector-ii')
     expect(product.productName).toBe('AIA Pro Lifetime Protector (II)')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:aia-pro-lifetime-protector-ii-regular-premium-charge',
       'branch:aia-pro-lifetime-protector-ii-special-bonus',
       'branch:aia-pro-lifetime-protector-ii-policy-fee',
+      'branch:aia-pro-lifetime-protector-ii-plus-benefit-charge',
+      'branch:aia-pro-lifetime-protector-ii-max-benefit-charge',
       'branch:aia-pro-lifetime-protector-ii-top-up-premium-charge',
       'branch:aia-pro-lifetime-protector-ii-zero-partial-withdrawal-charge',
       'branch:aia-pro-lifetime-protector-ii-full-surrender-charge',
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-premium-holiday-charge-fixed-monthly')
-    expect(product.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-benefit-charge-max-option')
+    expect(product.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-death-benefit-max-option')
     expect(product.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-no-lapse-privilege')
 
-    expect(product.variants).toHaveLength(1)
-    const variant = product.variants[0]
-    expect(variant).toMatchObject({
-      id: 'sgd-open-ended-regular-pay',
+    expect(product.variants).toHaveLength(2)
+
+    const plusVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-plus')
+    const maxVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-max')
+    expect(plusVariant).toBeDefined()
+    expect(maxVariant).toBeDefined()
+
+    expect(plusVariant).toMatchObject({
+      id: 'sgd-open-ended-plus',
       currency: 'SGD',
       mipBasis: 'open-ended',
       mipLength: null,
     })
-    expect(variant.accounts).toEqual([
+    expect(maxVariant).toMatchObject({
+      id: 'sgd-open-ended-max',
+      currency: 'SGD',
+      mipBasis: 'open-ended',
+      mipLength: null,
+    })
+    expect(maxVariant?.accounts).toEqual(plusVariant?.accounts)
+    expect(maxVariant?.bonuses).toEqual(plusVariant?.bonuses)
+
+    expect(plusVariant?.accounts).toEqual([
       expect.objectContaining({
         id: 'policy',
         subjectToEec: true,
@@ -140,7 +162,7 @@ describe('parseAiaProLifetimeProtectorIi', () => {
         ],
       }),
     ])
-    expect(variant.bonuses).toEqual([
+    expect(plusVariant?.bonuses).toEqual([
       expect.objectContaining({
         id: 'special-bonus',
         mode: 'premium-allocation',
@@ -149,28 +171,68 @@ describe('parseAiaProLifetimeProtectorIi', () => {
         rate: 0.02,
       }),
     ])
-    expect(variant.feeRules).toEqual([
-      expect.objectContaining({
-        id: 'regular-premium-charge',
-        basis: 'annual-contribution',
-        yearBasis: 'premium-year',
-        rateSchedule: [
-          { startPolicyYear: 1, endPolicyYear: 1, rate: 0.8 },
-          { startPolicyYear: 2, endPolicyYear: 2, rate: 0.55 },
-          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.5 },
-          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.08 },
-          { startPolicyYear: 5, endPolicyYear: null, rate: 0 },
-        ],
-      }),
-      expect.objectContaining({
-        id: 'policy-fee',
-        basis: 'fixed-annual',
-        amountSchedule: [
-          { startPolicyYear: 1, endPolicyYear: null, amount: 60 },
-        ],
-      }),
-    ])
-    expect(variant.eventChargeRules).toEqual([
+    expect(plusVariant?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'regular-premium-charge',
+          basis: 'annual-contribution',
+          yearBasis: 'premium-year',
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 0.8 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 0.55 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.5 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.08 },
+            { startPolicyYear: 5, endPolicyYear: null, rate: 0 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'policy-fee',
+          basis: 'fixed-annual',
+          amountSchedule: [
+            { startPolicyYear: 1, endPolicyYear: null, amount: 60 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'benefit-charge',
+          basis: 'assurance-sum-at-risk',
+          assuranceConfig: expect.objectContaining({
+            formula: 'aia-plp2-plus-death',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+            policyYearRateMultiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 1, multiplier: 0.5 },
+            ],
+            sumAssuredRateMultiplierTiers: [
+              { minSumAssured: 0, maxSumAssured: 119_999.99, multiplier: 1 },
+              { minSumAssured: 120_000, maxSumAssured: 249_999.99, multiplier: 0.95 },
+              { minSumAssured: 250_000, maxSumAssured: null, multiplier: 0.92 },
+            ],
+          }),
+          requiresManualInput: true,
+        }),
+      ]),
+    )
+    expect(maxVariant?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'benefit-charge',
+          basis: 'assurance-sum-at-risk',
+          assuranceConfig: expect.objectContaining({
+            formula: 'aia-plp2-max-death',
+          }),
+          requiresManualInput: true,
+        }),
+      ]),
+    )
+    expect(maxVariant?.eventChargeRules).toEqual(plusVariant?.eventChargeRules)
+    expect(maxVariant?.eecTable).toEqual([0.75, 0.5, 0])
+    expect(maxVariant?.warnings).toContain(
+      'This supported template models the SGD open-ended Max corridor with the published premium-year regular premium charge schedule, the 2% Special Bonus from premium year 10 onward, the fixed S$5 monthly policy fee, the Appendix A Benefit Charge, the 5% top-up premium charge, the nil policy-level partial-withdrawal charge path, and the first-two-policy-years full-surrender charge schedule.',
+    )
+    expect(maxVariant?.unsupportedItems).toContain(
+      'The Max death-benefit payout settlement itself remains metadata-only beyond the modeled Benefit Charge corridor.',
+    )
+    expect(plusVariant?.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
         trigger: 'top-up',
@@ -184,11 +246,11 @@ describe('parseAiaProLifetimeProtectorIi', () => {
         rate: 0,
       }),
     ])
-    expect(variant.eecTable).toEqual([0.75, 0.5, 0])
-    expect(variant.warnings).toContain(
-      'AIA Pro Lifetime Protector (II) is cataloged as a partial modeled subset in V1. The parser captures the published premium-year regular premium charge schedule, the 2% Special Bonus from premium year 10 onward, the fixed S$5 monthly policy fee, the 5% top-up premium charge, the nil policy-level partial-withdrawal charge path, and the first-two-policy-years full-surrender charge schedule through the open-ended regular-premium basis.',
+    expect(plusVariant?.eecTable).toEqual([0.75, 0.5, 0])
+    expect(plusVariant?.warnings).toContain(
+      'This supported template models the SGD open-ended Plus corridor with the published premium-year regular premium charge schedule, the 2% Special Bonus from premium year 10 onward, the fixed S$5 monthly policy fee, the Appendix A Benefit Charge, the 5% top-up premium charge, the nil policy-level partial-withdrawal charge path, and the first-two-policy-years full-surrender charge schedule.',
     )
-    expect(variant.unsupportedItems).toContain(
+    expect(plusVariant?.unsupportedItems).toContain(
       'The S$50 monthly premium-holiday charge in the first two policy years remains informational only because the current event kernel does not author fixed-per-month premium-holiday deductions.',
     )
   })
@@ -203,6 +265,10 @@ describe('parseAiaProLifetimeProtectorIi', () => {
 
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.sourceChecksumSha256).toBe(checksum)
+    expect(product.variants.map((variant) => variant.id)).toEqual([
+      'sgd-open-ended-plus',
+      'sgd-open-ended-max',
+    ])
     expect(product.variants[0]?.bonuses[0]?.id).toBe('special-bonus')
   }, 30_000)
 })

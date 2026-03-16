@@ -852,6 +852,76 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
+  it('maps AIA Pro Lifetime Protector (II) into a supported Plus seed with an Appendix A benefit-charge rule', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'aia-pro-lifetime-protector-ii')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-plus')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('AIA Pro Lifetime Protector (II) (SGD / Open-ended (Plus))')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-pro-lifetime-protector-ii-plus-benefit-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-premium-holiday-charge-fixed-monthly')
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'regular-premium-charge',
+          basis: 'annual-contribution',
+          yearBasis: 'premium-year',
+        }),
+        expect.objectContaining({
+          id: 'policy-fee',
+          basis: 'fixed-annual',
+          amountSchedule: [
+            { startPolicyYear: 1, endPolicyYear: null, amount: 60 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'benefit-charge',
+          basis: 'assurance-sum-at-risk',
+          requiresManualInput: true,
+          appliesTo: ['policy'],
+          assuranceConfig: {
+            formula: 'aia-plp2-plus-death',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+            policyYearRateMultiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 1, multiplier: 0.5 },
+            ],
+            sumAssuredRateMultiplierTiers: [
+              { minSumAssured: 0, maxSumAssured: 119_999.99, multiplier: 1 },
+              { minSumAssured: 120_000, maxSumAssured: 249_999.99, multiplier: 0.95 },
+              { minSumAssured: 250_000, maxSumAssured: null, multiplier: 0.92 },
+            ],
+          },
+          allocation: 'pro-rata-by-value',
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          trigger: 'top-up',
+          basis: 'event-amount',
+          appliesTo: ['policy'],
+          rate: 0.05,
+        }),
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          trigger: 'partial-withdrawal',
+          basis: 'event-amount',
+          appliesTo: ['policy'],
+          rate: 0,
+        }),
+      ]),
+    )
+  })
+
   it('maps PRUVantage Assure (SP) into a partial single-premium seed with explicit unsupported economics warnings', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'prudential-pruvantage-assure-sp')

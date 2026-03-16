@@ -56,6 +56,14 @@ export type GoldenCoverageTag =
   | 'branch:aia-pro-achiever-3-top-up-premium-charge'
   | 'branch:aia-pro-achiever-3-partial-withdrawal-charge'
   | 'branch:aia-pro-achiever-3-full-surrender-charge'
+  | 'branch:aia-pro-lifetime-protector-ii-regular-premium-charge'
+  | 'branch:aia-pro-lifetime-protector-ii-special-bonus'
+  | 'branch:aia-pro-lifetime-protector-ii-policy-fee'
+  | 'branch:aia-pro-lifetime-protector-ii-plus-benefit-charge'
+  | 'branch:aia-pro-lifetime-protector-ii-max-benefit-charge'
+  | 'branch:aia-pro-lifetime-protector-ii-top-up-premium-charge'
+  | 'branch:aia-pro-lifetime-protector-ii-zero-partial-withdrawal-charge'
+  | 'branch:aia-pro-lifetime-protector-ii-full-surrender-charge'
   | 'branch:aia-platinum-wealth-venture-2-zero-regular-premium-charge'
   | 'branch:aia-platinum-wealth-venture-2-regular-supplementary-charge'
   | 'branch:aia-platinum-wealth-venture-2-top-up-premium-charge'
@@ -1055,6 +1063,88 @@ function hsbcFlexiProtectorStressPolicy(
 ): IlpPolicyInput {
   return hsbcFlexiProtectorBasePolicy(snapshot, variantId, id, HSBC_STRESS_FUNDS, {
     name: `Golden HSBC Life Flexi Protector (${variantId.toUpperCase()} OCF Stress)`,
+  })
+}
+
+function aiaPlp2BasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended-plus' | 'sgd-open-ended-max',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'aia-pro-lifetime-protector-ii', variantId, id)
+  const optionLabel = variantId.endsWith('plus') ? 'Plus' : 'Max'
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden AIA Pro Lifetime Protector (II) (SGD / Open-ended ${optionLabel})`,
+      monthlyContribution: 1_000,
+      currentPolicyYear: 7,
+      monthsAlreadyPaid: 72,
+      postMipYears: 10,
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 150_000,
+        currentNetSupplementaryPremiumBase: 24_000,
+      },
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 80_000,
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function aiaPlp2BaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended-plus' | 'sgd-open-ended-max',
+  id: string,
+): IlpPolicyInput {
+  return aiaPlp2BasePolicy(snapshot, variantId, id, HSBC_BALANCED_FUNDS)
+}
+
+function aiaPlp2EventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaPlp2BasePolicy(snapshot, 'sgd-open-ended-max', id, HSBC_BALANCED_FUNDS, {
+    name: 'Golden AIA Pro Lifetime Protector (II) (SGD / Open-ended Max Event Heavy)',
+    currentPolicyYear: 8,
+    monthsAlreadyPaid: 84,
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 97,
+        durationMonths: 1,
+        amount: 8_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 101,
+        durationMonths: 1,
+        amount: 6_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function aiaPlp2StressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended-plus' | 'sgd-open-ended-max',
+  id: string,
+): IlpPolicyInput {
+  return aiaPlp2BasePolicy(snapshot, variantId, id, HSBC_STRESS_FUNDS, {
+    name: `Golden AIA Pro Lifetime Protector (II) (${variantId.toUpperCase()} OCF Stress)`,
   })
 }
 
@@ -12593,6 +12683,89 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'GREAT Invest Advantage 2 (RSP) alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'aia-pro-lifetime-protector-ii',
+    variantId: 'sgd-open-ended-plus',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:aia-pro-lifetime-protector-ii-regular-premium-charge',
+      'branch:aia-pro-lifetime-protector-ii-special-bonus',
+      'branch:aia-pro-lifetime-protector-ii-policy-fee',
+      'branch:aia-pro-lifetime-protector-ii-plus-benefit-charge',
+      'branch:aia-pro-lifetime-protector-ii-full-surrender-charge',
+    ],
+    description: 'AIA Pro Lifetime Protector (II) Plus baseline scenario proving the supported premium-charge, Special Bonus, policy-fee, and Appendix A Benefit Charge corridor.',
+    integrityChecks: [
+      {
+        description: 'Plus baseline applies a positive projected Benefit Charge on the policy account',
+        test: (_, artifact) => {
+          const firstRow = artifact.expected.projections.mid.rows[0]
+          return (firstRow?.accounts.find((account) => account.accountId === 'policy')?.grossFee ?? 0) > 0
+        },
+      },
+    ],
+  },
+  {
+    productId: 'aia-pro-lifetime-protector-ii',
+    variantId: 'sgd-open-ended-max',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:aia-pro-lifetime-protector-ii-max-benefit-charge',
+    ],
+    description: 'AIA Pro Lifetime Protector (II) Max baseline scenario proving the supported alternative Appendix A Benefit Charge corridor.',
+    integrityChecks: [
+      {
+        description: 'Max baseline produces a lower first-year Benefit Charge than Plus from the same balances because policy value reduces sum at risk',
+        test: (fixture) => {
+          const plusPolicy = ilpPolicySchema.parse({
+            ...fixture.policy,
+            chargeRules: fixture.policy.chargeRules?.map((rule) => ({
+              ...rule,
+              assuranceConfig: rule.assuranceConfig
+                ? {
+                    ...rule.assuranceConfig,
+                    formula: 'aia-plp2-plus-death',
+                  }
+                : undefined,
+            })),
+          })
+          const maxFee = analyzeIlpPolicy(fixture.policy).projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'policy')?.grossFee ?? 0
+          const plusFee = analyzeIlpPolicy(plusPolicy).projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'policy')?.grossFee ?? 0
+          return plusFee > maxFee
+        },
+      },
+    ],
+  },
+  {
+    productId: 'aia-pro-lifetime-protector-ii',
+    variantId: 'sgd-open-ended-max',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:aia-pro-lifetime-protector-ii-top-up-premium-charge',
+      'branch:aia-pro-lifetime-protector-ii-zero-partial-withdrawal-charge',
+    ],
+    description: 'AIA Pro Lifetime Protector (II) Max event-heavy scenario covering charged top-up allocation and later zero-charge policy withdrawals.',
+    integrityChecks: [
+      {
+        description: 'event-heavy Max corridor records both a top-up contribution spike and a later withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12 && row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'aia-pro-lifetime-protector-ii',
+    variantId: 'sgd-open-ended-max',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'AIA Pro Lifetime Protector (II) Max alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'hsbc-life-flexi-protector',
     variantId: 'sgd-open-ended-choice-cover',
     scenarioId: 'baseline',
@@ -14538,6 +14711,23 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'prudential-pruvantage-assure-ii' && definition.scenarioId === 'assurance-state-override') {
     return assureIiStateOverridePolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-pro-lifetime-protector-ii' && definition.scenarioId === 'baseline') {
+    return aiaPlp2BaselinePolicy(
+      snapshot,
+      definition.variantId as 'sgd-open-ended-plus' | 'sgd-open-ended-max',
+      id,
+    )
+  }
+  if (definition.productId === 'aia-pro-lifetime-protector-ii' && definition.scenarioId === 'event-heavy') {
+    return aiaPlp2EventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'aia-pro-lifetime-protector-ii' && definition.scenarioId === 'ocf-stress') {
+    return aiaPlp2StressPolicy(
+      snapshot,
+      definition.variantId as 'sgd-open-ended-plus' | 'sgd-open-ended-max',
+      id,
+    )
   }
   if (definition.productId === 'hsbc-life-flexi-protector' && definition.scenarioId === 'baseline') {
     return hsbcFlexiProtectorBaselinePolicy(
