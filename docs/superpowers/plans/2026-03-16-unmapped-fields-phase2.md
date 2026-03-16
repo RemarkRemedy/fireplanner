@@ -64,8 +64,8 @@ emergencyFundTarget?: number
 
 After `rentalExpensesPercent`:
 ```typescript
-/** Year after which rental income stops (e.g., lease expiry or tenant departure) */
-rentalIncomeEndYear?: number
+/** Age at which rental income stops (converted from calendar year at apply time) */
+rentalIncomeEndAge?: number
 ```
 
 - [ ] **Step 4: Add `annualInsurancePremiums` to ProfileState AND ProjectionParams**
@@ -171,54 +171,71 @@ git commit -m "feat: add ISP/CareShield premium overrides and MediSave routing t
 
 ---
 
-## Task 3: Property Engine Change (rental income end year)
+## Task 3: Rental Income End Age Cutoff
 
 **Files:**
 - Modify: `frontend/src/lib/calculations/propertyProjection.ts`
+- Modify: `frontend/src/lib/calculations/projection.ts`
+- Modify: `frontend/src/lib/household/compileHouseholdPlan.ts`
 
-- [ ] **Step 1: Add `rentalIncomeEndYear` to PropertyProjectionParams**
+**IMPORTANT:** The rental income cutoff must be applied in THREE places:
+1. `propertyProjection.ts` — property detail view
+2. `projection.ts` — main projection engine (uses `params.annualRentalIncome`)
+3. `compileHouseholdPlan.ts` — household compilation path
 
-In the inline `downsizing` type or at the top level of `PropertyProjectionParams`, add:
+**Year→age conversion:** The nudge flow collects `rentalIncomeEndYear` (calendar year).
+Convert to `rentalIncomeEndAge` at the apply boundary in `applyFlowValues.ts`:
 ```typescript
-rentalIncomeEndYear?: number
+rentalIncomeEndAge = selfAdult.currentAge + (rentalIncomeEndYear - currentYear)
 ```
+The engine receives an age, NOT a year. This avoids `new Date().getFullYear()` in engine code.
+
+- [ ] **Step 1: Add `rentalIncomeEndAge` to PropertyProjectionParams** (top level, not downsizing)
 
 - [ ] **Step 2: Apply cutoff in `generatePropertyProjection`**
 
-**NOTE:** `rentalIncome` is computed ONCE at line ~150 as a constant (outside the loop).
-The cutoff must be applied INSIDE the per-year loop (lines 158-251) where each row is built.
-
-Compute `rentalEndAge` before the loop:
+`rentalIncome` is computed ONCE as a constant (line ~150, outside loop).
+Apply cutoff INSIDE the per-year loop when assigning to each row:
 ```typescript
-const rentalEndAge = params.rentalIncomeEndYear != null
-  ? params.currentAge + (params.rentalIncomeEndYear - new Date().getFullYear())
-  : null
+rentalIncome: (params.rentalIncomeEndAge != null && age >= params.rentalIncomeEndAge) ? undefined : rentalIncome,
 ```
 
-Inside the loop, when assigning `rentalIncome` to each row (line ~248):
+- [ ] **Step 3: Add `rentalIncomeEndAge` to `ProjectionParams`**
+
+After `annualRentalIncome`:
 ```typescript
-rentalIncome: (rentalEndAge != null && age >= rentalEndAge) ? undefined : rentalIncome,
+/** Age at which rental income stops */
+rentalIncomeEndAge?: number
 ```
 
-Add `rentalIncomeEndYear` to `PropertyProjectionParams` at the top level (NOT inside downsizing).
+In `projection.ts`, where `effectiveRentalIncome` is assigned (~line 597):
+```typescript
+const effectiveRentalIncome = (params.rentalIncomeEndAge != null && age >= params.rentalIncomeEndAge)
+  ? 0
+  : annualRentalIncome
+```
 
-- [ ] **Step 3: Pass through from callers**
+- [ ] **Step 4: Update `compileHouseholdPlan.ts`**
 
-Update `runtimeLegacyInputs.ts` `mapProperty()` to pass `rentalIncomeEndYear` if set on PropertyPlan.
-Update `compileHouseholdPlan.ts` if it builds property projection params.
+In `compilePropertyCashflows`, apply the same age cutoff to rental income calculations.
 
-- [ ] **Step 4: Run type-check and existing property tests**
+- [ ] **Step 5: Pass through from callers**
+
+- `runtimeLegacyInputs.ts` `mapProperty()`: pass `rentalIncomeEndAge` from PropertyPlan
+- `toLegacyIndividual.ts` `cloneProperty()`: include `rentalIncomeEndAge`
+- `projectionParams.ts` `buildFullProjectionParams()`: pass from property state
+
+- [ ] **Step 6: Run type-check and tests**
 
 ```bash
-cd frontend && npm run type-check 2>&1 | grep "error TS" | head -10
-cd frontend && npx vitest run src/lib/calculations/propertyProjection.test.ts
+cd frontend && npm run type-check && npx vitest run src/lib/calculations/propertyProjection.test.ts
 ```
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add frontend/src/lib/calculations/propertyProjection.ts frontend/src/lib/household/runtimeLegacyInputs.ts
-git commit -m "feat: add rental income end year cutoff in property projection"
+git add frontend/src/lib/calculations/propertyProjection.ts frontend/src/lib/calculations/projection.ts frontend/src/lib/household/compileHouseholdPlan.ts frontend/src/lib/household/runtimeLegacyInputs.ts frontend/src/lib/household/toLegacyIndividual.ts
+git commit -m "feat: add rental income end age cutoff across all projection paths"
 ```
 
 ---
@@ -264,9 +281,15 @@ const inflationAdjustedExpenses = baseExpenses * Math.pow(1 + inflation, year) +
 ```
 
 **NOTE:** `inflationAdjustedExpenses` covers BOTH pre-retirement and retirement phases.
-Adding `insurancePremiums` to it once (line ~663) is sufficient. There is NO separate
-`extraExpenses` in the retirement section. Do NOT duplicate the addition in the retirement
-section — it would cause double-counting.
+Adding `insurancePremiums` to it once (line ~663) is sufficient for display/withdrawal.
+`extraExpenses` (line ~670) is only for pre-retirement portfolio deduction.
+Do NOT duplicate in the retirement section.
+
+- [ ] **Step 2b: Update `compileHouseholdPlan.ts`**
+
+In the household compilation loop, include `annualInsurancePremiums` in the recurring
+expense calculation (read the file to find the exact injection point — look for where
+`parentSupportExpense` or `healthcareCashOutlay` are summed).
 
 - [ ] **Step 3: Run type-check and tests**
 
@@ -322,7 +345,12 @@ if (typeof values.emergencyFundTarget === 'number') {
 Add to the property case (within the rental income section):
 ```typescript
 if (typeof values.rentalIncomeEndYear === 'number') {
-  propertyUpdates.rentalIncomeEndYear = values.rentalIncomeEndYear
+  // Convert calendar year to age at apply boundary (engine works in age-space)
+  const currentYear = new Date().getFullYear()
+  const endAge = selfAdult.currentAge + (values.rentalIncomeEndYear - currentYear)
+  if (endAge > selfAdult.currentAge) {
+    propertyUpdates.rentalIncomeEndAge = endAge
+  }
 }
 ```
 
@@ -331,7 +359,7 @@ Also clear on toggle-off:
 if (values.hasRentalIncome === false) {
   propertyUpdates.rentalYield = 0
   propertyUpdates.rentalExpensesPercent = 0
-  propertyUpdates.rentalIncomeEndYear = undefined
+  propertyUpdates.rentalIncomeEndAge = undefined
 }
 ```
 
@@ -352,8 +380,13 @@ seeds.emergencyFundTarget = adult.emergencyFundTarget ?? 6
 
 Property seeds (in rental section):
 ```typescript
-if (property.rentalIncomeEndYear != null) {
-  seeds.rentalIncomeEndYear = property.rentalIncomeEndYear
+// Reverse-compute calendar year from stored age
+if (property.rentalIncomeEndAge != null) {
+  const selfAdult = getSelfAdult()
+  if (selfAdult) {
+    const currentYear = new Date().getFullYear()
+    seeds.rentalIncomeEndYear = currentYear + (property.rentalIncomeEndAge - selfAdult.currentAge)
+  }
 }
 ```
 
@@ -403,16 +436,21 @@ Note: Task 1 types must be applied before agents start. Either commit types firs
 
 ## toLegacyIndividual Considerations
 
-`annualInsurancePremiums` flows through `ProfileState` → `ProjectionParams`. The
-`toLegacyIndividual` shortcut path maps `PlanningAdult` → `ProfileState`. This mapping
-must include `annualInsurancePremiums` to avoid the single-adult path silently ignoring
-insurance premiums. Add it in Task 5 alongside the `runtimeLegacyInputs` mapping.
+**Healthcare fields:** `customIspPremium`, `customCareShieldPremium`, `useMediSaveForPremiums`
+are added to `HealthcareConfig`. `toLegacyIndividual` copies `adult.healthcare` with a shallow
+spread, so these fields flow automatically. No additional wiring needed.
 
-Healthcare custom premiums (`customIspPremium`, `customCareShieldPremium`, `useMediSaveForPremiums`)
-flow through `HealthcareConfig` which is already mapped in both paths. No additional wiring needed.
+**`annualInsurancePremiums`:** Flows through `ProfileState` → `ProjectionParams`. The
+`toLegacyIndividual` shortcut maps `PlanningAdult` → `ProfileState`. This mapping must
+include `annualInsurancePremiums`. Add `snapshot.profile.annualInsurancePremiums = adult.annualInsurancePremiums ?? 0`
+in `toLegacyIndividual.ts`.
 
-`emergencyFundTarget` and `rentalIncomeEndYear` don't flow through `ProfileState` — they're
-consumed by health check and property projection respectively, which read from different sources.
+**`rentalIncomeEndAge`:** Flows through `PropertyState` → `ProjectionParams`. Add to
+`cloneProperty` in `toLegacyIndividual.ts` and to `PropertyState` type if not present.
+
+**`emergencyFundTarget`:** Consumed by health check which reads from `PlanningAdult` directly
+(not via `ProfileState`). The health check call site already has access to `PlanningAdult` data.
+No `toLegacyIndividual` wiring needed.
 
 ## What This Plan Does NOT Do
 
