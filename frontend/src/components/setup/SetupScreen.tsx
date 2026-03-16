@@ -342,7 +342,7 @@ export function SetupScreen({
         </div>
         {onBack && (
           <p className="text-xs text-center text-muted-foreground">
-            Estimate for now — you can always update this later.
+            Estimate for now, you can always update this later.
           </p>
         )}
       </div>

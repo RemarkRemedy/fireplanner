@@ -77,13 +77,13 @@ function deriveCategories(draft: SetupDraft): ReviewCategory[] {
   let cpfDetail: string
   if (draft.residency === 'foreigner') {
     cpfStatus = 'not-applicable'
-    cpfDetail = 'Not applicable — foreigner'
+    cpfDetail = 'Not applicable: foreigner'
   } else if (draft.cpfKnown && draft.cpfTotal != null) {
     cpfStatus = 'provided'
     cpfDetail = `Total CPF: ${formatCurrency(draft.cpfTotal)}`
   } else {
     cpfStatus = 'excluded'
-    cpfDetail = 'CPF balance not entered — estimates will be used'
+    cpfDetail = 'CPF balance not entered, estimates will be used'
   }
   categories.push({
     key: 'cpf',
@@ -98,7 +98,7 @@ function deriveCategories(draft: SetupDraft): ReviewCategory[] {
   let propertyDetail: string
   if (draft.ownsProperty === 'no') {
     propertyStatus = 'excluded'
-    propertyDetail = 'No property — not included in projection'
+    propertyDetail = 'No property, not included in projection'
   } else if (draft.ownsProperty === 'owns' && draft.propertyValue != null) {
     propertyStatus = 'provided'
     propertyDetail = `${formatCurrency(draft.propertyValue)} estimated value`
@@ -219,7 +219,7 @@ export function ReviewCheckpoint({ draft, onConfirm, onEdit, validationError }: 
         </div>
       )}
       <Button onClick={onConfirm} className="w-full" size="lg">
-        Looks good — See your projection
+        Looks good! See your projection
       </Button>
     </div>
   )

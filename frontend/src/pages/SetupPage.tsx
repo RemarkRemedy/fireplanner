@@ -66,7 +66,7 @@ const SCREENS: (NudgeFlowScreen & {
     title: 'What have you saved?',
     subtitle: 'This is your starting point for the projection.',
     fields: [
-      { name: 'liquidNetWorth', label: 'Cash & investments (excl. CPF/property)', type: 'currency', required: true, validationKey: 'liquidNetWorth', tooltip: 'Cash, savings, investments, and fixed deposits you could access. Excludes CPF and property equity.', helperText: 'Include savings accounts, brokerage, fixed deposits. Exclude CPF and your home — those are tracked separately.' },
+      { name: 'liquidNetWorth', label: 'Cash & investments (excl. CPF/property)', type: 'currency', required: true, validationKey: 'liquidNetWorth', tooltip: 'Cash, savings, investments, and fixed deposits you could access. Excludes CPF and property equity.', helperText: 'Include savings accounts, brokerage, fixed deposits. Exclude CPF and your home. Those are tracked separately.' },
     ],
   },
   // Screen 5: Residency
@@ -771,7 +771,7 @@ export function SetupPage() {
               {SG_EXPENSE_BENCHMARKS.map((b) => (
                 <p key={b.label}>{b.label}: {b.range}</p>
               ))}
-              <p className="mt-2 text-xs italic">A rough estimate works fine — you can refine it later.</p>
+              <p className="mt-2 text-xs italic">A rough estimate works fine. You can refine it later.</p>
             </div>
           </details>
         </>
