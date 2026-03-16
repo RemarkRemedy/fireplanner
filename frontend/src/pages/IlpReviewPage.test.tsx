@@ -1308,6 +1308,29 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Initial Account Redemption Fee')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds FWD Invest Flexi Elite as a partial catalog product with unemployment-waiver and distribution warnings', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'FWD Invest Flexi Elite')
+
+    expect(within(dialog).getByText('FWD Invest Flexi Elite')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(flexi 3\)use partial template$/i }))
+
+    expect(screen.getAllByText('FWD Invest Flexi Elite (SGD / MIP 10 (Flexi 3))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('published initial-account-value charge')
+    expect(seededAlert?.textContent).toContain('unemployment waiver')
+    expect(seededAlert?.textContent).toContain('reinvest-default distribution support')
+    expect(screen.getByDisplayValue('Initial Account Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Initial Account Redemption Fee')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Elite Secure Income - Single Premium as a partial catalog product with manual payout-state warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
