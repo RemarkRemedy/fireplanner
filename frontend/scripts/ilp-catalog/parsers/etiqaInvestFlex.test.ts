@@ -15,7 +15,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('Etiqa Invest flex parsers', () => {
-  it('builds a valid partial modeled-subset product for Invest flex prime II', async () => {
+  it('builds a valid supported product for Invest flex prime II', async () => {
     const document = await extractPdfText(PRIME_SOURCE_PATH)
     const product = parseEtiqaInvestFlexPrimeIi({
       document,
@@ -24,20 +24,22 @@ describe('Etiqa Invest flex parsers', () => {
 
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('etiqa-invest-flex-prime-ii')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:etiqa-flex-prime-ii-startup-bonus',
       'branch:etiqa-flex-prime-ii-special-bonus',
       'branch:etiqa-flex-prime-ii-loyalty-bonus',
       'branch:etiqa-flex-prime-ii-policy-charge',
+      'branch:etiqa-flex-prime-ii-insurance-charge',
       'branch:etiqa-flex-prime-ii-top-up-premium-charge',
       'branch:etiqa-flex-prime-ii-startup-bonus-recovery',
       'branch:etiqa-flex-prime-ii-partial-withdrawal-charge',
       'branch:etiqa-flex-prime-ii-surrender-charge',
+      'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('etiqa-flex-prime-ii-premium-shortfall-charge')
-    expect(product.metadataOnlyBehaviors).toContain('etiqa-flex-prime-ii-insurance-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('etiqa-flex-prime-ii-insurance-charge')
 
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-10-flexi-3',
@@ -74,6 +76,18 @@ describe('Etiqa Invest flex parsers', () => {
         basis: 'premium-base-mip-multiplier',
         appliesTo: ['regular'],
         rate: 0.006,
+      }),
+      expect.objectContaining({
+        id: 'insurance-charge',
+        basis: 'assurance-sum-at-risk',
+        appliesTo: ['regular'],
+        assuranceValueAppliesTo: ['regular'],
+        requiresManualInput: true,
+        assuranceConfig: {
+          formula: 'income-invest-flex-death-ti',
+          monthlyModalFactor: 1 / 12,
+          maxAgeNextBirthday: 99,
+        },
       }),
     ])
     expect(flexi5?.eventChargeRules).toEqual(
@@ -158,7 +172,7 @@ describe('Etiqa Invest flex parsers', () => {
     ])
   }, 30_000)
 
-  it('builds a valid partial modeled-subset product for Invest flex pro', async () => {
+  it('builds a valid supported product for Invest flex pro', async () => {
     const document = await extractPdfText(PRO_SOURCE_PATH)
     const product = parseEtiqaInvestFlexPro({
       document,
@@ -168,8 +182,10 @@ describe('Etiqa Invest flex parsers', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('etiqa-invest-flex-pro')
     expect(product.productName).toBe('Invest flex pro')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('branch:etiqa-flex-pro-policy-charge')
+    expect(product.modeledEconomics).toContain('branch:etiqa-flex-pro-insurance-charge')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-10-flexi-3',
       'sgd-mip-10-flexi-5',

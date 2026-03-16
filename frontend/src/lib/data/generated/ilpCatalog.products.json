@@ -18442,14 +18442,15 @@
     "sourceChecksumSha256": "9160885da6aa66d08bfee3135ff79c71e7267e1672fd1444c1f1f58e6ae6e29a",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
       "branch:etiqa-flex-prime-ii-startup-bonus",
       "branch:etiqa-flex-prime-ii-special-bonus",
       "branch:etiqa-flex-prime-ii-loyalty-bonus",
       "branch:etiqa-flex-prime-ii-policy-charge",
+      "branch:etiqa-flex-prime-ii-insurance-charge",
       "branch:etiqa-flex-prime-ii-top-up-premium-charge",
       "branch:etiqa-flex-prime-ii-startup-bonus-recovery",
       "branch:etiqa-flex-prime-ii-partial-withdrawal-charge",
@@ -18460,12 +18461,11 @@
       "etiqa-flex-prime-ii-premium-free-period-gating",
       "etiqa-flex-prime-ii-premium-shortfall-charge",
       "etiqa-flex-prime-ii-free-partial-withdrawal-benefit",
-      "etiqa-flex-prime-ii-insurance-charge",
       "etiqa-flex-prime-ii-distribution-paying-fund-threshold-and-withdrawal-consequences",
       "etiqa-flex-prime-ii-change-of-life-insured"
     ],
     "warnings": [
-      "Invest flex prime II is currently modeled as a partial product in V1. The parser captures the bounded accumulation mechanics and reinvest-default distribution support, but Premium-Free Period gating, premium shortfall charge, insurance charge, and distribution-paying fund thresholds and withdrawal consequences remain outside the calculator."
+      "Invest flex prime II is currently modeled as a supported product in V1. The parser captures the bounded accumulation mechanics, monthly insurance charge through manual insured-life inputs, and reinvest-default distribution support, while Premium-Free Period gating, premium shortfall charge, free partial withdrawal allowances, and distribution-paying fund thresholds and withdrawal consequences remain outside the calculator."
     ],
     "archived": false,
     "variants": [
@@ -18650,6 +18650,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 22,
+                "section": "Start-up Bonus Recovery and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 27,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "Appendix A – Insurance Charge Table Annual Insurance Charge for Death Benefit and TI Benefit (per S$1,000 Net Sum At Risk) Female Non- ANB Male Non-Smoker Male Smoker Female Smoker Smoker 1 0.162 0.162 0.171 0.171 2 0.14"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -18828,16 +18865,15 @@
           0.08
         ],
         "warnings": [
-          "Flexi 3 is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
+          "Flexi 3 is modeled as a supported V1 corridor. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, monthly insurance charge through manual insured-life inputs, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "No Premium-Free Period applies for 10 Years – Flexi 3.",
-          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Premium-Free Period gating, premium-shortfall charge, and free partial withdrawal allowances remain informational only in V1.",
           "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
-          "Insurance charge for death and terminal illness remains informational only.",
           "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
@@ -19125,6 +19161,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 22,
+                "section": "Start-up Bonus Recovery and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 27,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "Appendix A – Insurance Charge Table Annual Insurance Charge for Death Benefit and TI Benefit (per S$1,000 Net Sum At Risk) Female Non- ANB Male Non-Smoker Male Smoker Female Smoker Smoker 1 0.162 0.162 0.171 0.171 2 0.14"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -19303,16 +19376,15 @@
           0.08
         ],
         "warnings": [
-          "Flexi 5 is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
+          "Flexi 5 is modeled as a supported V1 corridor. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, monthly insurance charge through manual insured-life inputs, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "Up to 84 months of Premium-Free Period may be accumulated across the 10-year premium term.",
-          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Premium-Free Period gating, premium-shortfall charge, and free partial withdrawal allowances remain informational only in V1.",
           "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
-          "Insurance charge for death and terminal illness remains informational only.",
           "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
@@ -19631,6 +19703,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 22,
+                "section": "Start-up Bonus Recovery and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 27,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "Appendix A – Insurance Charge Table Annual Insurance Charge for Death Benefit and TI Benefit (per S$1,000 Net Sum At Risk) Female Non- ANB Male Non-Smoker Male Smoker Female Smoker Smoker 1 0.162 0.162 0.171 0.171 2 0.14"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -19869,16 +19978,15 @@
           0.08
         ],
         "warnings": [
-          "20 Years is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
+          "20 Years is modeled as a supported V1 corridor. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, monthly insurance charge through manual insured-life inputs, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "Up to 132 months of Premium-Free Period may be accumulated across the 20-year premium term.",
-          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Premium-Free Period gating, premium-shortfall charge, and free partial withdrawal allowances remain informational only in V1.",
           "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
-          "Insurance charge for death and terminal illness remains informational only.",
           "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
@@ -19971,14 +20079,15 @@
     "sourceChecksumSha256": "040ee153136899fdab24a0c785858aa7dc53f9e28ff209b5c6f5c4dbc9d10cce",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
       "branch:etiqa-flex-pro-startup-bonus",
       "branch:etiqa-flex-pro-special-bonus",
       "branch:etiqa-flex-pro-loyalty-bonus",
       "branch:etiqa-flex-pro-policy-charge",
+      "branch:etiqa-flex-pro-insurance-charge",
       "branch:etiqa-flex-pro-top-up-premium-charge",
       "branch:etiqa-flex-pro-startup-bonus-recovery",
       "branch:etiqa-flex-pro-partial-withdrawal-charge",
@@ -19989,12 +20098,11 @@
       "etiqa-flex-pro-premium-free-period-gating",
       "etiqa-flex-pro-premium-shortfall-charge",
       "etiqa-flex-pro-free-partial-withdrawal-benefit",
-      "etiqa-flex-pro-insurance-charge",
       "etiqa-flex-pro-distribution-paying-fund-threshold-and-withdrawal-consequences",
       "etiqa-flex-pro-change-of-life-insured"
     ],
     "warnings": [
-      "Invest flex pro is currently modeled as a partial product in V1. The parser captures the bounded accumulation mechanics and reinvest-default distribution support, but Premium-Free Period gating, premium shortfall charge, insurance charge, and distribution-paying fund thresholds and withdrawal consequences remain outside the calculator."
+      "Invest flex pro is currently modeled as a supported product in V1. The parser captures the bounded accumulation mechanics, monthly insurance charge through manual insured-life inputs, and reinvest-default distribution support, while Premium-Free Period gating, premium shortfall charge, free partial withdrawal allowances, and distribution-paying fund thresholds and withdrawal consequences remain outside the calculator."
     ],
     "archived": false,
     "variants": [
@@ -20179,6 +20287,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 22,
+                "section": "Start-up Bonus Recovery and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 27,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "Appendix A – Insurance Charge Table Annual Insurance Charge for Death Benefit and TI Benefit (per S$1,000 Net Sum At Risk) Female Non- ANB Male Non-Smoker Male Smoker Female Smoker Smoker 1 0.162 0.162 0.171 0.171 2 0.14"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -20357,16 +20502,15 @@
           0.08
         ],
         "warnings": [
-          "Flexi 3 is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
+          "Flexi 3 is modeled as a supported V1 corridor. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, monthly insurance charge through manual insured-life inputs, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "No Premium-Free Period applies for 10 Years – Flexi 3.",
-          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Premium-Free Period gating, premium-shortfall charge, and free partial withdrawal allowances remain informational only in V1.",
           "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
-          "Insurance charge for death and terminal illness remains informational only.",
           "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
@@ -20654,6 +20798,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 22,
+                "section": "Start-up Bonus Recovery and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 27,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "Appendix A – Insurance Charge Table Annual Insurance Charge for Death Benefit and TI Benefit (per S$1,000 Net Sum At Risk) Female Non- ANB Male Non-Smoker Male Smoker Female Smoker Smoker 1 0.162 0.162 0.171 0.171 2 0.14"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -20832,16 +21013,15 @@
           0.08
         ],
         "warnings": [
-          "Flexi 5 is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
+          "Flexi 5 is modeled as a supported V1 corridor. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, monthly insurance charge through manual insured-life inputs, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "Up to 84 months of Premium-Free Period may be accumulated across the 10-year premium term.",
-          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Premium-Free Period gating, premium-shortfall charge, and free partial withdrawal allowances remain informational only in V1.",
           "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
-          "Insurance charge for death and terminal illness remains informational only.",
           "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
@@ -21160,6 +21340,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 22,
+                "section": "Start-up Bonus Recovery and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 27,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "Appendix A – Insurance Charge Table Annual Insurance Charge for Death Benefit and TI Benefit (per S$1,000 Net Sum At Risk) Female Non- ANB Male Non-Smoker Male Smoker Female Smoker Smoker 1 0.162 0.162 0.171 0.171 2 0.14"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -21398,16 +21615,15 @@
           0.08
         ],
         "warnings": [
-          "20 Years is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
+          "20 Years is modeled as a supported V1 corridor. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, monthly insurance charge through manual insured-life inputs, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "Up to 132 months of Premium-Free Period may be accumulated across the 20-year premium term.",
-          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Premium-Free Period gating, premium-shortfall charge, and free partial withdrawal allowances remain informational only in V1.",
           "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
-          "Insurance charge for death and terminal illness remains informational only.",
           "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
@@ -26255,14 +26471,15 @@
     "sourceChecksumSha256": "d4eb3338e7638c0f61c79aa6d3291acdde0f2ae5867eddef611b76190b1f2672",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
       "branch:etiqa-vista-startup-bonus",
       "branch:etiqa-vista-special-bonus",
       "branch:etiqa-vista-loyalty-bonus",
       "branch:etiqa-vista-policy-charge",
+      "branch:etiqa-vista-insurance-charge",
       "branch:etiqa-vista-top-up-premium-charge",
       "branch:etiqa-vista-startup-bonus-recovery",
       "branch:etiqa-vista-partial-withdrawal-charge",
@@ -26273,12 +26490,11 @@
       "etiqa-vista-premium-free-period-gating",
       "etiqa-vista-premium-shortfall-charge",
       "etiqa-vista-free-partial-withdrawal-benefit",
-      "etiqa-vista-insurance-charge",
       "etiqa-vista-distribution-paying-fund-threshold-and-withdrawal-consequences",
       "etiqa-vista-change-of-life-insured"
     ],
     "warnings": [
-      "Invest vista is currently modeled as a partial product in V1. The parser captures the bounded accumulation mechanics and reinvest-default distribution support, but Premium-Free Period gating, premium shortfall charge, insurance charge, and distribution-paying fund thresholds and withdrawal consequences remain outside the calculator."
+      "Invest vista is currently modeled as a supported product in V1. The parser captures the bounded accumulation mechanics, monthly insurance charge through manual insured-life inputs, and reinvest-default distribution support, while Premium-Free Period gating, premium shortfall charge, free partial withdrawal allowances, and distribution-paying fund thresholds and withdrawal consequences remain outside the calculator."
     ],
     "archived": false,
     "variants": [
@@ -26463,6 +26679,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 22,
+                "section": "Start-up Bonus Recovery and Insurance Charge",
+                "excerpt": "\"All partial withdrawals made from the Regular Premium Account\" refers to all past partial withdrawal amounts paid to You from the Regular Premium Account including partial withdrawal charge imposed. If the balance in th"
+              },
+              {
+                "page": 27,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "Financial Shariah Advisory and Consultancy of Singapore Islamic Scholars & Religious Teachers Association (Pergas) Singapore has certified this plan and its structure as Shariah compliant under the concept of Wakalah, Ta"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -26641,16 +26894,15 @@
           0.08
         ],
         "warnings": [
-          "Flexi 3 is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
+          "Flexi 3 is modeled as a supported V1 corridor. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, monthly insurance charge through manual insured-life inputs, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "No Premium-Free Period applies for 10 Years – Flexi 3.",
-          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Premium-Free Period gating, premium-shortfall charge, and free partial withdrawal allowances remain informational only in V1.",
           "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
-          "Insurance charge for death and terminal illness remains informational only.",
           "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
@@ -26938,6 +27190,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 22,
+                "section": "Start-up Bonus Recovery and Insurance Charge",
+                "excerpt": "\"All partial withdrawals made from the Regular Premium Account\" refers to all past partial withdrawal amounts paid to You from the Regular Premium Account including partial withdrawal charge imposed. If the balance in th"
+              },
+              {
+                "page": 27,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "Financial Shariah Advisory and Consultancy of Singapore Islamic Scholars & Religious Teachers Association (Pergas) Singapore has certified this plan and its structure as Shariah compliant under the concept of Wakalah, Ta"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -27116,16 +27405,15 @@
           0.08
         ],
         "warnings": [
-          "Flexi 5 is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
+          "Flexi 5 is modeled as a supported V1 corridor. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, monthly insurance charge through manual insured-life inputs, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "Up to 84 months of Premium-Free Period may be accumulated across the 10-year premium term.",
-          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Premium-Free Period gating, premium-shortfall charge, and free partial withdrawal allowances remain informational only in V1.",
           "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
-          "Insurance charge for death and terminal illness remains informational only.",
           "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."
@@ -27444,6 +27732,43 @@
                 "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 22,
+                "section": "Start-up Bonus Recovery and Insurance Charge",
+                "excerpt": "\"All partial withdrawals made from the Regular Premium Account\" refers to all past partial withdrawal amounts paid to You from the Regular Premium Account including partial withdrawal charge imposed. If the balance in th"
+              },
+              {
+                "page": 27,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "Financial Shariah Advisory and Consultancy of Singapore Islamic Scholars & Religious Teachers Association (Pergas) Singapore has certified this plan and its structure as Shariah compliant under the concept of Wakalah, Ta"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -27682,16 +28007,15 @@
           0.08
         ],
         "warnings": [
-          "20 Years is modeled as a partial subset in V1. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
+          "20 Years is modeled as a supported V1 corridor. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, monthly insurance charge through manual insured-life inputs, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
           "Up to 132 months of Premium-Free Period may be accumulated across the 20-year premium term.",
-          "Premium-Free Period gating, premium-shortfall charge, and insurance charge remain informational only in V1.",
+          "Premium-Free Period gating, premium-shortfall charge, and free partial withdrawal allowances remain informational only in V1.",
           "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1."
         ],
         "unsupportedItems": [
           "Premium-Free Period accumulated-month logic remains informational only.",
           "Premium shortfall charge and premium repayment reset behavior remain informational only.",
           "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
-          "Insurance charge for death and terminal illness remains informational only.",
           "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
           "Change of Life insured remains informational only.",
           "Optional riders and guaranteed issue wording remain informational only."

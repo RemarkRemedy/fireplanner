@@ -2454,7 +2454,7 @@ describe('templateVariantToPolicySeed', () => {
     ])
   })
 
-  it('maps Invest vista into a partial two-account seed with Etiqa flex-family bonus and charge schedules', () => {
+  it('maps Invest vista into a supported two-account seed with Etiqa flex-family bonus and charge schedules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-vista')
     expect(product).toBeDefined()
@@ -2463,9 +2463,10 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-vista-policy-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-vista-insurance-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-vista-premium-shortfall-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-vista-distribution-paying-fund-threshold-and-withdrawal-consequences')
@@ -2481,6 +2482,13 @@ describe('templateVariantToPolicySeed', () => {
           id: 'policy-charge-after-premium-term',
           basis: 'premium-base-mip-multiplier',
           rate: 0.006,
+        }),
+        expect.objectContaining({
+          id: 'insurance-charge',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['regular'],
+          assuranceValueAppliesTo: ['regular'],
+          requiresManualInput: true,
         }),
       ]),
     )
@@ -2907,7 +2915,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('supports distribution-paying fund elections'))).toBe(true)
   })
 
-  it('maps Etiqa Invest flex prime II into a partial seed with distinct Flexi 3 and Flexi 5 variants', () => {
+  it('maps Etiqa Invest flex prime II into a supported seed with distinct Flexi 3 and Flexi 5 variants', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-flex-prime-ii')
     expect(product).toBeDefined()
@@ -2917,9 +2925,10 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('Invest flex prime II (SGD / MIP 10 (Flexi 5))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-flex-prime-ii-policy-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-flex-prime-ii-insurance-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-flex-prime-ii-premium-shortfall-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-flex-prime-ii-distribution-paying-fund-threshold-and-withdrawal-consequences')
@@ -2943,6 +2952,13 @@ describe('templateVariantToPolicySeed', () => {
           basis: 'premium-base-mip-multiplier',
           rate: 0.006,
           appliesTo: ['regular'],
+        }),
+        expect.objectContaining({
+          id: 'insurance-charge',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['regular'],
+          assuranceValueAppliesTo: ['regular'],
+          requiresManualInput: true,
         }),
       ]),
     )
@@ -2983,7 +2999,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('supports distribution-paying fund elections'))).toBe(true)
   })
 
-  it('maps Etiqa Invest flex pro into a partial seed with the same bounded mechanics family', () => {
+  it('maps Etiqa Invest flex pro into a supported seed with the same bounded mechanics family', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-flex-pro')
     expect(product).toBeDefined()
@@ -2993,10 +3009,12 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('Invest flex pro (SGD / MIP 20)')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-flex-pro-loyalty-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-flex-pro-insurance-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-flex-pro-insurance-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('etiqa-flex-pro-insurance-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-flex-pro-distribution-paying-fund-threshold-and-withdrawal-consequences')
     expect(seed.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.rate).toBe(0.001)
     expect(seed.distributionSupport).toEqual({

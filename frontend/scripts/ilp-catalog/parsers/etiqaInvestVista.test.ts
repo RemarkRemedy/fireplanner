@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseEtiqaInvestVista', () => {
-  it('builds a valid partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseEtiqaInvestVista({
       document,
@@ -22,13 +22,14 @@ describe('parseEtiqaInvestVista', () => {
 
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('etiqa-invest-vista')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('branch:etiqa-vista-policy-charge')
     expect(product.modeledEconomics).toContain('branch:etiqa-vista-startup-bonus')
+    expect(product.modeledEconomics).toContain('branch:etiqa-vista-insurance-charge')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-vista-premium-shortfall-charge')
-    expect(product.metadataOnlyBehaviors).toContain('etiqa-vista-insurance-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('etiqa-vista-insurance-charge')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-vista-distribution-paying-fund-threshold-and-withdrawal-consequences')
 
     expect(product.variants).toHaveLength(3)
@@ -52,6 +53,15 @@ describe('parseEtiqaInvestVista', () => {
           id: 'policy-charge-after-premium-term',
           basis: 'premium-base-mip-multiplier',
           rate: 0.006,
+        }),
+        expect.objectContaining({
+          id: 'insurance-charge',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['regular'],
+          assuranceValueAppliesTo: ['regular'],
+          assuranceConfig: expect.objectContaining({
+            formula: 'income-invest-flex-death-ti',
+          }),
         }),
       ]),
     )
