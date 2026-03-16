@@ -142,6 +142,12 @@ export type GoldenCoverageTag =
   | 'branch:tokio-marine-wealth-enhancer-cpfis-zero-top-up-charge'
   | 'branch:tokio-marine-wealth-enhancer-cpfis-zero-recurring-single-premium-charge'
   | 'branch:tokio-marine-wealth-enhancer-cpfis-zero-partial-withdrawal-charge'
+  | 'branch:tokio-marine-goelite-zero-single-premium-charge'
+  | 'branch:tokio-marine-goelite-establishment-charge'
+  | 'branch:tokio-marine-goelite-administrative-charge'
+  | 'branch:tokio-marine-goelite-recurring-single-and-top-up-charge'
+  | 'branch:tokio-marine-goelite-zero-partial-withdrawal-charge'
+  | 'branch:tokio-marine-goelite-surrender-charge'
   | 'branch:hsbc-life-wealth-invest-cash-srs-max-single-premium-charge'
   | 'branch:hsbc-life-wealth-invest-cash-srs-max-recurring-single-premium-charge'
   | 'branch:hsbc-life-wealth-invest-cash-srs-max-top-up-charge'
@@ -2617,6 +2623,90 @@ function tokioMarineWealthEnhancerCpfisStressPolicy(
 ): IlpPolicyInput {
   return tokioMarineWealthEnhancerCpfisBasePolicy(snapshot, id, HSBC_STRESS_FUNDS, {
     name: 'Golden TM Wealth Enhancer (CPFIS) (SGD / Open-ended CPF OCF Stress)',
+  })
+}
+
+function tokioMarineGoEliteBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended-cash' | 'sgd-open-ended-srs',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-goelite', variantId, id, {
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+  const distributionAssumption = variantId === 'sgd-open-ended-cash'
+    ? {
+        mode: 'cash-payout' as const,
+        source: 'manual-assumption' as const,
+        annualYieldRate: 0.04,
+      }
+    : base.distributionAssumption
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden #goElite (${variantId.toUpperCase()})`,
+      policyEvents: [],
+      distributionAssumption,
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function tokioMarineGoEliteBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended-cash' | 'sgd-open-ended-srs',
+  id: string,
+): IlpPolicyInput {
+  return tokioMarineGoEliteBasePolicy(snapshot, variantId, id, TOKIO_BALANCED_FUNDS)
+}
+
+function tokioMarineGoEliteEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return tokioMarineGoEliteBasePolicy(snapshot, 'sgd-open-ended-cash', id, TOKIO_BALANCED_FUNDS, {
+    name: 'Golden #goElite (SGD / Open-ended Cash Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 13,
+        durationMonths: 1,
+        amount: 10_000,
+      },
+      {
+        id: 'rsp-1',
+        type: 'recurring-single-premium',
+        startPolicyMonth: 14,
+        durationMonths: 6,
+        amount: 500,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 18,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function tokioMarineGoEliteStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-open-ended-cash' | 'sgd-open-ended-srs',
+  id: string,
+): IlpPolicyInput {
+  return tokioMarineGoEliteBasePolicy(snapshot, variantId, id, HSBC_STRESS_FUNDS, {
+    name: `Golden #goElite (${variantId.toUpperCase()} OCF Stress)`,
   })
 }
 
@@ -6639,6 +6729,80 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'TM Wealth Enhancer (CPFIS) alternate-fund stress scenario through the open-ended CPF corridor.',
   },
   {
+    productId: 'tokio-marine-goelite',
+    variantId: 'sgd-open-ended-cash',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'branch:tokio-marine-goelite-zero-single-premium-charge',
+      'branch:tokio-marine-goelite-establishment-charge',
+      'branch:tokio-marine-goelite-administrative-charge',
+      'branch:tokio-marine-goelite-surrender-charge',
+    ],
+    description: '#goElite cash baseline scenario proving supported zero-charge single-premium seeding, original-base establishment and surrender charging, account-value administration fees, and cash-payout distribution assumptions.',
+    integrityChecks: [
+      {
+        description: 'baseline cash corridor records positive annual withdrawals under the manual cash-payout distribution assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+      {
+        description: 'baseline cash corridor incurs positive gross fees from establishment and administrative charges',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+    ],
+  },
+  {
+    productId: 'tokio-marine-goelite',
+    variantId: 'sgd-open-ended-srs',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: '#goElite SRS baseline scenario proving the supported reinvest-only open-ended corridor.',
+    integrityChecks: [
+      {
+        description: 'baseline SRS corridor keeps dividend distributions reinvested with no withdrawal payouts',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.every((row) => row.annualWithdrawals === 0),
+      },
+      {
+        description: 'baseline SRS corridor still incurs positive establishment and administrative fees',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+    ],
+  },
+  {
+    productId: 'tokio-marine-goelite',
+    variantId: 'sgd-open-ended-cash',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:tokio-marine-goelite-recurring-single-and-top-up-charge',
+      'branch:tokio-marine-goelite-zero-partial-withdrawal-charge',
+      'tokio-recurring-single-premium-routing',
+    ],
+    description: '#goElite cash event-heavy scenario proving recurring-single-premium routing, charged top-up allocation, and nil-charge withdrawals.',
+    integrityChecks: [
+      {
+        description: 'event-heavy cash corridor records positive annual contribution from seeded top-up and recurring-single-premium events',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > 0),
+      },
+      {
+        description: 'event-heavy cash corridor executes a later withdrawal through the nil-charge withdrawal path',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'tokio-marine-goelite',
+    variantId: 'sgd-open-ended-srs',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: '#goElite SRS alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'etiqa-invest-flex-prime-ii',
     variantId: 'sgd-mip-10-flexi-3',
     scenarioId: 'baseline',
@@ -8052,6 +8216,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'tokio-marine-wealth-enhancer-cpfis' && definition.scenarioId === 'ocf-stress') {
     return tokioMarineWealthEnhancerCpfisStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-goelite' && definition.scenarioId === 'baseline') {
+    return tokioMarineGoEliteBaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended-cash' | 'sgd-open-ended-srs', id)
+  }
+  if (definition.productId === 'tokio-marine-goelite' && definition.scenarioId === 'event-heavy') {
+    return tokioMarineGoEliteEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-goelite' && definition.scenarioId === 'ocf-stress') {
+    return tokioMarineGoEliteStressPolicy(snapshot, definition.variantId as 'sgd-open-ended-cash' | 'sgd-open-ended-srs', id)
   }
   if (definition.productId === 'etiqa-invest-flex-prime-ii' && definition.scenarioId === 'baseline') {
     return etiqaFlexBaselinePolicy(snapshot, 'etiqa-invest-flex-prime-ii', definition.variantId as
