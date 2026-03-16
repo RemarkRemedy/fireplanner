@@ -3,13 +3,16 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SetupScreen, shouldSkipScreen } from '@/components/setup/SetupScreen'
+import { CareerPhaseEditor } from '@/components/setup/CareerPhaseEditor'
 import { useMetricsSnapshot } from '@/hooks/useMetricsSnapshot'
 import { useUIStore } from '@/stores/useUIStore'
 import { applyFlowValues } from '@/lib/household/applyFlowValues'
 import { seedFlowValues } from '@/lib/household/seedFlowValues'
 import { getNudgeFlow, getFullPageFlowIds } from '@/lib/data/nudgeFlows'
+import { DEFAULT_CAREER_PHASES } from '@/lib/calculations/income'
 import type { NudgeFlowId, NudgeFlowScreen } from '@/lib/data/nudgeFlows'
 import type { MetricsSnapshot } from '@/lib/calculations/metricsSnapshot'
+import type { CareerPhase, PromotionJump } from '@/lib/types'
 
 const DELTA_BEFORE_KEY = 'fireplanner-delta-before'
 
@@ -49,6 +52,13 @@ export function RefineFlowPage() {
     if (seeds.rebalancingFrequency === undefined) seeds.rebalancingFrequency = 'annual'
     if (seeds.ispTier === undefined) seeds.ispTier = 'basic'
     if (seeds.careShieldEnrolled === undefined) seeds.careShieldEnrolled = true
+    // Pre-populate career phases with defaults if not seeded from store
+    if (flowId === 'salary' && !seeds.careerPhases) {
+      seeds.careerPhases = DEFAULT_CAREER_PHASES.map((p) => ({ ...p }))
+    }
+    if (flowId === 'salary' && !seeds.promotionJumps) {
+      seeds.promotionJumps = []
+    }
     return seeds
   })
   const [currentScreenIndex, setCurrentScreenIndex] = useState(0)
@@ -160,7 +170,16 @@ export function RefineFlowPage() {
           currentStep={currentScreenIndex + 1}
           totalSteps={visibleScreens.length}
           submitLabel={isLastScreen ? 'Save & see impact' : 'Continue'}
-        />
+        >
+          {flowId === 'salary' && currentScreen.id === 'salary-model' && values.salaryModel === 'realistic' && (
+            <CareerPhaseEditor
+              phases={(values.careerPhases as CareerPhase[]) ?? DEFAULT_CAREER_PHASES}
+              onPhasesChange={(phases) => handleChange('careerPhases', phases)}
+              promotionJumps={(values.promotionJumps as PromotionJump[]) ?? []}
+              onPromotionJumpsChange={(jumps) => handleChange('promotionJumps', jumps)}
+            />
+          )}
+        </SetupScreen>
       </main>
     </div>
   )

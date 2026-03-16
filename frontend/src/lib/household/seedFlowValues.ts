@@ -128,6 +128,12 @@ function seedSalary(): Record<string, unknown> {
   if (salaryIncome.bonusMonths != null) {
     seeds.annualBonusMonths = salaryIncome.bonusMonths
   }
+  if (salaryIncome.realisticPhases && salaryIncome.realisticPhases.length > 0) {
+    seeds.careerPhases = salaryIncome.realisticPhases.map((p) => ({ ...p }))
+  }
+  if (salaryIncome.promotionJumps && salaryIncome.promotionJumps.length > 0) {
+    seeds.promotionJumps = salaryIncome.promotionJumps.map((j) => ({ ...j }))
+  }
   return seeds
 }
 

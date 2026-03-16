@@ -16,7 +16,7 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { createId } from '@/lib/household/ids'
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
 import type { HouseholdCpfConfig, GoalItem } from '@/lib/household/types'
-import type { AllocationTemplate, DownsizingConfig, GoalCategory, GrowthModel, HealthcareConfig, IspTierOption, PropertyType, SalaryModel } from '@/lib/types'
+import type { AllocationTemplate, CareerPhase, DownsizingConfig, GoalCategory, GrowthModel, HealthcareConfig, IspTierOption, PromotionJump, PropertyType, SalaryModel } from '@/lib/types'
 import type { ExpenseItem, IncomeSource, PlanningAdult, PropertyPlan } from '@/lib/household/types'
 
 /**
@@ -338,6 +338,19 @@ export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unkn
       }
       if (typeof values.annualBonusMonths === 'number') {
         incomeUpdates.bonusMonths = values.annualBonusMonths
+      }
+
+      // Career phases and promotion jumps for "realistic" model
+      const effectiveModel = typeof values.salaryModel === 'string'
+        ? (values.salaryModel === 'mom' ? 'data-driven' : values.salaryModel)
+        : salaryIncome.salaryModel
+      if (effectiveModel === 'realistic') {
+        if (Array.isArray(values.careerPhases) && values.careerPhases.length > 0) {
+          incomeUpdates.realisticPhases = values.careerPhases as CareerPhase[]
+        }
+        if (Array.isArray(values.promotionJumps)) {
+          incomeUpdates.promotionJumps = values.promotionJumps as PromotionJump[]
+        }
       }
 
       store.updateIncome(salaryIncome.id, incomeUpdates)

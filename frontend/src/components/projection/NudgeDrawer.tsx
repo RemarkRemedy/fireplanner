@@ -4,6 +4,9 @@ import { SetupScreen, shouldSkipScreen } from '@/components/setup/SetupScreen'
 import { getNudgeFlow, NUDGE_FLOWS } from '@/lib/data/nudgeFlows'
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
 import { seedFlowValues } from '@/lib/household/seedFlowValues'
+import { CareerPhaseEditor } from '@/components/setup/CareerPhaseEditor'
+import { DEFAULT_CAREER_PHASES } from '@/lib/calculations/income'
+import type { CareerPhase, PromotionJump } from '@/lib/types'
 import { computeDelta } from '@/lib/calculations/metricsSnapshot'
 import type { DeltaSummary, MetricsSnapshot } from '@/lib/calculations/metricsSnapshot'
 import { useMetricsSnapshot } from '@/hooks/useMetricsSnapshot'
@@ -68,6 +71,12 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
         if (seeds.rebalancingFrequency === undefined) seeds.rebalancingFrequency = 'annual'
         if (seeds.ispTier === undefined) seeds.ispTier = 'basic'
         if (seeds.careShieldEnrolled === undefined) seeds.careShieldEnrolled = true
+        if (flowId === 'salary' && !seeds.careerPhases) {
+          seeds.careerPhases = DEFAULT_CAREER_PHASES.map((p) => ({ ...p }))
+        }
+        if (flowId === 'salary' && !seeds.promotionJumps) {
+          seeds.promotionJumps = []
+        }
         setValues(seeds)
       } else {
         setValues({})
@@ -225,7 +234,16 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
               currentStep={stepIndex + 1}
               totalSteps={totalSteps}
               submitLabel={isLastStep ? 'Save' : 'Continue'}
-            />
+            >
+              {flowId === 'salary' && currentScreen.id === 'salary-model' && values.salaryModel === 'realistic' && (
+                <CareerPhaseEditor
+                  phases={(values.careerPhases as CareerPhase[]) ?? DEFAULT_CAREER_PHASES}
+                  onPhasesChange={(phases) => handleChange('careerPhases', phases)}
+                  promotionJumps={(values.promotionJumps as PromotionJump[]) ?? []}
+                  onPromotionJumpsChange={(jumps) => handleChange('promotionJumps', jumps)}
+                />
+              )}
+            </SetupScreen>
           )}
         </div>
       </div>

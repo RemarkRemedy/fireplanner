@@ -403,7 +403,7 @@ const SALARY_FLOW: NudgeFlowDefinition = {
           required: true,
           tooltip: 'Simple = fixed annual growth. Realistic = career phases with promotion jumps. Data-driven = MOM salary benchmarks.',
         },
-        { name: 'annualSalaryGrowthPercent', label: 'Annual salary growth rate (%)', type: 'percent' },
+        { name: 'annualSalaryGrowthPercent', label: 'Annual salary growth rate (%)', type: 'percent', showWhen: { field: 'salaryModel', equals: 'simple' } },
       ],
     },
     {
