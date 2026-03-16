@@ -329,6 +329,7 @@ export type GoldenCoverageTag =
   | 'tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events'
   | 'branch:prosper-assurance-charge'
   | 'kernel:distribution-mode-assumption'
+  | 'kernel:tokio-locked-in-protection-state'
   | 'branch:assure-ii-pre-70-assurance'
   | 'branch:assure-ii-post-70-charge-tail'
   | 'branch:assure-ii-manual-reduction-resumption'
@@ -5785,11 +5786,105 @@ function tokioGoClassicStressPolicy(
   )
 }
 
+function tokioGoClassicSecureEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-goclassic-secure', 'sgd-mip-25', id)
+  return withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine #goClassic Secure (SGD / MIP 25 Event Heavy)',
+        monthlyContribution: 350,
+        currentPolicyYear: 4,
+        monthsAlreadyPaid: 36,
+        policyEvents: [
+          {
+            id: 'topup-1',
+            type: 'top-up',
+            startPolicyMonth: 37,
+            durationMonths: 1,
+            amount: 1_000,
+          },
+          {
+            id: 'rsp-1',
+            type: 'recurring-single-premium',
+            startPolicyMonth: 38,
+            durationMonths: 12,
+            amount: 100,
+          },
+        ],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    18_000,
+    9_000,
+    0,
+  )
+}
+
+function tokioGoClassicSecureAdvancedDeathBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-goclassic-secure', 'sgd-mip-25-advanced-death', id)
+  return withResolvedManualInputs(withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine #goClassic Secure (SGD / MIP 25 Advanced Death Baseline)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 3,
+        monthsAlreadyPaid: 24,
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 72_000,
+          currentTokioLockedInValue: 60_000,
+        },
+        postMipYears: 15,
+        policyEvents: [],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    18_000,
+    9_000,
+    0,
+  ))
+}
+
+function tokioGoClassicSecureStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-goclassic-secure', 'sgd-mip-25', id)
+  return withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine #goClassic Secure (SGD / MIP 25 OCF Stress)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 12,
+        monthsAlreadyPaid: 132,
+        postMipYears: 15,
+        policyEvents: [],
+      }),
+      HSBC_STRESS_FUNDS,
+    ),
+    26_000,
+    13_000,
+    0,
+  )
+}
+
 function tokioBaselinePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   productId:
     | 'tokio-marine-affluence-atfuture'
     | 'tokio-marine-goclassic'
+    | 'tokio-marine-goclassic-secure'
     | 'tokio-marine-goaffluence'
     | 'tokio-marine-goluxe'
     | 'tokio-marine-harvest-builder-atfuture'
@@ -10521,6 +10616,55 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Tokio Marine #goClassic supported OCF stress scenario through the same SGD / MIP 25 corridor.',
   },
   {
+    productId: 'tokio-marine-goclassic-secure',
+    variantId: 'sgd-mip-25',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'tokio-initial-vs-accumulation-regular-premium-routing',
+      'tokio-initial-bonus-tiered-premium-allocation',
+      'tokio-initial-charge-on-initial-account',
+      'tokio-policy-charge-on-policy-value',
+      'tokio-initial-account-surrender-charge',
+      'kernel:distribution-mode-assumption',
+    ],
+    description: 'Tokio Marine #goClassic Secure supported baseline proving initial routing, fee-rate modeling, policy-value charge basis, and surrender mechanics through the SGD / MIP 25 corridor.',
+  },
+  {
+    productId: 'tokio-marine-goclassic-secure',
+    variantId: 'sgd-mip-25-advanced-death',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:tokio-locked-in-protection-state',
+    ],
+    description: 'Tokio Marine #goClassic Secure advanced-death supported baseline proving Locked-in Policy Value protection-state handling from insured-life inputs.',
+  },
+  {
+    productId: 'tokio-marine-goclassic-secure',
+    variantId: 'sgd-mip-25',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'tokio-top-up-routing',
+      'tokio-recurring-single-premium-routing',
+      'tokio-top-up-premium-charge',
+      'tokio-recurring-single-premium-charge',
+    ],
+    description: 'Tokio Marine #goClassic Secure supported scenario covering accumulation-account top-up routing and recurring-single-premium charging.',
+  },
+  {
+    productId: 'tokio-marine-goclassic-secure',
+    variantId: 'sgd-mip-25',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Tokio Marine #goClassic Secure supported OCF stress scenario through the same SGD / MIP 25 corridor.',
+  },
+  {
     productId: 'tokio-marine-harvest-builder-atfuture',
     variantId: 'sgd-mip-10',
     scenarioId: 'baseline',
@@ -12120,6 +12264,24 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'tokio-marine-goclassic' && definition.scenarioId === 'ocf-stress') {
     return tokioGoClassicStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-goclassic-secure' && definition.scenarioId === 'baseline') {
+    if (definition.variantId === 'sgd-mip-25-advanced-death') {
+      return tokioGoClassicSecureAdvancedDeathBaselinePolicy(snapshot, id)
+    }
+    return tokioBaselinePolicy(
+      snapshot,
+      'tokio-marine-goclassic-secure',
+      'sgd-mip-25',
+      id,
+      'Golden Tokio Marine #goClassic Secure (SGD / MIP 25 Baseline)',
+    )
+  }
+  if (definition.productId === 'tokio-marine-goclassic-secure' && definition.scenarioId === 'event-heavy') {
+    return tokioGoClassicSecureEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'tokio-marine-goclassic-secure' && definition.scenarioId === 'ocf-stress') {
+    return tokioGoClassicSecureStressPolicy(snapshot, id)
   }
   if (definition.productId === 'tokio-marine-harvest-builder-atfuture' && definition.scenarioId === 'baseline') {
     if (definition.variantId === 'sgd-mip-10-advanced-death') {

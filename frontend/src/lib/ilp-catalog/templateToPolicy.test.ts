@@ -5198,7 +5198,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('irreversible downgrade to Basic Death'))).toBe(true)
   })
 
-  it('maps Tokio Marine #goClassic Secure into a partial seed with combined account-fee modeling and accumulation top-up routing', () => {
+  it('maps Tokio Marine #goClassic Secure into a supported seed with combined account-fee modeling and accumulation top-up routing', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-goclassic-secure')
     expect(product).toBeDefined()
@@ -5207,7 +5207,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
@@ -5264,7 +5264,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
   })
 
-  it('maps Tokio Marine #goClassic Secure advanced death into a partial seed with locked-in-value MPC', () => {
+  it('maps Tokio Marine #goClassic Secure advanced death into a supported seed with locked-in-value MPC', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-goclassic-secure')
     expect(product).toBeDefined()
@@ -5273,7 +5273,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:tokio-locked-in-protection-state')
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({

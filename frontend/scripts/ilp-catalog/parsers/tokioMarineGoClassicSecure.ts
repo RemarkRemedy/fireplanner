@@ -302,9 +302,9 @@ export function parseTokioMarineGoClassicSecure(context: ParseContext): IlpCatal
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'tokio-initial-vs-accumulation-regular-premium-routing',
       'tokio-initial-bonus-tiered-premium-allocation',
@@ -329,10 +329,9 @@ export function parseTokioMarineGoClassicSecure(context: ParseContext): IlpCatal
       'tokio-goclassic-secure-change-of-life-assured',
     ],
     warnings: [
-      '#goClassic Secure is cataloged as a partial modeled subset in V1. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
+      '#goClassic Secure is cataloged as a supported V1 product. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
       'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published Locked-in Policy Value floor, policy-year-3 MPC settlement of years 1-2 accruals, and irreversible downgrade after failed deduction through the locked-in-value protection-state kernel.',
-      'Loyalty Bonus and Additional Bonus remain informational only because the source uses annual qualification gates and an adjustment-factor formula that the current engine does not execute.',
-      'Structured extraction validated against the #goClassic Secure product summary text layer.',
+      'Loyalty Bonus and Additional Bonus annual qualification and adjustment-factor handling, premium-holiday lapse state, regular-withdrawal administration, dividend payout threshold / record-date handling, credit-card charge, aggregation limits, and change-of-life-assured administration remain informational only.',
     ],
     archived: false,
     variants: [
