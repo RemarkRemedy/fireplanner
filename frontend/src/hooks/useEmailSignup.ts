@@ -3,6 +3,7 @@ import { trackEvent } from '@/lib/analytics'
 import {
   EMAIL_RE,
   EMAIL_MAX_LENGTH,
+  EMAIL_WORKER_URL,
   SIGNUP_FLAG,
   EMAIL_SUBMITTED_FLAG,
   type EmailSource,
@@ -72,17 +73,18 @@ export function useEmailSignup(source: EmailSource) {
     trackEvent('email_signup_submitted', { source })
 
     try {
-      const res = await fetch('/api/email-signup', {
+      const res = await fetch(`${EMAIL_WORKER_URL}/api/subscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmed, source }),
+        body: JSON.stringify({ email: trimmed }),
       })
 
       if (res.ok) {
         setSubmittedEmail(trimmed)
         setStatus('idle')
-        setStep('feature')
+        setStep('done')
         setFlag(EMAIL_SUBMITTED_FLAG)
+        setFlag(SIGNUP_FLAG)
         trackEvent('email_signup_success', { source })
       } else if (res.status === 429) {
         setStatus('error')

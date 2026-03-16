@@ -25,8 +25,8 @@ export function LandingEmailSection() {
           <CheckCircle className="h-4 w-4" />
           <p className="text-sm">
             {submittedEmail
-              ? `Thanks! We'll notify ${submittedEmail} when new features launch.`
-              : "Thanks! We'll let you know when new features launch."}
+              ? `Check ${submittedEmail} to confirm your subscription.`
+              : 'Check your email to confirm your subscription.'}
           </p>
         </div>
         <button
@@ -44,7 +44,7 @@ export function LandingEmailSection() {
       <div ref={stepRef} tabIndex={-1} className="space-y-3 text-center outline-none" aria-live="polite">
         <div className="flex items-center justify-center gap-2 text-green-700 dark:text-green-400">
           <CheckCircle className="h-4 w-4" />
-          <p className="text-sm font-medium">You're on the list!</p>
+          <p className="text-sm font-medium">Check your email to confirm your subscription.</p>
         </div>
         <p className="text-sm text-muted-foreground">
           One more thing: which would be most useful for your planning?

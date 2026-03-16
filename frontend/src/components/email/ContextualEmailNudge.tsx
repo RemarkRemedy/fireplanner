@@ -9,6 +9,7 @@ import { trackEvent } from '@/lib/analytics'
 import {
   EMAIL_RE,
   EMAIL_MAX_LENGTH,
+  EMAIL_WORKER_URL,
   SIGNUP_FLAG,
   EMAIL_SUBMITTED_FLAG,
 } from '@/lib/validation/emailConstants'
@@ -100,10 +101,10 @@ export function ContextualEmailNudge({ pageId, message, hidden = false }: Contex
     trackEvent('email_signup_submitted', { source: 'contextual_nudge' })
 
     try {
-      const res = await fetch('/api/email-signup', {
+      const res = await fetch(`${EMAIL_WORKER_URL}/api/subscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmed, source: 'contextual_nudge' }),
+        body: JSON.stringify({ email: trimmed }),
       })
 
       if (res.ok) {
@@ -136,7 +137,7 @@ export function ContextualEmailNudge({ pageId, message, hidden = false }: Contex
         {status === 'success' ? (
           <div className="flex items-center gap-2 text-green-700 dark:text-green-400" aria-live="polite">
             <CheckCircle className="h-4 w-4" />
-            <p className="text-sm">Thanks! We'll send you tips and guides when they're ready.</p>
+            <p className="text-sm">Check your email to confirm your subscription.</p>
           </div>
         ) : (
           <>
