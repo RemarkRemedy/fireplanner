@@ -253,8 +253,48 @@ function buildFeeRules(document: ExtractedPdfDocument): IlpTemplateFeeRule[] {
   ]
 }
 
-function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
-  const page1 = sourceRef(1, 'Plan Description', snippetNear(document, 1, 'Harvest Max', 18))
+function buildTokioMpcFeeRule(
+  optionPage: IlpCatalogSourceRef,
+  chargePage: IlpCatalogSourceRef,
+  tablePage: IlpCatalogSourceRef,
+): IlpTemplateFeeRule {
+  return {
+    id: 'monthly-protection-charge',
+    label: 'Monthly Protection Charge',
+    basis: 'assurance-sum-at-risk',
+    rate: 0,
+    amount: 0,
+    appliesTo: ['accumulation'],
+    fallbackAppliesTo: ['topup', 'initial'],
+    activeWindow: 'during-mip',
+    assuranceConfig: {
+      formula: 'tokio-mpc-net-premium-floor',
+      rateTable: 'tokio-mpc-unzo-death',
+      monthlyModalFactor: 1,
+      maxAgeNextBirthday: 99,
+      accrual: {
+        startPolicyYear: 1,
+        endPolicyYear: 3,
+        settlementPolicyYear: 4,
+      },
+    },
+    requiresManualInput: true,
+    notes: [
+      'Models the published Monthly Protection Charge for the Advanced Death corridor during the minimum investment period.',
+      'The Monthly Protection Charge for policy years 1 to 3 is accrued and collected in one lump sum in policy year 4.',
+      'From policy year 4 onward, the Monthly Protection Charge is deducted monthly in advance from the Accumulation Units Account, then the Top-up Units Account, then the Initial Units Account if needed.',
+      'Sum at risk is the published net premium less 101% of Account value, floored at zero.',
+    ],
+    sourceRefs: [optionPage, chargePage, tablePage],
+  }
+}
+
+function buildVariant(
+  document: ExtractedPdfDocument,
+  deathBenefitOption: 'basic-death' | 'advanced-death',
+): IlpTemplateVariant {
+  const isAdvancedDeath = deathBenefitOption === 'advanced-death'
+  const page1 = sourceRef(1, 'Death Benefit Options', snippetNear(document, 1, 'Basic Death Benefit', 28))
   const page2 = sourceRef(2, 'Initial Bonus', snippetNear(document, 2, 'Initial Bonus', 18))
   const page3 = sourceRef(3, 'Performance Investment / Loyalty / Power-up Bonus', snippetNear(document, 3, 'Performance Investment Bonus', 22))
   const page4 = sourceRef(4, 'Regular Premium Routing', snippetNear(document, 4, 'Regular premium are payable throughout the policy term', 22))
@@ -267,6 +307,9 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page16 = sourceRef(16, 'Appendix A Charges', snippetNear(document, 16, 'SURRENDER CHARGE', 24))
   const page17 = sourceRef(17, 'Appendix A Partial Withdrawal Charge', snippetNear(document, 17, 'PARTIAL WITHDRAWAL CHARGE', 24))
   const page18 = sourceRef(18, 'Appendix A Premium Shortfall Charge', snippetNear(document, 18, 'PREMIUM SHORTFALL CHARGE', 24))
+  const page18Mpc = isAdvancedDeath
+    ? sourceRef(18, 'Appendix A Monthly Protection Charge Rates', snippetNear(document, 18, 'Monthly Rates for Monthly Protection Charges', 24))
+    : null
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
     {
@@ -360,8 +403,13 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
   ]
 
+  const feeRules = buildFeeRules(document)
+  if (isAdvancedDeath && page18Mpc != null) {
+    feeRules.push(buildTokioMpcFeeRule(page1, page10, page18Mpc))
+  }
+
   return {
-    id: 'sgd-mip-15',
+    id: isAdvancedDeath ? 'sgd-mip-15-advanced-death' : 'sgd-mip-15',
     currency: 'SGD',
     mipLength: MIP_LENGTH,
     icpMonths: 36,
@@ -402,7 +450,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       },
     ],
     bonuses: buildBonuses(document),
-    feeRules: buildFeeRules(document),
+    feeRules,
     eventChargeRules,
     distributionSupport: {
       mode: 'manual-assumption',
@@ -420,18 +468,45 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      'This partial template models the SGD / MIP 15 corridor only.',
+      `This partial template models the SGD / MIP 15 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
       'This partial template models regular-premium routing through year 15, top-up routing, recurring single premium routing, initial setup charge, policy charge, admin charge, the published bonus set, surrender charge, partial-withdrawal charge, and premium shortfall charge.',
+      ...(isAdvancedDeath
+        ? [
+            'The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window and policy-year-4 lump-sum settlement, after you enter the insured-life details and current net premium base.',
+          ]
+        : []),
       'Partial withdrawals from the Accumulation Units Account are not allowed in the first five policy years and are modeled only from policy year 6 onward.',
       'Performance investment bonus is modeled at the published 1.70% annual rate, but the 102% performance-growth-measure gate remains a manual review assumption.',
       'Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.',
       'Harvest Max keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
     ],
     unsupportedItems: [
-      'Monthly protection charge, credit-card charge, and add/remove/change-life-assured administration remain metadata-only for this product.',
+      ...(isAdvancedDeath
+        ? [
+            'Advanced Death payout handling beyond the modeled Monthly Protection Charge, together with multiple-life and capital-guarantee option administration, remains metadata-only for this product.',
+          ]
+        : [
+            'Advanced Death selection, Monthly Protection Charge, and multiple-life and capital-guarantee option administration remain metadata-only for this product.',
+          ]),
+      'Credit-card charge and add/remove/change-life-assured administration remain metadata-only for this product.',
       'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product.',
     ],
-    sourceRefs: [page1, page2, page3, page4, page5, page6, page8, page9, page10, page11, page16, page17, page18],
+    sourceRefs: [
+      page1,
+      page2,
+      page3,
+      page4,
+      page5,
+      page6,
+      page8,
+      page9,
+      page10,
+      page11,
+      page16,
+      page17,
+      page18,
+      ...(page18Mpc != null ? [page18Mpc] : []),
+    ],
   }
 }
 
@@ -469,22 +544,26 @@ export function parseTokioMarineHarvestMax(context: ParseContext): IlpCatalogPro
       'tokio-premium-shortfall-charge-regular-premium-reduction',
       'tokio-premium-increase-restores-shortfall-charge-cessation',
       'tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only',
+      'branch:tokio-harvest-max-advanced-death-monthly-protection-charge-accrual',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-harvest-max-monthly-protection-charge',
       'tokio-harvest-max-dividend-payout-threshold-and-record-date-instructions',
       'tokio-harvest-max-credit-card-charge',
       'tokio-harvest-max-life-replacement-option',
     ],
     warnings: [
       'Structured extraction validated against the Harvest Max product summary text layer.',
-      'Harvest Max is modeled as the SGD / MIP 15 corridor with published initial setup charge, policy charge, admin charge, bonuses, and appendix charge tables.',
+      'Harvest Max is modeled as split SGD / MIP 15 death-benefit-option variants with published initial setup charge, policy charge, admin charge, bonuses, and appendix charge tables.',
+      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-three-policy-years accrual window and policy-year-4 lump-sum settlement.',
       'Performance investment bonus retains the published 102% performance-growth-measure gate as a manual review assumption.',
       'Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.',
       'Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary.',
     ],
     archived: false,
-    variants: [buildVariant(context.document)],
+    variants: [
+      buildVariant(context.document, 'basic-death'),
+      buildVariant(context.document, 'advanced-death'),
+    ],
   }
 }

@@ -966,7 +966,14 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Harvest Max')
 
     expect(within(dialog).getByText('Harvest Max')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 15/i }))
+    const basicVariantButton = within(dialog)
+      .getAllByRole('button')
+      .find((button) => (
+        button.textContent?.includes('SGD / MIP 15')
+        && !button.textContent.includes('Advanced Death')
+      ))
+    expect(basicVariantButton).toBeDefined()
+    await user.click(basicVariantButton!)
 
     expect(screen.getAllByText('Harvest Max (SGD / MIP 15)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -977,6 +984,26 @@ describe('IlpReviewPage', () => {
     expect(screen.getByDisplayValue('Initial Setup Charge')).toBeInTheDocument()
     expect(screen.getAllByDisplayValue('Policy Charge').length).toBeGreaterThan(0)
     expect(screen.getByDisplayValue('Admin Charge')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds Tokio Marine Harvest Max advanced-death as a partial catalog product with accrued Tokio MPC inputs', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Harvest Max')
+
+    expect(within(dialog).getByText('Harvest Max')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 15 \(advanced death\)/i }))
+
+    expect(screen.getAllByText('Harvest Max (SGD / MIP 15 (Advanced Death))').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Partial template')
+    expect(seededAlert?.textContent).toContain('Assurance-charge modeling still needs life-assured inputs')
+    expect(seededAlert?.textContent).toContain('current net regular premium base')
+    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('renames the active policy from the input form and updates the policy tab', async () => {

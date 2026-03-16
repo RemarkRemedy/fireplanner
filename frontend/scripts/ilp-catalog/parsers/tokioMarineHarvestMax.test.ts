@@ -26,15 +26,19 @@ describe('parseTokioMarineHarvestMax', () => {
     expect(product.supportStatus).toBe('partial')
     expect(product.economicsStatus).toBe('partial-modeled-subset')
     expect(product.modeledEconomics).toContain('tokio-admin-charge-on-initial-account')
+    expect(product.modeledEconomics).toContain('branch:tokio-harvest-max-advanced-death-monthly-protection-charge-accrual')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-max-monthly-protection-charge')
     expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-max-dividend-payout-threshold-and-record-date-instructions')
 
-    const variant = product.variants[0]
-    expect(variant?.id).toBe('sgd-mip-15')
-    expect(variant?.icpMonths).toBe(36)
-    expect(variant?.accounts.map((account) => account.id)).toEqual(['initial', 'accumulation', 'topup'])
-    expect(variant?.distributionSupport).toEqual({
+    const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15')
+    const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death')
+
+    expect(product.variants).toHaveLength(2)
+    expect(basicVariant?.icpMonths).toBe(36)
+    expect(advancedVariant?.icpMonths).toBe(36)
+    expect(basicVariant?.accounts.map((account) => account.id)).toEqual(['initial', 'accumulation', 'topup'])
+    expect(advancedVariant?.accounts.map((account) => account.id)).toEqual(['initial', 'accumulation', 'topup'])
+    expect(basicVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
       defaultMode: 'reinvest',
@@ -51,14 +55,14 @@ describe('parseTokioMarineHarvestMax', () => {
         }),
       ],
     })
-    expect(variant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.28 },
       { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.4 },
       { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.41 },
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.44 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.45 },
     ])
-    expect(variant?.feeRules).toEqual(
+    expect(basicVariant?.feeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: 'initial-charge',
@@ -108,7 +112,29 @@ describe('parseTokioMarineHarvestMax', () => {
         }),
       ]),
     )
-    expect(variant?.eventChargeRules).toEqual(
+    expect(basicVariant?.feeRules.some((rule) => rule.id === 'monthly-protection-charge')).toBe(false)
+    expect(advancedVariant?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 3,
+              settlementPolicyYear: 4,
+            },
+          },
+        }),
+      ]),
+    )
+    expect(basicVariant?.eventChargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.05 }),
         expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
@@ -135,8 +161,17 @@ describe('parseTokioMarineHarvestMax', () => {
         }),
       ]),
     )
-    expect(variant?.eecTable).toEqual([1, 1, 1, 0.99, 0.99, 0.98, 0.96, 0.95, 0.9, 0.89, 0.88, 0.83, 0.8, 0.75, 0.08])
-    expect(variant?.warnings).toContain(
+    expect(advancedVariant?.distributionSupport).toEqual(basicVariant?.distributionSupport)
+    expect(advancedVariant?.eventChargeRules).toEqual(basicVariant?.eventChargeRules)
+    expect(basicVariant?.unsupportedItems).toContain(
+      'Advanced Death selection, Monthly Protection Charge, and multiple-life and capital-guarantee option administration remain metadata-only for this product.',
+    )
+    expect(basicVariant?.eecTable).toEqual([1, 1, 1, 0.99, 0.99, 0.98, 0.96, 0.95, 0.9, 0.89, 0.88, 0.83, 0.8, 0.75, 0.08])
+    expect(advancedVariant?.eecTable).toEqual([1, 1, 1, 0.99, 0.99, 0.98, 0.96, 0.95, 0.9, 0.89, 0.88, 0.83, 0.8, 0.75, 0.08])
+    expect(advancedVariant?.warnings).toContain(
+      'The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window and policy-year-4 lump-sum settlement, after you enter the insured-life details and current net premium base.',
+    )
+    expect(basicVariant?.warnings).toContain(
       'Harvest Max keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
     )
   }, 30_000)
