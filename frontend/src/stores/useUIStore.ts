@@ -59,7 +59,7 @@ const DEFAULT_UI: UIState = {
   cpfEnabled: true,
   propertyEnabled: true,
   healthcareEnabled: true,
-  protectionEnabled: false,
+  protectionEnabled: true,
   mode: 'simple',
   sectionOverrides: {},
   dismissedNudges: [],
@@ -155,7 +155,7 @@ export const useUIStore = create<UIState & UIActions>()(
     }),
     {
       name: 'fireplanner-ui',
-      version: 12,
+      version: 13,
       partialize: (state) => {
         // Exclude transient fields from persistence
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -210,6 +210,9 @@ export const useUIStore = create<UIState & UIActions>()(
           state.setupPopulatedSections = []
           state.completedNudgeFlows = []
           state.dismissedSectionIntros = []
+        }
+        if (version < 13) {
+          state.protectionEnabled = true
         }
         return state
       },

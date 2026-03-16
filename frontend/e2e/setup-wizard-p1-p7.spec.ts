@@ -122,20 +122,10 @@ test.describe('P1-P7: Setup Wizard & Nudge Flows', () => {
     await completeSetupWizard(page, { ownsProperty: 'no' })
     await page.waitForURL(/\/(dashboard|projection|inputs)/, { timeout: 15000 })
 
-    // Enable protection section via UIStore (it's off by default)
-    await page.evaluate(() => {
-      const raw = localStorage.getItem('fireplanner-ui')
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (parsed.state) parsed.state.protectionEnabled = true
-        localStorage.setItem('fireplanner-ui', JSON.stringify(parsed))
-      }
-    })
-
     await page.goto('/inputs')
     await page.waitForLoadState('networkidle')
 
-    // Switch to Advanced mode
+    // Switch to Advanced mode — Protection section is visible but collapsed in Simple
     const advancedBtn = page.getByRole('button', { name: /advanced/i }).or(page.locator('button').filter({ hasText: 'Advanced' }))
     await advancedBtn.click()
     await page.waitForTimeout(1000)
