@@ -48,6 +48,7 @@ export interface IlpPolicyEvent {
   amount?: number
   accountId?: string
   chargeWaived?: boolean
+  bonusSuspensionWaived?: boolean
   repayMissedPremiums?: boolean
   repaymentAccountId?: string
   resultingSumAssured?: number
@@ -2075,11 +2076,11 @@ function getNormalizedEventsForBonusTrigger(
 ): IlpPolicyEvent[] {
   switch (trigger) {
     case 'premium-holiday':
-      return normalized.events.premiumHolidays
+      return normalized.events.premiumHolidays.filter((event) => event.bonusSuspensionWaived !== true)
     case 'partial-withdrawal':
-      return normalized.events.partialWithdrawals
+      return normalized.events.partialWithdrawals.filter((event) => event.bonusSuspensionWaived !== true)
     case 'regular-premium-reduction':
-      return normalized.events.regularPremiumReductions
+      return normalized.events.regularPremiumReductions.filter((event) => event.bonusSuspensionWaived !== true)
   }
 }
 

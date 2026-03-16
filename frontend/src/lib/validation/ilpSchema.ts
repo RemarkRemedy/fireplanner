@@ -10,6 +10,7 @@ export const ilpPolicyEventSchema = z.object({
   amount: z.number().min(0).max(100_000_000).optional(),
   accountId: z.string().min(1).optional(),
   chargeWaived: z.boolean().optional(),
+  bonusSuspensionWaived: z.boolean().optional(),
   repayMissedPremiums: z.boolean().optional(),
   repaymentAccountId: z.string().min(1).optional(),
   resultingSumAssured: z.number().min(0).max(100_000_000).optional(),
@@ -111,6 +112,17 @@ export const ilpPolicyEventSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'Charge waiver can only be applied to partial-withdrawal, premium-holiday, or regular-premium-reduction events',
       path: ['chargeWaived'],
+    })
+  }
+
+  if (event.bonusSuspensionWaived === true
+    && event.type !== 'partial-withdrawal'
+    && event.type !== 'premium-holiday'
+    && event.type !== 'regular-premium-reduction') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Bonus-suspension waiver can only be applied to partial-withdrawal, premium-holiday, or regular-premium-reduction events',
+      path: ['bonusSuspensionWaived'],
     })
   }
 

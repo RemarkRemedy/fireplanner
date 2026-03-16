@@ -4022,6 +4022,39 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[1], 'aua').bonusCredit).toBeGreaterThan(0)
   })
 
+  it('keeps bonus credit active when a partial withdrawal is explicitly ignored for bonus suspension', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 14,
+      monthsAlreadyPaid: 168,
+      monthlyContribution: 0,
+      accounts: [
+        { ...IUA_ACCOUNT, currentValue: 0 },
+        { ...AUA_ACCOUNT, currentValue: 10_000 },
+      ],
+      policyEvents: [
+        {
+          id: 'withdrawal-1',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 169,
+          durationMonths: 1,
+          amount: 1_000,
+          accountId: 'aua',
+          bonusSuspensionWaived: true,
+        },
+      ],
+      bonuses: [
+        {
+          ...POWER_UP,
+          rate: 0.12,
+          suspensionRules: [{ trigger: 'partial-withdrawal', suspensionMonths: 12 }],
+        },
+      ],
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'aua').bonusCredit).toBeGreaterThan(0)
+  })
+
   it('applies event-triggered charges when a partial withdrawal happens in the projection year', () => {
     const policy = makeDefaultPolicy({
       monthlyContribution: 0,
@@ -5000,6 +5033,80 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(waived.rows[0], 'growth').withdrawalAmount).toBe(150)
   })
 
+  it('keeps charge-waived partial withdrawals inside bonus suspension unless the bonus override is also set', () => {
+    const basePolicy = makeDefaultPolicy({
+      currentPolicyYear: 14,
+      monthsAlreadyPaid: 168,
+      monthlyContribution: 0,
+      accounts: [
+        { ...IUA_ACCOUNT, currentValue: 0 },
+        { ...AUA_ACCOUNT, currentValue: 10_000 },
+      ],
+      policyEvents: [
+        {
+          id: 'withdrawal-1',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 169,
+          durationMonths: 1,
+          amount: 1_000,
+          accountId: 'aua',
+          chargeWaived: true,
+        },
+      ],
+      bonuses: [
+        {
+          ...POWER_UP,
+          rate: 0.12,
+          suspensionRules: [{ trigger: 'partial-withdrawal', suspensionMonths: 12 }],
+        },
+      ],
+    })
+
+    const chargedOnlyWaiver = projectIlpPolicy(basePolicy, 'mid')
+    const fullWaiver = projectIlpPolicy({
+      ...basePolicy,
+      policyEvents: [
+        {
+          ...basePolicy.policyEvents![0],
+          bonusSuspensionWaived: true,
+        },
+      ],
+    }, 'mid')
+
+    expect(accountRow(chargedOnlyWaiver.rows[0], 'aua').bonusCredit).toBeCloseTo(0, 2)
+    expect(accountRow(fullWaiver.rows[0], 'aua').bonusCredit).toBeGreaterThan(0)
+  })
+
+  it('keeps bonus credit active when a premium holiday is explicitly ignored for bonus suspension', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 14,
+      monthsAlreadyPaid: 168,
+      accounts: [
+        { ...IUA_ACCOUNT, currentValue: 0 },
+        { ...AUA_ACCOUNT, currentValue: 10_000 },
+      ],
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 169,
+          durationMonths: 3,
+          bonusSuspensionWaived: true,
+        },
+      ],
+      bonuses: [
+        {
+          ...POWER_UP,
+          rate: 0.12,
+          suspensionRules: [{ trigger: 'premium-holiday', suspensionMonths: 12 }],
+        },
+      ],
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'aua').bonusCredit).toBeGreaterThan(0)
+  })
+
   it('suppresses premium-shortfall charges when holiday and reduction events are explicitly waived', () => {
     const basePolicy = makeDefaultPolicy({
       currentPolicyYear: 4,
@@ -5821,6 +5928,21 @@ describe('computeNpvAnalysis', () => {
         },
       }],
     }))).toThrow(/no overlaps/)
+  })
+
+  it('rejects bonus-suspension waiver on unsupported event types', () => {
+    expect(() => ilpPolicySchema.parse(makeDefaultPolicy({
+      policyEvents: [
+        {
+          id: 'top-up-1',
+          type: 'top-up',
+          startPolicyMonth: 2,
+          durationMonths: 1,
+          amount: 1_000,
+          bonusSuspensionWaived: true,
+        },
+      ],
+    }))).toThrow(/Bonus-suspension waiver can only be applied/)
   })
 })
 

@@ -1671,6 +1671,11 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                             || value === 'regular-premium-reduction'
                             ? (event.chargeWaived ?? false)
                             : undefined,
+                          bonusSuspensionWaived: value === 'partial-withdrawal'
+                            || value === 'premium-holiday'
+                            || value === 'regular-premium-reduction'
+                            ? (event.bonusSuspensionWaived ?? false)
+                            : undefined,
                           repayMissedPremiums: value === 'premium-holiday' ? (event.repayMissedPremiums ?? false) : undefined,
                           repaymentAccountId: value === 'premium-holiday' ? event.repaymentAccountId : undefined,
                           resultingSumAssured: value === 'assurance-benefit-reduction' || value === 'assurance-benefit-resumption'
@@ -1782,6 +1787,21 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                             />
                             Insurer-approved charge waiver applies
                           </label>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={event.bonusSuspensionWaived ?? false}
+                              onChange={(inputEvent) => {
+                                const nextEvents = [...(policy.policyEvents ?? [])]
+                                nextEvents[index] = {
+                                  ...event,
+                                  bonusSuspensionWaived: inputEvent.target.checked,
+                                }
+                                updatePolicyEvents(nextEvents)
+                              }}
+                            />
+                            Ignore this withdrawal for bonus-suspension rules
+                          </label>
                         </div>
                       </>
                     ) : event.type === 'premium-holiday' ? (
@@ -1820,6 +1840,21 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                               }}
                             />
                             Insurer-approved charge waiver applies
+                          </label>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={event.bonusSuspensionWaived ?? false}
+                              onChange={(inputEvent) => {
+                                const nextEvents = [...(policy.policyEvents ?? [])]
+                                nextEvents[index] = {
+                                  ...event,
+                                  bonusSuspensionWaived: inputEvent.target.checked,
+                                }
+                                updatePolicyEvents(nextEvents)
+                              }}
+                            />
+                            Ignore this holiday for bonus-suspension rules
                           </label>
                         </div>
                         <div className="space-y-1">
@@ -1871,6 +1906,21 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                               }}
                             />
                             Insurer-approved charge waiver applies
+                          </label>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={event.bonusSuspensionWaived ?? false}
+                              onChange={(inputEvent) => {
+                                const nextEvents = [...(policy.policyEvents ?? [])]
+                                nextEvents[index] = {
+                                  ...event,
+                                  bonusSuspensionWaived: inputEvent.target.checked,
+                                }
+                                updatePolicyEvents(nextEvents)
+                              }}
+                            />
+                            Ignore this reduction for bonus-suspension rules
                           </label>
                         </div>
                       </>
