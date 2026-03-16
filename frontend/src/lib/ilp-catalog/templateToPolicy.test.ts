@@ -3581,7 +3581,7 @@ describe('templateVariantToPolicySeed', () => {
     ])
   })
 
-  it('maps Tokio Marine Wealth Pro (II) into a partial seed with executable bonus ladders', () => {
+  it('maps Tokio Marine Wealth Pro (II) into a supported seed with executable bonus ladders', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-wealth-pro-ii')
     expect(product).toBeDefined()
@@ -3590,7 +3590,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-bonus-tiered-premium-allocation')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-performance-investment-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-loyalty-bonus')
@@ -3630,7 +3631,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
   })
 
-  it('maps Tokio Marine Wealth Pro (II) advanced-death into a partial seed with accrued Tokio MPC inputs', () => {
+  it('maps Tokio Marine Wealth Pro (II) advanced-death into a supported seed with accrued Tokio MPC inputs', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-wealth-pro-ii')
     expect(product).toBeDefined()
@@ -3639,7 +3640,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-wealth-pro-ii-advanced-death-monthly-protection-charge-accrual')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
