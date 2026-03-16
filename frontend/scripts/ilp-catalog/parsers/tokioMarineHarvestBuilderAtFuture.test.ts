@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseTokioMarineHarvestBuilderAtFuture', () => {
-  it('builds a valid partial Harvest Builder@Future product from the source PDF', async () => {
+  it('builds a valid supported Harvest Builder@Future product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseTokioMarineHarvestBuilderAtFuture({
       document,
@@ -23,7 +23,8 @@ describe('parseTokioMarineHarvestBuilderAtFuture', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('tokio-marine-harvest-builder-atfuture')
     expect(product.productName).toBe('Harvest Builder@Future')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('tokio-premium-bonus')
     expect(product.modeledEconomics).toContain('tokio-power-up-bonus')
     expect(product.modeledEconomics).toContain('tokio-loyalty-bonus')

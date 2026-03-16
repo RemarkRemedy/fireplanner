@@ -423,9 +423,9 @@ export function parseTokioMarineHarvestBuilderAtFuture(context: ParseContext): I
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'tokio-regular-premium-routing-to-accumulation-account',
       'tokio-initial-bonus-tiered-premium-allocation',
@@ -452,11 +452,8 @@ export function parseTokioMarineHarvestBuilderAtFuture(context: ParseContext): I
       'tokio-harvest-builder-atfuture-life-replacement-option',
     ],
     warnings: [
-      'Structured extraction validated against the Harvest Builder@Future product summary text layer.',
-      'Harvest Builder@Future is modeled as split SGD / MIP 10 death-benefit-option variants with a published 2.50% policy charge during the minimum investment period and a 0.60% policy charge thereafter.',
-      'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
-      'Premium bonus, power-up bonus, and loyalty bonus retain the published paid-up and no-withdrawal eligibility gates as manual review assumptions.',
-      'Recurring single premium stays blocked after a premium-holiday event until regular premium resumes at the commencement-date amount.',
+      'Harvest Builder@Future is cataloged as a supported V1 product. The SGD / MIP 10 Basic Death and Advanced Death corridors model regular-premium routing to the Accumulation Units Account, top-up and recurring-single-premium routing and charges, the published premium-bonus / power-up-bonus / loyalty-bonus rate windows, policy-charge schedules, surrender / partial-withdrawal / premium-shortfall charge schedules, and reinvest-default distribution support; the Advanced Death variant also models the published Monthly Protection Charge corridor from insured-life inputs.',
+      'Bonus paid-up and no-withdrawal eligibility gates, benefit payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider, dividend payout threshold / record-date handling, credit-card charge, life-replacement administration, regular-withdrawal / minimum-account-value enforcement, rider premium-deduction handling, and premium-holiday resumption administration remain informational only.',
     ],
     archived: false,
     variants: [

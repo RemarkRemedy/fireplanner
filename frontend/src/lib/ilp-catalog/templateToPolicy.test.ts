@@ -4636,7 +4636,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Advanced Death variant also models the published Monthly Protection Charge'))).toBe(true)
   })
 
-  it('maps Tokio Marine Harvest Builder@Future basic-death into a partial seed with the same policy-charge frame and lower initial bonus bands', () => {
+  it('maps Tokio Marine Harvest Builder@Future basic-death into a supported seed with the same policy-charge frame and lower initial bonus bands', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-harvest-builder-atfuture')
     expect(product).toBeDefined()
@@ -4645,7 +4645,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-premium-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-power-up-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-loyalty-bonus')
@@ -4701,7 +4701,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
   })
 
-  it('maps Tokio Marine Harvest Builder@Future advanced-death into a partial seed with Tokio MPC and assurance inputs', () => {
+  it('maps Tokio Marine Harvest Builder@Future advanced-death into a supported seed with Tokio MPC and assurance inputs', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-harvest-builder-atfuture')
     expect(product).toBeDefined()
@@ -4711,7 +4711,7 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('Harvest Builder@Future (SGD / MIP 10 (Advanced Death))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
