@@ -178,14 +178,14 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false, onHa
   // ── Build setup URL with pre-filled values ────────────────────────────
   const setupUrl = useMemo(() => {
     const order = result.status === 'already-fire' ? 'already-fire' : 'story-first'
-    const params = new URLSearchParams({ planType: 'individual' })
+    const params = new URLSearchParams({ planType: selectedPlanType })
     if (monthlyIncome > 0) params.set('qIncome', String(monthlyIncome))
     if (monthlyExpenses > 0) params.set('qExpenses', String(monthlyExpenses))
     if (currentSavings > 0) params.set('qSavings', String(currentSavings))
     if (currentAge !== QUICK_ESTIMATE_DEFAULTS.defaultAge) params.set('qAge', String(currentAge))
     params.set('qOrder', order)
     return `/setup?${params.toString()}`
-  }, [monthlyIncome, monthlyExpenses, currentSavings, currentAge, result.status])
+  }, [monthlyIncome, monthlyExpenses, currentSavings, currentAge, result.status, selectedPlanType])
 
   // ── Stage 2: Health score (full mode only) ─────────────────────────────
   const healthResult = useMemo(() => {
@@ -444,6 +444,9 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false, onHa
               Market crashes that can deplete savings faster
             </li>
           </ul>
+          {householdPlannerEnabled && (
+            <PlanTypeSelector value={selectedPlanType} onChange={setSelectedPlanType} />
+          )}
           <Button asChild className="w-full">
             <Link to={setupUrl}>
               Get your real FIRE age
@@ -477,6 +480,9 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false, onHa
               Stress test against historical market crashes
             </li>
           </ul>
+          {householdPlannerEnabled && (
+            <PlanTypeSelector value={selectedPlanType} onChange={setSelectedPlanType} />
+          )}
           <Button asChild className="w-full">
             <Link to={setupUrl}>
               Build your drawdown plan
