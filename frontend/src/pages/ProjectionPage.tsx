@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AlertTriangle, HeartPulse, PartyPopper } from 'lucide-react'
@@ -800,7 +800,7 @@ export function ProjectionPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{formatCurrency(displaySummary.peakTotalNW)}</p>
+              <p className="text-2xl font-bold truncate" title={formatCurrency(displaySummary.peakTotalNW)}>{formatCompactCurrency(displaySummary.peakTotalNW)}</p>
               <p className="text-xs text-muted-foreground">at age {displaySummary.peakTotalNWAge}</p>
             </CardContent>
           </Card>
@@ -812,7 +812,7 @@ export function ProjectionPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{formatCurrency(displaySummary.terminalTotalNW)}</p>
+              <p className="text-2xl font-bold truncate" title={formatCurrency(displaySummary.terminalTotalNW)}>{formatCompactCurrency(displaySummary.terminalTotalNW)}</p>
               <p className="text-xs text-muted-foreground">
                 Cash & Investments: {formatCurrency(displaySummary.terminalLiquidNW)}
               </p>
