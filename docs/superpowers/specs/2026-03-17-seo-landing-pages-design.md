@@ -35,7 +35,7 @@ Two new SEO landing pages to capture search traffic from redirect domains and pr
   1. `estimateCpfBalances(age, salary)` to estimate current OA/SA/MA balances from age and salary
   2. `projectCpfBalances(currentAge, 55, currentBalances, salary, salaryGrowth=0.03)` to forward-project to age 55
   3. `calculateBrsFrsErs(55)` for retirement sum comparison
-  4. `estimateCpfLifePayout(saBalanceAt55, plan)` / 12 for monthly CPF LIFE payout
+  4. `estimateCpfLifePayout(saBalanceAt55, plan)` / 12 for monthly CPF LIFE payout. **Note:** the payout rates (5.4% Basic, 6.3% Standard, 4.8% Escalating) are percentages of the accumulated balance at age 65, not the retirement sum at 55. The function handles this correctly since it takes the balance as input, but the landing page content must not claim these are percentages "of your retirement sum at 55."
 - Self-contained component, no Zustand store reads
 - Use `formatCurrency(value, 0)` for balance displays, `formatCurrency(value, 0)` for monthly payouts (round to whole dollars for clarity)
 
@@ -119,6 +119,7 @@ Verified fee data (March 2026):
 | StashAway | 0.20-0.80% (tiered by total invested) + ~0.15-0.25% ETF TER. $1 USD per invest/withdraw action. | stashaway.sg/pricing |
 | Syfe | 0.25-0.65% (5 tiers: Blue 0.65%, Black 0.55% at $50K+, Gold 0.45% at $250K+, Platinum 0.35% at $1M+, Diamond 0.25% at $5M+). UCITS ETFs: $0 per trade. | syfe.com/pricing |
 | DIY (IBKR) | $0 platform fee. ETF TER only: 0.03-0.22%. Cannot use for SRS. | N/A |
+| DBS digiPortfolio | 0.25-0.75% (optional, large retail adoption via DBS app) | dbs.com.sg |
 | SGFirePlanner | $0 (planning tool, not investment platform) | N/A |
 
 Fee drag formula: `portfolioSize * ((1 + returnRate) ^ years - (1 + returnRate - feeRate) ^ years)`
