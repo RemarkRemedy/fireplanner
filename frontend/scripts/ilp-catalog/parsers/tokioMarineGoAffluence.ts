@@ -317,6 +317,9 @@ function buildVariant(
           accountIds: ['initial', 'accumulation', 'topup'],
         },
       ],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -325,7 +328,8 @@ function buildVariant(
         'Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.',
         'During the 15-year premium payment term, only dividends from the Accumulation Units Account and Top-up Units Account may be paid in cash.',
         'After the premium payment term, dividends from the Initial Units Account, Accumulation Units Account, and Top-up Units Account may be paid in cash.',
-        'The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1.',
+        'Cash payouts below the published SGD 50 minimum dividend amount are reinvested.',
+        'Distribution-option instruction changes require at least 30 days before the Record Date.',
       ],
       sourceRefs: [page10],
     },
@@ -350,7 +354,6 @@ function buildVariant(
             'Advanced Death selection, Monthly Protection Charge, Advanced Death Benefit with Life Benefit Rider, accidental/dependent medical/retrenchment benefits, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.',
           ]),
       'Regular withdrawal, partial-withdrawal limit and minimum-account-value constraints, premium holiday state handling, and non-SGD/premium-term variants remain metadata-only for this product.',
-      'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1.',
     ],
     sourceRefs: [page1, page4, page7, page8, page9, page10, page11, page12, page19, ...(page17 ? [page17] : [])],
   }
@@ -386,12 +389,13 @@ export function parseTokioMarineGoAffluence(context: ParseContext): IlpCatalogPr
     metadataOnlyBehaviors: [
       'tokio-goaffluence-loyalty-and-achievement-bonuses',
       'tokio-goaffluence-advanced-death-payout-life-benefit-rider-and-life-assured-administration',
-      'tokio-goaffluence-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints',
+      'tokio-goaffluence-regular-withdrawal-and-partial-withdrawal-constraints',
       'tokio-goaffluence-premium-holiday-and-non-sgd-or-non-15-year-variants',
     ],
     warnings: [
       '#goAffluence is cataloged as a supported V1 product. The SGD / 15-year premium-payment corridors model regular-premium routing, initial bonus allocation, initial and policy charges, top-up and recurring-single-premium routing / charges, surrender mechanics, and reinvest-default distribution support; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.',
-      'Loyalty bonus and achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, dividend payout threshold / record-date handling, regular-withdrawal constraints, and premium-holiday / non-SGD / non-15-year variants remain informational only.',
+      'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
+      'Loyalty bonus and achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, regular-withdrawal administration, partial-withdrawal limit and minimum-account-value constraints, and premium-holiday / non-SGD / non-15-year variants remain informational only.',
     ],
     archived: false,
     variants: [

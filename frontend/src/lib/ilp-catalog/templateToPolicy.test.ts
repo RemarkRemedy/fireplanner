@@ -5412,6 +5412,9 @@ describe('templateVariantToPolicySeed', () => {
         { startPolicyYear: 1, endPolicyYear: 15, accountIds: ['accumulation', 'topup'] },
         { startPolicyYear: 16, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
       ],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -5422,8 +5425,10 @@ describe('templateVariantToPolicySeed', () => {
       source: 'catalog-default',
     })
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goaffluence-loyalty-and-achievement-bonuses')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goaffluence-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goaffluence-regular-withdrawal-and-partial-withdrawal-constraints')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
   })
 
   it('maps Tokio Marine #goAffluence advanced-death into a supported seed with accrued Tokio MPC valuation accounts', () => {
@@ -5525,7 +5530,25 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
       expect.objectContaining({ id: 'partial-withdrawal-charge', rate: 0 }),
     ])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation', 'topup'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 15, accountIds: ['accumulation', 'topup'] },
+        { startPolicyYear: 16, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
+      ],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-loyalty-bonus-adjustment-factor')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-regular-withdrawal-and-partial-withdrawal-constraints')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints')
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
   })
 
   it('maps Tokio Marine Affluence@Future advanced-death into a supported seed with accrued Tokio MPC inputs', () => {

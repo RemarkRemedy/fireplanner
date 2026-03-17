@@ -29,6 +29,8 @@ describe('parseTokioMarineGoAffluence', () => {
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('branch:tokio-goaffluence-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-goaffluence-regular-withdrawal-and-partial-withdrawal-constraints')
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15')
     const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death')
@@ -91,16 +93,23 @@ describe('parseTokioMarineGoAffluence', () => {
         { startPolicyYear: 1, endPolicyYear: 15, accountIds: ['accumulation', 'topup'] },
         { startPolicyYear: 16, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
       ],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: expect.arrayContaining([
         expect.stringContaining('During the 15-year premium payment term'),
+        expect.stringContaining('published SGD 50 minimum dividend amount'),
       ]),
       sourceRefs: expect.any(Array),
     })
     expect(basicVariant?.eecTable).toEqual([1, 1, 0.99, 0.99, 0.99, 0.91, 0.84, 0.76, 0.68, 0.6, 0.5, 0.43, 0.34, 0.26, 0.15])
+    expect(product.warnings).toContain(
+      'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
+    )
     expect(advancedVariant?.feeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

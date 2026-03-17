@@ -40,6 +40,8 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
     expect(product.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-zero-partial-withdrawal-charge')
     expect(product.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-regular-withdrawal-and-partial-withdrawal-constraints')
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15')
     const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death')
@@ -99,12 +101,16 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
         { startPolicyYear: 1, endPolicyYear: 15, accountIds: ['accumulation', 'topup'] },
         { startPolicyYear: 16, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
       ],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: expect.arrayContaining([
         expect.stringContaining('During the premium payment term'),
+        expect.stringContaining('published SGD 50 minimum dividend amount'),
       ]),
       sourceRefs: expect.any(Array),
     })
@@ -125,6 +131,9 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
       0.3,
       0.12,
     ])
+    expect(product.warnings).toContain(
+      'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
+    )
     expect(advancedVariant?.feeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
