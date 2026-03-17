@@ -64,6 +64,7 @@ export interface LegacyNormalizedAnalysisEntry {
     projection: {
       annualSavingsByYear: CompiledHouseholdPlan['annualSavingsByYear']
       postRetirementIncomeByYear: CompiledHouseholdPlan['postRetirementIncomeByYear']
+      guaranteedIncomeByYear: CompiledHouseholdPlan['guaranteedIncomeByYear']
       retirementExpenseBaseByYear: CompiledHouseholdPlan['retirementExpenseBaseByYear']
       householdWithdrawalNeedByYear: CompiledHouseholdPlan['householdWithdrawalNeedByYear']
       portfolioAdjustments: CompiledHouseholdPlan['portfolioAdjustments']
@@ -160,6 +161,7 @@ function createNormalizedAnalysisEntry(
       projection: {
         annualSavingsByYear: compiledPlan.annualSavingsByYear,
         postRetirementIncomeByYear: compiledPlan.postRetirementIncomeByYear,
+        guaranteedIncomeByYear: compiledPlan.guaranteedIncomeByYear,
         retirementExpenseBaseByYear: compiledPlan.retirementExpenseBaseByYear,
         householdWithdrawalNeedByYear: compiledPlan.householdWithdrawalNeedByYear,
         portfolioAdjustments: compiledPlan.portfolioAdjustments,
