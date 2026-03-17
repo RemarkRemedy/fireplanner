@@ -328,7 +328,7 @@ function buildVariant(
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
       `This partial template models the SGD / minimum-contribution-period-15 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
-      'This partial template models regular-premium routing through year 15, the published initial charge and policy charge through account fee rates, top-up routing, recurring single premium routing, the published surrender charge on the Initial Units Account, the published partial-withdrawal and premium-shortfall charge schedules, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface with the published $50 minimum cash-payout threshold and 30-day record-date lead time.',
+      'This partial template models regular-premium routing through year 15, the published initial charge and policy charge through account fee rates, top-up routing, recurring single premium routing, the published surrender charge on the Initial Units Account, the published partial-withdrawal and premium-shortfall charge schedules, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
       ...(isAdvancedDeath
         ? [
             'The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.',
@@ -345,7 +345,7 @@ function buildVariant(
         : [
             'Advanced Death selection, Monthly Protection Charge, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.',
           ]),
-      'Regular withdrawal and non-SGD policy currencies remain metadata-only for this product.',
+      'Regular withdrawal, partial-withdrawal limit caps, and non-SGD policy currencies remain metadata-only for this product.',
     ],
     sourceRefs: [page1, page2, page4, page5, page6, page8, page9, page10, page15, page16],
   }
