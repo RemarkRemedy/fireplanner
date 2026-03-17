@@ -130,6 +130,7 @@ export type GoldenCoverageTag =
   | 'branch:manulife-investready-growth-top-up-charge'
   | 'branch:manulife-investready-growth-partial-withdrawal-charge'
   | 'branch:manulife-investready-growth-full-surrender-charge'
+  | 'kernel:current-death-benefit-estimate'
   | 'branch:manulife-investready-iii-annual-premium-bonus'
   | 'branch:manulife-investready-iii-welcome-bonus'
   | 'branch:manulife-investready-iii-loyalty-bonus'
@@ -11853,6 +11854,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
       'branch:manulife-investready-growth-annual-premium-bonus',
       'branch:manulife-investready-growth-administrative-charge',
@@ -11882,6 +11884,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
       'branch:manulife-investready-growth-annual-premium-bonus',
       'branch:manulife-investready-growth-administrative-charge',
@@ -11950,6 +11953,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
       'branch:manulife-investready-iii-annual-premium-bonus',
       'branch:manulife-investready-iii-welcome-bonus',
@@ -12130,6 +12134,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
       'branch:manulife-investready-iii-administrative-charge',
       'branch:manulife-investready-iii-full-surrender-charge',

@@ -27,6 +27,7 @@ describe('parseManulifeInvestreadyGrowth', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
       'branch:manulife-investready-growth-annual-premium-bonus',
       'branch:manulife-investready-growth-administrative-charge',
       'branch:manulife-investready-growth-premium-shortfall-charge',
@@ -36,13 +37,15 @@ describe('parseManulifeInvestreadyGrowth', () => {
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-growth-post-flexi-premium-variation')
-    expect(product.metadataOnlyBehaviors).toContain('manulife-investready-growth-benefit-payout-handling')
+    expect(product.metadataOnlyBehaviors).toContain('manulife-investready-growth-ti-acceleration-limits-and-claim-timing')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-benefit-payout-handling')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-annual-premium-bonus')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-15-flexi-10',
       'sgd-mip-20-flexi-10',
     ])
+    expect(product.warnings.some((warning) => warning.includes('amount-owed deductions'))).toBe(true)
 
     const firstVariant = product.variants[0]
     expect(firstVariant?.mipLength).toBe(15)
@@ -154,8 +157,10 @@ describe('parseManulifeInvestreadyGrowth', () => {
       }),
     ])
     expect(firstVariant?.eecTable).toEqual([1, 1, 0.9, 0.8, 0.62, 0.49, 0.46, 0.32, 0.26, 0.21, 0.18, 0.15, 0.12, 0.08, 0.08])
+    expect(firstVariant?.warnings).toContain('15 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published administrative-charge path using the accumulated minimum-premium base, the one-time annual-premium bonus when the seed uses annual premium frequency, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the current-state death-benefit estimate from that same floor, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.')
     expect(firstVariant?.warnings).toContain('The administrative-charge base is interpreted as the future value of annualised regular basic premiums payable through the 10-year Flexi Start window, accumulated at 6% per annum. Keep monthly contribution aligned to the committed regular basic premium because post-Flexi premium variation remains informational only in V1.')
     expect(firstVariant?.unsupportedItems).toContain('The partial-withdrawal flexibility corridor from policy year 6 and the life-stage-event waiver remain informational only.')
+    expect(firstVariant?.unsupportedItems).toContain('Terminal-illness acceleration limits, amount-owed deductions, claim-notification valuation timing, and post-claim continuation remain informational only beyond the current death-benefit estimate.')
 
     const secondVariant = product.variants[1]
     expect(secondVariant?.mipLength).toBe(20)

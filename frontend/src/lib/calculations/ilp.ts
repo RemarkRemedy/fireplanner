@@ -446,6 +446,7 @@ export interface IlpSummaryMetrics {
   netFeeDrag: number
   currentSurrenderValue: number
   cancelNowPenalty: number
+  currentDeathBenefitEstimate?: number
 }
 
 export interface IlpPolicyAnalysis {
@@ -2754,6 +2755,51 @@ function computeCurrentValueSnapshot(
   }
 }
 
+function computeCurrentDeathBenefitEstimate(
+  input: IlpPolicyInput,
+  totalCurrentValue: number,
+): number | undefined {
+  const profile = input.assuranceProfile
+  const assuranceRules = input.chargeRules?.filter((rule) => (
+    rule.basis === 'assurance-sum-at-risk'
+    && rule.assuranceConfig != null
+  )) ?? []
+
+  if (!profile || assuranceRules.length === 0) return undefined
+
+  let supportedEstimate: number | undefined
+
+  for (const rule of assuranceRules) {
+    switch (rule.assuranceConfig?.formula) {
+      case 'manulife-investready-iii-death-ti': {
+        if (
+          profile.currentNetRegularPremiumBase == null
+          || profile.currentNetSupplementaryPremiumBase == null
+        ) {
+          continue
+        }
+
+        const protectedBase = Math.max(
+          0,
+          profile.currentNetRegularPremiumBase + profile.currentNetSupplementaryPremiumBase,
+        )
+        const estimate = Math.max(
+          totalCurrentValue,
+          protectedBase * MANULIFE_PROTECTED_BASE_FLOOR_MULTIPLIER,
+        )
+        supportedEstimate = supportedEstimate == null
+          ? estimate
+          : Math.max(supportedEstimate, estimate)
+        break
+      }
+      default:
+        break
+    }
+  }
+
+  return supportedEstimate
+}
+
 function getEventChargeEvents(
   normalized: IlpNormalizedPolicyInput,
   context: IlpCashflowYearContext,
@@ -4148,6 +4194,10 @@ export function computeSummaryMetrics(
 ): IlpSummaryMetrics {
   const mipEndRow = projection.rows[getMipEndProjectionIndex(input)]
   const currentValueSnapshot = computeCurrentValueSnapshot(input, initialSinglePremiumState)
+  const currentDeathBenefitEstimate = computeCurrentDeathBenefitEstimate(
+    input,
+    currentValueSnapshot.totalCurrentValue,
+  )
 
   return {
     totalPremiumsPaid: mipEndRow.cumulativePremiums,
@@ -4156,6 +4206,7 @@ export function computeSummaryMetrics(
     netFeeDrag: mipEndRow.cumulativeGrossFees - mipEndRow.cumulativeBonuses,
     currentSurrenderValue: currentValueSnapshot.totalCurrentValue - currentValueSnapshot.cancelNowPenalty,
     cancelNowPenalty: currentValueSnapshot.cancelNowPenalty,
+    currentDeathBenefitEstimate,
   }
 }
 
@@ -4212,6 +4263,12 @@ export function buildComparisonTable(
     },
     { metric: 'Cancel-Now Penalty', unit: 'currency', lowerIsBetter: currencyRule(true), values: valuesFor((analysis) => analysis.summary.cancelNowPenalty) },
     { metric: 'Surrender Value Today', unit: 'currency', lowerIsBetter: currencyRule(false), values: valuesFor((analysis) => analysis.summary.currentSurrenderValue) },
+    {
+      metric: 'Death Benefit Today',
+      unit: 'currency',
+      lowerIsBetter: currencyRule(false),
+      values: valuesFor((analysis) => analysis.summary.currentDeathBenefitEstimate ?? '—'),
+    },
     { metric: 'NPV Fees (Surrender Now)', unit: 'currency', lowerIsBetter: currencyRule(true), values: valuesFor((analysis) => analysis.npvAnalysis.surrenderNow.npvFees) },
     { metric: 'Best Exit Year', unit: 'years', lowerIsBetter: null, values: valuesFor((analysis) => analysis.npvAnalysis.bestExitYear) },
     { metric: 'NPV Fees (Best Exit)', unit: 'currency', lowerIsBetter: currencyRule(true), values: valuesFor((analysis) => analysis.npvAnalysis.bestExitNpvFees) },

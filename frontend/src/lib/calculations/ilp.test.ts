@@ -7385,6 +7385,154 @@ describe('computeSummaryMetrics', () => {
     expect(summary.cancelNowPenalty).toBeCloseTo(29_000 * 0.96, 2)
     expect(summary.currentSurrenderValue).toBeCloseTo(29_000 + 5_000 - (29_000 * 0.96), 2)
   })
+
+  it('adds a current death-benefit estimate for supported Manulife paid-premium-floor corridors', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 70_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 50_000,
+        currentNetSupplementaryPremiumBase: 20_000,
+      },
+      chargeRules: [
+        {
+          id: 'cost-of-insurance',
+          label: 'Cost of Insurance',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'manulife-investready-iii-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBeCloseTo(70_700, 2)
+  })
+
+  it('omits current death-benefit estimates when the supported manual-input base is unavailable', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 70_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+      },
+      chargeRules: [
+        {
+          id: 'cost-of-insurance',
+          label: 'Cost of Insurance',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'manulife-investready-iii-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBeUndefined()
+  })
+
+  it('omits current death-benefit estimates when the supplementary premium base is unavailable', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 70_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 50_000,
+      },
+      chargeRules: [
+        {
+          id: 'cost-of-insurance',
+          label: 'Cost of Insurance',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'manulife-investready-iii-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBeUndefined()
+  })
 })
 
 describe('full ILP analysis', () => {
@@ -7443,5 +7591,75 @@ describe('full ILP analysis', () => {
     })
 
     expect(comparison.find((row) => row.metric === 'Net Fee Drag (to horizon)')?.lowerIsBetter).toBe(true)
+  })
+
+  it('shows current death-benefit estimates in comparison rows and preserves unsupported cases', () => {
+    const supportedPolicy = makeOpenEndedPolicy({
+      id: 'policy-1',
+      currency: 'USD',
+      monthlyContribution: 0,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 70_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 50_000,
+        currentNetSupplementaryPremiumBase: 20_000,
+      },
+      chargeRules: [
+        {
+          id: 'cost-of-insurance',
+          label: 'Cost of Insurance',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'manulife-investready-iii-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    })
+    const unsupportedPolicy = makeDefaultPolicy({
+      id: 'policy-2',
+      currency: 'USD',
+    })
+
+    const comparison = buildComparisonTable(
+      [analyzeIlpPolicy(supportedPolicy), analyzeIlpPolicy(unsupportedPolicy)],
+      {
+        'policy-1': 'USD',
+        'policy-2': 'USD',
+      },
+    )
+
+    expect(comparison.find((row) => row.metric === 'Death Benefit Today')).toEqual({
+      metric: 'Death Benefit Today',
+      unit: 'currency',
+      lowerIsBetter: false,
+      values: {
+        'policy-1': 70_700,
+        'policy-2': '—',
+      },
+    })
   })
 })

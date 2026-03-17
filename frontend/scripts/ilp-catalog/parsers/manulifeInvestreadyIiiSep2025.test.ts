@@ -27,6 +27,7 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
       'branch:manulife-investready-iii-welcome-bonus',
       'branch:manulife-investready-iii-annual-premium-bonus',
       'branch:manulife-investready-iii-loyalty-bonus',
@@ -38,6 +39,8 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
       'kernel:distribution-mode-assumption',
     ])
     expect(product.modeledEconomics).not.toContain('branch:manulife-investready-iii-fund-management-charge')
+    expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-ti-acceleration-limits-and-claim-timing')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-benefit-payout-handling')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-policy-fee')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-step-up-booster-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-reinvested-dividend-withdrawals')
@@ -46,6 +49,8 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-annual-premium-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-welcome-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-loyalty-bonus')
+    expect(product.warnings.some((warning) => warning.includes('current-state death-benefit estimate from that same floor'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('amount-owed deductions'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('fund-level charges remain outside the current engine.'))).toBe(false)
     expect(product.variants.map((variant) => variant.id)).toEqual([

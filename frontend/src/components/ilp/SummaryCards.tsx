@@ -53,6 +53,16 @@ export function SummaryCards({ policy, analysis }: SummaryCardsProps) {
         accent="destructive"
         variant="elevated"
       />
+      {summary.currentDeathBenefitEstimate != null && (
+        <MetricCard
+          label="Death Benefit Today"
+          value={formatIlpCurrency(summary.currentDeathBenefitEstimate, policy.currency)}
+          subtitle="Current-state estimate from the supported death-benefit floor"
+          tooltip="Uses the current policy value plus supported manual-input premium bases. Terminal-illness acceleration limits, amount-owed deductions, claim-notification valuation timing, and post-claim continuation remain outside this estimate."
+          accent="success"
+          variant="elevated"
+        />
+      )}
     </div>
   )
 }
