@@ -401,18 +401,36 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false }: Qu
         </div>
       )}
 
-      {/* Compact CTA */}
-      {compact && hasInput && (
-        <div className="flex flex-col items-center gap-2 pt-2">
-          <Button asChild>
+      {/* Compact CTA — make them doubt the quick number */}
+      {compact && hasInput && result.status === 'ok' && (
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+          <p className="text-sm font-medium">
+            This estimate is missing key factors that could shift your FIRE age by years:
+          </p>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <li className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+              CPF contributions you're not counting
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+              Property equity and mortgage impact
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+              Healthcare costs that grow with age
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+              Market crashes that can deplete savings faster
+            </li>
+          </ul>
+          <Button asChild className="w-full">
             <Link to="/setup">
-              Build your full plan
+              Get your real FIRE age
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Add CPF, property, healthcare, and Monte Carlo stress testing
-          </p>
         </div>
       )}
     </div>
