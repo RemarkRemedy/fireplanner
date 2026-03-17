@@ -5,7 +5,7 @@ import { NumberInput } from '@/components/shared/NumberInput'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { Calculator, AlertTriangle } from 'lucide-react'
+import { Calculator, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { formatCurrency } from '@/lib/utils'
 import {
@@ -23,6 +23,8 @@ const DEFAULT_CAREER_START_AGE = 22
 const ASSUMED_SALARY_GROWTH = 0.03
 /** Assumed inflation rate for deflating nominal values to today's dollars */
 const ASSUMED_INFLATION = 0.025
+
+type RetirementSumTier = 'brs' | 'frs' | 'ers'
 
 interface ValidationErrors {
   age?: string
@@ -44,7 +46,9 @@ export function CpfMiniCalculator() {
   const [monthlyExpenses, setMonthlyExpenses] = useState(3000)
   const [cpfLifePlan, setCpfLifePlan] = useState<CpfLifePlan>('standard')
   const [residencyStatus, setResidencyStatus] = useState<ResidencyStatus>('citizen')
+  const [retirementSumTier, setRetirementSumTier] = useState<RetirementSumTier>('frs')
   const [hasCalculated, setHasCalculated] = useState(false)
+  const [showBreakdown, setShowBreakdown] = useState(false)
 
   const errors = useMemo(() => validate(age, monthlySalary, monthlyExpenses), [age, monthlySalary, monthlyExpenses])
   const isValid = Object.keys(errors).length === 0
@@ -68,8 +72,9 @@ export function CpfMiniCalculator() {
     // Step 3: Calculate retirement sums
     const { brs, frs, ers } = calculateBrsFrsErs(age)
 
-    // Step 4: Perform age 55 transfer (SA + OA -> RA, targeting FRS)
-    const { newOA, newRA } = performAge55Transfer(lastRow.oaBalance, lastRow.saBalance, frs)
+    // Step 4: Perform age 55 transfer using selected tier as target
+    const transferTarget = retirementSumTier === 'brs' ? brs : retirementSumTier === 'ers' ? ers : frs
+    const { newOA, newRA } = performAge55Transfer(lastRow.oaBalance, lastRow.saBalance, transferTarget)
 
     // Step 5: Estimate CPF LIFE payout (nominal, based on RA at 55)
     const annualPayoutNominal = estimateCpfLifePayout(newRA, cpfLifePlan)
@@ -84,25 +89,20 @@ export function CpfMiniCalculator() {
     const totalGap = monthlyGap > 0 ? monthlyGap * 12 * retirementYears : 0
 
     return {
-      estimatedOA: balances.oa,
-      estimatedSA: balances.sa,
-      estimatedMA: balances.ma,
-      projectedOAAt55: lastRow.oaBalance,
-      projectedSAAt55: lastRow.saBalance,
-      projectedMAAt55: lastRow.maBalance,
-      projectedTotalAt55: lastRow.totalBalance,
+      projections,
       brs,
       frs,
       ers,
       newOA,
       newRA,
       monthlyPayout,
-      annualPayout,
       monthlyGap,
       totalGap,
       retirementYears,
+      projectedTotalAt55: lastRow.totalBalance,
+      projectedMAAt55: lastRow.maBalance,
     }
-  }, [age, monthlySalary, monthlyExpenses, cpfLifePlan, residencyStatus, isValid, hasCalculated])
+  }, [age, monthlySalary, monthlyExpenses, cpfLifePlan, residencyStatus, retirementSumTier, isValid, hasCalculated])
 
   function handleCalculate() {
     if (isValid) setHasCalculated(true)
@@ -142,6 +142,19 @@ export function CpfMiniCalculator() {
             error={errors.expenses}
             tooltip="Your estimated monthly retirement expenses in today's dollars"
           />
+          <div className="flex flex-col gap-1">
+            <Label className="text-sm">Retirement Sum Target</Label>
+            <Select value={retirementSumTier} onValueChange={(v) => setRetirementSumTier(v as RetirementSumTier)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="brs">BRS (Basic, requires property pledge)</SelectItem>
+                <SelectItem value="frs">FRS (Full, recommended default)</SelectItem>
+                <SelectItem value="ers">ERS (Enhanced, highest payout)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex flex-col gap-1">
             <Label className="text-sm">CPF LIFE Plan</Label>
             <Select value={cpfLifePlan} onValueChange={(v) => setCpfLifePlan(v as CpfLifePlan)}>
@@ -183,18 +196,26 @@ export function CpfMiniCalculator() {
                 Projected Retirement Sums at Age 55
               </h3>
               <div className="grid grid-cols-3 gap-3">
-                <div className="text-center p-3 bg-muted/50 rounded-lg">
-                  <p className="text-xs text-muted-foreground">BRS</p>
-                  <p className="font-semibold">{formatCurrency(results.brs, 0)}</p>
-                </div>
-                <div className="text-center p-3 bg-primary/10 rounded-lg border border-primary/20">
-                  <p className="text-xs text-muted-foreground">FRS (default)</p>
-                  <p className="font-semibold">{formatCurrency(results.frs, 0)}</p>
-                </div>
-                <div className="text-center p-3 bg-muted/50 rounded-lg">
-                  <p className="text-xs text-muted-foreground">ERS</p>
-                  <p className="font-semibold">{formatCurrency(results.ers, 0)}</p>
-                </div>
+                {(['brs', 'frs', 'ers'] as const).map((tier) => {
+                  const label = tier.toUpperCase()
+                  const value = results[tier]
+                  const isSelected = retirementSumTier === tier
+                  return (
+                    <button
+                      key={tier}
+                      type="button"
+                      onClick={() => setRetirementSumTier(tier)}
+                      className={`text-center p-3 rounded-lg transition-colors cursor-pointer ${
+                        isSelected
+                          ? 'bg-primary/10 border border-primary/20 ring-1 ring-primary/30'
+                          : 'bg-muted/50 hover:bg-muted/80'
+                      }`}
+                    >
+                      <p className="text-xs text-muted-foreground">{label}{isSelected ? ' (selected)' : ''}</p>
+                      <p className="font-semibold">{formatCurrency(value, 0)}</p>
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
@@ -226,7 +247,7 @@ export function CpfMiniCalculator() {
             {/* CPF LIFE Payout */}
             <div>
               <h3 className="font-semibold text-sm text-muted-foreground mb-2">
-                Estimated CPF LIFE Monthly Payout (from age 65)
+                Estimated CPF LIFE Monthly Payout (from age 65, in today's dollars)
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
@@ -266,6 +287,49 @@ export function CpfMiniCalculator() {
                   <span className="font-semibold text-foreground">{formatCurrency(results.totalGap, 0)}</span>{' '}
                   from your investment portfolio to cover the gap (in today's dollars, assuming 2.5% inflation).
                 </p>
+              )}
+            </div>
+
+            {/* Annual Breakdown */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowBreakdown(!showBreakdown)}
+                className="flex items-center gap-2 text-sm font-semibold text-primary hover:underline cursor-pointer"
+              >
+                {showBreakdown ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                {showBreakdown ? 'Hide' : 'Show'} annual breakdown (age {age} to 55)
+              </button>
+
+              {showBreakdown && (
+                <div className="overflow-x-auto mt-3">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-muted-foreground">
+                        <th className="text-left py-2 pr-2 font-medium">Age</th>
+                        <th className="text-right py-2 px-2 font-medium">OA</th>
+                        <th className="text-right py-2 px-2 font-medium">SA</th>
+                        <th className="text-right py-2 px-2 font-medium">MA</th>
+                        <th className="text-right py-2 px-2 font-medium">Total</th>
+                        <th className="text-right py-2 px-2 font-medium">Contribution</th>
+                        <th className="text-right py-2 pl-2 font-medium">Interest</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {results.projections.map((row) => (
+                        <tr key={row.age} className="border-b last:border-b-0">
+                          <td className="py-1.5 pr-2 tabular-nums">{row.age}</td>
+                          <td className="py-1.5 px-2 text-right tabular-nums">{formatCurrency(row.oaBalance, 0)}</td>
+                          <td className="py-1.5 px-2 text-right tabular-nums">{formatCurrency(row.saBalance, 0)}</td>
+                          <td className="py-1.5 px-2 text-right tabular-nums">{formatCurrency(row.maBalance, 0)}</td>
+                          <td className="py-1.5 px-2 text-right tabular-nums font-medium">{formatCurrency(row.totalBalance, 0)}</td>
+                          <td className="py-1.5 px-2 text-right tabular-nums text-green-600 dark:text-green-400">+{formatCurrency(row.annualContribution, 0)}</td>
+                          <td className="py-1.5 pl-2 text-right tabular-nums text-blue-600 dark:text-blue-400">+{formatCurrency(row.annualInterest, 0)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
 
