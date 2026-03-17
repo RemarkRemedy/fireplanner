@@ -12024,6 +12024,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
       'branch:manuinvest-duo-administrative-charge',
       'branch:manuinvest-duo-full-surrender-charge',
@@ -12052,6 +12053,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
       'branch:manuinvest-duo-administrative-charge',
       'branch:manuinvest-duo-full-surrender-charge',
@@ -12080,6 +12082,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
       'branch:manuinvest-duo-administrative-charge',
       'branch:manuinvest-duo-full-surrender-charge',

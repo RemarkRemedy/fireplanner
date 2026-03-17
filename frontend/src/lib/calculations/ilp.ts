@@ -2792,6 +2792,17 @@ function computeCurrentDeathBenefitEstimate(
           : Math.max(supportedEstimate, estimate)
         break
       }
+      case 'manulife-manuinvest-duo-death-ti-tpd': {
+        if (profile.currentSumAssured == null) {
+          continue
+        }
+
+        const estimate = Math.max(totalCurrentValue, Math.max(0, profile.currentSumAssured))
+        supportedEstimate = supportedEstimate == null
+          ? estimate
+          : Math.max(supportedEstimate, estimate)
+        break
+      }
       default:
         break
     }
