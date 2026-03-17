@@ -374,7 +374,6 @@ function buildVariant(
       `${variantDefinition.label} is cataloged as a supported V1 corridor. The parser captures the published 2.50% / ${(variantDefinition.postMipFeeRate * 100).toFixed(2)}% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.`,
       'Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.',
       'Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate.',
-      'Withdrawals of accumulated reinvested dividends remain informational only.',
     ],
     unsupportedItems: [
       'Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.',
@@ -382,7 +381,6 @@ function buildVariant(
       'Step-up Booster Bonus remains informational only.',
       'Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.',
       'Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.',
-      'Withdrawals of accumulated reinvested dividends remain informational only.',
       'Fund switching, premium redirection, automatic fund rebalancing, and change-of-mode-of-payment options remain informational only.',
       'Reinstatement underwriting and pre-existing-condition exclusions remain informational only.',
     ],
@@ -418,7 +416,6 @@ export function parseManulifeInvestreadyIiiSep2025(context: ParseContext): IlpCa
       'manulife-investready-iii-policy-fee',
       'manulife-investready-iii-step-up-booster-bonus',
       'manulife-investready-iii-life-stage-partial-withdrawal',
-      'manulife-investready-iii-reinvested-dividend-withdrawals',
       'manulife-investready-iii-benefit-payout-handling',
       'manulife-investready-iii-fund-switching-and-redirection',
       'manulife-investready-iii-reinstatement',

@@ -40,6 +40,7 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
     expect(product.modeledEconomics).not.toContain('branch:manulife-investready-iii-fund-management-charge')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-policy-fee')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-step-up-booster-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-reinvested-dividend-withdrawals')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-fund-management-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-annual-premium-bonus')
@@ -90,6 +91,8 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
+    expect(firstVariant?.warnings).not.toContain('Withdrawals of accumulated reinvested dividends remain informational only.')
+    expect(firstVariant?.unsupportedItems).not.toContain('Withdrawals of accumulated reinvested dividends remain informational only.')
     expect(firstVariant?.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
@@ -211,6 +214,8 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
     ])
     expect(lastVariant?.warnings).toContain('Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.')
     expect(lastVariant?.warnings).toContain('Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate.')
+    expect(lastVariant?.warnings).not.toContain('Withdrawals of accumulated reinvested dividends remain informational only.')
+    expect(lastVariant?.unsupportedItems).not.toContain('Withdrawals of accumulated reinvested dividends remain informational only.')
     expect(lastVariant?.unsupportedItems).not.toContain('Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.')
   }, 30_000)
 })
