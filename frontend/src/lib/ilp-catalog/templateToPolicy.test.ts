@@ -2922,7 +2922,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
-  it('maps PRUActive LinkGuard into a partial open-ended seed with premium-year charges', () => {
+  it('maps PRUActive LinkGuard into a supported open-ended seed with the Appendix A assurance charge corridor', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'prudential-pruactive-linkguard')
     expect(product).toBeDefined()
@@ -2931,9 +2931,10 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:pruactive-linkguard-premium-year-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:pruactive-linkguard-administration-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:pruactive-linkguard-combined-assurance-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('pruactive-linkguard-no-lapse-period')
     expect(seed.mipBasis).toBe('open-ended')
     expect(seed.mipLength).toBeNull()
@@ -2968,16 +2969,33 @@ describe('templateVariantToPolicySeed', () => {
             { startPolicyYear: 1, endPolicyYear: null, amount: 60 },
           ],
         }),
+        expect.objectContaining({
+          id: 'assurance-charge-combined',
+          basis: 'assurance-sum-at-risk',
+          assuranceConfig: expect.objectContaining({
+            formula: 'prudential-linkguard-combined',
+            monthlyModalFactor: 0.0834,
+          }),
+          requiresManualInput: true,
+        }),
       ]),
     )
-    expect(seed.eventChargeRules).toEqual([
-      expect.objectContaining({
-        id: 'top-up-premium-charge',
-        trigger: 'top-up',
-        basis: 'event-amount',
-        rate: 0.03,
-      }),
-    ])
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          trigger: 'top-up',
+          basis: 'event-amount',
+          rate: 0.03,
+        }),
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          trigger: 'partial-withdrawal',
+          basis: 'event-amount',
+          rate: 0,
+        }),
+      ]),
+    )
   })
 
   it('maps AstraLink (VA2) into a supported seed with loyalty, insurance, and Appendix 2 charge schedules', () => {

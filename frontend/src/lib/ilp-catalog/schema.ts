@@ -70,6 +70,7 @@ export const ilpTemplateFeeRuleSchema = z.object({
       'prudential-prosper-death',
       'prudential-prosper-accidental-death',
       'prudential-assure-ii-combined',
+      'prudential-linkguard-combined',
       'aia-plp2-plus-death',
       'aia-plp2-max-death',
       'hsbc-flexi-choice-death-ti',

@@ -137,6 +137,11 @@ export type GoldenCoverageTag =
   | 'branch:manuinvest-duo-zero-top-up-charge'
   | 'branch:manuinvest-duo-partial-withdrawal-charge'
   | 'branch:manuinvest-duo-full-surrender-charge'
+  | 'branch:pruactive-linkguard-premium-year-premium-charge'
+  | 'branch:pruactive-linkguard-administration-charge'
+  | 'branch:pruactive-linkguard-combined-assurance-charge'
+  | 'branch:pruactive-linkguard-top-up-premium-charge'
+  | 'branch:pruactive-linkguard-zero-partial-withdrawal-charge'
   | 'branch:singlife-legacy-invest-welcome-bonus'
   | 'branch:singlife-legacy-invest-loyalty-bonus'
   | 'branch:singlife-legacy-invest-administrative-charge'
@@ -1199,6 +1204,98 @@ function aiaPlp2StressPolicy(
 ): IlpPolicyInput {
   return aiaPlp2BasePolicy(snapshot, variantId, id, HSBC_STRESS_FUNDS, {
     name: `Golden AIA Pro Lifetime Protector (II) (${variantId.toUpperCase()} OCF Stress)`,
+  })
+}
+
+function pruActiveLinkGuardBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'prudential-pruactive-linkguard', 'sgd-open-ended-cash-or-srs', id)
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden PRUActive LinkGuard (SGD / Open-ended Core Corridor)',
+      monthlyContribution: 500,
+      currentPolicyYear: 8,
+      monthsAlreadyPaid: 96,
+      postMipYears: 10,
+      assuranceProfile: {
+        currentAgeNextBirthday: 35,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 50_000,
+      },
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 60_000,
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function pruActiveLinkGuardBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return pruActiveLinkGuardBasePolicy(snapshot, id, HSBC_BALANCED_FUNDS)
+}
+
+function pruActiveLinkGuardEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return pruActiveLinkGuardBasePolicy(snapshot, id, HSBC_BALANCED_FUNDS, {
+    name: 'Golden PRUActive LinkGuard (SGD / Open-ended Event Heavy)',
+    currentPolicyYear: 9,
+    monthsAlreadyPaid: 108,
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 121,
+        durationMonths: 1,
+        amount: 7_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 128,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function pruActiveLinkGuardAssuranceTailPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return pruActiveLinkGuardBasePolicy(snapshot, id, HSBC_BALANCED_FUNDS, {
+    name: 'Golden PRUActive LinkGuard (SGD / Open-ended Post-50 Assurance Tail)',
+    assuranceProfile: {
+      currentAgeNextBirthday: 50,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentSumAssured: 50_000,
+    },
+  })
+}
+
+function pruActiveLinkGuardStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return pruActiveLinkGuardBasePolicy(snapshot, id, HSBC_STRESS_FUNDS, {
+    name: 'Golden PRUActive LinkGuard (SGD / Open-ended OCF Stress)',
   })
 }
 
@@ -14361,6 +14458,84 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'HSBC Life Flexi Protector alternate-fund high-OCF stress scenario through the supported Max Cover corridor.',
   },
   {
+    productId: 'prudential-pruactive-linkguard',
+    variantId: 'sgd-open-ended-cash-or-srs',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:pruactive-linkguard-premium-year-premium-charge',
+      'branch:pruactive-linkguard-administration-charge',
+      'branch:pruactive-linkguard-combined-assurance-charge',
+    ],
+    description: 'PRUActive LinkGuard baseline scenario proving the supported premium-year charge, fixed administration charge, and guaranteed Appendix A assurance-charge corridor.',
+    integrityChecks: [
+      {
+        description: 'baseline applies a positive annual assurance charge on the policy account',
+        test: (_, artifact) => {
+          const firstRow = artifact.expected.projections.mid.rows[0]
+          return (firstRow?.accounts.find((account) => account.accountId === 'policy')?.grossFee ?? 0) > 0
+        },
+      },
+    ],
+  },
+  {
+    productId: 'prudential-pruactive-linkguard',
+    variantId: 'sgd-open-ended-cash-or-srs',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:pruactive-linkguard-top-up-premium-charge',
+      'branch:pruactive-linkguard-zero-partial-withdrawal-charge',
+    ],
+    description: 'PRUActive LinkGuard event-heavy scenario covering charged top-up allocation and later zero-charge policy withdrawals on the supported core corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy corridor records both a top-up contribution spike and a later withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12 && row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'prudential-pruactive-linkguard',
+    variantId: 'sgd-open-ended-cash-or-srs',
+    scenarioId: 'assurance-tail',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:pruactive-linkguard-combined-assurance-charge',
+    ],
+    description: 'PRUActive LinkGuard post-age-50 assurance tail proving the supported switch from multiplier-based sum at risk to base sum assured.',
+    integrityChecks: [
+      {
+        description: 'post-age-50 corridor still applies a positive annual assurance charge on the policy account',
+        test: (_, artifact) => {
+          const firstRow = artifact.expected.projections.mid.rows[0]
+          return (firstRow?.accounts.find((account) => account.accountId === 'policy')?.grossFee ?? 0) > 0
+        },
+      },
+      {
+        description: 'post-age-50 assurance remains positive even when the policy account value exceeds the base sum assured',
+        test: (_, artifact) => {
+          const firstRow = artifact.expected.projections.mid.rows[0]
+          const policyAccount = artifact.policyInput.accounts.find((account) => account.id === 'policy')
+          const currentSumAssured = artifact.policyInput.assuranceProfile?.currentSumAssured ?? 0
+          const grossFee = firstRow?.accounts.find((account) => account.accountId === 'policy')?.grossFee ?? 0
+          return (policyAccount?.currentValue ?? 0) > currentSumAssured && grossFee > 0
+        },
+      },
+    ],
+  },
+  {
+    productId: 'prudential-pruactive-linkguard',
+    variantId: 'sgd-open-ended-cash-or-srs',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'PRUActive LinkGuard alternate-fund high-OCF stress scenario through the supported core corridor.',
+  },
+  {
     productId: 'tokio-marine-atlas-wealth',
     variantId: 'sgd-mip-25',
     scenarioId: 'baseline',
@@ -16332,6 +16507,18 @@ function buildPolicyForDefinition(
       definition.variantId as 'sgd-open-ended-choice-cover' | 'sgd-open-ended-max-cover',
       id,
     )
+  }
+  if (definition.productId === 'prudential-pruactive-linkguard' && definition.scenarioId === 'baseline') {
+    return pruActiveLinkGuardBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-pruactive-linkguard' && definition.scenarioId === 'event-heavy') {
+    return pruActiveLinkGuardEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-pruactive-linkguard' && definition.scenarioId === 'assurance-tail') {
+    return pruActiveLinkGuardAssuranceTailPolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-pruactive-linkguard' && definition.scenarioId === 'ocf-stress') {
+    return pruActiveLinkGuardStressPolicy(snapshot, id)
   }
   if (definition.productId === 'tokio-marine-atlas-wealth' && definition.scenarioId === 'baseline') {
     if (definition.variantId === 'sgd-mip-25-advanced-death') {

@@ -7,6 +7,7 @@ import {
   INCOME_LEGACY_FLEX_SOLITAIRE_DEATH_TI_RATE_TABLE,
   MANULIFE_INVESTREADY_III_DEATH_TI_RATE_TABLE,
   MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE,
+  PRUACTIVE_LINKGUARD_COMBINED_RATE_TABLE,
   PRUVANTAGE_ASSURE_II_COMBINED_RATE_TABLE,
   PRUVANTAGE_PROSPER_ACCIDENTAL_DEATH_RATE_TABLE,
   PRUVANTAGE_PROSPER_DEATH_RATE_TABLE,
@@ -168,6 +169,7 @@ export interface IlpAssuranceChargeConfig {
     | 'prudential-prosper-death'
     | 'prudential-prosper-accidental-death'
     | 'prudential-assure-ii-combined'
+    | 'prudential-linkguard-combined'
     | 'aia-plp2-plus-death'
     | 'aia-plp2-max-death'
     | 'hsbc-flexi-choice-death-ti'
@@ -516,6 +518,7 @@ interface IlpNormalizedEventChargeRule {
 type IlpAssuranceFormulaFamily =
   | 'prudential-prosper'
   | 'prudential-assure-ii'
+  | 'prudential-linkguard'
   | 'aia-plp2'
   | 'hsbc-flexi'
   | 'protected-base-paid-premium-floor'
@@ -1466,6 +1469,8 @@ function getAssuranceFormulaFamily(
       return 'prudential-prosper'
     case 'prudential-assure-ii-combined':
       return 'prudential-assure-ii'
+    case 'prudential-linkguard-combined':
+      return 'prudential-linkguard'
     case 'aia-plp2-plus-death':
     case 'aia-plp2-max-death':
       return 'aia-plp2'
@@ -1516,6 +1521,8 @@ function resolveAssuranceRate(
       return applyAssuranceRateMultipliers(rule, PRUVANTAGE_PROSPER_ACCIDENTAL_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
     case 'prudential-assure-ii-combined':
       return applyAssuranceRateMultipliers(rule, PRUVANTAGE_ASSURE_II_COMBINED_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+    case 'prudential-linkguard-combined':
+      return applyAssuranceRateMultipliers(rule, PRUACTIVE_LINKGUARD_COMBINED_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
     case 'aia-plp2-plus-death':
     case 'aia-plp2-max-death':
       return applyAssuranceRateMultipliers(rule, AIA_PLP2_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
@@ -1622,6 +1629,17 @@ function computeHsbcFlexiSumAtRisk(
   }
 
   return Math.max(0, (profile.currentBasicSumAssured ?? 0) + midpointSupplementaryPremiumBase - midpointApplicableValue)
+}
+
+function computePrudentialLinkGuardSumAtRisk(
+  profile: IlpAssuranceProfile,
+  ageNextBirthday: number,
+): number {
+  const baseSumAssured = Math.max(0, profile.currentSumAssured ?? 0)
+  // PRUActive LinkGuard's published worked example prices the guaranteed
+  // Death / TPD / TI charge on the gross Multiplier Benefit before expiry and
+  // on gross Sum Assured from the expiry age onward, not on AV-netted SAR.
+  return baseSumAssured * (ageNextBirthday < 50 ? 2 : 1)
 }
 
 function computeAiaPlp2SumAtRisk(
@@ -2014,6 +2032,10 @@ function computeAssuranceChargeByAccount(
         nextGrowthFrozen = assureIiState.nextGrowthFrozen
         break
       }
+
+      case 'prudential-linkguard':
+        sumAtRisk = computePrudentialLinkGuardSumAtRisk(profile, ageNextBirthday)
+        break
 
       case 'protected-base-paid-premium-floor':
       case 'protected-base-sum-assured':

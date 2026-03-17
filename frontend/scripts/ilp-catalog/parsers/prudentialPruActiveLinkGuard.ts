@@ -48,12 +48,15 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
 
 function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page1 = sourceRef(1, 'Nature and objective of plan', snippetNear(document, 1, 'Nature and Objective of Plan', 12))
+  const page2 = sourceRef(2, 'Death and terminal illness benefits', snippetNear(document, 2, 'Multiplier benefit', 18))
+  const page4 = sourceRef(4, 'Total and permanent disability benefit', snippetNear(document, 4, 'Multiplier benefit', 18))
   const page6 = sourceRef(6, 'Premium', snippetNear(document, 6, 'Minimum premium', 10))
   const page10 = sourceRef(10, 'Investment Booster (Lump Sum)', snippetNear(document, 10, 'Top-up with Investment Booster (Lump Sum)', 18))
   const page11 = sourceRef(11, 'Investment Booster (Regular) and withdrawal conditions', snippetNear(document, 11, 'Top-up with Investment Booster (Regular)', 18))
   const page12 = sourceRef(12, 'Surrender charge', snippetNear(document, 12, 'Surrender the policy', 18))
   const page13 = sourceRef(13, 'No Lapse Period', snippetNear(document, 13, 'No Lapse Period', 18))
   const page14 = sourceRef(14, 'Charges', snippetNear(document, 14, 'Premium Charge', 24))
+  const page20 = sourceRef(20, 'Appendix A assurance charges', snippetNear(document, 20, 'Appendix A', 32))
 
   const feeRules: IlpTemplateFeeRule[] = [
     {
@@ -89,6 +92,26 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       ],
       sourceRefs: [page14],
     },
+    {
+      id: 'assurance-charge-combined',
+      label: 'Assurance Charge (Death / TPD / TI)',
+      basis: 'assurance-sum-at-risk',
+      rate: 0,
+      amount: 0,
+      appliesTo: ['policy'],
+      activeWindow: 'policy-term',
+      requiresManualInput: true,
+      assuranceConfig: {
+        formula: 'prudential-linkguard-combined',
+        monthlyModalFactor: 0.0834,
+      },
+      notes: [
+        'Models the guaranteed Appendix A assurance charge for Death, Total and Permanent Disability, and Terminal Illness after entering insured-life details and the current sum assured.',
+        'The default modeled sum-at-risk uses 2x current sum assured before age 50 and 1x current sum assured from age 50 onward.',
+        'Optional retention of the Multiplier benefit after age 50 and any medical or occupational extra loading remain informational only in V1.',
+      ],
+      sourceRefs: [page1, page2, page4, page14, page20],
+    },
   ]
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
@@ -107,6 +130,22 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
         'The recurring Investment Booster (Regular) schedule remains informational only in V1.',
       ],
       sourceRefs: [page10, page11, page14],
+    },
+    {
+      id: 'partial-withdrawal-charge',
+      label: 'Partial Withdrawal Charge',
+      trigger: 'partial-withdrawal',
+      basis: 'event-amount',
+      appliesTo: ['policy'],
+      rate: 0,
+      amount: 0,
+      activeWindow: 'policy-term',
+      allocation: 'equal-split',
+      notes: [
+        'No policy-level partial-withdrawal charge is stated in the product summary.',
+        'The 25-month fully-paid gate, minimum withdrawal amount, minimum residual account balance, and Investment Booster paid-to-date cap remain informational only in V1.',
+      ],
+      sourceRefs: [page11, page12],
     },
   ]
 
@@ -136,13 +175,14 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eventChargeRules,
     eecTable: [],
     warnings: [
-      'PRUActive LinkGuard is modeled as a partial subset in V1. The parser captures the premium-year regular premium charge schedule, the S$5 monthly administration charge, and the 3% Investment Booster (Lump Sum) premium charge.',
-      'Assurance charges depend on Appendix A rates, age, sum assured, Multiplier settings, and possible medical or occupational loadings, so they remain informational only in V1.',
-      'No Lapse Period debt carry, withdrawal eligibility gating, surrender-charge-on-allocated-premiums, and Investment Booster (Regular) recurrence remain informational only in V1.',
+      'This supported template models the SGD open-ended core corridor with the premium-year regular premium charge schedule, the fixed S$5 monthly administration charge, the guaranteed Appendix A Death / TPD / TI assurance charge, the 3% Investment Booster (Lump Sum) premium charge, and the nil policy-level partial-withdrawal charge path.',
+      'Optional retention of the Multiplier benefit after age 50, No Lapse Period debt carry, surrender-charge-on-allocated-premiums, and non-core rider charges remain informational only.',
     ],
     unsupportedItems: [
-      'Death, terminal illness, total and permanent disability, and multiplier-benefit payout mechanics remain informational only.',
-      'Appendix A assurance charge curves and medical or occupational loadings remain informational only.',
+      'Death, terminal illness, and total and permanent disability claim-side payout settlement remains metadata-only beyond the modeled Appendix A assurance-charge corridor.',
+      'Optional retention of the Multiplier benefit after age 50 remains informational only.',
+      'Medical, occupational, and hazardous-activity extra loadings remain informational only.',
+      'Critical illness, pre-critical illness, and other supplementary rider charges remain informational only.',
       'No Lapse Period amount-owed carry and reinstatement behavior remain informational only.',
       'Partial withdrawal eligibility is not enforced automatically, including the 25-month fully-paid gate and the Investment Booster paid-to-date cap.',
       'Surrender charges on allocated premiums, including separate treatment for increased sum assured and exclusion for Investment Booster premiums, remain informational only.',
@@ -162,25 +202,28 @@ export function parsePrudentialPruActiveLinkGuard({ document, sourceChecksumSha2
     sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:pruactive-linkguard-premium-year-premium-charge',
       'branch:pruactive-linkguard-administration-charge',
+      'branch:pruactive-linkguard-combined-assurance-charge',
       'branch:pruactive-linkguard-top-up-premium-charge',
+      'branch:pruactive-linkguard-zero-partial-withdrawal-charge',
     ],
     metadataOnlyBehaviors: [
-      'pruactive-linkguard-assurance-charge',
       'pruactive-linkguard-no-lapse-period',
       'pruactive-linkguard-withdrawal-eligibility',
       'pruactive-linkguard-surrender-charge',
       'pruactive-linkguard-investment-booster-regular',
-      'pruactive-linkguard-protection-benefits',
+      'pruactive-linkguard-retained-multiplier-option',
+      'pruactive-linkguard-rider-benefits-and-loadings',
+      'pruactive-linkguard-protection-payout-settlement',
       'pruactive-linkguard-fund-switching',
     ],
     warnings: [
-      'PRUActive LinkGuard is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, the S$5 monthly administration charge, and the 3% Investment Booster (Lump Sum) premium charge, while assurance charges, No Lapse Period debt behavior, withdrawal eligibility, surrender mechanics, and protection-side payouts remain outside the current engine.',
+      'PRUActive LinkGuard is cataloged as a supported core corridor in V1. The parser models the premium-year regular premium charge schedule, the fixed S$5 monthly administration charge, the guaranteed Appendix A Death / TPD / TI assurance charge, the 3% Investment Booster (Lump Sum) premium charge, and the nil policy-level partial-withdrawal charge path, while retained multiplier options, No Lapse Period debt carry, surrender mechanics, rider charges, and claim-side payout settlement remain metadata-only.',
     ],
     archived: false,
     variants: [buildVariant(document)],

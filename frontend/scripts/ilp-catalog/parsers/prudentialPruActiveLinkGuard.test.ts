@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parsePrudentialPruActiveLinkGuard', () => {
-  it('builds a valid open-ended partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid supported open-ended core product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parsePrudentialPruActiveLinkGuard({
       document,
@@ -23,13 +23,18 @@ describe('parsePrudentialPruActiveLinkGuard', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('prudential-pruactive-linkguard')
     expect(product.productName).toBe('PRUActive LinkGuard')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:pruactive-linkguard-premium-year-premium-charge',
       'branch:pruactive-linkguard-administration-charge',
+      'branch:pruactive-linkguard-combined-assurance-charge',
       'branch:pruactive-linkguard-top-up-premium-charge',
+      'branch:pruactive-linkguard-zero-partial-withdrawal-charge',
     ])
     expect(product.metadataOnlyBehaviors).toContain('pruactive-linkguard-no-lapse-period')
     expect(product.metadataOnlyBehaviors).toContain('pruactive-linkguard-surrender-charge')
+    expect(product.metadataOnlyBehaviors).toContain('pruactive-linkguard-retained-multiplier-option')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-open-ended-cash-or-srs',
     ])
@@ -55,6 +60,15 @@ describe('parsePrudentialPruActiveLinkGuard', () => {
           { startPolicyYear: 1, endPolicyYear: null, amount: 60 },
         ],
       }),
+      expect.objectContaining({
+        id: 'assurance-charge-combined',
+        basis: 'assurance-sum-at-risk',
+        assuranceConfig: expect.objectContaining({
+          formula: 'prudential-linkguard-combined',
+          monthlyModalFactor: 0.0834,
+        }),
+        requiresManualInput: true,
+      }),
     ])
     expect(cashVariant?.eventChargeRules).toEqual([
       expect.objectContaining({
@@ -63,9 +77,15 @@ describe('parsePrudentialPruActiveLinkGuard', () => {
         basis: 'event-amount',
         rate: 0.03,
       }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
+        rate: 0,
+      }),
     ])
     expect(cashVariant?.warnings).toContain(
-      'No Lapse Period debt carry, withdrawal eligibility gating, surrender-charge-on-allocated-premiums, and Investment Booster (Regular) recurrence remain informational only in V1.',
+      'Optional retention of the Multiplier benefit after age 50, No Lapse Period debt carry, surrender-charge-on-allocated-premiums, and non-core rider charges remain informational only.',
     )
   }, 30_000)
 })

@@ -24,7 +24,7 @@ import {
   EEC_PRESET_MIP_30,
 } from '@/lib/data/ilpDefaults'
 import { TOKIO_MPC_PROTECTED_BASE_FLOOR_MULTIPLIER } from '@/lib/data/ilpAssuranceConfig'
-import { AIA_PLP2_DEATH_RATE_TABLE, FWD_FLEXI_ELITE_DEATH_RATE_TABLE, INCOME_LEGACY_FLEX_SOLITAIRE_DEATH_TI_RATE_TABLE, TOKIO_MPC_UNZO_DEATH_RATE_TABLE } from '@/lib/data/ilpAssuranceTables'
+import { AIA_PLP2_DEATH_RATE_TABLE, FWD_FLEXI_ELITE_DEATH_RATE_TABLE, INCOME_LEGACY_FLEX_SOLITAIRE_DEATH_TI_RATE_TABLE, PRUACTIVE_LINKGUARD_COMBINED_RATE_TABLE, TOKIO_MPC_UNZO_DEATH_RATE_TABLE } from '@/lib/data/ilpAssuranceTables'
 import { ilpPolicySeedSchema } from '@/lib/ilp-catalog/policySeedSchema'
 import { ilpPolicySchema } from '@/lib/validation/ilpSchema'
 
@@ -2737,6 +2737,74 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[0], 'growth').grossFee).toBeCloseTo(2.071656, 6)
     expect(accountRow(result.rows[0], 'flex').grossFee).toBeCloseTo(2.071656, 6)
     expect(accountRow(result.rows[0], 'additional').grossFee).toBe(0)
+  })
+
+  it('annualizes Prudential LinkGuard assurance charges before and after multiplier-benefit expiry', () => {
+    const basePolicy = makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 120,
+      currentPolicyYear: 10,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 60_000,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'linkguard-assurance',
+          label: 'Assurance Charge (Death / TPD / TI)',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'prudential-linkguard-combined',
+            monthlyModalFactor: 0.0834,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 35,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 50_000,
+      },
+    })
+
+    const preExpiry = projectIlpPolicy(basePolicy, 'mid')
+    const postExpiry = projectIlpPolicy({
+      ...basePolicy,
+      assuranceProfile: {
+        ...basePolicy.assuranceProfile!,
+        currentAgeNextBirthday: 50,
+      },
+    }, 'mid')
+
+    const preExpiryRate = PRUACTIVE_LINKGUARD_COMBINED_RATE_TABLE['male-non-smoker'][34] ?? 0
+    const postExpiryRate = PRUACTIVE_LINKGUARD_COMBINED_RATE_TABLE['male-non-smoker'][49] ?? 0
+    const expectedPreExpiryCharge = preExpiryRate * 100 * 0.0834 * 12
+    const expectedPostExpiryCharge = postExpiryRate * 50 * 0.0834 * 12
+
+    expect(accountRow(preExpiry.rows[0], 'policy').grossFee).toBeCloseTo(expectedPreExpiryCharge, 6)
+    expect(accountRow(postExpiry.rows[0], 'policy').grossFee).toBeCloseTo(expectedPostExpiryCharge, 6)
+    expect(basePolicy.accounts[0]?.currentValue).toBeGreaterThan(basePolicy.assuranceProfile?.currentSumAssured ?? 0)
+    expect(accountRow(postExpiry.rows[0], 'policy').grossFee).toBeGreaterThan(0)
+    expect(accountRow(preExpiry.rows[0], 'policy').grossFee).toBeLessThan(accountRow(postExpiry.rows[0], 'policy').grossFee)
   })
 
   it('annualizes HSBC Flexi Choice and Max death/TI charges from the published yearly rate table', () => {
