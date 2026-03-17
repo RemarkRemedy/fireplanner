@@ -315,6 +315,25 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
               value={policy.monthlyContribution}
               onChange={(value) => updatePolicy(policy.id, { monthlyContribution: value })}
             />
+            <div className="space-y-1">
+              <Label>Regular Premium Payment Frequency</Label>
+              <Select
+                value={policy.regularPremiumPaymentFrequency ?? 'monthly'}
+                onValueChange={(value) => updatePolicy(policy.id, {
+                  regularPremiumPaymentFrequency: value as NonNullable<IlpPolicyInput['regularPremiumPaymentFrequency']>,
+                })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="annual">Annual</SelectItem>
+                  <SelectItem value="semi-annual">Semi-Annual</SelectItem>
+                  <SelectItem value="quarterly">Quarterly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             {needsInitialSinglePremiumInput && (
               <CurrencyInput
                 label={`Initial Single Premium (Gross Lump Sum, ${policy.currency})`}

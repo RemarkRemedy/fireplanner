@@ -48,6 +48,7 @@ export interface IlpTemplateBonus {
   yearBasis?: 'policy-year' | 'premium-year'
   cadenceYears?: number
   requiresPremiumsPaidUpToDate?: boolean
+  requiredRegularPremiumPaymentFrequency?: 'annual' | 'semi-annual' | 'quarterly' | 'monthly'
   rate: number | null
   amount: number | null
   tieredRates: IlpTemplateBonusTier[]

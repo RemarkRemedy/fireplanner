@@ -27,6 +27,7 @@ describe('parseFwdInvestFlexiVii', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'kernel:protected-base-assurance',
+      'branch:fwd-invest-flexi-vii-annual-premium-bonus',
       'branch:fwd-invest-flexi-vii-initial-account-charge',
       'branch:fwd-invest-flexi-vii-insurance-charge',
       'branch:fwd-invest-flexi-vii-top-up-premium-charge',
@@ -34,6 +35,7 @@ describe('parseFwdInvestFlexiVii', () => {
       'branch:fwd-invest-flexi-vii-initial-account-surrender-charge',
     ])
     expect(product.metadataOnlyBehaviors).toContain('fwd-invest-flexi-vii-premium-shortfall-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-vii-annual-premium-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-vii-insurance-charge')
 
     const variant = product.variants[0]
@@ -48,6 +50,17 @@ describe('parseFwdInvestFlexiVii', () => {
       expect.objectContaining({
         id: 'accumulation',
         subjectToEec: false,
+      }),
+    ])
+    expect(variant?.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'annual-premium-bonus',
+        mode: 'premium-allocation',
+        rate: 0.01,
+        startPolicyYear: 1,
+        endPolicyYear: 7,
+        requiresPremiumsPaidUpToDate: true,
+        requiredRegularPremiumPaymentFrequency: 'annual',
       }),
     ])
     expect(variant?.feeRules).toEqual([

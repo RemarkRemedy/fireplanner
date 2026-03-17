@@ -263,6 +263,7 @@ function mapTemplateBonus(
     yearBasis: bonus.yearBasis,
     cadenceYears: bonus.cadenceYears,
     requiresPremiumsPaidUpToDate: bonus.requiresPremiumsPaidUpToDate,
+    requiredRegularPremiumPaymentFrequency: bonus.requiredRegularPremiumPaymentFrequency,
     tieredRates: bonus.tieredRates.map((tier) => ({ ...tier })),
     suspensionRules: bonus.suspensionRules?.map((rule) => ({ ...rule })) ?? [
       ...(bonus.notes.some((note) => note.toLowerCase().includes('partial withdrawal'))
@@ -277,6 +278,14 @@ function mapTemplateBonus(
     ],
     restorationRules: bonus.restorationRules?.map((rule) => ({ ...rule })),
   }
+}
+
+function deriveSeedRegularPremiumPaymentFrequency(
+  variant: IlpTemplateVariant,
+): NonNullable<IlpPolicyInput['regularPremiumPaymentFrequency']> {
+  return variant.bonuses.some((bonus) => bonus.requiredRegularPremiumPaymentFrequency === 'annual')
+    ? 'annual'
+    : 'monthly'
 }
 
 export function templateVariantToPolicySeed(
@@ -294,6 +303,7 @@ export function templateVariantToPolicySeed(
     insurer: product.insurer,
     currency: variant.currency,
     monthlyContribution: deriveSeedMonthlyContribution(product, variant),
+    regularPremiumPaymentFrequency: deriveSeedRegularPremiumPaymentFrequency(variant),
     initialSinglePremium: seedsInitialSinglePremiumRouting(variant) ? 0 : undefined,
     monthsAlreadyPaid: 0,
     currentPolicyYear: 1,
@@ -381,6 +391,9 @@ export function templateVariantToPolicySeed(
         : []),
       ...(variant.distributionSupport
         ? ['This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.']
+        : []),
+      ...(variant.bonuses.some((bonus) => bonus.requiredRegularPremiumPaymentFrequency === 'annual')
+        ? ['This seed assumes the regular premium is paid on the annual frequency option so the published annual-premium bonus path can execute. Change Regular Premium Payment Frequency in Policy Details if the policy uses a non-annual mode.']
         : []),
       ...(usesOriginalSinglePremiumBase(variant)
         ? ['Enter the one-time gross initial single premium lump sum in Policy Details if you want the starting policy value, original-base establishment charges, and surrender penalties to be modeled honestly.']

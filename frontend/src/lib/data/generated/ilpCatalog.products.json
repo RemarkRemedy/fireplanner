@@ -3819,6 +3819,7 @@
     "economicsStatus": "supported",
     "modeledEconomics": [
       "kernel:protected-base-assurance",
+      "branch:fwd-invest-flexi-elite-annual-premium-bonus",
       "branch:fwd-invest-flexi-elite-initial-account-charge",
       "branch:fwd-invest-flexi-elite-insurance-charge",
       "branch:fwd-invest-flexi-elite-top-up-premium-charge",
@@ -3831,7 +3832,6 @@
       "fwd-invest-flexi-elite-involuntary-unemployment-benefit",
       "fwd-invest-flexi-elite-premium-shortfall-charge-refund",
       "fwd-invest-flexi-elite-booster-bonus",
-      "fwd-invest-flexi-elite-annual-premium-bonus",
       "fwd-invest-flexi-elite-contribution-bonus",
       "fwd-invest-flexi-elite-free-partial-withdrawal-benefit",
       "fwd-invest-flexi-elite-partial-withdrawal-limits",
@@ -3938,7 +3938,35 @@
             ]
           }
         ],
-        "bonuses": [],
+        "bonuses": [
+          {
+            "id": "annual-premium-bonus",
+            "type": "allocation",
+            "label": "Annual Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "initial"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "requiresPremiumsPaidUpToDate": true,
+            "requiredRegularPremiumPaymentFrequency": "annual",
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied once on the first regular premium when the policy is issued on the annual premium payment frequency option.",
+              "Booster Bonus, Contribution Bonus, and any later payment-frequency changes remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Booster Bonus and Annual Premium Bonus",
+                "excerpt": "While this Policy is in force, we will pay a Booster Bonus upon receipt of each Regular Premium for the first Policy Year. Booster Bonus = Booster Bonus rate x Regular Premium received The reward band is determined based"
+              }
+            ]
+          }
+        ],
         "feeRules": [
           {
             "id": "initial-account-charge",
@@ -4127,13 +4155,14 @@
           0.05
         ],
         "warnings": [
-          "FWD Invest Flexi Elite (10 years – (3 flexi)) is cataloged as a supported V1 product. The parser captures the published initial-account-value charge, monthly insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "FWD Invest Flexi Elite (10 years – (3 flexi)) is cataloged as a supported V1 product. The parser captures the published initial-account-value charge, the one-time annual-premium bonus under the annual premium-frequency assumption, the monthly insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.",
           "Premium shortfall charge remains informational only because the published unemployment waiver, refund, and restart timing cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.",
-          "Booster Bonus, Annual Premium Bonus, Contribution Bonus, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain metadata-only."
+          "Booster Bonus, Contribution Bonus, payment-frequency changes after issue, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain metadata-only."
         ],
         "unsupportedItems": [
           "Premium shortfall charge remains informational only because the unemployment waiver, refund, and variant-specific charge periods are not modeled exactly in V1.",
-          "Booster Bonus, Annual Premium Bonus, and Contribution Bonus remain informational only.",
+          "Booster Bonus and Contribution Bonus remain informational only.",
+          "Changing the regular premium payment frequency after issue remains informational only.",
           "Free Partial Withdrawal Benefit eligibility, capped fee waivers, and life-event proof requirements remain informational only.",
           "Partial-withdrawal limit formulas, minimum withdrawal requirements, and minimum account-value gates remain informational only.",
           "Regular-premium reduction and increase windows, top-up eligibility gates, and premium-payment continuation after the minimum investment term remain informational only.",
@@ -4297,7 +4326,35 @@
             ]
           }
         ],
-        "bonuses": [],
+        "bonuses": [
+          {
+            "id": "annual-premium-bonus",
+            "type": "allocation",
+            "label": "Annual Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "initial"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "requiresPremiumsPaidUpToDate": true,
+            "requiredRegularPremiumPaymentFrequency": "annual",
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied once on the first regular premium when the policy is issued on the annual premium payment frequency option.",
+              "Booster Bonus, Contribution Bonus, and any later payment-frequency changes remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Booster Bonus and Annual Premium Bonus",
+                "excerpt": "While this Policy is in force, we will pay a Booster Bonus upon receipt of each Regular Premium for the first Policy Year. Booster Bonus = Booster Bonus rate x Regular Premium received The reward band is determined based"
+              }
+            ]
+          }
+        ],
         "feeRules": [
           {
             "id": "initial-account-charge",
@@ -4486,13 +4543,14 @@
           0.03
         ],
         "warnings": [
-          "FWD Invest Flexi Elite (10 years – (5 flexi)) is cataloged as a supported V1 product. The parser captures the published initial-account-value charge, monthly insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "FWD Invest Flexi Elite (10 years – (5 flexi)) is cataloged as a supported V1 product. The parser captures the published initial-account-value charge, the one-time annual-premium bonus under the annual premium-frequency assumption, the monthly insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.",
           "Premium shortfall charge remains informational only because the published unemployment waiver, refund, and restart timing cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.",
-          "Booster Bonus, Annual Premium Bonus, Contribution Bonus, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain metadata-only."
+          "Booster Bonus, Contribution Bonus, payment-frequency changes after issue, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain metadata-only."
         ],
         "unsupportedItems": [
           "Premium shortfall charge remains informational only because the unemployment waiver, refund, and variant-specific charge periods are not modeled exactly in V1.",
-          "Booster Bonus, Annual Premium Bonus, and Contribution Bonus remain informational only.",
+          "Booster Bonus and Contribution Bonus remain informational only.",
+          "Changing the regular premium payment frequency after issue remains informational only.",
           "Free Partial Withdrawal Benefit eligibility, capped fee waivers, and life-event proof requirements remain informational only.",
           "Partial-withdrawal limit formulas, minimum withdrawal requirements, and minimum account-value gates remain informational only.",
           "Regular-premium reduction and increase windows, top-up eligibility gates, and premium-payment continuation after the minimum investment term remain informational only.",
@@ -4581,6 +4639,7 @@
     "economicsStatus": "supported",
     "modeledEconomics": [
       "kernel:protected-base-assurance",
+      "branch:fwd-invest-flexi-vii-annual-premium-bonus",
       "branch:fwd-invest-flexi-vii-initial-account-charge",
       "branch:fwd-invest-flexi-vii-insurance-charge",
       "branch:fwd-invest-flexi-vii-top-up-premium-charge",
@@ -4592,7 +4651,6 @@
       "fwd-invest-flexi-vii-premium-pause-waiver",
       "fwd-invest-flexi-vii-support-benefit-waiver-and-refund",
       "fwd-invest-flexi-vii-booster-bonus",
-      "fwd-invest-flexi-vii-annual-premium-bonus",
       "fwd-invest-flexi-vii-loyalty-bonus",
       "fwd-invest-flexi-vii-repayment-bonus-restoration",
       "fwd-invest-flexi-vii-top-up-repayment-waterfall",
@@ -4689,7 +4747,35 @@
             ]
           }
         ],
-        "bonuses": [],
+        "bonuses": [
+          {
+            "id": "annual-premium-bonus",
+            "type": "allocation",
+            "label": "Annual Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "initial"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 7,
+            "requiresPremiumsPaidUpToDate": true,
+            "requiredRegularPremiumPaymentFrequency": "annual",
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied on each annual regular premium paid via the annual premium payment frequency option during the first 7 policy years.",
+              "Repayment and restoration interactions remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Bonus overview and support benefits",
+                "excerpt": "The Booster Bonus will be allocated to the ILP sub-funds in the same proportion as defined by your chosen investment allocation. We will buy Units in those ILP sub-funds at the Unit Price on the next 2 Pricing Day follow"
+              }
+            ]
+          }
+        ],
         "feeRules": [
           {
             "id": "initial-account-charge",
@@ -4898,14 +4984,15 @@
           0.07
         ],
         "warnings": [
-          "FWD Invest Flexi VII (SGD / 10-year minimum investment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the Appendix B insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.",
+          "FWD Invest Flexi VII (SGD / 10-year minimum investment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the annual-premium bonus under the annual premium-frequency assumption, the Appendix B insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.",
           "Premium shortfall charge remains informational only because the automatic 12-month Premium Pause Waiver cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.",
-          "Booster Bonus, Annual Premium Bonus, Loyalty Bonus, repayment waterfalls, and withdrawal eligibility gates remain outside the current engine."
+          "Booster Bonus, Loyalty Bonus, repayment waterfalls, payment-frequency changes after issue, and withdrawal eligibility gates remain outside the current engine."
         ],
         "unsupportedItems": [
           "Premium shortfall charge remains informational only because the automatic 12-month Premium Pause Waiver on missed premiums is not modeled exactly in V1.",
           "Support Benefit approvals and premium-shortfall-charge refund / waiver behavior remain informational only.",
-          "Booster Bonus, Annual Premium Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.",
+          "Booster Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.",
+          "Changing the regular premium payment frequency after issue remains informational only.",
           "Top-up repayment precedence for missed premiums, prior withdrawals, and prior regular-premium reductions remains informational only.",
           "Regular-premium reduction and restoration mechanics from policy year 8 onward remain informational only.",
           "Initial-units-account withdrawal lockout in the first two policy years, minimum withdrawal requirements, minimum account-value gates, and regular-withdrawal elections remain informational only.",
@@ -5759,6 +5846,7 @@
     "economicsStatus": "supported",
     "modeledEconomics": [
       "kernel:protected-base-assurance",
+      "branch:fwd-invest-first-horizon-annual-premium-bonus",
       "branch:fwd-invest-first-horizon-initial-account-charge",
       "branch:fwd-invest-first-horizon-insurance-charge",
       "branch:fwd-invest-first-horizon-premium-reduction-charge",
@@ -5771,7 +5859,6 @@
       "fwd-invest-first-horizon-premium-pause-waiver",
       "fwd-invest-first-horizon-support-benefit-waiver",
       "fwd-invest-first-horizon-booster-bonus",
-      "fwd-invest-first-horizon-annual-premium-bonus",
       "fwd-invest-first-horizon-loyalty-bonus",
       "fwd-invest-first-horizon-repayment-bonus-restoration",
       "fwd-invest-first-horizon-top-up-repayment-waterfall",
@@ -5868,7 +5955,35 @@
             ]
           }
         ],
-        "bonuses": [],
+        "bonuses": [
+          {
+            "id": "annual-premium-bonus",
+            "type": "allocation",
+            "label": "Annual Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "initial"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 5,
+            "requiresPremiumsPaidUpToDate": true,
+            "requiredRegularPremiumPaymentFrequency": "annual",
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied on each annual regular premium paid via the annual premium payment frequency option during the first 5 policy years.",
+              "Reduction, repayment, and restoration interactions beyond the paid-up annual premium amount remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Bonus overview and support benefits",
+                "excerpt": "While this Policy is in force, we will pay an Annual Premium Bonus upon receipt of each Regular Premium paid via the annual premium payment frequency option, during the first 5 Policy Years. Annual Premium 1.0% p.a. Annu"
+              }
+            ]
+          }
+        ],
         "feeRules": [
           {
             "id": "initial-account-charge",
@@ -6134,14 +6249,15 @@
           0.06
         ],
         "warnings": [
-          "FWD Invest First Horizon (20-year premium payment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the Appendix B insurance charge, the premium-reduction charge schedule, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.",
+          "FWD Invest First Horizon (20-year premium payment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the annual-premium bonus under the annual premium-frequency assumption, the Appendix B insurance charge, the premium-reduction charge schedule, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.",
           "Premium shortfall charge remains informational only because the automatic 24-month Premium Pause Waiver cannot be expressed exactly in the current event kernel without miscounting year-3 missed premiums.",
-          "Booster Bonus, Annual Premium Bonus, Loyalty Bonus, repayment waterfalls, and withdrawal-eligibility gates remain metadata-only."
+          "Booster Bonus, Loyalty Bonus, repayment waterfalls, payment-frequency changes after issue, and withdrawal-eligibility gates remain metadata-only."
         ],
         "unsupportedItems": [
           "Premium shortfall charge remains informational only because the automatic 24-month Premium Pause Waiver starts only from policy year 4 and is not modeled exactly in V1.",
           "Policy year 3 non-payment behavior, Support Benefit approvals, and Premium Pause Waiver month accounting remain informational only.",
-          "Booster Bonus, Annual Premium Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.",
+          "Booster Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.",
+          "Changing the regular premium payment frequency after issue remains informational only.",
           "Top-up repayment precedence for missed premiums, prior withdrawals, and prior premium reductions remains informational only.",
           "Top-up eligibility from policy year 2, total top-up cap, minimum top-up amount, and minimum withdrawal requirements remain informational only.",
           "Initial-units-account withdrawal lockout in the first two policy years, the 50%-minus-prior-withdrawals partial-withdrawal limit, and minimum account-value gates remain informational only.",
@@ -6280,7 +6396,35 @@
             ]
           }
         ],
-        "bonuses": [],
+        "bonuses": [
+          {
+            "id": "annual-premium-bonus",
+            "type": "allocation",
+            "label": "Annual Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "initial"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 5,
+            "requiresPremiumsPaidUpToDate": true,
+            "requiredRegularPremiumPaymentFrequency": "annual",
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied on each annual regular premium paid via the annual premium payment frequency option during the first 5 policy years.",
+              "Reduction, repayment, and restoration interactions beyond the paid-up annual premium amount remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Bonus overview and support benefits",
+                "excerpt": "While this Policy is in force, we will pay an Annual Premium Bonus upon receipt of each Regular Premium paid via the annual premium payment frequency option, during the first 5 Policy Years. Annual Premium 1.0% p.a. Annu"
+              }
+            ]
+          }
+        ],
         "feeRules": [
           {
             "id": "initial-account-charge",
@@ -6556,14 +6700,15 @@
           0.05
         ],
         "warnings": [
-          "FWD Invest First Horizon (25-year premium payment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the Appendix B insurance charge, the premium-reduction charge schedule, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.",
+          "FWD Invest First Horizon (25-year premium payment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the annual-premium bonus under the annual premium-frequency assumption, the Appendix B insurance charge, the premium-reduction charge schedule, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.",
           "Premium shortfall charge remains informational only because the automatic 24-month Premium Pause Waiver cannot be expressed exactly in the current event kernel without miscounting year-3 missed premiums.",
-          "Booster Bonus, Annual Premium Bonus, Loyalty Bonus, repayment waterfalls, and withdrawal-eligibility gates remain metadata-only."
+          "Booster Bonus, Loyalty Bonus, repayment waterfalls, payment-frequency changes after issue, and withdrawal-eligibility gates remain metadata-only."
         ],
         "unsupportedItems": [
           "Premium shortfall charge remains informational only because the automatic 24-month Premium Pause Waiver starts only from policy year 4 and is not modeled exactly in V1.",
           "Policy year 3 non-payment behavior, Support Benefit approvals, and Premium Pause Waiver month accounting remain informational only.",
-          "Booster Bonus, Annual Premium Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.",
+          "Booster Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.",
+          "Changing the regular premium payment frequency after issue remains informational only.",
           "Top-up repayment precedence for missed premiums, prior withdrawals, and prior premium reductions remains informational only.",
           "Top-up eligibility from policy year 2, total top-up cap, minimum top-up amount, and minimum withdrawal requirements remain informational only.",
           "Initial-units-account withdrawal lockout in the first two policy years, the 50%-minus-prior-withdrawals partial-withdrawal limit, and minimum account-value gates remain informational only.",
@@ -15500,6 +15645,7 @@
     "economicsStatus": "supported",
     "modeledEconomics": [
       "kernel:protected-base-assurance",
+      "branch:manulife-investready-growth-annual-premium-bonus",
       "branch:manulife-investready-growth-administrative-charge",
       "branch:manulife-investready-growth-premium-shortfall-charge",
       "branch:manulife-investready-growth-top-up-charge",
@@ -15509,7 +15655,6 @@
     ],
     "metadataOnlyBehaviors": [
       "manulife-investready-growth-welcome-bonus",
-      "manulife-investready-growth-annual-premium-bonus",
       "manulife-investready-growth-premium-bonus",
       "manulife-investready-growth-booster-bonus",
       "manulife-investready-growth-loyalty-bonus",
@@ -15577,7 +15722,35 @@
             ]
           }
         ],
-        "bonuses": [],
+        "bonuses": [
+          {
+            "id": "annual-premium-bonus",
+            "type": "allocation",
+            "label": "Annual Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "requiresPremiumsPaidUpToDate": true,
+            "requiredRegularPremiumPaymentFrequency": "annual",
+            "rate": 0.03,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied once on the first annual regular basic premium for the 15 Years Flexi 10 corridor when the policy is issued on annual premium payment frequency.",
+              "The product’s separate Premium Bonus, Booster Bonus, and annual-mode change handling remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Bonuses",
+                "excerpt": "B. Annual Premium Bonus A one-time Annual Premium Bonus will be given if the first regular basic premium is paid via the annual premium payment frequency as at the policy issue date. The Annual Premium Bonus is calculate"
+              }
+            ]
+          }
+        ],
         "feeRules": [
           {
             "id": "cost-of-insurance",
@@ -15907,13 +16080,14 @@
           0.08
         ],
         "warnings": [
-          "15 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published administrative-charge path using the accumulated minimum-premium base, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "15 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published administrative-charge path using the accumulated minimum-premium base, the one-time annual-premium bonus when the seed uses annual premium frequency, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
           "The administrative-charge base is interpreted as the future value of annualised regular basic premiums payable through the 10-year Flexi Start window, accumulated at 6% per annum. Keep monthly contribution aligned to the committed regular basic premium because post-Flexi premium variation remains informational only in V1.",
-          "Bonus mechanics, partial-withdrawal flexibility, dividend threshold behavior, and fund-level management charges remain informational only.",
+          "Premium Bonus, Booster Bonus, Loyalty Bonus, partial-withdrawal flexibility, dividend threshold behavior, and fund-level management charges remain informational only.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
-          "Welcome Bonus, Annual Premium Bonus, Premium Bonus, Booster Bonus, and Loyalty Bonus remain informational only.",
+          "Welcome Bonus, Premium Bonus, Booster Bonus, and Loyalty Bonus remain informational only.",
+          "Changing the regular premium payment mode from annual to a non-annual mode remains informational only.",
           "The partial-withdrawal flexibility corridor from policy year 6 and the life-stage-event waiver remain informational only.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
@@ -16007,7 +16181,35 @@
             ]
           }
         ],
-        "bonuses": [],
+        "bonuses": [
+          {
+            "id": "annual-premium-bonus",
+            "type": "allocation",
+            "label": "Annual Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "requiresPremiumsPaidUpToDate": true,
+            "requiredRegularPremiumPaymentFrequency": "annual",
+            "rate": 0.03,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied once on the first annual regular basic premium for the 20 Years Flexi 10 corridor when the policy is issued on annual premium payment frequency.",
+              "The product’s separate Premium Bonus, Booster Bonus, and annual-mode change handling remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Bonuses",
+                "excerpt": "B. Annual Premium Bonus A one-time Annual Premium Bonus will be given if the first regular basic premium is paid via the annual premium payment frequency as at the policy issue date. The Annual Premium Bonus is calculate"
+              }
+            ]
+          }
+        ],
         "feeRules": [
           {
             "id": "cost-of-insurance",
@@ -16367,13 +16569,14 @@
           0.08
         ],
         "warnings": [
-          "20 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published administrative-charge path using the accumulated minimum-premium base, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "20 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published administrative-charge path using the accumulated minimum-premium base, the one-time annual-premium bonus when the seed uses annual premium frequency, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
           "The administrative-charge base is interpreted as the future value of annualised regular basic premiums payable through the 10-year Flexi Start window, accumulated at 6% per annum. Keep monthly contribution aligned to the committed regular basic premium because post-Flexi premium variation remains informational only in V1.",
-          "Bonus mechanics, partial-withdrawal flexibility, dividend threshold behavior, and fund-level management charges remain informational only.",
+          "Premium Bonus, Booster Bonus, Loyalty Bonus, partial-withdrawal flexibility, dividend threshold behavior, and fund-level management charges remain informational only.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
-          "Welcome Bonus, Annual Premium Bonus, Premium Bonus, Booster Bonus, and Loyalty Bonus remain informational only.",
+          "Welcome Bonus, Premium Bonus, Booster Bonus, and Loyalty Bonus remain informational only.",
+          "Changing the regular premium payment mode from annual to a non-annual mode remains informational only.",
           "The partial-withdrawal flexibility corridor from policy year 6 and the life-stage-event waiver remain informational only.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
@@ -16435,6 +16638,7 @@
     "modeledEconomics": [
       "kernel:protected-base-assurance",
       "branch:manulife-investready-iii-welcome-bonus",
+      "branch:manulife-investready-iii-annual-premium-bonus",
       "branch:manulife-investready-iii-loyalty-bonus",
       "branch:manulife-investready-iii-administrative-charge",
       "branch:manulife-investready-iii-premium-shortfall-charge",
@@ -16444,7 +16648,6 @@
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "manulife-investready-iii-annual-premium-bonus",
       "manulife-investready-iii-top-up-underwriting",
       "manulife-investready-iii-dividend-payout-threshold",
       "manulife-investready-iii-reinvested-dividend-withdrawals",
@@ -16454,7 +16657,7 @@
       "manulife-investready-iii-fund-management-charge"
     ],
     "warnings": [
-      "Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter insured-life details and current premium bases, the published 1% / 2% welcome-bonus tiers, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface, while the annual-premium bonus payment-mode gate, flexi-start premium variation, benefit payouts, and fund-level charges remain informational only."
+      "Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter insured-life details and current premium bases, the published 1% / 2% welcome-bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface, while annual-mode clawback on later payment-mode changes, flexi-start premium variation, benefit payouts, and fund-level charges remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -16542,6 +16745,33 @@
                 "page": 4,
                 "section": "Welcome Bonus",
                 "excerpt": "Welcome Bonus rate is based on the table below: Welcome Bonus rates Minimum 5 Years 5 Years 6 Years 7 Years Investment Period Flexi 1 Flexi 4 Flexi 2 Flexi 5 Annualised $25,000 or $24,000 to $10,000 or $12,000 to Basic P"
+              }
+            ]
+          },
+          {
+            "id": "annual-premium-bonus",
+            "type": "allocation",
+            "label": "Annual Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "requiresPremiumsPaidUpToDate": true,
+            "requiredRegularPremiumPaymentFrequency": "annual",
+            "rate": 0,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied once on the first annual regular basic premium when the policy is issued on annual premium payment mode.",
+              "Any later change from annual to a non-annual premium payment mode during the premium-shortfall-charge period remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Loyalty Bonus",
+                "excerpt": "Loyalty Bonus rate is based on the table below: Loyalty Bonus rates Minimum 5 Years 5 Years 6 Years 7 Years 10 Years 10 Years 10 Years 13 Years Investment Flexi 1 Flexi 4 Flexi 2 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 "
               }
             ]
           },
@@ -16770,12 +17000,12 @@
           0.2
         ],
         "warnings": [
-          "Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the 5 Years Flexi 4 administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the published 1% / 2% welcome-bonus tiers, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
-          "Flexi-start premium variation, the annual-premium bonus payment-mode gate, partial-withdrawal amount limits, dividend threshold behavior, and fund-level management charges remain informational only.",
+          "Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the 5 Years Flexi 4 administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the published 1% / 2% welcome-bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "Flexi-start premium variation, annual-mode clawback on later payment-mode changes, partial-withdrawal amount limits, dividend threshold behavior, and fund-level management charges remain informational only.",
           "Dividend-paying funds seed reinvestment by default in V1. Cash payout requires a manual annual distribution-yield assumption and the published $40 minimum payout threshold remains informational only."
         ],
         "unsupportedItems": [
-          "Annual Premium Bonus remains informational only because the issue-time annual-payment election is not tracked in the current seed surface.",
+          "Changing the regular premium payment mode from annual to a non-annual mode during the premium-shortfall-charge period remains informational only.",
           "Top-up underwriting remains informational only.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
@@ -16843,6 +17073,7 @@
     "modeledEconomics": [
       "kernel:protected-base-assurance",
       "branch:manulife-investready-iii-welcome-bonus",
+      "branch:manulife-investready-iii-annual-premium-bonus",
       "branch:manulife-investready-iii-loyalty-bonus",
       "branch:manulife-investready-iii-administrative-charge",
       "branch:manulife-investready-iii-premium-shortfall-charge",
@@ -16853,7 +17084,6 @@
     ],
     "metadataOnlyBehaviors": [
       "manulife-investready-iii-policy-fee",
-      "manulife-investready-iii-annual-premium-bonus",
       "manulife-investready-iii-step-up-booster-bonus",
       "manulife-investready-iii-life-stage-partial-withdrawal",
       "manulife-investready-iii-dividend-payout-threshold",
@@ -16864,7 +17094,7 @@
       "manulife-investready-iii-reinstatement"
     ],
     "warnings": [
-      "Manulife InvestReady (III) Sep-2025 summary cohort is cataloged as a separate supported corridor set in V1. The parser captures the published administration-charge path, the 101% paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the Welcome Bonus tiers, the published Loyalty Bonus rates, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedules, the MIP full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface, while policy-fee thresholds, the annual-premium bonus payment-mode gate, Step-up Booster Bonus, life-stage withdrawal waivers, and fund-level charges remain outside the current engine."
+      "Manulife InvestReady (III) Sep-2025 summary cohort is cataloged as a separate supported corridor set in V1. The parser captures the published administration-charge path, the 101% paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the published Loyalty Bonus rates, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedules, the MIP full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface, while policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, life-stage withdrawal waivers, and fund-level charges remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -16945,6 +17175,33 @@
             ],
             "notes": [
               "Applied to the first 12 months of regular basic premium paid for the 5 Years Flexi 4 corridor, excluding top-up premiums."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome Bonus and Annual Premium Bonus",
+                "excerpt": "Welcome Bonus rate is based on the table below: Welcome Bonus Rates Minimum 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Investment Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 Period Annualised $24,000 to $12"
+              }
+            ]
+          },
+          {
+            "id": "annual-premium-bonus",
+            "type": "allocation",
+            "label": "Annual Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "requiresPremiumsPaidUpToDate": true,
+            "requiredRegularPremiumPaymentFrequency": "annual",
+            "rate": 0,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied once on the first annual regular basic premium for the 5 Years Flexi 4 corridor when the policy is issued on annual premium payment mode.",
+              "Any later change from annual to a non-annual premium payment mode during the premium-shortfall-charge period remains informational only in V1."
             ],
             "sourceRefs": [
               {
@@ -17189,13 +17446,13 @@
           0.2
         ],
         "warnings": [
-          "5 Years Flexi 4 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
-          "Policy-fee thresholds, the annual-premium bonus payment-mode gate, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "5 Years Flexi 4 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
-          "Annual Premium Bonus remains informational only because the issue-time annual-payment election is not tracked in the current seed surface.",
+          "Changing the regular premium payment mode from annual to a non-annual mode during the premium-shortfall-charge period remains informational only.",
           "Step-up Booster Bonus remains informational only.",
           "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
@@ -17329,6 +17586,33 @@
             ],
             "notes": [
               "Applied to the first 12 months of regular basic premium paid for the 7 Years Flexi 5 corridor, excluding top-up premiums."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome Bonus and Annual Premium Bonus",
+                "excerpt": "Welcome Bonus rate is based on the table below: Welcome Bonus Rates Minimum 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Investment Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 Period Annualised $24,000 to $12"
+              }
+            ]
+          },
+          {
+            "id": "annual-premium-bonus",
+            "type": "allocation",
+            "label": "Annual Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "requiresPremiumsPaidUpToDate": true,
+            "requiredRegularPremiumPaymentFrequency": "annual",
+            "rate": 0,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied once on the first annual regular basic premium for the 7 Years Flexi 5 corridor when the policy is issued on annual premium payment mode.",
+              "Any later change from annual to a non-annual premium payment mode during the premium-shortfall-charge period remains informational only in V1."
             ],
             "sourceRefs": [
               {
@@ -17590,13 +17874,13 @@
           0.05
         ],
         "warnings": [
-          "7 Years Flexi 5 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
-          "Policy-fee thresholds, the annual-premium bonus payment-mode gate, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "7 Years Flexi 5 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
-          "Annual Premium Bonus remains informational only because the issue-time annual-payment election is not tracked in the current seed surface.",
+          "Changing the regular premium payment mode from annual to a non-annual mode during the premium-shortfall-charge period remains informational only.",
           "Step-up Booster Bonus remains informational only.",
           "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
@@ -17730,6 +18014,33 @@
             ],
             "notes": [
               "Applied to the first 12 months of regular basic premium paid for the 10 Years Flexi 3 corridor, excluding top-up premiums."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome Bonus and Annual Premium Bonus",
+                "excerpt": "Welcome Bonus rate is based on the table below: Welcome Bonus Rates Minimum 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Investment Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 Period Annualised $24,000 to $12"
+              }
+            ]
+          },
+          {
+            "id": "annual-premium-bonus",
+            "type": "allocation",
+            "label": "Annual Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "requiresPremiumsPaidUpToDate": true,
+            "requiredRegularPremiumPaymentFrequency": "annual",
+            "rate": 0.02,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied once on the first annual regular basic premium for the 10 Years Flexi 3 corridor when the policy is issued on annual premium payment mode.",
+              "Any later change from annual to a non-annual premium payment mode during the premium-shortfall-charge period remains informational only in V1."
             ],
             "sourceRefs": [
               {
@@ -17999,13 +18310,13 @@
           0.08
         ],
         "warnings": [
-          "10 Years Flexi 3 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
-          "Policy-fee thresholds, the annual-premium bonus payment-mode gate, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "10 Years Flexi 3 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
-          "Annual Premium Bonus remains informational only because the issue-time annual-payment election is not tracked in the current seed surface.",
+          "Changing the regular premium payment mode from annual to a non-annual mode during the premium-shortfall-charge period remains informational only.",
           "Step-up Booster Bonus remains informational only.",
           "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
@@ -18139,6 +18450,33 @@
             ],
             "notes": [
               "Applied to the first 12 months of regular basic premium paid for the 10 Years Flexi 5 corridor, excluding top-up premiums."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome Bonus and Annual Premium Bonus",
+                "excerpt": "Welcome Bonus rate is based on the table below: Welcome Bonus Rates Minimum 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Investment Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 Period Annualised $24,000 to $12"
+              }
+            ]
+          },
+          {
+            "id": "annual-premium-bonus",
+            "type": "allocation",
+            "label": "Annual Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "requiresPremiumsPaidUpToDate": true,
+            "requiredRegularPremiumPaymentFrequency": "annual",
+            "rate": 0.05,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied once on the first annual regular basic premium for the 10 Years Flexi 5 corridor when the policy is issued on annual premium payment mode.",
+              "Any later change from annual to a non-annual premium payment mode during the premium-shortfall-charge period remains informational only in V1."
             ],
             "sourceRefs": [
               {
@@ -18418,13 +18756,13 @@
           0.08
         ],
         "warnings": [
-          "10 Years Flexi 5 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
-          "Policy-fee thresholds, the annual-premium bonus payment-mode gate, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "10 Years Flexi 5 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
-          "Annual Premium Bonus remains informational only because the issue-time annual-payment election is not tracked in the current seed surface.",
+          "Changing the regular premium payment mode from annual to a non-annual mode during the premium-shortfall-charge period remains informational only.",
           "Step-up Booster Bonus remains informational only.",
           "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
@@ -18558,6 +18896,33 @@
             ],
             "notes": [
               "Applied to the first 12 months of regular basic premium paid for the 10 Years Flexi 8 corridor, excluding top-up premiums."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome Bonus and Annual Premium Bonus",
+                "excerpt": "Welcome Bonus rate is based on the table below: Welcome Bonus Rates Minimum 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Investment Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 Period Annualised $24,000 to $12"
+              }
+            ]
+          },
+          {
+            "id": "annual-premium-bonus",
+            "type": "allocation",
+            "label": "Annual Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "requiresPremiumsPaidUpToDate": true,
+            "requiredRegularPremiumPaymentFrequency": "annual",
+            "rate": 0.05,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied once on the first annual regular basic premium for the 10 Years Flexi 8 corridor when the policy is issued on annual premium payment mode.",
+              "Any later change from annual to a non-annual premium payment mode during the premium-shortfall-charge period remains informational only in V1."
             ],
             "sourceRefs": [
               {
@@ -18852,13 +19217,13 @@
           0.08
         ],
         "warnings": [
-          "10 Years Flexi 8 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
-          "Policy-fee thresholds, the annual-premium bonus payment-mode gate, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "10 Years Flexi 8 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
-          "Annual Premium Bonus remains informational only because the issue-time annual-payment election is not tracked in the current seed surface.",
+          "Changing the regular premium payment mode from annual to a non-annual mode during the premium-shortfall-charge period remains informational only.",
           "Step-up Booster Bonus remains informational only.",
           "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
@@ -18992,6 +19357,33 @@
             ],
             "notes": [
               "Applied to the first 12 months of regular basic premium paid for the 13 Years Flexi 10 corridor, excluding top-up premiums."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Welcome Bonus and Annual Premium Bonus",
+                "excerpt": "Welcome Bonus rate is based on the table below: Welcome Bonus Rates Minimum 5 Years 7 Years 10 Years 10 Years 10 Years 13 Years Investment Flexi 4 Flexi 5 Flexi 3 Flexi 5 Flexi 8 Flexi 10 Period Annualised $24,000 to $12"
+              }
+            ]
+          },
+          {
+            "id": "annual-premium-bonus",
+            "type": "allocation",
+            "label": "Annual Premium Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "requiresPremiumsPaidUpToDate": true,
+            "requiredRegularPremiumPaymentFrequency": "annual",
+            "rate": 0.05,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Applied once on the first annual regular basic premium for the 13 Years Flexi 10 corridor when the policy is issued on annual premium payment mode.",
+              "Any later change from annual to a non-annual premium payment mode during the premium-shortfall-charge period remains informational only in V1."
             ],
             "sourceRefs": [
               {
@@ -19314,13 +19706,13 @@
           0.08
         ],
         "warnings": [
-          "13 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
-          "Policy-fee thresholds, the annual-premium bonus payment-mode gate, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
+          "13 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
-          "Annual Premium Bonus remains informational only because the issue-time annual-payment election is not tracked in the current seed surface.",
+          "Changing the regular premium payment mode from annual to a non-annual mode during the premium-shortfall-charge period remains informational only.",
           "Step-up Booster Bonus remains informational only.",
           "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",

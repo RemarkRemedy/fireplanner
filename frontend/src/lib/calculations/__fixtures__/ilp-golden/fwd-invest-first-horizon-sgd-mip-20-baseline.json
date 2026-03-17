@@ -10,6 +10,7 @@
     "coverageTags": [
       "baseline",
       "kernel:protected-base-assurance",
+      "branch:fwd-invest-first-horizon-annual-premium-bonus",
       "branch:fwd-invest-first-horizon-initial-account-charge",
       "branch:fwd-invest-first-horizon-insurance-charge",
       "branch:fwd-invest-first-horizon-initial-account-surrender-charge"
@@ -116,7 +117,25 @@
         "grossReturnHigh": 0.08
       }
     ],
-    "bonuses": [],
+    "bonuses": [
+      {
+        "id": "annual-premium-bonus",
+        "type": "allocation",
+        "label": "Annual Premium Bonus",
+        "mode": "premium-allocation",
+        "rate": 0.01,
+        "amount": 0,
+        "appliesTo": [
+          "initial"
+        ],
+        "startPolicyYear": 1,
+        "endPolicyYear": 5,
+        "requiresPremiumsPaidUpToDate": true,
+        "requiredRegularPremiumPaymentFrequency": "annual",
+        "tieredRates": [],
+        "suspensionRules": []
+      }
+    ],
     "chargeRules": [
       {
         "id": "initial-account-charge",
@@ -308,6 +327,7 @@
       "structureStatus": "structured",
       "modeledEconomics": [
         "kernel:protected-base-assurance",
+        "branch:fwd-invest-first-horizon-annual-premium-bonus",
         "branch:fwd-invest-first-horizon-initial-account-charge",
         "branch:fwd-invest-first-horizon-insurance-charge",
         "branch:fwd-invest-first-horizon-premium-reduction-charge",
@@ -320,7 +340,6 @@
         "fwd-invest-first-horizon-premium-pause-waiver",
         "fwd-invest-first-horizon-support-benefit-waiver",
         "fwd-invest-first-horizon-booster-bonus",
-        "fwd-invest-first-horizon-annual-premium-bonus",
         "fwd-invest-first-horizon-loyalty-bonus",
         "fwd-invest-first-horizon-repayment-bonus-restoration",
         "fwd-invest-first-horizon-top-up-repayment-waterfall",
@@ -335,12 +354,14 @@
     "catalogWarnings": [
       "FWD Invest First Horizon is cataloged as a supported V1 product. The parser currently covers the published 20-year and 25-year regular-premium corridors through the fixed-premium-base initial-account charge, Appendix B insurance charge, premium-reduction charge, top-up premium charge, initial-account redemption-fee, and surrender-charge surfaces that fit the existing charge and surrender kernels.",
       "Premium shortfall / Premium Pause Waiver behavior, bonus mechanics, repayment waterfalls, and withdrawal eligibility gates remain metadata-only.",
-      "FWD Invest First Horizon (20-year premium payment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the Appendix B insurance charge, the premium-reduction charge schedule, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.",
+      "FWD Invest First Horizon (20-year premium payment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the annual-premium bonus under the annual premium-frequency assumption, the Appendix B insurance charge, the premium-reduction charge schedule, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.",
       "Premium shortfall charge remains informational only because the automatic 24-month Premium Pause Waiver cannot be expressed exactly in the current event kernel without miscounting year-3 missed premiums.",
-      "Booster Bonus, Annual Premium Bonus, Loyalty Bonus, repayment waterfalls, and withdrawal-eligibility gates remain metadata-only.",
+      "Booster Bonus, Loyalty Bonus, repayment waterfalls, payment-frequency changes after issue, and withdrawal-eligibility gates remain metadata-only.",
+      "This seed assumes the regular premium is paid on the annual frequency option so the published annual-premium bonus path can execute. Change Regular Premium Payment Frequency in Policy Details if the policy uses a non-annual mode.",
       "Premium shortfall charge remains informational only because the automatic 24-month Premium Pause Waiver starts only from policy year 4 and is not modeled exactly in V1.",
       "Policy year 3 non-payment behavior, Support Benefit approvals, and Premium Pause Waiver month accounting remain informational only.",
-      "Booster Bonus, Annual Premium Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.",
+      "Booster Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.",
+      "Changing the regular premium payment frequency after issue remains informational only.",
       "Top-up repayment precedence for missed premiums, prior withdrawals, and prior premium reductions remains informational only.",
       "Top-up eligibility from policy year 2, total top-up cap, minimum top-up amount, and minimum withdrawal requirements remain informational only.",
       "Initial-units-account withdrawal lockout in the first two policy years, the 50%-minus-prior-withdrawals partial-withdrawal limit, and minimum account-value gates remain informational only.",

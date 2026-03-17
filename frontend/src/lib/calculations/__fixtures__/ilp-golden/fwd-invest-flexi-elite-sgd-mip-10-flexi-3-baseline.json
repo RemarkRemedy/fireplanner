@@ -11,6 +11,7 @@
       "baseline",
       "kernel:protected-base-assurance",
       "kernel:distribution-mode-assumption",
+      "branch:fwd-invest-flexi-elite-annual-premium-bonus",
       "branch:fwd-invest-flexi-elite-initial-account-charge",
       "branch:fwd-invest-flexi-elite-insurance-charge",
       "branch:fwd-invest-flexi-elite-initial-account-surrender-charge"
@@ -107,7 +108,25 @@
         "grossReturnHigh": 0.08
       }
     ],
-    "bonuses": [],
+    "bonuses": [
+      {
+        "id": "annual-premium-bonus",
+        "type": "allocation",
+        "label": "Annual Premium Bonus",
+        "mode": "premium-allocation",
+        "rate": 0.02,
+        "amount": 0,
+        "appliesTo": [
+          "initial"
+        ],
+        "startPolicyYear": 1,
+        "endPolicyYear": 1,
+        "requiresPremiumsPaidUpToDate": true,
+        "requiredRegularPremiumPaymentFrequency": "annual",
+        "tieredRates": [],
+        "suspensionRules": []
+      }
+    ],
     "chargeRules": [
       {
         "id": "initial-account-charge",
@@ -211,6 +230,7 @@
       "structureStatus": "structured",
       "modeledEconomics": [
         "kernel:protected-base-assurance",
+        "branch:fwd-invest-flexi-elite-annual-premium-bonus",
         "branch:fwd-invest-flexi-elite-initial-account-charge",
         "branch:fwd-invest-flexi-elite-insurance-charge",
         "branch:fwd-invest-flexi-elite-top-up-premium-charge",
@@ -223,7 +243,6 @@
         "fwd-invest-flexi-elite-involuntary-unemployment-benefit",
         "fwd-invest-flexi-elite-premium-shortfall-charge-refund",
         "fwd-invest-flexi-elite-booster-bonus",
-        "fwd-invest-flexi-elite-annual-premium-bonus",
         "fwd-invest-flexi-elite-contribution-bonus",
         "fwd-invest-flexi-elite-free-partial-withdrawal-benefit",
         "fwd-invest-flexi-elite-partial-withdrawal-limits",
@@ -238,12 +257,14 @@
     "catalogWarnings": [
       "FWD Invest Flexi Elite is cataloged as a supported V1 product. The current parser covers the published initial-account-value charge, monthly insurance charge, top-up premium charge, redemption-fee schedule, surrender-charge schedule, and reinvest-default distribution support that fit the existing kernels.",
       "Premium shortfall / unemployment-waiver behavior, bonuses, Free Partial Withdrawal Benefit, and broader premium-flexibility behavior remain metadata-only.",
-      "FWD Invest Flexi Elite (10 years – (3 flexi)) is cataloged as a supported V1 product. The parser captures the published initial-account-value charge, monthly insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.",
+      "FWD Invest Flexi Elite (10 years – (3 flexi)) is cataloged as a supported V1 product. The parser captures the published initial-account-value charge, the one-time annual-premium bonus under the annual premium-frequency assumption, the monthly insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.",
       "Premium shortfall charge remains informational only because the published unemployment waiver, refund, and restart timing cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.",
-      "Booster Bonus, Annual Premium Bonus, Contribution Bonus, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain metadata-only.",
+      "Booster Bonus, Contribution Bonus, payment-frequency changes after issue, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain metadata-only.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
+      "This seed assumes the regular premium is paid on the annual frequency option so the published annual-premium bonus path can execute. Change Regular Premium Payment Frequency in Policy Details if the policy uses a non-annual mode.",
       "Premium shortfall charge remains informational only because the unemployment waiver, refund, and variant-specific charge periods are not modeled exactly in V1.",
-      "Booster Bonus, Annual Premium Bonus, and Contribution Bonus remain informational only.",
+      "Booster Bonus and Contribution Bonus remain informational only.",
+      "Changing the regular premium payment frequency after issue remains informational only.",
       "Free Partial Withdrawal Benefit eligibility, capped fee waivers, and life-event proof requirements remain informational only.",
       "Partial-withdrawal limit formulas, minimum withdrawal requirements, and minimum account-value gates remain informational only.",
       "Regular-premium reduction and increase windows, top-up eligibility gates, and premium-payment continuation after the minimum investment term remain informational only.",

@@ -27,6 +27,7 @@ describe('parseFwdInvestFirstHorizon', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'kernel:protected-base-assurance',
+      'branch:fwd-invest-first-horizon-annual-premium-bonus',
       'branch:fwd-invest-first-horizon-initial-account-charge',
       'branch:fwd-invest-first-horizon-insurance-charge',
       'branch:fwd-invest-first-horizon-premium-reduction-charge',
@@ -36,6 +37,7 @@ describe('parseFwdInvestFirstHorizon', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('fwd-invest-first-horizon-premium-shortfall-charge')
     expect(product.metadataOnlyBehaviors).toContain('fwd-invest-first-horizon-premium-pause-waiver')
+    expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-first-horizon-annual-premium-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-first-horizon-insurance-charge')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-20',
@@ -61,6 +63,17 @@ describe('parseFwdInvestFirstHorizon', () => {
         contributionRules: [
           { phase: 'top-up', targetAccountId: 'accumulation', contributionShare: 1 },
         ],
+      }),
+    ])
+    expect(twentyYearVariant?.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'annual-premium-bonus',
+        mode: 'premium-allocation',
+        rate: 0.01,
+        startPolicyYear: 1,
+        endPolicyYear: 5,
+        requiresPremiumsPaidUpToDate: true,
+        requiredRegularPremiumPaymentFrequency: 'annual',
       }),
     ])
     expect(twentyYearVariant?.feeRules).toEqual([
@@ -141,6 +154,17 @@ describe('parseFwdInvestFirstHorizon', () => {
     expect(twentyFiveYearVariant).toBeDefined()
     expect(twentyFiveYearVariant?.mipBasis).toBe('finite')
     expect(twentyFiveYearVariant?.mipLength).toBe(25)
+    expect(twentyFiveYearVariant?.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'annual-premium-bonus',
+        mode: 'premium-allocation',
+        rate: 0.01,
+        startPolicyYear: 1,
+        endPolicyYear: 5,
+        requiresPremiumsPaidUpToDate: true,
+        requiredRegularPremiumPaymentFrequency: 'annual',
+      }),
+    ])
     expect(twentyFiveYearVariant?.eecTable).toHaveLength(25)
     expect(twentyFiveYearVariant?.eecTable.at(-1)).toBe(0.05)
   }, 30_000)

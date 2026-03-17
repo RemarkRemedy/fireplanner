@@ -24,6 +24,7 @@ const WELCOME_BONUS_TIERS = [
   { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 47_999.99, rate: 0.01 },
   { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.02 },
 ] as const
+const ANNUAL_PREMIUM_BONUS_RATE = 0
 
 const WITHDRAWAL_AND_SURRENDER_CHARGE_SCHEDULE = [1, 1, 0.75, 0.4, 0.2] as const
 
@@ -86,6 +87,25 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
         'The supported SGD 5 Years Flexi 4 corridor uses the published 1% / 2% welcome-bonus tiers by annualised basic premium.',
       ],
       sourceRefs: [page4],
+    },
+    {
+      id: 'annual-premium-bonus',
+      type: 'allocation',
+      label: 'Annual Premium Bonus',
+      mode: 'premium-allocation',
+      appliesTo: ['policy'],
+      startPolicyYear: 1,
+      endPolicyYear: 1,
+      rate: ANNUAL_PREMIUM_BONUS_RATE,
+      amount: null,
+      requiresPremiumsPaidUpToDate: true,
+      requiredRegularPremiumPaymentFrequency: 'annual',
+      tieredRates: [],
+      notes: [
+        'Applied once on the first annual regular basic premium when the policy is issued on annual premium payment mode.',
+        'Any later change from annual to a non-annual premium payment mode during the premium-shortfall-charge period remains informational only in V1.',
+      ],
+      sourceRefs: [page5],
     },
     {
       id: 'loyalty-bonus',
@@ -235,12 +255,12 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...WITHDRAWAL_AND_SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      'Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the 5 Years Flexi 4 administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the published 1% / 2% welcome-bonus tiers, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.',
-      'Flexi-start premium variation, the annual-premium bonus payment-mode gate, partial-withdrawal amount limits, dividend threshold behavior, and fund-level management charges remain informational only.',
+      'Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the 5 Years Flexi 4 administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the published 1% / 2% welcome-bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.',
+      'Flexi-start premium variation, annual-mode clawback on later payment-mode changes, partial-withdrawal amount limits, dividend threshold behavior, and fund-level management charges remain informational only.',
       'Dividend-paying funds seed reinvestment by default in V1. Cash payout requires a manual annual distribution-yield assumption and the published $40 minimum payout threshold remains informational only.',
     ],
     unsupportedItems: [
-      'Annual Premium Bonus remains informational only because the issue-time annual-payment election is not tracked in the current seed surface.',
+      'Changing the regular premium payment mode from annual to a non-annual mode during the premium-shortfall-charge period remains informational only.',
       'Top-up underwriting remains informational only.',
       'The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.',
       'Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.',
@@ -268,6 +288,7 @@ export function parseManulifeInvestreadyIii(context: ParseContext): IlpCatalogPr
     modeledEconomics: [
       'kernel:protected-base-assurance',
       'branch:manulife-investready-iii-welcome-bonus',
+      'branch:manulife-investready-iii-annual-premium-bonus',
       'branch:manulife-investready-iii-loyalty-bonus',
       'branch:manulife-investready-iii-administrative-charge',
       'branch:manulife-investready-iii-premium-shortfall-charge',
@@ -277,7 +298,6 @@ export function parseManulifeInvestreadyIii(context: ParseContext): IlpCatalogPr
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'manulife-investready-iii-annual-premium-bonus',
       'manulife-investready-iii-top-up-underwriting',
       'manulife-investready-iii-dividend-payout-threshold',
       'manulife-investready-iii-reinvested-dividend-withdrawals',
@@ -287,7 +307,7 @@ export function parseManulifeInvestreadyIii(context: ParseContext): IlpCatalogPr
       'manulife-investready-iii-fund-management-charge',
     ],
     warnings: [
-      'Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter insured-life details and current premium bases, the published 1% / 2% welcome-bonus tiers, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface, while the annual-premium bonus payment-mode gate, flexi-start premium variation, benefit payouts, and fund-level charges remain informational only.',
+      'Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter insured-life details and current premium bases, the published 1% / 2% welcome-bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface, while annual-mode clawback on later payment-mode changes, flexi-start premium variation, benefit payouts, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

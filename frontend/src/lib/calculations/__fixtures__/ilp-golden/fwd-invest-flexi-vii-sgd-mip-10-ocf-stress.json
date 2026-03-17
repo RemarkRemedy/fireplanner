@@ -102,7 +102,25 @@
         "grossReturnHigh": 0.075
       }
     ],
-    "bonuses": [],
+    "bonuses": [
+      {
+        "id": "annual-premium-bonus",
+        "type": "allocation",
+        "label": "Annual Premium Bonus",
+        "mode": "premium-allocation",
+        "rate": 0.01,
+        "amount": 0,
+        "appliesTo": [
+          "initial"
+        ],
+        "startPolicyYear": 1,
+        "endPolicyYear": 7,
+        "requiresPremiumsPaidUpToDate": true,
+        "requiredRegularPremiumPaymentFrequency": "annual",
+        "tieredRates": [],
+        "suspensionRules": []
+      }
+    ],
     "chargeRules": [
       {
         "id": "initial-account-charge",
@@ -248,6 +266,7 @@
       "structureStatus": "structured",
       "modeledEconomics": [
         "kernel:protected-base-assurance",
+        "branch:fwd-invest-flexi-vii-annual-premium-bonus",
         "branch:fwd-invest-flexi-vii-initial-account-charge",
         "branch:fwd-invest-flexi-vii-insurance-charge",
         "branch:fwd-invest-flexi-vii-top-up-premium-charge",
@@ -259,7 +278,6 @@
         "fwd-invest-flexi-vii-premium-pause-waiver",
         "fwd-invest-flexi-vii-support-benefit-waiver-and-refund",
         "fwd-invest-flexi-vii-booster-bonus",
-        "fwd-invest-flexi-vii-annual-premium-bonus",
         "fwd-invest-flexi-vii-loyalty-bonus",
         "fwd-invest-flexi-vii-repayment-bonus-restoration",
         "fwd-invest-flexi-vii-top-up-repayment-waterfall",
@@ -274,12 +292,14 @@
     "catalogWarnings": [
       "FWD Invest Flexi VII is cataloged as a supported V1 product. The current parser covers the published fixed-premium-base initial-account charge, Appendix B insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule through the existing two-account and surrender kernels.",
       "Premium shortfall / Premium Pause Waiver behavior, bonuses, repayment waterfalls, and broader withdrawal / premium-flexibility behavior remain metadata-only.",
-      "FWD Invest Flexi VII (SGD / 10-year minimum investment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the Appendix B insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.",
+      "FWD Invest Flexi VII (SGD / 10-year minimum investment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the annual-premium bonus under the annual premium-frequency assumption, the Appendix B insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.",
       "Premium shortfall charge remains informational only because the automatic 12-month Premium Pause Waiver cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.",
-      "Booster Bonus, Annual Premium Bonus, Loyalty Bonus, repayment waterfalls, and withdrawal eligibility gates remain outside the current engine.",
+      "Booster Bonus, Loyalty Bonus, repayment waterfalls, payment-frequency changes after issue, and withdrawal eligibility gates remain outside the current engine.",
+      "This seed assumes the regular premium is paid on the annual frequency option so the published annual-premium bonus path can execute. Change Regular Premium Payment Frequency in Policy Details if the policy uses a non-annual mode.",
       "Premium shortfall charge remains informational only because the automatic 12-month Premium Pause Waiver on missed premiums is not modeled exactly in V1.",
       "Support Benefit approvals and premium-shortfall-charge refund / waiver behavior remain informational only.",
-      "Booster Bonus, Annual Premium Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.",
+      "Booster Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.",
+      "Changing the regular premium payment frequency after issue remains informational only.",
       "Top-up repayment precedence for missed premiums, prior withdrawals, and prior regular-premium reductions remains informational only.",
       "Regular-premium reduction and restoration mechanics from policy year 8 onward remain informational only.",
       "Initial-units-account withdrawal lockout in the first two policy years, minimum withdrawal requirements, minimum account-value gates, and regular-withdrawal elections remain informational only.",

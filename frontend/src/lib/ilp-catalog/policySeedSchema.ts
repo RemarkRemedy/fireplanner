@@ -16,6 +16,7 @@ export const ilpPolicySeedSchema = z.object({
   insurer: z.string().max(100),
   currency: z.enum(['SGD', 'USD']),
   monthlyContribution: z.number().min(0).max(100_000),
+  regularPremiumPaymentFrequency: z.enum(['annual', 'semi-annual', 'quarterly', 'monthly']).optional(),
   initialSinglePremium: z.number().min(0).max(100_000_000).optional(),
   monthsAlreadyPaid: z.number().int().min(0).max(1_200),
   currentPolicyYear: z.number().int().min(1).max(100),

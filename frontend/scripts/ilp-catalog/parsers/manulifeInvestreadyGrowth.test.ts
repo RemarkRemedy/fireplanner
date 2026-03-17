@@ -27,6 +27,7 @@ describe('parseManulifeInvestreadyGrowth', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'kernel:protected-base-assurance',
+      'branch:manulife-investready-growth-annual-premium-bonus',
       'branch:manulife-investready-growth-administrative-charge',
       'branch:manulife-investready-growth-premium-shortfall-charge',
       'branch:manulife-investready-growth-top-up-charge',
@@ -37,6 +38,7 @@ describe('parseManulifeInvestreadyGrowth', () => {
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-growth-post-flexi-premium-variation')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-growth-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-growth-benefit-payout-handling')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-annual-premium-bonus')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-15-flexi-10',
       'sgd-mip-20-flexi-10',
@@ -93,6 +95,17 @@ describe('parseManulifeInvestreadyGrowth', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
+    expect(firstVariant?.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'annual-premium-bonus',
+        mode: 'premium-allocation',
+        rate: 0.03,
+        startPolicyYear: 1,
+        endPolicyYear: 1,
+        requiresPremiumsPaidUpToDate: true,
+        requiredRegularPremiumPaymentFrequency: 'annual',
+      }),
+    ])
     expect(firstVariant?.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'premium-shortfall-charge',

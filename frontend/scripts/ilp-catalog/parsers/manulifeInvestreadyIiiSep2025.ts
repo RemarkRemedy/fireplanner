@@ -20,6 +20,7 @@ const VARIANTS = [
     label: '5 Years Flexi 4',
     mipLength: 5,
     postMipFeeRate: 0.01,
+    annualPremiumBonusRate: 0,
     welcomeBonusTiers: [
       { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 59_999.99, rate: 0.01 },
       { currency: 'SGD', minAnnualPremium: 60_000, maxAnnualPremium: null, rate: 0.02 },
@@ -37,6 +38,7 @@ const VARIANTS = [
     label: '7 Years Flexi 5',
     mipLength: 7,
     postMipFeeRate: 0.01,
+    annualPremiumBonusRate: 0,
     welcomeBonusTiers: [
       { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 47_999.99, rate: 0.07 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.12 },
@@ -55,6 +57,7 @@ const VARIANTS = [
     label: '10 Years Flexi 3',
     mipLength: 10,
     postMipFeeRate: 0.007,
+    annualPremiumBonusRate: 0.02,
     welcomeBonusTiers: [
       { currency: 'SGD', minAnnualPremium: 6_000, maxAnnualPremium: 9_599.99, rate: 0.13 },
       { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.2 },
@@ -71,6 +74,7 @@ const VARIANTS = [
     label: '10 Years Flexi 5',
     mipLength: 10,
     postMipFeeRate: 0.007,
+    annualPremiumBonusRate: 0.05,
     welcomeBonusTiers: [
       { currency: 'SGD', minAnnualPremium: 6_000, maxAnnualPremium: 9_599.99, rate: 0.16 },
       { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.31 },
@@ -89,6 +93,7 @@ const VARIANTS = [
     label: '10 Years Flexi 8',
     mipLength: 10,
     postMipFeeRate: 0.007,
+    annualPremiumBonusRate: 0.05,
     welcomeBonusTiers: [
       { currency: 'SGD', minAnnualPremium: 6_000, maxAnnualPremium: 9_599.99, rate: 0.21 },
       { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.38 },
@@ -110,6 +115,7 @@ const VARIANTS = [
     label: '13 Years Flexi 10',
     mipLength: 13,
     postMipFeeRate: 0.007,
+    annualPremiumBonusRate: 0.05,
     welcomeBonusTiers: [
       { currency: 'SGD', minAnnualPremium: 3_600, maxAnnualPremium: 9_599.99, rate: 0.25 },
       { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.55 },
@@ -187,6 +193,25 @@ function buildBonuses(
       tieredRates: variantDefinition.welcomeBonusTiers.map((tier) => ({ ...tier })),
       notes: [
         `Applied to the first 12 months of regular basic premium paid for the ${variantDefinition.label} corridor, excluding top-up premiums.`,
+      ],
+      sourceRefs: [page4],
+    },
+    {
+      id: 'annual-premium-bonus',
+      type: 'allocation',
+      label: 'Annual Premium Bonus',
+      mode: 'premium-allocation',
+      appliesTo: ['policy'],
+      startPolicyYear: 1,
+      endPolicyYear: 1,
+      rate: variantDefinition.annualPremiumBonusRate,
+      amount: null,
+      requiresPremiumsPaidUpToDate: true,
+      requiredRegularPremiumPaymentFrequency: 'annual',
+      tieredRates: [],
+      notes: [
+        `Applied once on the first annual regular basic premium for the ${variantDefinition.label} corridor when the policy is issued on annual premium payment mode.`,
+        'Any later change from annual to a non-annual premium payment mode during the premium-shortfall-charge period remains informational only in V1.',
       ],
       sourceRefs: [page4],
     },
@@ -345,13 +370,13 @@ function buildVariant(
     },
     eecTable: [...variantDefinition.surrenderChargeSchedule],
     warnings: [
-      `${variantDefinition.label} is cataloged as a supported V1 corridor. The parser captures the published 2.50% / ${(variantDefinition.postMipFeeRate * 100).toFixed(2)}% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.`,
-      'Policy-fee thresholds, the annual-premium bonus payment-mode gate, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.',
+      `${variantDefinition.label} is cataloged as a supported V1 corridor. The parser captures the published 2.50% / ${(variantDefinition.postMipFeeRate * 100).toFixed(2)}% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.`,
+      'Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.',
       'The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.',
     ],
     unsupportedItems: [
       'Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.',
-      'Annual Premium Bonus remains informational only because the issue-time annual-payment election is not tracked in the current seed surface.',
+      'Changing the regular premium payment mode from annual to a non-annual mode during the premium-shortfall-charge period remains informational only.',
       'Step-up Booster Bonus remains informational only.',
       'Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.',
       'Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.',
@@ -379,6 +404,7 @@ export function parseManulifeInvestreadyIiiSep2025(context: ParseContext): IlpCa
     modeledEconomics: [
       'kernel:protected-base-assurance',
       'branch:manulife-investready-iii-welcome-bonus',
+      'branch:manulife-investready-iii-annual-premium-bonus',
       'branch:manulife-investready-iii-loyalty-bonus',
       'branch:manulife-investready-iii-administrative-charge',
       'branch:manulife-investready-iii-premium-shortfall-charge',
@@ -389,7 +415,6 @@ export function parseManulifeInvestreadyIiiSep2025(context: ParseContext): IlpCa
     ],
     metadataOnlyBehaviors: [
       'manulife-investready-iii-policy-fee',
-      'manulife-investready-iii-annual-premium-bonus',
       'manulife-investready-iii-step-up-booster-bonus',
       'manulife-investready-iii-life-stage-partial-withdrawal',
       'manulife-investready-iii-dividend-payout-threshold',
@@ -400,7 +425,7 @@ export function parseManulifeInvestreadyIiiSep2025(context: ParseContext): IlpCa
       'manulife-investready-iii-reinstatement',
     ],
     warnings: [
-      'Manulife InvestReady (III) Sep-2025 summary cohort is cataloged as a separate supported corridor set in V1. The parser captures the published administration-charge path, the 101% paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the Welcome Bonus tiers, the published Loyalty Bonus rates, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedules, the MIP full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface, while policy-fee thresholds, the annual-premium bonus payment-mode gate, Step-up Booster Bonus, life-stage withdrawal waivers, and fund-level charges remain outside the current engine.',
+      'Manulife InvestReady (III) Sep-2025 summary cohort is cataloged as a separate supported corridor set in V1. The parser captures the published administration-charge path, the 101% paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the published Loyalty Bonus rates, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedules, the MIP full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface, while policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, life-stage withdrawal waivers, and fund-level charges remain outside the current engine.',
     ],
     archived: false,
     variants: VARIANTS.map((variant) => buildVariant(context.document, variant)),

@@ -1744,6 +1744,83 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[1], 'aua1').bonusCredit).toBeCloseTo(105, 2)
   })
 
+  it('applies premium-allocation bonuses gated by annual payment frequency', () => {
+    const bonusAccount: IlpAccount = {
+      id: 'bonus',
+      label: 'Bonus Account',
+      feeRate: 0,
+      currentValue: 0,
+      contributionShare: 1,
+      subjectToEec: false,
+      postMipFeeRate: null,
+    }
+    const annualFrequencyBonus: IlpBonusRule = {
+      id: 'annual-premium-bonus',
+      type: 'allocation',
+      label: 'Annual Premium Bonus',
+      mode: 'premium-allocation',
+      rate: 0.1,
+      amount: 0,
+      appliesTo: ['bonus'],
+      startPolicyYear: 2,
+      endPolicyYear: 2,
+      requiredRegularPremiumPaymentFrequency: 'annual',
+    }
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 1,
+      monthsAlreadyPaid: 0,
+      mipLength: 2,
+      postMipYears: 0,
+      accounts: [bonusAccount],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [annualFrequencyBonus],
+      chargeRules: [],
+      regularPremiumPaymentFrequency: 'annual',
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'bonus').bonusCredit).toBeCloseTo(420, 2)
+  })
+
+  it('suppresses premium-allocation bonuses when the required payment frequency does not match', () => {
+    const bonusAccount: IlpAccount = {
+      id: 'bonus',
+      label: 'Bonus Account',
+      feeRate: 0,
+      currentValue: 0,
+      contributionShare: 1,
+      subjectToEec: false,
+      postMipFeeRate: null,
+    }
+    const annualFrequencyBonus: IlpBonusRule = {
+      id: 'annual-premium-bonus',
+      type: 'allocation',
+      label: 'Annual Premium Bonus',
+      mode: 'premium-allocation',
+      rate: 0.1,
+      amount: 0,
+      appliesTo: ['bonus'],
+      startPolicyYear: 2,
+      endPolicyYear: 2,
+      requiredRegularPremiumPaymentFrequency: 'annual',
+    }
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 1,
+      monthsAlreadyPaid: 0,
+      mipLength: 2,
+      postMipYears: 0,
+      accounts: [bonusAccount],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [annualFrequencyBonus],
+      chargeRules: [],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'bonus').bonusCredit).toBe(0)
+  })
+
   it('does not let top-ups inflate premium-allocation bonuses', () => {
     const bonusAccount: IlpAccount = {
       id: 'bonus',

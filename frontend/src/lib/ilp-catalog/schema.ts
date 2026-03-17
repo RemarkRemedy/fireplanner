@@ -42,6 +42,7 @@ export const ilpTemplateBonusSchema = z.object({
   yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   cadenceYears: z.number().int().min(1).max(100).optional(),
   requiresPremiumsPaidUpToDate: z.boolean().optional(),
+  requiredRegularPremiumPaymentFrequency: z.enum(['annual', 'semi-annual', 'quarterly', 'monthly']).optional(),
   rate: z.number().min(0).max(1).nullable(),
   amount: z.number().min(0).max(100_000_000).nullable(),
   tieredRates: z.array(ilpTemplateBonusTierSchema),

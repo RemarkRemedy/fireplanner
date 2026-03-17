@@ -11,6 +11,7 @@
       "baseline",
       "kernel:protected-base-assurance",
       "kernel:distribution-mode-assumption",
+      "branch:manulife-investready-growth-annual-premium-bonus",
       "branch:manulife-investready-growth-administrative-charge",
       "branch:manulife-investready-growth-full-surrender-charge"
     ],
@@ -103,7 +104,25 @@
         "grossReturnHigh": 0.07
       }
     ],
-    "bonuses": [],
+    "bonuses": [
+      {
+        "id": "annual-premium-bonus",
+        "type": "allocation",
+        "label": "Annual Premium Bonus",
+        "mode": "premium-allocation",
+        "rate": 0.03,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 1,
+        "endPolicyYear": 1,
+        "requiresPremiumsPaidUpToDate": true,
+        "requiredRegularPremiumPaymentFrequency": "annual",
+        "tieredRates": [],
+        "suspensionRules": []
+      }
+    ],
     "chargeRules": [
       {
         "id": "cost-of-insurance",
@@ -367,6 +386,7 @@
       "structureStatus": "structured",
       "modeledEconomics": [
         "kernel:protected-base-assurance",
+        "branch:manulife-investready-growth-annual-premium-bonus",
         "branch:manulife-investready-growth-administrative-charge",
         "branch:manulife-investready-growth-premium-shortfall-charge",
         "branch:manulife-investready-growth-top-up-charge",
@@ -376,7 +396,6 @@
       ],
       "metadataOnlyBehaviors": [
         "manulife-investready-growth-welcome-bonus",
-        "manulife-investready-growth-annual-premium-bonus",
         "manulife-investready-growth-premium-bonus",
         "manulife-investready-growth-booster-bonus",
         "manulife-investready-growth-loyalty-bonus",
@@ -394,12 +413,14 @@
     },
     "catalogWarnings": [
       "Manulife InvestReady Growth is cataloged as a supported V1 corridor. The parser captures the accumulated-minimum-premium administrative-charge path, the paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal and full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface, while bonus mechanics, partial-withdrawal flexibility, dividend threshold behavior, benefit payouts, and fund-level charges remain informational only.",
-      "20 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published administrative-charge path using the accumulated minimum-premium base, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+      "20 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published administrative-charge path using the accumulated minimum-premium base, the one-time annual-premium bonus when the seed uses annual premium frequency, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
       "The administrative-charge base is interpreted as the future value of annualised regular basic premiums payable through the 10-year Flexi Start window, accumulated at 6% per annum. Keep monthly contribution aligned to the committed regular basic premium because post-Flexi premium variation remains informational only in V1.",
-      "Bonus mechanics, partial-withdrawal flexibility, dividend threshold behavior, and fund-level management charges remain informational only.",
+      "Premium Bonus, Booster Bonus, Loyalty Bonus, partial-withdrawal flexibility, dividend threshold behavior, and fund-level management charges remain informational only.",
       "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
-      "Welcome Bonus, Annual Premium Bonus, Premium Bonus, Booster Bonus, and Loyalty Bonus remain informational only.",
+      "This seed assumes the regular premium is paid on the annual frequency option so the published annual-premium bonus path can execute. Change Regular Premium Payment Frequency in Policy Details if the policy uses a non-annual mode.",
+      "Welcome Bonus, Premium Bonus, Booster Bonus, and Loyalty Bonus remain informational only.",
+      "Changing the regular premium payment mode from annual to a non-annual mode remains informational only.",
       "The partial-withdrawal flexibility corridor from policy year 6 and the life-stage-event waiver remain informational only.",
       "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
       "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",

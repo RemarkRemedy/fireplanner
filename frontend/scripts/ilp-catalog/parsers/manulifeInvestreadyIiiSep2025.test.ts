@@ -28,6 +28,7 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
     expect(product.modeledEconomics).toEqual([
       'kernel:protected-base-assurance',
       'branch:manulife-investready-iii-welcome-bonus',
+      'branch:manulife-investready-iii-annual-premium-bonus',
       'branch:manulife-investready-iii-loyalty-bonus',
       'branch:manulife-investready-iii-administrative-charge',
       'branch:manulife-investready-iii-premium-shortfall-charge',
@@ -39,6 +40,7 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-policy-fee')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-step-up-booster-bonus')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-dividend-payout-threshold')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-annual-premium-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-welcome-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-loyalty-bonus')
     expect(product.variants.map((variant) => variant.id)).toEqual([
@@ -124,6 +126,15 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
         ],
       }),
       expect.objectContaining({
+        id: 'annual-premium-bonus',
+        mode: 'premium-allocation',
+        rate: 0,
+        startPolicyYear: 1,
+        endPolicyYear: 1,
+        requiresPremiumsPaidUpToDate: true,
+        requiredRegularPremiumPaymentFrequency: 'annual',
+      }),
+      expect.objectContaining({
         id: 'loyalty-bonus',
         mode: 'annual-rate',
         startPolicyYear: 6,
@@ -136,6 +147,11 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
     expect(lastVariant?.mipLength).toBe(13)
     expect(lastVariant?.accounts[0]).toEqual(expect.objectContaining({
       postMipFeeRate: 0.007,
+    }))
+    expect(lastVariant?.bonuses?.[1]).toEqual(expect.objectContaining({
+      id: 'annual-premium-bonus',
+      rate: 0.05,
+      requiredRegularPremiumPaymentFrequency: 'annual',
     }))
     expect(lastVariant?.eventChargeRules[1]).toEqual(expect.objectContaining({
       rateSchedule: [
@@ -177,12 +193,17 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
         ],
       }),
       expect.objectContaining({
+        id: 'annual-premium-bonus',
+        rate: 0.05,
+        requiredRegularPremiumPaymentFrequency: 'annual',
+      }),
+      expect.objectContaining({
         id: 'loyalty-bonus',
         rate: 0.003,
         startPolicyYear: 14,
         endPolicyYear: null,
       }),
     ])
-    expect(lastVariant?.warnings).toContain('Policy-fee thresholds, the annual-premium bonus payment-mode gate, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.')
+    expect(lastVariant?.warnings).toContain('Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.')
   }, 30_000)
 })

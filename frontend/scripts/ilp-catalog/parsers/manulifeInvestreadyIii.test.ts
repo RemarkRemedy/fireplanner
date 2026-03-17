@@ -28,6 +28,7 @@ describe('parseManulifeInvestreadyIii', () => {
     expect(product.modeledEconomics).toEqual([
       'kernel:protected-base-assurance',
       'branch:manulife-investready-iii-welcome-bonus',
+      'branch:manulife-investready-iii-annual-premium-bonus',
       'branch:manulife-investready-iii-loyalty-bonus',
       'branch:manulife-investready-iii-administrative-charge',
       'branch:manulife-investready-iii-premium-shortfall-charge',
@@ -36,9 +37,9 @@ describe('parseManulifeInvestreadyIii', () => {
       'branch:manulife-investready-iii-full-surrender-charge',
       'kernel:distribution-mode-assumption',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-annual-premium-bonus')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-benefit-payout-handling')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-annual-premium-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-welcome-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-loyalty-bonus')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-mip-5-flexi-4'])
@@ -121,6 +122,15 @@ describe('parseManulifeInvestreadyIii', () => {
         ],
       }),
       expect.objectContaining({
+        id: 'annual-premium-bonus',
+        mode: 'premium-allocation',
+        rate: 0,
+        startPolicyYear: 1,
+        endPolicyYear: 1,
+        requiresPremiumsPaidUpToDate: true,
+        requiredRegularPremiumPaymentFrequency: 'annual',
+      }),
+      expect.objectContaining({
         id: 'loyalty-bonus',
         mode: 'annual-rate',
         startPolicyYear: 6,
@@ -128,7 +138,7 @@ describe('parseManulifeInvestreadyIii', () => {
         rate: 0,
       }),
     ])
-    expect(variant?.warnings).toContain('Flexi-start premium variation, the annual-premium bonus payment-mode gate, partial-withdrawal amount limits, dividend threshold behavior, and fund-level management charges remain informational only.')
+    expect(variant?.warnings).toContain('Flexi-start premium variation, annual-mode clawback on later payment-mode changes, partial-withdrawal amount limits, dividend threshold behavior, and fund-level management charges remain informational only.')
     expect(variant?.warnings).toContain('Dividend-paying funds seed reinvestment by default in V1. Cash payout requires a manual annual distribution-yield assumption and the published $40 minimum payout threshold remains informational only.')
   }, 30_000)
 })

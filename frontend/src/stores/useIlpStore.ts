@@ -176,6 +176,7 @@ export function createDefaultPolicy(): IlpPolicyInput {
     insurer: '',
     currency: 'SGD',
     monthlyContribution: 350,
+    regularPremiumPaymentFrequency: 'monthly',
     monthsAlreadyPaid: 0,
     currentPolicyYear: 1,
     icpMonths: 12,

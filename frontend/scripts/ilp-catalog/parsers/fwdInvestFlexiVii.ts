@@ -2,6 +2,7 @@ import path from 'node:path'
 import type {
   IlpCatalogProduct,
   IlpCatalogSourceRef,
+  IlpTemplateBonus,
   IlpTemplateEventChargeRule,
   IlpTemplateFeeRule,
   IlpTemplateVariant,
@@ -77,6 +78,28 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page10 = sourceRef(10, 'Surrender charge', snippetNear(document, 10, 'Surrender charge', 24))
   const page12 = sourceRef(12, 'Withdrawal rules and minimum account value', snippetNear(document, 12, 'Withdrawals are allowed', 24))
   const page13 = sourceRef(13, 'Regular withdrawal and change of person insured', snippetNear(document, 13, 'Regular withdrawal', 18))
+
+  const bonuses: IlpTemplateBonus[] = [
+    {
+      id: 'annual-premium-bonus',
+      type: 'allocation',
+      label: 'Annual Premium Bonus',
+      mode: 'premium-allocation',
+      appliesTo: ['initial'],
+      startPolicyYear: 1,
+      endPolicyYear: 7,
+      rate: 0.01,
+      amount: null,
+      requiresPremiumsPaidUpToDate: true,
+      requiredRegularPremiumPaymentFrequency: 'annual',
+      tieredRates: [],
+      notes: [
+        'Applied on each annual regular premium paid via the annual premium payment frequency option during the first 7 policy years.',
+        'Repayment and restoration interactions remain informational only in V1.',
+      ],
+      sourceRefs: [page3],
+    },
+  ]
 
   const feeRules: IlpTemplateFeeRule[] = [
     {
@@ -197,19 +220,20 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
         sourceRefs: [page5, page6, page12],
       },
     ],
-    bonuses: [],
+    bonuses,
     feeRules,
     eventChargeRules,
     eecTable: [...SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      'FWD Invest Flexi VII (SGD / 10-year minimum investment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the Appendix B insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.',
+      'FWD Invest Flexi VII (SGD / 10-year minimum investment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the annual-premium bonus under the annual premium-frequency assumption, the Appendix B insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.',
       'Premium shortfall charge remains informational only because the automatic 12-month Premium Pause Waiver cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.',
-      'Booster Bonus, Annual Premium Bonus, Loyalty Bonus, repayment waterfalls, and withdrawal eligibility gates remain outside the current engine.',
+      'Booster Bonus, Loyalty Bonus, repayment waterfalls, payment-frequency changes after issue, and withdrawal eligibility gates remain outside the current engine.',
     ],
     unsupportedItems: [
       'Premium shortfall charge remains informational only because the automatic 12-month Premium Pause Waiver on missed premiums is not modeled exactly in V1.',
       'Support Benefit approvals and premium-shortfall-charge refund / waiver behavior remain informational only.',
-      'Booster Bonus, Annual Premium Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.',
+      'Booster Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.',
+      'Changing the regular premium payment frequency after issue remains informational only.',
       'Top-up repayment precedence for missed premiums, prior withdrawals, and prior regular-premium reductions remains informational only.',
       'Regular-premium reduction and restoration mechanics from policy year 8 onward remain informational only.',
       'Initial-units-account withdrawal lockout in the first two policy years, minimum withdrawal requirements, minimum account-value gates, and regular-withdrawal elections remain informational only.',
@@ -233,6 +257,7 @@ export function parseFwdInvestFlexiVii(context: ParseContext): IlpCatalogProduct
     economicsStatus: 'supported',
     modeledEconomics: [
       'kernel:protected-base-assurance',
+      'branch:fwd-invest-flexi-vii-annual-premium-bonus',
       'branch:fwd-invest-flexi-vii-initial-account-charge',
       'branch:fwd-invest-flexi-vii-insurance-charge',
       'branch:fwd-invest-flexi-vii-top-up-premium-charge',
@@ -244,7 +269,6 @@ export function parseFwdInvestFlexiVii(context: ParseContext): IlpCatalogProduct
       'fwd-invest-flexi-vii-premium-pause-waiver',
       'fwd-invest-flexi-vii-support-benefit-waiver-and-refund',
       'fwd-invest-flexi-vii-booster-bonus',
-      'fwd-invest-flexi-vii-annual-premium-bonus',
       'fwd-invest-flexi-vii-loyalty-bonus',
       'fwd-invest-flexi-vii-repayment-bonus-restoration',
       'fwd-invest-flexi-vii-top-up-repayment-waterfall',

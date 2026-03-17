@@ -2025,10 +2025,13 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-first-horizon-annual-premium-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-first-horizon-initial-account-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-first-horizon-insurance-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('fwd-invest-first-horizon-premium-shortfall-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-first-horizon-annual-premium-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-first-horizon-insurance-charge')
+    expect(seed.regularPremiumPaymentFrequency).toBe('annual')
     expect(seed.mipLength).toBe(20)
     expect(seed.accounts).toEqual([
       expect.objectContaining({
@@ -2094,6 +2097,16 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+    expect(seed.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'annual-premium-bonus',
+        mode: 'premium-allocation',
+        rate: 0.01,
+        startPolicyYear: 1,
+        endPolicyYear: 5,
+        requiredRegularPremiumPaymentFrequency: 'annual',
+      }),
+    ])
     expect(seed.eecTable).toHaveLength(20)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Premium Pause Waiver'))).toBe(true)
   })
@@ -2236,10 +2249,13 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.name).toBe('FWD Invest Flexi VII (SGD / MIP 10)')
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-flexi-vii-annual-premium-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-flexi-vii-initial-account-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-flexi-vii-insurance-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('fwd-invest-flexi-vii-premium-shortfall-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-vii-annual-premium-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-vii-insurance-charge')
+    expect(seed.regularPremiumPaymentFrequency).toBe('annual')
     expect(seed.mipLength).toBe(10)
     expect(seed.accounts).toEqual([
       expect.objectContaining({
@@ -2287,6 +2303,16 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+    expect(seed.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'annual-premium-bonus',
+        mode: 'premium-allocation',
+        rate: 0.01,
+        startPolicyYear: 1,
+        endPolicyYear: 7,
+        requiredRegularPremiumPaymentFrequency: 'annual',
+      }),
+    ])
     expect(seed.eecTable).toEqual([1, 1, 0.8, 0.68, 0.58, 0.55, 0.45, 0.3, 0.15, 0.07])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Premium Pause Waiver'))).toBe(true)
   })
@@ -2304,11 +2330,14 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-flexi-elite-annual-premium-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-flexi-elite-initial-account-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-flexi-elite-insurance-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('fwd-invest-flexi-elite-premium-shortfall-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-elite-annual-premium-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-elite-insurance-charge')
+    expect(seed.regularPremiumPaymentFrequency).toBe('annual')
     expect(seed.mipLength).toBe(10)
     expect(seed.accounts).toEqual([
       expect.objectContaining({
@@ -2369,6 +2398,16 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+    expect(seed.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'annual-premium-bonus',
+        mode: 'premium-allocation',
+        rate: 0.02,
+        startPolicyYear: 1,
+        endPolicyYear: 1,
+        requiredRegularPremiumPaymentFrequency: 'annual',
+      }),
+    ])
     expect(seed.eecTable).toEqual([1, 1, 0.8, 0.68, 0.58, 0.55, 0.45, 0.18, 0.12, 0.03])
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
@@ -5968,6 +6007,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-annual-premium-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-welcome-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
@@ -5975,9 +6015,10 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-partial-withdrawal-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-full-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-benefit-payout-handling')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-annual-premium-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-annual-premium-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-welcome-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-loyalty-bonus')
+    expect(seed.regularPremiumPaymentFrequency).toBe('annual')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(5)
     expect(seed.accounts).toEqual([
@@ -6007,6 +6048,14 @@ describe('templateVariantToPolicySeed', () => {
           { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 47_999.99, rate: 0.01 },
           { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.02 },
         ],
+      }),
+      expect.objectContaining({
+        id: 'annual-premium-bonus',
+        mode: 'premium-allocation',
+        rate: 0,
+        startPolicyYear: 1,
+        endPolicyYear: 1,
+        requiredRegularPremiumPaymentFrequency: 'annual',
       }),
       expect.objectContaining({
         id: 'loyalty-bonus',
@@ -6069,10 +6118,13 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-growth-annual-premium-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-growth-administrative-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-growth-partial-withdrawal-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-growth-full-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-growth-post-flexi-premium-variation')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-annual-premium-bonus')
+    expect(seed.regularPremiumPaymentFrequency).toBe('annual')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(15)
     expect(seed.accounts).toEqual([
@@ -6105,6 +6157,16 @@ describe('templateVariantToPolicySeed', () => {
             { startPolicyYear: 1, endPolicyYear: null, mode: 'fixed', multiplier: 13.971643 },
           ],
         },
+      }),
+    ])
+    expect(seed.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'annual-premium-bonus',
+        mode: 'premium-allocation',
+        rate: 0.03,
+        startPolicyYear: 1,
+        endPolicyYear: 1,
+        requiredRegularPremiumPaymentFrequency: 'annual',
       }),
     ])
     expect(seed.eventChargeRules).toEqual([
@@ -6154,6 +6216,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-annual-premium-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-welcome-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
@@ -6161,9 +6224,10 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-partial-withdrawal-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-full-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-life-stage-partial-withdrawal')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-annual-premium-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-annual-premium-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-welcome-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-loyalty-bonus')
+    expect(seed.regularPremiumPaymentFrequency).toBe('annual')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(5)
     expect(seed.accounts).toEqual([
@@ -6194,6 +6258,14 @@ describe('templateVariantToPolicySeed', () => {
           { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 59_999.99, rate: 0.01 },
           { currency: 'SGD', minAnnualPremium: 60_000, maxAnnualPremium: null, rate: 0.02 },
         ],
+      }),
+      expect.objectContaining({
+        id: 'annual-premium-bonus',
+        mode: 'premium-allocation',
+        rate: 0,
+        startPolicyYear: 1,
+        endPolicyYear: 1,
+        requiredRegularPremiumPaymentFrequency: 'annual',
       }),
       expect.objectContaining({
         id: 'loyalty-bonus',

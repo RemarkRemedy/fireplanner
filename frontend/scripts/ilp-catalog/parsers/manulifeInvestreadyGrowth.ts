@@ -2,6 +2,7 @@ import path from 'node:path'
 import type {
   IlpCatalogProduct,
   IlpCatalogSourceRef,
+  IlpTemplateBonus,
   IlpTemplateEventChargeRule,
   IlpTemplateFeeRule,
   IlpTemplateVariant,
@@ -40,6 +41,7 @@ const ADMINISTRATIVE_CHARGE_RATES = {
     afterMip: 0.0092,
   },
 } as const
+const ANNUAL_PREMIUM_BONUS_RATE = 0.03
 
 function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
@@ -90,6 +92,28 @@ function buildVariant(
   const page8 = sourceRef(8, 'Top-up premium', snippetNear(document, 8, 'Top-up Premium', 18))
   const page11 = sourceRef(11, 'Distribution of dividend', snippetNear(document, 11, 'Distribution of Dividend', 20))
   const page18 = sourceRef(18, 'Appendix A annual COI table', snippetNear(document, 18, 'Annual Cost of Insurance', 20))
+
+  const bonuses: IlpTemplateBonus[] = [
+    {
+      id: 'annual-premium-bonus',
+      type: 'allocation',
+      label: 'Annual Premium Bonus',
+      mode: 'premium-allocation',
+      appliesTo: ['policy'],
+      startPolicyYear: 1,
+      endPolicyYear: 1,
+      rate: ANNUAL_PREMIUM_BONUS_RATE,
+      amount: null,
+      requiresPremiumsPaidUpToDate: true,
+      requiredRegularPremiumPaymentFrequency: 'annual',
+      tieredRates: [],
+      notes: [
+        `Applied once on the first annual regular basic premium for the ${plan.label} corridor when the policy is issued on annual premium payment frequency.`,
+        'The product’s separate Premium Bonus, Booster Bonus, and annual-mode change handling remain informational only in V1.',
+      ],
+      sourceRefs: [page4],
+    },
+  ]
 
   const feeRules: IlpTemplateFeeRule[] = [
     {
@@ -226,7 +250,7 @@ function buildVariant(
         sourceRefs: [page1, page5, page8],
       },
     ],
-    bonuses: [],
+    bonuses,
     feeRules,
     eventChargeRules,
     eecTable: [...WITHDRAWAL_AND_SURRENDER_CHARGE_SCHEDULES[plan.label]],
@@ -244,13 +268,14 @@ function buildVariant(
       sourceRefs: [page11],
     },
     warnings: [
-      `${plan.label} is cataloged as a supported V1 corridor. The parser captures the published administrative-charge path using the accumulated minimum-premium base, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.`,
+      `${plan.label} is cataloged as a supported V1 corridor. The parser captures the published administrative-charge path using the accumulated minimum-premium base, the one-time annual-premium bonus when the seed uses annual premium frequency, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.`,
       'The administrative-charge base is interpreted as the future value of annualised regular basic premiums payable through the 10-year Flexi Start window, accumulated at 6% per annum. Keep monthly contribution aligned to the committed regular basic premium because post-Flexi premium variation remains informational only in V1.',
-      'Bonus mechanics, partial-withdrawal flexibility, dividend threshold behavior, and fund-level management charges remain informational only.',
+      'Premium Bonus, Booster Bonus, Loyalty Bonus, partial-withdrawal flexibility, dividend threshold behavior, and fund-level management charges remain informational only.',
       'The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.',
     ],
     unsupportedItems: [
-      'Welcome Bonus, Annual Premium Bonus, Premium Bonus, Booster Bonus, and Loyalty Bonus remain informational only.',
+      'Welcome Bonus, Premium Bonus, Booster Bonus, and Loyalty Bonus remain informational only.',
+      'Changing the regular premium payment mode from annual to a non-annual mode remains informational only.',
       'The partial-withdrawal flexibility corridor from policy year 6 and the life-stage-event waiver remain informational only.',
       'Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.',
       'The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.',
@@ -276,6 +301,7 @@ export function parseManulifeInvestreadyGrowth(context: ParseContext): IlpCatalo
     economicsStatus: 'supported',
     modeledEconomics: [
       'kernel:protected-base-assurance',
+      'branch:manulife-investready-growth-annual-premium-bonus',
       'branch:manulife-investready-growth-administrative-charge',
       'branch:manulife-investready-growth-premium-shortfall-charge',
       'branch:manulife-investready-growth-top-up-charge',
@@ -285,7 +311,6 @@ export function parseManulifeInvestreadyGrowth(context: ParseContext): IlpCatalo
     ],
     metadataOnlyBehaviors: [
       'manulife-investready-growth-welcome-bonus',
-      'manulife-investready-growth-annual-premium-bonus',
       'manulife-investready-growth-premium-bonus',
       'manulife-investready-growth-booster-bonus',
       'manulife-investready-growth-loyalty-bonus',

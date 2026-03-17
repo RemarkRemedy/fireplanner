@@ -27,6 +27,7 @@ describe('parseFwdInvestFlexiElite', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'kernel:protected-base-assurance',
+      'branch:fwd-invest-flexi-elite-annual-premium-bonus',
       'branch:fwd-invest-flexi-elite-initial-account-charge',
       'branch:fwd-invest-flexi-elite-insurance-charge',
       'branch:fwd-invest-flexi-elite-top-up-premium-charge',
@@ -36,6 +37,7 @@ describe('parseFwdInvestFlexiElite', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('fwd-invest-flexi-elite-premium-shortfall-charge')
     expect(product.metadataOnlyBehaviors).toContain('fwd-invest-flexi-elite-free-partial-withdrawal-benefit')
+    expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-elite-annual-premium-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-elite-insurance-charge')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-10-flexi-3',
@@ -61,6 +63,17 @@ describe('parseFwdInvestFlexiElite', () => {
         contributionRules: [
           { phase: 'top-up', targetAccountId: 'accumulation', contributionShare: 1 },
         ],
+      }),
+    ])
+    expect(flexi3?.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'annual-premium-bonus',
+        mode: 'premium-allocation',
+        rate: 0.02,
+        startPolicyYear: 1,
+        endPolicyYear: 1,
+        requiresPremiumsPaidUpToDate: true,
+        requiredRegularPremiumPaymentFrequency: 'annual',
       }),
     ])
     expect(flexi3?.feeRules).toEqual([
@@ -134,6 +147,17 @@ describe('parseFwdInvestFlexiElite', () => {
     expect(flexi5).toBeDefined()
     expect(flexi5?.mipBasis).toBe('finite')
     expect(flexi5?.mipLength).toBe(10)
+    expect(flexi5?.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'annual-premium-bonus',
+        mode: 'premium-allocation',
+        rate: 0.02,
+        startPolicyYear: 1,
+        endPolicyYear: 1,
+        requiresPremiumsPaidUpToDate: true,
+        requiredRegularPremiumPaymentFrequency: 'annual',
+      }),
+    ])
     expect(flexi5?.eecTable).toEqual([1, 1, 0.8, 0.68, 0.58, 0.55, 0.45, 0.18, 0.12, 0.03])
     expect(flexi5?.warnings).not.toContain(
       'Booster Bonus, Annual Premium Bonus, Contribution Bonus, insurance charge, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain outside the current engine.',

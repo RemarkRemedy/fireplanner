@@ -2,6 +2,7 @@ import path from 'node:path'
 import type {
   IlpCatalogProduct,
   IlpCatalogSourceRef,
+  IlpTemplateBonus,
   IlpTemplateEventChargeRule,
   IlpTemplateFeeRule,
   IlpTemplateVariant,
@@ -224,6 +225,7 @@ function buildPremiumReductionChargeRule(term: PremiumPaymentTerm, page12: IlpCa
 
 function buildVariant(document: ExtractedPdfDocument, term: PremiumPaymentTerm): IlpTemplateVariant {
   const page1 = sourceRef(1, 'Plan overview and death benefit', snippetNear(document, 1, 'FWD Invest First Horizon', 18))
+  const page3 = sourceRef(3, 'Bonus overview and support benefits', snippetNear(document, 3, 'Annual Premium Bonus', 24))
   const page7 = sourceRef(7, 'Missed regular premium and Premium Pause Waiver', snippetNear(document, 7, 'During Policy Year 3', 26))
   const page8 = sourceRef(8, 'Top-up premium', snippetNear(document, 8, 'Top-up premium', 20))
   const page9 = sourceRef(9, 'Initial account charge and insurance charge', snippetNear(document, 9, 'Initial account charge', 30))
@@ -233,6 +235,28 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumPaymentTerm):
   const page13 = sourceRef(13, 'Policy closure charge and redemption fee', snippetNear(document, 13, 'Policy closure charge', 24))
   const page14 = sourceRef(14, 'Surrender charge', snippetNear(document, 14, 'Surrender charge', 28))
   const page16 = sourceRef(16, 'Withdrawal rules and partial withdrawal limits', snippetNear(document, 16, 'Withdrawals are allowed', 28))
+
+  const bonuses: IlpTemplateBonus[] = [
+    {
+      id: 'annual-premium-bonus',
+      type: 'allocation',
+      label: 'Annual Premium Bonus',
+      mode: 'premium-allocation',
+      appliesTo: ['initial'],
+      startPolicyYear: 1,
+      endPolicyYear: 5,
+      rate: 0.01,
+      amount: null,
+      requiresPremiumsPaidUpToDate: true,
+      requiredRegularPremiumPaymentFrequency: 'annual',
+      tieredRates: [],
+      notes: [
+        'Applied on each annual regular premium paid via the annual premium payment frequency option during the first 5 policy years.',
+        'Reduction, repayment, and restoration interactions beyond the paid-up annual premium amount remain informational only in V1.',
+      ],
+      sourceRefs: [page3],
+    },
+  ]
 
   return {
     id: `sgd-mip-${term}`,
@@ -265,7 +289,7 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumPaymentTerm):
         sourceRefs: [page7, page8, page16],
       },
     ],
-    bonuses: [],
+    bonuses,
     feeRules: [
       buildInitialAccountChargeRule(term, page9),
       buildInsuranceChargeRule(page9),
@@ -309,14 +333,15 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumPaymentTerm):
     ],
     eecTable: [...SURRENDER_CHARGE_SCHEDULE[term]],
     warnings: [
-      `FWD Invest First Horizon (${term}-year premium payment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the Appendix B insurance charge, the premium-reduction charge schedule, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.`,
+      `FWD Invest First Horizon (${term}-year premium payment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the annual-premium bonus under the annual premium-frequency assumption, the Appendix B insurance charge, the premium-reduction charge schedule, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.`,
       'Premium shortfall charge remains informational only because the automatic 24-month Premium Pause Waiver cannot be expressed exactly in the current event kernel without miscounting year-3 missed premiums.',
-      'Booster Bonus, Annual Premium Bonus, Loyalty Bonus, repayment waterfalls, and withdrawal-eligibility gates remain metadata-only.',
+      'Booster Bonus, Loyalty Bonus, repayment waterfalls, payment-frequency changes after issue, and withdrawal-eligibility gates remain metadata-only.',
     ],
     unsupportedItems: [
       'Premium shortfall charge remains informational only because the automatic 24-month Premium Pause Waiver starts only from policy year 4 and is not modeled exactly in V1.',
       'Policy year 3 non-payment behavior, Support Benefit approvals, and Premium Pause Waiver month accounting remain informational only.',
-      'Booster Bonus, Annual Premium Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.',
+      'Booster Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.',
+      'Changing the regular premium payment frequency after issue remains informational only.',
       'Top-up repayment precedence for missed premiums, prior withdrawals, and prior premium reductions remains informational only.',
       'Top-up eligibility from policy year 2, total top-up cap, minimum top-up amount, and minimum withdrawal requirements remain informational only.',
       'Initial-units-account withdrawal lockout in the first two policy years, the 50%-minus-prior-withdrawals partial-withdrawal limit, and minimum account-value gates remain informational only.',
@@ -340,6 +365,7 @@ export function parseFwdInvestFirstHorizon(context: ParseContext): IlpCatalogPro
     economicsStatus: 'supported',
     modeledEconomics: [
       'kernel:protected-base-assurance',
+      'branch:fwd-invest-first-horizon-annual-premium-bonus',
       'branch:fwd-invest-first-horizon-initial-account-charge',
       'branch:fwd-invest-first-horizon-insurance-charge',
       'branch:fwd-invest-first-horizon-premium-reduction-charge',
@@ -352,7 +378,6 @@ export function parseFwdInvestFirstHorizon(context: ParseContext): IlpCatalogPro
       'fwd-invest-first-horizon-premium-pause-waiver',
       'fwd-invest-first-horizon-support-benefit-waiver',
       'fwd-invest-first-horizon-booster-bonus',
-      'fwd-invest-first-horizon-annual-premium-bonus',
       'fwd-invest-first-horizon-loyalty-bonus',
       'fwd-invest-first-horizon-repayment-bonus-restoration',
       'fwd-invest-first-horizon-top-up-repayment-waterfall',

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 const SUM_TOLERANCE = 0.001
+const ilpRegularPremiumPaymentFrequencySchema = z.enum(['annual', 'semi-annual', 'quarterly', 'monthly'])
 
 export const ilpPolicyEventSchema = z.object({
   id: z.string().min(1),
@@ -254,6 +255,7 @@ export const ilpBonusRuleSchema = z.object({
   yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   cadenceYears: z.number().int().min(1).max(100).optional(),
   requiresPremiumsPaidUpToDate: z.boolean().optional(),
+  requiredRegularPremiumPaymentFrequency: ilpRegularPremiumPaymentFrequencySchema.optional(),
   tieredRates: z.array(z.object({
     currency: z.enum(['SGD', 'USD']),
     minAnnualPremium: z.number().min(0).nullable(),
@@ -771,6 +773,7 @@ export const ilpPolicySchema = z.object({
   insurer: z.string().max(100),
   currency: z.enum(['SGD', 'USD']),
   monthlyContribution: z.number().min(0).max(100_000),
+  regularPremiumPaymentFrequency: ilpRegularPremiumPaymentFrequencySchema.optional(),
   initialSinglePremium: z.number().min(0).max(100_000_000).optional(),
   monthsAlreadyPaid: z.number().int().min(0).max(1_200),
   currentPolicyYear: z.number().int().min(1).max(100),

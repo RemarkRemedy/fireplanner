@@ -124,10 +124,12 @@ export type GoldenCoverageTag =
   | 'branch:manulife-smartretire-v-premium-shortfall-charge'
   | 'branch:manulife-smartretire-v-zero-top-up-charge'
   | 'branch:manulife-investready-growth-administrative-charge'
+  | 'branch:manulife-investready-growth-annual-premium-bonus'
   | 'branch:manulife-investready-growth-premium-shortfall-charge'
   | 'branch:manulife-investready-growth-top-up-charge'
   | 'branch:manulife-investready-growth-partial-withdrawal-charge'
   | 'branch:manulife-investready-growth-full-surrender-charge'
+  | 'branch:manulife-investready-iii-annual-premium-bonus'
   | 'branch:manulife-investready-iii-welcome-bonus'
   | 'branch:manulife-investready-iii-loyalty-bonus'
   | 'branch:manulife-investready-iii-administrative-charge'
@@ -286,16 +288,19 @@ export type GoldenCoverageTag =
   | 'branch:tokio-marine-goassure-surrender-charge'
   | 'branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge'
   | 'branch:fwd-invest-flexi-vii-initial-account-charge'
+  | 'branch:fwd-invest-flexi-vii-annual-premium-bonus'
   | 'branch:fwd-invest-flexi-vii-insurance-charge'
   | 'branch:fwd-invest-flexi-vii-top-up-premium-charge'
   | 'branch:fwd-invest-flexi-vii-initial-account-redemption-fee'
   | 'branch:fwd-invest-flexi-vii-initial-account-surrender-charge'
   | 'branch:fwd-invest-flexi-elite-initial-account-charge'
+  | 'branch:fwd-invest-flexi-elite-annual-premium-bonus'
   | 'branch:fwd-invest-flexi-elite-insurance-charge'
   | 'branch:fwd-invest-flexi-elite-top-up-premium-charge'
   | 'branch:fwd-invest-flexi-elite-initial-account-redemption-fee'
   | 'branch:fwd-invest-flexi-elite-initial-account-surrender-charge'
   | 'branch:fwd-invest-first-horizon-initial-account-charge'
+  | 'branch:fwd-invest-first-horizon-annual-premium-bonus'
   | 'branch:fwd-invest-first-horizon-insurance-charge'
   | 'branch:fwd-invest-first-horizon-premium-reduction-charge'
   | 'branch:fwd-invest-first-horizon-top-up-premium-charge'
@@ -11605,6 +11610,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'baseline',
       'kernel:protected-base-assurance',
       'kernel:distribution-mode-assumption',
+      'branch:manulife-investready-growth-annual-premium-bonus',
       'branch:manulife-investready-growth-administrative-charge',
       'branch:manulife-investready-growth-full-surrender-charge',
     ],
@@ -11633,6 +11639,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'baseline',
       'kernel:protected-base-assurance',
       'kernel:distribution-mode-assumption',
+      'branch:manulife-investready-growth-annual-premium-bonus',
       'branch:manulife-investready-growth-administrative-charge',
       'branch:manulife-investready-growth-full-surrender-charge',
     ],
@@ -11700,6 +11707,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'baseline',
       'kernel:protected-base-assurance',
       'kernel:distribution-mode-assumption',
+      'branch:manulife-investready-iii-annual-premium-bonus',
       'branch:manulife-investready-iii-welcome-bonus',
       'branch:manulife-investready-iii-loyalty-bonus',
       'branch:manulife-investready-iii-administrative-charge',
@@ -11942,6 +11950,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'baseline',
       'branch:manulife-investready-iii-welcome-bonus',
       'branch:manulife-investready-iii-loyalty-bonus',
+      'branch:manulife-investready-iii-annual-premium-bonus',
     ],
     description: 'Manulife InvestReady (III) Sep-2025 7 Years Flexi 5 baseline scenario under supported post-MIP distribution assumptions.',
   },
@@ -13117,6 +13126,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'baseline',
       'kernel:protected-base-assurance',
       'kernel:distribution-mode-assumption',
+      'branch:fwd-invest-flexi-elite-annual-premium-bonus',
       'branch:fwd-invest-flexi-elite-initial-account-charge',
       'branch:fwd-invest-flexi-elite-insurance-charge',
       'branch:fwd-invest-flexi-elite-initial-account-surrender-charge',
@@ -13183,6 +13193,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:protected-base-assurance',
+      'branch:fwd-invest-flexi-vii-annual-premium-bonus',
       'branch:fwd-invest-flexi-vii-initial-account-charge',
       'branch:fwd-invest-flexi-vii-insurance-charge',
       'branch:fwd-invest-flexi-vii-initial-account-surrender-charge',
@@ -13253,6 +13264,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:protected-base-assurance',
+      'branch:fwd-invest-first-horizon-annual-premium-bonus',
       'branch:fwd-invest-first-horizon-initial-account-charge',
       'branch:fwd-invest-first-horizon-insurance-charge',
       'branch:fwd-invest-first-horizon-initial-account-surrender-charge',

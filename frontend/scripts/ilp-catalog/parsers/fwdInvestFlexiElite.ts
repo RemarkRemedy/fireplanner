@@ -2,6 +2,7 @@ import path from 'node:path'
 import type {
   IlpCatalogProduct,
   IlpCatalogSourceRef,
+  IlpTemplateBonus,
   IlpTemplateEventChargeRule,
   IlpTemplateFeeRule,
   IlpTemplateVariant,
@@ -119,6 +120,28 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
   const page13 = sourceRef(13, 'Free Partial Withdrawal Benefit', snippetNear(document, 13, 'Free Partial Withdrawal Benefit', 28))
   const page17 = sourceRef(17, 'Dividend distribution options', snippetNear(document, 17, 'What are the options to manage my dividends', 28))
 
+  const bonuses: IlpTemplateBonus[] = [
+    {
+      id: 'annual-premium-bonus',
+      type: 'allocation',
+      label: 'Annual Premium Bonus',
+      mode: 'premium-allocation',
+      appliesTo: ['initial'],
+      startPolicyYear: 1,
+      endPolicyYear: 1,
+      rate: 0.02,
+      amount: null,
+      requiresPremiumsPaidUpToDate: true,
+      requiredRegularPremiumPaymentFrequency: 'annual',
+      tieredRates: [],
+      notes: [
+        'Applied once on the first regular premium when the policy is issued on the annual premium payment frequency option.',
+        'Booster Bonus, Contribution Bonus, and any later payment-frequency changes remain informational only in V1.',
+      ],
+      sourceRefs: [page2],
+    },
+  ]
+
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
     {
       id: 'top-up-premium-charge',
@@ -187,7 +210,7 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
         sourceRefs: [page5, page7, page11],
       },
     ],
-    bonuses: [],
+    bonuses,
     feeRules: [
       buildInitialAccountChargeRule(page6),
       buildInsuranceChargeRule(page6Insurance),
@@ -208,13 +231,14 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
     },
     eecTable: [...SURRENDER_CHARGE_SCHEDULE[flexMode]],
     warnings: [
-      `FWD Invest Flexi Elite (${variantLabel}) is cataloged as a supported V1 product. The parser captures the published initial-account-value charge, monthly insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.`,
+      `FWD Invest Flexi Elite (${variantLabel}) is cataloged as a supported V1 product. The parser captures the published initial-account-value charge, the one-time annual-premium bonus under the annual premium-frequency assumption, the monthly insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.`,
       'Premium shortfall charge remains informational only because the published unemployment waiver, refund, and restart timing cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.',
-      'Booster Bonus, Annual Premium Bonus, Contribution Bonus, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain metadata-only.',
+      'Booster Bonus, Contribution Bonus, payment-frequency changes after issue, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain metadata-only.',
     ],
     unsupportedItems: [
       'Premium shortfall charge remains informational only because the unemployment waiver, refund, and variant-specific charge periods are not modeled exactly in V1.',
-      'Booster Bonus, Annual Premium Bonus, and Contribution Bonus remain informational only.',
+      'Booster Bonus and Contribution Bonus remain informational only.',
+      'Changing the regular premium payment frequency after issue remains informational only.',
       'Free Partial Withdrawal Benefit eligibility, capped fee waivers, and life-event proof requirements remain informational only.',
       'Partial-withdrawal limit formulas, minimum withdrawal requirements, and minimum account-value gates remain informational only.',
       'Regular-premium reduction and increase windows, top-up eligibility gates, and premium-payment continuation after the minimum investment term remain informational only.',
@@ -238,6 +262,7 @@ export function parseFwdInvestFlexiElite(context: ParseContext): IlpCatalogProdu
     economicsStatus: 'supported',
     modeledEconomics: [
       'kernel:protected-base-assurance',
+      'branch:fwd-invest-flexi-elite-annual-premium-bonus',
       'branch:fwd-invest-flexi-elite-initial-account-charge',
       'branch:fwd-invest-flexi-elite-insurance-charge',
       'branch:fwd-invest-flexi-elite-top-up-premium-charge',
@@ -250,7 +275,6 @@ export function parseFwdInvestFlexiElite(context: ParseContext): IlpCatalogProdu
       'fwd-invest-flexi-elite-involuntary-unemployment-benefit',
       'fwd-invest-flexi-elite-premium-shortfall-charge-refund',
       'fwd-invest-flexi-elite-booster-bonus',
-      'fwd-invest-flexi-elite-annual-premium-bonus',
       'fwd-invest-flexi-elite-contribution-bonus',
       'fwd-invest-flexi-elite-free-partial-withdrawal-benefit',
       'fwd-invest-flexi-elite-partial-withdrawal-limits',

@@ -63,6 +63,8 @@ export interface IlpPolicyEvent {
   resultingWealthAssureValue?: number
 }
 
+export type IlpRegularPremiumPaymentFrequency = 'annual' | 'semi-annual' | 'quarterly' | 'monthly'
+
 export interface IlpScheduledPayoutSupport {
   mode: 'manual-assumption'
   accountId: string
@@ -133,6 +135,7 @@ export interface IlpBonusRule {
   yearBasis?: 'policy-year' | 'premium-year'
   cadenceYears?: number
   requiresPremiumsPaidUpToDate?: boolean
+  requiredRegularPremiumPaymentFrequency?: IlpRegularPremiumPaymentFrequency
   tieredRates?: IlpBonusTier[]
   suspensionRules?: IlpBonusSuspensionRule[]
   restorationRules?: IlpBonusRestorationRule[]
@@ -320,6 +323,7 @@ export interface IlpPolicyInput {
   insurer: string
   currency: 'SGD' | 'USD'
   monthlyContribution: number
+  regularPremiumPaymentFrequency?: IlpRegularPremiumPaymentFrequency
   initialSinglePremium?: number
   monthsAlreadyPaid: number
   currentPolicyYear: number
@@ -616,6 +620,12 @@ interface IlpNormalizedPolicyInput {
 
 function getMipBasis(input: Pick<IlpPolicyInput, 'mipBasis'>): 'finite' | 'open-ended' {
   return input.mipBasis ?? 'finite'
+}
+
+function getRegularPremiumPaymentFrequency(
+  input: Pick<IlpPolicyInput, 'regularPremiumPaymentFrequency'>,
+): IlpRegularPremiumPaymentFrequency {
+  return input.regularPremiumPaymentFrequency ?? 'monthly'
 }
 
 function getExitChargeBasis(
@@ -2271,6 +2281,13 @@ function getBonusEligibilityFraction(
   normalized: IlpNormalizedPolicyInput,
   context: IlpCashflowYearContext,
 ): number {
+  if (
+    normalizedBonus.bonus.requiredRegularPremiumPaymentFrequency
+    && getRegularPremiumPaymentFrequency(normalized.input) !== normalizedBonus.bonus.requiredRegularPremiumPaymentFrequency
+  ) {
+    return 0
+  }
+
   if (normalizedBonus.bonus.requiresPremiumsPaidUpToDate && !context.paymentHistory.premiumsPaidUpToDate) {
     return 0
   }
