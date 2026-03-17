@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { createElement, useCallback, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useUIStore } from '@/stores/useUIStore'
 import { HOUSEHOLD_PLAN_STORAGE_KEY, useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
-import { Target, TrendingUp, CheckCircle, ArrowRight, Info, RotateCcw, Calculator } from 'lucide-react'
+import { Target, TrendingUp, CheckCircle, ArrowRight, Info, RotateCcw, Calculator, Play } from 'lucide-react'
 import type { HouseholdPlanType } from '@/lib/household/types'
 import { PlanTypeSelector } from '@/components/household/PlanTypeSelector'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
@@ -23,6 +23,17 @@ import { trackEvent } from '@/lib/analytics'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { LandingEmailSection } from '@/components/email/LandingEmailSection'
 import { QuickEstimateForm } from '@/components/shared/QuickEstimateForm'
+import { DEMO_SCENARIO_DRAFT, DEMO_PLAN_TYPE } from '@/lib/data/demoScenario'
+import { applySetupDraft } from '@/lib/household/setupDraft'
+import { saveScenario } from '@/lib/scenarios'
+import type { SectionId } from '@/lib/household/sectionOrder'
+import { toast } from 'sonner'
+
+const ALL_DEMO_SECTIONS: SectionId[] = [
+  'section-personal', 'section-fire-settings', 'section-income',
+  'section-expenses', 'section-net-worth', 'section-cpf',
+  'section-healthcare', 'section-property', 'section-allocation',
+]
 
 type ActivePathway = 'goal-first' | 'story-first' | 'already-fire' | null
 
@@ -64,6 +75,32 @@ export function StartPage() {
   )
   const [householdPlannerEnabled] = useState(() => isHouseholdPlannerV1Enabled())
   const [calculatorHasResult, setCalculatorHasResult] = useState(false)
+
+  // Demo loading logic
+  const hasExistingData = useMemo(() => {
+    try { return localStorage.getItem(HOUSEHOLD_PLAN_STORAGE_KEY) !== null } catch { return false }
+  }, [])
+
+  const loadDemo = useCallback(() => {
+    if (hasExistingData) {
+      try { saveScenario('Auto-save before demo') } catch { /* max scenarios */ }
+    }
+    applySetupDraft(DEMO_SCENARIO_DRAFT, DEMO_PLAN_TYPE)
+    setUIField('setupCompleted', true)
+    setUIField('setupPopulatedSections', ALL_DEMO_SECTIONS)
+    trackEvent('demo_loaded')
+    navigate('/projection')
+    setTimeout(() => {
+      toast('Viewing demo data', {
+        description: createElement('span', null,
+          createElement(Link, { to: '/setup', className: 'underline font-medium', onClick: () => toast.dismiss() }, 'Start your own plan'),
+          ' or ',
+          createElement(Link, { to: '/', className: 'underline font-medium', onClick: () => toast.dismiss() }, 'back to start'),
+        ),
+        duration: 15000,
+      })
+    }, 500)
+  }, [hasExistingData, setUIField, navigate])
 
   // Check if returning user (has saved profile in localStorage)
   const [isReturningUser] = useState(() => {
@@ -190,14 +227,46 @@ export function StartPage() {
 
       {/* Quick estimate for new users */}
       {!isReturningUser && (
-        <Card>
-          <CardHeader className="pb-2">
-            <p className="text-sm font-medium text-muted-foreground">Quick estimate (10 seconds)</p>
-          </CardHeader>
-          <CardContent>
-            <QuickEstimateForm compact onHasResult={setCalculatorHasResult} />
-          </CardContent>
-        </Card>
+        <>
+          <Card>
+            <CardHeader className="pb-2">
+              <p className="text-sm font-medium text-muted-foreground">Quick estimate (10 seconds)</p>
+            </CardHeader>
+            <CardContent>
+              <QuickEstimateForm compact onHasResult={setCalculatorHasResult} />
+            </CardContent>
+          </Card>
+          <div className="flex justify-center">
+            {hasExistingData ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <Play className="mr-1.5 h-3.5 w-3.5" />
+                    Or explore a demo
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Load demo data?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will replace your current plan with demo data. Your existing plan will be
+                      auto-saved as a scenario you can restore later.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={loadDemo}>Load demo</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={loadDemo}>
+                <Play className="mr-1.5 h-3.5 w-3.5" />
+                Or explore a demo
+              </Button>
+            )}
+          </div>
+        </>
       )}
 
       {householdPlannerEnabled && !calculatorHasResult && (
