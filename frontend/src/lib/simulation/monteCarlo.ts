@@ -53,6 +53,19 @@ export interface MonteCarloEngineParams {
   extractPaths?: boolean  // when true, extract representative paths for projection replay
   deterministicAccumulation?: boolean  // when true, use expected return during accumulation (all sims get identical pre-retirement path)
   yearlyWeights?: number[][]  // per-year allocation weights for glide path (nTotalYears × 8, covering accum + decum)
+  cpfAutoFallback?: CpfAutoFallbackMcConfig  // CPF OA/SA fallback when portfolio depletes
+}
+
+/** Pre-computed CPF state at retirement for MC fallback. */
+export interface CpfAutoFallbackMcConfig {
+  oaBalanceAtRetirement: number     // withdrawable OA (EXCLUDING CPFIS-invested)
+  oaGrowthRate: number              // 2.5% from cpfRates.ts
+  oaLockedForFRS: number            // cannot withdraw below this
+  retirementAge: number
+  includeSA?: boolean
+  saBalanceAtRetirement?: number
+  saGrowthRate?: number             // 4% from cpfRates.ts
+  cpfLifeStartAge?: number          // when RA is annuitized, SA fallback stops
 }
 
 export type MonteCarloEngineResult = Omit<
@@ -547,6 +560,13 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
   const wb_p90: number[] = []
   const wb_p95: number[] = []
 
+  // CPF Auto-Fallback state (per-sim OA/SA balances during decumulation)
+  const cpfFallback = params.cpfAutoFallback
+  const cpfOaBalances = cpfFallback ? new Float64Array(nSims).fill(cpfFallback.oaBalanceAtRetirement) : null
+  const cpfSaBalances = (cpfFallback?.includeSA && cpfFallback.saBalanceAtRetirement)
+    ? new Float64Array(nSims).fill(cpfFallback.saBalanceAtRetirement)
+    : null
+
   // Retirement cash bucket state (one scalar per sim)
   const cashBuckets = new Float64Array(nSims)      // current bucket balance
   const cashBucketTargets = new Float64Array(nSims) // target bucket size
@@ -673,10 +693,53 @@ export function runMonteCarlo(params: MonteCarloEngineParams): MonteCarloEngineR
             (currentBalance - netWithdrawal) * (1 + portfolioReturns[s][t] - expenseRatio)
         }
 
+        // CPF Auto-Fallback: when portfolio depletes, draw from CPF OA (then SA)
+        if (cpfOaBalances && balances[s][t + 1] <= 0) {
+          const age = currentAge + t
+          if (age >= 55) {
+            const shortfall = -balances[s][t + 1] // positive amount needed
+            const cpfLifeStarted = cpfFallback!.cpfLifeStartAge != null && age >= cpfFallback!.cpfLifeStartAge
+
+            // OA withdrawal: available = balance - locked for FRS
+            const oaAvailable = Math.max(0, cpfOaBalances[s] - cpfFallback!.oaLockedForFRS)
+            const oaWithdraw = Math.min(shortfall, oaAvailable)
+            cpfOaBalances[s] -= oaWithdraw
+            let remaining = shortfall - oaWithdraw
+
+            // SA withdrawal (if enabled, OA exhausted, and CPF LIFE hasn't started)
+            if (remaining > 0 && cpfSaBalances && !cpfLifeStarted) {
+              const saWithdraw = Math.min(remaining, cpfSaBalances[s])
+              cpfSaBalances[s] -= saWithdraw
+              remaining -= saWithdraw
+            }
+
+            // Portfolio was negative by `shortfall`. CPF covered (shortfall - remaining).
+            // If fully covered, portfolio goes to 0. If partially covered, still 0.
+            balances[s][t + 1] = 0
+          }
+        }
+
+        // Grow CPF balances (interest accrual at year-end, regardless of withdrawal)
+        if (cpfOaBalances) {
+          cpfOaBalances[s] *= (1 + cpfFallback!.oaGrowthRate)
+        }
+        if (cpfSaBalances) {
+          cpfSaBalances[s] *= (1 + (cpfFallback!.saGrowthRate ?? 0.04))
+        }
+
         // Check for failure
         if (balances[s][t + 1] <= 0 && !failed[s]) {
-          failed[s] = true
-          failureYear[s] = decumYear
+          // With CPF fallback, failure only occurs when both portfolio AND accessible CPF are exhausted
+          const age = currentAge + t
+          const cpfAccessible = age >= 54 // will be 55+ next year when fallback kicks in
+          const cpfStillAvailable = cpfAccessible && cpfOaBalances
+            ? (cpfOaBalances[s] - cpfFallback!.oaLockedForFRS > 0.01) ||
+              (cpfSaBalances ? cpfSaBalances[s] > 0.01 : false)
+            : false
+          if (!cpfStillAvailable) {
+            failed[s] = true
+            failureYear[s] = decumYear
+          }
         }
         // Clamp to 0
         if (balances[s][t + 1] < 0) {

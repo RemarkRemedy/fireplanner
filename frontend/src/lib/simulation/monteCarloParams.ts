@@ -5,7 +5,7 @@ import type {
   PropertyState,
   SimulationState,
 } from '@/lib/types'
-import type { MonteCarloEngineParams } from '@/lib/simulation/monteCarlo'
+import type { MonteCarloEngineParams, CpfAutoFallbackMcConfig } from '@/lib/simulation/monteCarlo'
 import type { NormalizedMonteCarloAnalysisInputs } from '@/lib/household/toAnalysisInputs'
 import { toMonteCarloAnalysisInputs, type NormalizedAnalysisCacheOps } from '@/stores/useNormalizedAnalysisStore'
 import { buildProjectionParams } from '@/lib/calculations/projectionParams'
@@ -21,6 +21,7 @@ import {
 } from '@/lib/calculations/property'
 import { computeCashReservePlan, computeCashReserveOffset } from '@/lib/calculations/cashReserve'
 import { DEFAULT_DOWNSIZING_RENT_GROWTH_RATE } from '@/lib/data/propertyDefaults'
+import { OA_INTEREST_RATE, SA_INTEREST_RATE, FRS_BASE, BRS_GROWTH_RATE, RETIREMENT_SUM_BASE_YEAR } from '@/lib/data/cpfRates'
 import { CORRELATION_MATRIX } from '@/lib/data/historicalReturns'
 import { flattenStrategyParams } from '@/lib/simulation/workerClient'
 import { getEffectiveReturns, getEffectiveStdDevs, buildYearlyWeights } from '@/lib/calculations/portfolio'
@@ -127,11 +128,24 @@ export function buildLegacyMonteCarloEngineParams({
     }
   }
 
+  // CPF balances at retirement for MC fallback (captured from projection)
+  let cpfAtRetirement: { cpfOA: number; cpfSA: number; cpfRA: number; cpfisOA: number; cpfisSA: number } | null = null
+
   if (projectionParams) {
     const projection = generateIncomeProjection(projectionParams)
     const annualRentalIncome = getPropertyRentalIncome(property)
 
     for (const row of projection) {
+      // Capture CPF balances at the first retirement year for MC fallback
+      if (row.isRetired && !cpfAtRetirement) {
+        cpfAtRetirement = {
+          cpfOA: row.cpfOA,
+          cpfSA: row.cpfSA,
+          cpfRA: row.cpfRA,
+          cpfisOA: row.cpfisOA,
+          cpfisSA: row.cpfisSA,
+        }
+      }
       if (!row.isRetired) {
         const year = row.age - profile.currentAge
         const isSold = dsSellAge !== null && row.age >= dsSellAge
@@ -289,6 +303,33 @@ export function buildLegacyMonteCarloEngineParams({
     ?? (profile.liquidNetWorth + profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA)
   const resolvedAllocationWeights = allocationWeights ?? allocation.currentWeights
 
+  // Build CPF auto-fallback config for MC when enabled
+  let cpfAutoFallbackConfig: CpfAutoFallbackMcConfig | undefined
+  if (profile.cpfAutoFallback && cpfAtRetirement) {
+    const uninvestedOA = Math.max(0, cpfAtRetirement.cpfOA - cpfAtRetirement.cpfisOA)
+    // Compute FRS at retirement year to determine locked amount
+    const retirementYear = new Date().getFullYear() + (profile.retirementAge - profile.currentAge)
+    const yearsUntil55FromRet = Math.max(0, 55 - profile.retirementAge)
+    const yearsSinceBase = Math.max(0, retirementYear - RETIREMENT_SUM_BASE_YEAR)
+    const frsAtRetirement = FRS_BASE * Math.pow(1 + BRS_GROWTH_RATE, yearsUntil55FromRet + yearsSinceBase)
+    const raGapToFRS = profile.retirementAge >= 55
+      ? Math.max(0, frsAtRetirement - cpfAtRetirement.cpfRA)
+      : 0
+
+    cpfAutoFallbackConfig = {
+      oaBalanceAtRetirement: uninvestedOA,
+      oaGrowthRate: OA_INTEREST_RATE,
+      oaLockedForFRS: raGapToFRS,
+      retirementAge: profile.retirementAge,
+      includeSA: profile.cpfAutoFallbackIncludeSA,
+      saBalanceAtRetirement: profile.cpfAutoFallbackIncludeSA
+        ? Math.max(0, cpfAtRetirement.cpfSA - cpfAtRetirement.cpfisSA)
+        : undefined,
+      saGrowthRate: profile.cpfAutoFallbackIncludeSA ? SA_INTEREST_RATE : undefined,
+      cpfLifeStartAge: profile.cpfLifeStartAge,
+    }
+  }
+
   return {
     initialPortfolio: resolvedInitialPortfolio,
     allocationWeights: resolvedAllocationWeights,
@@ -328,6 +369,7 @@ export function buildLegacyMonteCarloEngineParams({
           allocation.glidePathConfig,
         )
       : undefined,
+    cpfAutoFallback: cpfAutoFallbackConfig,
   }
 }
 
