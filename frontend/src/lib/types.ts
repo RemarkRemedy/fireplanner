@@ -243,6 +243,9 @@ export interface ProfileState {
   // Age-Gated Locked Assets (illiquid holdings that become accessible at a specific age)
   lockedAssets: LockedAsset[]
 
+  // Per-Expense SWR (advisory gap feature): itemised retirement expenses with per-item withdrawal rates
+  retirementExpenseItems: RetirementExpenseItem[]
+
   // Validation
   validationErrors: ValidationErrors
 }

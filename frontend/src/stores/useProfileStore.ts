@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { ProfileState, ParentSupport, RetirementWithdrawal, CpfOaWithdrawal, FinancialGoal, LockedAsset, ExpenseAdjustment, OopCurveVariant, ValidationErrors } from '@/lib/types'
+import type { ProfileState, ParentSupport, RetirementWithdrawal, CpfOaWithdrawal, FinancialGoal, LockedAsset, ExpenseAdjustment, RetirementExpenseItem, OopCurveVariant, ValidationErrors } from '@/lib/types'
 import { validateProfileField } from '@/lib/validation/schemas'
 import { validateProfileConsistency } from '@/lib/validation/rules'
 import { interpolateOopMultiplier } from '@/lib/data/healthcareOop'
@@ -30,6 +30,9 @@ interface ProfileActions {
   addLockedAsset: (asset: LockedAsset) => void
   removeLockedAsset: (id: string) => void
   updateLockedAsset: (id: string, updates: Partial<Omit<LockedAsset, 'id'>>) => void
+  addRetirementExpenseItem: (item: RetirementExpenseItem) => void
+  removeRetirementExpenseItem: (id: string) => void
+  updateRetirementExpenseItem: (id: string, updates: Partial<Omit<RetirementExpenseItem, 'id'>>) => void
   reset: () => void
 }
 
@@ -61,6 +64,7 @@ export const PROFILE_DATA_KEYS = [
   'lockedAssets',
   'cashReserveEnabled', 'cashReserveMode', 'cashReserveFixedAmount',
   'cashReserveMonths', 'cashReserveReturn', 'retirementMitigation',
+  'retirementExpenseItems',
 ] as const
 
 export const DEFAULT_PROFILE: Omit<ProfileState, 'validationErrors'> = {
@@ -127,6 +131,7 @@ export const DEFAULT_PROFILE: Omit<ProfileState, 'validationErrors'> = {
   cashReserveMonths: 6,
   cashReserveReturn: 0.02,
   retirementMitigation: { type: 'none' as const },
+  retirementExpenseItems: [],
 }
 
 // ============================================================
@@ -465,6 +470,44 @@ export const useProfileStore = create<ProfileStoreState>()(
           }
         }),
 
+      addRetirementExpenseItem: (item: RetirementExpenseItem) =>
+        set((state) => {
+          const stateData = extractProfileData(state)
+          const updated = { ...stateData, retirementExpenseItems: [...stateData.retirementExpenseItems, item] }
+          return {
+            retirementExpenseItems: updated.retirementExpenseItems,
+            profileRevision: bumpProfileRevision(state.profileRevision),
+            validationErrors: computeValidationErrors(updated),
+          }
+        }),
+
+      removeRetirementExpenseItem: (id: string) =>
+        set((state) => {
+          const stateData = extractProfileData(state)
+          const updated = { ...stateData, retirementExpenseItems: stateData.retirementExpenseItems.filter((a) => a.id !== id) }
+          return {
+            retirementExpenseItems: updated.retirementExpenseItems,
+            profileRevision: bumpProfileRevision(state.profileRevision),
+            validationErrors: computeValidationErrors(updated),
+          }
+        }),
+
+      updateRetirementExpenseItem: (id: string, updates: Partial<Omit<RetirementExpenseItem, 'id'>>) =>
+        set((state) => {
+          const stateData = extractProfileData(state)
+          const updated = {
+            ...stateData,
+            retirementExpenseItems: stateData.retirementExpenseItems.map((a) =>
+              a.id === id ? { ...a, ...updates } : a
+            ),
+          }
+          return {
+            retirementExpenseItems: updated.retirementExpenseItems,
+            profileRevision: bumpProfileRevision(state.profileRevision),
+            validationErrors: computeValidationErrors(updated),
+          }
+        }),
+
       reset: () =>
         set((state) => ({
           ...DEFAULT_PROFILE,
@@ -474,7 +517,7 @@ export const useProfileStore = create<ProfileStoreState>()(
     }),
     {
       name: 'fireplanner-profile',
-      version: 22,
+      version: 23,
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>
         if (version < 2) {
@@ -584,6 +627,9 @@ export const useProfileStore = create<ProfileStoreState>()(
         }
         if (version < 22) {
           state.prMonths = state.prMonths ?? 24 // Default to full citizen rates
+        }
+        if (version < 23) {
+          state.retirementExpenseItems = state.retirementExpenseItems ?? []
         }
         return state
       },

@@ -86,6 +86,7 @@ Normative rules for PR 2:
 - `expenseAdjustments` -> `expenses["expense-adjustment-*"]` with one item per legacy entry -> `expenseOrder` and `expensesById["expense-adjustment-*"]`
 - `financialGoals` -> `goals["goal-*"]` with one item per legacy goal -> `goalOrder` and `goalsById["goal-*"]`
 - `lockedAssets` -> `assets["asset-locked-*"]` with one item per legacy asset -> `assetOrder` and `assetsById["asset-locked-*"]`
+- `retirementExpenseItems` -> display-layer only (per-expense SWR advisory feature); not mapped to household plan normalization
 - `cashReserveEnabled` -> `assumptions.cashReserve.enabled` -> `assumptions.cashReserve.enabled`
 - `cashReserveMode` -> `assumptions.cashReserve.mode` -> `assumptions.cashReserve.mode`
 - `cashReserveFixedAmount` -> `assumptions.cashReserve.fixedAmount` -> `assumptions.cashReserve.fixedAmount`

@@ -37,6 +37,8 @@ interface UIState {
   setupPopulatedSections: SectionId[]
   completedNudgeFlows: NudgeFlowId[]
   dismissedSectionIntros: SectionId[]
+  /** When true, the blended per-expense FIRE number overrides the dashboard primary FIRE number */
+  useBlendedFireNumber: boolean
 }
 
 interface UIActions {
@@ -77,6 +79,7 @@ const DEFAULT_UI: UIState = {
   setupPopulatedSections: [] as SectionId[],
   completedNudgeFlows: [] as NudgeFlowId[],
   dismissedSectionIntros: [] as SectionId[],
+  useBlendedFireNumber: false,
 }
 
 export const useUIStore = create<UIState & UIActions>()(
@@ -155,7 +158,7 @@ export const useUIStore = create<UIState & UIActions>()(
     }),
     {
       name: 'fireplanner-ui',
-      version: 14,
+      version: 15,
       partialize: (state) => {
         // Exclude transient fields from persistence
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -218,6 +221,9 @@ export const useUIStore = create<UIState & UIActions>()(
           // healthcareEnabled was introduced as false in v2 and never migrated to true.
           // protectionEnabled was fixed in v13 but healthcareEnabled was missed.
           state.healthcareEnabled = true
+        }
+        if (version < 15) {
+          state.useBlendedFireNumber = false
         }
         return state
       },
