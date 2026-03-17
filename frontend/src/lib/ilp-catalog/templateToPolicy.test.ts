@@ -3680,6 +3680,7 @@ describe('templateVariantToPolicySeed', () => {
           id: 'monthly-protection-charge',
           basis: 'assurance-sum-at-risk',
           appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
           fallbackAppliesTo: ['topup', 'initial'],
           assuranceConfig: {
             formula: 'tokio-mpc-net-premium-floor',
@@ -3697,6 +3698,42 @@ describe('templateVariantToPolicySeed', () => {
     )
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('first-three-policy-years accrual window'))).toBe(true)
+  })
+
+  it('maps Tokio Marine Wealth Max (II) advanced-death-life-benefit-rider into a supported seed with policy-term Tokio MPC inputs', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-wealth-max-ii')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-15-advanced-death-life-benefit-rider')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-wealth-max-ii-advanced-death-monthly-protection-charge-accrual')
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          assuranceConfig: expect.objectContaining({
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 3,
+              settlementPolicyYear: 4,
+            },
+          }),
+          requiresManualInput: true,
+        }),
+      ]),
+    )
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('policy anniversary immediately after age 99'))).toBe(true)
   })
 
   it('maps TM Wealth Enhancer (CPFIS) into a supported seed with zero-charge regular top-up routing', () => {
@@ -4107,6 +4144,7 @@ describe('templateVariantToPolicySeed', () => {
           id: 'monthly-protection-charge',
           basis: 'assurance-sum-at-risk',
           appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
           fallbackAppliesTo: ['topup', 'initial'],
           assuranceConfig: {
             formula: 'tokio-mpc-net-premium-floor',
@@ -4124,6 +4162,42 @@ describe('templateVariantToPolicySeed', () => {
     )
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('first-three-policy-years accrual window'))).toBe(true)
+  })
+
+  it('maps Tokio Marine Wealth Pro (II) advanced-death-life-benefit-rider into a supported seed with policy-term Tokio MPC inputs', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-wealth-pro-ii')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10-advanced-death-life-benefit-rider')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-wealth-pro-ii-advanced-death-monthly-protection-charge-accrual')
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          assuranceConfig: expect.objectContaining({
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 3,
+              settlementPolicyYear: 4,
+            },
+          }),
+          requiresManualInput: true,
+        }),
+      ]),
+    )
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('policy anniversary immediately after age 99'))).toBe(true)
   })
 
   it('maps Tokio Marine Harvest Pro into a supported seed with executable bonus ladders', () => {
@@ -4205,6 +4279,7 @@ describe('templateVariantToPolicySeed', () => {
           id: 'monthly-protection-charge',
           basis: 'assurance-sum-at-risk',
           appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
           fallbackAppliesTo: ['topup', 'initial'],
           assuranceConfig: {
             formula: 'tokio-mpc-net-premium-floor',
@@ -4222,6 +4297,42 @@ describe('templateVariantToPolicySeed', () => {
     )
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('first-three-policy-years accrual window'))).toBe(true)
+  })
+
+  it('maps Tokio Marine Harvest Pro advanced-death-life-benefit-rider into a supported seed with policy-term Tokio MPC inputs', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-harvest-pro')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10-advanced-death-life-benefit-rider')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-harvest-pro-advanced-death-monthly-protection-charge-accrual')
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          assuranceConfig: expect.objectContaining({
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 3,
+              settlementPolicyYear: 4,
+            },
+          }),
+          requiresManualInput: true,
+        }),
+      ]),
+    )
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('policy anniversary immediately after age 99'))).toBe(true)
   })
 
   it('maps Tokio Marine Harvest Flexi into a supported seed with executable initial and policy charge surfaces', () => {
@@ -4308,7 +4419,8 @@ describe('templateVariantToPolicySeed', () => {
       ]),
     )
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-benefit-payout-handling')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-life-benefit-rider')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-multiple-life-and-life-replacement-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-life-benefit-rider')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
       'tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions',
     )
@@ -4361,6 +4473,37 @@ describe('templateVariantToPolicySeed', () => {
     )
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Monthly Protection Charge during the minimum investment period'))).toBe(true)
+  })
+
+  it('maps Tokio Marine Harvest Flexi advanced-death-life-benefit-rider into a supported seed with policy-term Tokio MPC inputs', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-harvest-flexi')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10-advanced-death-life-benefit-rider')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-harvest-flexi-advanced-death-monthly-protection-charge')
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+          assuranceConfig: expect.objectContaining({
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            maxAgeNextBirthday: 99,
+          }),
+          requiresManualInput: true,
+        }),
+      ]),
+    )
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('policy anniversary immediately after age 99'))).toBe(true)
   })
 
   it('maps Tokio Marine Harvest Max into a supported seed with executable initial, policy, and admin charge surfaces', () => {
@@ -4639,6 +4782,8 @@ describe('templateVariantToPolicySeed', () => {
       source: 'catalog-default',
     })
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-benefit-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-multiple-life-and-life-replacement-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-life-benefit-rider')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
@@ -4676,6 +4821,38 @@ describe('templateVariantToPolicySeed', () => {
     )
     expect(seed.assuranceProfile).toBeUndefined()
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Monthly Protection Charge'))).toBe(true)
+  })
+
+  it('maps Tokio Marine Wealth Flexi advanced-death-life-benefit-rider into a supported seed with policy-term Tokio MPC inputs', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-wealth-flexi')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10-advanced-death-life-benefit-rider')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.name).toBe('Wealth Flexi (SGD / MIP 10 (Advanced Death Life Benefit Rider))')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-wealth-flexi-advanced-death-monthly-protection-charge')
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+          requiresManualInput: true,
+          assuranceConfig: expect.objectContaining({
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            maxAgeNextBirthday: 99,
+          }),
+        }),
+      ]),
+    )
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('policy anniversary immediately after age 99'))).toBe(true)
   })
 
   it('maps Tokio Marine Wealth Flexi-Link 5.10 into a supported seed with accumulation-account policy charges and bonus windows', () => {

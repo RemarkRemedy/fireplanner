@@ -250,6 +250,7 @@ function buildTokioMpcFeeRule(
   optionPage: IlpCatalogSourceRef,
   chargePage: IlpCatalogSourceRef,
   tablePage: IlpCatalogSourceRef,
+  withLifeBenefitRider = false,
 ): IlpTemplateFeeRule {
   return {
     id: 'monthly-protection-charge',
@@ -258,8 +259,9 @@ function buildTokioMpcFeeRule(
     rate: 0,
     amount: 0,
     appliesTo: ['accumulation'],
+    assuranceValueAppliesTo: ['initial', 'accumulation'],
     fallbackAppliesTo: ['topup', 'initial'],
-    activeWindow: 'during-mip',
+    activeWindow: withLifeBenefitRider ? 'policy-term' : 'during-mip',
     assuranceConfig: {
       formula: 'tokio-mpc-net-premium-floor',
       rateTable: 'tokio-mpc-unzo-death',
@@ -273,10 +275,12 @@ function buildTokioMpcFeeRule(
     },
     requiresManualInput: true,
     notes: [
-      'Models the published Monthly Protection Charge for the Advanced Death corridor during the minimum investment period.',
+      withLifeBenefitRider
+        ? 'Models the published Monthly Protection Charge for the single-life Advanced Death with Life Benefit Rider corridor through the policy anniversary immediately after age 99.'
+        : 'Models the published Monthly Protection Charge for the Advanced Death corridor during the minimum investment period.',
       'The Monthly Protection Charge for policy years 1 to 3 is accrued and collected in one lump sum in policy year 4.',
       'From policy year 4 onward, the Monthly Protection Charge is deducted monthly in advance from the Accumulation Units Account, then the Top-up Units Account, then the Initial Units Account if needed.',
-      'Sum at risk is the published net premium less 101% of Account value, floored at zero.',
+      'Sum at risk is the published net premium less 101% of the Initial Units Account value and 101% of the Accumulation Units Account value, floored at zero.',
     ],
     sourceRefs: [optionPage, chargePage, tablePage],
   }
@@ -284,9 +288,10 @@ function buildTokioMpcFeeRule(
 
 function buildVariant(
   document: ExtractedPdfDocument,
-  deathBenefitOption: 'basic-death' | 'advanced-death',
+  deathBenefitOption: 'basic-death' | 'advanced-death' | 'advanced-death-life-benefit-rider',
 ): IlpTemplateVariant {
-  const isAdvancedDeath = deathBenefitOption === 'advanced-death'
+  const isAdvancedDeath = deathBenefitOption !== 'basic-death'
+  const hasLifeBenefitRider = deathBenefitOption === 'advanced-death-life-benefit-rider'
   const page2 = sourceRef(2, 'Initial Bonus', snippetNear(document, 2, 'Initial Bonus', 16))
   const page3 = sourceRef(3, 'Performance Investment / Loyalty / Power-up Bonus', snippetNear(document, 3, 'Performance Investment Bonus', 20))
   const page5 = sourceRef(5, 'Regular Premium Routing', snippetNear(document, 5, 'Initial Units Account'))
@@ -392,14 +397,18 @@ function buildVariant(
 
   const feeRules = buildFeeRules(document)
   if (isAdvancedDeath && page18 != null) {
-    feeRules.push(buildTokioMpcFeeRule(page2, page11, page18))
+    feeRules.push(buildTokioMpcFeeRule(page2, page11, page18, hasLifeBenefitRider))
   }
   const advancedSourceRefs = isAdvancedDeath && page18 != null
     ? [page18]
     : []
 
   return {
-    id: deathBenefitOption === 'basic-death' ? 'sgd-mip-15' : 'sgd-mip-15-advanced-death',
+    id: deathBenefitOption === 'basic-death'
+      ? 'sgd-mip-15'
+      : hasLifeBenefitRider
+        ? 'sgd-mip-15-advanced-death-life-benefit-rider'
+        : 'sgd-mip-15-advanced-death',
     currency: 'SGD',
     mipLength: MIP_LENGTH,
     icpMonths: 36,
@@ -475,12 +484,14 @@ function buildVariant(
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      `This supported template models the SGD / MIP 15 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
+      `This supported template models the SGD / MIP 15 (${hasLifeBenefitRider ? 'Advanced Death with Life Benefit Rider' : isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.${hasLifeBenefitRider ? ' The Life Benefit Rider path is limited to the single-life corridor.' : ''}`,
       'This supported template models regular-premium routing through year 15, top-up routing, recurring single premium routing, the published initial setup charge, policy investment charge, admin charge, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.',
       'This supported template also models the published premium shortfall charge for non-payment periods and regular-premium reductions, including the higher-charge rule when both overlap.',
       ...(isAdvancedDeath
         ? [
-            'The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window and policy-year-4 lump-sum settlement, after you enter the insured-life details and current net premium base.',
+            hasLifeBenefitRider
+              ? 'The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and the published sum-at-risk valuation across the Initial Units Account and Accumulation Units Account after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.'
+              : 'The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and the published sum-at-risk valuation across the Initial Units Account and Accumulation Units Account after you enter the insured-life details and current net premium base.',
           ]
         : []),
       'Recurring single premium remains blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.',
@@ -489,13 +500,17 @@ function buildVariant(
       'The phase-specific dividend cash-payout account restrictions are modeled through the manual distribution-mode assumption surface, together with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
     ],
     unsupportedItems: [
-      ...(isAdvancedDeath
+      ...(!isAdvancedDeath
         ? [
-            'Advanced Death payout handling beyond the modeled Monthly Protection Charge, together with multiple-life and capital-guarantee option administration, remains metadata-only for this product.',
+            'Advanced Death selection, Advanced Death with Life Benefit Rider selection, Monthly Protection Charge, multiple-life last-life settlement, and life replacement administration remain metadata-only for this product.',
           ]
-        : [
-            'Advanced Death selection, Monthly Protection Charge, and multiple-life and capital-guarantee option administration remain metadata-only for this product.',
-          ]),
+        : hasLifeBenefitRider
+          ? [
+              'Advanced Death and Life Benefit Rider payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, oldest/youngest-life rider-term and Monthly Protection Charge recalculation, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+            ]
+          : [
+              'Advanced Death payout handling beyond the modeled Monthly Protection Charge, Advanced Death with Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+            ]),
       'The published regular withdrawal facility remains informational only in V1.',
     ],
     sourceRefs: [page2, page3, page5, page6, page9, page11, page12, ...advancedSourceRefs, page19],
@@ -540,12 +555,13 @@ export function parseTokioMarineWealthMaxIi(context: ParseContext): IlpCatalogPr
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-multiple-life-and-capital-guarantee-options',
+      'tokio-wealth-max-ii-advanced-death-payout-handling',
+      'tokio-wealth-max-ii-multiple-life-and-life-replacement-administration',
     ],
     warnings: [
       'Structured extraction validated against the Wealth Max (II) product summary text layer.',
       'Wealth Max (II) is modeled with the published initial setup charge, policy investment charge, and admin charge tied to the commencement-date premium commitment.',
-      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-three-policy-years accrual window and policy-year-4 lump-sum settlement after you enter the insured-life details and current net premium base.',
+      'Basic Death keeps Monthly Protection Charge metadata-only, the Advanced Death variant models the published first-three-policy-years accrual window and policy-year-4 lump-sum settlement after you enter the insured-life details and current net premium base, and the Advanced Death with Life Benefit Rider variant extends that same Monthly Protection Charge corridor through the policy anniversary immediately after age 99 for the single-life corridor.',
       'Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.',
       'When a regular-premium reduction overlaps a recurring single premium, the modeled cashflow reduces the recurring single premium first before reducing regular premium contributions.',
       'Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.',
@@ -556,6 +572,7 @@ export function parseTokioMarineWealthMaxIi(context: ParseContext): IlpCatalogPr
     variants: [
       buildVariant(context.document, 'basic-death'),
       buildVariant(context.document, 'advanced-death'),
+      buildVariant(context.document, 'advanced-death-life-benefit-rider'),
     ],
   }
 }

@@ -7749,6 +7749,36 @@ function tokioWealthMaxAdvancedDeathBaselinePolicy(
   ))
 }
 
+function tokioWealthMaxAdvancedDeathLifeBenefitRiderBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-wealth-max-ii', 'sgd-mip-15-advanced-death-life-benefit-rider', id)
+  return withResolvedManualInputs(withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Wealth Max (II) (SGD / MIP 15 Advanced Death Life Benefit Rider Baseline)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 14,
+        monthsAlreadyPaid: 156,
+        assuranceProfile: {
+          currentAgeNextBirthday: 57,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 72_000,
+        },
+        postMipYears: 15,
+        policyEvents: [],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    10_000,
+    20_000,
+    0,
+  ))
+}
+
 function tokioWealthMaxStressPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
@@ -8642,6 +8672,36 @@ function tokioWealthProAdvancedDeathBaselinePolicy(
   ))
 }
 
+function tokioWealthProAdvancedDeathLifeBenefitRiderBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-wealth-pro-ii', 'sgd-mip-10-advanced-death-life-benefit-rider', id)
+  return withResolvedManualInputs(withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Wealth Pro (II) (SGD / MIP 10 Advanced Death Life Benefit Rider Baseline)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 9,
+        monthsAlreadyPaid: 96,
+        assuranceProfile: {
+          currentAgeNextBirthday: 57,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 72_000,
+        },
+        postMipYears: 15,
+        policyEvents: [],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    10_000,
+    20_000,
+    0,
+  ))
+}
+
 function tokioWealthProStressPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
@@ -8757,6 +8817,36 @@ function tokioHarvestFlexiAdvancedDeathBaselinePolicy(
   ))
 }
 
+function tokioHarvestFlexiAdvancedDeathLifeBenefitRiderBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-harvest-flexi', 'sgd-mip-10-advanced-death-life-benefit-rider', id)
+  return withResolvedManualInputs(withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Harvest Flexi (SGD / MIP 10 Advanced Death Life Benefit Rider Baseline)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 9,
+        monthsAlreadyPaid: 96,
+        assuranceProfile: {
+          currentAgeNextBirthday: 57,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 72_000,
+        },
+        postMipYears: 15,
+        policyEvents: [],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    0,
+    20_000,
+    10_000,
+  ))
+}
+
 function tokioHarvestFlexiStressPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
@@ -8869,6 +8959,36 @@ function tokioWealthFlexiAdvancedDeathBaselinePolicy(
     0,
     8_000,
     1_500,
+  ))
+}
+
+function tokioWealthFlexiAdvancedDeathLifeBenefitRiderBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-wealth-flexi', 'sgd-mip-10-advanced-death-life-benefit-rider', id)
+  return withResolvedManualInputs(withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Wealth Flexi (SGD / MIP 10 Advanced Death Life Benefit Rider Baseline)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 9,
+        monthsAlreadyPaid: 96,
+        assuranceProfile: {
+          currentAgeNextBirthday: 57,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 72_000,
+        },
+        postMipYears: 15,
+        policyEvents: [],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    0,
+    20_000,
+    10_000,
   ))
 }
 
@@ -9431,6 +9551,36 @@ function tokioHarvestProAdvancedDeathBaselinePolicy(
     ),
     1_500,
     8_000,
+    0,
+  ))
+}
+
+function tokioHarvestProAdvancedDeathLifeBenefitRiderBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-harvest-pro', 'sgd-mip-10-advanced-death-life-benefit-rider', id)
+  return withResolvedManualInputs(withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Harvest Pro (SGD / MIP 10 Advanced Death Life Benefit Rider Baseline)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 9,
+        monthsAlreadyPaid: 96,
+        assuranceProfile: {
+          currentAgeNextBirthday: 57,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 72_000,
+        },
+        postMipYears: 15,
+        policyEvents: [],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    10_000,
+    20_000,
     0,
   ))
 }
@@ -15177,6 +15327,17 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'tokio-marine-wealth-flexi',
+    variantId: 'sgd-mip-10-advanced-death-life-benefit-rider',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:tokio-wealth-flexi-advanced-death-monthly-protection-charge',
+    ],
+    description: 'Tokio Marine Wealth Flexi advanced-death with Life Benefit Rider baseline proving the single-life rider corridor keeps Monthly Protection Charge active through the late supported V1 policy window.',
+  },
+  {
+    productId: 'tokio-marine-wealth-flexi',
     variantId: 'sgd-mip-10',
     scenarioId: 'event-heavy',
     fixtureClass: 'supported',
@@ -15234,6 +15395,17 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'branch:tokio-harvest-flexi-advanced-death-monthly-protection-charge',
     ],
     description: 'Tokio Marine Harvest Flexi advanced-death supported baseline proving Monthly Protection Charge handling from insured-life inputs.',
+  },
+  {
+    productId: 'tokio-marine-harvest-flexi',
+    variantId: 'sgd-mip-10-advanced-death-life-benefit-rider',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:tokio-harvest-flexi-advanced-death-monthly-protection-charge',
+    ],
+    description: 'Tokio Marine Harvest Flexi advanced-death with Life Benefit Rider baseline proving the single-life rider corridor keeps Monthly Protection Charge active through the late supported V1 policy window.',
   },
   {
     productId: 'tokio-marine-harvest-flexi',
@@ -15299,6 +15471,17 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'branch:tokio-harvest-pro-advanced-death-monthly-protection-charge-accrual',
     ],
     description: 'Tokio Marine Harvest Pro advanced-death supported baseline proving accrued Monthly Protection Charge handling.',
+  },
+  {
+    productId: 'tokio-marine-harvest-pro',
+    variantId: 'sgd-mip-10-advanced-death-life-benefit-rider',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:tokio-harvest-pro-advanced-death-monthly-protection-charge-accrual',
+    ],
+    description: 'Tokio Marine Harvest Pro advanced-death with Life Benefit Rider baseline proving the single-life rider corridor keeps the accrued Monthly Protection Charge path active through the late supported V1 policy window.',
   },
   {
     productId: 'tokio-marine-harvest-pro',
@@ -15653,6 +15836,17 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'tokio-marine-wealth-max-ii',
+    variantId: 'sgd-mip-15-advanced-death-life-benefit-rider',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:tokio-wealth-max-ii-advanced-death-monthly-protection-charge-accrual',
+    ],
+    description: 'Tokio Marine Wealth Max (II) advanced-death with Life Benefit Rider baseline proving the single-life rider corridor keeps the accrued Monthly Protection Charge path active through the late supported V1 policy window.',
+  },
+  {
+    productId: 'tokio-marine-wealth-max-ii',
     variantId: 'sgd-mip-15',
     scenarioId: 'event-heavy',
     fixtureClass: 'supported',
@@ -15800,6 +15994,17 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'branch:tokio-wealth-pro-ii-advanced-death-monthly-protection-charge-accrual',
     ],
     description: 'Tokio Marine Wealth Pro (II) advanced-death supported baseline proving accrued Monthly Protection Charge handling.',
+  },
+  {
+    productId: 'tokio-marine-wealth-pro-ii',
+    variantId: 'sgd-mip-10-advanced-death-life-benefit-rider',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:tokio-wealth-pro-ii-advanced-death-monthly-protection-charge-accrual',
+    ],
+    description: 'Tokio Marine Wealth Pro (II) advanced-death with Life Benefit Rider baseline proving the single-life rider corridor keeps the accrued Monthly Protection Charge path active through the late supported V1 policy window.',
   },
   {
     productId: 'tokio-marine-wealth-pro-ii',
@@ -16919,6 +17124,9 @@ function buildPolicyForDefinition(
     if (definition.variantId === 'sgd-mip-10-advanced-death') {
       return tokioWealthFlexiAdvancedDeathBaselinePolicy(snapshot, id)
     }
+    if (definition.variantId === 'sgd-mip-10-advanced-death-life-benefit-rider') {
+      return tokioWealthFlexiAdvancedDeathLifeBenefitRiderBaselinePolicy(snapshot, id)
+    }
     return tokioBaselinePolicy(
       snapshot,
       'tokio-marine-wealth-flexi',
@@ -16937,6 +17145,9 @@ function buildPolicyForDefinition(
     if (definition.variantId === 'sgd-mip-10-advanced-death') {
       return tokioHarvestFlexiAdvancedDeathBaselinePolicy(snapshot, id)
     }
+    if (definition.variantId === 'sgd-mip-10-advanced-death-life-benefit-rider') {
+      return tokioHarvestFlexiAdvancedDeathLifeBenefitRiderBaselinePolicy(snapshot, id)
+    }
     return tokioBaselinePolicy(
       snapshot,
       'tokio-marine-harvest-flexi',
@@ -16954,6 +17165,9 @@ function buildPolicyForDefinition(
   if (definition.productId === 'tokio-marine-harvest-pro' && definition.scenarioId === 'baseline') {
     if (definition.variantId === 'sgd-mip-10-advanced-death') {
       return tokioHarvestProAdvancedDeathBaselinePolicy(snapshot, id)
+    }
+    if (definition.variantId === 'sgd-mip-10-advanced-death-life-benefit-rider') {
+      return tokioHarvestProAdvancedDeathLifeBenefitRiderBaselinePolicy(snapshot, id)
     }
     return tokioBaselinePolicy(
       snapshot,
@@ -17051,6 +17265,9 @@ function buildPolicyForDefinition(
     if (definition.variantId === 'sgd-mip-15-advanced-death') {
       return tokioWealthMaxAdvancedDeathBaselinePolicy(snapshot, id)
     }
+    if (definition.variantId === 'sgd-mip-15-advanced-death-life-benefit-rider') {
+      return tokioWealthMaxAdvancedDeathLifeBenefitRiderBaselinePolicy(snapshot, id)
+    }
     return tokioBaselinePolicy(
       snapshot,
       'tokio-marine-wealth-max-ii',
@@ -17068,6 +17285,9 @@ function buildPolicyForDefinition(
   if (definition.productId === 'tokio-marine-wealth-pro-ii' && definition.scenarioId === 'baseline') {
     if (definition.variantId === 'sgd-mip-10-advanced-death') {
       return tokioWealthProAdvancedDeathBaselinePolicy(snapshot, id)
+    }
+    if (definition.variantId === 'sgd-mip-10-advanced-death-life-benefit-rider') {
+      return tokioWealthProAdvancedDeathLifeBenefitRiderBaselinePolicy(snapshot, id)
     }
     return tokioBaselinePolicy(
       snapshot,

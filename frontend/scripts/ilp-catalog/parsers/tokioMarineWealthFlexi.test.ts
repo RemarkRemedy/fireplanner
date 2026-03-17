@@ -33,15 +33,19 @@ describe('parseTokioMarineWealthFlexi', () => {
     expect(product.modeledEconomics).toContain('branch:tokio-wealth-flexi-advanced-death-monthly-protection-charge')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-benefit-payout-handling')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-life-benefit-rider')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-multiple-life-and-life-replacement-administration')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-life-benefit-rider')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-multiple-life-and-capital-guarantee-options')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-dividend-payout-threshold-and-record-date-instructions')
-    expect(product.variants).toHaveLength(2)
+    expect(product.variants).toHaveLength(3)
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10')
     const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10-advanced-death')
+    const riderVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10-advanced-death-life-benefit-rider')
 
     expect(basicVariant).toBeDefined()
     expect(advancedVariant).toBeDefined()
+    expect(riderVariant).toBeDefined()
     expect(basicVariant?.icpMonths).toBe(1)
     expect(basicVariant?.accounts.map((account) => account.id)).toEqual(['accumulation', 'topup'])
     expect(basicVariant?.accounts[0]?.subjectToEec).toBe(true)
@@ -150,12 +154,39 @@ describe('parseTokioMarineWealthFlexi', () => {
         }),
       ]),
     )
+    expect(advancedVariant?.feeRules.filter((rule) => rule.id === 'monthly-protection-charge')).toHaveLength(1)
     expect(advancedVariant?.warnings).toContain(
       'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
     )
-    expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider, multiple-life administration, and capital-guarantee options remain metadata-only for this product.',
+    expect(riderVariant?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+          requiresManualInput: true,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+          },
+        }),
+      ]),
     )
+    expect(riderVariant?.feeRules.filter((rule) => rule.id === 'monthly-protection-charge')).toHaveLength(1)
+    expect(riderVariant?.warnings).toContain(
+      'The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.',
+    )
+    expect(riderVariant?.unsupportedItems).toContain(
+      'Advanced Death Benefit and Life Benefit Rider payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, oldest/youngest-life rider-term and Monthly Protection Charge recalculation, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+    )
+    expect(advancedVariant?.unsupportedItems).toContain(
+      'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, Advanced Death Benefit with Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+    )
+    expect(riderVariant?.sourceRefs.some((ref) => ref.page === 15)).toBe(true)
     expect(advancedVariant?.sourceRefs.some((ref) => ref.page === 15)).toBe(true)
     expect(basicVariant?.sourceRefs.some((ref) => ref.page === 15)).toBe(false)
   }, 30_000)
