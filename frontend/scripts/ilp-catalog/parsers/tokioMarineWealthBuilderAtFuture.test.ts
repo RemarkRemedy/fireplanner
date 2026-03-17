@@ -31,9 +31,18 @@ describe('parseTokioMarineWealthBuilderAtFuture', () => {
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-builder-atfuture-advanced-death-benefit-selection')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-builder-atfuture-advanced-death-benefit-payout-handling')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-builder-atfuture-life-benefit-rider')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-builder-atfuture-regular-withdrawal-behavior')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-builder-atfuture-minimum-account-value-enforcement')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-builder-atfuture-rider-premium-deduction-handling')
     expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-builder-atfuture-multiple-life-last-life-settlement')
     expect(product.metadataOnlyBehaviors).toContain(
       'tokio-wealth-builder-atfuture-change-of-life-assured-and-life-replacement-administration',
+    )
+    expect(product.metadataOnlyBehaviors).not.toContain(
+      'tokio-wealth-builder-atfuture-advanced-death-benefit-and-life-benefit-rider',
     )
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-wealth-builder-atfuture-life-replacement-option')
     expect(product.metadataOnlyBehaviors).not.toContain(

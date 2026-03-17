@@ -437,10 +437,15 @@ export function parseTokioMarineWealthBuilderAtFuture(context: ParseContext): Il
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-wealth-builder-atfuture-advanced-death-benefit-and-life-benefit-rider',
+      'tokio-wealth-builder-atfuture-advanced-death-benefit-selection',
+      'tokio-wealth-builder-atfuture-advanced-death-benefit-payout-handling',
+      'tokio-wealth-builder-atfuture-life-benefit-rider',
       'tokio-wealth-builder-atfuture-credit-card-charge',
       'tokio-wealth-builder-atfuture-multiple-life-last-life-settlement',
       'tokio-wealth-builder-atfuture-change-of-life-assured-and-life-replacement-administration',
+      'tokio-wealth-builder-atfuture-regular-withdrawal-behavior',
+      'tokio-wealth-builder-atfuture-minimum-account-value-enforcement',
+      'tokio-wealth-builder-atfuture-rider-premium-deduction-handling',
     ],
     warnings: [
       'Structured extraction validated against the Wealth Builder@Future product summary text layer.',

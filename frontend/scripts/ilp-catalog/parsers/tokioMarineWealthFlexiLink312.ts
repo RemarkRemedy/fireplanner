@@ -449,10 +449,10 @@ function buildVariant(
     unsupportedItems: [
       ...(isAdvancedDeath
         ? [
-            'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, eligible rider fallback, involuntary unemployment waiver, credit-card charge, multiple-life last-life settlement, change-of-life-assured and life-replacement administration, regular withdrawal behavior, and minimum-account-value enforcement remain metadata-only for this product.',
+            'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, eligible-rider fallback, involuntary unemployment waiver, credit-card charge, multiple-life last-life settlement, change-of-life-assured and life-replacement administration, regular withdrawal behavior, and minimum-account-value enforcement remain metadata-only for this product.',
           ]
         : [
-            'Advanced Death Benefit selection, eligible rider handling, involuntary unemployment waiver, credit-card charge, multiple-life last-life settlement, change-of-life-assured and life-replacement administration, regular withdrawal behavior, and minimum-account-value enforcement remain metadata-only for this product.',
+            'Advanced Death Benefit selection, eligible-rider fallback, involuntary unemployment waiver, credit-card charge, multiple-life last-life settlement, change-of-life-assured and life-replacement administration, regular withdrawal behavior, and minimum-account-value enforcement remain metadata-only for this product.',
           ]),
     ],
     sourceRefs: [
@@ -505,7 +505,9 @@ export function parseTokioMarineWealthFlexiLink312(context: ParseContext): IlpCa
     ],
     metadataOnlyBehaviors: [
       'tokio-wealth-flexi-link-3-12-involuntary-unemployment-waiver',
-      'tokio-wealth-flexi-link-3-12-advanced-death-benefit-and-eligible-rider-handling',
+      'tokio-wealth-flexi-link-3-12-advanced-death-benefit-selection',
+      'tokio-wealth-flexi-link-3-12-advanced-death-benefit-payout-handling',
+      'tokio-wealth-flexi-link-3-12-eligible-rider-fallback',
       'tokio-wealth-flexi-link-3-12-regular-withdrawal-and-minimum-account-value-constraints',
       'tokio-wealth-flexi-link-3-12-credit-card-charge',
       'tokio-wealth-flexi-link-3-12-multiple-life-last-life-settlement',
