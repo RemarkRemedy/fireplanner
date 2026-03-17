@@ -85,6 +85,10 @@ describe('parseHsbcWealthFocus', () => {
       expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-free-partial-withdrawal-benefit')
       expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-regular-withdrawal-facility')
       expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-death-and-ti-benefits')
+      expect(product.metadataOnlyBehaviors).toContain('wealth-focus-life-replacement-eligibility-and-underwriting')
+      expect(product.metadataOnlyBehaviors).toContain('wealth-focus-life-replacement-cover-reset-and-rider-termination')
+      expect(product.metadataOnlyBehaviors).toContain('wealth-focus-life-replacement-policy-reissue-fallback')
+      expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-life-replacement-option')
       expect(product.metadataOnlyBehaviors).toContain('wealth-focus-accidental-death-and-ti-claim-adjustments')
       expect(product.metadataOnlyBehaviors).toContain('wealth-focus-claim-side-benefit-settlement')
       expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-benefit-payout-handling')
@@ -209,6 +213,18 @@ describe('parseHsbcWealthFocus', () => {
       )
       expect(sgdVariant?.warnings).toContain(
         'Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, the current-state death-benefit estimate from regular-premium-paid history and current account balances, manual top-up-first scheduled payout support for Regular Withdrawal, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.',
+      )
+      expect(sgdVariant?.warnings).toContain(
+        'Life Replacement Option eligibility / underwriting, post-replacement cover resets, and policy-reissue fallback remain informational only in V1.',
+      )
+      expect(sgdVariant?.unsupportedItems).toContain(
+        'Life Replacement Option request timing, replacement eligibility, and underwriting acceptance remain informational only.',
+      )
+      expect(sgdVariant?.unsupportedItems).toContain(
+        'Life Replacement Option rider termination, new suicide / incontestability / exclusion periods, and revised expiry-date administration remain informational only.',
+      )
+      expect(sgdVariant?.unsupportedItems).toContain(
+        'Life Replacement Option policy-reissue fallback, non-identical replacement-policy terms, and post-replacement premium / term administration remain informational only.',
       )
       expect(sgdVariant?.unsupportedItems).toContain(
         'Accidental Death uplift, Terminal Illness aggregate-cap and post-claim reduction mechanics, and claim-side payout settlement remain informational only beyond the current death-benefit estimate.',

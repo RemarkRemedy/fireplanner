@@ -344,10 +344,12 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
     eecTable: FLEXI_CONFIG[term].eecSchedule.map(roundRate),
     warnings: [
       'Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, the current-state death-benefit estimate from regular-premium-paid history and current account balances, manual top-up-first scheduled payout support for Regular Withdrawal, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.',
-      'Life Replacement Option remains informational only in V1.',
+      'Life Replacement Option eligibility / underwriting, post-replacement cover resets, and policy-reissue fallback remain informational only in V1.',
     ],
     unsupportedItems: [
-      'Life Replacement Option remains informational only.',
+      'Life Replacement Option request timing, replacement eligibility, and underwriting acceptance remain informational only.',
+      'Life Replacement Option rider termination, new suicide / incontestability / exclusion periods, and revised expiry-date administration remain informational only.',
+      'Life Replacement Option policy-reissue fallback, non-identical replacement-policy terms, and post-replacement premium / term administration remain informational only.',
       'Accidental Death uplift, Terminal Illness aggregate-cap and post-claim reduction mechanics, and claim-side payout settlement remain informational only beyond the current death-benefit estimate.',
     ],
     sourceRefs: [page1, page4, page5, page6, page8, page10, page11, page12, page13, page15, page18],
@@ -390,12 +392,14 @@ export function parseHsbcWealthFocus({ document, sourceChecksumSha256 }: ParseCo
     economicsStatus: 'supported',
     modeledEconomics,
     metadataOnlyBehaviors: [
-      'wealth-focus-life-replacement-option',
+      'wealth-focus-life-replacement-eligibility-and-underwriting',
+      'wealth-focus-life-replacement-cover-reset-and-rider-termination',
+      'wealth-focus-life-replacement-policy-reissue-fallback',
       'wealth-focus-accidental-death-and-ti-claim-adjustments',
       'wealth-focus-claim-side-benefit-settlement',
     ],
     warnings: [
-      `Wealth Focus Flexi ${flexiTerm} is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, the current-state death-benefit estimate, the top-up-first manual scheduled-payout surface for Regular Withdrawal, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, while Life Replacement Option, accidental-death / terminal-illness claim adjustments, and claim-side benefit settlement remain informational only.`,
+      `Wealth Focus Flexi ${flexiTerm} is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, the current-state death-benefit estimate, the top-up-first manual scheduled-payout surface for Regular Withdrawal, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, while Life Replacement Option eligibility / underwriting, post-replacement cover resets, policy-reissue fallback, accidental-death / terminal-illness claim adjustments, and claim-side benefit settlement remain informational only.`,
     ],
     archived: false,
     variants: [
