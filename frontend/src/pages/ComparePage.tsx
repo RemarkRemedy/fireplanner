@@ -156,67 +156,7 @@ export function ComparePage() {
         </p>
       </header>
 
-      {/* Philosophy section */}
-      <section className="prose prose-neutral dark:prose-invert max-w-none space-y-4">
-        <h2 className="text-2xl font-semibold">
-          What robo-advisors do well
-        </h2>
-        <p>
-          Robo-advisors like Endowus, StashAway, and Syfe have made investing
-          dramatically more accessible in Singapore. They handle portfolio
-          construction, automatic rebalancing, and dividend reinvestment for a
-          fraction of what traditional wealth managers charge. For many people,
-          they remove the biggest barrier to investing: getting started.
-        </p>
-        <p>
-          They also provide access to tax-advantaged accounts. Endowus is the
-          only platform that supports both SRS and CPF-IS investing, letting you
-          put your retirement savings to work in diversified funds. StashAway and
-          Syfe support SRS. These integrations matter because idle cash in your
-          SRS or CPF accounts earns less than it could in a well-diversified
-          portfolio.
-        </p>
-        <p>
-          The discipline factor is real too. Automated monthly contributions and
-          rebalancing keep you invested through market downturns when the
-          temptation to sell is strongest. For accumulation-phase investors, this
-          behavioural guardrail alone can be worth the management fee.
-        </p>
-
-        <h2 className="text-2xl font-semibold">
-          What robo-advisors cannot tell you
-        </h2>
-        <p>
-          A robo-advisor tells you how your portfolio is performing. It does not
-          tell you whether your portfolio, combined with your CPF, property, and
-          spending plans, is enough to retire on. That is a fundamentally
-          different question.
-        </p>
-        <p>
-          Retirement planning in Singapore involves variables that no
-          robo-advisor models: CPF contribution rates that change at age 55, 60,
-          65, and 70. CPF LIFE payouts that begin at 65. BRS, FRS, and ERS
-          thresholds that grow at 3.5% per year. Property loan tenures,
-          MediShield Life premiums, and CareShield Life contributions. Income
-          tax reliefs from SRS contributions. The interaction between all of
-          these determines when you can actually stop working.
-        </p>
-        <p>
-          A retirement planner also stress-tests your plan. What happens if
-          markets drop 40% in your first year of retirement? What if you face a
-          career disruption at age 45? What withdrawal strategy gives you the
-          best chance of not running out of money? Robo-advisors do not answer
-          these questions because they are not designed to.
-        </p>
-        <p>
-          The best approach is to use both: a robo-advisor (or DIY ETF portfolio)
-          for execution, and a retirement planner for strategy. SGFirePlanner
-          is free, runs entirely in your browser, and works alongside whatever
-          investment platform you choose.
-        </p>
-      </section>
-
-      {/* Fee comparison calculator */}
+      {/* Fee comparison calculator — front and center */}
       <section>
         <FeeComparisonCalculator />
       </section>
@@ -243,6 +183,50 @@ export function ComparePage() {
             </Card>
           ))}
         </div>
+      </section>
+
+      {/* Robo-advisor context (collapsed for quick scanners) */}
+      <section className="space-y-4">
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="robos-do-well">
+            <AccordionTrigger className="text-lg font-semibold">What robo-advisors do well</AccordionTrigger>
+            <AccordionContent className="prose prose-neutral dark:prose-invert max-w-none space-y-3 text-sm text-muted-foreground">
+              <p>
+                Robo-advisors like Endowus, StashAway, and Syfe have made investing
+                dramatically more accessible in Singapore. They handle portfolio
+                construction, automatic rebalancing, and dividend reinvestment for a
+                fraction of what traditional wealth managers charge.
+              </p>
+              <p>
+                They also provide access to tax-advantaged accounts. Endowus supports
+                both SRS and CPF-IS investing. StashAway and Syfe support SRS.
+                Automated monthly contributions keep you disciplined through downturns.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="robos-cannot">
+            <AccordionTrigger className="text-lg font-semibold">What robo-advisors cannot tell you</AccordionTrigger>
+            <AccordionContent className="prose prose-neutral dark:prose-invert max-w-none space-y-3 text-sm text-muted-foreground">
+              <p>
+                A robo-advisor tells you how your portfolio is performing. It does not
+                tell you whether your portfolio, combined with your CPF, property, and
+                spending plans, is enough to retire on.
+              </p>
+              <p>
+                Retirement planning in Singapore involves CPF contribution rates that
+                change at age 55, 60, 65, and 70. CPF LIFE payouts. BRS/FRS/ERS
+                thresholds. Property loans. MediShield and CareShield premiums.
+                SRS tax reliefs. The interaction between all of these determines when
+                you can actually stop working.
+              </p>
+              <p>
+                The best approach: use a robo-advisor (or DIY ETFs) for execution,
+                and a retirement planner for strategy. SGFirePlanner is free, runs in
+                your browser, and works alongside any platform.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </section>
 
       {/* FAQ */}
