@@ -27,6 +27,8 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'kernel:protected-base-assurance',
+      'branch:manulife-investready-iii-welcome-bonus',
+      'branch:manulife-investready-iii-loyalty-bonus',
       'branch:manulife-investready-iii-administrative-charge',
       'branch:manulife-investready-iii-premium-shortfall-charge',
       'branch:manulife-investready-iii-zero-top-up-charge',
@@ -37,6 +39,8 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-policy-fee')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-step-up-booster-bonus')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-dividend-payout-threshold')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-welcome-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-loyalty-bonus')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-5-flexi-4-sep-2025',
       'sgd-mip-7-flexi-5-sep-2025',
@@ -110,6 +114,23 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
       }),
     ])
     expect(firstVariant?.eecTable).toEqual([1, 1, 0.75, 0.4, 0.2])
+    expect(firstVariant?.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'welcome-bonus',
+        mode: 'premium-allocation',
+        tieredRates: [
+          { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 59_999.99, rate: 0.01 },
+          { currency: 'SGD', minAnnualPremium: 60_000, maxAnnualPremium: null, rate: 0.02 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        mode: 'annual-rate',
+        startPolicyYear: 6,
+        endPolicyYear: null,
+        rate: 0,
+      }),
+    ])
 
     const lastVariant = product.variants.at(-1)
     expect(lastVariant?.mipLength).toBe(13)
@@ -147,6 +168,21 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
       ],
     }))
     expect(lastVariant?.eecTable).toEqual([1, 1, 0.81, 0.63, 0.53, 0.49, 0.46, 0.27, 0.22, 0.14, 0.08, 0.08, 0.08])
-    expect(lastVariant?.warnings).toContain('Policy-fee thresholds, all bonus mechanics, and life-stage partial-withdrawal waivers remain outside the current engine.')
+    expect(lastVariant?.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'welcome-bonus',
+        tieredRates: [
+          { currency: 'SGD', minAnnualPremium: 3_600, maxAnnualPremium: 9_599.99, rate: 0.25 },
+          { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.55 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        rate: 0.003,
+        startPolicyYear: 14,
+        endPolicyYear: null,
+      }),
+    ])
+    expect(lastVariant?.warnings).toContain('Policy-fee thresholds, the annual-premium bonus payment-mode gate, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.')
   }, 30_000)
 })

@@ -5968,11 +5968,16 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-welcome-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-zero-top-up-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-partial-withdrawal-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-full-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-benefit-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-annual-premium-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-welcome-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-loyalty-bonus')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(5)
     expect(seed.accounts).toEqual([
@@ -5991,6 +5996,24 @@ describe('templateVariantToPolicySeed', () => {
           monthlyModalFactor: 1 / 12,
         }),
         requiresManualInput: true,
+      }),
+    ])
+    expect(seed.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'welcome-bonus',
+        mode: 'premium-allocation',
+        rate: 0.01,
+        tieredRates: [
+          { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 47_999.99, rate: 0.01 },
+          { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.02 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        mode: 'annual-rate',
+        rate: 0,
+        startPolicyYear: 6,
+        endPolicyYear: null,
       }),
     ])
     expect(seed.eventChargeRules).toEqual([
@@ -6131,11 +6154,16 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-welcome-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-zero-top-up-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-partial-withdrawal-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-full-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-life-stage-partial-withdrawal')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-annual-premium-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-welcome-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-loyalty-bonus')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(5)
     expect(seed.accounts).toEqual([
@@ -6155,6 +6183,24 @@ describe('templateVariantToPolicySeed', () => {
           monthlyModalFactor: 1 / 12,
         }),
         requiresManualInput: true,
+      }),
+    ])
+    expect(seed.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'welcome-bonus',
+        mode: 'premium-allocation',
+        rate: 0.01,
+        tieredRates: [
+          { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 59_999.99, rate: 0.01 },
+          { currency: 'SGD', minAnnualPremium: 60_000, maxAnnualPremium: null, rate: 0.02 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        mode: 'annual-rate',
+        rate: 0,
+        startPolicyYear: 6,
+        endPolicyYear: null,
       }),
     ])
     expect(seed.eventChargeRules).toEqual([

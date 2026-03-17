@@ -128,6 +128,8 @@ export type GoldenCoverageTag =
   | 'branch:manulife-investready-growth-top-up-charge'
   | 'branch:manulife-investready-growth-partial-withdrawal-charge'
   | 'branch:manulife-investready-growth-full-surrender-charge'
+  | 'branch:manulife-investready-iii-welcome-bonus'
+  | 'branch:manulife-investready-iii-loyalty-bonus'
   | 'branch:manulife-investready-iii-administrative-charge'
   | 'branch:manulife-investready-iii-premium-shortfall-charge'
   | 'branch:manulife-investready-iii-zero-top-up-charge'
@@ -11698,6 +11700,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'baseline',
       'kernel:protected-base-assurance',
       'kernel:distribution-mode-assumption',
+      'branch:manulife-investready-iii-welcome-bonus',
+      'branch:manulife-investready-iii-loyalty-bonus',
       'branch:manulife-investready-iii-administrative-charge',
       'branch:manulife-investready-iii-full-surrender-charge',
     ],
@@ -11934,7 +11938,11 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-mip-7-flexi-5-sep-2025',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline'],
+    coverageTags: [
+      'baseline',
+      'branch:manulife-investready-iii-welcome-bonus',
+      'branch:manulife-investready-iii-loyalty-bonus',
+    ],
     description: 'Manulife InvestReady (III) Sep-2025 7 Years Flexi 5 baseline scenario under supported post-MIP distribution assumptions.',
   },
   {
