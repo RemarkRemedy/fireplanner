@@ -14,6 +14,7 @@ import { PlanCompleteness } from '@/components/dashboard/PlanCompleteness'
 import { NudgeDrawer } from '@/components/projection/NudgeDrawer'
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
 import { StrategyCard } from '@/components/dashboard/StrategyCard'
+import { GuardrailDashboard } from '@/components/dashboard/GuardrailDashboard'
 import { PassiveIncomePanel } from '@/components/dashboard/PassiveIncomePanel'
 import { TrajectoryPanel } from '@/components/dashboard/TrajectoryPanel'
 import { PerAdultBreakdownPanel } from '@/components/dashboard/PerAdultBreakdownPanel'
@@ -23,6 +24,7 @@ import { useSectionCompletion, type SectionId } from '@/hooks/useSectionCompleti
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { ExpenseSwrPanel } from '@/components/dashboard/ExpenseSwrPanel'
+import { EstateProjectionPanel } from '@/components/dashboard/EstateProjectionPanel'
 import { ExpenseTrackerCard } from '@/components/email/ExpenseTrackerCard'
 import { useExpenseTrackerDwell } from '@/hooks/useExpenseTrackerDwell'
 import { useExpenseTracker } from '@/hooks/useExpenseTracker'
@@ -192,6 +194,9 @@ function JointPanels({ metrics, isEligible }: { metrics: ReturnType<typeof useDa
       <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         <StrategyCard />
       </div>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '210ms' }}>
+        <GuardrailDashboard />
+      </div>
       <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '220ms' }}>
         <ExpenseSwrPanel />
       </div>
@@ -202,10 +207,13 @@ function JointPanels({ metrics, isEligible }: { metrics: ReturnType<typeof useDa
         <CashFlowPanel />
       </div>
       <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '420ms' }}>
+        <EstateProjectionPanel />
+      </div>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '460ms' }}>
         <RiskDashboard />
       </div>
       {isEligible && (
-        <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '460ms' }}>
+        <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '500ms' }}>
           <ExpenseTrackerCard />
         </div>
       )}
