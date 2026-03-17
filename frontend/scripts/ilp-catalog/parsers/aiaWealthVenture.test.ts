@@ -123,7 +123,7 @@ describe('parseAiaWealthVenture', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-wealth-venture-welcome-bonus')
     expect(product.metadataOnlyBehaviors).toContain('aia-wealth-venture-performance-bonus')
-    expect(product.metadataOnlyBehaviors).toContain('aia-wealth-venture-dividend-cashout-threshold')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-wealth-venture-dividend-cashout-threshold')
 
     expect(product.variants).toHaveLength(1)
     const variant = product.variants[0]
@@ -167,11 +167,12 @@ describe('parseAiaWealthVenture', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: expect.arrayContaining([
-        expect.stringContaining('S$50 minimum cash-out threshold'),
+        expect.stringContaining('published S$50 minimum remain reinvested'),
       ]),
       sourceRefs: [
         expect.objectContaining({

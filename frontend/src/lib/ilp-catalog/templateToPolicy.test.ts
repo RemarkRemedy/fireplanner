@@ -388,7 +388,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-wealth-venture-regular-supplementary-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-wealth-venture-fund-switching')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-wealth-venture-dividend-cashout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-wealth-venture-dividend-cashout-threshold')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -417,6 +417,7 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -442,7 +443,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-venture-2-regular-supplementary-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-wealth-venture-2-fund-switching')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-wealth-venture-2-dividend-cashout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-venture-2-dividend-cashout-threshold')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -471,6 +472,7 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -6426,6 +6428,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-pro-achiever-3-regular-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-pro-achiever-3-premium-pass')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-achiever-3-dividend-cashout-threshold')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(10)
     expect(seed.accounts).toEqual([
@@ -6465,6 +6468,7 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
       cashPayoutAllowedDuringMip: false,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',

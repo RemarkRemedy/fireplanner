@@ -131,7 +131,7 @@ describe('parseAiaPlatinumWealthVenture2', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-platinum-wealth-venture-2-welcome-bonus')
     expect(product.metadataOnlyBehaviors).toContain('aia-platinum-wealth-venture-2-performance-bonus')
-    expect(product.metadataOnlyBehaviors).toContain('aia-platinum-wealth-venture-2-dividend-cashout-threshold')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-venture-2-dividend-cashout-threshold')
 
     expect(product.variants).toHaveLength(1)
     const variant = product.variants[0]
@@ -175,11 +175,12 @@ describe('parseAiaPlatinumWealthVenture2', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: expect.arrayContaining([
-        expect.stringContaining('S$50 minimum cash-out threshold'),
+        expect.stringContaining('published S$50 minimum remain reinvested'),
       ]),
       sourceRefs: [
         expect.objectContaining({

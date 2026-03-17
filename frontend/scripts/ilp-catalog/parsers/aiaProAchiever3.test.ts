@@ -54,6 +54,7 @@ describe('parseAiaProAchiever3', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-pro-achiever-3-benefit-charge')
     expect(product.metadataOnlyBehaviors).toContain('aia-pro-achiever-3-premium-pass')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-pro-achiever-3-dividend-cashout-threshold')
 
     const variant = product.variants[0]
     expect(variant).toMatchObject({
@@ -85,11 +86,13 @@ describe('parseAiaProAchiever3', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
       cashPayoutAllowedDuringMip: false,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: expect.arrayContaining([
         expect.stringContaining('only allowed after the end of the relevant IIP'),
+        expect.stringContaining('published S$50 minimum remain reinvested'),
       ]),
       sourceRefs: [
         expect.objectContaining({
