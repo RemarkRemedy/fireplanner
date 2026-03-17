@@ -124,6 +124,8 @@ export type GoldenCoverageTag =
   | 'branch:manulife-smartretire-v-withdrawal-and-surrender-charge'
   | 'branch:manulife-smartretire-v-premium-shortfall-charge'
   | 'branch:manulife-smartretire-v-zero-top-up-charge'
+  | 'branch:manulife-smartretire-v-welcome-bonus'
+  | 'branch:manulife-smartretire-v-loyalty-bonus'
   | 'branch:manulife-investready-growth-administrative-charge'
   | 'branch:manulife-investready-growth-annual-premium-bonus'
   | 'branch:manulife-investready-growth-premium-shortfall-charge'
@@ -4974,6 +4976,18 @@ function manulifeSmartRetireSumStressPolicy(
   })
 }
 
+function manulifeSmartRetireSumBonusCoveragePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return manulifeSmartRetireSumBasePolicy(snapshot, 'sgd-mip-8-flexi-5', id, MANULIFE_BALANCED_FUNDS, {
+    name: 'Golden Manulife SmartRetire (V) - Sum (SGD / MIP 8 Flexi 5 Bonus Coverage)',
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+    postMipYears: 1,
+  })
+}
+
 function manulifeSmartRetireIncomeBasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   variantId: 'sgd-mip-8-flexi-3' | 'sgd-mip-8-flexi-5' | 'sgd-mip-12-flexi-8',
@@ -5064,6 +5078,18 @@ function manulifeSmartRetireIncomeStressPolicy(
 ): IlpPolicyInput {
   return manulifeSmartRetireIncomeBasePolicy(snapshot, 'sgd-mip-12-flexi-8', id, MANULIFE_STRESS_FUNDS, {
     name: 'Golden Manulife SmartRetire (V) - Income (SGD / MIP 12 Flexi 8 OCF Stress)',
+  })
+}
+
+function manulifeSmartRetireIncomeBonusCoveragePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return manulifeSmartRetireIncomeBasePolicy(snapshot, 'sgd-mip-8-flexi-5', id, MANULIFE_BALANCED_FUNDS, {
+    name: 'Golden Manulife SmartRetire (V) - Income (SGD / MIP 8 Flexi 5 Bonus Coverage)',
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+    postMipYears: 1,
   })
 }
 
@@ -11781,6 +11807,26 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Manulife SmartRetire (V) - Sum alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'manulife-smartretire-v-sum',
+    variantId: 'sgd-mip-8-flexi-5',
+    scenarioId: 'bonus-coverage',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'branch:manulife-smartretire-v-welcome-bonus',
+      'branch:manulife-smartretire-v-loyalty-bonus',
+    ],
+    description: 'Manulife SmartRetire (V) - Sum bonus-coverage scenario for the issue-year welcome-bonus setup and first eligible loyalty-bonus anniversary.',
+    integrityChecks: [
+      {
+        description: 'bonus-coverage policy credits a positive loyalty bonus once the first eligible anniversary is reached',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.policyYear >= 9
+          && row.accounts.some((account) => (account.bonusCredit ?? 0) > 0)
+        )),
+      },
+    ],
+  },
+  {
     productId: 'manulife-smartretire-v-income',
     variantId: 'sgd-mip-8-flexi-3',
     scenarioId: 'baseline',
@@ -11851,6 +11897,26 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: ['ocf-stress'],
     description: 'Manulife SmartRetire (V) - Income alternate-fund high-OCF stress scenario.',
+  },
+  {
+    productId: 'manulife-smartretire-v-income',
+    variantId: 'sgd-mip-8-flexi-5',
+    scenarioId: 'bonus-coverage',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'branch:manulife-smartretire-v-welcome-bonus',
+      'branch:manulife-smartretire-v-loyalty-bonus',
+    ],
+    description: 'Manulife SmartRetire (V) - Income bonus-coverage scenario for the issue-year welcome-bonus setup and first eligible loyalty-bonus anniversary.',
+    integrityChecks: [
+      {
+        description: 'bonus-coverage policy credits a positive loyalty bonus once the first eligible anniversary is reached',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.policyYear >= 9
+          && row.accounts.some((account) => (account.bonusCredit ?? 0) > 0)
+        )),
+      },
+    ],
   },
   {
     productId: 'manulife-investready-growth',
@@ -16357,6 +16423,9 @@ function buildPolicyForDefinition(
   if (definition.productId === 'manulife-smartretire-v-sum' && definition.scenarioId === 'ocf-stress') {
     return manulifeSmartRetireSumStressPolicy(snapshot, id)
   }
+  if (definition.productId === 'manulife-smartretire-v-sum' && definition.scenarioId === 'bonus-coverage') {
+    return manulifeSmartRetireSumBonusCoveragePolicy(snapshot, id)
+  }
   if (definition.productId === 'manulife-smartretire-v-income' && definition.scenarioId === 'baseline') {
     return manulifeSmartRetireIncomeBaselinePolicy(
       snapshot,
@@ -16369,6 +16438,9 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'manulife-smartretire-v-income' && definition.scenarioId === 'ocf-stress') {
     return manulifeSmartRetireIncomeStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'manulife-smartretire-v-income' && definition.scenarioId === 'bonus-coverage') {
+    return manulifeSmartRetireIncomeBonusCoveragePolicy(snapshot, id)
   }
   if (definition.productId === 'manulife-investready-growth' && definition.scenarioId === 'baseline') {
     return manulifeInvestreadyGrowthBaselinePolicy(

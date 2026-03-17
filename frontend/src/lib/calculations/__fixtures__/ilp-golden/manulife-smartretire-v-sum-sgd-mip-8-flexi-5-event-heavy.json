@@ -85,7 +85,62 @@
         "grossReturnHigh": 0.07
       }
     ],
-    "bonuses": [],
+    "bonuses": [
+      {
+        "id": "welcome-bonus",
+        "type": "sign-up",
+        "label": "Welcome Bonus",
+        "mode": "premium-allocation",
+        "rate": 0.01,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 1,
+        "endPolicyYear": 1,
+        "tieredRates": [
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 6000,
+            "maxAnnualPremium": 8999.99,
+            "rate": 0.01
+          },
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 9000,
+            "maxAnnualPremium": 14999.99,
+            "rate": 0.025
+          },
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 15000,
+            "maxAnnualPremium": null,
+            "rate": 0.075
+          }
+        ],
+        "suspensionRules": []
+      },
+      {
+        "id": "loyalty-bonus",
+        "type": "loyalty",
+        "label": "Loyalty Bonus",
+        "mode": "annual-rate",
+        "rate": 0.0035,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 9,
+        "endPolicyYear": null,
+        "tieredRates": [],
+        "suspensionRules": [
+          {
+            "trigger": "partial-withdrawal",
+            "suspensionMonths": 12
+          }
+        ]
+      }
+    ],
     "chargeRules": [],
     "policyEvents": [
       {
@@ -237,6 +292,8 @@
         "branch:manulife-smartretire-v-withdrawal-and-surrender-charge",
         "branch:manulife-smartretire-v-premium-shortfall-charge",
         "branch:manulife-smartretire-v-zero-top-up-charge",
+        "branch:manulife-smartretire-v-welcome-bonus",
+        "branch:manulife-smartretire-v-loyalty-bonus",
         "kernel:current-death-benefit-estimate",
         "kernel:distribution-mode-assumption"
       ],
@@ -247,8 +304,6 @@
         "manulife-smartretire-v-sum-amount-owed-deductions-and-claim-handling",
         "manulife-smartretire-v-sum-waiver-of-premium-benefit",
         "manulife-smartretire-v-sum-coi-refund",
-        "manulife-smartretire-v-sum-welcome-bonus",
-        "manulife-smartretire-v-sum-loyalty-bonus",
         "manulife-smartretire-v-sum-flexi-start-premium-variation",
         "manulife-smartretire-v-sum-reinstatement",
         "manulife-smartretire-v-sum-reinvested-dividend-withdrawal",
@@ -257,9 +312,9 @@
       ]
     },
     "catalogWarnings": [
-      "Manulife SmartRetire (V) - Sum is cataloged as a supported V1 product for the regular-pay corridors. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, the current-state MIP death-benefit estimate, and the reinvest-default distribution-mode assumption surface, while retirement-sum withdrawal handling, optional drawdown elections, later death-benefit corridors, hybrid COI mechanics, TPD waiver, COI refund, bonuses, and fund-level charges remain outside the current engine.",
-      "8 Years Flexi 5 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the current-state MIP death-benefit estimate, and the reinvest-default distribution-mode assumption surface.",
-      "Target Retirement Sum withdrawal, optional regular-income drawdown elections, hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, bonuses, and fund-level management charges remain outside the current engine.",
+      "Manulife SmartRetire (V) - Sum is cataloged as a supported V1 product for the regular-pay corridors. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, welcome-bonus and loyalty-bonus mechanics, the current-state MIP death-benefit estimate, and the reinvest-default distribution-mode assumption surface, while retirement-sum withdrawal handling, optional drawdown elections, later death-benefit corridors, hybrid COI mechanics, TPD waiver, COI refund, and fund-level charges remain outside the current engine.",
+      "8 Years Flexi 5 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the welcome-bonus and loyalty-bonus mechanics, the current-state MIP death-benefit estimate, and the reinvest-default distribution-mode assumption surface.",
+      "Target Retirement Sum withdrawal, optional regular-income drawdown elections, hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, and fund-level management charges remain outside the current engine.",
       "Withdrawals of accumulated reinvested dividends remain informational only.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of $40 remain reinvested.",
       "Target Retirement Sum withdrawal remains informational only and should be represented manually with withdrawal events if needed.",
@@ -267,7 +322,6 @@
       "Only the current-state MIP death-benefit estimate is modeled. The accumulation-period basic-sum-insured corridor, the post-target-retirement-age account-value-only corridor, amount-owed deductions, and claim-side handling remain informational only.",
       "Waiver of Premium benefit on TPD and its separate COI table remain informational only.",
       "Refund of Cost of Insurance at target retirement age remains informational only.",
-      "Welcome Bonus and Loyalty Bonus remain informational only.",
       "Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.",
       "Lapsing / reinstatement effects remain informational only.",
       "Withdrawals of accumulated reinvested dividends remain informational only.",

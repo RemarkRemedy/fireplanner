@@ -2,6 +2,7 @@ import path from 'node:path'
 import type {
   IlpCatalogProduct,
   IlpCatalogSourceRef,
+  IlpTemplateBonus,
   IlpTemplateEventChargeRule,
   IlpTemplateVariant,
 } from '../../../src/lib/ilp-catalog/types.js'
@@ -17,6 +18,11 @@ const VARIANTS = [
     id: 'sgd-mip-8-flexi-3',
     label: '8 Years Flexi 3',
     mipLength: 8,
+    welcomeBonusTiers: [
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.005 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.01 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.025 },
+    ],
     premiumShortfallSchedule: [
       { startPolicyYear: 1, endPolicyYear: 2, rate: 1 },
       { startPolicyYear: 3, endPolicyYear: 3, rate: 0.6 },
@@ -27,6 +33,11 @@ const VARIANTS = [
     id: 'sgd-mip-8-flexi-5',
     label: '8 Years Flexi 5',
     mipLength: 8,
+    welcomeBonusTiers: [
+      { currency: 'SGD', minAnnualPremium: 6_000, maxAnnualPremium: 8_999.99, rate: 0.01 },
+      { currency: 'SGD', minAnnualPremium: 9_000, maxAnnualPremium: 14_999.99, rate: 0.025 },
+      { currency: 'SGD', minAnnualPremium: 15_000, maxAnnualPremium: null, rate: 0.075 },
+    ],
     premiumShortfallSchedule: [
       { startPolicyYear: 1, endPolicyYear: 2, rate: 1 },
       { startPolicyYear: 3, endPolicyYear: 3, rate: 0.6 },
@@ -39,6 +50,11 @@ const VARIANTS = [
     id: 'sgd-mip-12-flexi-8',
     label: '12 Years Flexi 8',
     mipLength: 12,
+    welcomeBonusTiers: [
+      { currency: 'SGD', minAnnualPremium: 3_600, maxAnnualPremium: 7_199.99, rate: 0.025 },
+      { currency: 'SGD', minAnnualPremium: 7_200, maxAnnualPremium: 11_999.99, rate: 0.085 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: null, rate: 0.15 },
+    ],
     premiumShortfallSchedule: [
       { startPolicyYear: 1, endPolicyYear: 2, rate: 1 },
       { startPolicyYear: 3, endPolicyYear: 3, rate: 0.8 },
@@ -94,12 +110,59 @@ function buildRateSchedule(values: readonly number[]): Array<{ startPolicyYear: 
   }))
 }
 
+function buildBonuses(
+  variantDefinition: typeof VARIANTS[number],
+  page4: IlpCatalogSourceRef,
+  page5: IlpCatalogSourceRef,
+  page8: IlpCatalogSourceRef,
+): IlpTemplateBonus[] {
+  return [
+    {
+      id: 'welcome-bonus',
+      type: 'sign-up',
+      label: 'Welcome Bonus',
+      mode: 'premium-allocation',
+      appliesTo: ['policy'],
+      startPolicyYear: 1,
+      endPolicyYear: 1,
+      rate: null,
+      amount: null,
+      tieredRates: variantDefinition.welcomeBonusTiers.map((tier) => ({ ...tier })),
+      notes: [
+        `Applied on the first 12 months of regular basic premium for the ${variantDefinition.label} corridor.`,
+        'Top-up premium does not qualify for the Welcome Bonus.',
+      ],
+      sourceRefs: [page4, page8],
+    },
+    {
+      id: 'loyalty-bonus',
+      type: 'loyalty',
+      label: 'Loyalty Bonus',
+      mode: 'annual-rate',
+      appliesTo: ['policy'],
+      startPolicyYear: variantDefinition.mipLength + 1,
+      endPolicyYear: null,
+      rate: 0.0035,
+      amount: null,
+      tieredRates: [],
+      suspensionRules: [{ trigger: 'partial-withdrawal', suspensionMonths: 12 }],
+      notes: [
+        'Applied annually as additional units on the policy account value from the next policy anniversary after the minimum investment period ends.',
+        'Top-up premium qualifies as part of account value for Loyalty Bonus eligibility, subject to the published no-partial-withdrawal qualification.',
+        'Target Retirement Income payouts do not suspend Loyalty Bonus eligibility in the source document and therefore remain outside the partial-withdrawal suspension path.',
+      ],
+      sourceRefs: [page4, page5, page8],
+    },
+  ]
+}
+
 function buildVariant(
   document: ExtractedPdfDocument,
   variantDefinition: typeof VARIANTS[number],
 ): IlpTemplateVariant {
   const page1 = sourceRef(1, 'Product description and death benefit', snippetNear(document, 1, 'Target Retirement Income', 18))
   const page3 = sourceRef(3, 'Target retirement income and minimum premium', snippetNear(document, 3, 'Payment of Target Retirement Income', 22))
+  const page4 = sourceRef(4, 'Welcome Bonus and Loyalty Bonus', snippetNear(document, 4, 'Welcome Bonus', 28))
   const page5 = sourceRef(5, 'Administrative charge and surrender charge', snippetNear(document, 5, 'Administrative Charge', 22))
   const page6 = sourceRef(6, 'Partial withdrawal charge and premium shortfall charge', snippetNear(document, 6, 'Premium Shortfall Charge', 24))
   const page8 = sourceRef(8, 'Top-up premium and policy options', snippetNear(document, 8, 'Top-up Premium', 22))
@@ -177,7 +240,7 @@ function buildVariant(
         sourceRefs: [page1, page5, page8],
       },
     ],
-    bonuses: [],
+    bonuses: buildBonuses(variantDefinition, page4, page5, page8),
     feeRules: [],
     eventChargeRules,
     scheduledPayoutSupport: {
@@ -205,21 +268,20 @@ function buildVariant(
     },
     eecTable: [...variantDefinition.withdrawalAndSurrenderChargeSchedule],
     warnings: [
-      `${variantDefinition.label} is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the current-state MIP death-benefit estimate, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface.`,
-      'Hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, bonuses, flexi-start premium variation, and fund-level management charges remain outside the current engine.',
+      `${variantDefinition.label} is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the welcome-bonus and loyalty-bonus mechanics, the current-state MIP death-benefit estimate, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface.`,
+      'Hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, flexi-start premium variation, and fund-level management charges remain outside the current engine.',
       'Withdrawals of accumulated reinvested dividends remain informational only.',
     ],
     unsupportedItems: [
       'Only the current-state MIP death-benefit estimate is modeled. The accumulation-period basic-sum-insured corridor, the post-target-retirement-age account-value-only corridor, amount-owed deductions, and claim-side handling remain informational only.',
       'Waiver of Premium benefit on TPD and its separate COI table remain informational only.',
       'Refund of Cost of Insurance at target retirement age remains informational only.',
-      'Welcome Bonus and Loyalty Bonus remain informational only.',
       'Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.',
       'Lapsing / reinstatement effects remain informational only.',
       'Withdrawals of accumulated reinvested dividends remain informational only.',
       'Fund-level management charges, fund switching, premium redirection, and automatic fund rebalancing remain informational only.',
     ],
-    sourceRefs: [page1, page3, page5, page6, page8, page9],
+    sourceRefs: [page1, page3, page4, page5, page6, page8, page9],
   }
 }
 
@@ -240,6 +302,8 @@ export function parseManulifeSmartRetireIncome({ document, sourceChecksumSha256 
       'branch:manulife-smartretire-v-withdrawal-and-surrender-charge',
       'branch:manulife-smartretire-v-premium-shortfall-charge',
       'branch:manulife-smartretire-v-zero-top-up-charge',
+      'branch:manulife-smartretire-v-welcome-bonus',
+      'branch:manulife-smartretire-v-loyalty-bonus',
       'kernel:current-death-benefit-estimate',
       'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
@@ -249,8 +313,6 @@ export function parseManulifeSmartRetireIncome({ document, sourceChecksumSha256 
       'manulife-smartretire-v-income-amount-owed-deductions-and-claim-handling',
       'manulife-smartretire-v-income-waiver-of-premium-benefit',
       'manulife-smartretire-v-income-coi-refund',
-      'manulife-smartretire-v-income-welcome-bonus',
-      'manulife-smartretire-v-income-loyalty-bonus',
       'manulife-smartretire-v-income-flexi-start-premium-variation',
       'manulife-smartretire-v-income-reinstatement',
       'manulife-smartretire-v-income-reinvested-dividend-withdrawal',
@@ -258,7 +320,7 @@ export function parseManulifeSmartRetireIncome({ document, sourceChecksumSha256 
       'manulife-smartretire-v-income-fund-switching-and-redirection',
     ],
     warnings: [
-      'Manulife SmartRetire (V) - Income is cataloged as a supported V1 product for the regular-pay corridors. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, the current-state MIP death-benefit estimate, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface, while later death-benefit corridors, hybrid COI mechanics, TPD waiver, COI refund, bonuses, and fund-level charges remain outside the current engine.',
+      'Manulife SmartRetire (V) - Income is cataloged as a supported V1 product for the regular-pay corridors. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, welcome-bonus and loyalty-bonus mechanics, the current-state MIP death-benefit estimate, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface, while later death-benefit corridors, hybrid COI mechanics, TPD waiver, COI refund, and fund-level charges remain outside the current engine.',
     ],
     archived: false,
     variants: VARIANTS.map((variantDefinition) => buildVariant(document, variantDefinition)),

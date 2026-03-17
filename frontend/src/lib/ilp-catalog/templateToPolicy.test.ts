@@ -6927,12 +6927,16 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-smartretire-v-administrative-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-smartretire-v-welcome-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-smartretire-v-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-target-retirement-sum-withdrawal')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-post-mip-death-benefit-corridor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-amount-owed-deductions-and-claim-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-benefit-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-welcome-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-loyalty-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-dividend-payout-threshold')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-reinvested-dividend-withdrawal')
     expect(seed.monthlyContribution).toBe(350)
@@ -6943,6 +6947,16 @@ describe('templateVariantToPolicySeed', () => {
       }),
     ])
     expect(seed.chargeRules).toEqual([])
+    expect(seed.bonuses.find((bonus) => bonus.id === 'welcome-bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.005 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.01 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.025 },
+    ])
+    expect(seed.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')).toEqual(expect.objectContaining({
+      rate: 0.0035,
+      startPolicyYear: 9,
+      suspensionRules: [{ trigger: 'partial-withdrawal', suspensionMonths: 12 }],
+    }))
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
@@ -6989,12 +7003,16 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-smartretire-v-administrative-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-smartretire-v-welcome-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-smartretire-v-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-post-mip-death-benefit-corridor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-amount-owed-deductions-and-claim-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-benefit-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-welcome-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-loyalty-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-dividend-payout-threshold')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-reinvested-dividend-withdrawal')
     expect(seed.monthlyContribution).toBe(350)
@@ -7005,6 +7023,16 @@ describe('templateVariantToPolicySeed', () => {
       }),
     ])
     expect(seed.chargeRules).toEqual([])
+    expect(seed.bonuses.find((bonus) => bonus.id === 'welcome-bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.005 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.01 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.025 },
+    ])
+    expect(seed.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')).toEqual(expect.objectContaining({
+      rate: 0.0035,
+      startPolicyYear: 9,
+      suspensionRules: [{ trigger: 'partial-withdrawal', suspensionMonths: 12 }],
+    }))
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',

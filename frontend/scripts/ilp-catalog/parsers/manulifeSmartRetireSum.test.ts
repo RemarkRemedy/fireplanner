@@ -30,6 +30,8 @@ describe('parseManulifeSmartRetireSum', () => {
       'branch:manulife-smartretire-v-withdrawal-and-surrender-charge',
       'branch:manulife-smartretire-v-premium-shortfall-charge',
       'branch:manulife-smartretire-v-zero-top-up-charge',
+      'branch:manulife-smartretire-v-welcome-bonus',
+      'branch:manulife-smartretire-v-loyalty-bonus',
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ])
@@ -38,6 +40,8 @@ describe('parseManulifeSmartRetireSum', () => {
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-post-mip-death-benefit-corridor')
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-amount-owed-deductions-and-claim-handling')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-benefit-payout-handling')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-welcome-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-loyalty-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-reinvested-dividend-withdrawal')
     expect(product.warnings.some((warning) => warning.includes('current-state MIP death-benefit estimate'))).toBe(true)
@@ -71,6 +75,47 @@ describe('parseManulifeSmartRetireSum', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
+    expect(firstVariant?.bonuses).toEqual([
+      {
+        id: 'welcome-bonus',
+        type: 'sign-up',
+        label: 'Welcome Bonus',
+        mode: 'premium-allocation',
+        appliesTo: ['policy'],
+        startPolicyYear: 1,
+        endPolicyYear: 1,
+        rate: null,
+        amount: null,
+        tieredRates: [
+          { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.005 },
+          { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.01 },
+          { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.025 },
+        ],
+        notes: expect.arrayContaining([
+          expect.stringContaining('first 12 months'),
+          expect.stringContaining('Top-up premium does not qualify'),
+        ]),
+        sourceRefs: expect.any(Array),
+      },
+      {
+        id: 'loyalty-bonus',
+        type: 'loyalty',
+        label: 'Loyalty Bonus',
+        mode: 'annual-rate',
+        appliesTo: ['policy'],
+        startPolicyYear: 9,
+        endPolicyYear: null,
+        rate: 0.0035,
+        amount: null,
+        tieredRates: [],
+        suspensionRules: [{ trigger: 'partial-withdrawal', suspensionMonths: 12 }],
+        notes: expect.arrayContaining([
+          expect.stringContaining('Top-up premium qualifies'),
+          expect.stringContaining('Regular income drawdown does not suspend'),
+        ]),
+        sourceRefs: expect.any(Array),
+      },
+    ])
     expect(firstVariant?.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
@@ -106,6 +151,14 @@ describe('parseManulifeSmartRetireSum', () => {
     ])
     expect(firstVariant?.eecTable).toEqual([1, 1, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0])
 
+    const middleVariant = product.variants[1]
+    expect(middleVariant?.bonuses.find((bonus) => bonus.id === 'welcome-bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: 6_000, maxAnnualPremium: 8_999.99, rate: 0.01 },
+      { currency: 'SGD', minAnnualPremium: 9_000, maxAnnualPremium: 14_999.99, rate: 0.025 },
+      { currency: 'SGD', minAnnualPremium: 15_000, maxAnnualPremium: null, rate: 0.075 },
+    ])
+    expect(middleVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.startPolicyYear).toBe(9)
+
     const lastVariant = product.variants.at(-1)
     expect(lastVariant?.mipLength).toBe(12)
     expect(lastVariant?.eventChargeRules[1]).toEqual(expect.objectContaining({
@@ -120,6 +173,12 @@ describe('parseManulifeSmartRetireSum', () => {
       ],
     }))
     expect(lastVariant?.eecTable).toEqual([1, 1, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25, 0.2, 0.15, 0.1, 0])
+    expect(lastVariant?.bonuses.find((bonus) => bonus.id === 'welcome-bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: 3_600, maxAnnualPremium: 7_199.99, rate: 0.025 },
+      { currency: 'SGD', minAnnualPremium: 7_200, maxAnnualPremium: 11_999.99, rate: 0.085 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: null, rate: 0.15 },
+    ])
+    expect(lastVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.startPolicyYear).toBe(13)
     expect(lastVariant?.warnings).toContain('Withdrawals of accumulated reinvested dividends remain informational only.')
   }, 30_000)
 })
