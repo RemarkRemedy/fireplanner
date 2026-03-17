@@ -10,12 +10,14 @@ const MAX_PORTFOLIO = 2_000_000
 const STEP = 10_000
 const DEFAULT_PORTFOLIO = 500_000
 const ANNUAL_RETURN = 0.07
+const ASSUMED_INFLATION = 0.025
 const YEARS = 30
 
 interface PlatformRow {
   name: string
   feeRate: number
-  opportunityCost: number
+  nominalCost: number
+  realCost: number
   isSgFirePlanner: boolean
   sourceUrl: string
 }
@@ -25,44 +27,49 @@ const PRICING_LINKS: { name: string; url: string }[] = ROBO_FEES
   .filter((p: PlatformFees) => p.sourceUrl && p.id !== 'sgfireplanner')
   .map((p: PlatformFees) => ({ name: p.name, url: p.sourceUrl }))
 
+const INFLATION_DEFLATOR = Math.pow(1 + ASSUMED_INFLATION, YEARS)
+
 function calculateRows(portfolioSize: number): PlatformRow[] {
   const zeroFeeGrowth = portfolioSize * Math.pow(1 + ANNUAL_RETURN, YEARS)
 
   const rows: PlatformRow[] = ROBO_FEES.map((platform) => {
     const feeRate = getFeeRate(platform, portfolioSize)
     const netGrowth = portfolioSize * Math.pow(1 + ANNUAL_RETURN - feeRate, YEARS)
-    const opportunityCost = zeroFeeGrowth - netGrowth
+    const nominalCost = zeroFeeGrowth - netGrowth
 
     return {
       name: platform.name,
       feeRate,
-      opportunityCost,
+      nominalCost,
+      realCost: nominalCost / INFLATION_DEFLATOR,
       isSgFirePlanner: platform.id === 'sgfireplanner',
       sourceUrl: platform.sourceUrl,
     }
   })
 
-  // Sort by opportunity cost (highest first), SGFirePlanner always last
+  // Sort by nominal cost (highest first), SGFirePlanner always last
   const sgfp = rows.find((r) => r.isSgFirePlanner)
   const others = rows.filter((r) => !r.isSgFirePlanner)
-  others.sort((a, b) => b.opportunityCost - a.opportunityCost)
+  others.sort((a, b) => b.nominalCost - a.nominalCost)
 
   return sgfp ? [...others, sgfp] : others
 }
 
 export function FeeComparisonCalculator() {
   const [portfolioSize, setPortfolioSize] = useState(DEFAULT_PORTFOLIO)
+  const [showReal, setShowReal] = useState(false)
   const rows = calculateRows(portfolioSize)
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-xl">
-          Lost portfolio growth over 30 years (opportunity cost)
+          What platform fees cost over 30 years
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          This is the difference in portfolio value between paying this fee and
-          paying nothing, assuming 7% annual returns.
+          The cumulative effect of platform and fund fees on your portfolio,
+          assuming 7% annual returns. Lower fees compound in your favour,
+          but convenience, SRS access, and discipline have real value too.
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -87,6 +94,33 @@ export function FeeComparisonCalculator() {
           </div>
         </div>
 
+        {/* Dollar basis toggle */}
+        <div className="flex items-center gap-3 text-sm">
+          <span className="text-muted-foreground">Show in:</span>
+          <button
+            type="button"
+            onClick={() => setShowReal(false)}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              !showReal
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            }`}
+          >
+            Nominal dollars
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowReal(true)}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              showReal
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            }`}
+          >
+            Today's dollars (2.5% inflation)
+          </button>
+        </div>
+
         {/* Comparison table */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -97,7 +131,7 @@ export function FeeComparisonCalculator() {
                   Total fee rate
                 </th>
                 <th className="text-right py-2 pl-4 font-medium">
-                  30-year cost
+                  30-year fee impact
                 </th>
               </tr>
             </thead>
@@ -121,7 +155,7 @@ export function FeeComparisonCalculator() {
                         $0
                       </span>
                     ) : (
-                      formatCurrency(row.opportunityCost, 0)
+                      formatCurrency(showReal ? row.realCost : row.nominalCost, 0)
                     )}
                   </td>
                 </tr>
@@ -129,6 +163,12 @@ export function FeeComparisonCalculator() {
             </tbody>
           </table>
         </div>
+
+        {/* Balanced note */}
+        <p className="text-xs text-muted-foreground italic">
+          A platform that keeps you invested through downturns can be worth more
+          than the fee difference.
+        </p>
 
         {/* Disclaimers */}
         <div className="space-y-2 text-xs text-muted-foreground">
