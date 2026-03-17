@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useUIStore } from '@/stores/useUIStore'
 import { HOUSEHOLD_PLAN_STORAGE_KEY, useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
-import { Target, TrendingUp, CheckCircle, ArrowRight, Info, RotateCcw } from 'lucide-react'
+import { Target, TrendingUp, CheckCircle, ArrowRight, Info, RotateCcw, Calculator, Play } from 'lucide-react'
 import type { HouseholdPlanType } from '@/lib/household/types'
 import { PlanTypeSelector } from '@/components/household/PlanTypeSelector'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
@@ -105,12 +105,18 @@ export function StartPage() {
             <RotateCcw className="mr-2 h-3 w-3" />
             Redo setup
           </Button>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap justify-center gap-3">
             <Button variant="ghost" size="sm" asChild>
               <Link to="/inputs">Edit inputs</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild>
               <Link to="/projection">View projection</Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/quick-estimate">
+                <Calculator className="mr-1 h-3 w-3" />
+                Quick estimate
+              </Link>
             </Button>
           </div>
           <AlertDialog>
@@ -161,17 +167,33 @@ export function StartPage() {
         </p>
         <p className="mt-2 text-sm text-muted-foreground">Set up in under 3 minutes.</p>
         {!isReturningUser && (
-          <p className="mt-3 text-sm text-muted-foreground">
-            Also available as a{' '}
-            <Link to="/retirement-planner" className="font-medium text-foreground underline decoration-primary/50 underline-offset-4 hover:decoration-primary">
-              Singapore retirement planner
-            </Link>{' '}
-            and{' '}
-            <Link to="/retirement-calculator" className="font-medium text-foreground underline decoration-primary/50 underline-offset-4 hover:decoration-primary">
-              retirement calculator
-            </Link>
-            {' '}with feature overviews and guides.
-          </p>
+          <>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/quick-estimate">
+                  <Calculator className="mr-1.5 h-3.5 w-3.5" />
+                  Quick estimate (10 sec)
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/quick-estimate">
+                  <Play className="mr-1.5 h-3.5 w-3.5" />
+                  Explore a demo
+                </Link>
+              </Button>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Also available as a{' '}
+              <Link to="/retirement-planner" className="font-medium text-foreground underline decoration-primary/50 underline-offset-4 hover:decoration-primary">
+                Singapore retirement planner
+              </Link>{' '}
+              and{' '}
+              <Link to="/retirement-calculator" className="font-medium text-foreground underline decoration-primary/50 underline-offset-4 hover:decoration-primary">
+                retirement calculator
+              </Link>
+              {' '}with feature overviews and guides.
+            </p>
+          </>
         )}
       </div>
 
