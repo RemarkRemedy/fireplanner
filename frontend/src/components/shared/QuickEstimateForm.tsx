@@ -391,7 +391,7 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false }: Qu
             </div>
           )}
 
-          {!compact && (result.status === 'ok' || result.status === 'already-fire') && (
+          {(result.status === 'ok' || result.status === 'already-fire') && (
             <QuickProjectionChart
               data={result.trajectory}
               fireNumber={result.fireNumber}
@@ -404,9 +404,9 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false }: Qu
       {/* Compact CTA */}
       {compact && hasInput && (
         <div className="flex justify-center">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/retirement-calculator">
-              Full calculator with chart
+          <Button size="sm" asChild>
+            <Link to="/setup">
+              Get a personalized plan
               <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
             </Link>
           </Button>
