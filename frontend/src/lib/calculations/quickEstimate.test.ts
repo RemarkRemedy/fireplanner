@@ -51,10 +51,23 @@ describe('computeQuickEstimate', () => {
     expect(result.yearsToFire).toBe(Infinity)
   })
 
-  it('returns negative-savings when expenses exceed income', () => {
+  it('returns negative-savings when expenses exceed income and savings cannot cover', () => {
     const result = computeQuickEstimate(makeInputs({ monthlyIncome: 3000, monthlyExpenses: 4000 }))
     expect(result.status).toBe('negative-savings')
     expect(result.yearsToFire).toBe(Infinity)
+  })
+
+  it('returns ok when expenses exceed income but savings + returns can reach FIRE', () => {
+    const result = computeQuickEstimate(makeInputs({
+      monthlyIncome: 7500,
+      monthlyExpenses: 10000,
+      currentSavings: 2_000_000,
+    }))
+    // FIRE number = $120k/0.035 = $3.4M. $2M grows via 2.5% real return
+    // despite -$30k annual cash flow. Investment returns outpace the bleed.
+    expect(result.status).toBe('ok')
+    expect(result.yearsToFire).toBeGreaterThan(0)
+    expect(result.yearsToFire).toBeLessThan(100)
   })
 
   it('returns already-fire when savings exceed FIRE number', () => {

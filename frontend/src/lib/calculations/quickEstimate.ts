@@ -114,19 +114,24 @@ export function computeQuickEstimate(inputs: QuickEstimateInputs): QuickEstimate
     status = 'no-income'
   } else if (currentSavings >= fireNumber && fireNumber > 0) {
     status = 'already-fire'
-  } else if (annualSavings <= 0) {
-    status = 'negative-savings'
   }
 
   let yearsToFire = Infinity
   let fireAge = Infinity
 
-  if (status === 'ok' || status === 'already-fire') {
+  if (status !== 'no-income') {
     yearsToFire = calculateYearsToFire(netRealReturn, annualSavings, currentSavings, fireNumber)
     fireAge = currentAge + yearsToFire
 
-    if (yearsToFire > maxYearsToFire || !isFinite(yearsToFire)) {
-      status = status === 'already-fire' ? 'already-fire' : 'unreachable'
+    if (status === 'already-fire') {
+      // Keep already-fire status regardless of yearsToFire
+    } else if (annualSavings <= 0 && (!isFinite(yearsToFire) || yearsToFire > maxYearsToFire)) {
+      // Only show negative-savings when savings + returns can't reach FIRE either
+      status = 'negative-savings'
+      yearsToFire = Infinity
+      fireAge = Infinity
+    } else if (yearsToFire > maxYearsToFire || !isFinite(yearsToFire)) {
+      status = 'unreachable'
       yearsToFire = Infinity
       fireAge = Infinity
     }
