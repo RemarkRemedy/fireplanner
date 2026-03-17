@@ -150,6 +150,14 @@ export function RetirementPlannerPage() {
               <span>Retirement planning reference guide</span>
               <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </Link>
+            <Link to="/cpf-planner" className="flex items-center justify-between rounded-xl border px-4 py-3 hover:border-primary/60 hover:bg-muted/40">
+              <span>CPF retirement planner</span>
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+            <Link to="/compare" className="flex items-center justify-between rounded-xl border px-4 py-3 hover:border-primary/60 hover:bg-muted/40">
+              <span>Compare robo-advisors vs DIY</span>
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
           </CardContent>
         </Card>
       </section>

@@ -109,6 +109,18 @@ export function RetirementCalculatorPage() {
           </CardContent>
         </Card>
       </section>
+
+      {/* Related tools */}
+      <section className="grid gap-4 lg:grid-cols-2">
+        <Link to="/cpf-planner" className="flex items-center gap-3 rounded-xl border px-4 py-3 hover:border-primary/60 hover:bg-muted/40 text-sm">
+          <Calculator className="h-4 w-4 text-muted-foreground shrink-0" />
+          <span>CPF retirement planner</span>
+        </Link>
+        <Link to="/compare" className="flex items-center gap-3 rounded-xl border px-4 py-3 hover:border-primary/60 hover:bg-muted/40 text-sm">
+          <ChartColumn className="h-4 w-4 text-muted-foreground shrink-0" />
+          <span>Compare robo-advisors vs DIY</span>
+        </Link>
+      </section>
     </div>
   )
 }
