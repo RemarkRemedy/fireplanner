@@ -127,17 +127,19 @@ export function ComparePage() {
   useEffect(() => {
     const faqScript = document.createElement('script')
     faqScript.type = 'application/ld+json'
+    faqScript.id = 'compare-faq-schema'
     faqScript.textContent = JSON.stringify(FAQ_SCHEMA)
     document.head.appendChild(faqScript)
 
     const webAppScript = document.createElement('script')
     webAppScript.type = 'application/ld+json'
+    webAppScript.id = 'compare-webapp-schema'
     webAppScript.textContent = JSON.stringify(WEB_APP_SCHEMA)
     document.head.appendChild(webAppScript)
 
     return () => {
-      document.head.removeChild(faqScript)
-      document.head.removeChild(webAppScript)
+      document.getElementById('compare-faq-schema')?.remove()
+      document.getElementById('compare-webapp-schema')?.remove()
     }
   }, [])
 

@@ -17,6 +17,7 @@ export const FEATURE_OPTIONS: { value: FeatureInterest; label: string }[] = [
   { value: 'couples_planning', label: 'Couples / Household Planning' },
   { value: 'insurance_gap', label: 'Insurance Gap Calculator' },
   { value: 'general', label: 'General Updates' },
+  { value: 'portfolio_integration', label: 'Portfolio Integration' },
 ]
 
 // --- Expense Tracker Early Access ---

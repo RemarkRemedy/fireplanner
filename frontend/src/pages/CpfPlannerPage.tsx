@@ -311,6 +311,26 @@ export function CpfPlannerPage() {
               <p className="text-sm text-muted-foreground">Fee comparison across Singapore platforms</p>
             </div>
           </Link>
+          <Link
+            to="/retirement-planner"
+            className="flex items-center gap-2 p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+          >
+            <ArrowRight className="h-4 w-4 text-primary" />
+            <div>
+              <p className="font-medium">Singapore Retirement Planner</p>
+              <p className="text-sm text-muted-foreground">Full CPF, SRS, and FIRE planning</p>
+            </div>
+          </Link>
+          <Link
+            to="/retirement-calculator"
+            className="flex items-center gap-2 p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+          >
+            <ArrowRight className="h-4 w-4 text-primary" />
+            <div>
+              <p className="font-medium">Retirement Calculator</p>
+              <p className="text-sm text-muted-foreground">Quick FIRE number estimate</p>
+            </div>
+          </Link>
         </div>
       </section>
 

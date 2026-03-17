@@ -107,6 +107,7 @@ export const ROBO_FEES: PlatformFees[] = [
  * Finds the highest tier where minAmount <= portfolioSize.
  */
 export function getFeeRate(platform: PlatformFees, portfolioSize: number): number {
+  if (platform.tiers.length === 0) return platform.estimatedTer
   let applicableTier = platform.tiers[0]
   for (const tier of platform.tiers) {
     if (tier.minAmount <= portfolioSize) {

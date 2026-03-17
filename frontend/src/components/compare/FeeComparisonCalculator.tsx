@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Slider } from '@/components/ui/slider'
 import { Label } from '@/components/ui/label'
-import { ROBO_FEES, getFeeRate } from '@/lib/data/roboFees'
+import { ROBO_FEES, getFeeRate, type PlatformFees } from '@/lib/data/roboFees'
 import { formatCurrency } from '@/lib/utils'
 
 const MIN_PORTFOLIO = 50_000
@@ -17,7 +17,13 @@ interface PlatformRow {
   feeRate: number
   opportunityCost: number
   isSgFirePlanner: boolean
+  sourceUrl: string
 }
+
+/** Platforms with pricing pages to link to in the disclaimer */
+const PRICING_LINKS: { name: string; url: string }[] = ROBO_FEES
+  .filter((p: PlatformFees) => p.sourceUrl && p.id !== 'sgfireplanner')
+  .map((p: PlatformFees) => ({ name: p.name, url: p.sourceUrl }))
 
 function calculateRows(portfolioSize: number): PlatformRow[] {
   const zeroFeeGrowth = portfolioSize * Math.pow(1 + ANNUAL_RETURN, YEARS)
@@ -32,6 +38,7 @@ function calculateRows(portfolioSize: number): PlatformRow[] {
       feeRate,
       opportunityCost,
       isSgFirePlanner: platform.id === 'sgfireplanner',
+      sourceUrl: platform.sourceUrl,
     }
   })
 
@@ -131,7 +138,21 @@ export function FeeComparisonCalculator() {
           </p>
           <p>
             Fee structures change. Verify current rates on each platform's
-            pricing page.
+            pricing page:{' '}
+            {PRICING_LINKS.map((link, i) => (
+              <span key={link.name}>
+                {i > 0 && ', '}
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  {link.name}
+                </a>
+              </span>
+            ))}
+            .
           </p>
         </div>
       </CardContent>

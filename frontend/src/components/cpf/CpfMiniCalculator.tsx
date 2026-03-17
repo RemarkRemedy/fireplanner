@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Calculator, AlertTriangle } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { formatCurrency } from '@/lib/utils'
 import {
   estimateCpfBalancesFromAge,
@@ -15,6 +16,13 @@ import {
   estimateCpfLifePayout,
 } from '@/lib/calculations/cpf'
 import type { CpfLifePlan, ResidencyStatus } from '@/lib/types'
+
+/** Assumed career start age for CPF balance estimation */
+const DEFAULT_CAREER_START_AGE = 22
+/** Assumed annual salary growth rate for projections */
+const ASSUMED_SALARY_GROWTH = 0.03
+/** Assumed inflation rate for deflating nominal values to today's dollars */
+const ASSUMED_INFLATION = 0.025
 
 interface ValidationErrors {
   age?: string
@@ -47,12 +55,12 @@ export function CpfMiniCalculator() {
     const annualSalary = monthlySalary * 12
 
     // Step 1: Estimate current CPF balances
-    const balances = estimateCpfBalancesFromAge(age, annualSalary, 22, 0.03, residencyStatus)
+    const balances = estimateCpfBalancesFromAge(age, annualSalary, DEFAULT_CAREER_START_AGE, ASSUMED_SALARY_GROWTH, residencyStatus)
 
     // Step 2: Project balances to age 55
     const projections = projectCpfBalances(
       age, 55, balances.oa, balances.sa, balances.ma,
-      annualSalary, 0.03, residencyStatus,
+      annualSalary, ASSUMED_SALARY_GROWTH, residencyStatus,
     )
     const lastRow = projections[projections.length - 1]
     if (!lastRow) return null
@@ -63,8 +71,11 @@ export function CpfMiniCalculator() {
     // Step 4: Perform age 55 transfer (SA + OA -> RA, targeting FRS)
     const { newOA, newRA } = performAge55Transfer(lastRow.oaBalance, lastRow.saBalance, frs)
 
-    // Step 5: Estimate CPF LIFE payout
-    const annualPayout = estimateCpfLifePayout(newRA, cpfLifePlan)
+    // Step 5: Estimate CPF LIFE payout (nominal, based on RA at 55)
+    const annualPayoutNominal = estimateCpfLifePayout(newRA, cpfLifePlan)
+    // Deflate to today's dollars: payout starts at 65, so discount by (65 - currentAge) years of inflation
+    const yearsToPayoutStart = 65 - age
+    const annualPayout = annualPayoutNominal / Math.pow(1 + ASSUMED_INFLATION, yearsToPayoutStart)
     const monthlyPayout = annualPayout / 12
 
     // Step 6: Gap analysis (all in today's dollars)
@@ -253,7 +264,7 @@ export function CpfMiniCalculator() {
                 <p className="text-sm text-muted-foreground mt-3">
                   Over {results.retirementYears} years (age 65 to 90), you would need approximately{' '}
                   <span className="font-semibold text-foreground">{formatCurrency(results.totalGap, 0)}</span>{' '}
-                  from your investment portfolio to cover the gap. This is in today's dollars.
+                  from your investment portfolio to cover the gap (in today's dollars, assuming 2.5% inflation).
                 </p>
               )}
             </div>
@@ -262,9 +273,9 @@ export function CpfMiniCalculator() {
             <div className="flex gap-2 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
               <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
               <p>
-                This is a rough estimate based on heuristic assumptions.
+                This is a rough estimate assuming 3% salary growth and 2.5% inflation.
                 For a precise projection, enter your actual CPF balances in the{' '}
-                <a href="/inputs#section-cpf" className="text-primary hover:underline">full planner</a>.
+                <Link to="/inputs#section-cpf" className="text-primary hover:underline">full planner</Link>.
               </p>
             </div>
           </div>
