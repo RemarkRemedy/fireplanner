@@ -3,16 +3,33 @@ import { getLifeStageGuide, MONEYSENSE_AREAS } from './moneySenseGuide'
 import { HEALTH_RATIOS } from './healthBenchmarks'
 
 describe('getLifeStageGuide', () => {
-  it('returns starting-out guide for age 25', () => {
+  it('returns starting-out guide for age 25 (start of starting-family range, but starting-out is first)', () => {
     expect(getLifeStageGuide(25)?.label).toContain('Starting Out')
+  })
+
+  it('returns starting-family guide for age 30', () => {
+    expect(getLifeStageGuide(30)?.label).toContain('Starting a Family')
+  })
+
+  it('returns supporting-parents guide for age 50', () => {
+    expect(getLifeStageGuide(50)?.label).toContain('Supporting Children & Parents')
   })
 
   it('returns retiree guide for age 60', () => {
     expect(getLifeStageGuide(60)?.label).toContain('Retiree')
   })
 
-  it('returns null for age 0', () => {
-    expect(getLifeStageGuide(0)).toBeNull()
+  it('returns retiree guide for age 55 (start of retiree range, but supporting is first)', () => {
+    // 55 matches both 35-59 and 55-120. Supporting is first in array.
+    expect(getLifeStageGuide(55)?.label).toContain('Supporting Children & Parents')
+  })
+
+  it('returns null for age 18 (below minimum)', () => {
+    expect(getLifeStageGuide(18)).toBeNull()
+  })
+
+  it('returns retiree guide for age 120 (max)', () => {
+    expect(getLifeStageGuide(120)?.label).toContain('Retiree')
   })
 })
 

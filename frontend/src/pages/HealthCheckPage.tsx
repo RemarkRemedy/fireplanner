@@ -35,6 +35,13 @@ export function HealthCheckPage() {
 
   const inputs = useHealthCheckInputs(selectedAdultId)
 
+  // Ensure selectedAdultId is valid if adults list changes
+  useEffect(() => {
+    if (adults.length > 0 && !adults.find((a) => a.id === selectedAdultId)) {
+      setSelectedAdultId(adults[0].id)
+    }
+  }, [adults, selectedAdultId])
+
   const healthCheck: HealthCheckResult | null = useMemo(() => {
     if (!inputs) return null
     return computeHealthRatios(inputs.ratioInputs)
@@ -46,19 +53,6 @@ export function HealthCheckPage() {
   }, [inputs])
 
   const lifeStageGuide = getLifeStageGuide(currentAge)
-
-  if (!inputs?.isReady) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Financial Health Check</h1>
-          <p className="text-muted-foreground mt-1">
-            Enter your income and expenses to see your financial health assessment.
-          </p>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="space-y-8">
@@ -75,7 +69,7 @@ export function HealthCheckPage() {
             MoneySense Basic Financial Planning Guide
           </a>
         </p>
-        {healthCheck && (
+        {healthCheck && inputs?.isReady && (
           <p className="text-sm text-muted-foreground mt-1">
             {healthCheck.greenCount}/{healthCheck.ratios.length} ratios healthy
           </p>
@@ -94,14 +88,20 @@ export function HealthCheckPage() {
         </Tabs>
       )}
 
-      {healthCheck && (
+      {!inputs?.isReady ? (
+        <div className="rounded-lg border border-dashed p-8 text-center bg-muted/20">
+          <p className="text-muted-foreground">
+            Enter income and expenses for {selectedAdult?.displayName ?? 'this adult'} to see the health assessment.
+          </p>
+        </div>
+      ) : (
         <>
           {/* 4 MoneySense areas */}
           {MONEYSENSE_AREAS.map((area) => (
             <RatioGroup
               key={area.id}
               area={area}
-              ratios={healthCheck.ratios}
+              ratios={healthCheck!.ratios}
               insuranceNeeds={insuranceNeeds}
               insuranceInputs={inputs?.insuranceInputs ?? null}
             />

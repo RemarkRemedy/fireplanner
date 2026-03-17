@@ -196,8 +196,10 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
     (sectionId: string) => {
       // Expand the target section if collapsed
       expandSection(sectionId)
-      // For sub-items (Goals, Healthcare, Protection), also expand parent Expenses section
-      if (sectionId === 'section-goals' || sectionId === 'section-healthcare' || sectionId === 'section-protection') {
+      
+      // For sub-items, also expand parent Expenses section
+      const targetItem = allInputSections.find((s) => s.sectionId === sectionId)
+      if (targetItem?.isSubItem) {
         expandSection('section-expenses')
       }
 
@@ -464,9 +466,12 @@ export function Sidebar() {
     if (sectionId) {
       // Expand the target section (and parent for sub-items) before scrolling
       expandSection(sectionId)
-      if (sectionId === 'section-goals' || sectionId === 'section-healthcare' || sectionId === 'section-protection') {
+      
+      const targetItem = allInputSections.find((s) => s.sectionId === sectionId)
+      if (targetItem?.isSubItem) {
         expandSection('section-expenses')
       }
+      
       // Wait for the section to appear in the DOM (accordion may need time to expand)
       let attempts = 0
       const tryScroll = () => {
@@ -549,9 +554,9 @@ export function Sidebar() {
           : [
           { label: 'Inputs', path: '/inputs', icon: <Settings2 className="h-5 w-5" /> },
           { label: 'Plan', path: '/projection', icon: <TableProperties className="h-5 w-5" /> },
+          { label: 'Health', path: '/health-check', icon: <HeartPulse className="h-5 w-5" /> },
           { label: 'Test', path: '/stress-test', icon: <ShieldAlert className="h-5 w-5" /> },
           { label: 'Dash', path: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-          { label: 'Strategies', path: '/withdrawal', icon: <Banknote className="h-5 w-5" /> },
           ]
         ).map((item) => (
           <NavLink
