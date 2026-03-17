@@ -5313,7 +5313,16 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-builder-atfuture-benefit-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toEqual([
+      'tokio-harvest-builder-atfuture-advanced-death-benefit-selection',
+      'tokio-harvest-builder-atfuture-advanced-death-benefit-payout-handling',
+      'tokio-harvest-builder-atfuture-life-benefit-rider',
+      'tokio-harvest-builder-atfuture-credit-card-charge',
+      'tokio-harvest-builder-atfuture-life-replacement-administration',
+      'tokio-harvest-builder-atfuture-regular-withdrawal-behavior',
+      'tokio-harvest-builder-atfuture-minimum-account-value-enforcement',
+      'tokio-harvest-builder-atfuture-rider-premium-deduction-handling',
+    ])
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
       'tokio-harvest-builder-atfuture-dividend-payout-threshold-and-record-date-instructions',
     )

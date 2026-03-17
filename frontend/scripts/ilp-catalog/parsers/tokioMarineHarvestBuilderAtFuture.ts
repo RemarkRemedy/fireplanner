@@ -448,10 +448,14 @@ export function parseTokioMarineHarvestBuilderAtFuture(context: ParseContext): I
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-harvest-builder-atfuture-benefit-payout-handling',
+      'tokio-harvest-builder-atfuture-advanced-death-benefit-selection',
+      'tokio-harvest-builder-atfuture-advanced-death-benefit-payout-handling',
       'tokio-harvest-builder-atfuture-life-benefit-rider',
       'tokio-harvest-builder-atfuture-credit-card-charge',
-      'tokio-harvest-builder-atfuture-life-replacement-option',
+      'tokio-harvest-builder-atfuture-life-replacement-administration',
+      'tokio-harvest-builder-atfuture-regular-withdrawal-behavior',
+      'tokio-harvest-builder-atfuture-minimum-account-value-enforcement',
+      'tokio-harvest-builder-atfuture-rider-premium-deduction-handling',
     ],
     warnings: [
       'Harvest Builder@Future is cataloged as a supported V1 product. The SGD / MIP 10 Basic Death and Advanced Death corridors model regular-premium routing to the Accumulation Units Account, top-up and recurring-single-premium routing and charges, the published premium-bonus / power-up-bonus / loyalty-bonus rate windows, policy-charge schedules, surrender / partial-withdrawal / premium-shortfall charge schedules, and reinvest-default distribution support with the published SGD 50 minimum payout threshold and 30-day record-date lead time; the Advanced Death variant also models the published Monthly Protection Charge corridor from insured-life inputs.',
