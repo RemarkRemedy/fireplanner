@@ -5955,6 +5955,92 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
+  it('maps Manulife InvestReady Growth into a supported seed with accumulated-minimum-premium administration charging', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'manulife-investready-growth')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-15-flexi-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-growth-administrative-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-growth-partial-withdrawal-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-growth-full-surrender-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-growth-post-flexi-premium-variation')
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.mipLength).toBe(15)
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'policy',
+        feeRate: 0,
+        postMipFeeRate: 0,
+      }),
+    ])
+    expect(seed.chargeRules).toEqual([
+      expect.objectContaining({
+        id: 'cost-of-insurance',
+        basis: 'assurance-sum-at-risk',
+        assuranceConfig: expect.objectContaining({
+          formula: 'manulife-investready-iii-death-ti',
+          monthlyModalFactor: 1 / 12,
+        }),
+        requiresManualInput: true,
+      }),
+      expect.objectContaining({
+        id: 'administrative-charge',
+        basis: 'premium-base-mip-multiplier',
+        rateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 15, rate: 0.0218 },
+          { startPolicyYear: 16, endPolicyYear: null, rate: 0.0095 },
+        ],
+        premiumBaseConfig: {
+          useHigherOfCommencementAndPrevailing: false,
+          multiplierSchedule: [
+            { startPolicyYear: 1, endPolicyYear: null, mode: 'fixed', multiplier: 13.971643 },
+          ],
+        },
+      }),
+    ])
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'premium-shortfall-charge',
+        trigger: 'premium-holiday',
+        basis: 'committed-annual-premium-with-overlap-months',
+      }),
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        basis: 'event-amount',
+        rate: 0.05,
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
+      }),
+    ])
+    expect(seed.eecTable).toEqual([1, 1, 0.9, 0.8, 0.62, 0.49, 0.46, 0.32, 0.26, 0.21, 0.18, 0.15, 0.12, 0.08, 0.08])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy'],
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('future value of annualised regular basic premiums payable through the 10-year Flexi Start window'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
+  })
+
   it('maps Manulife InvestReady (III) Sep-2025 into a supported seed with variant charge schedules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'manulife-investready-iii-sep-2025')

@@ -123,6 +123,11 @@ export type GoldenCoverageTag =
   | 'branch:manulife-smartretire-v-withdrawal-and-surrender-charge'
   | 'branch:manulife-smartretire-v-premium-shortfall-charge'
   | 'branch:manulife-smartretire-v-zero-top-up-charge'
+  | 'branch:manulife-investready-growth-administrative-charge'
+  | 'branch:manulife-investready-growth-premium-shortfall-charge'
+  | 'branch:manulife-investready-growth-top-up-charge'
+  | 'branch:manulife-investready-growth-partial-withdrawal-charge'
+  | 'branch:manulife-investready-growth-full-surrender-charge'
   | 'branch:manulife-investready-iii-administrative-charge'
   | 'branch:manulife-investready-iii-premium-shortfall-charge'
   | 'branch:manulife-investready-iii-zero-top-up-charge'
@@ -4934,6 +4939,117 @@ function manulifeInvestreadyIiiStressPolicy(
 ): IlpPolicyInput {
   return manulifeInvestreadyIiiBasePolicy(snapshot, id, MANULIFE_STRESS_FUNDS, {
     name: 'Golden Manulife InvestReady (III) (SGD / MIP 5 Flexi 4 OCF Stress)',
+  })
+}
+
+const MANULIFE_INVESTREADY_GROWTH_VARIANT_LABELS = {
+  'sgd-mip-15-flexi-10': 'SGD / MIP 15 Flexi 10',
+  'sgd-mip-20-flexi-10': 'SGD / MIP 20 Flexi 10',
+} as const
+
+function manulifeInvestreadyGrowthBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: keyof typeof MANULIFE_INVESTREADY_GROWTH_VARIANT_LABELS,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const config = variantId === 'sgd-mip-15-flexi-10'
+    ? {
+        monthlyContribution: 1_000,
+        currentPolicyYear: 8,
+        monthsAlreadyPaid: 84,
+        currentAgeNextBirthday: 43,
+        sex: 'male' as const,
+        currentValue: 76_000,
+      }
+    : {
+        monthlyContribution: 700,
+        currentPolicyYear: 10,
+        monthsAlreadyPaid: 108,
+        currentAgeNextBirthday: 45,
+        sex: 'female' as const,
+        currentValue: 82_000,
+      }
+  const currentNetRegularPremiumBase = config.monthlyContribution * 12 * (config.currentPolicyYear - 1)
+  const base = seedPolicy(snapshot, 'manulife-investready-growth', variantId, id, {
+    monthlyContribution: config.monthlyContribution,
+    currentPolicyYear: config.currentPolicyYear,
+    monthsAlreadyPaid: config.monthsAlreadyPaid,
+    assuranceProfile: {
+      currentAgeNextBirthday: config.currentAgeNextBirthday,
+      sex: config.sex,
+      smokerStatus: 'non-smoker',
+      currentNetRegularPremiumBase,
+    },
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden Manulife InvestReady Growth (${MANULIFE_INVESTREADY_GROWTH_VARIANT_LABELS[variantId]})`,
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: config.currentValue,
+      })),
+      distributionAssumption: {
+        mode: 'cash-payout',
+        source: 'manual-assumption',
+        annualYieldRate: 0.03,
+      },
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function manulifeInvestreadyGrowthBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: keyof typeof MANULIFE_INVESTREADY_GROWTH_VARIANT_LABELS,
+  id: string,
+): IlpPolicyInput {
+  return manulifeInvestreadyGrowthBasePolicy(snapshot, variantId, id, MANULIFE_BALANCED_FUNDS)
+}
+
+function manulifeInvestreadyGrowthEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return manulifeInvestreadyGrowthBasePolicy(snapshot, 'sgd-mip-15-flexi-10', id, MANULIFE_BALANCED_FUNDS, {
+    name: 'Golden Manulife InvestReady Growth (SGD / MIP 15 Flexi 10 Event Heavy)',
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 85,
+        durationMonths: 4,
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 91,
+        durationMonths: 1,
+        amount: 7_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 94,
+        durationMonths: 1,
+        amount: 4_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function manulifeInvestreadyGrowthStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return manulifeInvestreadyGrowthBasePolicy(snapshot, 'sgd-mip-20-flexi-10', id, MANULIFE_STRESS_FUNDS, {
+    name: 'Golden Manulife InvestReady Growth (SGD / MIP 20 Flexi 10 OCF Stress)',
   })
 }
 
@@ -11294,6 +11410,101 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Manulife SmartRetire (V) - Income alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'manulife-investready-growth',
+    variantId: 'sgd-mip-15-flexi-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:protected-base-assurance',
+      'kernel:distribution-mode-assumption',
+      'branch:manulife-investready-growth-administrative-charge',
+      'branch:manulife-investready-growth-full-surrender-charge',
+    ],
+    description: 'Manulife InvestReady Growth 15 Years Flexi 10 baseline scenario covering the supported administration-charge, full-surrender-charge, protected-base assurance, and cash-payout distribution corridors.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the administration-charge corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+      {
+        description: 'baseline policy produces annual withdrawals under the manual cash-payout distribution assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+      {
+        description: 'baseline policy exposes a positive surrender-charge rate during the MIP corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.eecRate > 0),
+      },
+    ],
+  },
+  {
+    productId: 'manulife-investready-growth',
+    variantId: 'sgd-mip-20-flexi-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:protected-base-assurance',
+      'kernel:distribution-mode-assumption',
+      'branch:manulife-investready-growth-administrative-charge',
+      'branch:manulife-investready-growth-full-surrender-charge',
+    ],
+    description: 'Manulife InvestReady Growth 20 Years Flexi 10 baseline scenario covering the supported administration-charge, full-surrender-charge, protected-base assurance, and cash-payout distribution corridors.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the administration-charge corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+      {
+        description: 'baseline policy produces annual withdrawals under the manual cash-payout distribution assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+      {
+        description: 'baseline policy exposes a positive surrender-charge rate during the MIP corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.eecRate > 0),
+      },
+    ],
+  },
+  {
+    productId: 'manulife-investready-growth',
+    variantId: 'sgd-mip-15-flexi-10',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:manulife-investready-growth-premium-shortfall-charge',
+      'branch:manulife-investready-growth-top-up-charge',
+      'branch:manulife-investready-growth-partial-withdrawal-charge',
+    ],
+    description: 'Manulife InvestReady Growth event-heavy scenario covering premium holiday, charged top-up, and in-MIP partial withdrawal on the supported corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy records both top-up contribution and later withdrawals',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > 0 && row.annualWithdrawals > 0),
+      },
+      {
+        description: 'premium holiday increases cumulative fees beyond the same policy without the holiday event',
+        test: (fixture, artifact) => {
+          const withoutHoliday = ilpPolicySchema.parse({
+            ...fixture.policy,
+            policyEvents: fixture.policy.policyEvents?.filter((event) => event.type !== 'premium-holiday'),
+          })
+          const withHolidayFees = artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          const withoutHolidayFees = analyzeIlpPolicy(withoutHoliday).projections.mid.rows[0]?.cumulativeGrossFees ?? 0
+          return withHolidayFees > withoutHolidayFees
+        },
+      },
+    ],
+  },
+  {
+    productId: 'manulife-investready-growth',
+    variantId: 'sgd-mip-20-flexi-10',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Manulife InvestReady Growth 20 Years Flexi 10 alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'manulife-investready-iii',
     variantId: 'sgd-mip-5-flexi-4',
     scenarioId: 'baseline',
@@ -15483,6 +15694,19 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'manulife-smartretire-v-income' && definition.scenarioId === 'ocf-stress') {
     return manulifeSmartRetireIncomeStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'manulife-investready-growth' && definition.scenarioId === 'baseline') {
+    return manulifeInvestreadyGrowthBaselinePolicy(
+      snapshot,
+      definition.variantId as keyof typeof MANULIFE_INVESTREADY_GROWTH_VARIANT_LABELS,
+      id,
+    )
+  }
+  if (definition.productId === 'manulife-investready-growth' && definition.scenarioId === 'event-heavy') {
+    return manulifeInvestreadyGrowthEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'manulife-investready-growth' && definition.scenarioId === 'ocf-stress') {
+    return manulifeInvestreadyGrowthStressPolicy(snapshot, id)
   }
   if (definition.productId === 'manulife-investready-iii' && definition.scenarioId === 'baseline') {
     return manulifeInvestreadyIiiBaselinePolicy(snapshot, id)

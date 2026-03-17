@@ -15495,35 +15495,37 @@
     "sourceChecksumSha256": "339d2d44a308c51eaef49ea31cce095e7220eb488bea8553de8b04f49b4abe6e",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
       "kernel:protected-base-assurance",
+      "branch:manulife-investready-growth-administrative-charge",
       "branch:manulife-investready-growth-premium-shortfall-charge",
       "branch:manulife-investready-growth-top-up-charge",
+      "branch:manulife-investready-growth-partial-withdrawal-charge",
+      "branch:manulife-investready-growth-full-surrender-charge",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "manulife-investready-growth-administrative-charge",
       "manulife-investready-growth-welcome-bonus",
       "manulife-investready-growth-annual-premium-bonus",
       "manulife-investready-growth-premium-bonus",
       "manulife-investready-growth-booster-bonus",
       "manulife-investready-growth-loyalty-bonus",
-      "manulife-investready-growth-partial-withdrawal-charge",
       "manulife-investready-growth-partial-withdrawal-flexibility",
-      "manulife-investready-growth-surrender-charge",
+      "manulife-investready-growth-partial-withdrawal-flexibility-life-stage-waiver",
       "manulife-investready-growth-dividend-payout-threshold",
       "manulife-investready-growth-reinvested-dividend-withdrawals",
       "manulife-investready-growth-benefit-payout-handling",
       "manulife-investready-growth-fund-management-charge",
       "manulife-investready-growth-fund-switching-and-redirection",
       "manulife-investready-growth-life-insured-change",
-      "manulife-investready-growth-reinstatement"
+      "manulife-investready-growth-reinstatement",
+      "manulife-investready-growth-post-flexi-premium-variation"
     ],
     "warnings": [
-      "Manulife InvestReady Growth is cataloged as a partial modeled subset in V1. The parser captures the paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, and the reinvest-default distribution-mode assumption surface, while the administrative charge, bonus mechanics, withdrawal / surrender schedules, and fund-level charges remain outside the current engine."
+      "Manulife InvestReady Growth is cataloged as a supported V1 corridor. The parser captures the accumulated-minimum-premium administrative-charge path, the paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal and full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface, while bonus mechanics, partial-withdrawal flexibility, dividend threshold behavior, benefit payouts, and fund-level charges remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -15614,6 +15616,52 @@
                 "page": 18,
                 "section": "Appendix A annual COI table",
                 "excerpt": "Annual Cost of Insurance for Death Benefit and Terminal Illness Benefit (per $1,000 Net Amount At Risk) Attained Age Male Female Non-Smoker Smoker Non-Smoker Smoker 0 0.6 0.6 0.45 0.45 1 0.6 0.6 0.45 0.45 2 0.6 0.6 0.45 "
+              }
+            ]
+          },
+          {
+            "id": "administrative-charge",
+            "label": "Administrative Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 13.971643
+                }
+              ]
+            },
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 15,
+                "rate": 0.0218
+              },
+              {
+                "startPolicyYear": 16,
+                "endPolicyYear": null,
+                "rate": 0.0095
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published administrative charge as X% / 12 multiplied by the Value of Minimum Premium Payable for the 15 Years Flexi 10 corridor.",
+              "V1 interprets the Value of Minimum Premium Payable as the future value of the annualised regular basic premium, accumulated annually at 6% through the 10-year Flexi Start window.",
+              "Keep monthly contribution aligned to the committed regular basic premium because post-Flexi premium variation remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "COI and administrative charge",
+                "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
               }
             ]
           }
@@ -15717,6 +15765,107 @@
                 "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
               }
             ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.9
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.62
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.49
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.46
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.32
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.26
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.21
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.18
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.12
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published in-MIP partial-withdrawal charge schedule for the 15 Years Flexi 10 corridor.",
+              "The partial-withdrawal flexibility corridor from policy year 6 and the life-stage-event waiver remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Premium shortfall charge",
+                "excerpt": "5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfall charge will apply starting from the first business day after the end of the grace period o"
+              }
+            ]
           }
         ],
         "distributionSupport": {
@@ -15740,20 +15889,36 @@
             }
           ]
         },
-        "eecTable": [],
+        "eecTable": [
+          1,
+          1,
+          0.9,
+          0.8,
+          0.62,
+          0.49,
+          0.46,
+          0.32,
+          0.26,
+          0.21,
+          0.18,
+          0.15,
+          0.12,
+          0.08,
+          0.08
+        ],
         "warnings": [
-          "15 Years Flexi 10 is cataloged as a partial modeled subset in V1. The parser captures the published 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
-          "Administrative-charge economics, all bonus mechanics, surrender / partial-withdrawal charge schedules, partial-withdrawal flexibility, and fund-level management charges remain outside the current engine.",
+          "15 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published administrative-charge path using the accumulated minimum-premium base, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "The administrative-charge base is interpreted as the future value of annualised regular basic premiums payable through the 10-year Flexi Start window, accumulated at 6% per annum. Keep monthly contribution aligned to the committed regular basic premium because post-Flexi premium variation remains informational only in V1.",
+          "Bonus mechanics, partial-withdrawal flexibility, dividend threshold behavior, and fund-level management charges remain informational only.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
-          "Administrative charge remains informational only because the published 6% accumulated minimum-premium base is not yet authored as a parser-backed charge basis.",
           "Welcome Bonus, Annual Premium Bonus, Premium Bonus, Booster Bonus, and Loyalty Bonus remain informational only.",
-          "Full-surrender and partial-withdrawal charge schedules remain informational only, including the partial-withdrawal flexibility corridor and life-stage waiver.",
+          "The partial-withdrawal flexibility corridor from policy year 6 and the life-stage-event waiver remain informational only.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
-          "Fund switching, premium redirection, automatic fund rebalancing, change-of-payment-mode, and change-of-life-insured options remain informational only.",
+          "Fund switching, premium redirection, automatic fund rebalancing, change-of-payment-mode, change-of-life-insured, and post-Flexi premium variation options remain informational only.",
           "Reinstatement underwriting and pre-existing-condition exclusions remain informational only."
         ],
         "sourceRefs": [
@@ -15883,6 +16048,52 @@
                 "excerpt": "Annual Cost of Insurance for Death Benefit and Terminal Illness Benefit (per $1,000 Net Amount At Risk) Attained Age Male Female Non-Smoker Smoker Non-Smoker Smoker 0 0.6 0.6 0.45 0.45 1 0.6 0.6 0.45 0.45 2 0.6 0.6 0.45 "
               }
             ]
+          },
+          {
+            "id": "administrative-charge",
+            "label": "Administrative Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 13.971643
+                }
+              ]
+            },
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 20,
+                "rate": 0.018
+              },
+              {
+                "startPolicyYear": 21,
+                "endPolicyYear": null,
+                "rate": 0.0092
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published administrative charge as X% / 12 multiplied by the Value of Minimum Premium Payable for the 20 Years Flexi 10 corridor.",
+              "V1 interprets the Value of Minimum Premium Payable as the future value of the annualised regular basic premium, accumulated annually at 6% through the 10-year Flexi Start window.",
+              "Keep monthly contribution aligned to the committed regular basic premium because post-Flexi premium variation remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "COI and administrative charge",
+                "excerpt": "1. Cost of Insurance (“ COI ”) The COI is levied on the policy on a monthly basis by cancelling units from your Fund(s) to provide for the insurance coverage. The COI is based on the attained age, gender and smoking stat"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -15984,6 +16195,132 @@
                 "excerpt": "2. Top-up Premium Top-up premium is any premium received outside of the regular basic premium and is allowed during the policy term, subject to our approval and the maximum entry age allowable at the point of application"
               }
             ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.9
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.85
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.62
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.52
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.36
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.33
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.27
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.24
+              },
+              {
+                "startPolicyYear": 16,
+                "endPolicyYear": 16,
+                "rate": 0.21
+              },
+              {
+                "startPolicyYear": 17,
+                "endPolicyYear": 17,
+                "rate": 0.17
+              },
+              {
+                "startPolicyYear": 18,
+                "endPolicyYear": 18,
+                "rate": 0.13
+              },
+              {
+                "startPolicyYear": 19,
+                "endPolicyYear": 19,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 20,
+                "endPolicyYear": 20,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published in-MIP partial-withdrawal charge schedule for the 20 Years Flexi 10 corridor.",
+              "The partial-withdrawal flexibility corridor from policy year 6 and the life-stage-event waiver remain informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Premium shortfall charge",
+                "excerpt": "5. Premium Shortfall Charge If you miss paying any regular basic premium before the flexi start date, a monthly premium shortfall charge will apply starting from the first business day after the end of the grace period o"
+              }
+            ]
           }
         ],
         "distributionSupport": {
@@ -16007,20 +16344,41 @@
             }
           ]
         },
-        "eecTable": [],
+        "eecTable": [
+          1,
+          1,
+          0.9,
+          0.85,
+          0.8,
+          0.75,
+          0.62,
+          0.52,
+          0.45,
+          0.4,
+          0.36,
+          0.33,
+          0.3,
+          0.27,
+          0.24,
+          0.21,
+          0.17,
+          0.13,
+          0.08,
+          0.08
+        ],
         "warnings": [
-          "20 Years Flexi 10 is cataloged as a partial modeled subset in V1. The parser captures the published 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
-          "Administrative-charge economics, all bonus mechanics, surrender / partial-withdrawal charge schedules, partial-withdrawal flexibility, and fund-level management charges remain outside the current engine.",
+          "20 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published administrative-charge path using the accumulated minimum-premium base, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+          "The administrative-charge base is interpreted as the future value of annualised regular basic premiums payable through the 10-year Flexi Start window, accumulated at 6% per annum. Keep monthly contribution aligned to the committed regular basic premium because post-Flexi premium variation remains informational only in V1.",
+          "Bonus mechanics, partial-withdrawal flexibility, dividend threshold behavior, and fund-level management charges remain informational only.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
-          "Administrative charge remains informational only because the published 6% accumulated minimum-premium base is not yet authored as a parser-backed charge basis.",
           "Welcome Bonus, Annual Premium Bonus, Premium Bonus, Booster Bonus, and Loyalty Bonus remain informational only.",
-          "Full-surrender and partial-withdrawal charge schedules remain informational only, including the partial-withdrawal flexibility corridor and life-stage waiver.",
+          "The partial-withdrawal flexibility corridor from policy year 6 and the life-stage-event waiver remain informational only.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
           "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
-          "Fund switching, premium redirection, automatic fund rebalancing, change-of-payment-mode, and change-of-life-insured options remain informational only.",
+          "Fund switching, premium redirection, automatic fund rebalancing, change-of-payment-mode, change-of-life-insured, and post-Flexi premium variation options remain informational only.",
           "Reinstatement underwriting and pre-existing-condition exclusions remain informational only."
         ],
         "sourceRefs": [

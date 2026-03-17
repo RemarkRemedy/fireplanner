@@ -24,9 +24,33 @@ const PREMIUM_SHORTFALL_SCHEDULE = [
   { startPolicyYear: 9, endPolicyYear: 9, rate: 0.26 },
   { startPolicyYear: 10, endPolicyYear: 10, rate: 0.21 },
 ] as const
+const FLEXI_START_YEARS = 10
+const MINIMUM_PREMIUM_PAYABLE_FACTOR = 13.971643
+const WITHDRAWAL_AND_SURRENDER_CHARGE_SCHEDULES = {
+  '15 Years Flexi 10': [1, 1, 0.9, 0.8, 0.62, 0.49, 0.46, 0.32, 0.26, 0.21, 0.18, 0.15, 0.12, 0.08, 0.08],
+  '20 Years Flexi 10': [1, 1, 0.9, 0.85, 0.8, 0.75, 0.62, 0.52, 0.45, 0.4, 0.36, 0.33, 0.3, 0.27, 0.24, 0.21, 0.17, 0.13, 0.08, 0.08],
+} as const
+const ADMINISTRATIVE_CHARGE_RATES = {
+  '15 Years Flexi 10': {
+    duringMip: 0.0218,
+    afterMip: 0.0095,
+  },
+  '20 Years Flexi 10': {
+    duringMip: 0.018,
+    afterMip: 0.0092,
+  },
+} as const
 
 function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
+}
+
+function buildRateSchedule(values: readonly number[]): Array<{ startPolicyYear: number, endPolicyYear: number | null, rate: number }> {
+  return values.map((rate, index) => ({
+    startPolicyYear: index + 1,
+    endPolicyYear: index + 1,
+    rate,
+  }))
 }
 
 function sourceRef(page: number, section: string, excerpt: string): IlpCatalogSourceRef {
@@ -90,6 +114,44 @@ function buildVariant(
       ],
       sourceRefs: [page1, page5, page18],
     },
+    {
+      id: 'administrative-charge',
+      label: 'Administrative Charge',
+      basis: 'premium-base-mip-multiplier',
+      rate: 0,
+      amount: 0,
+      appliesTo: ['policy'],
+      activeWindow: 'policy-term',
+      premiumBaseConfig: {
+        useHigherOfCommencementAndPrevailing: false,
+        multiplierSchedule: [
+          {
+            startPolicyYear: 1,
+            endPolicyYear: null,
+            mode: 'fixed',
+            multiplier: MINIMUM_PREMIUM_PAYABLE_FACTOR,
+          },
+        ],
+      },
+      rateSchedule: [
+        {
+          startPolicyYear: 1,
+          endPolicyYear: plan.mipLength,
+          rate: ADMINISTRATIVE_CHARGE_RATES[plan.label].duringMip,
+        },
+        {
+          startPolicyYear: plan.mipLength + 1,
+          endPolicyYear: null,
+          rate: ADMINISTRATIVE_CHARGE_RATES[plan.label].afterMip,
+        },
+      ],
+      notes: [
+        `Models the published administrative charge as X% / 12 multiplied by the Value of Minimum Premium Payable for the ${plan.label} corridor.`,
+        `V1 interprets the Value of Minimum Premium Payable as the future value of the annualised regular basic premium, accumulated annually at 6% through the ${FLEXI_START_YEARS}-year Flexi Start window.`,
+        'Keep monthly contribution aligned to the committed regular basic premium because post-Flexi premium variation remains informational only in V1.',
+      ],
+      sourceRefs: [page5],
+    },
   ]
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
@@ -125,6 +187,23 @@ function buildVariant(
       ],
       sourceRefs: [page8],
     },
+    {
+      id: 'partial-withdrawal-charge',
+      label: 'Partial Withdrawal Charge',
+      trigger: 'partial-withdrawal',
+      basis: 'event-amount',
+      appliesTo: ['policy'],
+      rate: 0,
+      amount: 0,
+      rateSchedule: buildRateSchedule(WITHDRAWAL_AND_SURRENDER_CHARGE_SCHEDULES[plan.label]),
+      activeWindow: 'during-mip',
+      allocation: 'equal-split',
+      notes: [
+        `Models the published in-MIP partial-withdrawal charge schedule for the ${plan.label} corridor.`,
+        'The partial-withdrawal flexibility corridor from policy year 6 and the life-stage-event waiver remain informational only in V1.',
+      ],
+      sourceRefs: [page7],
+    },
   ]
 
   return {
@@ -150,6 +229,7 @@ function buildVariant(
     bonuses: [],
     feeRules,
     eventChargeRules,
+    eecTable: [...WITHDRAWAL_AND_SURRENDER_CHARGE_SCHEDULES[plan.label]],
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['policy'],
@@ -163,20 +243,19 @@ function buildVariant(
       ],
       sourceRefs: [page11],
     },
-    eecTable: [],
     warnings: [
-      `${plan.label} is cataloged as a partial modeled subset in V1. The parser captures the published 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, and the reinvest-default distribution-mode assumption surface.`,
-      'Administrative-charge economics, all bonus mechanics, surrender / partial-withdrawal charge schedules, partial-withdrawal flexibility, and fund-level management charges remain outside the current engine.',
+      `${plan.label} is cataloged as a supported V1 corridor. The parser captures the published administrative-charge path using the accumulated minimum-premium base, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.`,
+      'The administrative-charge base is interpreted as the future value of annualised regular basic premiums payable through the 10-year Flexi Start window, accumulated at 6% per annum. Keep monthly contribution aligned to the committed regular basic premium because post-Flexi premium variation remains informational only in V1.',
+      'Bonus mechanics, partial-withdrawal flexibility, dividend threshold behavior, and fund-level management charges remain informational only.',
       'The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.',
     ],
     unsupportedItems: [
-      'Administrative charge remains informational only because the published 6% accumulated minimum-premium base is not yet authored as a parser-backed charge basis.',
       'Welcome Bonus, Annual Premium Bonus, Premium Bonus, Booster Bonus, and Loyalty Bonus remain informational only.',
-      'Full-surrender and partial-withdrawal charge schedules remain informational only, including the partial-withdrawal flexibility corridor and life-stage waiver.',
+      'The partial-withdrawal flexibility corridor from policy year 6 and the life-stage-event waiver remain informational only.',
       'Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.',
       'The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.',
       'Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.',
-      'Fund switching, premium redirection, automatic fund rebalancing, change-of-payment-mode, and change-of-life-insured options remain informational only.',
+      'Fund switching, premium redirection, automatic fund rebalancing, change-of-payment-mode, change-of-life-insured, and post-Flexi premium variation options remain informational only.',
       'Reinstatement underwriting and pre-existing-condition exclusions remain informational only.',
     ],
     sourceRefs: [page1, page4, page5, page7, page8, page11, page18],
@@ -192,25 +271,26 @@ export function parseManulifeInvestreadyGrowth(context: ParseContext): IlpCatalo
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'kernel:protected-base-assurance',
+      'branch:manulife-investready-growth-administrative-charge',
       'branch:manulife-investready-growth-premium-shortfall-charge',
       'branch:manulife-investready-growth-top-up-charge',
+      'branch:manulife-investready-growth-partial-withdrawal-charge',
+      'branch:manulife-investready-growth-full-surrender-charge',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'manulife-investready-growth-administrative-charge',
       'manulife-investready-growth-welcome-bonus',
       'manulife-investready-growth-annual-premium-bonus',
       'manulife-investready-growth-premium-bonus',
       'manulife-investready-growth-booster-bonus',
       'manulife-investready-growth-loyalty-bonus',
-      'manulife-investready-growth-partial-withdrawal-charge',
       'manulife-investready-growth-partial-withdrawal-flexibility',
-      'manulife-investready-growth-surrender-charge',
+      'manulife-investready-growth-partial-withdrawal-flexibility-life-stage-waiver',
       'manulife-investready-growth-dividend-payout-threshold',
       'manulife-investready-growth-reinvested-dividend-withdrawals',
       'manulife-investready-growth-benefit-payout-handling',
@@ -218,9 +298,10 @@ export function parseManulifeInvestreadyGrowth(context: ParseContext): IlpCatalo
       'manulife-investready-growth-fund-switching-and-redirection',
       'manulife-investready-growth-life-insured-change',
       'manulife-investready-growth-reinstatement',
+      'manulife-investready-growth-post-flexi-premium-variation',
     ],
     warnings: [
-      'Manulife InvestReady Growth is cataloged as a partial modeled subset in V1. The parser captures the paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, and the reinvest-default distribution-mode assumption surface, while the administrative charge, bonus mechanics, withdrawal / surrender schedules, and fund-level charges remain outside the current engine.',
+      'Manulife InvestReady Growth is cataloged as a supported V1 corridor. The parser captures the accumulated-minimum-premium administrative-charge path, the paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal and full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface, while bonus mechanics, partial-withdrawal flexibility, dividend threshold behavior, benefit payouts, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [
