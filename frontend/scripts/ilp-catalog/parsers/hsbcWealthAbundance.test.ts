@@ -35,6 +35,10 @@ describe('parseHsbcWealthAbundance', () => {
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-abundance-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-abundance-dividend-bank-routing')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-abundance-regular-withdrawal-facility')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-abundance-life-replacement-eligibility-and-underwriting')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-abundance-life-replacement-cover-reset-and-rider-termination')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-abundance-life-replacement-policy-reissue-fallback')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-abundance-life-replacement-option')
 
     const sgdVariant = product.variants.find((entry) => entry.id === 'sgd-mip-10')
     expect(sgdVariant?.distributionSupport).toEqual({
@@ -78,8 +82,23 @@ describe('parseHsbcWealthAbundance', () => {
     expect(product.warnings).toContain(
       'Wealth Abundance keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published S$30 minimum annual payout threshold.',
     )
+    expect(product.warnings).toContain(
+      'Regular withdrawal is modeled through the manual payout-state kernel; post-holiday recurring-single-premium administrative restart, Life Replacement Option eligibility / underwriting, post-replacement cover resets, and policy-reissue fallback remain metadata-only in V1.',
+    )
     expect(usdVariant?.warnings).toContain(
       'Recurring single premium is not available for USD-denominated policies and is therefore omitted from this variant.',
+    )
+    expect(sgdVariant?.warnings).toContain(
+      'Life Replacement Option eligibility / underwriting, post-replacement cover resets, and policy-reissue fallback remain informational only in V1.',
+    )
+    expect(sgdVariant?.unsupportedItems).toContain(
+      'Life Replacement Option request timing, replacement eligibility, and underwriting acceptance remain informational only.',
+    )
+    expect(sgdVariant?.unsupportedItems).toContain(
+      'Life Replacement Option rider termination, new suicide / incontestability / exclusion periods, and revised expiry-date administration remain informational only.',
+    )
+    expect(sgdVariant?.unsupportedItems).toContain(
+      'Life Replacement Option policy-reissue fallback, non-identical replacement-policy terms, and post-replacement premium / term administration remain informational only.',
     )
     expect(sgdVariant?.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',

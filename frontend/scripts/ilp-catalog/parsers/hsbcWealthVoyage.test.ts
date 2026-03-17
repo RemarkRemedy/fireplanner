@@ -28,6 +28,13 @@ describe('parseHsbcWealthVoyage', () => {
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-regular-withdrawal-loyalty-suspension')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-life-replacement-eligibility-and-underwriting')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-life-replacement-cover-reset-and-rider-termination')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-life-replacement-policy-reissue-fallback')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-life-replacement-option')
+    expect(product.warnings).toContain(
+      'Wealth Voyage is cataloged as a supported V1 product. Premium-base AMF, start-up bonus, bonus recovery charge, top-up charge, partial-withdrawal charge, surrender mechanics, manual regular-withdrawal payout support, the modeled subset of power-up / loyalty bonus suspension rules, and reinvest-default distribution support are modeled; premium-holiday charge after the free duration, premium-holiday backpay AMF reconciliation, Life Replacement Option eligibility / underwriting, post-replacement cover resets, and policy-reissue fallback remain informational only.',
+    )
 
     const sgdMip20 = product.variants.find((variant) => variant.id === 'sgd-mip-20')
     expect(sgdMip20).toBeDefined()
@@ -75,6 +82,18 @@ describe('parseHsbcWealthVoyage', () => {
         }),
       ],
     })
+    expect(sgdMip20?.warnings).toContain(
+      'Life Replacement Option eligibility / underwriting, post-replacement cover resets, and policy-reissue fallback remain informational only in V1.',
+    )
+    expect(sgdMip20?.unsupportedItems).toContain(
+      'Life Replacement Option request timing, replacement eligibility, and underwriting acceptance remain informational only.',
+    )
+    expect(sgdMip20?.unsupportedItems).toContain(
+      'Life Replacement Option rider termination, new suicide / incontestability / exclusion periods, and revised expiry-date administration remain informational only.',
+    )
+    expect(sgdMip20?.unsupportedItems).toContain(
+      'Life Replacement Option policy-reissue fallback, non-identical replacement-policy terms, and post-replacement premium / term administration remain informational only.',
+    )
     expect(sgdMip20?.bonuses).toEqual(expect.arrayContaining([
       expect.objectContaining({
         id: 'loyalty-bonus',

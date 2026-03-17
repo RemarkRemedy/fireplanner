@@ -172,6 +172,10 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-abundance-dividend-payout-threshold')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-abundance-regular-withdrawal-facility')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-abundance-life-replacement-eligibility-and-underwriting')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-abundance-life-replacement-cover-reset-and-rider-termination')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-abundance-life-replacement-policy-reissue-fallback')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-abundance-life-replacement-option')
     expect(seed.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
       accountId: 'topup',
@@ -259,6 +263,10 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-voyage-premium-holiday-charge-after-free-duration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-voyage-dividend-payout-threshold')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-voyage-regular-withdrawal-loyalty-suspension')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-voyage-life-replacement-eligibility-and-underwriting')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-voyage-life-replacement-cover-reset-and-rider-termination')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-voyage-life-replacement-policy-reissue-fallback')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-voyage-life-replacement-option')
     expect(seed.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
       accountId: 'topup',

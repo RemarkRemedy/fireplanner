@@ -314,9 +314,13 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD'): 
     eecTable: EEC_SCHEDULE.map(roundRate),
     warnings: [
       'This template captures the modeled regular-premium, top-up, recurring-single-premium, free-withdrawal, BRC, account-fee, and reinvest-default distribution subset.',
+      'Life Replacement Option eligibility / underwriting, post-replacement cover resets, and policy-reissue fallback remain informational only in V1.',
       ...(currency === 'USD' ? ['Recurring single premium is not available for USD-denominated policies and is therefore omitted from this variant.'] : []),
     ],
     unsupportedItems: [
+      'Life Replacement Option request timing, replacement eligibility, and underwriting acceptance remain informational only.',
+      'Life Replacement Option rider termination, new suicide / incontestability / exclusion periods, and revised expiry-date administration remain informational only.',
+      'Life Replacement Option policy-reissue fallback, non-identical replacement-policy terms, and post-replacement premium / term administration remain informational only.',
       'Designated-bank-account routing, unsuccessful cash-credit fallback to reinvestment, and payout execution operations remain informational only.',
     ],
     sourceRefs: [page2, page4, page6, page8, page9, page10, page11, page16],
@@ -346,12 +350,14 @@ export function parseHsbcWealthAbundance(context: ParseContext): IlpCatalogProdu
     metadataOnlyBehaviors: [
       'hsbc-abundance-dividend-bank-routing',
       'hsbc-abundance-rsp-administrative-restart-after-premium-holiday',
-      'hsbc-abundance-life-replacement-option',
+      'hsbc-abundance-life-replacement-eligibility-and-underwriting',
+      'hsbc-abundance-life-replacement-cover-reset-and-rider-termination',
+      'hsbc-abundance-life-replacement-policy-reissue-fallback',
     ],
     warnings: [
       'Structured extraction validated against the Wealth Abundance product summary text layer.',
       'Wealth Abundance keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published S$30 minimum annual payout threshold.',
-      'Regular withdrawal is modeled through the manual payout-state kernel; post-holiday recurring-single-premium administrative restart and life replacement remain metadata-only in V1.',
+      'Regular withdrawal is modeled through the manual payout-state kernel; post-holiday recurring-single-premium administrative restart, Life Replacement Option eligibility / underwriting, post-replacement cover resets, and policy-reissue fallback remain metadata-only in V1.',
     ],
     archived: false,
     variants: [
