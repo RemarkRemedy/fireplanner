@@ -1791,6 +1791,8 @@ function hsbcWealthFocusBaselinePolicy(
   variantId: 'sgd-mip-10' | 'usd-mip-10',
   id: string,
 ): IlpPolicyInput {
+  const flexiTerm = Number(productId.slice(-1))
+  const scheduledPayoutAmount = variantId.startsWith('usd') ? 900 : 1_200
   const distributionAssumption = {
     mode: 'cash-payout' as const,
     source: 'manual-assumption' as const,
@@ -1799,6 +1801,14 @@ function hsbcWealthFocusBaselinePolicy(
 
   return hsbcWealthFocusBasePolicy(snapshot, productId, variantId, id, HSBC_BALANCED_FUNDS, {
     distributionAssumption,
+    scheduledPayoutAssumption: {
+      mode: 'scheduled-redemption',
+      source: 'manual-assumption',
+      accountId: 'topup',
+      startPolicyYear: Math.max(2, flexiTerm + 1) + 1,
+      durationYears: 5,
+      annualPayoutAmount: scheduledPayoutAmount,
+    },
   })
 }
 
@@ -10385,17 +10395,20 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'branch:wealth-focus-premium-base-amf',
       'branch:wealth-focus-partial-withdrawal-charge',
       'branch:wealth-focus-eec',
+      'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
     ],
-    description: 'HSBC Wealth Focus Flexi 1 SGD baseline scenario proving supported bonus, AMF, and surrender-charge mechanics through the two-account corridor.',
+    description: 'HSBC Wealth Focus Flexi 1 SGD baseline scenario proving supported bonus, AMF, top-up-first manual scheduled payout, and surrender-charge mechanics through the two-account corridor.',
     integrityChecks: [
       {
         description: 'baseline Flexi 1 corridor incurs positive gross fees from the premium-base AMF',
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
       },
       {
-        description: 'baseline Flexi 1 corridor records positive annual withdrawals from the manual distribution assumption',
-        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+        description: 'baseline Flexi 1 corridor redeems the top-up account under the manual scheduled-payout assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          (row.accounts.find((account) => account.accountId === 'topup')?.withdrawalAmount ?? 0) >= 1_000
+        )),
       },
     ],
   },
@@ -10467,13 +10480,16 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'branch:wealth-focus-premium-base-amf',
       'kernel:cumulative-free-partial-withdrawal-pool',
       'branch:wealth-focus-eec',
+      'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
     ],
-    description: 'HSBC Wealth Focus Flexi 3 SGD baseline scenario proving supported bonus, AMF, surrender-charge, the modeled year-6 free-withdrawal pool surface, and cash-payout distribution handling.',
+    description: 'HSBC Wealth Focus Flexi 3 SGD baseline scenario proving supported bonus, AMF, the modeled year-6 free-withdrawal pool surface, top-up-first manual scheduled payout, and cash-payout distribution handling.',
     integrityChecks: [
       {
-        description: 'baseline Flexi 3 cash-payout corridor records positive annual withdrawals from the manual distribution assumption',
-        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+        description: 'baseline Flexi 3 corridor redeems the top-up account under the manual scheduled-payout assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          (row.accounts.find((account) => account.accountId === 'topup')?.withdrawalAmount ?? 0) >= 1_000
+        )),
       },
     ],
   },
@@ -10524,17 +10540,20 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'branch:wealth-focus-premium-base-amf',
       'kernel:cumulative-free-partial-withdrawal-pool',
       'branch:wealth-focus-eec',
+      'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
     ],
-    description: 'HSBC Wealth Focus Flexi 5 USD baseline scenario proving the supported second-currency corridor, the modeled year-6 free-withdrawal pool surface, and cash-payout distribution handling.',
+    description: 'HSBC Wealth Focus Flexi 5 USD baseline scenario proving the supported second-currency corridor, the modeled year-6 free-withdrawal pool surface, top-up-first manual scheduled payout, and cash-payout distribution handling.',
     integrityChecks: [
       {
         description: 'baseline Flexi 5 USD corridor incurs positive gross fees from the premium-base AMF',
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
       },
       {
-        description: 'baseline Flexi 5 USD corridor records positive annual withdrawals from the manual distribution assumption',
-        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+        description: 'baseline Flexi 5 USD corridor redeems the top-up account under the manual scheduled-payout assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          (row.accounts.find((account) => account.accountId === 'topup')?.withdrawalAmount ?? 0) >= 900
+        )),
       },
     ],
   },

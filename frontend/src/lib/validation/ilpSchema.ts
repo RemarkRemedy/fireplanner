@@ -157,6 +157,7 @@ export const ilpPolicyEventSchema = z.object({
 export const ilpScheduledPayoutSupportSchema = z.object({
   mode: z.literal('manual-assumption'),
   accountId: z.string().min(1),
+  fallbackAccountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
   source: z.literal('policy-redemption'),
 })
 
@@ -1241,6 +1242,23 @@ export const ilpPolicySchema = z.object({
       path: ['scheduledPayoutSupport', 'accountId'],
     })
   }
+
+  policy.scheduledPayoutSupport?.fallbackAccountIds?.forEach((accountId, accountIndex) => {
+    if (!accountIds.includes(accountId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'scheduledPayoutSupport.fallbackAccountIds must reference existing accounts',
+        path: ['scheduledPayoutSupport', 'fallbackAccountIds', accountIndex],
+      })
+    }
+    if (accountId === policy.scheduledPayoutSupport?.accountId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'scheduledPayoutSupport.fallbackAccountIds must not repeat the primary account',
+        path: ['scheduledPayoutSupport', 'fallbackAccountIds', accountIndex],
+      })
+    }
+  })
 
   policy.distributionSupport?.accountIds.forEach((accountId, accountIndex) => {
     if (!accountIds.includes(accountId)) {

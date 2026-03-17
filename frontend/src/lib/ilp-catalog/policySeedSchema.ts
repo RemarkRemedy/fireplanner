@@ -148,6 +148,23 @@ export const ilpPolicySeedSchema = z.object({
     })
   }
 
+  policy.scheduledPayoutSupport?.fallbackAccountIds?.forEach((accountId, accountIndex) => {
+    if (!accountIds.has(accountId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'scheduledPayoutSupport.fallbackAccountIds must reference existing accounts',
+        path: ['scheduledPayoutSupport', 'fallbackAccountIds', accountIndex],
+      })
+    }
+    if (accountId === policy.scheduledPayoutSupport?.accountId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'scheduledPayoutSupport.fallbackAccountIds must not repeat the primary account',
+        path: ['scheduledPayoutSupport', 'fallbackAccountIds', accountIndex],
+      })
+    }
+  })
+
   policy.distributionSupport?.accountIds.forEach((accountId, accountIndex) => {
     if (!accountIds.has(accountId)) {
       ctx.addIssue({

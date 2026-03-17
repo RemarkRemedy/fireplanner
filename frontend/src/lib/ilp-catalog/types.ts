@@ -196,6 +196,7 @@ export interface IlpTemplateEventChargeRule {
 export interface IlpTemplateScheduledPayoutSupport {
   mode: 'manual-assumption'
   accountId: string
+  fallbackAccountIds?: string[]
   source: 'policy-redemption'
   notes: string[]
   sourceRefs: IlpCatalogSourceRef[]

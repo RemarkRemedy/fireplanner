@@ -78,10 +78,11 @@ describe('parseHsbcWealthFocus', () => {
       expect(product.productName).toBe(testCase.productName)
       expect(product.supportStatus).toBe('supported')
       expect(product.economicsStatus).toBe('supported')
+      expect(product.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
       expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
       expect(product.modeledEconomics).toContain('kernel:cumulative-free-partial-withdrawal-pool')
       expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-free-partial-withdrawal-benefit')
-      expect(product.metadataOnlyBehaviors).toContain('wealth-focus-regular-withdrawal-facility')
+      expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-regular-withdrawal-facility')
       expect(product.variants).toHaveLength(2)
 
       const sgdVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10')
@@ -155,6 +156,21 @@ describe('parseHsbcWealthFocus', () => {
           expect.objectContaining({
             page: 18,
             section: 'Distribution of Dividend',
+          }),
+        ],
+      })
+      expect(sgdVariant?.scheduledPayoutSupport).toEqual({
+        mode: 'manual-assumption',
+        accountId: 'topup',
+        fallbackAccountIds: ['regular'],
+        source: 'policy-redemption',
+        notes: expect.arrayContaining([
+          expect.stringContaining('Top-up Account first'),
+        ]),
+        sourceRefs: [
+          expect.objectContaining({
+            page: 15,
+            section: 'Regular Withdrawal',
           }),
         ],
       })

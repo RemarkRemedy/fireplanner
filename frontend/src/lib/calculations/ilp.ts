@@ -68,6 +68,7 @@ export type IlpRegularPremiumPaymentFrequency = 'annual' | 'semi-annual' | 'quar
 export interface IlpScheduledPayoutSupport {
   mode: 'manual-assumption'
   accountId: string
+  fallbackAccountIds?: string[]
   source: 'policy-redemption'
 }
 
@@ -1128,6 +1129,8 @@ function getPartialWithdrawalsByAccount(
 function getScheduledPayoutsByAccount(
   normalized: IlpNormalizedPolicyInput,
   policyYear: number,
+  availableBeforeBaseWithdrawalsByAccount: Map<string, number>,
+  partialWithdrawalByAccount: Map<string, number>,
 ): Map<string, number> {
   const payouts = new Map<string, number>(normalized.input.accounts.map((account) => [account.id, 0]))
   const scheduledPayout = normalized.input.scheduledPayoutAssumption
@@ -1141,7 +1144,26 @@ function getScheduledPayoutsByAccount(
     return payouts
   }
 
-  payouts.set(scheduledPayout.accountId, scheduledPayout.annualPayoutAmount)
+  const payoutAccountIds = [
+    normalized.input.scheduledPayoutSupport?.accountId ?? scheduledPayout.accountId,
+    ...(normalized.input.scheduledPayoutSupport?.fallbackAccountIds ?? []),
+  ]
+  let remainingPayout = scheduledPayout.annualPayoutAmount
+
+  for (const accountId of payoutAccountIds) {
+    if (remainingPayout <= CONTRIBUTION_TOLERANCE) break
+
+    const availableBeforeScheduledPayout = Math.max(
+      0,
+      (availableBeforeBaseWithdrawalsByAccount.get(accountId) ?? 0) - (partialWithdrawalByAccount.get(accountId) ?? 0),
+    )
+    if (availableBeforeScheduledPayout <= CONTRIBUTION_TOLERANCE) continue
+
+    const payoutAmount = Math.min(remainingPayout, availableBeforeScheduledPayout)
+    payouts.set(accountId, payoutAmount)
+    remainingPayout -= payoutAmount
+  }
+
   return payouts
 }
 
@@ -1192,6 +1214,18 @@ function assertScheduledPayoutConfiguration(input: IlpPolicyInput): void {
 
   if (input.scheduledPayoutSupport && !accountIds.has(input.scheduledPayoutSupport.accountId)) {
     throw new Error(`Scheduled payout support account "${input.scheduledPayoutSupport.accountId}" does not exist on policy "${input.name}".`)
+  }
+
+  for (const fallbackAccountId of input.scheduledPayoutSupport?.fallbackAccountIds ?? []) {
+    if (!accountIds.has(fallbackAccountId)) {
+      throw new Error(`Scheduled payout support fallback account "${fallbackAccountId}" does not exist on policy "${input.name}".`)
+    }
+  }
+
+  if (
+    input.scheduledPayoutSupport?.fallbackAccountIds?.includes(input.scheduledPayoutSupport.accountId)
+  ) {
+    throw new Error(`Scheduled payout support fallback accounts must not repeat the primary payout account on policy "${input.name}".`)
   }
 
   if (input.scheduledPayoutAssumption && !input.scheduledPayoutSupport) {
@@ -3778,7 +3812,6 @@ export function projectIlpPolicy(
     const contributionForYear = Array.from(contributionByAccount.values()).reduce((sum, value) => sum + value, 0)
     cumulativePremiums += contributionForYear
     const partialWithdrawalByAccount = getPartialWithdrawalsByAccount(normalized, context.range)
-    const requestedScheduledPayoutByAccount = getScheduledPayoutsByAccount(normalized, policyYear)
     const distributionPayoutByAccount = getDistributionPayoutsByAccount(normalized, year, openBalances)
     const additionalChargeByAccount = computeAdditionalChargeByAccount(
       normalized,
@@ -3795,8 +3828,8 @@ export function projectIlpPolicy(
       freeAmountPoolUsedByRule,
     )
     const bonusCreditByAccount = new Map<string, number>()
-    const scheduledPayoutByAccount = new Map<string, number>(input.accounts.map((account) => [account.id, 0]))
     const baseWithdrawalByAccount = new Map<string, number>(input.accounts.map((account) => [account.id, 0]))
+    const availableBeforeBaseWithdrawalsByAccount = new Map<string, number>()
 
     for (const account of input.accounts) {
       bonusCreditByAccount.set(
@@ -3824,24 +3857,30 @@ export function projectIlpPolicy(
       const extraCharges = (additionalChargeByAccount.get(account.id) ?? 0) + (eventChargeByAccount.get(account.id) ?? 0)
       const accountContribution = contributionByAccount.get(account.id) ?? 0
       const bonusCredit = bonusCreditByAccount.get(account.id) ?? 0
-      const partialWithdrawalAmount = partialWithdrawalByAccount.get(account.id) ?? 0
-      const requestedScheduledPayout = requestedScheduledPayoutByAccount.get(account.id) ?? 0
       const availableBeforeBaseWithdrawals = Math.max(
         0,
         (open - (baseGrossFee + extraCharges - bonusCredit)) * (1 + blendedNetReturn) + accountContribution,
       )
-      const scheduledPayoutAmount = Math.min(
-        requestedScheduledPayout,
-        Math.max(availableBeforeBaseWithdrawals - partialWithdrawalAmount, 0),
-      )
+      availableBeforeBaseWithdrawalsByAccount.set(account.id, availableBeforeBaseWithdrawals)
+    }
+
+    const scheduledPayoutByAccount = getScheduledPayoutsByAccount(
+      normalized,
+      policyYear,
+      availableBeforeBaseWithdrawalsByAccount,
+      partialWithdrawalByAccount,
+    )
+
+    for (const account of input.accounts) {
+      const availableBeforeBaseWithdrawals = availableBeforeBaseWithdrawalsByAccount.get(account.id) ?? 0
+      const partialWithdrawalAmount = partialWithdrawalByAccount.get(account.id) ?? 0
+      const scheduledPayoutAmount = scheduledPayoutByAccount.get(account.id) ?? 0
       const baseWithdrawalAmount = partialWithdrawalAmount + scheduledPayoutAmount
       const distributionPayoutAmount = distributionPayoutByAccount.get(account.id) ?? 0
       const withdrawalAmount = baseWithdrawalAmount + distributionPayoutAmount
       const closeBeforeAssurance = availableBeforeBaseWithdrawals - withdrawalAmount
 
-      scheduledPayoutByAccount.set(account.id, scheduledPayoutAmount)
       baseWithdrawalByAccount.set(account.id, baseWithdrawalAmount)
-
       provisionalCloseByAccount.set(account.id, Math.max(0, closeBeforeAssurance))
     }
 

@@ -264,6 +264,7 @@ export const ilpTemplateEventChargeRuleSchema = z.object({
 export const ilpTemplateScheduledPayoutSupportSchema = z.object({
   mode: z.literal('manual-assumption'),
   accountId: z.string().min(1),
+  fallbackAccountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
   source: z.literal('policy-redemption'),
   notes: z.array(z.string()).min(1),
   sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
@@ -363,6 +364,23 @@ export const ilpTemplateVariantSchema = z.object({
       path: ['scheduledPayoutSupport', 'accountId'],
     })
   }
+
+  variant.scheduledPayoutSupport?.fallbackAccountIds?.forEach((accountId, accountIndex) => {
+    if (!variant.accounts.some((account) => account.id === accountId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'scheduledPayoutSupport.fallbackAccountIds must reference existing accounts',
+        path: ['scheduledPayoutSupport', 'fallbackAccountIds', accountIndex],
+      })
+    }
+    if (accountId === variant.scheduledPayoutSupport?.accountId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'scheduledPayoutSupport.fallbackAccountIds must not repeat the primary account',
+        path: ['scheduledPayoutSupport', 'fallbackAccountIds', accountIndex],
+      })
+    }
+  })
 
   if (variant.distributionSupport) {
     variant.distributionSupport.accountIds.forEach((accountId, accountIndex) => {

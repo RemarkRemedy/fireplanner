@@ -321,6 +321,9 @@ export function templateVariantToPolicySeed(
       ? {
           mode: variant.scheduledPayoutSupport.mode,
           accountId: variant.scheduledPayoutSupport.accountId,
+          ...(variant.scheduledPayoutSupport.fallbackAccountIds
+            ? { fallbackAccountIds: [...variant.scheduledPayoutSupport.fallbackAccountIds] }
+            : {}),
           source: variant.scheduledPayoutSupport.source,
         }
       : undefined,

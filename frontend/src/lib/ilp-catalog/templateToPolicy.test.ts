@@ -290,10 +290,18 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:wealth-focus-premium-base-amf')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:wealth-focus-premium-holiday-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:cumulative-free-partial-withdrawal-pool')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('wealth-focus-free-partial-withdrawal-benefit')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-regular-withdrawal-facility')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('wealth-focus-regular-withdrawal-facility')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('reinvest by default'))).toBe(true)
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      accountId: 'topup',
+      fallbackAccountIds: ['regular'],
+      source: 'policy-redemption',
+    })
+    expect(seed.scheduledPayoutAssumption).toBeUndefined()
     expect(seed.accounts.find((account) => account.id === 'regular')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'after-icp', contributionShare: 1 },

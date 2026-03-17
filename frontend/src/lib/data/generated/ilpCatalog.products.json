@@ -46717,15 +46717,15 @@
       "branch:wealth-focus-eec",
       "branch:wealth-focus-ad-hoc-top-up-routing",
       "kernel:cumulative-free-partial-withdrawal-pool",
+      "kernel:scheduled-payout-manual-assumption",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "wealth-focus-life-replacement-option",
-      "wealth-focus-regular-withdrawal-facility",
       "wealth-focus-death-and-ti-benefits"
     ],
     "warnings": [
-      "Wealth Focus Flexi 1 is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but the top-up-first regular-withdrawal facility and protection-side options remain informational only."
+      "Wealth Focus Flexi 1 is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, the top-up-first manual scheduled-payout surface for Regular Withdrawal, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but protection-side options remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -47069,6 +47069,26 @@
             ]
           }
         ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "topup",
+          "fallbackAccountIds": [
+            "regular"
+          ],
+          "source": "policy-redemption",
+          "notes": [
+            "Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the fifth policy anniversary by redeeming units.",
+            "V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.",
+            "The published minimum withdrawal amount, minimum remaining account value, and qualifying life-event gating remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 15,
+              "section": "Regular Withdrawal",
+              "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the amount to be withd"
+            }
+          ]
+        },
         "distributionSupport": {
           "mode": "manual-assumption",
           "accountIds": [
@@ -47104,12 +47124,11 @@
           0.03
         ],
         "warnings": [
-          "Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
-          "Regular Withdrawal and Life Replacement Option remain informational only in V1."
+          "Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, manual top-up-first scheduled payout support for Regular Withdrawal, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
+          "Life Replacement Option remains informational only in V1."
         ],
         "unsupportedItems": [
           "Life Replacement Option remains informational only.",
-          "Regular Withdrawal facility remains informational only.",
           "Death, terminal illness, and accidental death payout mechanics remain informational only."
         ],
         "sourceRefs": [
@@ -47510,6 +47529,26 @@
             ]
           }
         ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "topup",
+          "fallbackAccountIds": [
+            "regular"
+          ],
+          "source": "policy-redemption",
+          "notes": [
+            "Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the fifth policy anniversary by redeeming units.",
+            "V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.",
+            "The published minimum withdrawal amount, minimum remaining account value, and qualifying life-event gating remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 15,
+              "section": "Regular Withdrawal",
+              "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the amount to be withd"
+            }
+          ]
+        },
         "distributionSupport": {
           "mode": "manual-assumption",
           "accountIds": [
@@ -47545,12 +47584,11 @@
           0.03
         ],
         "warnings": [
-          "Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
-          "Regular Withdrawal and Life Replacement Option remain informational only in V1."
+          "Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, manual top-up-first scheduled payout support for Regular Withdrawal, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
+          "Life Replacement Option remains informational only in V1."
         ],
         "unsupportedItems": [
           "Life Replacement Option remains informational only.",
-          "Regular Withdrawal facility remains informational only.",
           "Death, terminal illness, and accidental death payout mechanics remain informational only."
         ],
         "sourceRefs": [
@@ -47634,16 +47672,16 @@
       "branch:wealth-focus-eec",
       "branch:wealth-focus-ad-hoc-top-up-routing",
       "kernel:cumulative-free-partial-withdrawal-pool",
+      "kernel:scheduled-payout-manual-assumption",
       "kernel:distribution-mode-assumption",
       "branch:wealth-focus-premium-holiday-charge"
     ],
     "metadataOnlyBehaviors": [
       "wealth-focus-life-replacement-option",
-      "wealth-focus-regular-withdrawal-facility",
       "wealth-focus-death-and-ti-benefits"
     ],
     "warnings": [
-      "Wealth Focus Flexi 3 is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but the top-up-first regular-withdrawal facility and protection-side options remain informational only."
+      "Wealth Focus Flexi 3 is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, the top-up-first manual scheduled-payout surface for Regular Withdrawal, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but protection-side options remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -48032,6 +48070,26 @@
             ]
           }
         ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "topup",
+          "fallbackAccountIds": [
+            "regular"
+          ],
+          "source": "policy-redemption",
+          "notes": [
+            "Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the fifth policy anniversary by redeeming units.",
+            "V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.",
+            "The published minimum withdrawal amount, minimum remaining account value, and qualifying life-event gating remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 15,
+              "section": "Regular Withdrawal",
+              "excerpt": "sufficient to deduct the withdrawal amount, the remaining withdrawal amount will be deducted from the Regular Premium Account, which may incur a Partial Withdrawal Charge. If you do not indicate the account to withdraw f"
+            }
+          ]
+        },
         "distributionSupport": {
           "mode": "manual-assumption",
           "accountIds": [
@@ -48067,12 +48125,11 @@
           0.08
         ],
         "warnings": [
-          "Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
-          "Regular Withdrawal and Life Replacement Option remain informational only in V1."
+          "Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, manual top-up-first scheduled payout support for Regular Withdrawal, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
+          "Life Replacement Option remains informational only in V1."
         ],
         "unsupportedItems": [
           "Life Replacement Option remains informational only.",
-          "Regular Withdrawal facility remains informational only.",
           "Death, terminal illness, and accidental death payout mechanics remain informational only."
         ],
         "sourceRefs": [
@@ -48518,6 +48575,26 @@
             ]
           }
         ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "topup",
+          "fallbackAccountIds": [
+            "regular"
+          ],
+          "source": "policy-redemption",
+          "notes": [
+            "Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the fifth policy anniversary by redeeming units.",
+            "V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.",
+            "The published minimum withdrawal amount, minimum remaining account value, and qualifying life-event gating remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 15,
+              "section": "Regular Withdrawal",
+              "excerpt": "sufficient to deduct the withdrawal amount, the remaining withdrawal amount will be deducted from the Regular Premium Account, which may incur a Partial Withdrawal Charge. If you do not indicate the account to withdraw f"
+            }
+          ]
+        },
         "distributionSupport": {
           "mode": "manual-assumption",
           "accountIds": [
@@ -48553,12 +48630,11 @@
           0.08
         ],
         "warnings": [
-          "Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
-          "Regular Withdrawal and Life Replacement Option remain informational only in V1."
+          "Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, manual top-up-first scheduled payout support for Regular Withdrawal, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
+          "Life Replacement Option remains informational only in V1."
         ],
         "unsupportedItems": [
           "Life Replacement Option remains informational only.",
-          "Regular Withdrawal facility remains informational only.",
           "Death, terminal illness, and accidental death payout mechanics remain informational only."
         ],
         "sourceRefs": [
@@ -48642,16 +48718,16 @@
       "branch:wealth-focus-eec",
       "branch:wealth-focus-ad-hoc-top-up-routing",
       "kernel:cumulative-free-partial-withdrawal-pool",
+      "kernel:scheduled-payout-manual-assumption",
       "kernel:distribution-mode-assumption",
       "branch:wealth-focus-premium-holiday-charge"
     ],
     "metadataOnlyBehaviors": [
       "wealth-focus-life-replacement-option",
-      "wealth-focus-regular-withdrawal-facility",
       "wealth-focus-death-and-ti-benefits"
     ],
     "warnings": [
-      "Wealth Focus Flexi 5 is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but the top-up-first regular-withdrawal facility and protection-side options remain informational only."
+      "Wealth Focus Flexi 5 is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, the top-up-first manual scheduled-payout surface for Regular Withdrawal, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but protection-side options remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -49050,6 +49126,26 @@
             ]
           }
         ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "topup",
+          "fallbackAccountIds": [
+            "regular"
+          ],
+          "source": "policy-redemption",
+          "notes": [
+            "Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the fifth policy anniversary by redeeming units.",
+            "V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.",
+            "The published minimum withdrawal amount, minimum remaining account value, and qualifying life-event gating remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 15,
+              "section": "Regular Withdrawal",
+              "excerpt": "sufficient to deduct the withdrawal amount, the remaining withdrawal amount will be deducted from the Regular Premium Account, which may incur a Partial Withdrawal Charge. If you do not indicate the account to withdraw f"
+            }
+          ]
+        },
         "distributionSupport": {
           "mode": "manual-assumption",
           "accountIds": [
@@ -49085,12 +49181,11 @@
           0.08
         ],
         "warnings": [
-          "Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
-          "Regular Withdrawal and Life Replacement Option remain informational only in V1."
+          "Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, manual top-up-first scheduled payout support for Regular Withdrawal, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
+          "Life Replacement Option remains informational only in V1."
         ],
         "unsupportedItems": [
           "Life Replacement Option remains informational only.",
-          "Regular Withdrawal facility remains informational only.",
           "Death, terminal illness, and accidental death payout mechanics remain informational only."
         ],
         "sourceRefs": [
@@ -49546,6 +49641,26 @@
             ]
           }
         ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "topup",
+          "fallbackAccountIds": [
+            "regular"
+          ],
+          "source": "policy-redemption",
+          "notes": [
+            "Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the fifth policy anniversary by redeeming units.",
+            "V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.",
+            "The published minimum withdrawal amount, minimum remaining account value, and qualifying life-event gating remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 15,
+              "section": "Regular Withdrawal",
+              "excerpt": "sufficient to deduct the withdrawal amount, the remaining withdrawal amount will be deducted from the Regular Premium Account, which may incur a Partial Withdrawal Charge. If you do not indicate the account to withdraw f"
+            }
+          ]
+        },
         "distributionSupport": {
           "mode": "manual-assumption",
           "accountIds": [
@@ -49581,12 +49696,11 @@
           0.08
         ],
         "warnings": [
-          "Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
-          "Regular Withdrawal and Life Replacement Option remain informational only in V1."
+          "Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, manual top-up-first scheduled payout support for Regular Withdrawal, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
+          "Life Replacement Option remains informational only in V1."
         ],
         "unsupportedItems": [
           "Life Replacement Option remains informational only.",
-          "Regular Withdrawal facility remains informational only.",
           "Death, terminal illness, and accidental death payout mechanics remain informational only."
         ],
         "sourceRefs": [

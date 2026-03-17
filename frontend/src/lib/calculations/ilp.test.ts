@@ -866,6 +866,59 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[0], 'policy').close).toBe(0)
   })
 
+  it('allocates scheduled payouts through fallback payout accounts in order', () => {
+    const result = projectIlpPolicy(makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 1,
+      accounts: [
+        {
+          id: 'topup',
+          label: 'Top-up Account',
+          feeRate: 0,
+          currentValue: 50,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'regular',
+          label: 'Regular Account',
+          feeRate: 0,
+          currentValue: 200,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'topup',
+        fallbackAccountIds: ['regular'],
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        source: 'manual-assumption',
+        accountId: 'topup',
+        startPolicyYear: 2,
+        durationYears: 1,
+        annualPayoutAmount: 180,
+      },
+    }), 'mid')
+
+    expect(result.rows[0].annualWithdrawals).toBe(180)
+    expect(accountRow(result.rows[0], 'topup').withdrawalAmount).toBe(50)
+    expect(accountRow(result.rows[0], 'regular').withdrawalAmount).toBe(130)
+  })
+
   it('does not erode the protected premium base when cash distributions are paid from an assured account', () => {
     const result = projectIlpPolicy(makeOpenEndedPolicy({
       postMipYears: 4,
