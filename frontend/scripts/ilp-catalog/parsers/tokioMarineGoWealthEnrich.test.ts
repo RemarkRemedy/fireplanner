@@ -36,6 +36,7 @@ describe('parseTokioMarineGoWealthEnrich', () => {
     ])
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-establishment-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-surrender-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-dividend-payout-threshold')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cash'])
 
     const variant = product.variants[0]
@@ -86,6 +87,7 @@ describe('parseTokioMarineGoWealthEnrich', () => {
       mode: 'manual-assumption',
       accountIds: ['policy', 'topup'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -119,6 +121,6 @@ describe('parseTokioMarineGoWealthEnrich', () => {
         ],
       }),
     ])
-    expect(variant?.warnings).toContain('The published $50 minimum dividend-payout threshold remains informational only.')
+    expect(variant?.warnings).toContain('The published 30-day record-date instruction window remains informational only.')
   }, 30_000)
 })

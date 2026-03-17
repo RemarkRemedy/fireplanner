@@ -183,12 +183,13 @@ function buildVariant(document: ExtractedPdfDocument, variantId: 'sgd-open-ended
       mode: 'manual-assumption',
       accountIds: ['policy', 'topup'],
       defaultMode: 'reinvest',
+      ...(isCash ? { minimumAnnualPayoutAmount: 50 } : {}),
       cashPayoutAllowedDuringMip: isCash,
       cashPayoutAllowedAfterMip: isCash,
       source: 'distribution-paying-funds',
       notes: isCash
         ? [
-            'Cash policies may reinvest dividends or receive cash payouts from dividend-paying ILP sub-funds, subject to the published minimum payout amount.',
+            'Cash policies may reinvest dividends or receive cash payouts from dividend-paying ILP sub-funds.',
             'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.',
           ]
         : [
@@ -202,7 +203,7 @@ function buildVariant(document: ExtractedPdfDocument, variantId: 'sgd-open-ended
       isCash
         ? '#goElite (Cash) is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the cash-payout or reinvestment distribution assumption surface through the open-ended single-premium basis.'
         : '#goElite (SRS) is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the reinvest-only distribution-mode surface through the open-ended single-premium basis.',
-      'The published $50 minimum dividend-payout threshold remains informational only.',
+      'The published 30-day record-date instruction window remains informational only.',
       'Recurring single premium and top-up availability only after one policy year remains informational only.',
     ],
     unsupportedItems: [
@@ -238,10 +239,9 @@ export function parseTokioMarineGoElite(context: ParseContext): IlpCatalogProduc
       'tokio-marine-goelite-protection-benefits',
       'tokio-marine-goelite-rsp-and-top-up-eligibility-gating',
       'tokio-marine-goelite-fund-level-and-third-party-charges',
-      'tokio-marine-goelite-dividend-payout-threshold',
     ],
     warnings: [
-      '#goElite is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the cash-vs-SRS distribution-mode support surface; protection benefits, fund-level charges, and dividend payout thresholds remain informational only.',
+      '#goElite is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the cash-vs-SRS distribution-mode support surface with the published $50 minimum cash-payout threshold; protection benefits, fund-level charges, and record-date instruction timing remain informational only.',
     ],
     archived: false,
     variants: [

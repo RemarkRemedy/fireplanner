@@ -36,6 +36,7 @@ describe('parseTokioMarineGoElite', () => {
     ])
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-establishment-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-surrender-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-dividend-payout-threshold')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cash', 'sgd-open-ended-srs'])
 
     const [cashVariant, srsVariant] = product.variants
@@ -82,6 +83,7 @@ describe('parseTokioMarineGoElite', () => {
       mode: 'manual-assumption',
       accountIds: ['policy', 'topup'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -90,7 +92,7 @@ describe('parseTokioMarineGoElite', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
-    expect(cashVariant?.warnings).toContain('The published $50 minimum dividend-payout threshold remains informational only.')
+    expect(cashVariant?.warnings).toContain('The published 30-day record-date instruction window remains informational only.')
 
     expect(srsVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
@@ -104,5 +106,6 @@ describe('parseTokioMarineGoElite', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
+    expect(srsVariant?.distributionSupport).not.toHaveProperty('minimumAnnualPayoutAmount')
   }, 30_000)
 })

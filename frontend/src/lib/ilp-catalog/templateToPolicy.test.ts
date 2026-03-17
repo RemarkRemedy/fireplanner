@@ -6941,6 +6941,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-gowealth-enrich-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-establishment-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-surrender-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-dividend-payout-threshold')
     expect(seed.monthlyContribution).toBe(0)
     expect(seed.initialSinglePremium).toBe(0)
     expect(seed.mipBasis).toBe('open-ended')
@@ -6948,6 +6949,15 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.eecTable).toEqual([0.07, 0.056, 0.042, 0.028, 0.014, 0])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('establishment charges'))).toBe(true)
     expect(seed.accounts.find((account) => account.id === 'policy')?.feeRate).toBe(0.01)
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy', 'topup'],
+      defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
         id: 'single-premium-charge',
@@ -6982,6 +6992,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goelite-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-establishment-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-surrender-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-dividend-payout-threshold')
     expect(seed.monthlyContribution).toBe(0)
     expect(seed.initialSinglePremium).toBe(0)
     expect(seed.mipBasis).toBe('open-ended')
@@ -6989,6 +7000,15 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.eecTable).toEqual([0.07, 0.056, 0.042, 0.028, 0.014, 0])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('establishment charges'))).toBe(true)
     expect(seed.accounts.find((account) => account.id === 'policy')?.feeRate).toBe(0.01)
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy', 'topup'],
+      defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
         id: 'single-premium-charge',

@@ -206,11 +206,12 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       mode: 'manual-assumption',
       accountIds: ['policy', 'topup'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: [
-        'Dividend-paying ILP sub-funds may be reinvested or paid out in cash for cash policies, subject to the published minimum payout amount.',
+        'Dividend-paying ILP sub-funds may be reinvested or paid out in cash for cash policies.',
         'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.',
       ],
       sourceRefs: [page5],
@@ -220,7 +221,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     warnings: [
       '#goWealth Enrich is cataloged as a supported V1 corridor. The parser captures the published 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the cash-payout-capable manual distribution-mode assumption surface through the open-ended single-premium basis.',
       'Loyalty bonus, protection benefits, principal-floor handling, and related fund-level charges remain outside the current engine.',
-      'The published $50 minimum dividend-payout threshold remains informational only.',
+      'The published 30-day record-date instruction window remains informational only.',
     ],
     unsupportedItems: [
       'Loyalty bonus remains informational only.',
@@ -261,10 +262,9 @@ export function parseTokioMarineGoWealthEnrich(context: ParseContext): IlpCatalo
       'tokio-marine-gowealth-enrich-fund-management-fee',
       'tokio-marine-gowealth-enrich-switching-charge',
       'tokio-marine-gowealth-enrich-third-party-charges',
-      'tokio-marine-gowealth-enrich-dividend-payout-threshold',
     ],
     warnings: [
-      '#goWealth Enrich is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the cash-payout-capable distribution-mode assumption surface, while loyalty bonus, protection benefits, principal-floor handling, and fund-level charges remain informational only.',
+      '#goWealth Enrich is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the cash-payout-capable distribution-mode assumption surface with the published $50 minimum cash-payout threshold, while loyalty bonus, protection benefits, principal-floor handling, fund-level charges, and record-date instruction timing remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],
