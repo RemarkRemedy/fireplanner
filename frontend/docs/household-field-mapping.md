@@ -274,6 +274,13 @@ Snapshot date: `2026-03-07`
 - [DashboardPage.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/pages/DashboardPage.tsx)
 - [HealthCheckPage.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/pages/HealthCheckPage.tsx)
 
+### Advisory Gap Feature Consumers (reads from legacy stores for display-layer calculations)
+
+- `/src/hooks/useGuardrailStatus.ts` — reads withdrawal params + projection output for guardrail zone computation
+- `/src/hooks/useEstateProjection.ts` — reads projection rows at death age for estate calculation
+- `/src/hooks/useTaxOptimization.ts` — reads income/CPF data for tax optimization per adult
+- `/src/components/dashboard/ExpenseSwrPanel.tsx` — reads retirementExpenseItems from useProfileStore for blended FIRE number
+
 ## Deferred Work For PR 3+
 
 - `NormalizedHouseholdPlan` ordering and indexing are stable, but yearly timing resolution, ownership aggregation, healthcare projection slots, CPF projection slots, and household cashflow compilation remain deferred to PR 3.

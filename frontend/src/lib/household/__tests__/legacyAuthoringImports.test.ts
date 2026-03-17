@@ -12,6 +12,7 @@ const ALLOWED_IMPORTERS = [
   path.resolve(FRONTEND_ROOT, 'src/components/dashboard/ExpenseSwrPanel.tsx'),
   path.resolve(FRONTEND_ROOT, 'src/components/inputs/ExpenseItemiser.tsx'),
   path.resolve(FRONTEND_ROOT, 'src/hooks/useDashboardMetrics.ts'),
+  path.resolve(FRONTEND_ROOT, 'src/hooks/useGuardrailStatus.ts'),
   path.resolve(FRONTEND_ROOT, 'src/lib/household/fromLegacyIndividual.ts'),
   path.resolve(FRONTEND_ROOT, 'src/lib/storeRegistry.ts'),
 ].sort()
