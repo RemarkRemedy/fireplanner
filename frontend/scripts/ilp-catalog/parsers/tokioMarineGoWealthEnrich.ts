@@ -207,6 +207,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       accountIds: ['policy', 'topup'],
       defaultMode: 'reinvest',
       minimumAnnualPayoutAmount: 50,
+      recordDateInstructionLeadDays: 30,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -221,7 +222,6 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     warnings: [
       '#goWealth Enrich is cataloged as a supported V1 corridor. The parser captures the published 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the cash-payout-capable manual distribution-mode assumption surface through the open-ended single-premium basis.',
       'Loyalty bonus, protection benefits, principal-floor handling, and related fund-level charges remain outside the current engine.',
-      'The published 30-day record-date instruction window remains informational only.',
     ],
     unsupportedItems: [
       'Loyalty bonus remains informational only.',
@@ -264,7 +264,7 @@ export function parseTokioMarineGoWealthEnrich(context: ParseContext): IlpCatalo
       'tokio-marine-gowealth-enrich-third-party-charges',
     ],
     warnings: [
-      '#goWealth Enrich is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the cash-payout-capable distribution-mode assumption surface with the published $50 minimum cash-payout threshold, while loyalty bonus, protection benefits, principal-floor handling, fund-level charges, and record-date instruction timing remain informational only.',
+      '#goWealth Enrich is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the cash-payout-capable distribution-mode assumption surface with the published $50 minimum cash-payout threshold plus the 30-day record-date instruction lead time, while loyalty bonus, protection benefits, principal-floor handling, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

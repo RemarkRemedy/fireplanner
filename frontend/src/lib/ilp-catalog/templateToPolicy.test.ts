@@ -7079,10 +7079,12 @@ describe('templateVariantToPolicySeed', () => {
       accountIds: ['policy', 'topup'],
       defaultMode: 'reinvest',
       minimumAnnualPayoutAmount: 50,
+      recordDateInstructionLeadDays: 30,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
     })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
         id: 'single-premium-charge',
@@ -7130,10 +7132,12 @@ describe('templateVariantToPolicySeed', () => {
       accountIds: ['policy', 'topup'],
       defaultMode: 'reinvest',
       minimumAnnualPayoutAmount: 50,
+      recordDateInstructionLeadDays: 30,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
     })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
         id: 'single-premium-charge',

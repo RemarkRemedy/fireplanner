@@ -84,6 +84,7 @@ describe('parseTokioMarineGoElite', () => {
       accountIds: ['policy', 'topup'],
       defaultMode: 'reinvest',
       minimumAnnualPayoutAmount: 50,
+      recordDateInstructionLeadDays: 30,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -92,7 +93,6 @@ describe('parseTokioMarineGoElite', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
-    expect(cashVariant?.warnings).toContain('The published 30-day record-date instruction window remains informational only.')
 
     expect(srsVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
@@ -107,5 +107,6 @@ describe('parseTokioMarineGoElite', () => {
       sourceRefs: expect.any(Array),
     })
     expect(srsVariant?.distributionSupport).not.toHaveProperty('minimumAnnualPayoutAmount')
+    expect(srsVariant?.distributionSupport).not.toHaveProperty('recordDateInstructionLeadDays')
   }, 30_000)
 })

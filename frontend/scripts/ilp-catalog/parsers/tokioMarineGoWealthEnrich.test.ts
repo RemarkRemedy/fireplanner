@@ -88,6 +88,7 @@ describe('parseTokioMarineGoWealthEnrich', () => {
       accountIds: ['policy', 'topup'],
       defaultMode: 'reinvest',
       minimumAnnualPayoutAmount: 50,
+      recordDateInstructionLeadDays: 30,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -121,6 +122,5 @@ describe('parseTokioMarineGoWealthEnrich', () => {
         ],
       }),
     ])
-    expect(variant?.warnings).toContain('The published 30-day record-date instruction window remains informational only.')
   }, 30_000)
 })

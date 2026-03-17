@@ -183,7 +183,7 @@ function buildVariant(document: ExtractedPdfDocument, variantId: 'sgd-open-ended
       mode: 'manual-assumption',
       accountIds: ['policy', 'topup'],
       defaultMode: 'reinvest',
-      ...(isCash ? { minimumAnnualPayoutAmount: 50 } : {}),
+      ...(isCash ? { minimumAnnualPayoutAmount: 50, recordDateInstructionLeadDays: 30 } : {}),
       cashPayoutAllowedDuringMip: isCash,
       cashPayoutAllowedAfterMip: isCash,
       source: 'distribution-paying-funds',
@@ -203,7 +203,6 @@ function buildVariant(document: ExtractedPdfDocument, variantId: 'sgd-open-ended
       isCash
         ? '#goElite (Cash) is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the cash-payout or reinvestment distribution assumption surface through the open-ended single-premium basis.'
         : '#goElite (SRS) is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the reinvest-only distribution-mode surface through the open-ended single-premium basis.',
-      'The published 30-day record-date instruction window remains informational only.',
       'Recurring single premium and top-up availability only after one policy year remains informational only.',
     ],
     unsupportedItems: [
@@ -241,7 +240,7 @@ export function parseTokioMarineGoElite(context: ParseContext): IlpCatalogProduc
       'tokio-marine-goelite-fund-level-and-third-party-charges',
     ],
     warnings: [
-      '#goElite is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the cash-vs-SRS distribution-mode support surface with the published $50 minimum cash-payout threshold; protection benefits, fund-level charges, and record-date instruction timing remain informational only.',
+      '#goElite is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the cash-vs-SRS distribution-mode support surface with the published $50 minimum cash-payout threshold plus the 30-day record-date instruction lead time on the cash corridor; protection benefits and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [
