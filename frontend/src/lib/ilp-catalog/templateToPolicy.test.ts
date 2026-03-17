@@ -6774,6 +6774,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manuinvest-duo-partial-withdrawal-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manuinvest-duo-full-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manuinvest-duo-premium-flexibility-benefit')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manuinvest-duo-death-ti-tpd-benefit-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manuinvest-duo-benefit-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manuinvest-duo-dividend-payout-threshold')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(10)

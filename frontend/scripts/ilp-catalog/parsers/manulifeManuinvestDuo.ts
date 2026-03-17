@@ -230,7 +230,7 @@ export function parseManulifeManuinvestDuo(context: ParseContext): IlpCatalogPro
       'manuinvest-duo-premium-shortfall-charge',
       'manuinvest-duo-premium-flexibility-benefit',
       'manuinvest-duo-withdrawal-flexibility-charge-threshold',
-      'manuinvest-duo-benefit-payout-handling',
+      'manuinvest-duo-death-ti-tpd-benefit-payout-handling',
       'manuinvest-duo-reinvested-dividend-withdrawals',
       'manuinvest-duo-fund-management-charge',
       'manuinvest-duo-fund-switching-and-redirection',
