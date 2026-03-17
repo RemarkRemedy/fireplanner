@@ -1,5 +1,5 @@
 /**
- * MoneySense Basic Financial Planning Guide — quoted text and source URLs.
+ * MoneySense Basic Financial Planning Guide: quoted text and source URLs.
  * Source: https://www.moneysense.gov.sg/planning-your-finances-well/
  * Published by MAS in collaboration with ABS, AFAS, and LIA Singapore.
  * Guide PDF (Sep 2023): https://www.moneysense.gov.sg/files/Streamlined_Basic_Financial_Planning_Guide__circulate_on_26_Sep_2023_.pdf
@@ -45,7 +45,7 @@ export const MONEYSENSE_AREAS: MoneySenseArea[] = [
     context:
       'Citizens and PRs are automatically covered by DPS ($70,000 until age 59), ' +
       'MediShield Life for large hospital bills, and CareShield Life for long-term care. ' +
-      '"Consider Term Insurance Plans for affordable protection." — MoneySense',
+      '"Consider Term Insurance Plans for affordable protection.", MoneySense',
     source: 'MoneySense Basic Financial Planning Guide; LIA Singapore',
     sourceUrl: 'https://www.moneysense.gov.sg/planning-your-finances-well/',
     ratioIds: [],
