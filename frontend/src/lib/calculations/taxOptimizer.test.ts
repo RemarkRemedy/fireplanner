@@ -124,7 +124,6 @@ describe('optimizeTaxContributions', () => {
     // SRS savings + RSTU savings should approximately equal total savings
     // (Not exactly equal due to progressive brackets — the combined effect
     // may differ from sum of individual effects)
-    const combinedIndividual = result.breakdown.srs.savingsFromMax + result.breakdown.rstu.savingsFromMax
     // Total savings from maxing both simultaneously
     expect(result.taxSavings).toBeGreaterThan(0)
     // Individual savings computed independently should each be positive

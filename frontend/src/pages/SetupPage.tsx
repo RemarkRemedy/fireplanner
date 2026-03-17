@@ -462,7 +462,6 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
     const partnerResidency = values.partnerResidency as 'citizen' | 'pr' | 'foreigner'
     // Partner CPF: same 3 modes as main user (estimate, know/total, know/breakdown)
     let partnerCpfTotal: number | undefined
-    let partnerCpfBreakdown: { oa: number; sa: number; ma: number; ra: number } | undefined
     const partnerCpfMode = (values.partnerCpfMode as 'estimate' | 'know') ?? 'estimate'
     if (partnerResidency === 'foreigner') {
       // Foreigners have no CPF
@@ -470,14 +469,12 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
       const oaMortgage = values.partnerUsedOaForMortgage ? (values.partnerOaMortgageAmount as number) : undefined
       const est = estimateCpfBalances(partnerAge, partnerAnnualIncome, partnerResidency, undefined, oaMortgage)
       partnerCpfTotal = est.total
-      partnerCpfBreakdown = { oa: est.oa, sa: est.sa, ma: est.ma, ra: est.ra }
     } else {
       const oa = (values.partnerCpfOA as number) ?? 0
       const sa = (values.partnerCpfSA as number) ?? 0
       const ma = (values.partnerCpfMA as number) ?? 0
       const ra = (values.partnerCpfRA as number) ?? 0
       partnerCpfTotal = oa + sa + ma + ra
-      partnerCpfBreakdown = { oa, sa, ma, ra }
     }
     draft.partner = {
       name: values.partnerName as string,
