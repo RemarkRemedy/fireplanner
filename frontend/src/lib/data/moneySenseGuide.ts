@@ -91,7 +91,7 @@ export const MONEYSENSE_AREAS: MoneySenseArea[] = [
   },
 ]
 
-/** Life-stage guide PDF links from MoneySense (Jan 2024 update, 6 variants). */
+/** Life-stage guide PDF links from MoneySense (Jan 2024 update, 4 of 6 variants included). */
 export const LIFE_STAGE_GUIDES: { minAge: number; maxAge: number; label: string; url: string }[] = [
   {
     minAge: 19,

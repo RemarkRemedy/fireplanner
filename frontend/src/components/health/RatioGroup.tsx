@@ -39,9 +39,13 @@ export function RatioGroup({ area, ratios, insuranceNeeds, insuranceInputs }: Ra
       )}
 
       {/* Insurance needs panel (Protection area only) */}
-      {area.includesInsurance && insuranceNeeds && insuranceInputs && (
+      {area.includesInsurance && insuranceNeeds && insuranceInputs ? (
         <InsuranceNeedsPanel result={insuranceNeeds} inputs={insuranceInputs} />
-      )}
+      ) : area.includesInsurance ? (
+        <p className="text-sm text-muted-foreground italic">
+          Enter your insurance coverage in the Protection section to see your insurance needs analysis.
+        </p>
+      ) : null}
 
       {/* Action links */}
       {area.actionLinks.length > 0 && (
