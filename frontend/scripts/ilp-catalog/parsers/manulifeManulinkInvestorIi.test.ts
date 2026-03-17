@@ -34,6 +34,7 @@ describe('parseManulifeManulinkInvestorIi', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('manulink-investor-ii-cpf-funding-route')
     expect(product.metadataOnlyBehaviors).not.toContain('manulink-investor-ii-single-premium-principal-tracking')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulink-investor-ii-dividend-minimum-threshold')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-open-ended-cash',
       'sgd-open-ended-srs',
@@ -73,6 +74,7 @@ describe('parseManulifeManulinkInvestorIi', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 40,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -108,6 +110,7 @@ describe('parseManulifeManulinkInvestorIi', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 40,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',

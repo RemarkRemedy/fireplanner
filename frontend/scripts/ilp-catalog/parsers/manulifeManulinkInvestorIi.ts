@@ -132,6 +132,7 @@ function buildVariant(document: ExtractedPdfDocument, fundingMode: FundingMode):
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 40,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -139,11 +140,11 @@ function buildVariant(document: ExtractedPdfDocument, fundingMode: FundingMode):
         ? [
             'SRS-funded policies default dividend distributions to reinvestment, while payout elections remain available subject to the published fund-level rules.',
             'V1 seeds reinvestment by default; payout elections use a manual annual distribution-yield assumption and do not distinguish SRS-account crediting from direct cash settlement.',
-            'The published $40 minimum payout threshold remains informational only.',
+            'Payouts below the published $40 minimum remain reinvested.',
           ]
         : [
             'Cash-funded policies may reinvest fund dividends or receive them as payouts subject to the published fund-level rules.',
-            'V1 seeds reinvestment by default; payout elections use a manual annual distribution-yield assumption and the published $40 minimum payout threshold remains informational only.',
+            'V1 seeds reinvestment by default; payout elections use a manual annual distribution-yield assumption, and payouts below the published $40 minimum remain reinvested.',
           ],
       sourceRefs: [page3],
     },
@@ -160,7 +161,7 @@ function buildVariant(document: ExtractedPdfDocument, fundingMode: FundingMode):
       'Partial-withdrawal and full-surrender administration remain informational only.',
       'Fund-level management fees remain informational only because they vary by chosen ILP sub-fund and are published in the fund summaries.',
       'Fund-switching remains informational only.',
-      'The published $40 dividend minimum, CPF routing, and payout-destination operations remain informational only.',
+      'CPF routing and payout-destination operations remain informational only.',
       'Lapsing and termination behavior remains informational only.',
     ],
     sourceRefs: [page1, page2, page2Recurring, page3, page5],
@@ -195,7 +196,6 @@ export function parseManulifeManulinkInvestorIi(context: ParseContext): IlpCatal
       'manulink-investor-ii-full-surrender',
       'manulink-investor-ii-fund-management-fee',
       'manulink-investor-ii-fund-switching',
-      'manulink-investor-ii-dividend-minimum-threshold',
       'manulink-investor-ii-lapse-and-termination',
     ],
     warnings: [
