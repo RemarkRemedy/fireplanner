@@ -479,7 +479,7 @@ export function parseTokioMarineHarvestFlexi(context: ParseContext): IlpCatalogP
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-harvest-flexi-benefit-payout-handling',
+      'tokio-harvest-flexi-advanced-death-payout-handling',
       'tokio-harvest-flexi-multiple-life-and-life-replacement-administration',
       'tokio-harvest-flexi-partial-withdrawal-limit-gates',
       'tokio-harvest-flexi-credit-card-charge',

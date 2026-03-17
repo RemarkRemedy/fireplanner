@@ -502,7 +502,7 @@ export function parseTokioMarineWealthFlexi(context: ParseContext): IlpCatalogPr
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-wealth-flexi-benefit-payout-handling',
+      'tokio-wealth-flexi-advanced-death-payout-handling',
       'tokio-wealth-flexi-multiple-life-and-life-replacement-administration',
     ],
     warnings: [

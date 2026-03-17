@@ -29,6 +29,8 @@ describe('parseTokioMarineHarvestFlexi', () => {
     expect(product.modeledEconomics).toContain('tokio-admin-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('branch:tokio-harvest-flexi-advanced-death-monthly-protection-charge')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-advanced-death-payout-handling')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-benefit-payout-handling')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions')
     expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-multiple-life-and-life-replacement-administration')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-life-benefit-rider')

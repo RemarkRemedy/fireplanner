@@ -4420,7 +4420,8 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-benefit-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-advanced-death-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-benefit-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-multiple-life-and-life-replacement-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-life-benefit-rider')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
@@ -4783,7 +4784,8 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-benefit-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-advanced-death-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-benefit-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-multiple-life-and-life-replacement-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-life-benefit-rider')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-dividend-payout-threshold-and-record-date-instructions')
