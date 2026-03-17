@@ -47,6 +47,7 @@ type HouseholdAssumptionUpdates = {
   returns?: Partial<HouseholdAssumptions['returns']>
   cashReserve?: Partial<HouseholdAssumptions['cashReserve']>
   retirementMitigation?: HouseholdAssumptions['retirementMitigation']
+  survivorExpenseRatio?: HouseholdAssumptions['survivorExpenseRatio']
 }
 
 interface HouseholdPlanActions {
@@ -330,6 +331,9 @@ export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
               ? {
                   retirementMitigation: updates.retirementMitigation,
                 }
+              : {}),
+            ...('survivorExpenseRatio' in updates
+              ? { survivorExpenseRatio: updates.survivorExpenseRatio }
               : {}),
           }
 

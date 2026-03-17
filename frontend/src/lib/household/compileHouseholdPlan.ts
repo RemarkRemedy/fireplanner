@@ -38,6 +38,10 @@ import {
   type ResolvedTimingWindow,
   type TimingWarning,
 } from './timing'
+import {
+  getSurvivorMultiplier,
+  type SurvivorContext,
+} from '@/lib/calculations/survivorSpending'
 import type {
   AdultOwner,
   Dependent,
@@ -973,6 +977,13 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
   const portfolioAdjustments: HouseholdPortfolioAdjustment[] = []
   const milestones: HouseholdMilestoneRow[] = []
 
+  const survivorCtx: SurvivorContext = {
+    adultLifeExpectancyYearOffsets: normalized.adultOrder.map(
+      (id) => adultTimingById[id].lifeExpectancyYearOffset,
+    ),
+    survivorExpenseRatio: normalized.assumptions.survivorExpenseRatio,
+  }
+
   for (const adultId of normalized.adultOrder) {
     const adult = normalized.adultsById[adultId]
     const timing = adultTimingById[adultId]
@@ -1071,12 +1082,13 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
         if (!window || window.owner !== adult.owner) {
           return sum
         }
-        return sum + evaluateExpenseBaseToday(
+        const base = evaluateExpenseBaseToday(
           expense,
           window,
           yearOffset,
           adultTimingById
         )
+        return sum + base * getSurvivorMultiplier(survivorCtx, expense.owner, yearOffset)
       }, 0)
 
       const age = adult.currentAge + yearOffset
