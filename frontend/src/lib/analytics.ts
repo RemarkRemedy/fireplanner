@@ -60,6 +60,16 @@ type AnalyticsEvent =
   | 'expense_tracker_form_abandon'
   | 'projection_view_changed'
   | 'stress_test_view_changed'
+  | 'setup_step_completed'
+  | 'setup_redo_started'
+  | 'nudge_flow_opened'
+  | 'nudge_flow_completed'
+  | 'nudge_delta_dismissed'
+  | 'risk_card_clicked'
+  | 'completeness_card_clicked'
+  | 'goal_edited'
+  | 'goal_deleted'
+  | 'health_check_ratio_expanded'
 
 export function trackEvent(event: AnalyticsEvent, data?: Record<string, string | number | boolean>) {
   if (isCompanionMode()) return

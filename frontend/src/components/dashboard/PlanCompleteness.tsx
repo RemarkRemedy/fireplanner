@@ -6,6 +6,7 @@ import { usePlanCompleteness } from '@/hooks/usePlanCompleteness'
 import type { CompletenessRow } from '@/hooks/usePlanCompleteness'
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
 import { cn } from '@/lib/utils'
+import { trackEvent } from '@/lib/analytics'
 
 interface PlanCompletenessProps {
   /** When provided, opens the drawer directly instead of navigating to Projection. */
@@ -23,6 +24,7 @@ export function PlanCompleteness({ onOpenDrawer }: PlanCompletenessProps) {
   const [expanded, setExpanded] = useState(!allProvided)
 
   const handleAction = (row: CompletenessRow) => {
+    trackEvent('completeness_card_clicked', { flowId: row.flowId, status: row.status })
     if (onOpenDrawer) {
       onOpenDrawer(row.flowId)
     }

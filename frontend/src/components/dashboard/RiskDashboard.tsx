@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useRiskAssessment } from '@/hooks/useRiskAssessment'
+import { trackEvent } from '@/lib/analytics'
 
 const LEVEL_COLORS = {
   low: 'bg-green-100 text-green-800',
@@ -21,6 +22,7 @@ export function RiskDashboard() {
 
   const handleClick = (risk: (typeof risks)[number]) => {
     if (!risk.actionTarget) return
+    trackEvent('risk_card_clicked', { riskId: risk.id, level: risk.level, target: risk.actionTarget.value })
     if (risk.actionTarget.type === 'route') {
       navigate(risk.actionTarget.value)
     } else {

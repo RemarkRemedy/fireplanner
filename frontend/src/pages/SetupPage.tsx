@@ -546,6 +546,7 @@ export function SetupPage() {
   // Hydrate from existing plan on redo
   useEffect(() => {
     if (!isRedo) return
+    trackEvent('setup_redo_started', { pathway: sectionOrder })
     try {
       const plan = useHouseholdPlanStore.getState().plan
       const existing = hydrateSetupFromPlan(plan)
@@ -575,6 +576,10 @@ export function SetupPage() {
 
   const handleNext = useCallback(() => {
     const currentPos = activeScreenIndices.indexOf(state.screenIndex)
+    const screenDef = visibleScreenDefs[state.screenIndex]
+    if (screenDef) {
+      trackEvent('setup_step_completed', { step: screenDef.id ?? `step-${state.screenIndex}`, position: currentPos + 1 })
+    }
     if (currentPos < activeScreenIndices.length - 1) {
       // Go to next non-skipped screen
       dispatch({ type: 'GO_TO', index: activeScreenIndices[currentPos + 1] })

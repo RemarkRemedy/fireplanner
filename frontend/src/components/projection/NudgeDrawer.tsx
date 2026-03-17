@@ -13,6 +13,7 @@ import {
   extractBreakdown,
 } from '@/components/setup/ExpenseFlowHelpers'
 import { GoalListEditor } from '@/components/setup/GoalListEditor'
+import { trackEvent } from '@/lib/analytics'
 import type { GoalDraft } from '@/components/setup/GoalListEditor'
 import { DEFAULT_CAREER_PHASES } from '@/lib/calculations/income'
 import { FLOW_FIELD_TO_CATEGORY } from '@/lib/data/retirementTemplates'
@@ -69,6 +70,7 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
     if (flowId !== null) {
       beforeSnapshotRef.current = currentSnapshot
       setStepIndex(0)
+      trackEvent('nudge_flow_opened', { flowId })
 
       // Seed from store data + toggle defaults for skipWhen logic
       const flow = NUDGE_FLOWS.find((f) => f.id === flowId)
@@ -185,6 +187,8 @@ export function NudgeDrawer({ flowId, onClose, onComplete }: NudgeDrawerProps) {
         if (!completed.includes(flowId)) {
           setUIField('completedNudgeFlows', [...completed, flowId])
         }
+
+        trackEvent('nudge_flow_completed', { flowId })
 
         // Store pending completion so the useEffect computes delta after store update
         pendingCompletion.current = { flowId, before: beforeSnapshotRef.current ?? currentSnapshot }

@@ -3,6 +3,7 @@ import { X, ChevronDown, ChevronUp } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { DeltaBadge } from '@/components/shared/DeltaBadge'
 import type { DeltaSummary } from '@/lib/calculations/metricsSnapshot'
+import { trackEvent } from '@/lib/analytics'
 
 interface DeltaCardProps {
   summary: DeltaSummary
@@ -31,6 +32,11 @@ export function DeltaCard({ summary, onDismiss, showMcNote }: DeltaCardProps) {
   const [showDetails, setShowDetails] = useState(false)
   const hasDrivers = summary.driverDeltas.length > 0
 
+  const handleDismiss = () => {
+    trackEvent('nudge_delta_dismissed', { flow: summary.label, significant: summary.isSignificant })
+    onDismiss()
+  }
+
   if (!summary.isSignificant) {
     return (
       <Card
@@ -45,7 +51,7 @@ export function DeltaCard({ summary, onDismiss, showMcNote }: DeltaCardProps) {
               {' '}No significant change to your FIRE plan.
             </p>
             <button
-              onClick={onDismiss}
+              onClick={handleDismiss}
               aria-label="Dismiss"
               className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
             >
@@ -67,7 +73,7 @@ export function DeltaCard({ summary, onDismiss, showMcNote }: DeltaCardProps) {
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-semibold text-foreground">{summary.label}</p>
           <button
-            onClick={onDismiss}
+            onClick={handleDismiss}
             aria-label="Dismiss"
             className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
           >

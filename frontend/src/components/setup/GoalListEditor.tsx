@@ -1,4 +1,5 @@
 import { Trash2, Plus } from 'lucide-react'
+import { trackEvent } from '@/lib/analytics'
 import { Button } from '@/components/ui/button'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { NumberInput } from '@/components/shared/NumberInput'
@@ -44,7 +45,7 @@ export function GoalListEditor({ goals, onAdd, onUpdate, onRemove }: GoalListEdi
               variant="ghost"
               size="sm"
               className="shrink-0 h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-              onClick={() => onRemove(goal.id)}
+              onClick={() => { trackEvent('goal_deleted'); onRemove(goal.id) }}
               aria-label={`Remove ${goal.name || 'goal'}`}
             >
               <Trash2 className="h-4 w-4" />
@@ -72,7 +73,7 @@ export function GoalListEditor({ goals, onAdd, onUpdate, onRemove }: GoalListEdi
         type="button"
         variant="outline"
         size="sm"
-        onClick={onAdd}
+        onClick={() => { trackEvent('goal_added'); onAdd() }}
         className="w-full gap-1.5"
       >
         <Plus className="h-4 w-4" />
