@@ -29,9 +29,7 @@ export const MONEYSENSE_AREAS: MoneySenseArea[] = [
     title: 'Emergency Funds',
     quote: 'Set aside at least 3 to 6 months\' worth of expenses.',
     context:
-      'If your income is irregular, aim to have savings equivalent to 12 months of expenses. ' +
-      'Consider keeping money in a combination of savings accounts and Singapore Savings Bonds (SSBs), ' +
-      'which are guaranteed by the Government and can be exited any month without penalty.',
+      'If your income is irregular, aim for 12 months. Consider savings accounts and Singapore Savings Bonds (SSBs).',
     source: 'MoneySense Basic Financial Planning Guide',
     sourceUrl: 'https://www.moneysense.gov.sg/planning-your-finances-well/',
     ratioIds: ['emergency-fund', 'savings-ratio'],
@@ -45,7 +43,7 @@ export const MONEYSENSE_AREAS: MoneySenseArea[] = [
       'Obtain insurance protection for Death & Total Permanent Disability: 9x annual income. ' +
       'Critical Illness: 4x annual income. Spend at most 15% of income on insurance protection.',
     context:
-      'All Singapore Citizens and PRs are automatically covered by DPS ($70,000 until age 59), ' +
+      'Citizens and PRs are automatically covered by DPS ($70,000 until age 59), ' +
       'MediShield Life for large hospital bills, and CareShield Life for long-term care. ' +
       '"Consider Term Insurance Plans for affordable protection." — MoneySense',
     source: 'MoneySense Basic Financial Planning Guide; LIA Singapore',
@@ -76,10 +74,7 @@ export const MONEYSENSE_AREAS: MoneySenseArea[] = [
     title: 'Investments',
     quote: 'Invest at least 10% of income for retirement and other financial goals.',
     context:
-      'For short-term goals, MoneySense suggests Singapore Savings Bonds, T-bills, or fixed deposits. ' +
-      'For long-term: CPF top-ups (up to $8,000/yr tax relief), ETFs, or unit trusts. ' +
-      'Growing your CPF savings through cash top-ups to your Special/Retirement Account earns 4% risk-free ' +
-      'with compounding interest and higher monthly payouts when you retire.',
+      'Short-term: SSBs, T-bills, fixed deposits. Long-term: CPF top-ups (up to $8,000/yr tax relief), ETFs, or unit trusts.',
     source: 'MoneySense Basic Financial Planning Guide',
     sourceUrl: 'https://www.moneysense.gov.sg/planning-your-finances-well/',
     ratioIds: ['liquid-to-nw', 'investment-to-nw', 'solvency', 'fee-drag'],

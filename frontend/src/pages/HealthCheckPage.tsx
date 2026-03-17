@@ -93,13 +93,14 @@ export function HealthCheckPage() {
       ) : (
         <>
           {/* 4 MoneySense areas */}
-          {MONEYSENSE_AREAS.map((area) => (
+          {MONEYSENSE_AREAS.map((area, i) => (
             <RatioGroup
               key={area.id}
               area={area}
               ratios={healthCheck!.ratios}
               insuranceNeeds={insuranceNeeds}
               insuranceInputs={inputs?.insuranceInputs ?? null}
+              showDivider={i > 0}
             />
           ))}
 
