@@ -2980,7 +2980,7 @@ describe('templateVariantToPolicySeed', () => {
     ])
   })
 
-  it('maps AstraLink (VA2) into a partial seed with policy-fee and Appendix 2 charge schedules', () => {
+  it('maps AstraLink (VA2) into a supported seed with loyalty, insurance, and Appendix 2 charge schedules', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'income-astralink-va2')
     expect(product).toBeDefined()
@@ -2989,11 +2989,16 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:astralink-va2-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:astralink-va2-policy-fee')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:astralink-va2-insurance-cover-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:astralink-va2-premium-holiday-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:astralink-va2-surrender-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('astralink-va2-investment-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('astralink-va2-loyalty-bonus')
     expect(seed.mipLength).toBe(20)
     expect(seed.accounts).toEqual([
       expect.objectContaining({
@@ -3015,9 +3020,46 @@ describe('templateVariantToPolicySeed', () => {
             { startPolicyYear: 6, endPolicyYear: null, rate: 0.01 },
           ],
         }),
+        expect.objectContaining({
+          id: 'insurance-cover-charge',
+          basis: 'assurance-sum-at-risk',
+          requiresManualInput: true,
+          assuranceConfig: expect.objectContaining({
+            formula: 'great-eastern-gla4-death-ti',
+            monthlyModalFactor: 1 / 12,
+          }),
+        }),
       ]),
     )
     expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'premium-holiday-charge',
+        trigger: 'premium-holiday',
+        basis: 'annual-premium-with-overlap-months',
+        freeLifetimeMonths: 24,
+        rateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
+          { startPolicyYear: 2, endPolicyYear: 2, rate: 1 },
+          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.9 },
+          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.8 },
+          { startPolicyYear: 5, endPolicyYear: 5, rate: 0.7 },
+          { startPolicyYear: 6, endPolicyYear: 6, rate: 0.65 },
+          { startPolicyYear: 7, endPolicyYear: 7, rate: 0.6 },
+          { startPolicyYear: 8, endPolicyYear: 8, rate: 0.55 },
+          { startPolicyYear: 9, endPolicyYear: 9, rate: 0.5 },
+          { startPolicyYear: 10, endPolicyYear: 10, rate: 0.45 },
+          { startPolicyYear: 11, endPolicyYear: 11, rate: 0.4 },
+          { startPolicyYear: 12, endPolicyYear: 12, rate: 0.35 },
+          { startPolicyYear: 13, endPolicyYear: 13, rate: 0.3 },
+          { startPolicyYear: 14, endPolicyYear: 14, rate: 0.25 },
+          { startPolicyYear: 15, endPolicyYear: 15, rate: 0.2 },
+          { startPolicyYear: 16, endPolicyYear: 16, rate: 0.16 },
+          { startPolicyYear: 17, endPolicyYear: 17, rate: 0.14 },
+          { startPolicyYear: 18, endPolicyYear: 18, rate: 0.12 },
+          { startPolicyYear: 19, endPolicyYear: 19, rate: 0.1 },
+          { startPolicyYear: 20, endPolicyYear: 20, rate: 0.08 },
+        ],
+      }),
       expect.objectContaining({
         id: 'partial-withdrawal-charge',
         trigger: 'partial-withdrawal',
@@ -3046,6 +3088,25 @@ describe('templateVariantToPolicySeed', () => {
         ],
       }),
     ])
+    expect(seed.bonuses).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'post-mip-regular-premium-allocation',
+        startPolicyYear: 21,
+        rate: 0.05,
+      }),
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        startPolicyYear: 10,
+        endPolicyYear: 20,
+        rate: 0.003,
+      }),
+      expect.objectContaining({
+        id: 'loyalty-bonus-2',
+        startPolicyYear: 21,
+        endPolicyYear: null,
+        rate: 0.009,
+      }),
+    ]))
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['policy'],

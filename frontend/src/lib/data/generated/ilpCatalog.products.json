@@ -9259,28 +9259,29 @@
     "sourceChecksumSha256": "fbc8b140725f4766811f53dcd400fe054dca6df0ba5ae92f693dda5b68d6b504",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
+      "kernel:protected-base-assurance",
       "branch:astralink-va2-post-mip-regular-allocation",
+      "branch:astralink-va2-loyalty-bonus",
       "branch:astralink-va2-policy-fee",
+      "branch:astralink-va2-insurance-cover-charge",
+      "branch:astralink-va2-premium-holiday-charge",
       "branch:astralink-va2-partial-withdrawal-charge",
       "branch:astralink-va2-surrender-charge",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "astralink-va2-investment-bonus",
-      "astralink-va2-loyalty-bonus",
-      "astralink-va2-insurance-cover-charge",
       "astralink-va2-no-lapse-guarantee",
-      "astralink-va2-premium-holiday-charge",
       "astralink-va2-premium-holiday-gating",
       "astralink-va2-protection-benefits",
       "astralink-va2-flexible-options"
     ],
     "warnings": [
-      "AstraLink (VA2) is cataloged as a partial modeled subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, the Appendix 2 partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode, while investment bonus, loyalty bonus, insurance cover charge, premium-holiday gating, and protection-side payouts remain outside the current engine."
+      "AstraLink (VA2) is cataloged as a supported V1 product. The parser captures the 105% post-MIP regular-premium allocation uplift, the term-specific annual loyalty bonus schedule, the policy-fee schedule, the monthly insurance cover charge after insured-life and current-basic-benefit inputs are supplied, the Appendix 2 premium-holiday / partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode, while investment bonus, No Lapse Guarantee debt carry, premium-holiday start gating, and protection-side payouts remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -9357,6 +9358,31 @@
                 "excerpt": "Version 1.26 PRODUCT SUMMARY AstraLink (VA2) 1. POLICY DESCRIPTION AstraLink is a whole life regular-premium investment-linked plan (ILP) that provides both investment opportunity and protection coverage against death, t"
               }
             ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus as a percentage of policy value from the 10th policy anniversary onward for the selected MIP corridor.",
+              "The policy must stay in force for the loyalty bonus to be credited."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty bonus and top-ups",
+                "excerpt": "2.3 Loyalty Bonus th Starting from the 10 anniversary, an annual loyalty bonus shown in table below will be provided on the next working day from the anniversary. The loyalty bonus is a percentage of the policy value bas"
+              }
+            ]
           }
         ],
         "feeRules": [
@@ -9392,9 +9418,125 @@
                 "excerpt": "Version 1.26 4.6 Partial Withdrawal Partial withdrawal can be made by cashing in the units from the ILP sub-fund(s) you have chosen (at the bid price) partly, subject to minimum policy value of $1,000 after each withdraw"
               }
             ]
+          },
+          {
+            "id": "insurance-cover-charge",
+            "label": "Insurance Cover Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "great-eastern-gla4-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 120
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published monthly insurance cover charge using the Appendix 1 rate table after insured-life details and the current applicable basic benefit are entered.",
+              "Use the current sum assured field as the current applicable basic benefit before charges: enter the MPV before the anniversary immediately after age 70, and the sum assured thereafter.",
+              "Top-ups and withdrawals remain included in the modeled sum-at-risk path through the existing protected-base assurance kernel."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "No Lapse Guarantee",
+                "excerpt": "3.3 No Lapse Guarantee (NLG) Benefit During the minimum investment period, if the policy value is not enough to cover the fees and charges due on the policy, the NLG benefit will apply and the policy will continue during"
+              },
+              {
+                "page": 7,
+                "section": "Fees and charges",
+                "excerpt": "Version 1.26 4.6 Partial Withdrawal Partial withdrawal can be made by cashing in the units from the ILP sub-fund(s) you have chosen (at the bid price) partly, subject to minimum policy value of $1,000 after each withdraw"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "freeLifetimeMonths": 12,
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.65
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.55
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published Appendix 2 premium-holiday charge after the first 12 months of charge-free premium holiday for the selected MIP corridor.",
+              "Premium-holiday start timing from the 2nd anniversary and the no-lapse / lapse gating remain manual in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Premium holiday charge",
+                "excerpt": "Version 1.26 6. RISKS 6.1 General Risks Buying a life insurance policy is a long-term commitment. Early termination of the policy usually involves high cost and the surrender value payable (if applicable) may be zero or "
+              },
+              {
+                "page": 21,
+                "section": "Appendix 2 charges",
+                "excerpt": "Appendix 2 – Surrender Charge, Partial Withdrawal Charge and Premium Holiday Charge The table below shows the percentage of to be applied for charges. • For full surrender and partial withdrawal, the percentage is applie"
+              }
+            ]
+          },
           {
             "id": "partial-withdrawal-charge",
             "label": "Partial Withdrawal Charge",
@@ -9516,16 +9658,14 @@
           0.08
         ],
         "warnings": [
-          "AstraLink (VA2) is modeled as a partial subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, the Appendix 2 partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode.",
-          "Investment bonus and loyalty bonus remain informational only because the published tables depend on dimensions or term rows that are not fully representable without guesswork in the current template schema.",
-          "Insurance cover charge, No Lapse Guarantee, and premium-holiday free-window gating remain informational only in V1."
+          "AstraLink (VA2) is modeled as a supported subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the term-specific annual loyalty bonus schedule from the 10th policy anniversary onward, the policy-fee schedule, the monthly insurance cover charge after insured-life and current-basic-benefit inputs are supplied, the Appendix 2 premium-holiday / partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode.",
+          "Investment bonus remains informational only because the published tables depend on sum-assured-multiple, annual-premium, and rider dimensions that are not expressible without overstating support in the current template surface.",
+          "No Lapse Guarantee debt carry, premium-holiday start gating, and protection-side payout handling remain informational only in V1."
         ],
         "unsupportedItems": [
           "Investment bonus tables depend on annual premium bands and sum assured multiple, including a separate rider table, and remain informational only.",
-          "Loyalty bonus remains informational only because the extracted 25-year row is not machine-readable enough to model without guesswork.",
-          "Insurance cover charge depends on age, sex, smoker status, and sum at risk and remains informational only.",
           "No Lapse Guarantee amount-owed carry and reinstatement behavior remain informational only.",
-          "Premium holiday free-window gating and the pre-2nd-anniversary lapse path remain informational only.",
+          "Premium holiday start gating and the pre-2nd-anniversary lapse path remain informational only.",
           "Minimum withdrawal amount, minimum post-withdrawal policy value, and top-up blocking during premium holiday remain informational only.",
           "Changing premium or sum assured, retirement option, and guaranteed insurability option remain informational only.",
           "All protection-benefit payout mechanics remain informational only."
@@ -9651,6 +9791,56 @@
                 "excerpt": "Version 1.26 PRODUCT SUMMARY AstraLink (VA2) 1. POLICY DESCRIPTION AstraLink is a whole life regular-premium investment-linked plan (ILP) that provides both investment opportunity and protection coverage against death, t"
               }
             ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": 15,
+            "rate": 0.002,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus as a percentage of policy value from the 10th policy anniversary onward for the selected MIP corridor.",
+              "The policy must stay in force for the loyalty bonus to be credited."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty bonus and top-ups",
+                "excerpt": "2.3 Loyalty Bonus th Starting from the 10 anniversary, an annual loyalty bonus shown in table below will be provided on the next working day from the anniversary. The loyalty bonus is a percentage of the policy value bas"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-2",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 16,
+            "endPolicyYear": null,
+            "rate": 0.006,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus as a percentage of policy value from the 10th policy anniversary onward for the selected MIP corridor.",
+              "The policy must stay in force for the loyalty bonus to be credited."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty bonus and top-ups",
+                "excerpt": "2.3 Loyalty Bonus th Starting from the 10 anniversary, an annual loyalty bonus shown in table below will be provided on the next working day from the anniversary. The loyalty bonus is a percentage of the policy value bas"
+              }
+            ]
           }
         ],
         "feeRules": [
@@ -9686,9 +9876,150 @@
                 "excerpt": "Version 1.26 4.6 Partial Withdrawal Partial withdrawal can be made by cashing in the units from the ILP sub-fund(s) you have chosen (at the bid price) partly, subject to minimum policy value of $1,000 after each withdraw"
               }
             ]
+          },
+          {
+            "id": "insurance-cover-charge",
+            "label": "Insurance Cover Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "great-eastern-gla4-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 120
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published monthly insurance cover charge using the Appendix 1 rate table after insured-life details and the current applicable basic benefit are entered.",
+              "Use the current sum assured field as the current applicable basic benefit before charges: enter the MPV before the anniversary immediately after age 70, and the sum assured thereafter.",
+              "Top-ups and withdrawals remain included in the modeled sum-at-risk path through the existing protected-base assurance kernel."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "No Lapse Guarantee",
+                "excerpt": "3.3 No Lapse Guarantee (NLG) Benefit During the minimum investment period, if the policy value is not enough to cover the fees and charges due on the policy, the NLG benefit will apply and the policy will continue during"
+              },
+              {
+                "page": 7,
+                "section": "Fees and charges",
+                "excerpt": "Version 1.26 4.6 Partial Withdrawal Partial withdrawal can be made by cashing in the units from the ILP sub-fund(s) you have chosen (at the bid price) partly, subject to minimum policy value of $1,000 after each withdraw"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "freeLifetimeMonths": 12,
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.85
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.7
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.55
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published Appendix 2 premium-holiday charge after the first 12 months of charge-free premium holiday for the selected MIP corridor.",
+              "Premium-holiday start timing from the 2nd anniversary and the no-lapse / lapse gating remain manual in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Premium holiday charge",
+                "excerpt": "Version 1.26 6. RISKS 6.1 General Risks Buying a life insurance policy is a long-term commitment. Early termination of the policy usually involves high cost and the surrender value payable (if applicable) may be zero or "
+              },
+              {
+                "page": 21,
+                "section": "Appendix 2 charges",
+                "excerpt": "Appendix 2 – Surrender Charge, Partial Withdrawal Charge and Premium Holiday Charge The table below shows the percentage of to be applied for charges. • For full surrender and partial withdrawal, the percentage is applie"
+              }
+            ]
+          },
           {
             "id": "partial-withdrawal-charge",
             "label": "Partial Withdrawal Charge",
@@ -9840,16 +10171,14 @@
           0.08
         ],
         "warnings": [
-          "AstraLink (VA2) is modeled as a partial subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, the Appendix 2 partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode.",
-          "Investment bonus and loyalty bonus remain informational only because the published tables depend on dimensions or term rows that are not fully representable without guesswork in the current template schema.",
-          "Insurance cover charge, No Lapse Guarantee, and premium-holiday free-window gating remain informational only in V1."
+          "AstraLink (VA2) is modeled as a supported subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the term-specific annual loyalty bonus schedule from the 10th policy anniversary onward, the policy-fee schedule, the monthly insurance cover charge after insured-life and current-basic-benefit inputs are supplied, the Appendix 2 premium-holiday / partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode.",
+          "Investment bonus remains informational only because the published tables depend on sum-assured-multiple, annual-premium, and rider dimensions that are not expressible without overstating support in the current template surface.",
+          "No Lapse Guarantee debt carry, premium-holiday start gating, and protection-side payout handling remain informational only in V1."
         ],
         "unsupportedItems": [
           "Investment bonus tables depend on annual premium bands and sum assured multiple, including a separate rider table, and remain informational only.",
-          "Loyalty bonus remains informational only because the extracted 25-year row is not machine-readable enough to model without guesswork.",
-          "Insurance cover charge depends on age, sex, smoker status, and sum at risk and remains informational only.",
           "No Lapse Guarantee amount-owed carry and reinstatement behavior remain informational only.",
-          "Premium holiday free-window gating and the pre-2nd-anniversary lapse path remain informational only.",
+          "Premium holiday start gating and the pre-2nd-anniversary lapse path remain informational only.",
           "Minimum withdrawal amount, minimum post-withdrawal policy value, and top-up blocking during premium holiday remain informational only.",
           "Changing premium or sum assured, retirement option, and guaranteed insurability option remain informational only.",
           "All protection-benefit payout mechanics remain informational only."
@@ -9975,6 +10304,56 @@
                 "excerpt": "Version 1.26 PRODUCT SUMMARY AstraLink (VA2) 1. POLICY DESCRIPTION AstraLink is a whole life regular-premium investment-linked plan (ILP) that provides both investment opportunity and protection coverage against death, t"
               }
             ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": 20,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus as a percentage of policy value from the 10th policy anniversary onward for the selected MIP corridor.",
+              "The policy must stay in force for the loyalty bonus to be credited."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty bonus and top-ups",
+                "excerpt": "2.3 Loyalty Bonus th Starting from the 10 anniversary, an annual loyalty bonus shown in table below will be provided on the next working day from the anniversary. The loyalty bonus is a percentage of the policy value bas"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-2",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 21,
+            "endPolicyYear": null,
+            "rate": 0.009,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus as a percentage of policy value from the 10th policy anniversary onward for the selected MIP corridor.",
+              "The policy must stay in force for the loyalty bonus to be credited."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty bonus and top-ups",
+                "excerpt": "2.3 Loyalty Bonus th Starting from the 10 anniversary, an annual loyalty bonus shown in table below will be provided on the next working day from the anniversary. The loyalty bonus is a percentage of the policy value bas"
+              }
+            ]
           }
         ],
         "feeRules": [
@@ -10010,9 +10389,175 @@
                 "excerpt": "Version 1.26 4.6 Partial Withdrawal Partial withdrawal can be made by cashing in the units from the ILP sub-fund(s) you have chosen (at the bid price) partly, subject to minimum policy value of $1,000 after each withdraw"
               }
             ]
+          },
+          {
+            "id": "insurance-cover-charge",
+            "label": "Insurance Cover Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "great-eastern-gla4-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 120
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published monthly insurance cover charge using the Appendix 1 rate table after insured-life details and the current applicable basic benefit are entered.",
+              "Use the current sum assured field as the current applicable basic benefit before charges: enter the MPV before the anniversary immediately after age 70, and the sum assured thereafter.",
+              "Top-ups and withdrawals remain included in the modeled sum-at-risk path through the existing protected-base assurance kernel."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "No Lapse Guarantee",
+                "excerpt": "3.3 No Lapse Guarantee (NLG) Benefit During the minimum investment period, if the policy value is not enough to cover the fees and charges due on the policy, the NLG benefit will apply and the policy will continue during"
+              },
+              {
+                "page": 7,
+                "section": "Fees and charges",
+                "excerpt": "Version 1.26 4.6 Partial Withdrawal Partial withdrawal can be made by cashing in the units from the ILP sub-fund(s) you have chosen (at the bid price) partly, subject to minimum policy value of $1,000 after each withdraw"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "freeLifetimeMonths": 24,
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.9
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.8
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.7
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.65
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.55
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 16,
+                "endPolicyYear": 16,
+                "rate": 0.16
+              },
+              {
+                "startPolicyYear": 17,
+                "endPolicyYear": 17,
+                "rate": 0.14
+              },
+              {
+                "startPolicyYear": 18,
+                "endPolicyYear": 18,
+                "rate": 0.12
+              },
+              {
+                "startPolicyYear": 19,
+                "endPolicyYear": 19,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 20,
+                "endPolicyYear": 20,
+                "rate": 0.08
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published Appendix 2 premium-holiday charge after the first 24 months of charge-free premium holiday for the selected MIP corridor.",
+              "Premium-holiday start timing from the 2nd anniversary and the no-lapse / lapse gating remain manual in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Premium holiday charge",
+                "excerpt": "Version 1.26 6. RISKS 6.1 General Risks Buying a life insurance policy is a long-term commitment. Early termination of the policy usually involves high cost and the surrender value payable (if applicable) may be zero or "
+              },
+              {
+                "page": 21,
+                "section": "Appendix 2 charges",
+                "excerpt": "Appendix 2 – Surrender Charge, Partial Withdrawal Charge and Premium Holiday Charge The table below shows the percentage of to be applied for charges. • For full surrender and partial withdrawal, the percentage is applie"
+              }
+            ]
+          },
           {
             "id": "partial-withdrawal-charge",
             "label": "Partial Withdrawal Charge",
@@ -10194,16 +10739,14 @@
           0.08
         ],
         "warnings": [
-          "AstraLink (VA2) is modeled as a partial subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, the Appendix 2 partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode.",
-          "Investment bonus and loyalty bonus remain informational only because the published tables depend on dimensions or term rows that are not fully representable without guesswork in the current template schema.",
-          "Insurance cover charge, No Lapse Guarantee, and premium-holiday free-window gating remain informational only in V1."
+          "AstraLink (VA2) is modeled as a supported subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the term-specific annual loyalty bonus schedule from the 10th policy anniversary onward, the policy-fee schedule, the monthly insurance cover charge after insured-life and current-basic-benefit inputs are supplied, the Appendix 2 premium-holiday / partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode.",
+          "Investment bonus remains informational only because the published tables depend on sum-assured-multiple, annual-premium, and rider dimensions that are not expressible without overstating support in the current template surface.",
+          "No Lapse Guarantee debt carry, premium-holiday start gating, and protection-side payout handling remain informational only in V1."
         ],
         "unsupportedItems": [
           "Investment bonus tables depend on annual premium bands and sum assured multiple, including a separate rider table, and remain informational only.",
-          "Loyalty bonus remains informational only because the extracted 25-year row is not machine-readable enough to model without guesswork.",
-          "Insurance cover charge depends on age, sex, smoker status, and sum at risk and remains informational only.",
           "No Lapse Guarantee amount-owed carry and reinstatement behavior remain informational only.",
-          "Premium holiday free-window gating and the pre-2nd-anniversary lapse path remain informational only.",
+          "Premium holiday start gating and the pre-2nd-anniversary lapse path remain informational only.",
           "Minimum withdrawal amount, minimum post-withdrawal policy value, and top-up blocking during premium holiday remain informational only.",
           "Changing premium or sum assured, retirement option, and guaranteed insurability option remain informational only.",
           "All protection-benefit payout mechanics remain informational only."
@@ -10329,6 +10872,56 @@
                 "excerpt": "Version 1.26 PRODUCT SUMMARY AstraLink (VA2) 1. POLICY DESCRIPTION AstraLink is a whole life regular-premium investment-linked plan (ILP) that provides both investment opportunity and protection coverage against death, t"
               }
             ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 10,
+            "endPolicyYear": 25,
+            "rate": 0.004,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus as a percentage of policy value from the 10th policy anniversary onward for the selected MIP corridor.",
+              "The policy must stay in force for the loyalty bonus to be credited."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty bonus and top-ups",
+                "excerpt": "2.3 Loyalty Bonus th Starting from the 10 anniversary, an annual loyalty bonus shown in table below will be provided on the next working day from the anniversary. The loyalty bonus is a percentage of the policy value bas"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-2",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 26,
+            "endPolicyYear": null,
+            "rate": 0.01,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus as a percentage of policy value from the 10th policy anniversary onward for the selected MIP corridor.",
+              "The policy must stay in force for the loyalty bonus to be credited."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty bonus and top-ups",
+                "excerpt": "2.3 Loyalty Bonus th Starting from the 10 anniversary, an annual loyalty bonus shown in table below will be provided on the next working day from the anniversary. The loyalty bonus is a percentage of the policy value bas"
+              }
+            ]
           }
         ],
         "feeRules": [
@@ -10364,9 +10957,200 @@
                 "excerpt": "Version 1.26 4.6 Partial Withdrawal Partial withdrawal can be made by cashing in the units from the ILP sub-fund(s) you have chosen (at the bid price) partly, subject to minimum policy value of $1,000 after each withdraw"
               }
             ]
+          },
+          {
+            "id": "insurance-cover-charge",
+            "label": "Insurance Cover Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "great-eastern-gla4-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 120
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published monthly insurance cover charge using the Appendix 1 rate table after insured-life details and the current applicable basic benefit are entered.",
+              "Use the current sum assured field as the current applicable basic benefit before charges: enter the MPV before the anniversary immediately after age 70, and the sum assured thereafter.",
+              "Top-ups and withdrawals remain included in the modeled sum-at-risk path through the existing protected-base assurance kernel."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "No Lapse Guarantee",
+                "excerpt": "3.3 No Lapse Guarantee (NLG) Benefit During the minimum investment period, if the policy value is not enough to cover the fees and charges due on the policy, the NLG benefit will apply and the policy will continue during"
+              },
+              {
+                "page": 7,
+                "section": "Fees and charges",
+                "excerpt": "Version 1.26 4.6 Partial Withdrawal Partial withdrawal can be made by cashing in the units from the ILP sub-fund(s) you have chosen (at the bid price) partly, subject to minimum policy value of $1,000 after each withdraw"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "policy"
+            ],
+            "freeLifetimeMonths": 24,
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.95
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.85
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.7
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.65
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.55
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.45
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 16,
+                "endPolicyYear": 16,
+                "rate": 0.2
+              },
+              {
+                "startPolicyYear": 17,
+                "endPolicyYear": 17,
+                "rate": 0.18
+              },
+              {
+                "startPolicyYear": 18,
+                "endPolicyYear": 18,
+                "rate": 0.16
+              },
+              {
+                "startPolicyYear": 19,
+                "endPolicyYear": 19,
+                "rate": 0.14
+              },
+              {
+                "startPolicyYear": 20,
+                "endPolicyYear": 20,
+                "rate": 0.12
+              },
+              {
+                "startPolicyYear": 21,
+                "endPolicyYear": 21,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 22,
+                "endPolicyYear": 22,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 23,
+                "endPolicyYear": 23,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 24,
+                "endPolicyYear": 24,
+                "rate": 0.05
+              },
+              {
+                "startPolicyYear": 25,
+                "endPolicyYear": 25,
+                "rate": 0.04
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published Appendix 2 premium-holiday charge after the first 24 months of charge-free premium holiday for the selected MIP corridor.",
+              "Premium-holiday start timing from the 2nd anniversary and the no-lapse / lapse gating remain manual in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Premium holiday charge",
+                "excerpt": "Version 1.26 6. RISKS 6.1 General Risks Buying a life insurance policy is a long-term commitment. Early termination of the policy usually involves high cost and the surrender value payable (if applicable) may be zero or "
+              },
+              {
+                "page": 21,
+                "section": "Appendix 2 charges",
+                "excerpt": "Appendix 2 – Surrender Charge, Partial Withdrawal Charge and Premium Holiday Charge The table below shows the percentage of to be applied for charges. • For full surrender and partial withdrawal, the percentage is applie"
+              }
+            ]
+          },
           {
             "id": "partial-withdrawal-charge",
             "label": "Partial Withdrawal Charge",
@@ -10578,16 +11362,14 @@
           0.04
         ],
         "warnings": [
-          "AstraLink (VA2) is modeled as a partial subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the policy-fee schedule, top-up routing, the Appendix 2 partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode.",
-          "Investment bonus and loyalty bonus remain informational only because the published tables depend on dimensions or term rows that are not fully representable without guesswork in the current template schema.",
-          "Insurance cover charge, No Lapse Guarantee, and premium-holiday free-window gating remain informational only in V1."
+          "AstraLink (VA2) is modeled as a supported subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the term-specific annual loyalty bonus schedule from the 10th policy anniversary onward, the policy-fee schedule, the monthly insurance cover charge after insured-life and current-basic-benefit inputs are supplied, the Appendix 2 premium-holiday / partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode.",
+          "Investment bonus remains informational only because the published tables depend on sum-assured-multiple, annual-premium, and rider dimensions that are not expressible without overstating support in the current template surface.",
+          "No Lapse Guarantee debt carry, premium-holiday start gating, and protection-side payout handling remain informational only in V1."
         ],
         "unsupportedItems": [
           "Investment bonus tables depend on annual premium bands and sum assured multiple, including a separate rider table, and remain informational only.",
-          "Loyalty bonus remains informational only because the extracted 25-year row is not machine-readable enough to model without guesswork.",
-          "Insurance cover charge depends on age, sex, smoker status, and sum at risk and remains informational only.",
           "No Lapse Guarantee amount-owed carry and reinstatement behavior remain informational only.",
-          "Premium holiday free-window gating and the pre-2nd-anniversary lapse path remain informational only.",
+          "Premium holiday start gating and the pre-2nd-anniversary lapse path remain informational only.",
           "Minimum withdrawal amount, minimum post-withdrawal policy value, and top-up blocking during premium holiday remain informational only.",
           "Changing premium or sum assured, retirement option, and guaranteed insurability option remain informational only.",
           "All protection-benefit payout mechanics remain informational only."

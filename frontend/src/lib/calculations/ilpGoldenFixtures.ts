@@ -212,6 +212,13 @@ export type GoldenCoverageTag =
   | 'branch:income-vs3-partial-withdrawal-charge'
   | 'branch:income-vs3-surrender-charge'
   | 'branch:income-vs3-ad-hoc-top-up-routing'
+  | 'branch:astralink-va2-post-mip-regular-allocation'
+  | 'branch:astralink-va2-loyalty-bonus'
+  | 'branch:astralink-va2-policy-fee'
+  | 'branch:astralink-va2-insurance-cover-charge'
+  | 'branch:astralink-va2-premium-holiday-charge'
+  | 'branch:astralink-va2-partial-withdrawal-charge'
+  | 'branch:astralink-va2-surrender-charge'
   | 'branch:income-legacy-flex-solitaire-regular-premium-charge'
   | 'branch:income-legacy-flex-solitaire-policy-fee'
   | 'branch:income-legacy-flex-solitaire-insurance-cover-charge'
@@ -2730,6 +2737,138 @@ function incomeInvestFlexTriVantageStressPolicy(
       sex: 'female',
       smokerStatus: 'non-smoker',
       currentNetRegularPremiumBase: 64_800,
+    },
+  })
+}
+
+function incomeAstralinkVa2BasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-mip-10' | 'sgd-mip-15' | 'sgd-mip-20' | 'sgd-mip-25',
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const baseConfigByVariant = {
+    'sgd-mip-10': {
+      monthlyContribution: 700,
+      currentPolicyYear: 9,
+      monthsAlreadyPaid: 96,
+      currentSumAssured: 135_000,
+      currentAgeNextBirthday: 44,
+    },
+    'sgd-mip-15': {
+      monthlyContribution: 750,
+      currentPolicyYear: 10,
+      monthsAlreadyPaid: 108,
+      currentSumAssured: 150_000,
+      currentAgeNextBirthday: 45,
+    },
+    'sgd-mip-20': {
+      monthlyContribution: 800,
+      currentPolicyYear: 10,
+      monthsAlreadyPaid: 108,
+      currentSumAssured: 165_000,
+      currentAgeNextBirthday: 46,
+    },
+    'sgd-mip-25': {
+      monthlyContribution: 850,
+      currentPolicyYear: 12,
+      monthsAlreadyPaid: 132,
+      currentSumAssured: 180_000,
+      currentAgeNextBirthday: 47,
+    },
+  } as const
+
+  const config = baseConfigByVariant[variantId]
+  const base = seedPolicy(snapshot, 'income-astralink-va2', variantId, id, {
+    monthlyContribution: config.monthlyContribution,
+    currentPolicyYear: config.currentPolicyYear,
+    monthsAlreadyPaid: config.monthsAlreadyPaid,
+    assuranceProfile: {
+      currentAgeNextBirthday: config.currentAgeNextBirthday,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentSumAssured: config.currentSumAssured,
+    },
+  })
+
+  const term = Number(variantId.replace('sgd-mip-', ''))
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden AstraLink (VA2) (${variantId.toUpperCase()})`,
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 18_000 + (term * 1_500),
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function incomeAstralinkVa2BaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-mip-10' | 'sgd-mip-15' | 'sgd-mip-20' | 'sgd-mip-25',
+  id: string,
+): IlpPolicyInput {
+  return incomeAstralinkVa2BasePolicy(snapshot, variantId, id, INCOME_BALANCED_FUNDS, variantId === 'sgd-mip-10'
+    ? {
+        postMipYears: 5,
+      }
+    : {})
+}
+
+function incomeAstralinkVa2EventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return incomeAstralinkVa2BasePolicy(snapshot, 'sgd-mip-15', id, INCOME_BALANCED_FUNDS, {
+    name: 'Golden AstraLink (VA2) (SGD / MIP 15 Event Heavy)',
+    currentPolicyYear: 13,
+    monthsAlreadyPaid: 144,
+    monthlyContribution: 800,
+    assuranceProfile: {
+      currentAgeNextBirthday: 48,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentSumAssured: 165_000,
+    },
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 145,
+        durationMonths: 15,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 158,
+        durationMonths: 1,
+        amount: 3_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function incomeAstralinkVa2StressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return incomeAstralinkVa2BasePolicy(snapshot, 'sgd-mip-20', id, INCOME_STRESS_FUNDS, {
+    name: 'Golden AstraLink (VA2) (SGD / MIP 20 OCF Stress)',
+    currentPolicyYear: 11,
+    monthsAlreadyPaid: 120,
+    monthlyContribution: 820,
+    assuranceProfile: {
+      currentAgeNextBirthday: 44,
+      sex: 'female',
+      smokerStatus: 'non-smoker',
+      currentSumAssured: 170_000,
     },
   })
 }
@@ -11957,6 +12096,100 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Invest Flex TriVantage alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'income-astralink-va2',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:astralink-va2-post-mip-regular-allocation',
+      'branch:astralink-va2-loyalty-bonus',
+    ],
+    description: 'AstraLink (VA2) baseline scenario for the SGD / MIP 10 corridor after the end of the MIP.',
+    integrityChecks: [
+      {
+        description: 'credits a positive loyalty bonus once the 10th anniversary has been reached',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.accounts.some((account) => (account.bonusCredit ?? 0) > 0)
+        )),
+      },
+    ],
+  },
+  {
+    productId: 'income-astralink-va2',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:protected-base-assurance',
+      'branch:astralink-va2-policy-fee',
+      'branch:astralink-va2-insurance-cover-charge',
+    ],
+    description: 'AstraLink (VA2) baseline scenario for the SGD / MIP 15 corridor with active insurance-cover charges.',
+  },
+  {
+    productId: 'income-astralink-va2',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:astralink-va2-surrender-charge',
+      'kernel:distribution-mode-assumption',
+    ],
+    description: 'AstraLink (VA2) baseline scenario for the SGD / MIP 20 corridor with reinvest-only distribution support.',
+  },
+  {
+    productId: 'income-astralink-va2',
+    variantId: 'sgd-mip-25',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:astralink-va2-partial-withdrawal-charge',
+    ],
+    description: 'AstraLink (VA2) baseline scenario for the SGD / MIP 25 corridor.',
+  },
+  {
+    productId: 'income-astralink-va2',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:astralink-va2-premium-holiday-charge',
+      'branch:astralink-va2-partial-withdrawal-charge',
+    ],
+    description: 'AstraLink (VA2) event-heavy scenario covering a long premium holiday and a charged partial withdrawal during the MIP.',
+    integrityChecks: [
+      {
+        description: 'seeded partial withdrawal is present in the projection output',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+      {
+        description: 'premium holiday adds extra charges beyond the same policy without the holiday event',
+        test: (fixture, artifact) => {
+          const withoutHoliday = ilpPolicySchema.parse({
+            ...fixture.policy,
+            policyEvents: (fixture.policy.policyEvents ?? []).filter((event) => event.type !== 'premium-holiday'),
+          })
+          const withHolidayFees = artifact.expected.projections.mid.rows.at(-1)?.cumulativeGrossFees ?? 0
+          const withoutHolidayFees = analyzeIlpPolicy(withoutHoliday).projections.mid.rows.at(-1)?.cumulativeGrossFees ?? 0
+          return withHolidayFees > withoutHolidayFees
+        },
+      },
+    ],
+  },
+  {
+    productId: 'income-astralink-va2',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'AstraLink (VA2) alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'income-legacy-flex-solitaire',
     variantId: 'sgd-regular-mip-5',
     scenarioId: 'baseline',
@@ -15384,6 +15617,19 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'income-invest-flex-trivantage' && definition.scenarioId === 'ocf-stress') {
     return incomeInvestFlexTriVantageStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'income-astralink-va2' && definition.scenarioId === 'baseline') {
+    return incomeAstralinkVa2BaselinePolicy(
+      snapshot,
+      definition.variantId as 'sgd-mip-10' | 'sgd-mip-15' | 'sgd-mip-20' | 'sgd-mip-25',
+      id,
+    )
+  }
+  if (definition.productId === 'income-astralink-va2' && definition.scenarioId === 'event-heavy') {
+    return incomeAstralinkVa2EventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'income-astralink-va2' && definition.scenarioId === 'ocf-stress') {
+    return incomeAstralinkVa2StressPolicy(snapshot, id)
   }
   if (definition.productId === 'income-legacy-flex-solitaire' && definition.scenarioId === 'baseline') {
     return incomeLegacyFlexSolitaireBaselinePolicy(snapshot, definition.variantId as 'sgd-regular-mip-5' | 'sgd-regular-mip-10', id)
