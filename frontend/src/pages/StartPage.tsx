@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useUIStore } from '@/stores/useUIStore'
 import { HOUSEHOLD_PLAN_STORAGE_KEY, useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
-import { Target, TrendingUp, CheckCircle, ArrowRight, Info, RotateCcw, Calculator, Play } from 'lucide-react'
+import { Target, TrendingUp, CheckCircle, ArrowRight, Info, Play } from 'lucide-react'
 import type { HouseholdPlanType } from '@/lib/household/types'
 import { PlanTypeSelector } from '@/components/household/PlanTypeSelector'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
@@ -23,7 +23,6 @@ import { trackEvent } from '@/lib/analytics'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { LandingEmailSection } from '@/components/email/LandingEmailSection'
 import { QuickEstimateForm } from '@/components/shared/QuickEstimateForm'
-import { clearFireplannerData } from '@/components/shared/DemoBadge'
 import { loadDemoData } from '@/lib/demo'
 
 type ActivePathway = 'goal-first' | 'story-first' | 'already-fire' | null
@@ -91,96 +90,10 @@ export function StartPage() {
     }
   })
 
-  // Returning users who completed setup go straight to their projection
-  useEffect(() => {
-    if (setupCompleted && isReturningUser) {
-      navigate('/projection', { replace: true })
-    }
-  }, [setupCompleted, isReturningUser, navigate])
-
   const handlePathwayClick = (pathway: NonNullable<ActivePathway>) => {
     setUIField('sectionOrder', pathway)
     trackEvent('onboarding_pathway_selected', { pathway })
     navigate(`/setup?planType=${selectedPlanType}`)
-  }
-
-  const handleRedoSetup = () => {
-    navigate(`/setup?planType=${selectedPlanType}&redo=true`)
-  }
-
-  // Returning user who has completed setup: show continue/redo options
-  if (setupCompleted && isReturningUser) {
-    return (
-      <div className="space-y-8">
-        <div className="py-8">
-          <h1 className="text-3xl font-bold">Singapore FIRE Planner</h1>
-          <p className="text-muted-foreground mt-2 text-base">
-            Welcome back. Your plan is ready.
-          </p>
-        </div>
-
-        <div className="flex flex-col items-center gap-4">
-          <Button size="lg" asChild>
-            <Link to="/dashboard">
-              Continue to Dashboard
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleRedoSetup}>
-            <RotateCcw className="mr-2 h-3 w-3" />
-            Redo setup
-          </Button>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/inputs">Edit inputs</Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/projection">View projection</Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/retirement-calculator">
-                <Calculator className="mr-1 h-3 w-3" />
-                Quick estimate
-              </Link>
-            </Button>
-          </div>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                Start fresh (reset all data)
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Reset all data?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete your current plan and all saved inputs.
-                  Saved scenarios will be preserved. This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={() => {
-                    clearFireplannerData()
-                    window.location.href = '/'
-                  }}
-                >
-                  Delete everything and start fresh
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-
-        <LandingEmailSection />
-      </div>
-    )
   }
 
   return (
