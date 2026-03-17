@@ -23,15 +23,27 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('premium-holiday-delayed-or-partial-repayment')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-accelerate-dividend-payout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-accelerate-dividend-payout-threshold')
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['iua', 'aua'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 30,
+      minimumAnnualPayoutCurrency: 'SGD',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
     })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('S$30 minimum annual payout threshold'))).toBe(true)
+
+    const usdVariant = product?.variants.find((entry) => entry.id === 'usd-mip-30')
+    expect(usdVariant).toBeDefined()
+    const usdSeed = templateVariantToPolicySeed(product!, usdVariant!, manifest)
+    expect(usdSeed.distributionSupport?.minimumAnnualPayoutCurrency).toBe('SGD')
+    expect(usdSeed.catalogWarnings?.some((warning) => warning.includes('cash-payout amount of S$30'))).toBe(true)
+    expect(usdSeed.catalogWarnings?.some((warning) => warning.includes('remains informational for this policy currency'))).toBe(true)
+    expect(usdSeed.catalogWarnings?.some((warning) => warning.includes('US$30'))).toBe(false)
+
     expect(seed.accounts.find((account) => account.id === 'iua')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
     ])

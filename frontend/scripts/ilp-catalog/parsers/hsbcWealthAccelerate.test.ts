@@ -24,7 +24,7 @@ describe('parseHsbcWealthAccelerate', () => {
     expect(product.id).toBe('hsbc-life-wealth-accelerate')
     expect(product.supportStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain('hsbc-accelerate-dividend-payout-threshold')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-accelerate-dividend-payout-threshold')
 
     const sgdVariant = product.variants.find((entry) => entry.id === 'sgd-mip-25')
     expect(sgdVariant?.feeRules).toEqual([
@@ -41,12 +41,15 @@ describe('parseHsbcWealthAccelerate', () => {
       mode: 'manual-assumption',
       accountIds: ['iua', 'aua'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 30,
+      minimumAnnualPayoutCurrency: 'SGD',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: expect.arrayContaining([
         expect.stringContaining('Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash'),
         expect.stringContaining('Cash payout applies to both the Initial Units Account and the Accumulation Units Account'),
+        expect.stringContaining('published S$30 minimum annual threshold remain reinvested'),
       ]),
       sourceRefs: [
         expect.objectContaining({
@@ -55,8 +58,25 @@ describe('parseHsbcWealthAccelerate', () => {
         }),
       ],
     })
+    const usdVariant = product.variants.find((entry) => entry.id === 'usd-mip-30')
+    expect(usdVariant?.distributionSupport).toMatchObject({
+      mode: 'manual-assumption',
+      accountIds: ['iua', 'aua'],
+      defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 30,
+      minimumAnnualPayoutCurrency: 'SGD',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(usdVariant?.distributionSupport?.notes).toEqual(expect.arrayContaining([
+      expect.stringContaining('published S$30 minimum annual threshold remain reinvested'),
+    ]))
     expect(sgdVariant?.warnings).toContain(
       'This template captures generic product mechanics plus reinvest-default distribution support. Personal policy fields still need user input.',
+    )
+    expect(product.warnings).toContain(
+      'Wealth Accelerate keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published S$30 minimum annual payout threshold.',
     )
   }, 30_000)
 })
