@@ -568,27 +568,23 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false, onHa
       {/* CTA to full planner */}
       {hasInput && (
         <Card className="border-primary/30 bg-primary/5">
-          <CardContent className="py-6">
-            <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
-              <div className="flex-1 space-y-1">
-                <p className="font-semibold">Want CPF, property, and SG-specific calculations?</p>
-                <p className="text-sm text-muted-foreground">
-                  The full planner adds CPF projections, property analysis, Monte Carlo simulation,
-                  12 withdrawal strategies, and more.
-                </p>
-              </div>
-              <div className="flex flex-col items-center gap-3 sm:items-end">
-                {householdPlannerEnabled && (
-                  <PlanTypeSelector value={selectedPlanType} onChange={setSelectedPlanType} />
-                )}
-                <Button asChild>
-                  <Link to={setupUrl + (selectedPlanType !== 'individual' ? `&planType=${selectedPlanType}` : '')}>
-                    Get a personalized plan
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
+          <CardContent className="py-6 space-y-4">
+            <div className="space-y-1">
+              <p className="font-semibold">Want CPF, property, and SG-specific calculations?</p>
+              <p className="text-sm text-muted-foreground">
+                The full planner adds CPF projections, property analysis, Monte Carlo simulation,
+                12 withdrawal strategies, and more.
+              </p>
             </div>
+            {householdPlannerEnabled && (
+              <PlanTypeSelector value={selectedPlanType} onChange={setSelectedPlanType} />
+            )}
+            <Button asChild className="w-full sm:w-auto">
+              <Link to={setupUrl + (selectedPlanType !== 'individual' ? `&planType=${selectedPlanType}` : '')}>
+                Get a personalized plan
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       )}
