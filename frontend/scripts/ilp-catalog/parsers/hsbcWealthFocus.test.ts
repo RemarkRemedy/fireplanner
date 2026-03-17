@@ -85,7 +85,9 @@ describe('parseHsbcWealthFocus', () => {
       expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-free-partial-withdrawal-benefit')
       expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-regular-withdrawal-facility')
       expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-death-and-ti-benefits')
-      expect(product.metadataOnlyBehaviors).toContain('wealth-focus-benefit-payout-handling')
+      expect(product.metadataOnlyBehaviors).toContain('wealth-focus-accidental-death-and-ti-claim-adjustments')
+      expect(product.metadataOnlyBehaviors).toContain('wealth-focus-claim-side-benefit-settlement')
+      expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-benefit-payout-handling')
       expect(product.variants).toHaveLength(2)
       expect(product.warnings.some((warning) => warning.includes('current-state death-benefit estimate'))).toBe(true)
 

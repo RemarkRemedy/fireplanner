@@ -350,6 +350,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('wealth-focus-free-partial-withdrawal-benefit')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('wealth-focus-regular-withdrawal-facility')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('wealth-focus-death-and-ti-benefits')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-accidental-death-and-ti-claim-adjustments')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-claim-side-benefit-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('wealth-focus-benefit-payout-handling')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('reinvest by default'))).toBe(true)
     expect(seed.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
