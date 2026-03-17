@@ -449,10 +449,10 @@ function buildVariant(
     unsupportedItems: [
       ...(isAdvancedDeath
         ? [
-            'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, eligible rider fallback, involuntary unemployment waiver, credit-card charge, life-replacement administration, regular withdrawal behavior, and minimum-account-value enforcement remain metadata-only for this product.',
+            'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, eligible rider fallback, involuntary unemployment waiver, credit-card charge, multiple-life last-life settlement, change-of-life-assured and life-replacement administration, regular withdrawal behavior, and minimum-account-value enforcement remain metadata-only for this product.',
           ]
         : [
-            'Advanced Death Benefit selection, eligible rider handling, involuntary unemployment waiver, credit-card charge, life-replacement administration, regular withdrawal behavior, and minimum-account-value enforcement remain metadata-only for this product.',
+            'Advanced Death Benefit selection, eligible rider handling, involuntary unemployment waiver, credit-card charge, multiple-life last-life settlement, change-of-life-assured and life-replacement administration, regular withdrawal behavior, and minimum-account-value enforcement remain metadata-only for this product.',
           ]),
     ],
     sourceRefs: [
@@ -508,7 +508,8 @@ export function parseTokioMarineWealthFlexiLink312(context: ParseContext): IlpCa
       'tokio-wealth-flexi-link-3-12-advanced-death-benefit-and-eligible-rider-handling',
       'tokio-wealth-flexi-link-3-12-regular-withdrawal-and-minimum-account-value-constraints',
       'tokio-wealth-flexi-link-3-12-credit-card-charge',
-      'tokio-wealth-flexi-link-3-12-life-replacement-option',
+      'tokio-wealth-flexi-link-3-12-multiple-life-last-life-settlement',
+      'tokio-wealth-flexi-link-3-12-change-of-life-assured-and-life-replacement-administration',
     ],
     warnings: [
       'Structured extraction validated against the Wealth Flexi-Link 3.12 product summary text layer.',

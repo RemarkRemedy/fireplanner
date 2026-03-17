@@ -5047,8 +5047,15 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
       'tokio-wealth-flexi-link-3-12-regular-withdrawal-and-minimum-account-value-constraints',
     )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-flexi-link-3-12-multiple-life-last-life-settlement',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-flexi-link-3-12-change-of-life-assured-and-life-replacement-administration',
+    )
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-3-12-benefit-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-3-12-life-benefit-rider')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-3-12-life-replacement-option')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-3-12-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.accounts.find((account) => account.id === 'accumulation')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
@@ -5203,6 +5210,15 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-builder-atfuture-multiple-life-last-life-settlement',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-builder-atfuture-change-of-life-assured-and-life-replacement-administration',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
+      'tokio-wealth-builder-atfuture-life-replacement-option',
+    )
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
       'tokio-wealth-builder-atfuture-dividend-payout-threshold-and-record-date-instructions',
     )

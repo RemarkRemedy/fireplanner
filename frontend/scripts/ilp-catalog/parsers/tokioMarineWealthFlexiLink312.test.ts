@@ -38,8 +38,15 @@ describe('parseTokioMarineWealthFlexiLink312', () => {
     expect(product.metadataOnlyBehaviors).toContain(
       'tokio-wealth-flexi-link-3-12-regular-withdrawal-and-minimum-account-value-constraints',
     )
+    expect(product.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-flexi-link-3-12-multiple-life-last-life-settlement',
+    )
+    expect(product.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-flexi-link-3-12-change-of-life-assured-and-life-replacement-administration',
+    )
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-3-12-benefit-payout-handling')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-3-12-life-benefit-rider')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-3-12-life-replacement-option')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-3-12-dividend-payout-threshold-and-record-date-instructions')
     expect(product.warnings).toContain(
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface: only Top-up Units Account dividends may be paid in cash during the first three policy years, Accumulation Units Account dividends join after policy year 3, and the published SGD 50 minimum payout threshold plus 30-day record-date lead time are applied.',
@@ -157,7 +164,7 @@ describe('parseTokioMarineWealthFlexiLink312', () => {
       'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, eligible rider fallback, involuntary unemployment waiver, credit-card charge, life-replacement administration, regular withdrawal behavior, and minimum-account-value enforcement remain metadata-only for this product.',
+      'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, eligible rider fallback, involuntary unemployment waiver, credit-card charge, multiple-life last-life settlement, change-of-life-assured and life-replacement administration, regular withdrawal behavior, and minimum-account-value enforcement remain metadata-only for this product.',
     )
     expect(advancedVariant?.sourceRefs.some((ref) => ref.page === 16)).toBe(true)
     expect(basicVariant?.sourceRefs.some((ref) => ref.page === 16)).toBe(false)

@@ -396,10 +396,10 @@ function buildVariant(
     unsupportedItems: [
       ...(isAdvancedDeath
         ? [
-            'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider, credit-card charge, life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
+            'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider, credit-card charge, multiple-life last-life settlement, change-of-life-assured and life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
           ]
         : [
-            'Advanced Death Benefit selection, Life Benefit Rider, monthly protection charge, credit-card charge, life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
+            'Advanced Death Benefit selection, Life Benefit Rider, monthly protection charge, credit-card charge, multiple-life last-life settlement, change-of-life-assured and life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
           ]),
     ],
     sourceRefs: [page1, page2, page3, page4, page5, page6, page7, page8, page9, page10, ...(page14 ? [page14] : []), page15],
@@ -439,7 +439,8 @@ export function parseTokioMarineWealthBuilderAtFuture(context: ParseContext): Il
     metadataOnlyBehaviors: [
       'tokio-wealth-builder-atfuture-advanced-death-benefit-and-life-benefit-rider',
       'tokio-wealth-builder-atfuture-credit-card-charge',
-      'tokio-wealth-builder-atfuture-life-replacement-option',
+      'tokio-wealth-builder-atfuture-multiple-life-last-life-settlement',
+      'tokio-wealth-builder-atfuture-change-of-life-assured-and-life-replacement-administration',
     ],
     warnings: [
       'Structured extraction validated against the Wealth Builder@Future product summary text layer.',
