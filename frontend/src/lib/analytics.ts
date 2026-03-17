@@ -70,6 +70,9 @@ type AnalyticsEvent =
   | 'goal_edited'
   | 'goal_deleted'
   | 'health_check_ratio_expanded'
+  | 'quick_estimate_computed'
+  | 'quick_health_score_viewed'
+  | 'demo_loaded'
 
 export function trackEvent(event: AnalyticsEvent, data?: Record<string, string | number | boolean>) {
   if (isCompanionMode()) return

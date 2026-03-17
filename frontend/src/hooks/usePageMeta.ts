@@ -31,6 +31,7 @@ const PAGE_NAMES: Record<string, string> = {
   '/privacy': 'Privacy Policy',
   '/retirement-planner': 'Retirement Planner',
   '/retirement-calculator': 'Retirement Calculator',
+  '/quick-estimate': 'Quick Estimate',
 }
 
 export function usePageMeta({ title, description, path = '/' }: PageMeta) {
