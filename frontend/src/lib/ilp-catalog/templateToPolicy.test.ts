@@ -6525,6 +6525,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manuinvest-duo-partial-withdrawal-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manuinvest-duo-full-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manuinvest-duo-premium-flexibility-benefit')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manuinvest-duo-dividend-payout-threshold')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(10)
     expect(seed.accounts).toEqual([
@@ -6563,6 +6564,7 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 40,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -6573,6 +6575,7 @@ describe('templateVariantToPolicySeed', () => {
     })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current sum insured'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('$40 minimum annual payout threshold'))).toBe(true)
   })
 
   it('maps AIA Pro Achiever 3.0 into a supported seed with premium-year charge schedules', () => {

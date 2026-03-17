@@ -36,6 +36,7 @@ describe('parseManulifeManuinvestDuo', () => {
     expect(product.metadataOnlyBehaviors).toContain('manuinvest-duo-premium-shortfall-charge')
     expect(product.metadataOnlyBehaviors).toContain('manuinvest-duo-premium-flexibility-benefit')
     expect(product.metadataOnlyBehaviors).toContain('manuinvest-duo-benefit-payout-handling')
+    expect(product.metadataOnlyBehaviors).not.toContain('manuinvest-duo-dividend-payout-threshold')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-mip-10', 'sgd-mip-15', 'sgd-mip-20'])
 
     const variant = product.variants[0]
@@ -56,10 +57,14 @@ describe('parseManulifeManuinvestDuo', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 40,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
-      notes: expect.any(Array),
+      notes: expect.arrayContaining([
+        expect.stringContaining('product summary minimum payout amount'),
+        expect.stringContaining('published $40 minimum annual threshold remain reinvested'),
+      ]),
       sourceRefs: expect.any(Array),
     })
     expect(variant?.feeRules).toEqual([
@@ -100,6 +105,9 @@ describe('parseManulifeManuinvestDuo', () => {
     ])
     expect(variant?.eecTable).toEqual([1, 1, 0.8, 0.63, 0.55, 0.47, 0.4, 0.3, 0.2, 0.08])
     expect(variant?.warnings).toContain('Premium shortfall charging remains metadata-only because Premium Flexibility Benefit waives the published shortfall charge up to a cumulative missed-premium limit that the current event kernel does not yet track.')
+    expect(product.warnings).toContain(
+      'ManuInvest Duo is cataloged as a supported V1 corridor. The parser captures the published 5.00% / 1.00% administration-charge path, the protected-base death / TI / TPD cost-of-insurance formula after you enter insured-life details and current sum insured, the prevailing 0% top-up charge, the MIP withdrawal / surrender charge schedules, and the reinvest-default distribution-mode assumption surface with the published $40 minimum annual payout threshold, while bonus mechanics, premium-flexibility shortfall behavior, withdrawal-flexibility fee handling, benefit payouts, and fund-level charges remain informational only.',
+    )
 
     const twentyYearVariant = product.variants.find((entry) => entry.id === 'sgd-mip-20')
     expect(twentyYearVariant?.eecTable).toEqual([1, 1, 0.9, 0.81, 0.71, 0.65, 0.59, 0.53, 0.48, 0.43, 0.38, 0.34, 0.3, 0.26, 0.22, 0.18, 0.14, 0.1, 0.09, 0.08])
