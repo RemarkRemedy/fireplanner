@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -90,6 +90,13 @@ export function StartPage() {
       return false
     }
   })
+
+  // Returning users who completed setup go straight to their projection
+  useEffect(() => {
+    if (setupCompleted && isReturningUser) {
+      navigate('/projection', { replace: true })
+    }
+  }, [setupCompleted, isReturningUser, navigate])
 
   const handlePathwayClick = (pathway: NonNullable<ActivePathway>) => {
     setUIField('sectionOrder', pathway)
