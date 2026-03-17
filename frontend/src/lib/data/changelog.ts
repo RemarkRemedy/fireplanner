@@ -12,6 +12,67 @@ export interface ChangelogEntry {
 /** Newest first. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-03-17',
+    category: 'feature',
+    title: 'Guided Setup Flow',
+    description:
+      'New step-by-step setup wizard walks you through personal details, income, expenses, CPF, property, protection, and FIRE settings. Replaces the previous wall-of-fields approach. You can redo setup anytime from Plan Setup.',
+    insight:
+      'The wizard validates each step and pre-populates fields from your existing plan when redoing setup. Progress is tracked so you can resume where you left off.',
+  },
+  {
+    date: '2026-03-17',
+    category: 'feature',
+    title: 'Nudge-Based Refinement',
+    description:
+      'The Projection page sidebar suggests which areas to refine next. Each refinement opens as a drawer overlay, and a delta card shows exactly what changed: FIRE age, FIRE number, and a "Why" explanation of which inputs drove the change.',
+    affectedSections: ['section-projection'],
+    insight:
+      'Delta explanations track 6 key drivers (income, expenses, savings rate, debt payments, net worth, withdrawal rate) and highlight which ones moved. Expandable detail view shows before/after values.',
+  },
+  {
+    date: '2026-03-17',
+    category: 'feature',
+    title: 'Financial Health Check',
+    description:
+      '9 financial health ratios organized into 4 MoneySense areas: Emergency Preparedness, Cash Flow Management, Debt Management, and Wealth Building. Traffic-light status with benchmarks from MoneySense and DBS. Insurance needs analysis with formula tooltips. New Investment Fee Drag metric.',
+    insight:
+      'Ratios include Emergency Fund, Savings Rate, TDSR, Non-Mortgage DSR, Debt-to-Asset, Liquidity, Investment-to-NW, Solvency, and Fee Drag. Each has clickable source citations.',
+  },
+  {
+    date: '2026-03-17',
+    category: 'feature',
+    title: 'Debt Payment Engine Wiring',
+    description:
+      'Non-mortgage debt payments are now deducted from projection cash flow. Set a debt payoff age and the deduction stops there. Works for both single and joint plans with per-person payoff ages.',
+    affectedSections: ['section-projection', 'section-protection'],
+    insight:
+      'Debt follows the same per-entity-first pattern as insurance premiums: each adult\'s debt is computed independently, then merged into the combined projection.',
+  },
+  {
+    date: '2026-03-17',
+    category: 'feature',
+    title: 'Property Flow Improvements',
+    description:
+      'HDB, Executive Condo (EC), and Private Condo are now separate options. HDB and EC automatically get 99-year leases. Mortgage end-year calculator estimates payoff date from balance, payment, and interest rate.',
+    affectedSections: ['section-property'],
+  },
+  {
+    date: '2026-03-17',
+    category: 'feature',
+    title: 'CPF Investment Strategy in Nudge Flow',
+    description:
+      'CPFIS return rates and the "Count CPF as bond allocation" toggle are now accessible from the CPF refinement flow, no longer hidden behind Advanced mode.',
+    affectedSections: ['section-cpf'],
+  },
+  {
+    date: '2026-03-17',
+    category: 'fix',
+    title: 'Healthcare and Protection visibility fix',
+    description:
+      'Existing users who couldn\'t see Health Check or Protection sections due to a missing migration have been fixed. Both sections are now enabled by default.',
+  },
+  {
     date: '2026-03-15',
     category: 'feature',
     title: 'Net FIRE number formula',
