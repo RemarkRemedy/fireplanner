@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { GuaranteedIncomeEditor } from '@/components/inputs/GuaranteedIncomeEditor'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -513,7 +514,12 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
   const visibleAdultOwnerOptions: AdultOwner[] = ADULT_OWNER_OPTIONS.filter((owner) => adults.some((adult) => adult.owner === owner))
 
   const selectedAdultStreams = useMemo(
-    () => plan.income.filter((entry) => entry.kind === 'income-stream' && entry.timing.owner === selectedAdult?.owner),
+    () => plan.income.filter((entry) => entry.kind === 'income-stream' && !entry.guaranteed && entry.timing.owner === selectedAdult?.owner),
+    [plan.income, selectedAdult?.owner],
+  )
+
+  const selectedAdultGuaranteedStreams = useMemo(
+    () => plan.income.filter((entry) => entry.guaranteed && entry.timing.owner === selectedAdult?.owner),
     [plan.income, selectedAdult?.owner],
   )
 
@@ -1083,6 +1089,16 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
           )}
         </CardContent>
       </Card>
+
+      <GuaranteedIncomeEditor
+        streams={selectedAdultGuaranteedStreams}
+        selectedAdult={selectedAdult}
+        adults={adults}
+        visibleOwnerOptions={visibleIncomeOwnerOptions}
+        onAdd={addIncome}
+        onUpdate={updateIncome}
+        onRemove={removeIncome}
+      />
 
       {isMultiAdult && (
         <div className="space-y-1">

@@ -164,9 +164,9 @@ describe('computeHealthRatios', () => {
     expect(result.greenCount).toBe(8)
     expect(result.overallStatus).toBe('green')
   })
-  it('greenCount + amberCount + redCount + nullCount === 8', () => {
+  it('greenCount + amberCount + redCount + nullCount === total ratios', () => {
     const result = computeHealthRatios(midCareerWithMortgage)
-    expect(result.greenCount + result.amberCount + result.redCount + result.nullCount).toBe(8)
+    expect(result.greenCount + result.amberCount + result.redCount + result.nullCount).toBe(result.ratios.length)
   })
   it('no NaN or undefined in any ratio value', () => {
     for (const fixture of [freshGraduate, midCareerWithMortgage, overLeveraged, fireAchieved]) {
@@ -184,5 +184,37 @@ describe('computeHealthRatios', () => {
     const tdsr = result.ratios.find((r) => r.id === 'tdsr')!
     expect(tdsr.status).toBe('green')
     expect(tdsr.message).toMatch(/no debt/i)
+  })
+
+  describe('emergency fund target override', () => {
+    it('uses default 6-month threshold when no override', () => {
+      // freshGraduate has 5000 / 2500 = 2.0 months → red (below 3)
+      const result = computeHealthRatios(freshGraduate)
+      const ef = result.ratios.find((r) => r.id === 'emergency-fund')!
+      expect(ef.status).toBe('red')
+    })
+
+    it('overrides greenBound to custom target', () => {
+      // With target=2, greenBound=2, amberBound=1. 2.0 months → green
+      const result = computeHealthRatios(freshGraduate, { emergencyFundTarget: 2 })
+      const ef = result.ratios.find((r) => r.id === 'emergency-fund')!
+      expect(ef.status).toBe('green')
+      expect(ef.meta.thresholds.greenBound).toBe(2)
+      expect(ef.meta.thresholds.amberBound).toBe(1)
+    })
+
+    it('classifies amber correctly with custom target', () => {
+      // With target=4, greenBound=4, amberBound=2. 2.0 months → amber
+      const result = computeHealthRatios(freshGraduate, { emergencyFundTarget: 4 })
+      const ef = result.ratios.find((r) => r.id === 'emergency-fund')!
+      expect(ef.status).toBe('amber')
+    })
+
+    it('classifies red correctly with stricter custom target', () => {
+      // With target=12, greenBound=12, amberBound=6. 2.0 months → red
+      const result = computeHealthRatios(freshGraduate, { emergencyFundTarget: 12 })
+      const ef = result.ratios.find((r) => r.id === 'emergency-fund')!
+      expect(ef.status).toBe('red')
+    })
   })
 })

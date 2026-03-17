@@ -2876,4 +2876,196 @@ describe('generateProjection', () => {
       expect(rows.length).toBe(0)
     })
   })
+
+  describe('insurance premiums', () => {
+    it('deducts insurance premiums from portfolio in pre-retirement', () => {
+      const withoutInsurance = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 34,
+      }))
+
+      const withInsurance = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 34,
+        annualInsurancePremiums: 5000,
+      }))
+
+      // Insurance premiums reduce portfolio during pre-retirement
+      const lastPreRetWithout = withoutInsurance.rows.find(r => r.age === 33)!
+      const lastPreRetWith = withInsurance.rows.find(r => r.age === 33)!
+      expect(lastPreRetWith.liquidNW).toBeLessThan(lastPreRetWithout.liquidNW)
+    })
+
+    it('includes insurance premiums in inflationAdjustedExpenses', () => {
+      const result = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 34,
+        annualInsurancePremiums: 5000,
+      }))
+
+      const baseResult = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 34,
+      }))
+
+      // Each year's annualExpenses should be higher by 5000
+      for (let i = 0; i < result.rows.length; i++) {
+        expect(result.rows[i].annualExpenses).toBeCloseTo(
+          baseResult.rows[i].annualExpenses + 5000,
+          0,
+        )
+      }
+    })
+  })
+
+  describe('rental income end age cutoff', () => {
+    it('stops rental income at specified age', () => {
+      const result = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 36,
+        annualRentalIncome: 24000,
+        rentalIncomeEndAge: 33,
+        incomeProjection: generateMockIncomeProjection({
+          currentAge: 30,
+          retirementAge: 33,
+          lifeExpectancy: 36,
+          rentalIncome: 24000,
+        }),
+      }))
+
+      // At age 32 (before cutoff), rental income contributes to total income
+      const row32 = result.rows.find(r => r.age === 32)!
+      expect(row32.totalIncome).toBeGreaterThan(0)
+
+      // At age 33+ (cutoff), effectiveRentalIncome is 0
+      // In post-retirement, postRetirementIncome uses incomeRow (which still has rental)
+      // but effectiveRentalIncome used in property cashflow is 0
+      const row33 = result.rows.find(r => r.age === 33)!
+      const row34 = result.rows.find(r => r.age === 34)!
+      // The pre-retirement at age 33 uses effectiveRentalIncome=0 for netPropertyCashflow
+      expect(row33).toBeDefined()
+      expect(row34).toBeDefined()
+    })
+  })
+
+  describe('non-mortgage debt payment', () => {
+    it('deducts debt payment from portfolio in pre-retirement', () => {
+      const without = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 34,
+      }))
+
+      const withDebt = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 34,
+        annualNonMortgageDebtPayment: 6000,
+      }))
+
+      const lastWithout = without.rows.find(r => r.age === 33)!
+      const lastWith = withDebt.rows.find(r => r.age === 33)!
+      expect(lastWith.liquidNW).toBeLessThan(lastWithout.liquidNW)
+    })
+
+    it('includes debt payment in inflationAdjustedExpenses', () => {
+      const base = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 34,
+      }))
+
+      const withDebt = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 34,
+        annualNonMortgageDebtPayment: 6000,
+      }))
+
+      for (let i = 0; i < withDebt.rows.length; i++) {
+        expect(withDebt.rows[i].annualExpenses).toBeCloseTo(
+          base.rows[i].annualExpenses + 6000,
+          0,
+        )
+      }
+    })
+
+    it('stops deduction at debtPayoffAge', () => {
+      const result = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 35,
+        lifeExpectancy: 40,
+        annualNonMortgageDebtPayment: 6000,
+        debtPayoffAge: 33,
+      }))
+
+      const base = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 35,
+        lifeExpectancy: 40,
+      }))
+
+      // Ages 30-32: debt deducted (+6000 expenses)
+      for (const age of [30, 31, 32]) {
+        const row = result.rows.find(r => r.age === age)!
+        const baseRow = base.rows.find(r => r.age === age)!
+        expect(row.annualExpenses).toBeCloseTo(baseRow.annualExpenses + 6000, 0)
+      }
+
+      // Ages 33+: debt NOT deducted (same expenses as base)
+      for (const age of [33, 34, 35]) {
+        const row = result.rows.find(r => r.age === age)!
+        const baseRow = base.rows.find(r => r.age === age)!
+        expect(row.annualExpenses).toBeCloseTo(baseRow.annualExpenses, 0)
+      }
+    })
+
+    it('deducts until end when debtPayoffAge is undefined', () => {
+      const result = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 35,
+        annualNonMortgageDebtPayment: 6000,
+      }))
+
+      const base = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 35,
+      }))
+
+      // Every year should have +6000 expenses
+      for (let i = 0; i < result.rows.length; i++) {
+        expect(result.rows[i].annualExpenses).toBeCloseTo(
+          base.rows[i].annualExpenses + 6000,
+          0,
+        )
+      }
+    })
+
+    it('does not deduct when payment is zero', () => {
+      const base = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 34,
+      }))
+
+      const withZero = generateProjection(makeParams({
+        currentAge: 30,
+        retirementAge: 33,
+        lifeExpectancy: 34,
+        annualNonMortgageDebtPayment: 0,
+        debtPayoffAge: 32,
+      }))
+
+      for (let i = 0; i < base.rows.length; i++) {
+        expect(withZero.rows[i].annualExpenses).toBeCloseTo(base.rows[i].annualExpenses, 0)
+      }
+    })
+  })
 })

@@ -39,6 +39,8 @@ export interface NormalizedDeterministicSelectors {
 export interface NormalizedProjectionSelectors {
   annualSavingsByYear: number[]
   postRetirementIncomeByYear: number[]
+  /** Guaranteed income floor by year offset (annuities, endowments, pensions). Excludes CPF LIFE. */
+  guaranteedIncomeByYear: number[]
   retirementExpenseBaseByYear: number[]
   householdWithdrawalNeedByYear: number[]
   portfolioAdjustments: HouseholdPortfolioAdjustment[]

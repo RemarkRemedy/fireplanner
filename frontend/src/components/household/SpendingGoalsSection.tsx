@@ -559,6 +559,34 @@ function HealthcareDetails({ adult, onUpdate }: {
         onChange={(value) => onUpdate({ mediSaveTopUpAnnual: value })}
       />
 
+      {/* Premium Overrides & MediSave Routing */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <CurrencyInput
+          label="Custom ISP premium (annual)"
+          tooltip="Override the default tier-based ISP premium with your actual annual premium."
+          value={hc.customIspPremium ?? 0}
+          onChange={(value) => onUpdate({ customIspPremium: value || undefined })}
+        />
+        <CurrencyInput
+          label="Custom CareShield premium (annual)"
+          tooltip="Override the default CareShield Life premium with your actual annual premium."
+          value={hc.customCareShieldPremium ?? 0}
+          onChange={(value) => onUpdate({ customCareShieldPremium: value || undefined })}
+        />
+      </div>
+      <div className="flex items-center justify-between rounded-md border p-3">
+        <div>
+          <div className="font-medium">Use MediSave for premiums</div>
+          <div className="text-sm text-muted-foreground">
+            Route ISP and CareShield premiums through MediSave deduction instead of cash outflow.
+          </div>
+        </div>
+        <Switch
+          checked={hc.useMediSaveForPremiums ?? true}
+          onCheckedChange={(checked) => onUpdate({ useMediSaveForPremiums: checked })}
+        />
+      </div>
+
       {/* Cost Preview by Age */}
       <div className="space-y-2">
         <Label>Cost Preview by Age</Label>
@@ -1274,6 +1302,12 @@ export function SpendingGoalsSection({ selectedAdultId }: SpendingGoalsSectionPr
                     onChange={(value) => updateGoalList(goal.id, { amount: value })}
                     error={goalErrors.amount}
                     tooltip="Total cost of this goal (in today's dollars if inflation-adjusted)"
+                  />
+                  <CurrencyInput
+                    label="Already saved"
+                    value={goal.amountSaved ?? 0}
+                    onChange={(value) => updateGoalList(goal.id, { amountSaved: value || undefined })}
+                    tooltip="Amount already saved toward this goal, included in your net worth. Subtracted from the target to avoid double-counting."
                   />
                   <NumberInput
                     label="Target age"

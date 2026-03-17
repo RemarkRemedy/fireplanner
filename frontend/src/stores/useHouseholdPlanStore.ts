@@ -47,6 +47,7 @@ type HouseholdAssumptionUpdates = {
   returns?: Partial<HouseholdAssumptions['returns']>
   cashReserve?: Partial<HouseholdAssumptions['cashReserve']>
   retirementMitigation?: HouseholdAssumptions['retirementMitigation']
+  survivorExpenseRatio?: HouseholdAssumptions['survivorExpenseRatio']
 }
 
 interface HouseholdPlanActions {
@@ -73,6 +74,7 @@ interface HouseholdPlanActions {
   addGoal: (goal: GoalItem) => void
   updateGoal: (id: string, updates: Partial<GoalItem>) => void
   removeGoal: (id: string) => void
+  batchUpdateGoals: (additions: GoalItem[], updates: { id: string; changes: Partial<GoalItem> }[], removals: string[]) => void
   addProperty: (property: PropertyPlan) => void
   updateProperty: (id: string, updates: Partial<PropertyPlan>) => void
   removeProperty: (id: string) => void
@@ -330,6 +332,9 @@ export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
                   retirementMitigation: updates.retirementMitigation,
                 }
               : {}),
+            ...('survivorExpenseRatio' in updates
+              ? { survivorExpenseRatio: updates.survivorExpenseRatio }
+              : {}),
           }
 
           return buildValidatedState(nextPlan, state.provenance, state.householdPlanRevision + 1)
@@ -502,6 +507,25 @@ export const useHouseholdPlanStore = create<HouseholdPlanStoreState>()(
         set((state) => {
           const nextPlan = clonePlan(state.plan)
           nextPlan.goals = nextPlan.goals.filter((goal) => goal.id !== id)
+          return buildValidatedState(nextPlan, state.provenance, state.householdPlanRevision + 1)
+        }),
+
+      batchUpdateGoals: (additions, updates, removals) =>
+        set((state) => {
+          const nextPlan = clonePlan(state.plan)
+          // Remove
+          if (removals.length > 0) {
+            const removeSet = new Set(removals)
+            nextPlan.goals = nextPlan.goals.filter((g) => !removeSet.has(g.id))
+          }
+          // Update
+          for (const { id, changes } of updates) {
+            nextPlan.goals = replaceCollectionItem(nextPlan.goals, id, changes)
+          }
+          // Add
+          for (const goal of additions) {
+            nextPlan.goals.push(structuredClone(goal))
+          }
           return buildValidatedState(nextPlan, state.provenance, state.householdPlanRevision + 1)
         }),
 

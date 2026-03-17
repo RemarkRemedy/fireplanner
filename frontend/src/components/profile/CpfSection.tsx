@@ -722,28 +722,39 @@ function CpfSectionBody({ model, mode, showProjectionTools }: CpfSectionBodyProp
           </>
         )}
 
-        {/* CPF Auto-Withdrawal Rules — Advanced only */}
+        {/* CPF Auto-Withdrawal — visible in both Simple and Advanced */}
+        <Separator />
+        <div>
+          <h4 className="text-sm font-medium flex items-center mb-3">
+            CPF Auto-Withdrawal
+            <InfoTooltip text="When your liquid portfolio runs out, automatically withdraw from CPF OA (and optionally SA) to cover living expenses. This applies to both the deterministic projection and Monte Carlo simulation. Without this, the planner may show $0 liquid assets while CPF holds hundreds of thousands untouched." />
+          </h4>
+
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={cpfAutoFallback}
+                onChange={(e) => setField('cpfAutoFallback', e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              Auto-withdraw from CPF when portfolio runs out
+              <InfoTooltip text="When your liquid portfolio hits $0, automatically withdraw from CPF OA (and optionally SA) to cover living expenses. Only applies from age 55 onwards, and FRS is always preserved for CPF LIFE. On by default because most retirees would tap CPF rather than go unfunded. Uncheck to see a worst-case scenario where CPF is left entirely untouched (e.g. for bequest planning)." />
+            </label>
+          </div>
+        </div>
+
+        {/* Virtual Rebalancing — Advanced only */}
         {mode === 'advanced' && (
           <>
             <Separator />
             <div>
               <h4 className="text-sm font-medium flex items-center mb-3">
-                CPF Auto-Withdrawal Rules
-                <InfoTooltip text="Configure automatic CPF withdrawal behavior when your liquid portfolio runs out. Without these features, the projection may show $0 liquid assets for decades while CPF holds hundreds of thousands untouched — an unrealistic scenario for most retirees." />
+                CPF Virtual Rebalancing
+                <InfoTooltip text="Configure how uninvested CPF balances affect your portfolio allocation." />
               </h4>
 
               <div className="space-y-3">
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={cpfAutoFallback}
-                    onChange={(e) => setField('cpfAutoFallback', e.target.checked)}
-                    className="rounded border-gray-300"
-                  />
-                  Auto-withdraw from CPF when portfolio runs out
-                  <InfoTooltip text="When your liquid portfolio hits $0, automatically withdraw from CPF OA (and optionally SA) to cover living expenses. Only applies from age 55 onwards, and FRS is always preserved for CPF LIFE. On by default because most retirees would tap CPF rather than go unfunded. Uncheck to see a worst-case scenario where CPF is left entirely untouched (e.g. for bequest planning)." />
-                </label>
-
                 <label className="flex items-center gap-2 text-sm cursor-pointer">
                   <input
                     type="checkbox"

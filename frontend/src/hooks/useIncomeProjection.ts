@@ -46,6 +46,7 @@ function createNormalizedAnalysisEntry(
       projection: {
         annualSavingsByYear: compiledPlan.annualSavingsByYear,
         postRetirementIncomeByYear: compiledPlan.postRetirementIncomeByYear,
+        guaranteedIncomeByYear: compiledPlan.guaranteedIncomeByYear,
         retirementExpenseBaseByYear: compiledPlan.retirementExpenseBaseByYear,
         householdWithdrawalNeedByYear: compiledPlan.householdWithdrawalNeedByYear,
         portfolioAdjustments: compiledPlan.portfolioAdjustments,

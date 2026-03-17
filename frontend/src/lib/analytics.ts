@@ -40,6 +40,7 @@ type AnalyticsEvent =
   | 'telegram_join_clicked'
   | 'life_event_added'
   | 'life_event_removed'
+  | 'setup_completed'
   | 'withdrawal_basis_changed'
   | 'section_mode_changed'
   | 'scenario_deleted'
@@ -59,6 +60,19 @@ type AnalyticsEvent =
   | 'expense_tracker_form_abandon'
   | 'projection_view_changed'
   | 'stress_test_view_changed'
+  | 'setup_step_completed'
+  | 'setup_redo_started'
+  | 'nudge_flow_opened'
+  | 'nudge_flow_completed'
+  | 'nudge_delta_dismissed'
+  | 'risk_card_clicked'
+  | 'completeness_card_clicked'
+  | 'goal_edited'
+  | 'goal_deleted'
+  | 'health_check_ratio_expanded'
+  | 'quick_estimate_computed'
+  | 'quick_health_score_viewed'
+  | 'demo_loaded'
 
 export function trackEvent(event: AnalyticsEvent, data?: Record<string, string | number | boolean>) {
   if (isCompanionMode()) return

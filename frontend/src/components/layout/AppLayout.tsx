@@ -16,6 +16,7 @@ import { ExpenseTrackerProvider } from '@/components/email/ExpenseTrackerProvide
 import { useExpenseTracker } from '@/hooks/useExpenseTracker'
 import { ExpenseTrackerBanner } from '@/components/email/ExpenseTrackerBanner'
 import { useExitIntent } from '@/hooks/useExitIntent'
+import { DemoBadge } from '@/components/shared/DemoBadge'
 
 // Lazy-load components that aren't needed for first paint
 const HelpPanel = lazy(() => import('./HelpPanel').then(m => ({ default: m.HelpPanel })))
@@ -151,13 +152,17 @@ export function AppLayout() {
   const isBottom = statsPosition === 'bottom'
   const isTop = statsPosition === 'top'
 
+  // Hide sidebar on start page for new users — reduces "this is complex" signal
+  const setupCompleted = useUIStore((s) => s.setupCompleted)
+  const hideSidebar = location.pathname === '/' && !setupCompleted
+
   return (
     <div className="flex min-h-dvh md:h-screen md:overflow-hidden">
       <ExpenseTrackerProvider>
         <Toaster position="bottom-right" />
         <SaveIndicator />
         <PlanUrlHandler />
-        <Sidebar />
+        {!hideSidebar && <Sidebar />}
         <div className="flex-1 flex flex-col min-w-0 md:min-h-0">
           {showStats && isTop && <FireStatsStrip position="top" />}
           <div className="flex flex-1 md:min-h-0 relative">
@@ -207,6 +212,7 @@ export function AppLayout() {
           </Suspense>
         )}
       </ExpenseTrackerProvider>
+      <DemoBadge />
     </div>
   )
 }

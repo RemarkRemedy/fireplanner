@@ -1,6 +1,9 @@
 import { type InsuranceNeedsResult } from '@/lib/calculations/insuranceNeeds'
+import { type InsuranceNeedsInputs } from '@/lib/calculations/insuranceNeeds'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
+import { INSURANCE_MULTIPLES } from '@/lib/data/healthBenchmarks'
 import { cn } from '@/lib/utils'
 
 const fmt = (v: number) =>
@@ -18,18 +21,27 @@ function GapCell({ gap }: { gap: number }) {
   )
 }
 
-function MoneySenseTab({ result }: { result: InsuranceNeedsResult }) {
+function MoneySenseTab({ result, inputs }: { result: InsuranceNeedsResult; inputs: InsuranceNeedsInputs }) {
   const { deathTpd, criticalIllness, disabilityIncome } = result.moneySense
 
   const rows = [
-    { label: 'Death / TPD', ...deathTpd },
-    { label: 'Critical Illness', ...criticalIllness },
+    {
+      label: 'Death / TPD',
+      ...deathTpd,
+      tooltip: `${INSURANCE_MULTIPLES.deathTpd}x annual income: ${fmt(inputs.annualIncome)} × ${INSURANCE_MULTIPLES.deathTpd} = ${fmt(deathTpd.need)}. MoneySense recommends coverage of ${INSURANCE_MULTIPLES.deathTpd} years of annual income.`,
+    },
+    {
+      label: 'Critical Illness',
+      ...criticalIllness,
+      tooltip: `${INSURANCE_MULTIPLES.criticalIllness}x annual income: ${fmt(inputs.annualIncome)} × ${INSURANCE_MULTIPLES.criticalIllness} = ${fmt(criticalIllness.need)}. Covers income replacement during recovery period.`,
+    },
     {
       label: 'Disability Income',
       need: disabilityIncome.need,
       existing: disabilityIncome.existing,
       gap: disabilityIncome.gap,
       note: `${fmt(disabilityIncome.needMonthly)}/mo needed, ${fmt(disabilityIncome.existingMonthly)}/mo covered`,
+      tooltip: `${Math.round(INSURANCE_MULTIPLES.disabilityIncome * 100)}% of monthly income: ${fmt(inputs.monthlyIncome)} × ${Math.round(INSURANCE_MULTIPLES.disabilityIncome * 100)}% = ${fmt(disabilityIncome.needMonthly)}/mo. Industry range is 60-75% of salary; we use 65% as a conservative middle ground.`,
     },
   ]
 
@@ -53,7 +65,10 @@ function MoneySenseTab({ result }: { result: InsuranceNeedsResult }) {
               {rows.map((row) => (
                 <tr key={row.label} className="border-b last:border-0">
                   <td className="py-2">
-                    <div>{row.label}</div>
+                    <div className="flex items-center gap-1">
+                      {row.label}
+                      <InfoTooltip text={row.tooltip} />
+                    </div>
                     {'note' in row && row.note && (
                       <div className="text-xs text-muted-foreground mt-0.5">{row.note}</div>
                     )}
@@ -204,7 +219,7 @@ function CapitalNeedsTab({ result }: { result: InsuranceNeedsResult }) {
   )
 }
 
-export function InsuranceNeedsPanel({ result }: { result: InsuranceNeedsResult }) {
+export function InsuranceNeedsPanel({ result, inputs }: { result: InsuranceNeedsResult; inputs: InsuranceNeedsInputs }) {
   return (
     <Tabs defaultValue="moneysense">
       <TabsList>
@@ -212,7 +227,7 @@ export function InsuranceNeedsPanel({ result }: { result: InsuranceNeedsResult }
         <TabsTrigger value="capital-needs">Capital Needs (Detailed)</TabsTrigger>
       </TabsList>
       <TabsContent value="moneysense" className="mt-4">
-        <MoneySenseTab result={result} />
+        <MoneySenseTab result={result} inputs={inputs} />
       </TabsContent>
       <TabsContent value="capital-needs" className="mt-4">
         <CapitalNeedsTab result={result} />

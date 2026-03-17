@@ -76,6 +76,9 @@ Normative rules for PR 2:
 - `cpfAutoFallbackIncludeSA` -> `adults[0].cpf.autoFallbackIncludeSA` -> `adultsById["adult-self"].cpf.autoFallbackIncludeSA`
 - `cpfVirtualRebalancing` -> `adults[0].cpf.virtualRebalancing` -> `adultsById["adult-self"].cpf.virtualRebalancing`
 - `cpfVirtualRebalancingMode` -> `adults[0].cpf.virtualRebalancingMode` -> `adultsById["adult-self"].cpf.virtualRebalancingMode`
+- `annualInsurancePremiums` -> `adults[0].annualInsurancePremiums` -> `adultsById["adult-self"].annualInsurancePremiums` (annual cost, deducted from projection cash flow)
+- `annualNonMortgageDebtPayment` -> derived from `adults[0].nonMortgageDebtMonthlyPayment * 12` -> `adultsById["adult-self"].nonMortgageDebtMonthlyPayment * 12` (annual debt payment, deducted from projection cash flow)
+- `debtPayoffAge` -> `adults[0].debtPayoffAge` -> `adultsById["adult-self"].debtPayoffAge` (age at which debt deduction stops)
 - `parentSupportEnabled` -> `adults[0].parentSupportEnabled` -> `adultsById["adult-self"].parentSupportEnabled`
 - `parentSupport` -> `expenses["expense-parent-support-*"]` with one monthly item per legacy entry -> `expenseOrder` and `expensesById["expense-parent-support-*"]`
 - `healthcareConfig` -> `adults[0].healthcare` -> `adultsById["adult-self"].healthcare`
@@ -83,6 +86,7 @@ Normative rules for PR 2:
 - `expenseAdjustments` -> `expenses["expense-adjustment-*"]` with one item per legacy entry -> `expenseOrder` and `expensesById["expense-adjustment-*"]`
 - `financialGoals` -> `goals["goal-*"]` with one item per legacy goal -> `goalOrder` and `goalsById["goal-*"]`
 - `lockedAssets` -> `assets["asset-locked-*"]` with one item per legacy asset -> `assetOrder` and `assetsById["asset-locked-*"]`
+- `retirementExpenseItems` -> display-layer only (per-expense SWR advisory feature); not mapped to household plan normalization
 - `cashReserveEnabled` -> `assumptions.cashReserve.enabled` -> `assumptions.cashReserve.enabled`
 - `cashReserveMode` -> `assumptions.cashReserve.mode` -> `assumptions.cashReserve.mode`
 - `cashReserveFixedAmount` -> `assumptions.cashReserve.fixedAmount` -> `assumptions.cashReserve.fixedAmount`
@@ -138,6 +142,7 @@ Normative notes:
 - `existingAppreciationRate` -> `properties[0].existingAppreciationRate` -> `propertiesById["property-primary"].existingAppreciationRate`
 - `existingLeaseYears` -> `properties[0].existingLeaseYears` -> `propertiesById["property-primary"].existingLeaseYears`
 - `existingApplyBalaDecay` -> `properties[0].existingApplyBalaDecay` -> `propertiesById["property-primary"].existingApplyBalaDecay`
+- `rentalIncomeEndAge` -> `properties[0].rentalIncomeEndAge` -> `propertiesById["property-primary"].rentalIncomeEndAge` (age at which rental income stops)
 - `downsizing` -> `properties[0].downsizing` -> `propertiesById["property-primary"].downsizing`
 - `hdbFlatType` -> `properties[0].hdbFlatType` -> `propertiesById["property-primary"].hdbFlatType`
 - `hdbMonetizationStrategy` -> `properties[0].hdbMonetizationStrategy` -> `propertiesById["property-primary"].hdbMonetizationStrategy`
@@ -217,9 +222,11 @@ Snapshot date: `2026-03-07`
 - [BacktestDrillDown.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/components/backtest/BacktestDrillDown.tsx)
 - [CpfAssumptionsPanel.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/components/cpf/CpfAssumptionsPanel.tsx)
 - [CpfProjectionTable.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/components/cpf/CpfProjectionTable.tsx)
+- [ExpenseSwrPanel.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/components/dashboard/ExpenseSwrPanel.tsx)
 - [TimeCostPanel.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/components/dashboard/TimeCostPanel.tsx)
 - [TrajectoryPanel.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/components/dashboard/TrajectoryPanel.tsx)
 - [WhatIfPanel.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/components/dashboard/WhatIfPanel.tsx)
+- [ExpenseItemiser.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/components/inputs/ExpenseItemiser.tsx)
 - [ProofComparePanel.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/components/proof/ProofComparePanel.tsx)
 - [SimulationControls.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/components/simulation/SimulationControls.tsx)
 - [ActiveLifeEventsBar.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/components/stressTest/ActiveLifeEventsBar.tsx)
@@ -265,6 +272,14 @@ Snapshot date: `2026-03-07`
 ### Indirect Route Surfaces
 
 - [DashboardPage.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/pages/DashboardPage.tsx)
+- [HealthCheckPage.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/pages/HealthCheckPage.tsx)
+
+### Advisory Gap Feature Consumers (reads from legacy stores for display-layer calculations)
+
+- `/src/hooks/useGuardrailStatus.ts` — reads withdrawal params + projection output for guardrail zone computation
+- `/src/hooks/useEstateProjection.ts` — reads projection rows at death age for estate calculation
+- `/src/hooks/useTaxOptimization.ts` — reads income/CPF data for tax optimization per adult
+- `/src/components/dashboard/ExpenseSwrPanel.tsx` — reads retirementExpenseItems from useProfileStore for blended FIRE number
 
 ## Deferred Work For PR 3+
 

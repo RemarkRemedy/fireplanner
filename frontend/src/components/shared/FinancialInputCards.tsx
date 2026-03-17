@@ -100,7 +100,7 @@ export function MonthlyIncomeInput({
           onCheckedChange={(checked) => onHasBonusAwsChange(checked === true)}
         />
         <label htmlFor={checkboxId} className="text-xs text-muted-foreground cursor-pointer">
-          I receive bonus / AWS
+          I receive a yearly bonus (13th month / AWS)
         </label>
         {hasBonusAws && (
           <div className="flex items-center gap-1">
@@ -110,7 +110,7 @@ export function MonthlyIncomeInput({
               min={0}
               max={6}
               step={0.1}
-              className="w-14 h-7 text-xs border-blue-300"
+              className="w-16 h-7 text-xs border-blue-300"
             />
             <span className="text-xs text-muted-foreground">extra month(s)</span>
           </div>
@@ -153,7 +153,7 @@ export function MonthlyExpenseInput({
   onMonthlyExpensesChange,
   annualExpenses,
   label = 'Monthly Expenses',
-  tooltip = 'Excludes healthcare insurance and mortgage — those are modelled separately in their own sections.',
+  tooltip = 'Excludes healthcare insurance and mortgage. Those are modelled separately in their own sections.',
 }: MonthlyExpenseInputProps) {
   return (
     <div className="flex flex-col gap-1">
@@ -184,10 +184,10 @@ export function NetWorthInput({ value, onChange }: NetWorthInputProps) {
         label="Cash & Investments"
         value={value}
         onChange={onChange}
-        tooltip="Cash, savings, stocks, bonds, and other investments — excluding CPF and property"
+        tooltip="Cash, savings, stocks, bonds, and other investments, excluding CPF and property"
       />
       <div className="text-xs text-muted-foreground">
-        Savings, stocks, bonds — not CPF or property
+        Savings, stocks, bonds. Not CPF or property
       </div>
     </div>
   )

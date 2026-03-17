@@ -38,6 +38,28 @@ export function getExpensesAtRetirement(
   return base * Math.pow(1 + inflation, Math.max(0, retirementAge - currentAge))
 }
 
+/**
+ * Compute a weighted retirement spending ratio from per-category breakdown
+ * and per-category multipliers. Categories with no multiplier default to 1.0.
+ * Negative amounts are ignored. Multipliers are clamped to [0, 5].
+ * Returns 1.0 when the breakdown is empty or all amounts are zero.
+ */
+export function computeWeightedRetirementRatio(
+  breakdown: Record<string, number>,
+  multipliers: Record<string, number>,
+): number {
+  let total = 0
+  let weighted = 0
+  for (const [category, amount] of Object.entries(breakdown)) {
+    if (amount <= 0) continue
+    total += amount
+    const multiplier = Math.min(5.0, Math.max(0, multipliers[category] ?? 1.0))
+    weighted += amount * multiplier
+  }
+  if (total === 0) return 1.0
+  return weighted / total
+}
+
 export interface ExpensePhase {
   fromAge: number
   toAge: number

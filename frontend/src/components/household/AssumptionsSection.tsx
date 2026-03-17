@@ -186,6 +186,16 @@ export function AssumptionsSection({ mode }: AssumptionsSectionProps) {
             })}
             error={assumptionsErrors['fire.swr']}
           />
+          {plan.adults.length > 1 && (
+            <PercentInput
+              label="Survivor spending ratio"
+              value={plan.assumptions.survivorExpenseRatio ?? 0.75}
+              onChange={(value) => updateAssumptions({
+                survivorExpenseRatio: value,
+              })}
+              tooltip="When one partner passes, shared expenses adjust to this fraction of the original. Default 75%."
+            />
+          )}
           <div className="space-y-1">
             <Label>FIRE number basis</Label>
             <Select

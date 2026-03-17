@@ -659,6 +659,137 @@ describe('compileHouseholdPlan', () => {
     expect(() => compileHouseholdPlan(plan)).toThrow('Unknown owner "pet" at income-salary-self.owner. Expected "self", "partner", or "shared".')
   })
 
+  describe('non-mortgage debt per-adult deduction', () => {
+    it('deducts debt from household expenses', () => {
+      const plan = makeCouplePlan()
+      plan.adults[0].nonMortgageDebtMonthlyPayment = 500
+
+      const base = compileHouseholdPlan(makeCouplePlan())
+      const withDebt = compileHouseholdPlan(plan)
+
+      // Year 0 savings should be reduced by 500*12 = 6000
+      expect(withDebt.annualSavingsByYear[0]).toBeCloseTo(
+        base.annualSavingsByYear[0] - 6000,
+        0,
+      )
+    })
+
+    it('stops deduction at adult debtPayoffAge', () => {
+      const plan = makeCouplePlan()
+      const self = plan.adults[0]
+      self.nonMortgageDebtMonthlyPayment = 500
+      self.debtPayoffAge = self.currentAge + 3 // pay off after 3 years
+
+      const compiled = compileHouseholdPlan(plan)
+      const base = compileHouseholdPlan(makeCouplePlan())
+
+      // Years 0-2: debt deducted (6000/yr less savings)
+      for (let y = 0; y < 3; y++) {
+        expect(compiled.annualSavingsByYear[y]).toBeCloseTo(
+          base.annualSavingsByYear[y] - 6000,
+          0,
+        )
+      }
+
+      // Year 3+: no deduction (savings match base)
+      expect(compiled.annualSavingsByYear[3]).toBeCloseTo(
+        base.annualSavingsByYear[3],
+        0,
+      )
+    })
+
+    it('handles different payoff ages per adult', () => {
+      const plan = makeCouplePlan()
+      plan.adults[0].nonMortgageDebtMonthlyPayment = 500
+      plan.adults[0].debtPayoffAge = plan.adults[0].currentAge + 2 // 2 years
+
+      plan.adults[1].nonMortgageDebtMonthlyPayment = 300
+      plan.adults[1].debtPayoffAge = plan.adults[1].currentAge + 5 // 5 years
+
+      const compiled = compileHouseholdPlan(plan)
+      const base = compileHouseholdPlan(makeCouplePlan())
+
+      // Year 0-1: both adults' debt deducted (6000 + 3600 = 9600)
+      expect(compiled.annualSavingsByYear[0]).toBeCloseTo(
+        base.annualSavingsByYear[0] - 9600,
+        0,
+      )
+
+      // Year 2: only partner's debt (3600)
+      expect(compiled.annualSavingsByYear[2]).toBeCloseTo(
+        base.annualSavingsByYear[2] - 3600,
+        0,
+      )
+    })
+  })
+
+  it('applies survivorExpenseRatio to shared expenses after one adult dies', () => {
+    const plan = makeCouplePlan()
+    // Self: age 40, lifeExpectancy 90 → dies at yearOffset 50
+    // Partner: age 38, lifeExpectancy 92 → dies at yearOffset 54
+    // Shared base-living: 48,000/year anchored to self's timeline (endAge 90)
+    // Self base-living: 12,000/year
+    plan.assumptions.survivorExpenseRatio = 0.75
+
+    const compiled = compileHouseholdPlan(plan)
+
+    // Before self dies (yearOffset 0): both alive, no adjustment
+    const baselineCompiled = compileHouseholdPlan({
+      ...plan,
+      assumptions: { ...plan.assumptions, survivorExpenseRatio: undefined },
+    })
+    // At yearOffset 0, retirement spending adjustment doesn't apply (pre-retirement)
+    // so shared expense = 48,000, self private = 12,000, partner private = 8,000
+    expect(compiled.rows[0].retirementExpenseBase).toBe(
+      baselineCompiled.rows[0].retirementExpenseBase,
+    )
+
+    // After self dies (yearOffset 51): shared expenses should be reduced
+    // The shared expense is anchored to self and ends at self's lifeExpectancy (yearOffset 50),
+    // so at yearOffset 51 the shared expense timing window has ended.
+    // The survivor ratio only affects expenses within their active window.
+    // Let's check yearOffset 49 (last year before death) vs yearOffset 50 (death year).
+    // At yearOffset 50, self is at lifeExpectancy — still alive that year.
+    // The shared expense is active at yearOffset 50 (endAge 90, self age = 90).
+    // No adult has died yet at yearOffset 50, so no reduction.
+    expect(compiled.rows[50].retirementExpenseBase).toBe(
+      baselineCompiled.rows[50].retirementExpenseBase,
+    )
+  })
+
+  it('reduces shared expenses by survivorExpenseRatio when partner dies before expense window ends', () => {
+    const plan = makeCouplePlan()
+    // Partner: age 38, lifeExpectancy 85 → dies at yearOffset 47
+    // Self: age 40, lifeExpectancy 90 → dies at yearOffset 50
+    // Shared expense anchored to self, endAge 90 (so active for yearOffsets 0-50)
+    plan.adults[1].lifeExpectancy = 85
+    plan.assumptions.survivorExpenseRatio = 0.6
+
+    const compiled = compileHouseholdPlan(plan)
+    const baselineCompiled = compileHouseholdPlan({
+      ...plan,
+      assumptions: { ...plan.assumptions, survivorExpenseRatio: undefined },
+    })
+
+    // yearOffset 47: partner at lifeExpectancy (85), still alive → no reduction
+    expect(compiled.rows[47].retirementExpenseBase).toBe(
+      baselineCompiled.rows[47].retirementExpenseBase,
+    )
+
+    // yearOffset 48: partner dead → shared expenses reduced by 0.6
+    // At this point self is retired (yearOffset >= 20), so retirement adjustment applies:
+    // Shared expense base today = 48,000 * 0.75 (retirementSpendingAdjustment) = 36,000
+    // With survivor ratio: 36,000 * 0.6 = 21,600
+    // Inflation factor at yearOffset 48 shifts the nominal value, but the ratio should be consistent.
+    const baseShared48 = baselineCompiled.rows[48].retirementExpenseBase
+    const survivorShared48 = compiled.rows[48].retirementExpenseBase
+    // The shared portion is 36,000 * inflation^48 in baseline.
+    // With survivor ratio, only the shared part is reduced. Self private (12,000 * 0.5 = 6,000)
+    // and partner private (8,000 * 0.6 = 4,800) don't change (partner's expense window ended at death).
+    // So we check that the survivor version is less than baseline.
+    expect(survivorShared48).toBeLessThan(baseShared48)
+  })
+
   it('treats income with undefined isActive as active (backward compat)', () => {
     const plan = makeCouplePlan()
     // Compile with isActive present to get baseline

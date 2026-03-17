@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { AllocationState, AllocationTemplate, GlidePathConfig, ValidationErrors } from '@/lib/types'
+import type { AllocationState, AllocationTemplate, BucketConfig, GlidePathConfig, ValidationErrors } from '@/lib/types'
 import { validateAllocationField } from '@/lib/validation/schemas'
 import { ALLOCATION_TEMPLATES } from '@/lib/data/historicalReturns'
+import { createDefaultBucketConfig } from '@/lib/calculations/bucketAllocation'
 
 interface AllocationActions {
   setCurrentWeights: (weights: number[]) => void
@@ -11,6 +12,7 @@ interface AllocationActions {
   setReturnOverride: (index: number, value: number | null) => void
   setStdDevOverride: (index: number, value: number | null) => void
   setGlidePathConfig: (config: GlidePathConfig) => void
+  setBucketConfig: (config: BucketConfig) => void
   setField: <K extends keyof Omit<AllocationState, 'validationErrors'>>(
     field: K,
     value: AllocationState[K]
@@ -26,7 +28,7 @@ type AllocationStoreState = AllocationState & AllocationRevisionState & Allocati
 
 const ALLOCATION_DATA_KEYS = [
   'currentWeights', 'targetWeights', 'selectedTemplate', 'selectedTargetTemplate',
-  'returnOverrides', 'stdDevOverrides', 'glidePathConfig',
+  'returnOverrides', 'stdDevOverrides', 'glidePathConfig', 'bucketConfig',
 ] as const
 
 const DEFAULT_ALLOCATION: Omit<AllocationState, 'validationErrors'> = {
@@ -42,6 +44,7 @@ const DEFAULT_ALLOCATION: Omit<AllocationState, 'validationErrors'> = {
     startAge: 60,
     endAge: 75,
   },
+  bucketConfig: createDefaultBucketConfig(),
 }
 
 function extractAllocationData(
@@ -183,6 +186,17 @@ export const useAllocationStore = create<AllocationStoreState>()(
           }
         }),
 
+      setBucketConfig: (config) =>
+        set((state) => {
+          const stateData = extractAllocationData(state)
+          const updated = { ...stateData, bucketConfig: config }
+          return {
+            bucketConfig: config,
+            allocationRevision: bumpAllocationRevision(state.allocationRevision),
+            validationErrors: computeValidationErrors(updated),
+          }
+        }),
+
       setField: (field, value) =>
         set((state) => {
           const stateData = extractAllocationData(state)
@@ -203,7 +217,7 @@ export const useAllocationStore = create<AllocationStoreState>()(
     }),
     {
       name: 'fireplanner-allocation',
-      version: 3,
+      version: 4,
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>
         if (version < 2) {
@@ -236,6 +250,12 @@ export const useAllocationStore = create<AllocationStoreState>()(
           // Add selectedTargetTemplate for existing users
           if (!state.selectedTargetTemplate) {
             state.selectedTargetTemplate = 'custom'
+          }
+        }
+        if (version < 4) {
+          // Add bucketConfig for existing users
+          if (!state.bucketConfig) {
+            state.bucketConfig = createDefaultBucketConfig()
           }
         }
         return state

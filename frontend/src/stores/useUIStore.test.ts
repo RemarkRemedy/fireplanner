@@ -68,13 +68,14 @@ describe('useUIStore', () => {
   })
 
   describe('persist migration', () => {
-    it('v1→v4: adds boolean toggle defaults, migrates to mode, adds overrides', () => {
+    it('v1→latest: adds boolean toggle defaults, migrates to mode, adds overrides', () => {
       const { migrate } = useUIStore.persist.getOptions()
       const oldState: Record<string, unknown> = { sectionOrder: 'story-first', statsPosition: 'top' }
       const migrated = migrate!(oldState, 1) as Record<string, unknown>
       expect(migrated.cpfEnabled).toBe(true)
       expect(migrated.propertyEnabled).toBe(false)
-      expect(migrated.healthcareEnabled).toBe(false)
+      // v2 sets healthcareEnabled=false, v14 sets it back to true
+      expect(migrated.healthcareEnabled).toBe(true)
       expect(migrated.mode).toBe('simple')
       expect(migrated.sectionOverrides).toEqual({})
       expect(migrated.dismissedNudges).toEqual([])

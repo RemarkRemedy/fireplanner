@@ -1,0 +1,696 @@
+/**
+ * Known unmapped fields (no store destination yet — collected for future engine features):
+ * - Healthcare: hasRider (needs copayment modelling), careShieldSupplementPlan (needs premium modelling)
+ * - Salary: variablePayPercent (needs income engine support)
+ * - Protection: emergencyFundType (informational), hasTermLife (informational)
+ * - Expenses: retirementSpendingModel
+ */
+
+import { FLOW_FIELD_TO_CATEGORY } from '@/lib/data/retirementTemplates'
+import { SRS_STRATEGY_RETURNS } from '@/lib/data/taxBrackets'
+import { VERY_CONSERVATIVE_WEIGHTS } from '@/lib/data/historicalReturns'
+import { computeWeightedRetirementRatio } from '@/lib/calculations/expenses'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { useAllocationStore } from '@/stores/useAllocationStore'
+import { createId } from '@/lib/household/ids'
+import { createDefaultHouseholdProperty } from '@/lib/household/assetPropertyDefaults'
+import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
+import type { HouseholdCpfConfig, GoalItem } from '@/lib/household/types'
+import type { AllocationTemplate, CareerPhase, DownsizingConfig, GoalCategory, GrowthModel, HealthcareConfig, IspTierOption, PromotionJump, PropertyType, RebalanceFrequency, SalaryModel } from '@/lib/types'
+import type { ExpenseItem, IncomeSource, PlanningAdult, PropertyPlan } from '@/lib/household/types'
+
+/**
+ * Maps a nudge flow's goalCategory option value to a valid GoalCategory.
+ * The nudge flow uses 'property' but the domain type uses 'housing';
+ * 'charity' is not a valid GoalCategory and maps to 'other'.
+ */
+function toGoalCategory(value: string): GoalCategory {
+  const mapping: Record<string, GoalCategory> = {
+    property: 'housing',
+    education: 'education',
+    travel: 'travel',
+    wedding: 'wedding',
+    renovation: 'renovation',
+    vehicle: 'vehicle',
+    charity: 'other',
+    other: 'other',
+  }
+  return mapping[value] ?? 'other'
+}
+
+/**
+ * Maps a nudge flow allocation template option to a valid AllocationTemplate (excluding 'custom').
+ * 'cpf-heavy' is not a recognised template; falls back to 'balanced'.
+ */
+function toIspTier(val: unknown): IspTierOption | null {
+  const valid: IspTierOption[] = ['none', 'basic', 'standard', 'enhanced']
+  return typeof val === 'string' && valid.includes(val as IspTierOption) ? val as IspTierOption : null
+}
+
+function toCpfLifePlan(val: unknown): HouseholdCpfConfig['lifePlan'] | null {
+  const valid: HouseholdCpfConfig['lifePlan'][] = ['basic', 'standard', 'escalating']
+  return typeof val === 'string' && valid.includes(val as HouseholdCpfConfig['lifePlan'])
+    ? val as HouseholdCpfConfig['lifePlan']
+    : null
+}
+
+function toPropertyType(val: unknown): PropertyType | null {
+  const valid: PropertyType[] = ['hdb', 'condo', 'landed']
+  return typeof val === 'string' && valid.includes(val as PropertyType) ? val as PropertyType : null
+}
+
+function toAllocationTemplate(value: string): Exclude<AllocationTemplate, 'custom'> | null {
+  const valid: Record<string, Exclude<AllocationTemplate, 'custom'>> = {
+    conservative: 'conservative',
+    balanced: 'balanced',
+    aggressive: 'aggressive',
+  }
+  return valid[value] ?? null
+}
+
+/**
+ * Apply the collected values from a nudge flow to the appropriate stores.
+ * Used by NudgeDrawer to persist nudge flow values to the household plan store.
+ */
+export function applyFlowValues(flowId: NudgeFlowId, values: Record<string, unknown>): boolean {
+  const store = useHouseholdPlanStore.getState()
+  const plan = store.plan
+  const selfAdult = plan.adults.find((a) => a.owner === 'self')
+  if (!selfAdult) return false
+
+  switch (flowId) {
+    case 'cpf': {
+      const balances: HouseholdCpfConfig['balances'] = {
+        ...selfAdult.cpf.balances,
+        ...(typeof values.cpfOA === 'number' ? { oa: values.cpfOA } : {}),
+        ...(typeof values.cpfSA === 'number' ? { sa: values.cpfSA } : {}),
+        ...(typeof values.cpfMA === 'number' ? { ma: values.cpfMA } : {}),
+        ...(typeof values.cpfRA === 'number' ? { ra: values.cpfRA } : {}),
+      }
+
+      const annualTopUps: HouseholdCpfConfig['annualTopUps'] = {
+        ...selfAdult.cpf.annualTopUps,
+        ...(typeof values.annualSaTopUp === 'number' ? { sa: values.annualSaTopUp } : {}),
+        ...(typeof values.annualMaTopUp === 'number' ? { ma: values.annualMaTopUp } : {}),
+      }
+
+      const cpfUpdates: Partial<HouseholdCpfConfig> = {
+        balances,
+        annualTopUps,
+      }
+
+      if (typeof values.cpfLifePlan === 'string') {
+        const lifePlan = toCpfLifePlan(values.cpfLifePlan)
+        if (lifePlan) cpfUpdates.lifePlan = lifePlan
+      }
+      if (typeof values.cpfPayoutStartAge === 'number') {
+        cpfUpdates.lifeStartAge = values.cpfPayoutStartAge
+      }
+      if (typeof values.hasCpfis === 'boolean') {
+        cpfUpdates.cpfisEnabled = values.hasCpfis
+      }
+      if (typeof values.cpfisOaReturn === 'number') {
+        cpfUpdates.cpfisOaReturn = values.cpfisOaReturn
+      }
+      if (typeof values.cpfisSaReturn === 'number') {
+        cpfUpdates.cpfisSaReturn = values.cpfisSaReturn
+      }
+      if (typeof values.cpfVirtualRebalancing === 'boolean') {
+        cpfUpdates.virtualRebalancing = values.cpfVirtualRebalancing
+      }
+      if (typeof values.cpfVirtualRebalancingMode === 'string') {
+        const mode = values.cpfVirtualRebalancingMode
+        if (mode === 'from55' || mode === 'always') {
+          cpfUpdates.virtualRebalancingMode = mode
+        }
+      }
+
+      // Toggle-off: clear CPFIS returns when user says they don't invest through CPFIS
+      if (values.hasCpfis === false) {
+        cpfUpdates.cpfisOaReturn = 0
+        cpfUpdates.cpfisSaReturn = 0
+      }
+      // Toggle-on: restore sensible defaults if returns are 0 (prevents silent 0% assumption)
+      if (values.hasCpfis === true) {
+        const oaReturn = typeof values.cpfisOaReturn === 'number' ? values.cpfisOaReturn : selfAdult.cpf.cpfisOaReturn
+        const saReturn = typeof values.cpfisSaReturn === 'number' ? values.cpfisSaReturn : selfAdult.cpf.cpfisSaReturn
+        if (oaReturn === 0) cpfUpdates.cpfisOaReturn = 0.04
+        if (saReturn === 0) cpfUpdates.cpfisSaReturn = 0.04
+      }
+
+      // Toggle-off: clear top-ups when user says they don't make voluntary top-ups
+      if (values.hasCpfTopUps === false) {
+        cpfUpdates.annualTopUps = { oa: 0, sa: 0, ma: 0 }
+      }
+
+      store.updateAdult(selfAdult.id, {
+        cpf: { ...selfAdult.cpf, ...cpfUpdates },
+      })
+      return true
+    }
+
+    case 'property': {
+      let property = plan.properties[0]
+      if (!property) {
+        // Create a blank property — zero out defaults that would distort projection
+        // if the user doesn't explicitly touch those toggles
+        const newProperty = createDefaultHouseholdProperty(
+          plan.adults.length > 1 ? 'shared' : 'self'
+        )
+        newProperty.existingMortgageBalance = 0
+        newProperty.existingMonthlyPayment = 0
+        newProperty.existingMortgageRate = 0
+        newProperty.existingMortgageRemainingYears = 0
+        newProperty.rentalYield = 0
+        store.addProperty(newProperty)
+        property = newProperty
+      }
+
+      const currentYear = new Date().getFullYear()
+      const propertyUpdates: Partial<PropertyPlan> = {}
+
+      // Map UI property type to store type ('ec' → 'condo')
+      const rawType = typeof values.propertyType === 'string' ? values.propertyType : null
+      if (rawType) {
+        const storeType = rawType === 'ec' ? 'condo' : rawType
+        const pt = toPropertyType(storeType)
+        if (pt) propertyUpdates.propertyType = pt
+      }
+
+      // HDB and EC are always 99-year leasehold
+      const isFixedLease = rawType === 'hdb' || rawType === 'ec'
+      if (isFixedLease) {
+        if (typeof values.leaseStartYear === 'number') {
+          const elapsed = currentYear - values.leaseStartYear
+          propertyUpdates.existingLeaseYears = Math.max(0, 99 - elapsed)
+        } else {
+          propertyUpdates.existingLeaseYears = 99
+        }
+      } else if (typeof values.leaseTenure === 'string') {
+        // Private condo / landed: user picks tenure
+        const leaseYears = values.leaseTenure === 'freehold' ? 999 : parseInt(values.leaseTenure as string, 10)
+        if (!isNaN(leaseYears)) {
+          propertyUpdates.existingLeaseYears = leaseYears
+        }
+      }
+      if (typeof values.propertyValue === 'number') {
+        propertyUpdates.existingPropertyValue = values.propertyValue
+      }
+      if (typeof values.mortgageOutstanding === 'number') {
+        propertyUpdates.existingMortgageBalance = values.mortgageOutstanding
+      }
+      if (typeof values.monthlyMortgagePayment === 'number') {
+        propertyUpdates.existingMonthlyPayment = values.monthlyMortgagePayment
+      }
+      if (typeof values.mortgageRatePercent === 'number') {
+        propertyUpdates.existingMortgageRate = values.mortgageRatePercent
+      }
+      if (typeof values.mortgageEndYear === 'number') {
+        const remainingYears = Math.max(0, values.mortgageEndYear - currentYear)
+        propertyUpdates.existingMortgageRemainingYears = remainingYears
+      }
+      if (typeof values.monthlyRentalIncome === 'number') {
+        // Rental yield as annual rental / property value
+        const propValue =
+          typeof values.propertyValue === 'number'
+            ? values.propertyValue
+            : property.existingPropertyValue
+        if (propValue > 0) {
+          propertyUpdates.rentalYield = ((values.monthlyRentalIncome as number) * 12) / propValue
+        }
+      }
+
+      if (typeof values.rentalExpensesPercent === 'number') {
+        propertyUpdates.rentalExpensesPercent = values.rentalExpensesPercent
+      }
+      // Convert calendar year to age at apply boundary (engine works in age-space)
+      if (typeof values.rentalIncomeEndYear === 'number') {
+        const endAge = selfAdult.currentAge + (values.rentalIncomeEndYear - currentYear)
+        if (endAge > selfAdult.currentAge) {
+          propertyUpdates.rentalIncomeEndAge = endAge
+        }
+      }
+
+      if (values.planToDownsize === true) {
+        const downsizing: DownsizingConfig = {
+          ...property.downsizing,
+          scenario: 'sell-and-downsize',
+        }
+        if (typeof values.downsizeYear === 'number') {
+          const selfAge = selfAdult.currentAge
+          downsizing.sellAge = selfAge + (values.downsizeYear - currentYear)
+        }
+        if (typeof values.replacementPropertyCost === 'number') {
+          downsizing.newPropertyCost = values.replacementPropertyCost
+        }
+        if (typeof values.downsizeProceedsPercent === 'number') {
+          downsizing.proceedsAllocationPercent = values.downsizeProceedsPercent
+        }
+        propertyUpdates.downsizing = downsizing
+      }
+
+      // Toggle-off: reset downsizing when user says no
+      if (values.planToDownsize === false) {
+        propertyUpdates.downsizing = { ...property.downsizing, scenario: 'none' as const }
+      }
+
+      // Toggle-off: clear mortgage fields when user says no mortgage
+      if (values.hasMortgage === false) {
+        propertyUpdates.existingMortgageBalance = 0
+        propertyUpdates.existingMonthlyPayment = 0
+        propertyUpdates.existingMortgageRate = 0
+        propertyUpdates.existingMortgageRemainingYears = 0
+      }
+
+      // Toggle-off: clear rental yield, expenses, and end age when user says no rental income
+      if (values.hasRentalIncome === false) {
+        propertyUpdates.rentalYield = 0
+        propertyUpdates.rentalExpensesPercent = 0
+        propertyUpdates.rentalIncomeEndAge = undefined
+      }
+
+      store.updateProperty(property.id, propertyUpdates)
+      return true
+    }
+
+    case 'expenses': {
+      const baseExpense = plan.expenses.find(
+        (e) => e.kind === 'base-living' && e.timing.owner === 'self'
+      )
+      if (!baseExpense) return false
+
+      // Build canonical breakdown from nudge flow field names
+      const breakdown: Record<string, number> = {}
+      for (const [flowField, catKey] of Object.entries(FLOW_FIELD_TO_CATEGORY)) {
+        const val = values[flowField]
+        if (typeof val === 'number' && val >= 0) {
+          breakdown[catKey] = val
+        }
+      }
+
+      const filledCategories = Object.values(breakdown).filter((v) => v > 0)
+      const total = filledCategories.reduce((sum, v) => sum + v, 0)
+
+      const expenseUpdates: Partial<ExpenseItem> = {}
+
+      if (filledCategories.length >= 1 && total > 0) {
+        // Persist category breakdown
+        const multipliers = (typeof values.multipliers === 'object' && values.multipliers != null)
+          ? values.multipliers as Record<string, number>
+          : {}
+        const templateId = typeof values.templateId === 'string'
+          ? values.templateId as 'frugal' | 'active' | 'none' | 'custom'
+          : 'none'
+
+        expenseUpdates.categoryBreakdown = {
+          amounts: breakdown,
+          templateId,
+          multipliers,
+        }
+
+        // Compute weighted retirement ratio
+        expenseUpdates.retirementSpendingAdjustment = computeWeightedRetirementRatio(breakdown, multipliers)
+
+        // Only overwrite total if 2+ categories filled (avoid understating with partial entry)
+        // Categories are monthly; ExpenseItem.amount is annual
+        if (filledCategories.length >= 2) {
+          expenseUpdates.amount = total * 12
+        }
+      } else if (typeof values.retirementSpendingRatio === 'number') {
+        // Fallback: scalar ratio if no categories (e.g., re-entering with old data)
+        expenseUpdates.retirementSpendingAdjustment = values.retirementSpendingRatio
+      }
+
+      store.updateExpense(baseExpense.id, expenseUpdates)
+
+      // Batch-apply goals from multi-goal editor (goalDrafts) or legacy single goal
+      if (values.hasLargeGoals === true) {
+        const currentYear = new Date().getFullYear()
+        const goalDrafts = values.goalDrafts as Array<{ id: string; name: string; amount: number; year: number; category: string; isNew?: boolean }> | undefined
+
+        if (goalDrafts) {
+          // Multi-goal mode: batch add/update/remove
+          const existingGoalIds = new Set(plan.goals.filter((g) => g.owner === 'self').map((g) => g.id))
+          const draftIds = new Set(goalDrafts.map((d) => d.id))
+
+          const additions: GoalItem[] = []
+          const updates: { id: string; changes: Partial<GoalItem> }[] = []
+          const removals = [...existingGoalIds].filter((id) => !draftIds.has(id))
+
+          for (const draft of goalDrafts) {
+            const targetAge = selfAdult.currentAge + (draft.year - currentYear)
+            if (existingGoalIds.has(draft.id)) {
+              updates.push({
+                id: draft.id,
+                changes: {
+                  label: draft.name,
+                  amount: draft.amount,
+                  timing: { kind: 'single-age', owner: 'self', age: targetAge },
+                  category: toGoalCategory(draft.category),
+                },
+              })
+            } else {
+              additions.push({
+                id: draft.id,
+                owner: 'self',
+                label: draft.name,
+                kind: 'financial-goal',
+                timing: { kind: 'single-age', owner: 'self', age: targetAge },
+                amount: draft.amount,
+                durationYears: 1,
+                priority: 'important',
+                inflationAdjusted: true,
+                category: toGoalCategory(draft.category),
+              })
+            }
+          }
+
+          store.batchUpdateGoals(additions, updates, removals)
+        } else if (typeof values.goalName === 'string' && values.goalName) {
+          // Legacy single-goal fallback
+          const targetYear = typeof values.goalYear === 'number' ? values.goalYear : currentYear + 5
+          const targetAge = selfAdult.currentAge + (targetYear - currentYear)
+          const existingGoal = plan.goals.find(
+            (g) => g.label === values.goalName && g.owner === 'self'
+          )
+          if (!existingGoal) {
+            store.addGoal({
+              id: createId('goal'),
+              owner: 'self',
+              label: values.goalName,
+              kind: 'financial-goal',
+              timing: { kind: 'single-age', owner: 'self', age: targetAge },
+              amount: typeof values.goalAmount === 'number' ? values.goalAmount : 0,
+              durationYears: 1,
+              priority: 'important',
+              inflationAdjusted: true,
+              category: 'other',
+            })
+          }
+        }
+      }
+      return true
+    }
+
+    case 'healthcare': {
+      const healthcareUpdates: Partial<HealthcareConfig> = {
+        ...selfAdult.healthcare,
+        enabled: true,
+      }
+
+      if (typeof values.ispTier === 'string') {
+        const tier = toIspTier(values.ispTier)
+        if (tier) healthcareUpdates.ispTier = tier
+      }
+      if (typeof values.careShieldEnrolled === 'boolean') {
+        healthcareUpdates.careShieldLifeEnabled = values.careShieldEnrolled
+      }
+      if (typeof values.mediSaveTopUpAnnual === 'number') {
+        healthcareUpdates.mediSaveTopUpAnnual = values.mediSaveTopUpAnnual
+      }
+      if (typeof values.annualIspPremium === 'number') {
+        healthcareUpdates.customIspPremium = values.annualIspPremium
+      }
+      if (typeof values.annualCareShieldPremium === 'number') {
+        healthcareUpdates.customCareShieldPremium = values.annualCareShieldPremium
+      }
+      if (typeof values.useMediSaveForPremiums === 'boolean') {
+        healthcareUpdates.useMediSaveForPremiums = values.useMediSaveForPremiums
+      }
+
+      store.updateAdult(selfAdult.id, {
+        healthcare: healthcareUpdates as HealthcareConfig,
+      })
+
+      // mediSaveBalance maps to CPF MA balance (MediSave is the MA account)
+      if (typeof values.mediSaveBalance === 'number') {
+        store.updateAdult(selfAdult.id, {
+          cpf: {
+            ...selfAdult.cpf,
+            balances: {
+              ...selfAdult.cpf.balances,
+              ma: values.mediSaveBalance,
+            },
+          },
+        })
+      }
+      return true
+    }
+
+    case 'salary': {
+      // Find the salary-model income entry for self
+      const salaryIncome = plan.income.find(
+        (inc) => inc.kind === 'salary-model' && inc.owner === 'self'
+      )
+      if (!salaryIncome) return false
+
+      const incomeUpdates: Partial<IncomeSource> = {}
+
+      if (typeof values.salaryModel === 'string') {
+        // Map nudge flow option values to SalaryModel domain values
+        const salaryModelMap: Record<string, SalaryModel> = {
+          simple: 'simple',
+          realistic: 'realistic',
+          mom: 'data-driven',
+        }
+        const mappedSalaryModel = salaryModelMap[values.salaryModel]
+        if (mappedSalaryModel) {
+          incomeUpdates.salaryModel = mappedSalaryModel
+          // All salary models use 'fixed' growthModel — the salary model itself handles growth
+          incomeUpdates.growthModel = 'fixed' as GrowthModel
+        }
+      }
+      if (typeof values.annualSalaryGrowthPercent === 'number') {
+        // Only apply growth rate when salary model is 'simple' (flat growth)
+        const effectiveModel = typeof values.salaryModel === 'string'
+          ? (values.salaryModel === 'mom' ? 'data-driven' : values.salaryModel)
+          : salaryIncome.salaryModel
+        if (effectiveModel === 'simple') {
+          incomeUpdates.growthRate = values.annualSalaryGrowthPercent
+        }
+      }
+      if (typeof values.annualBonusMonths === 'number') {
+        incomeUpdates.bonusMonths = values.annualBonusMonths
+      }
+
+      // Map salaryStopYear to timing.endAge
+      if (typeof values.salaryStopYear === 'number') {
+        const currentYear = new Date().getFullYear()
+        const endAge = selfAdult.currentAge + (values.salaryStopYear - currentYear)
+        if (endAge >= selfAdult.currentAge) {
+          incomeUpdates.timing = {
+            kind: 'age-range',
+            owner: salaryIncome.timing.owner,
+            startAge: salaryIncome.timing.kind === 'age-range' ? salaryIncome.timing.startAge : selfAdult.currentAge,
+            endAge,
+          }
+        }
+      }
+
+      // Career phases and promotion jumps for "realistic" model
+      const effectiveModel = typeof values.salaryModel === 'string'
+        ? (values.salaryModel === 'mom' ? 'data-driven' : values.salaryModel)
+        : salaryIncome.salaryModel
+      if (effectiveModel === 'realistic') {
+        if (Array.isArray(values.careerPhases) && values.careerPhases.length > 0) {
+          incomeUpdates.realisticPhases = values.careerPhases as CareerPhase[]
+        }
+        if (Array.isArray(values.promotionJumps)) {
+          incomeUpdates.promotionJumps = values.promotionJumps as PromotionJump[]
+        }
+      }
+
+      store.updateIncome(salaryIncome.id, incomeUpdates)
+      return true
+    }
+
+    case 'srs': {
+      const srsUpdates: Partial<typeof selfAdult.srs> = { ...selfAdult.srs }
+
+      if (typeof values.srsBalance === 'number') {
+        srsUpdates.balance = values.srsBalance
+      }
+
+      // Map investment strategy to expected return rate
+      if (typeof values.srsInvestmentStrategy === 'string') {
+        const rate = SRS_STRATEGY_RETURNS[values.srsInvestmentStrategy]
+        if (rate != null) srsUpdates.investmentReturn = rate
+      }
+
+      // Only set contribution values if the toggle is not explicitly off
+      if (values.contributeToSrs !== false) {
+        if (typeof values.annualSrsContribution === 'number') {
+          srsUpdates.annualContribution = values.annualSrsContribution
+        }
+        if (typeof values.srsWithdrawalStartAge === 'number') {
+          srsUpdates.drawdownStartAge = values.srsWithdrawalStartAge
+        }
+      }
+
+      // Toggle-off: zero out SRS contribution when user says they don't contribute
+      if (values.contributeToSrs === false) {
+        srsUpdates.annualContribution = 0
+      }
+
+      store.updateAdult(selfAdult.id, {
+        srs: { ...selfAdult.srs, ...srsUpdates },
+      })
+      return true
+    }
+
+    case 'goals': {
+      if (typeof values.goalName !== 'string' || !values.goalName) return false
+
+      const category = typeof values.goalCategory === 'string'
+        ? toGoalCategory(values.goalCategory)
+        : 'other'
+
+      const currentYear = new Date().getFullYear()
+      const targetYear = typeof values.goalTargetYear === 'number' ? values.goalTargetYear : currentYear + 5
+      const targetAge = selfAdult.currentAge + (targetYear - currentYear)
+
+      const goal: GoalItem = {
+        id: createId('goal'),
+        owner: 'self',
+        label: values.goalName,
+        kind: 'financial-goal',
+        timing: {
+          kind: 'single-age',
+          owner: 'self',
+          age: targetAge,
+        },
+        amount: typeof values.goalTargetAmount === 'number' ? values.goalTargetAmount : 0,
+        ...(typeof values.goalCurrentSavings === 'number' && values.goalCurrentSavings > 0
+          ? { amountSaved: values.goalCurrentSavings }
+          : {}),
+        durationYears: 1,
+        priority: 'nice-to-have',
+        inflationAdjusted: true,
+        category,
+      }
+
+      // Avoid creating duplicate goals with the same label
+      const existingGoal = plan.goals.find(
+        (g) => g.label === values.goalName && g.owner === 'self'
+      )
+      if (!existingGoal) {
+        store.addGoal(goal)
+      }
+      return true
+    }
+
+    case 'allocation': {
+      let applied = false
+      if (typeof values.allocationTemplate === 'string') {
+        const template = toAllocationTemplate(values.allocationTemplate)
+        if (template) {
+          useAllocationStore.getState().applyTemplate(template)
+          applied = true
+        }
+      }
+
+      // Wire glide path config fields
+      if (typeof values.enableGlidePath === 'boolean') {
+        const allocationState = useAllocationStore.getState()
+        const currentGlidePathConfig = allocationState.glidePathConfig
+        const updatedConfig = {
+          ...currentGlidePathConfig,
+          enabled: values.enableGlidePath,
+          ...(typeof values.glidePathStartAge === 'number' ? { startAge: values.glidePathStartAge } : {}),
+          ...(typeof values.glidePathEndAge === 'number' ? { endAge: values.glidePathEndAge } : {}),
+        }
+        allocationState.setGlidePathConfig(updatedConfig)
+        applied = true
+      }
+
+      // Map glide path end template to target allocation weights
+      if (typeof values.glidePathEndTemplate === 'string') {
+        if (values.glidePathEndTemplate === 'very-conservative') {
+          useAllocationStore.getState().setTargetWeights([...VERY_CONSERVATIVE_WEIGHTS])
+          applied = true
+        } else {
+          const template = toAllocationTemplate(values.glidePathEndTemplate)
+          if (template) {
+            useAllocationStore.getState().applyTemplate(template, 'target')
+            applied = true
+          }
+        }
+      }
+
+      // Wire rebalancing frequency to household assumptions
+      if (typeof values.rebalancingFrequency === 'string') {
+        const validFrequencies: RebalanceFrequency[] = ['annual', 'semi-annual', 'quarterly']
+        if (validFrequencies.includes(values.rebalancingFrequency as RebalanceFrequency)) {
+          store.updateAssumptions({
+            returns: {
+              rebalanceFrequency: values.rebalancingFrequency as RebalanceFrequency,
+            },
+          })
+          applied = true
+        }
+      }
+      return applied
+    }
+
+    case 'protection': {
+      const adultUpdates: Partial<PlanningAdult> = {}
+
+      if (typeof values.emergencyFundBalance === 'number') {
+        adultUpdates.cashSavings = values.emergencyFundBalance
+      }
+
+      // Sum all debt fields into nonMortgageDebtTotal
+      const debtFields = [
+        'carLoanOutstanding',
+        'studentLoanOutstanding',
+        'personalLoanOutstanding',
+        'creditCardDebt',
+        'otherDebt',
+      ] as const
+      const totalDebt = debtFields.reduce((sum, field) => {
+        const val = values[field]
+        return sum + (typeof val === 'number' && val > 0 ? val : 0)
+      }, 0)
+      if (totalDebt > 0 || values.hasOutstandingDebt === true) {
+        adultUpdates.nonMortgageDebtTotal = totalDebt
+      }
+
+      // Toggle-off: clear debt fields when user says no outstanding debt
+      if (values.hasOutstandingDebt === false) {
+        adultUpdates.nonMortgageDebtTotal = 0
+        adultUpdates.nonMortgageDebtMonthlyPayment = 0
+        adultUpdates.debtPayoffAge = undefined
+      }
+
+      // Debt payoff age (from nudge flow)
+      if (typeof values.debtPayoffAge === 'number' && values.debtPayoffAge > 0) {
+        adultUpdates.debtPayoffAge = values.debtPayoffAge
+      }
+
+      // Insurance fields
+      if (typeof values.lifeCoverageAmount === 'number') {
+        adultUpdates.insuranceDeathCoverage = values.lifeCoverageAmount
+      }
+      if (typeof values.ciCoverageAmount === 'number') {
+        adultUpdates.insuranceCICoverage = values.ciCoverageAmount
+      }
+      if (typeof values.disabilityCoverageMonthly === 'number') {
+        adultUpdates.insuranceDisabilityMonthly = values.disabilityCoverageMonthly
+      }
+      if (typeof values.annualInsurancePremiums === 'number') {
+        adultUpdates.annualInsurancePremiums = values.annualInsurancePremiums
+      }
+      if (typeof values.emergencyFundTarget === 'number') {
+        adultUpdates.emergencyFundTarget = values.emergencyFundTarget
+      }
+
+      if (Object.keys(adultUpdates).length > 0) {
+        store.updateAdult(selfAdult.id, adultUpdates)
+      }
+      return true
+    }
+
+    default:
+      return false
+  }
+}

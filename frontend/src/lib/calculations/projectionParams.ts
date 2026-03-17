@@ -251,6 +251,7 @@ export function buildFullProjectionParams(
       ? (property.existingMonthlyPayment - property.mortgageCpfMonthly) * 12 * ownershipPct
       : 0,
     annualRentalIncome: getPropertyRentalIncome(property),
+    rentalIncomeEndAge: property.rentalIncomeEndAge,
     existingPropertyValue: property.ownsProperty
       ? property.existingPropertyValue * ownershipPct
       : 0,
@@ -270,6 +271,9 @@ export function buildFullProjectionParams(
     propertyOwnershipPct: ownershipPct,
     parentSupport: profile.parentSupport,
     parentSupportEnabled: profile.parentSupportEnabled,
+    annualInsurancePremiums: profile.annualInsurancePremiums,
+    annualNonMortgageDebtPayment: profile.annualNonMortgageDebtPayment,
+    debtPayoffAge: profile.debtPayoffAge,
     healthcareConfig: profile.healthcareConfig?.enabled ? profile.healthcareConfig : null,
     healthcareCashOutlayByYear,
     retirementWithdrawals: profile.retirementWithdrawals,

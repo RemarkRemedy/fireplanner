@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { Info, FlaskConical } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -9,7 +10,11 @@ import { OneMoreYearPanel } from '@/components/dashboard/OneMoreYearPanel'
 import { CashFlowPanel } from '@/components/dashboard/CashFlowPanel'
 import { RiskDashboard } from '@/components/dashboard/RiskDashboard'
 import { EmptyDashboardState } from '@/components/dashboard/EmptyDashboardState'
+import { PlanCompleteness } from '@/components/dashboard/PlanCompleteness'
+import { NudgeDrawer } from '@/components/projection/NudgeDrawer'
+import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
 import { StrategyCard } from '@/components/dashboard/StrategyCard'
+import { GuardrailDashboard } from '@/components/dashboard/GuardrailDashboard'
 import { PassiveIncomePanel } from '@/components/dashboard/PassiveIncomePanel'
 import { TrajectoryPanel } from '@/components/dashboard/TrajectoryPanel'
 import { PerAdultBreakdownPanel } from '@/components/dashboard/PerAdultBreakdownPanel'
@@ -18,11 +23,15 @@ import { usePerAdultBreakdown } from '@/hooks/usePerAdultBreakdown'
 import { useSectionCompletion, type SectionId } from '@/hooks/useSectionCompletion'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { ExpenseSwrPanel } from '@/components/dashboard/ExpenseSwrPanel'
+import { EstateProjectionPanel } from '@/components/dashboard/EstateProjectionPanel'
 import { ExpenseTrackerCard } from '@/components/email/ExpenseTrackerCard'
 import { useExpenseTrackerDwell } from '@/hooks/useExpenseTrackerDwell'
 import { useExpenseTracker } from '@/hooks/useExpenseTracker'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { BucketVisualization } from '@/components/dashboard/BucketVisualization'
+import { AnnualReviewBanner } from '@/components/shared/AnnualReviewBanner'
 
 const INDIVIDUAL_KEY_SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'section-personal', label: 'Personal Details' },
@@ -39,7 +48,7 @@ const HOUSEHOLD_KEY_SECTIONS: { id: SectionId; label: string }[] = [
 ]
 
 export function DashboardPage() {
-  usePageMeta({ title: 'Dashboard — SG FIRE Planner', description: 'See your FIRE number, years to retirement, portfolio at retirement, success probability, and risk assessment in one view. Updated live as you adjust inputs.', path: '/dashboard' })
+  usePageMeta({ title: 'Dashboard | SG FIRE Planner', description: 'Your FIRE dashboard with key metrics, risk assessment, and retirement readiness overview.', path: '/dashboard' })
   const metrics = useDashboardMetrics()
   const isEmpty = metrics.fireNumber === null
   const { isEligible } = useExpenseTracker()
@@ -47,6 +56,7 @@ export function DashboardPage() {
   const { sections } = useSectionCompletion()
   const householdPlanType = useHouseholdPlanStore((state) => state.plan.planType)
 
+  const [drawerFlowId, setDrawerFlowId] = useState<NudgeFlowId | null>(null)
   const lastMC = useSimulationStore((s) => s.lastMCSuccessRate)
   const lastBT = useSimulationStore((s) => s.lastBacktestSuccessRate)
   const hasRunSimulation = lastMC !== null || lastBT !== null
@@ -56,7 +66,7 @@ export function DashboardPage() {
 
   const isHouseholdMode = isHouseholdPlannerV1Enabled() && householdPlanType !== 'individual'
   const keySections = isHouseholdMode ? HOUSEHOLD_KEY_SECTIONS : INDIVIDUAL_KEY_SECTIONS
-  const uncustomized = keySections.filter((section) => !sections[section.id].isComplete)
+  const uncustomized = keySections.filter((section) => !sections[section.id]?.isComplete)
 
   return (
     <div className="space-y-8">
@@ -66,6 +76,10 @@ export function DashboardPage() {
           Your financial independence snapshot. All metrics are computed from your profile, income, and allocation settings.
         </p>
       </div>
+
+      <AnnualReviewBanner />
+
+      <PlanCompleteness onOpenDrawer={setDrawerFlowId} />
 
       {!isEmpty && uncustomized.length > 0 && (
         <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-3">
@@ -148,6 +162,15 @@ export function DashboardPage() {
       ) : (
         <JointPanels metrics={metrics} isEligible={isEligible} />
       )}
+
+      {drawerFlowId && createPortal(
+        <NudgeDrawer
+          flowId={drawerFlowId}
+          onClose={() => setDrawerFlowId(null)}
+          onComplete={(_delta) => { setDrawerFlowId(null) }}
+        />,
+        document.body
+      )}
     </div>
   )
 }
@@ -175,17 +198,29 @@ function JointPanels({ metrics, isEligible }: { metrics: ReturnType<typeof useDa
       <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         <StrategyCard />
       </div>
-      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '240ms' }}>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '210ms' }}>
+        <GuardrailDashboard />
+      </div>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '220ms' }}>
+        <ExpenseSwrPanel />
+      </div>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '260ms' }}>
         <PassiveIncomePanel />
       </div>
-      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '320ms' }}>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+        <BucketVisualization />
+      </div>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '340ms' }}>
         <CashFlowPanel />
       </div>
-      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '420ms' }}>
+        <EstateProjectionPanel />
+      </div>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '460ms' }}>
         <RiskDashboard />
       </div>
       {isEligible && (
-        <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '440ms' }}>
+        <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '500ms' }}>
           <ExpenseTrackerCard />
         </div>
       )}

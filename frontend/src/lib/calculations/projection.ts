@@ -103,6 +103,14 @@ export interface ProjectionParams {
   // Parent support
   parentSupport: ParentSupport[]
   parentSupportEnabled: boolean
+  /** Annual insurance premium deducted from cash flow */
+  annualInsurancePremiums?: number
+  /** Annual non-mortgage debt payment deducted from cash flow */
+  annualNonMortgageDebtPayment?: number
+  /** Age at which non-mortgage debt is fully repaid (deduction stops) */
+  debtPayoffAge?: number
+  /** Age at which rental income stops */
+  rentalIncomeEndAge?: number
   // Healthcare
   healthcareConfig: HealthcareConfig | null
   /** Pre-computed healthcare cash outlay per year (summed across all adults).
@@ -366,6 +374,7 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
         newMortgageTerm: downsizing.newMortgageTerm,
         residency: residencyForAbsd,
         propertyCount: Math.max(0, propertyCount - 1),
+        proceedsAllocationPercent: downsizing.proceedsAllocationPercent,
       })
       dsNetEquity = result.netEquityToPortfolio * propertyOwnershipPct
       dsShortfall = result.shortfall * propertyOwnershipPct
@@ -471,8 +480,9 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       if (soldProperty && downsizing?.scenario === 'sell-and-rent') {
         estDsRent = dsAnnualRent * Math.pow(1 + (downsizing.rentGrowthRate ?? 0.03), age - dsSellAge)
       }
+      const estInsurance = params.annualInsurancePremiums ?? 0
       const estExpenses = estLeAdj * retirementSpendingAdjustment * Math.pow(1 + inflation, year)
-        + estParentSupport + estDsRent + estHealthCare
+        + estParentSupport + estDsRent + estHealthCare + estInsurance
       const estGap = Math.max(0, estExpenses - estPostRetIncome)
       const estMortgage = age >= mortgageEndAge ? 0 : annualMortgagePayment + incomeRow.cpfOaShortfall
       const totalPreFundNeed = Math.max(0, estGap + estMortgage)
@@ -593,7 +603,9 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     let effectiveMortgagePayment = age >= mortgageEndAge ? 0 : annualMortgagePayment
     // When CPF OA can't cover its mortgage share, the shortfall spills to cash
     effectiveMortgagePayment += incomeRow.cpfOaShortfall
-    let effectiveRentalIncome = annualRentalIncome
+    let effectiveRentalIncome = (params.rentalIncomeEndAge != null && age >= params.rentalIncomeEndAge)
+      ? 0
+      : annualRentalIncome
     let downsizingRentExpense = 0
 
     // Dynamic property value: appreciation +/- Bala's Table leasehold decay
@@ -659,14 +671,19 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
     const { adjustedExpense: lifeEventAdjustedBase, lumpSum: lifeEventLumpSum } =
       getLifeEventExpenseImpact(age, effectiveBase, params.lifeEvents ?? [], params.lifeEventsEnabled ?? false)
     const baseExpenses = isRetired ? lifeEventAdjustedBase * retirementSpendingAdjustment : lifeEventAdjustedBase
-    const inflationAdjustedExpenses = baseExpenses * Math.pow(1 + inflation, year) + parentSupportExpense + downsizingRentExpense + healthcareCashOutlay
+    const insurancePremiums = params.annualInsurancePremiums ?? 0
+    const debtPayment = (params.annualNonMortgageDebtPayment ?? 0) > 0
+      && (params.debtPayoffAge == null || age < params.debtPayoffAge)
+      ? (params.annualNonMortgageDebtPayment ?? 0)
+      : 0
+    const inflationAdjustedExpenses = baseExpenses * Math.pow(1 + inflation, year) + parentSupportExpense + downsizingRentExpense + healthcareCashOutlay + insurancePremiums + debtPayment
 
     if (!isRetired) {
       // Pre-retirement: accumulation
       const netPropertyCashflow = effectiveRentalIncome - effectiveMortgagePayment
-      // Extra expenses (parent support, healthcare, downsizing rent) are computed by the
+      // Extra expenses (parent support, healthcare, downsizing rent, insurance premiums) are computed by the
       // projection but NOT included in income projection's annualSavings — deduct them here.
-      const extraExpenses = parentSupportExpense + healthcareCashOutlay + downsizingRentExpense
+      const extraExpenses = parentSupportExpense + healthcareCashOutlay + downsizingRentExpense + insurancePremiums + debtPayment
       // When income < base expenses, income projection clamps annualSavings to max(0, ...).
       // The shortfall must still be deducted from the portfolio.
       // Use life-event-adjusted base to match income.ts savings calculation.
@@ -997,6 +1014,16 @@ export function generateProjection(params: ProjectionParams): ProjectionResult {
       cumulativeSavings: incomeRow.cumulativeSavings,
       activeLifeEvents: incomeRow.activeLifeEvents,
     })
+  }
+
+  // If the portfolio never depleted but FIRE was never formally achieved by
+  // crossing the FIRE number, the household effectively achieved FIRE at
+  // retirement age — post-retirement income (CPF LIFE, rental, etc.) sustained
+  // spending without the portfolio needing to reach the gross FIRE number.
+  // Only applies if the projection actually reached retirement (lifeExpectancy >= retirementAge).
+  const lastAge = rows.length > 0 ? rows[rows.length - 1].age : currentAge
+  if (fireAchievedAge === null && portfolioDepletedAge === null && lastAge >= retirementAge) {
+    fireAchievedAge = retirementAge
   }
 
   const lastRow = rows[rows.length - 1]

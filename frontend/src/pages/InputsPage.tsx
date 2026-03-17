@@ -26,6 +26,9 @@ import { AssumptionsSection as HouseholdAssumptionsSection } from '@/components/
 import { CpfSection } from '@/components/profile/CpfSection'
 import { WithdrawalStrategyCard } from '@/components/household/WithdrawalStrategyCard'
 import { ProtectionSection } from '@/components/household/ProtectionSection'
+import { SectionIntro } from '@/components/inputs/SectionIntro'
+import { ExpenseItemiser } from '@/components/inputs/ExpenseItemiser'
+import { BucketAllocator } from '@/components/inputs/BucketAllocator'
 
 const HOUSEHOLD_PLAN_LABELS = {
   individual: 'Individual',
@@ -212,6 +215,7 @@ export function InputsPage() {
           description="Roster setup, member naming, and who this plan covers."
           isComplete={sectionCompletion['section-personal'].isComplete}
         >
+          <SectionIntro sectionId="section-personal" />
           <PeopleSection
             selectedAdultId={selectedAdult?.id ?? null}
             onSelectedAdultIdChange={setSelectedAdultId}
@@ -230,6 +234,7 @@ export function InputsPage() {
           isComplete={sectionCompletion['section-income'].isComplete}
           scopePill={selectedAdult ? { kind: 'person', adults: adults.map(a => ({ id: a.id, name: a.displayName })), selectedId: selectedAdultId, onSelect: setSelectedAdultId } : undefined}
         >
+          <SectionIntro sectionId="section-income" />
           <IncomeSection selectedAdultId={selectedAdult?.id ?? null} />
         </HouseholdPrototypeSection>
       ),
@@ -245,6 +250,7 @@ export function InputsPage() {
           isComplete={sectionCompletion['section-expenses'].isComplete}
           scopePill={selectedAdult ? { kind: 'shared', adults: adults.map(a => ({ id: a.id, name: a.displayName })), selectedId: selectedAdultId, onSelect: setSelectedAdultId } : undefined}
         >
+          <SectionIntro sectionId="section-expenses" />
           <SpendingGoalsSection selectedAdultId={selectedAdult?.id ?? null} />
         </HouseholdPrototypeSection>
       ),
@@ -260,6 +266,7 @@ export function InputsPage() {
           isComplete={sectionCompletion['section-net-worth'].isComplete}
           scopePill={{ kind: 'household' }}
         >
+          <SectionIntro sectionId="section-net-worth" />
           <AssetsPropertySection mode="assets" />
         </HouseholdPrototypeSection>
       ),
@@ -279,6 +286,7 @@ export function InputsPage() {
           isComplete={sectionCompletion['section-cpf'].isComplete}
           scopePill={selectedAdult ? { kind: 'person', adults: adults.map(a => ({ id: a.id, name: a.displayName })), selectedId: selectedAdultId, onSelect: setSelectedAdultId } : undefined}
         >
+          <SectionIntro sectionId="section-cpf" />
           {cpfModel ? (
             <CpfSection model={cpfModel} />
           ) : (
@@ -301,6 +309,7 @@ export function InputsPage() {
           isComplete={sectionCompletion['section-protection'].isComplete}
           scopePill={selectedAdult ? { kind: 'person', adults: adults.map(a => ({ id: a.id, name: a.displayName })), selectedId: selectedAdultId, onSelect: setSelectedAdultId } : undefined}
         >
+          <SectionIntro sectionId="section-protection" />
           <ProtectionSection />
         </HouseholdPrototypeSection>
       ),
@@ -316,6 +325,7 @@ export function InputsPage() {
           isComplete={sectionCompletion['section-property'].isComplete}
           scopePill={{ kind: 'household' }}
         >
+          <SectionIntro sectionId="section-property" />
           <AssetsPropertySection mode="property" />
         </HouseholdPrototypeSection>
       ),
@@ -333,6 +343,7 @@ export function InputsPage() {
         >
           <HouseholdAssumptionsSection mode="assumptions" />
           <WithdrawalStrategyCard />
+          <ExpenseItemiser />
         </HouseholdPrototypeSection>
       ),
     },
@@ -347,7 +358,9 @@ export function InputsPage() {
           isComplete={sectionCompletion['section-allocation'].isComplete}
           scopePill={{ kind: 'household' }}
         >
+          <SectionIntro sectionId="section-allocation" />
           <HouseholdAssumptionsSection mode="allocation" />
+          <BucketAllocator />
         </HouseholdPrototypeSection>
       ),
     },

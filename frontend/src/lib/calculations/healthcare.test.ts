@@ -595,6 +595,132 @@ describe('ISP OOP factor', () => {
   })
 })
 
+describe('custom ISP premium override', () => {
+  it('uses customIspPremium instead of tier lookup when set', () => {
+    const config: HealthcareConfig = {
+      ...DEFAULT_CONFIG,
+      ispTier: 'enhanced',
+      customIspPremium: 5000,
+    }
+    const result = calculateHealthcareCostAtAge(config, 50)
+    expect(result.ispAdditionalPremium).toBe(5000)
+  })
+
+  it('falls back to tier lookup when customIspPremium is undefined', () => {
+    const config: HealthcareConfig = { ...DEFAULT_CONFIG, ispTier: 'standard' }
+    const result = calculateHealthcareCostAtAge(config, 50)
+    // standard tier, age 41-50 = 1000
+    expect(result.ispAdditionalPremium).toBe(1000)
+  })
+
+  it('falls back to tier lookup when customIspPremium is 0', () => {
+    const config: HealthcareConfig = {
+      ...DEFAULT_CONFIG,
+      ispTier: 'standard',
+      customIspPremium: 0,
+    }
+    const result = calculateHealthcareCostAtAge(config, 50)
+    expect(result.ispAdditionalPremium).toBe(1000)
+  })
+
+  it('still applies ISP OOP factor from resolved tier when using custom premium', () => {
+    const config: HealthcareConfig = {
+      ...DEFAULT_CONFIG,
+      ispTier: 'enhanced',
+      customIspPremium: 3000,
+      oopModel: 'fixed',
+      oopBaseAmount: 1000,
+    }
+    const result = calculateHealthcareCostAtAge(config, 50)
+    // enhanced tier OOP factor = 0.15
+    expect(result.oopExpense).toBe(150)
+  })
+})
+
+describe('custom CareShield premium override', () => {
+  it('uses customCareShieldPremium instead of table lookup when set', () => {
+    const config: HealthcareConfig = {
+      ...DEFAULT_CONFIG,
+      careShieldLifeEnabled: true,
+      customCareShieldPremium: 800,
+    }
+    const result = calculateHealthcareCostAtAge(config, 45)
+    expect(result.careShieldLifePremium).toBe(800)
+  })
+
+  it('falls back to table lookup when customCareShieldPremium is undefined', () => {
+    const result = calculateHealthcareCostAtAge(DEFAULT_CONFIG, 45)
+    expect(result.careShieldLifePremium).toBe(290)
+  })
+
+  it('falls back to table lookup when customCareShieldPremium is 0', () => {
+    const config: HealthcareConfig = {
+      ...DEFAULT_CONFIG,
+      careShieldLifeEnabled: true,
+      customCareShieldPremium: 0,
+    }
+    const result = calculateHealthcareCostAtAge(config, 45)
+    expect(result.careShieldLifePremium).toBe(290)
+  })
+})
+
+describe('MediSave routing toggle', () => {
+  it('defaults to MediSave deduction when useMediSaveForPremiums is undefined', () => {
+    const config: HealthcareConfig = { ...DEFAULT_CONFIG, ispTier: 'enhanced' }
+    const result = calculateHealthcareCostAtAge(config, 50)
+    expect(result.mediSaveDeductible).toBeGreaterThan(0)
+    expect(result.cashOutlay).toBeLessThan(result.totalCost)
+  })
+
+  it('defaults to MediSave deduction when useMediSaveForPremiums is true', () => {
+    const config: HealthcareConfig = {
+      ...DEFAULT_CONFIG,
+      ispTier: 'enhanced',
+      useMediSaveForPremiums: true,
+    }
+    const result = calculateHealthcareCostAtAge(config, 50)
+    expect(result.mediSaveDeductible).toBeGreaterThan(0)
+    expect(result.cashOutlay).toBeLessThan(result.totalCost)
+  })
+
+  it('sets mediSaveDeductible to 0 when useMediSaveForPremiums is false', () => {
+    const config: HealthcareConfig = {
+      ...DEFAULT_CONFIG,
+      ispTier: 'enhanced',
+      useMediSaveForPremiums: false,
+    }
+    const result = calculateHealthcareCostAtAge(config, 50)
+    expect(result.mediSaveDeductible).toBe(0)
+    expect(result.cashOutlay).toBe(result.totalCost)
+  })
+
+  it('inflateHealthcareCost respects useMediSaveForPremiums=false', () => {
+    const config: HealthcareConfig = {
+      ...DEFAULT_CONFIG,
+      ispTier: 'enhanced',
+      premiumInflationRate: 0.03,
+      useMediSaveForPremiums: false,
+    }
+    const base = calculateHealthcareCostAtAge(config, 50)
+    const inflated = inflateHealthcareCost(base, config, 40)
+    expect(inflated.mediSaveDeductible).toBe(0)
+    expect(inflated.cashOutlay).toBe(inflated.totalCost)
+  })
+
+  it('calculateHealthcareLAE respects useMediSaveForPremiums=false', () => {
+    const config: HealthcareConfig = {
+      ...DEFAULT_CONFIG,
+      ispTier: 'enhanced',
+      useMediSaveForPremiums: false,
+    }
+    // With MediSave routing off, LAE should be higher (user pays everything in cash)
+    const configWithMediSave: HealthcareConfig = { ...DEFAULT_CONFIG, ispTier: 'enhanced' }
+    const laeNoMediSave = calculateHealthcareLAE(config, 50, 90, 0.04)
+    const laeWithMediSave = calculateHealthcareLAE(configWithMediSave, 50, 90, 0.04)
+    expect(laeNoMediSave).toBeGreaterThan(laeWithMediSave)
+  })
+})
+
 describe('invariants', () => {
   const AGES = [30, 40, 50, 60, 70, 80, 90]
   const CONFIGS: HealthcareConfig[] = [

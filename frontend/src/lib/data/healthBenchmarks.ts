@@ -1,10 +1,17 @@
 /**
  * Financial Health Check benchmarks and thresholds.
- * Sources: MoneySense, DBS, MAS, LIA, Karen Tang.
+ * Sources: MoneySense, DBS, MAS, LIA.
  * Downloaded: 2026-03-10
  */
 
 export type TrafficLight = 'green' | 'amber' | 'red'
+
+/** Tailwind dot color classes for traffic-light status indicators. */
+export const TRAFFIC_LIGHT_COLORS: Record<TrafficLight, string> = {
+  green: 'bg-emerald-500',
+  amber: 'bg-amber-500',
+  red: 'bg-red-500',
+} as const
 
 export type RatioDirection = 'higher-is-better' | 'lower-is-better'
 
@@ -22,6 +29,7 @@ export interface HealthRatioMeta {
   }
   tip: Record<TrafficLight, string>
   source: string
+  sourceUrl?: string
 }
 
 export const HEALTH_RATIOS: HealthRatioMeta[] = [
@@ -40,6 +48,7 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
       red: 'Less than 3 months of expenses in cash. Prioritize building an emergency fund.',
     },
     source: 'MoneySense Basic Financial Planning Guide',
+    sourceUrl: 'https://www.moneysense.gov.sg/planning-your-finances-well/',
   },
   {
     id: 'savings-ratio',
@@ -61,6 +70,7 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
       red: 'Saving less than 10% of take-home income. Review expenses for reduction opportunities.',
     },
     source: 'MoneySense Basic Financial Planning Guide (thresholds adjusted for net income basis)',
+    sourceUrl: 'https://www.moneysense.gov.sg/planning-your-finances-well/',
   },
   {
     id: 'tdsr',
@@ -80,6 +90,7 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
       red: 'TDSR over 50%. Debt payments consume more than half of income. Urgent action needed.',
     },
     source: 'DBS Financial Health Ratios (personal finance thresholds; MAS regulatory limit is 55%)',
+    sourceUrl: 'https://www.dbs.com.sg/personal/articles/nav/financial-planning/7-financial-ratios-to-gauge-your-financial-health',
   },
   {
     id: 'non-mortgage-dsr',
@@ -96,6 +107,7 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
       red: 'Non-mortgage debt over 25% of gross income. High risk of debt spiral.',
     },
     source: 'DBS Financial Health Ratios',
+    sourceUrl: 'https://www.dbs.com.sg/personal/articles/nav/financial-planning/7-financial-ratios-to-gauge-your-financial-health',
   },
   {
     id: 'debt-to-asset',
@@ -112,6 +124,7 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
       red: 'Debt-to-asset over 50%. More than half your assets are financed by debt.',
     },
     source: 'DBS Financial Health Ratios',
+    sourceUrl: 'https://www.dbs.com.sg/personal/articles/nav/financial-planning/7-financial-ratios-to-gauge-your-financial-health',
   },
   {
     id: 'liquid-to-nw',
@@ -127,7 +140,8 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
       amber: '10-15% liquid. Consider increasing accessible cash reserves.',
       red: 'Less than 10% liquid. Wealth is illiquid. May struggle in emergencies.',
     },
-    source: 'Karen Tang Financial Planning',
+    source: 'DBS Financial Health Ratios',
+    sourceUrl: 'https://www.dbs.com.sg/personal/articles/nav/financial-planning/7-financial-ratios-to-gauge-your-financial-health',
   },
   {
     id: 'investment-to-nw',
@@ -143,7 +157,8 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
       amber: '30-50% invested. Consider deploying more idle cash into investments.',
       red: 'Less than 30% invested. Significant wealth sitting idle.',
     },
-    source: 'Karen Tang Financial Planning',
+    source: 'DBS Financial Health Ratios',
+    sourceUrl: 'https://www.dbs.com.sg/personal/articles/nav/financial-planning/7-financial-ratios-to-gauge-your-financial-health',
   },
   {
     id: 'solvency',
@@ -160,6 +175,24 @@ export const HEALTH_RATIOS: HealthRatioMeta[] = [
       red: 'Solvency under 35%. High leverage. Focus on debt reduction.',
     },
     source: 'DBS Financial Health Ratios',
+    sourceUrl: 'https://www.dbs.com.sg/personal/articles/nav/financial-planning/7-financial-ratios-to-gauge-your-financial-health',
+  },
+  {
+    id: 'fee-drag',
+    label: 'Investment Fee Drag',
+    shortLabel: 'Fees',
+    description: 'Annual expense ratio on your invested portfolio',
+    formula: 'expenseRatio (set in FIRE Settings)',
+    unit: '%',
+    direction: 'lower-is-better',
+    thresholds: { greenBound: 0.005, amberBound: 0.01 },
+    tip: {
+      green: 'Under 0.5% fees. Low-cost portfolio — more of your returns stay invested.',
+      amber: '0.5-1.0% fees. Consider switching active funds to lower-cost index funds or ETFs.',
+      red: 'Over 1.0% fees. Common with ILPs and actively managed funds. Over 30 years, this can cost 20-30% of your final portfolio value.',
+    },
+    source: 'MoneySense Unit Trusts Guide (Total Expense Ratio)',
+    sourceUrl: 'https://www.moneysense.gov.sg/unit-trusts-guide/',
   },
 ]
 

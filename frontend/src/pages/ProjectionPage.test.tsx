@@ -9,9 +9,13 @@ vi.mock('@/hooks/useProjection', () => ({
   useProjection: vi.fn(),
 }))
 
-vi.mock('@/hooks/useIncomeProjection', () => ({
-  useNormalizedLegacyAnalysisContext: vi.fn(),
-}))
+vi.mock('@/hooks/useIncomeProjection', async (importOriginal) => {
+  const actual = await importOriginal() as Record<string, unknown>
+  return {
+    ...actual,
+    useNormalizedLegacyAnalysisContext: vi.fn(),
+  }
+})
 
 vi.mock('@/hooks/useMediaQuery', () => ({
   useMediaQuery: () => false,

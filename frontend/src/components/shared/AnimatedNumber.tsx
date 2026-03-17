@@ -17,7 +17,11 @@ export function AnimatedNumber({ value, format, delay = 0, className }: Animated
     const to = value
     prevValue.current = value
 
-    if (from === to) return
+    // Skip animation when from is NaN (StrictMode cleanup) or values match
+    if (!isFinite(from) || from === to) {
+      setDisplay(to)
+      return
+    }
 
     const duration = 600
     let start: number | null = null
@@ -52,7 +56,13 @@ export function AnimatedNumber({ value, format, delay = 0, className }: Animated
       rafId.current = requestAnimationFrame(animate)
     }
 
-    return () => cancelAnimationFrame(rafId.current)
+    return () => {
+      cancelAnimationFrame(rafId.current)
+      // Snap display to target so no NaN interpolation on next change
+      setDisplay(value)
+      // Reset so StrictMode's re-invocation of the effect doesn't bail out
+      prevValue.current = NaN
+    }
   }, [value, delay])
 
   return (

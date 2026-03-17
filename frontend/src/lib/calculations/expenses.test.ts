@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { ExpenseAdjustment } from '@/lib/types'
-import { getEffectiveExpenses, computeExpensePhases } from './expenses'
+import { getEffectiveExpenses, computeExpensePhases, computeWeightedRetirementRatio } from './expenses'
 
 describe('getEffectiveExpenses', () => {
   const base = 48000
@@ -187,5 +187,39 @@ describe('computeExpensePhases', () => {
       { fromAge: 30, toAge: 40, amount: 0 },
       { fromAge: 40, toAge: 50, amount: 48000 },
     ])
+  })
+})
+
+describe('computeWeightedRetirementRatio', () => {
+  it('returns 1.0 when all categories are zero', () => {
+    expect(computeWeightedRetirementRatio({ food: 0, transport: 0 }, { food: 0.8 })).toBe(1.0)
+  })
+  it('returns 1.0 when breakdown is empty', () => {
+    expect(computeWeightedRetirementRatio({}, {})).toBe(1.0)
+  })
+  it('returns the multiplier for a single category', () => {
+    expect(computeWeightedRetirementRatio({ food: 500 }, { food: 0.85 })).toBeCloseTo(0.85)
+  })
+  it('returns uniform multiplier when all categories have the same multiplier', () => {
+    expect(computeWeightedRetirementRatio({ food: 500, transport: 300, travel: 200 }, { food: 0.7, transport: 0.7, travel: 0.7 })).toBeCloseTo(0.7)
+  })
+  it('computes weighted average across categories', () => {
+    // food: 600 (60%), transport: 400 (40%), multipliers: 1.0 and 0.5 → 0.8
+    expect(computeWeightedRetirementRatio({ food: 600, transport: 400 }, { food: 1.0, transport: 0.5 })).toBeCloseTo(0.8)
+  })
+  it('defaults to 1.0 for categories with no multiplier', () => {
+    expect(computeWeightedRetirementRatio({ food: 500 }, {})).toBeCloseTo(1.0)
+  })
+  it('ignores negative amounts', () => {
+    expect(computeWeightedRetirementRatio({ food: 500, transport: -100 }, { food: 0.85, transport: 0.5 })).toBeCloseTo(0.85)
+  })
+  it('clamps multipliers above 5.0', () => {
+    expect(computeWeightedRetirementRatio({ food: 500 }, { food: 10 })).toBeCloseTo(5.0)
+  })
+  it('clamps multipliers below 0', () => {
+    expect(computeWeightedRetirementRatio({ food: 500 }, { food: -2 })).toBeCloseTo(0)
+  })
+  it('returns 1.0 for backward-compat (empty breakdown from legacy data)', () => {
+    expect(computeWeightedRetirementRatio({}, { food: 0.8 })).toBe(1.0)
   })
 })

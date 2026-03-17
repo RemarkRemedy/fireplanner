@@ -119,15 +119,22 @@ export function calculateHealthcareCostAtAge(
   // 2. ISP additional premium (uses resolved tier for downgrade support)
   const effectiveTier = resolveIspTierAtAge(config, age)
   let ispAdditionalPremium = 0
-  if (effectiveTier !== 'none') {
+  if (config.customIspPremium != null && config.customIspPremium > 0) {
+    ispAdditionalPremium = config.customIspPremium
+  } else if (effectiveTier !== 'none') {
     const tierTable = ISP_ADDITIONAL_PREMIUMS[effectiveTier]
     ispAdditionalPremium = lookupByAge(tierTable, age)
   }
 
   // 3. CareShield LIFE (premiums paid from age 30 to 67 only)
-  const careShieldLifePremium = config.careShieldLifeEnabled
-    ? lookupByAge(CARESHIELD_LIFE_PREMIUMS, age)
-    : 0
+  let careShieldLifePremium: number
+  if (config.customCareShieldPremium != null && config.customCareShieldPremium > 0) {
+    careShieldLifePremium = config.careShieldLifeEnabled ? config.customCareShieldPremium : 0
+  } else {
+    careShieldLifePremium = config.careShieldLifeEnabled
+      ? lookupByAge(CARESHIELD_LIFE_PREMIUMS, age)
+      : 0
+  }
 
   // 4. Out-of-pocket — today's dollars (age-curve or fixed, no inflation)
   // Inflation is applied by nominal-context callers via inflateHealthcareCost()
@@ -146,13 +153,22 @@ export function calculateHealthcareCostAtAge(
   oopExpense *= effectiveOopFactor
 
   const totalCost = mediShieldLifePremium + ispAdditionalPremium + careShieldLifePremium + oopExpense
-  const mediSaveDeductible = calculateMediSaveDeduction(
-    mediShieldLifePremium,
-    ispAdditionalPremium,
-    careShieldLifePremium,
-    age,
-  )
-  const cashOutlay = Math.max(0, totalCost - mediSaveDeductible)
+
+  // MediSave routing: when useMediSaveForPremiums is false, all premiums are cash
+  let mediSaveDeductible: number
+  let cashOutlay: number
+  if (config.useMediSaveForPremiums === false) {
+    mediSaveDeductible = 0
+    cashOutlay = totalCost
+  } else {
+    mediSaveDeductible = calculateMediSaveDeduction(
+      mediShieldLifePremium,
+      ispAdditionalPremium,
+      careShieldLifePremium,
+      age,
+    )
+    cashOutlay = Math.max(0, totalCost - mediSaveDeductible)
+  }
 
   return {
     age,
@@ -196,10 +212,19 @@ export function inflateHealthcareCost(
   const oopExpense = cost.oopExpense * oopFactor
 
   const totalCost = mediShieldLifePremium + ispAdditionalPremium + careShieldLifePremium + oopExpense
-  const mediSaveDeductible = calculateMediSaveDeduction(
-    mediShieldLifePremium, ispAdditionalPremium, careShieldLifePremium, cost.age,
-  )
-  const cashOutlay = Math.max(0, totalCost - mediSaveDeductible)
+
+  // MediSave routing: when useMediSaveForPremiums is false, all premiums are cash
+  let mediSaveDeductible: number
+  let cashOutlay: number
+  if (config.useMediSaveForPremiums === false) {
+    mediSaveDeductible = 0
+    cashOutlay = totalCost
+  } else {
+    mediSaveDeductible = calculateMediSaveDeduction(
+      mediShieldLifePremium, ispAdditionalPremium, careShieldLifePremium, cost.age,
+    )
+    cashOutlay = Math.max(0, totalCost - mediSaveDeductible)
+  }
 
   return {
     age: cost.age,
@@ -395,10 +420,17 @@ export function calculateHealthcareLAE(
     const inflatedOop = cost.oopExpense * oopGrowth
 
     const totalInflated = inflatedPremiums.mediShield + inflatedPremiums.isp + inflatedPremiums.careShield + inflatedOop
-    const mediSaveDed = calculateMediSaveDeduction(
-      inflatedPremiums.mediShield, inflatedPremiums.isp, inflatedPremiums.careShield, age,
-    )
-    const cashOutlay = Math.max(0, totalInflated - mediSaveDed)
+
+    // MediSave routing: when useMediSaveForPremiums is false, all premiums are cash
+    let cashOutlay: number
+    if (config.useMediSaveForPremiums === false) {
+      cashOutlay = totalInflated
+    } else {
+      const mediSaveDed = calculateMediSaveDeduction(
+        inflatedPremiums.mediShield, inflatedPremiums.isp, inflatedPremiums.careShield, age,
+      )
+      cashOutlay = Math.max(0, totalInflated - mediSaveDed)
+    }
 
     const discountFactor = Math.abs(netRealReturn) < 1e-10
       ? 1

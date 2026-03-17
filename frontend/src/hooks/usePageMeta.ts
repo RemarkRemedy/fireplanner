@@ -31,6 +31,7 @@ const PAGE_NAMES: Record<string, string> = {
   '/privacy': 'Privacy Policy',
   '/retirement-planner': 'Retirement Planner',
   '/retirement-calculator': 'Retirement Calculator',
+  '/quick-estimate': 'Quick Estimate',
 }
 
 export function usePageMeta({ title, description, path = '/' }: PageMeta) {
@@ -72,7 +73,7 @@ export function usePageMeta({ title, description, path = '/' }: PageMeta) {
       breadcrumbItems.push({
         '@type': 'ListItem',
         position: 2,
-        name: PAGE_NAMES[path] ?? title.split('—')[0].trim(),
+        name: PAGE_NAMES[path] ?? title.split(/[—:]/)[0].trim(),
         item: canonicalUrl,
       })
     }

@@ -52,10 +52,13 @@ export interface PropertyProjectionParams {
     newLtv: number
     monthlyRent: number
     rentGrowthRate: number
+    proceedsAllocationPercent?: number
   }
   residencyForAbsd: 'citizen' | 'pr' | 'foreigner'
   /** Pre-sale property count. Function adjusts to post-sale for ABSD. */
   propertyCount: number
+  /** Age at which rental income stops */
+  rentalIncomeEndAge?: number
   currentAge: number
   retirementAge: number
   lifeExpectancy: number
@@ -206,6 +209,7 @@ export function generatePropertyProjection(
           newMortgageTerm: downsizing.newMortgageTerm,
           residency: params.residencyForAbsd,
           propertyCount: postSalePropertyCount,
+          proceedsAllocationPercent: downsizing.proceedsAllocationPercent,
         })
         if (result.shortfall > 0) {
           netEquity = -result.shortfall * ownershipPercent
@@ -243,7 +247,7 @@ export function generatePropertyProjection(
       annualPaymentCpf: Math.round(annualPaymentCpf),
       cpfHousingRefund: cpfHousingRefund != null ? Math.round(cpfHousingRefund) : undefined,
       netEquity: Math.round(netEquity),
-      rentalIncome,
+      rentalIncome: (params.rentalIncomeEndAge != null && age >= params.rentalIncomeEndAge) ? undefined : rentalIncome,
       note,
     })
   }

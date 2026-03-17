@@ -254,7 +254,7 @@ function mapGoals(
       return {
         id: goal.id.replace(/^goal-/, ''),
         label: goal.label,
-        amount: goal.amount,
+        amount: Math.max(0, goal.amount - (goal.amountSaved ?? 0)),
         targetAge: range.startAge + delta,
         durationYears: goal.durationYears,
         priority: goal.priority,
@@ -310,7 +310,8 @@ function mapProperty(
     purchasePrice: property.purchasePrice,
     leaseYears: property.leaseYears,
     appreciationRate: property.appreciationRate,
-    rentalYield: property.rentalYield,
+    rentalYield: property.rentalYield * (1 - (property.rentalExpensesPercent ?? 0)),
+    rentalIncomeEndAge: property.rentalIncomeEndAge,
     mortgageRate: property.mortgageRate,
     mortgageTerm: property.mortgageTerm,
     ltv: property.ltv,
@@ -459,6 +460,17 @@ function buildAggregateRuntimeSnapshot(
       : best,
     plan.adults[0].cpf.retirementSum,
   )
+  defaults.profile.annualInsurancePremiums = plan.adults.reduce(
+    (sum, adult) => sum + (adult.annualInsurancePremiums ?? 0), 0
+  )
+  defaults.profile.annualNonMortgageDebtPayment = plan.adults.reduce(
+    (sum, adult) => sum + (adult.nonMortgageDebtMonthlyPayment * 12), 0
+  )
+  // Legacy path: take max debtPayoffAge across adults (conservative — deduction continues until last adult finishes)
+  const adultPayoffAges = plan.adults
+    .filter((adult) => adult.debtPayoffAge != null && adult.nonMortgageDebtMonthlyPayment > 0)
+    .map((adult) => adult.debtPayoffAge!)
+  defaults.profile.debtPayoffAge = adultPayoffAges.length > 0 ? Math.max(...adultPayoffAges) : undefined
   defaults.profile.parentSupportEnabled = plan.expenses.some((expense) => expense.kind === 'parent-support')
   defaults.profile.parentSupport = mapParentSupport(
     plan.expenses,

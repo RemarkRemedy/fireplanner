@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import {
   useReactTable,
@@ -16,10 +16,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
-import { Link } from 'react-router-dom'
-import { AlertTriangle } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { AlertTriangle, HeartPulse, PartyPopper } from 'lucide-react'
+import { toast } from 'sonner'
 import { NWChartView } from '@/components/projection/NWChartView'
 import { Maximize2 } from 'lucide-react'
 import { useEffectiveMode } from '@/hooks/useEffectiveMode'
@@ -47,6 +48,15 @@ import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacy
 import { buildProjectionParams, buildFullProjectionParams } from '@/lib/calculations/projectionParams'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { generateProjection } from '@/lib/calculations/projection'
+import { NudgeSidebar } from '@/components/projection/NudgeSidebar'
+import { useHealthCheck } from '@/hooks/useHealthCheck'
+import { NudgeDrawer } from '@/components/projection/NudgeDrawer'
+import { MobileNudgeBar } from '@/components/projection/MobileNudgeBar'
+import { DeltaCard } from '@/components/projection/DeltaCard'
+import { useMetricsSnapshot } from '@/hooks/useMetricsSnapshot'
+import { computeDelta, type DeltaSummary, type MetricsSnapshot } from '@/lib/calculations/metricsSnapshot'
+import { NUDGE_FLOWS, NUDGE_PRIORITY, NUDGE_TO_SECTION, type NudgeFlowId } from '@/lib/data/nudgeFlows'
+import { useSectionCompletion } from '@/hooks/useSectionCompletion'
 
 const STRATEGY_SHORT_LABELS: Record<WithdrawalStrategyType, string> = {
   constant_dollar: '4% Rule',
@@ -64,22 +74,192 @@ const STRATEGY_SHORT_LABELS: Record<WithdrawalStrategyType, string> = {
 }
 
 export function ProjectionPage() {
-  usePageMeta({ title: 'Projection — SG FIRE Planner', description: 'See your net worth trajectory from today to retirement and beyond. Tracks portfolio growth, CPF OA/SA/MA balances, income changes, and spending year by year.', path: '/projection' })
+  usePageMeta({ title: 'Projection | SG FIRE Planner', description: 'Year-by-year financial projection with net worth trajectory, CPF balances, and retirement milestones.', path: '/projection' })
+
+  const [drawerFlowId, setDrawerFlowId] = useState<NudgeFlowId | null>(null)
+  const [deltaStack, setDeltaStack] = useState<DeltaSummary[]>([])
+  const location = useLocation()
+  const navigate = useNavigate()
+  const currentSnapshot = useMetricsSnapshot()
+  const deltaProcessed = useRef(false)
+  const nudgeSectionRef = useRef<HTMLDivElement>(null)
+  const { result: healthResult } = useHealthCheck()
+
+  // Show welcome toast after completing guided setup
+  useEffect(() => {
+    const justCompleted = sessionStorage.getItem('fireplanner-setup-just-completed')
+    if (justCompleted) {
+      sessionStorage.removeItem('fireplanner-setup-just-completed')
+      toast('Your plan is ready!', {
+        description: 'Use the sidebar to explore inputs, stress tests, and more. Refine cards on this page let you fine-tune specific sections.',
+        duration: 8000,
+        icon: <PartyPopper className="h-4 w-4" />,
+      })
+    }
+  }, [])
+
+  useEffect(() => {
+    if (deltaProcessed.current || !location.state?.showDelta) return
+    const stored = sessionStorage.getItem('fireplanner-delta-before')
+    if (!stored) return
+
+    const { fireAge, fireNumber, timestamp } = JSON.parse(stored) as { fireAge: number | null; fireNumber: number | null; timestamp: number }
+    const beforeHasData = fireAge !== null || fireNumber !== null
+    const afterHasData = currentSnapshot.fireAge !== null || currentSnapshot.fireNumber !== null
+    if (!beforeHasData && !afterHasData) return // no data at all, skip
+
+    deltaProcessed.current = true
+    if (Date.now() - timestamp < 30 * 60 * 1000) {
+      const before: MetricsSnapshot = { fireAge, fireNumber }
+      const flow = NUDGE_FLOWS.find(f => f.id === location.state.flowId)
+      if (flow) {
+        const delta = computeDelta(before, currentSnapshot, flow.label, flow.explanation)
+        setDeltaStack(prev => [delta, ...prev].slice(0, 3))
+      }
+    }
+    sessionStorage.removeItem('fireplanner-delta-before')
+    navigate(location.pathname, { replace: true, state: {} })
+  }, [location.state, currentSnapshot])
+
+  useEffect(() => {
+    if (!location.state?.showDelta) {
+      deltaProcessed.current = false
+    }
+  }, [location.state])
+
+  // Auto-open drawer when navigated with openFlow state (from Dashboard, PlanCompleteness)
+  useEffect(() => {
+    if (location.state?.openFlow) {
+      setDrawerFlowId(location.state.openFlow as NudgeFlowId)
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+  }, [location.state, navigate, location.pathname])
+
   const normalized = useNormalizedLegacyAnalysisContext()
-  const { rows: jointRows, summary: jointSummary, hasErrors } = useProjection()
+  const { rows: jointRows, summary: jointSummary, hasErrors, errors: crossStoreErrors } = useProjection()
+  const householdValidationErrors = useHouseholdPlanStore((s) => s.validationErrors)
   const { isEligible } = useExpenseTracker()
   useExpenseTrackerDwell(Boolean(jointRows && jointRows.length > 0), 10)
   const plan = useHouseholdPlanStore((s) => s.plan)
   const adults = plan.adults
   const isMultiAdult = adults.length > 1
-  const allocation = useAllocationStore()
-  const simulation = useSimulationStore()
-  const activeStrategy = useSimulationStore((s) => s.selectedStrategy)
+  const allocationCurrentWeights = useAllocationStore((s) => s.currentWeights)
+  const allocationTargetWeights = useAllocationStore((s) => s.targetWeights)
+  const allocationReturnOverrides = useAllocationStore((s) => s.returnOverrides)
+  const allocationGlidePathConfig = useAllocationStore((s) => s.glidePathConfig)
+  const allocationValidationErrors = useAllocationStore((s) => s.validationErrors)
+  const allocation = useMemo(() => ({
+    currentWeights: allocationCurrentWeights,
+    targetWeights: allocationTargetWeights,
+    returnOverrides: allocationReturnOverrides,
+    glidePathConfig: allocationGlidePathConfig,
+    validationErrors: allocationValidationErrors,
+  }), [allocationCurrentWeights, allocationTargetWeights, allocationReturnOverrides, allocationGlidePathConfig, allocationValidationErrors])
+  const simSelectedStrategy = useSimulationStore((s) => s.selectedStrategy)
+  const simStrategyParams = useSimulationStore((s) => s.strategyParams)
+  const simWithdrawalBasis = useSimulationStore((s) => s.withdrawalBasis)
+  const hasRunMC = useSimulationStore((s) => s.lastMCSuccessRate !== null)
+  const simulation = useMemo(() => ({
+    selectedStrategy: simSelectedStrategy,
+    strategyParams: simStrategyParams,
+    withdrawalBasis: simWithdrawalBasis,
+  }), [simSelectedStrategy, simStrategyParams, simWithdrawalBasis])
+  const activeStrategy = simSelectedStrategy
   const setSimField = useSimulationStore((s) => s.setField)
 
   const dollarBasis = useUIStore((s) => s.dollarBasis)
   const projectionView = useUIStore((s) => s.projectionView)
   const setUIField = useUIStore((s) => s.setField)
+
+  // Nudge count for mobile bar — mirrors filtering logic in NudgeSidebar
+  const setupPopulatedSections = useUIStore((s) => s.setupPopulatedSections)
+  const { sections: nudgeSections } = useSectionCompletion()
+  const visibleNudgeCount = useMemo(() => {
+    return NUDGE_PRIORITY.filter((flowId) => {
+      const sectionId = NUDGE_TO_SECTION[flowId]
+      const section = nudgeSections[sectionId]
+      const status = section?.status ?? 'default'
+      if (status === 'default') return true
+      if (status === 'customized' && setupPopulatedSections.includes(sectionId)) return true
+      return false
+    }).length
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nudgeSections, setupPopulatedSections])
+
+  // Section-specific validation error links (Task 1)
+  const validationSections = useMemo(() => {
+    const sectionErrors: Record<string, string[]> = {}
+
+    const addError = (section: string, message: string) => {
+      if (!sectionErrors[section]) sectionErrors[section] = []
+      sectionErrors[section].push(message)
+    }
+
+    // Categorize household store validation errors (entity-keyed)
+    for (const [entityKey, fieldErrors] of Object.entries(householdValidationErrors)) {
+      const messages = Object.values(fieldErrors)
+      if (messages.length === 0) continue
+      const firstMsg = messages[0]
+
+      if (entityKey.startsWith('adult:')) {
+        // Sub-categorize adult fields
+        const fields = Object.keys(fieldErrors)
+        const hasCpf = fields.some((f) => f.includes('cpf'))
+        const hasProtection = fields.some((f) => f.includes('insurance') || f === 'cashSavings' || f.includes('nonMortgageDebt') || f === 'debtPayoffAge')
+        const hasHealthcare = fields.some((f) => f.includes('healthcare'))
+        if (hasCpf) addError('CPF', firstMsg)
+        if (hasProtection) addError('Protection', firstMsg)
+        if (hasHealthcare) addError('Healthcare', firstMsg)
+        if (!hasCpf && !hasProtection && !hasHealthcare) addError('Personal Details', firstMsg)
+      } else if (entityKey.startsWith('income:')) {
+        addError('Income', firstMsg)
+      } else if (entityKey.startsWith('assumptions:')) {
+        addError('FIRE Settings', firstMsg)
+      } else if (entityKey.startsWith('property:')) {
+        addError('Property', firstMsg)
+      } else if (entityKey.startsWith('expense:') || entityKey.startsWith('goal:')) {
+        addError('Expenses', firstMsg)
+      }
+    }
+
+    // Categorize cross-store errors (flat keys from useProjection)
+    for (const [key, message] of Object.entries(crossStoreErrors)) {
+      if (key === 'cpfMA') {
+        addError('CPF', message)
+      } else if (key === 'retirementAge' || key === 'lifeExpectancy' || key === 'cpfLifeStartAge') {
+        addError('Personal Details', message)
+      } else if (key.startsWith('incomeStream_') || key.startsWith('lifeEvent_') || key.startsWith('promotionJump_')) {
+        addError('Income', message)
+      } else if (key.startsWith('glidePathConfig') || key === 'targetWeights') {
+        addError('Allocation', message)
+      } else if (key.startsWith('goal_')) {
+        addError('Expenses', message)
+      } else if (key.startsWith('healthcareConfig')) {
+        addError('Healthcare', message)
+      } else {
+        addError('Personal Details', message)
+      }
+    }
+
+    // Map sections to route paths
+    const sectionPaths: Record<string, string> = {
+      'Personal Details': '/inputs#section-personal',
+      'Income': '/inputs#section-income',
+      'Allocation': '/inputs#section-allocation',
+      'CPF': '/inputs#section-cpf',
+      'Property': '/inputs#section-property',
+      'Protection': '/inputs#section-protection',
+      'Healthcare': '/inputs#section-healthcare',
+      'FIRE Settings': '/inputs#section-fire-settings',
+      'Expenses': '/inputs#section-expenses',
+    }
+
+    return Object.entries(sectionErrors).map(([label, messages]) => ({
+      label,
+      path: sectionPaths[label] ?? '/inputs',
+      message: messages[0],
+    }))
+  }, [householdValidationErrors, crossStoreErrors])
 
   const isPerAdult = isMultiAdult && projectionView !== 'joint'
 
@@ -480,7 +660,21 @@ export function ProjectionPage() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="md:grid md:grid-cols-[minmax(0,1fr)_280px] md:gap-6">
+    <div className="min-w-0 space-y-6">
+      {/* Delta cards — visible on all viewports */}
+      {deltaStack.length > 0 && (
+        <div className="space-y-2">
+          {deltaStack.map((delta, i) => (
+            <DeltaCard
+              key={i}
+              summary={delta}
+              onDismiss={() => setDeltaStack(prev => prev.filter((_, j) => j !== i))}
+              showMcNote={hasRunMC}
+            />
+          ))}
+        </div>
+      )}
       <div>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -570,15 +764,16 @@ export function ProjectionPage() {
             Fix input errors before the projection can be computed.
           </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-            <Link to="/inputs#section-personal" className="text-sm text-destructive hover:underline font-medium">
-              Fix in Personal Details &rarr;
-            </Link>
-            <Link to="/inputs#section-income" className="text-sm text-destructive hover:underline font-medium">
-              Fix in Income &rarr;
-            </Link>
-            <Link to="/inputs#section-allocation" className="text-sm text-destructive hover:underline font-medium">
-              Fix in Allocation &rarr;
-            </Link>
+            {validationSections.map(({ label, path, message }) => (
+              <div key={path} className="flex flex-col">
+                <Link to={path} className="text-sm text-destructive hover:underline font-medium">
+                  Fix in {label} &rarr;
+                </Link>
+                {message && (
+                  <span className="text-xs text-destructive/80">{message}</span>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -605,7 +800,7 @@ export function ProjectionPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{formatCurrency(displaySummary.peakTotalNW)}</p>
+              <p className="text-2xl font-bold truncate" title={formatCurrency(displaySummary.peakTotalNW)}>{formatCompactCurrency(displaySummary.peakTotalNW)}</p>
               <p className="text-xs text-muted-foreground">at age {displaySummary.peakTotalNWAge}</p>
             </CardContent>
           </Card>
@@ -617,7 +812,7 @@ export function ProjectionPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{formatCurrency(displaySummary.terminalTotalNW)}</p>
+              <p className="text-2xl font-bold truncate" title={formatCurrency(displaySummary.terminalTotalNW)}>{formatCompactCurrency(displaySummary.terminalTotalNW)}</p>
               <p className="text-xs text-muted-foreground">
                 Cash & Investments: {formatCurrency(displaySummary.terminalLiquidNW)}
               </p>
@@ -657,6 +852,8 @@ export function ProjectionPage() {
           narrative = `Your portfolio does not reach the FIRE number and depletes at age ${portfolioDepletedAge}. Consider increasing savings or extending your working years.`
         }
 
+        const healthIssueCount = (healthResult?.amberCount ?? 0) + (healthResult?.redCount ?? 0)
+
         return (
           <p className={cn(
             'text-sm rounded-md p-3 border',
@@ -665,6 +862,14 @@ export function ProjectionPage() {
               : 'text-green-800 dark:text-green-200 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
           )}>
             {narrative}
+            {healthIssueCount > 0 && (
+              <>
+                {' '}Your{' '}
+                <Link to="/health-check" className="underline font-medium">
+                  financial health check has {healthIssueCount} area{healthIssueCount === 1 ? '' : 's'} that could use attention
+                </Link>.
+              </>
+            )}
           </p>
         )
       })()}
@@ -759,6 +964,11 @@ export function ProjectionPage() {
 
       {isEligible && rows && rows.length > 0 && <ExpenseTrackerCard />}
 
+      {/* Mobile nudge section */}
+      <div ref={nudgeSectionRef} className="md:hidden mt-6">
+        <NudgeSidebar onOpenDrawer={setDrawerFlowId} />
+      </div>
+
       <Dialog open={expanded} onOpenChange={setExpanded}>
         <DialogContent className="max-w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-4">
           <DialogHeader className="shrink-0">
@@ -779,6 +989,61 @@ export function ProjectionPage() {
           {renderTable('flex-1 min-h-0')}
         </DialogContent>
       </Dialog>
+    </div>
+    <aside className="hidden md:block space-y-4">
+      {healthResult && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <HeartPulse className="h-4 w-4" />
+              Financial Health
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground space-y-2">
+            <p>After you refine your data, check your emergency fund, protection gaps, and debt ratios against MoneySense benchmarks.</p>
+            <div className="flex items-center gap-3 text-xs">
+              {healthResult.greenCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  {healthResult.greenCount}
+                </span>
+              )}
+              {healthResult.amberCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                  {healthResult.amberCount}
+                </span>
+              )}
+              {healthResult.redCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-red-500" />
+                  {healthResult.redCount}
+                </span>
+              )}
+            </div>
+            <Link
+              to="/health-check"
+              className="inline-flex items-center rounded-full border px-3 py-1 text-sm text-primary hover:bg-primary/5 transition-colors"
+            >
+              Review health ratios →
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+      <NudgeSidebar onOpenDrawer={setDrawerFlowId} />
+    </aside>
+    <NudgeDrawer
+      flowId={drawerFlowId}
+      onClose={() => setDrawerFlowId(null)}
+      onComplete={(delta) => {
+        setDrawerFlowId(null)
+        setDeltaStack(prev => [delta, ...prev].slice(0, 3))
+      }}
+    />
+    <MobileNudgeBar
+      nudgeCount={visibleNudgeCount}
+      onTap={() => nudgeSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
+    />
     </div>
   )
 }

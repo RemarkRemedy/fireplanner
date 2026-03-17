@@ -24,6 +24,7 @@ export interface HealthRatioInputs {
   totalAssets: number
   netWorth: number
   investedAssets: number
+  expenseRatio?: number
 }
 
 export interface HealthRatioResult {
@@ -51,6 +52,9 @@ type RatioComputer = (inputs: HealthRatioInputs) => { value: number | null; mess
 const RATIO_COMPUTERS: Record<string, RatioComputer> = {
   'emergency-fund': (i) => {
     if (i.monthlyExpenses === 0) return { value: null, message: 'No expenses entered' }
+    if (i.cashSavings === 0 && i.investedAssets > 0) {
+      return { value: null, message: 'Use the expense breakdown to specify your cash savings' }
+    }
     return { value: i.cashSavings / i.monthlyExpenses, message: null }
   },
   'savings-ratio': (i) => {
@@ -98,6 +102,14 @@ const RATIO_COMPUTERS: Record<string, RatioComputer> = {
     if (ratio < 0) return { value: ratio, message: 'Net worth is negative' }
     return { value: ratio, message: null }
   },
+  'fee-drag': (i) => {
+    if (i.expenseRatio == null) return { value: null, message: 'No expense ratio set' }
+    const annualCost = i.investedAssets * i.expenseRatio
+    const message = i.investedAssets > 0
+      ? `$${Math.round(annualCost).toLocaleString()}/yr on your current portfolio`
+      : null
+    return { value: i.expenseRatio, message }
+  },
 }
 
 // ── Classification ─────────────────────────────────────────────────────────
@@ -133,6 +145,13 @@ function formatValue(value: number | null, unit: HealthRatioMeta['unit']): strin
   }
 }
 
+// ── Overrides ─────────────────────────────────────────────────────────────
+
+export interface HealthCheckOverrides {
+  /** Override default 6-month emergency fund target (months of expenses) */
+  emergencyFundTarget?: number
+}
+
 // ── Public API ─────────────────────────────────────────────────────────────
 
 export function computeRatioValue(ratioId: string, inputs: HealthRatioInputs): number | null {
@@ -148,7 +167,7 @@ export function classifyRatio(ratioId: string, value: number | null): TrafficLig
   return classifyValue(meta, value)
 }
 
-export function computeHealthRatios(inputs: HealthRatioInputs): HealthCheckResult {
+export function computeHealthRatios(inputs: HealthRatioInputs, overrides?: HealthCheckOverrides): HealthCheckResult {
   const ratios: HealthRatioResult[] = HEALTH_RATIOS.map((meta) => {
     const computer = RATIO_COMPUTERS[meta.id]
     if (!computer) {
@@ -163,10 +182,21 @@ export function computeHealthRatios(inputs: HealthRatioInputs): HealthCheckResul
     }
 
     const { value, message } = computer(inputs)
-    const status = value !== null ? classifyValue(meta, value) : null
+
+    // Apply emergency fund target override: patch thresholds for classification
+    let effectiveMeta = meta
+    if (meta.id === 'emergency-fund' && overrides?.emergencyFundTarget != null) {
+      const target = overrides.emergencyFundTarget
+      effectiveMeta = {
+        ...meta,
+        thresholds: { greenBound: target, amberBound: target / 2 },
+      }
+    }
+
+    const status = value !== null ? classifyValue(effectiveMeta, value) : null
     const displayValue = formatValue(value, meta.unit)
 
-    return { id: meta.id, meta, value, status, displayValue, message }
+    return { id: meta.id, meta: effectiveMeta, value, status, displayValue, message }
   })
 
   let greenCount = 0

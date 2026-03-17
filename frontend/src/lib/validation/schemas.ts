@@ -357,6 +357,39 @@ export interface StoreValidationResult {
   warnings: string[]
 }
 
+// ============================================================
+// Advisory Gap Feature types
+// ============================================================
+
+export const retirementExpenseItemSchema = z.object({
+  id: z.string(),
+  label: z.string().min(1),
+  annualAmount: z.number().min(0),
+  flexibility: z.enum(['essential', 'fixed-term', 'flexible']),
+  swr: z.number().min(0.01).max(0.15),
+  endAge: z.number().int().min(30).max(130).optional(),
+  category: z.string().optional(),
+})
+
+export const timeBucketSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  startYear: z.number().int().min(0),
+  endYear: z.number().int().min(1),
+  targetAllocation: z.object({
+    equities: z.number().min(0).max(1),
+    bonds: z.number().min(0).max(1),
+    cash: z.number().min(0).max(1),
+  }),
+  currentAmount: z.number().min(0),
+})
+
+export const bucketConfigSchema = z.object({
+  enabled: z.boolean(),
+  buckets: z.array(timeBucketSchema),
+  incomeFloorAnnual: z.number().min(0),
+})
+
 // Basic structural schema for HouseholdPlan. Full field-level validation is
 // handled by validateHouseholdPlan() in lib/household/validation.ts; this
 // schema validates the envelope shape for import-time store validation.

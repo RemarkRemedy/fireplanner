@@ -64,6 +64,12 @@ export interface HealthcareConfig {
   ispDowngradeTier?: IspTierOption   // tier to switch to (must be lower than ispTier)
   ispDowngradeAge?: number           // age at which to switch
   premiumInflationRate?: number       // annual rate at which premium schedules increase (default 0.03)
+  /** Override tier-based ISP premium with user-specified annual amount */
+  customIspPremium?: number
+  /** Override default CareShield Life premium with user-specified annual amount */
+  customCareShieldPremium?: number
+  /** Route premiums to MediSave deduction (true) or cash outflow (false). Default: true */
+  useMediSaveForPremiums?: boolean
 }
 
 // ============================================================
@@ -200,6 +206,13 @@ export interface ProfileState {
   parentSupportEnabled: boolean
   parentSupport: ParentSupport[]
 
+  /** Annual insurance premium cost (deducted from cash flow in projection) */
+  annualInsurancePremiums?: number
+  /** Annual non-mortgage debt payment (deducted from cash flow in projection) */
+  annualNonMortgageDebtPayment?: number
+  /** Age at which non-mortgage debt is fully repaid (deduction stops) */
+  debtPayoffAge?: number
+
   // Healthcare & Insurance
   healthcareConfig: HealthcareConfig
 
@@ -229,6 +242,9 @@ export interface ProfileState {
 
   // Age-Gated Locked Assets (illiquid holdings that become accessible at a specific age)
   lockedAssets: LockedAsset[]
+
+  // Per-Expense SWR (advisory gap feature): itemised retirement expenses with per-item withdrawal rates
+  retirementExpenseItems: RetirementExpenseItem[]
 
   // Validation
   validationErrors: ValidationErrors
@@ -490,6 +506,7 @@ export interface AllocationState {
   returnOverrides: (number | null)[]
   stdDevOverrides: (number | null)[]
   glidePathConfig: GlidePathConfig
+  bucketConfig: BucketConfig
   validationErrors: ValidationErrors
 }
 
@@ -855,6 +872,8 @@ export interface DownsizingConfig {
   monthlyRent: number
   // Nominal annual growth applied directly to future rent cashflows after the sale year.
   rentGrowthRate: number
+  /** Fraction of sale proceeds allocated to investment portfolio (0-1); default 1.0 = 100% */
+  proceedsAllocationPercent?: number
 }
 
 export type HdbFlatType = '2-room' | '3-room' | '4-room' | '5-room' | 'executive'
@@ -884,6 +903,7 @@ export interface PropertyState {
   existingAppreciationRate: number   // annual appreciation rate for existing property (separate from new purchase analysis)
   existingLeaseYears: number         // remaining lease years for existing property
   existingApplyBalaDecay: boolean    // when true, Bala's Table lease decay multiplies the appreciated value each year rather than acting as a separate cashflow
+  rentalIncomeEndAge?: number        // age at which rental income stops
   // Downsizing
   downsizing: DownsizingConfig
   // HDB monetization
@@ -1034,6 +1054,45 @@ export interface FinancialGoal {
   priority: 'essential' | 'important' | 'nice-to-have'
   inflationAdjusted: boolean
   category: GoalCategory
+}
+
+// ============================================================
+// Per-Expense SWR (Advisory Gap Feature 1)
+// ============================================================
+
+export type ExpenseFlexibility = 'essential' | 'fixed-term' | 'flexible'
+
+export interface RetirementExpenseItem {
+  id: string
+  label: string
+  annualAmount: number           // today's dollars (real terms)
+  flexibility: ExpenseFlexibility
+  swr: number                    // e.g. 0.0325, 0.04, 0.05
+  endAge?: number                // null = lifetime, else stops at this age
+  category?: string              // optional grouping
+}
+
+// ============================================================
+// Bucket Allocation (Advisory Gap Feature 5)
+// ============================================================
+
+export interface TimeBucket {
+  id: string
+  label: string                    // e.g. "Years 1-5"
+  startYear: number                // 0
+  endYear: number                  // 5
+  targetAllocation: {
+    equities: number               // 0.0 to 1.0
+    bonds: number
+    cash: number
+  }
+  currentAmount: number            // user-entered current allocation to this bucket
+}
+
+export interface BucketConfig {
+  enabled: boolean
+  buckets: TimeBucket[]
+  incomeFloorAnnual: number        // from guaranteed income streams, or manual entry
 }
 
 // ============================================================

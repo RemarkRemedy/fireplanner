@@ -78,7 +78,7 @@ function cloneGoal(goal: GoalItem) {
   return {
     id: goal.id.replace(/^goal-/, ''),
     label: goal.label,
-    amount: goal.amount,
+    amount: Math.max(0, goal.amount - (goal.amountSaved ?? 0)),
     targetAge: startAge,
     durationYears,
     priority: goal.priority,
@@ -169,7 +169,7 @@ function cloneProperty(property: PropertyPlan) {
     purchasePrice: property.purchasePrice,
     leaseYears: property.leaseYears,
     appreciationRate: property.appreciationRate,
-    rentalYield: property.rentalYield,
+    rentalYield: property.rentalYield * (1 - (property.rentalExpensesPercent ?? 0)),
     mortgageRate: property.mortgageRate,
     mortgageTerm: property.mortgageTerm,
     ltv: property.ltv,
@@ -187,6 +187,7 @@ function cloneProperty(property: PropertyPlan) {
     existingAppreciationRate: property.existingAppreciationRate,
     existingLeaseYears: property.existingLeaseYears,
     existingApplyBalaDecay: property.existingApplyBalaDecay,
+    rentalIncomeEndAge: property.rentalIncomeEndAge,
     downsizing: { ...property.downsizing },
     hdbFlatType: property.hdbFlatType,
     hdbMonetizationStrategy: property.hdbMonetizationStrategy,
@@ -311,6 +312,9 @@ export function toLegacyIndividual(plan: HouseholdPlan): LegacyIndividualSnapsho
   if (parentSupport.some((entry) => entry === null)) return null
   snapshot.profile.parentSupport = parentSupport.filter((entry) => entry !== null)
   snapshot.profile.parentSupportEnabled = adult.parentSupportEnabled || snapshot.profile.parentSupport.length > 0
+  snapshot.profile.annualInsurancePremiums = adult.annualInsurancePremiums ?? 0
+  snapshot.profile.annualNonMortgageDebtPayment = adult.nonMortgageDebtMonthlyPayment * 12
+  snapshot.profile.debtPayoffAge = adult.debtPayoffAge
 
   const expenseAdjustments = plan.expenses
     .filter((entry) => entry.kind === 'expense-adjustment')

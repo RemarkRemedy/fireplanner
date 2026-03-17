@@ -38,6 +38,10 @@ import {
   type ResolvedTimingWindow,
   type TimingWarning,
 } from './timing'
+import {
+  getSurvivorMultiplier,
+  type SurvivorContext,
+} from '@/lib/calculations/survivorSpending'
 import type {
   AdultOwner,
   Dependent,
@@ -185,6 +189,8 @@ export interface CompiledHouseholdPlan extends NormalizedHouseholdPlan {
   milestones: HouseholdMilestoneRow[]
   annualSavingsByYear: number[]
   postRetirementIncomeByYear: number[]
+  /** Guaranteed income floor by year offset (annuities, endowments, pensions). Excludes CPF LIFE. */
+  guaranteedIncomeByYear: number[]
   retirementExpenseBaseByYear: number[]
   householdWithdrawalNeedByYear: number[]
   portfolioAdjustments: HouseholdPortfolioAdjustment[]
@@ -766,6 +772,7 @@ function compilePropertyCashflows(
           newMortgageTerm: property.downsizing.newMortgageTerm,
           residency: property.residencyForAbsd,
           propertyCount: Math.max(0, property.propertyCount - 1),
+          proceedsAllocationPercent: property.downsizing.proceedsAllocationPercent,
         })
         adjustmentAmount = (result.netEquityToPortfolio - result.shortfall) * ownershipPct
         postSaleAnnualMortgage = result.newMonthlyPayment * 12 * ownershipPct
@@ -801,7 +808,12 @@ function compilePropertyCashflows(
   for (let yearOffset = 0; yearOffset < yearCount; yearOffset += 1) {
     const isSold = sellYearOffset != null && yearOffset >= sellYearOffset
     if (!isSold) {
-      incomeByYear[yearOffset] += annualRentalIncome
+      const rentalCutoffAge = property.rentalIncomeEndAge
+      const ageAtOffset = referenceAdult ? referenceAdult.currentAge + yearOffset : undefined
+      const rentalStopped = rentalCutoffAge != null && ageAtOffset != null && ageAtOffset >= rentalCutoffAge
+      if (!rentalStopped) {
+        incomeByYear[yearOffset] += annualRentalIncome
+      }
       if (yearOffset < mortgageYearCount) {
         expenseByYear[yearOffset] += annualCashMortgage
       }
@@ -954,6 +966,7 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
 
   const sharedIncomeByYear = zeroes(yearCount)
   const retiredSharedIncomeByYear = zeroes(yearCount)
+  const guaranteedIncomeByYear = zeroes(yearCount)
   const propertyIncomeByYear = zeroes(yearCount)
   const propertyExpenseByYear = zeroes(yearCount)
   const totalNetIncomeByYear = zeroes(yearCount)
@@ -962,8 +975,17 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
   const parentSupportExpenseByYear = zeroes(yearCount)
   const dependentExpenseByYear = zeroes(yearCount)
   const baseExpenseAdjustedByYear = zeroes(yearCount)
+  const insurancePremiumsByYear = zeroes(yearCount)
+  const debtPaymentsByYear = zeroes(yearCount)
   const portfolioAdjustments: HouseholdPortfolioAdjustment[] = []
   const milestones: HouseholdMilestoneRow[] = []
+
+  const survivorCtx: SurvivorContext = {
+    adultLifeExpectancyYearOffsets: normalized.adultOrder.map(
+      (id) => adultTimingById[id].lifeExpectancyYearOffset,
+    ),
+    survivorExpenseRatio: normalized.assumptions.survivorExpenseRatio,
+  }
 
   for (const adultId of normalized.adultOrder) {
     const adult = normalized.adultsById[adultId]
@@ -1001,6 +1023,27 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
           sourceId: `${adultId}:cpf-oa-withdrawal:${row.age}`,
           kind: 'cpf-oa-withdrawal',
         })
+      }
+    }
+
+    // Insurance premiums: flat annual deduction from cash flow while the adult is alive
+    const adultInsurance = adult.annualInsurancePremiums ?? 0
+    if (adultInsurance > 0) {
+      for (let yearOffset = 0; yearOffset <= timing.lifeExpectancyYearOffset && yearOffset < yearCount; yearOffset += 1) {
+        insurancePremiumsByYear[yearOffset] += adultInsurance
+      }
+    }
+
+    // Non-mortgage debt payments: annual deduction from cash flow, stops at debtPayoffAge
+    const adultDebtAnnual = adult.nonMortgageDebtMonthlyPayment * 12
+    if (adultDebtAnnual > 0) {
+      const debtPayoffYearOffset = adult.debtPayoffAge != null
+        ? adult.debtPayoffAge - adult.currentAge
+        : timing.lifeExpectancyYearOffset + 1 // no payoff age → deduct until death
+      for (let yearOffset = 0; yearOffset < Math.min(debtPayoffYearOffset, yearCount); yearOffset += 1) {
+        if (yearOffset <= timing.lifeExpectancyYearOffset) {
+          debtPaymentsByYear[yearOffset] += adultDebtAnnual
+        }
       }
     }
 
@@ -1042,12 +1085,13 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
         if (!window || window.owner !== adult.owner) {
           return sum
         }
-        return sum + evaluateExpenseBaseToday(
+        const base = evaluateExpenseBaseToday(
           expense,
           window,
           yearOffset,
           adultTimingById
         )
+        return sum + base * getSurvivorMultiplier(survivorCtx, expense.owner, yearOffset)
       }, 0)
 
       const age = adult.currentAge + yearOffset
@@ -1072,6 +1116,30 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
           sourceId: `${adultId}:life-event-lump-sum:${yearOffset}`,
           kind: 'life-event-lump-sum',
         })
+      }
+    }
+  }
+
+  // Guaranteed income floor: per-adult owned streams (excludes CPF LIFE, which the
+  // per-adult projection already handles separately via sumPostRetirementIncome)
+  for (const incomeId of normalized.incomeOrder) {
+    const source = normalized.incomeById[incomeId]
+    if (!source.guaranteed || source.isActive === false || source.owner === 'shared') continue
+
+    const window = resolvedTiming.incomeById[source.id]
+    if (!window) continue
+    const ownerAdult = adultsByOwner[source.owner]
+    if (!ownerAdult) continue
+
+    const stream = convertToIncomeStream(source, window)
+    for (let yearOffset = 0; yearOffset < yearCount; yearOffset += 1) {
+      const amount = getStreamAmountAtAge(
+        stream,
+        ownerAdult.currentAge + yearOffset,
+        normalized.assumptions.returns.inflation
+      )
+      if (amount > 0) {
+        guaranteedIncomeByYear[yearOffset] += amount
       }
     }
   }
@@ -1109,6 +1177,9 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
       sharedIncomeByYear[yearOffset] += amount
       if (source.streamType !== 'employment') {
         retiredSharedIncomeByYear[yearOffset] += amount
+      }
+      if (source.guaranteed) {
+        guaranteedIncomeByYear[yearOffset] += amount
       }
     }
   }
@@ -1198,7 +1269,8 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
       sourceId: goal.id,
     })
 
-    const annualGoalAmount = goal.amount / Math.max(1, goal.durationYears)
+    const netGoalAmount = Math.max(0, goal.amount - (goal.amountSaved ?? 0))
+    const annualGoalAmount = netGoalAmount / Math.max(1, goal.durationYears)
     for (let yearOffset = window.startYearOffset; yearOffset <= Math.min(window.endYearOffset, yearCount - 1); yearOffset += 1) {
       portfolioAdjustments.push({
         yearOffset,
@@ -1264,6 +1336,8 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
       + dependentExpenseByYear[yearOffset]
       + healthcareCashOutlayByYear[yearOffset]
       + propertyExpenseByYear[yearOffset]
+      + insurancePremiumsByYear[yearOffset]
+      + debtPaymentsByYear[yearOffset]
 
     const totalCashIncome = totalNetIncomeByYear[yearOffset]
       + sharedIncomeByYear[yearOffset]
@@ -1312,6 +1386,7 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
     milestones: sortMilestones(milestones),
     annualSavingsByYear,
     postRetirementIncomeByYear,
+    guaranteedIncomeByYear,
     retirementExpenseBaseByYear,
     householdWithdrawalNeedByYear,
     portfolioAdjustments: sortAdjustments(portfolioAdjustments),

@@ -1,10 +1,18 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { StartPage } from './StartPage'
-import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useUIStore } from '@/stores/useUIStore'
+
+const mockNavigate = vi.fn()
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom')
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  }
+})
 
 function renderStartPage() {
   return render(
@@ -14,21 +22,14 @@ function renderStartPage() {
   )
 }
 
-function getSelfAdult() {
-  return useHouseholdPlanStore.getState().plan.adults.find((a) => a.owner === 'self')!
-}
-
-function getSalaryIncome() {
-  return useHouseholdPlanStore.getState().plan.income.find(
-    (i) => i.kind === 'salary-model' && i.owner === 'self'
-  )
-}
-
 beforeEach(() => {
-  useHouseholdPlanStore.getState().reset()
-  // Reset UI store to defaults
+  mockNavigate.mockClear()
+  localStorage.removeItem('fireplanner-profile')
+  localStorage.removeItem('fireplanner-household-plan-v1')
   useUIStore.setState({
     sectionOrder: 'goal-first',
+    setupCompleted: false,
+    setupPopulatedSections: [],
     cpfEnabled: true,
     propertyEnabled: false,
     healthcareEnabled: false,
@@ -50,71 +51,29 @@ describe('StartPage', () => {
     expect(screen.getByText('I already have enough')).toBeInTheDocument()
   })
 
-  it('shows goal-first form when clicking first pathway', async () => {
+  it('navigates to /setup with planType when clicking a pathway', async () => {
     const user = userEvent.setup()
     renderStartPage()
     await user.click(screen.getByText('I know when I want to retire'))
-    // Goal-first form has "Desired Retirement Age" label
-    expect(screen.getByText('Desired Retirement Age')).toBeInTheDocument()
-    expect(screen.getByText('Build my full plan')).toBeInTheDocument()
+    expect(mockNavigate).toHaveBeenCalledWith('/setup?planType=individual')
   })
 
-  it('shows story-first form when clicking second pathway', async () => {
+  it('sets sectionOrder in UIStore when selecting pathway', async () => {
     const user = userEvent.setup()
     renderStartPage()
     await user.click(screen.getByText("Show me what's possible"))
-    // Story-first form has "Monthly Income" label
-    expect(screen.getByText('Monthly Income')).toBeInTheDocument()
-    expect(screen.getByText('Build my full plan')).toBeInTheDocument()
+    expect(useUIStore.getState().sectionOrder).toBe('story-first')
   })
 
-  it('shows already-fire form with CPF phase cards when clicking third pathway', async () => {
+  it('sets sectionOrder to already-fire when selecting third pathway', async () => {
     const user = userEvent.setup()
     renderStartPage()
     await user.click(screen.getByText('I already have enough'))
-    // Already-fire shows CPF stage selection
-    expect(screen.getByText("What's your CPF stage?")).toBeInTheDocument()
-    expect(screen.getByText('Before 55')).toBeInTheDocument()
-    expect(screen.getByText('55 to 64')).toBeInTheDocument()
-    expect(screen.getByText('65 and above')).toBeInTheDocument()
-  })
-
-  it('toggles off pathway form when clicking same card again', async () => {
-    const user = userEvent.setup()
-    renderStartPage()
-    await user.click(screen.getByText('I know when I want to retire'))
-    expect(screen.getByText('Desired Retirement Age')).toBeInTheDocument()
-
-    // Click again to toggle off
-    await user.click(screen.getByText('I know when I want to retire'))
-    expect(screen.queryByText('Desired Retirement Age')).not.toBeInTheDocument()
-  })
-
-  it('shows section toggles inline after picking any pathway', async () => {
-    const user = userEvent.setup()
-    renderStartPage()
-    // No toggles visible initially
-    expect(screen.queryByText('What should we include?')).not.toBeInTheDocument()
-
-    await user.click(screen.getByText('I know when I want to retire'))
-    expect(screen.getByText('What should we include?')).toBeInTheDocument()
-    expect(screen.getByText('CPF Integration')).toBeInTheDocument()
-    expect(screen.getByText('Property Analysis')).toBeInTheDocument()
-  })
-
-  it('shows healthcare toggle only when CPF is enabled', async () => {
-    const user = userEvent.setup()
-    renderStartPage()
-    await user.click(screen.getByText('I know when I want to retire'))
-
-    // CPF is enabled by default, so healthcare should be visible
-    expect(screen.getByText('Healthcare Planning')).toBeInTheDocument()
+    expect(useUIStore.getState().sectionOrder).toBe('already-fire')
   })
 
   it('shows returning user link only when localStorage has profile', () => {
     // No profile — links should not appear
-    localStorage.removeItem('fireplanner-profile')
-    localStorage.removeItem('fireplanner-household-plan-v1')
     const { unmount } = renderStartPage()
     expect(screen.queryByText(/continue inputs/i)).not.toBeInTheDocument()
     unmount()
@@ -129,118 +88,35 @@ describe('StartPage', () => {
     localStorage.removeItem('fireplanner-profile')
   })
 
-  it('goal-first Continue button is disabled when retirement age <= current age', async () => {
+  it('shows continue/redo options when setup is completed and user is returning', () => {
+    localStorage.setItem('fireplanner-profile', '{}')
+    useUIStore.setState({ setupCompleted: true })
+    renderStartPage()
+
+    expect(screen.getByText('Continue to Dashboard')).toBeInTheDocument()
+    expect(screen.getByText('Redo setup')).toBeInTheDocument()
+    localStorage.removeItem('fireplanner-profile')
+  })
+
+  it('navigates to /setup?redo=true when clicking redo', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('fireplanner-profile', '{}')
+    useUIStore.setState({ setupCompleted: true })
+    renderStartPage()
+
+    await user.click(screen.getByText('Redo setup'))
+    expect(mockNavigate).toHaveBeenCalledWith('/setup?planType=individual&redo=true')
+    localStorage.removeItem('fireplanner-profile')
+  })
+
+  it('does not show inline forms after pathway selection', async () => {
     const user = userEvent.setup()
     renderStartPage()
     await user.click(screen.getByText('I know when I want to retire'))
 
-    // Find the Continue button
-    const continueButton = screen.getByRole('button', { name: /Build my full plan/i })
-
-    // Default ages: current=30, retirement=55 — should be enabled
-    expect(continueButton).not.toBeDisabled()
-  })
-
-  it('shows take-home/gross selector when pathway form opens', async () => {
-    const user = userEvent.setup()
-    renderStartPage()
-    await user.click(screen.getByText("Show me what's possible"))
-    expect(screen.getByText('Take-home')).toBeInTheDocument()
-    expect(screen.getByText('Gross')).toBeInTheDocument()
-  })
-
-  it('shows bonus months input when checkbox is checked', async () => {
-    const user = userEvent.setup()
-    renderStartPage()
-    await user.click(screen.getByText("Show me what's possible"))
-
-    const checkbox = screen.getByLabelText('I receive bonus / AWS')
-    expect(screen.queryByText('extra month(s)')).not.toBeInTheDocument()
-
-    await user.click(checkbox)
-    expect(screen.getByText('extra month(s)')).toBeInTheDocument()
-  })
-
-  it('shows estimated gross when take-home is selected', async () => {
-    const user = userEvent.setup()
-    renderStartPage()
-    await user.click(screen.getByText("Show me what's possible"))
-
-    // Default take-home mode with default value should show gross estimate
-    expect(screen.getByText(/estimated gross/i)).toBeInTheDocument()
-    expect(screen.getByText(/employee CPF/i)).toBeInTheDocument()
-  })
-
-  it('hides gross estimate and shows annual equivalent when switching to gross mode', async () => {
-    const user = userEvent.setup()
-    renderStartPage()
-    await user.click(screen.getByText("Show me what's possible"))
-
-    // Switch to gross mode
-    await user.click(screen.getByText('Gross'))
-
-    // In gross mode, should NOT show "Estimated gross"
-    expect(screen.queryByText(/estimated gross/i)).not.toBeInTheDocument()
-    // Should show annual equivalent with tilde prefix
-    expect(screen.getByText(/~\$72,000\/year/)).toBeInTheDocument()
-  })
-
-  it('shows annual equivalent for monthly expenses', async () => {
-    const user = userEvent.setup()
-    renderStartPage()
-    await user.click(screen.getByText("Show me what's possible"))
-
-    // Default $4,000/mo expenses → should show ~$48,000/year
-    expect(screen.getByText(/~\$48,000\/year/)).toBeInTheDocument()
-  })
-
-  it('writes annual base salary and expenses to household plan when continuing', async () => {
-    const user = userEvent.setup()
-    renderStartPage()
-    await user.click(screen.getByText("Show me what's possible"))
-
-    const continueBtn = screen.getByRole('button', { name: /build my full plan/i })
-    await user.click(continueBtn)
-
-    const selfAdult = getSelfAdult()
-    const salaryIncome = getSalaryIncome()
-    // Default take-home $4,800 at age 30 grosses up to $6,000/mo = $72,000/year
-    expect(selfAdult.annualIncome).toBeCloseTo(72000, -2)
-    expect(selfAdult.annualExpenses).toBe(48000)
-    expect(salaryIncome?.annualAmount).toBeCloseTo(72000, -2)
-  })
-
-  it('writes total income including bonus to household plan when bonus is enabled', async () => {
-    const user = userEvent.setup()
-    renderStartPage()
-    await user.click(screen.getByText("Show me what's possible"))
-
-    // Enable bonus with default 1 month
-    const checkbox = screen.getByLabelText('I receive bonus / AWS')
-    await user.click(checkbox)
-
-    const continueBtn = screen.getByRole('button', { name: /build my full plan/i })
-    await user.click(continueBtn)
-
-    const selfAdult = getSelfAdult()
-    const salaryIncome = getSalaryIncome()
-    // With 1 bonus month: draftIncome = grossMonthly * 13 = 6000 * 13 = 78000
-    // The total annualAmount includes bonus (12 + 1 months * grossMonthly)
-    expect(selfAdult.annualIncome).toBeCloseTo(78000, -2)
-    expect(salaryIncome?.annualAmount).toBeCloseTo(78000, -2)
-  })
-
-  it('writes income to household plan in already-fire pathway', async () => {
-    const user = userEvent.setup()
-    renderStartPage()
-    await user.click(screen.getByText('I already have enough'))
-
-    // Click a phase card to continue
-    await user.click(screen.getByText('Before 55'))
-
-    const selfAdult = getSelfAdult()
-    const salaryIncome = getSalaryIncome()
-    expect(selfAdult.annualIncome).toBeCloseTo(72000, -2)
-    expect(salaryIncome?.annualAmount).toBeCloseTo(72000, -2)
+    // Old inline forms should not exist
+    expect(screen.queryByText('Desired Retirement Age')).not.toBeInTheDocument()
+    expect(screen.queryByText('Build my full plan')).not.toBeInTheDocument()
+    expect(screen.queryByText('What should we include?')).not.toBeInTheDocument()
   })
 })

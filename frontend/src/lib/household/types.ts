@@ -75,6 +75,12 @@ export interface PlanningAdult {
   insuranceDeathCoverage: number
   insuranceCICoverage: number
   insuranceDisabilityMonthly: number
+  /** Annual insurance premium cost (deducted from cash flow in projection) */
+  annualInsurancePremiums?: number
+  /** Age at which non-mortgage debt is fully repaid (deduction stops) */
+  debtPayoffAge?: number
+  /** Emergency fund target in months of expenses (default: 6) */
+  emergencyFundTarget?: number
   funeralCosts: number
   ciRecoveryYears: number
 }
@@ -151,6 +157,8 @@ export interface IncomeSource {
   realisticPhases?: CareerPhase[]
   promotionJumps?: PromotionJump[]
   legacySourceId?: string
+  /** True = guaranteed income floor (annuity, endowment, pension). False/undefined = variable. */
+  guaranteed?: boolean
 }
 
 export interface ExpenseItem {
@@ -166,6 +174,12 @@ export interface ExpenseItem {
   durationYears?: number
   inflationAdjusted?: boolean
   retirementSpendingAdjustment?: number
+  /** Per-category monthly breakdown for base-living expenses. Optional for backward compat. */
+  categoryBreakdown?: {
+    amounts: Record<string, number>        // category key -> monthly amount
+    templateId?: 'frugal' | 'active' | 'none' | 'custom'
+    multipliers?: Record<string, number>   // category key -> retirement multiplier
+  }
   legacySourceId?: string
 }
 
@@ -187,6 +201,8 @@ export interface GoalItem {
   kind: 'financial-goal'
   timing: TimingRule
   amount: number
+  /** Amount already saved toward this goal; net needed = amount - amountSaved */
+  amountSaved?: number
   durationYears: number
   priority: FinancialGoal['priority']
   inflationAdjusted: boolean
@@ -203,6 +219,10 @@ export interface PropertyPlan {
   leaseYears: number
   appreciationRate: number
   rentalYield: number
+  /** Fraction of gross rental income consumed by expenses (0-1); net yield = rentalYield * (1 - rentalExpensesPercent) */
+  rentalExpensesPercent?: number
+  /** Age at which rental income stops (converted from calendar year at apply time) */
+  rentalIncomeEndAge?: number
   mortgageRate: number
   mortgageTerm: number
   ltv: number
@@ -252,6 +272,8 @@ export interface HouseholdAssumptions {
   }
   cashReserve: HouseholdCashReserveSettings
   retirementMitigation: RetirementMitigationConfig
+  /** When one partner passes, shared expenses multiply by this ratio. Default 0.75 (75%). */
+  survivorExpenseRatio?: number
 }
 
 export interface LegacyMutationCoupling {

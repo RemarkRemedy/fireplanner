@@ -170,6 +170,8 @@ export function calculateSellAndDownsize(params: {
   newMortgageTerm: number
   residency: 'citizen' | 'pr' | 'foreigner'
   propertyCount: number // property count AFTER selling (typically 0 if selling only home)
+  /** Fraction of net equity allocated to portfolio (0-1); defaults to 1.0 */
+  proceedsAllocationPercent?: number
 }): SellAndDownsizeResult {
   const grossProceeds = params.salePrice
   const bsd = calculateBSD(params.newPropertyCost)
@@ -187,6 +189,7 @@ export function calculateSellAndDownsize(params: {
   }
 
   const netEquity = grossProceeds - params.outstandingMortgage - bsd - absd - downPayment
+  const allocationPercent = params.proceedsAllocationPercent ?? 1.0
 
   return {
     grossProceeds,
@@ -196,7 +199,7 @@ export function calculateSellAndDownsize(params: {
     downPayment,
     newLoanAmount,
     newMonthlyPayment,
-    netEquityToPortfolio: Math.max(0, netEquity),
+    netEquityToPortfolio: Math.max(0, netEquity * allocationPercent),
     shortfall: Math.max(0, -netEquity),
   }
 }
