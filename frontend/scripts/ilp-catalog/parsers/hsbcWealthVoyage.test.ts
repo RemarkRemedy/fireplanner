@@ -25,7 +25,7 @@ describe('parseHsbcWealthVoyage', () => {
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-dividend-payout-threshold')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-dividend-payout-threshold')
 
     const sgdMip20 = product.variants.find((variant) => variant.id === 'sgd-mip-20')
     expect(sgdMip20).toBeDefined()
@@ -34,6 +34,7 @@ describe('parseHsbcWealthVoyage', () => {
       accountIds: ['regular', 'topup'],
       defaultMode: 'reinvest',
       minimumAnnualPayoutAmount: 30,
+      minimumAnnualPayoutCurrency: 'SGD',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -54,6 +55,7 @@ describe('parseHsbcWealthVoyage', () => {
     expect(usdMip20?.distributionSupport).toEqual(
       expect.objectContaining({
         minimumAnnualPayoutAmount: 30,
+        minimumAnnualPayoutCurrency: 'SGD',
       }),
     )
     expect(sgdMip20?.feeRules).toEqual(

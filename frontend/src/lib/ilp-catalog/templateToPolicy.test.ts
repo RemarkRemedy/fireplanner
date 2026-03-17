@@ -156,11 +156,22 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 30,
+      minimumAnnualPayoutCurrency: 'SGD',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
     })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
+
+    const usdVariant = product?.variants.find((entry) => entry.id === 'usd-mip-10')
+    expect(usdVariant).toBeDefined()
+    const usdSeed = templateVariantToPolicySeed(product!, usdVariant!, manifest)
+    expect(usdSeed.distributionSupport?.minimumAnnualPayoutCurrency).toBe('SGD')
+    expect(usdSeed.catalogWarnings?.some((warning) => warning.includes('cash-payout amount of S$30'))).toBe(true)
+    expect(usdSeed.catalogWarnings?.some((warning) => warning.includes('remains informational for this policy currency'))).toBe(true)
+    expect(usdSeed.catalogWarnings?.some((warning) => warning.includes('US$30'))).toBe(false)
+
     expect(seed.accounts.find((account) => account.id === 'topup')?.contributionRules).toEqual([
       { phase: 'top-up', contributionShare: 1 },
     ])
@@ -218,7 +229,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-voyage-premium-base-amf')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-voyage-premium-holiday-charge-after-free-duration')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-voyage-dividend-payout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-voyage-dividend-payout-threshold')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -267,6 +278,7 @@ describe('templateVariantToPolicySeed', () => {
       accountIds: ['regular', 'topup'],
       defaultMode: 'reinvest',
       minimumAnnualPayoutAmount: 30,
+      minimumAnnualPayoutCurrency: 'SGD',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -276,6 +288,11 @@ describe('templateVariantToPolicySeed', () => {
       source: 'catalog-default',
     })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
+    const usdVariant = product?.variants.find((entry) => entry.id === 'usd-mip-20')
+    expect(usdVariant).toBeDefined()
+    const usdSeed = templateVariantToPolicySeed(product!, usdVariant!, manifest)
+    expect(usdSeed.distributionSupport?.minimumAnnualPayoutCurrency).toBe('SGD')
+    expect(usdSeed.catalogWarnings?.some((warning) => warning.includes('remains informational for this policy currency'))).toBe(true)
   })
 
   it('maps HSBC Wealth Focus Flexi 3 into a supported seed with two-account routing and holiday charges', () => {

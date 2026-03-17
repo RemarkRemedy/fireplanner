@@ -383,6 +383,7 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', m
       accountIds: ['regular', 'topup'],
       defaultMode: 'reinvest',
       minimumAnnualPayoutAmount: 30,
+      minimumAnnualPayoutCurrency: 'SGD',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -429,6 +430,7 @@ export function parseHsbcWealthVoyage(context: ParseContext): IlpCatalogProduct 
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
+      'hsbc-voyage-dividend-payout-threshold',
       'hsbc-voyage-premium-holiday-charge-after-free-duration',
       'hsbc-voyage-premium-holiday-backpay-amf-reconciliation',
       'hsbc-voyage-regular-withdrawal-loyalty-suspension',

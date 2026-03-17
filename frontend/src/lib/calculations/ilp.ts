@@ -89,6 +89,7 @@ export interface IlpDistributionSupport {
   mode: 'manual-assumption'
   accountIds: string[]
   minimumAnnualPayoutAmount?: number
+  minimumAnnualPayoutCurrency?: 'SGD' | 'USD'
   cashPayoutWindows?: Array<{
     startPolicyYear: number
     endPolicyYear: number | null
@@ -1192,8 +1193,10 @@ function getDistributionPayoutsByAccount(
     const openBalance = openBalances.get(accountId) ?? 0
     if (openBalance <= 0) continue
     const payoutAmount = openBalance * distributionAssumption.annualYieldRate
+    const minimumAnnualPayoutCurrency = distributionSupport.minimumAnnualPayoutCurrency ?? normalized.input.currency
     if (
       distributionSupport.minimumAnnualPayoutAmount != null
+      && minimumAnnualPayoutCurrency === normalized.input.currency
       && payoutAmount < distributionSupport.minimumAnnualPayoutAmount
     ) {
       continue

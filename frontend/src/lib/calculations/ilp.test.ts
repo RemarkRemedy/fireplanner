@@ -668,6 +668,53 @@ describe('projectIlpPolicy', () => {
     expect(result.rows.map((row) => accountRow(row, 'policy').close)).toEqual([300, 300, 300])
   })
 
+  it('treats a foreign-currency minimum cash threshold as informational in runtime projection', () => {
+    const result = projectIlpPolicy(makeDefaultPolicy({
+      currency: 'USD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 24,
+      currentPolicyYear: 1,
+      mipLength: 2,
+      postMipYears: 2,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 300,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      distributionSupport: {
+        mode: 'manual-assumption',
+        accountIds: ['policy'],
+        minimumAnnualPayoutAmount: 40,
+        minimumAnnualPayoutCurrency: 'SGD',
+        defaultMode: 'reinvest',
+        cashPayoutAllowedDuringMip: false,
+        cashPayoutAllowedAfterMip: true,
+        source: 'distribution-paying-funds',
+      },
+      distributionAssumption: {
+        mode: 'cash-payout',
+        source: 'manual-assumption',
+        annualYieldRate: 0.1,
+      },
+    }), 'mid')
+
+    expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 30, 27])
+  })
+
   it('switches payout-eligible accounts when authored distribution windows cross the MIP boundary', () => {
     const result = projectIlpPolicy(makeDefaultPolicy({
       monthlyContribution: 0,

@@ -284,13 +284,16 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD'): 
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 30,
+      minimumAnnualPayoutCurrency: 'SGD',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: [
         'Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.',
         'Cash payout applies to both the Regular Premium Account and the Top-up Account.',
-        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption while the published S$30 minimum payout threshold and designated-bank-account routing remain informational only.',
+        'Cash dividends are paid in SGD irrespective of policy currency, and the published S$30 minimum annual payout applies across both the Regular Premium Account and Top-up Account.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published S$30 minimum remain reinvested.',
       ],
       sourceRefs: [page16],
     },
@@ -299,7 +302,9 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD'): 
       'This template captures the modeled regular-premium, top-up, recurring-single-premium, free-withdrawal, BRC, account-fee, and reinvest-default distribution subset.',
       ...(currency === 'USD' ? ['Recurring single premium is not available for USD-denominated policies and is therefore omitted from this variant.'] : []),
     ],
-    unsupportedItems: [],
+    unsupportedItems: [
+      'Designated-bank-account routing, unsuccessful cash-credit fallback to reinvestment, and payout execution operations remain informational only.',
+    ],
     sourceRefs: [page2, page4, page6, page8, page9, page10, page11, page16],
   }
 }

@@ -39,12 +39,16 @@ describe('parseHsbcWealthAbundance', () => {
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 30,
+      minimumAnnualPayoutCurrency: 'SGD',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: expect.arrayContaining([
         expect.stringContaining('Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash'),
         expect.stringContaining('Cash payout applies to both the Regular Premium Account and the Top-up Account'),
+        expect.stringContaining('paid in SGD irrespective of policy currency'),
+        expect.stringContaining('published S$30 minimum remain reinvested'),
       ]),
       sourceRefs: [
         expect.objectContaining({
@@ -59,10 +63,16 @@ describe('parseHsbcWealthAbundance', () => {
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 30,
+      minimumAnnualPayoutCurrency: 'SGD',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
     })
+    expect(usdVariant?.distributionSupport?.notes).toEqual(expect.arrayContaining([
+      expect.stringContaining('paid in SGD irrespective of policy currency'),
+      expect.stringContaining('published S$30 minimum remain reinvested'),
+    ]))
     expect(usdVariant?.warnings).toContain(
       'Recurring single premium is not available for USD-denominated policies and is therefore omitted from this variant.',
     )

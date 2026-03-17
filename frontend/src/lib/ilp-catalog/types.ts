@@ -206,6 +206,7 @@ export interface IlpTemplateDistributionSupport {
   mode: 'manual-assumption'
   accountIds: string[]
   minimumAnnualPayoutAmount?: number
+  minimumAnnualPayoutCurrency?: IlpCatalogCurrency
   cashPayoutWindows?: Array<{
     startPolicyYear: number
     endPolicyYear: number | null
