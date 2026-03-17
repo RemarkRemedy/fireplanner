@@ -568,14 +568,14 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false, onHa
       {/* CTA to full planner */}
       {hasInput && (
         <Card className="border-primary/30 bg-primary/5">
-          <CardContent className="py-6 space-y-4">
-            <div className="space-y-1">
-              <p className="font-semibold">Want CPF, property, and SG-specific calculations?</p>
-              <p className="text-sm text-muted-foreground">
-                The full planner adds CPF projections, property analysis, Monte Carlo simulation,
-                12 withdrawal strategies, and more.
-              </p>
-            </div>
+          <CardHeader className="pb-0">
+            <p className="font-semibold">Want CPF, property, and SG-specific calculations?</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              The full planner adds CPF projections, property analysis, Monte Carlo simulation,
+              12 withdrawal strategies, and more.
+            </p>
             {householdPlannerEnabled && (
               <PlanTypeSelector value={selectedPlanType} onChange={setSelectedPlanType} />
             )}

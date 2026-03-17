@@ -93,6 +93,9 @@ Always use the shared input wrappers from `components/shared/` instead of raw `<
 
 These handle cursor-jump prevention, comma formatting, blue border convention, and validation error display.
 
+### Card Layout
+`CardContent` has `pt-0` by default (designed to follow `CardHeader`). When a Card has text/content without a preceding `CardHeader`, always use `CardHeader` for the first text element or add `pt-6` to `CardContent`. Never let content touch the top edge of a Card.
+
 ### Shared Helpers (canonical locations)
 | Pattern | Canonical Location | Do NOT |
 |---------|-------------------|--------|
