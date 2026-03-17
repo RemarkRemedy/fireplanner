@@ -7969,6 +7969,234 @@ describe('computeSummaryMetrics', () => {
 
     expect(summary.currentDeathBenefitEstimate).toBeUndefined()
   })
+
+  it('adds a SmartRetire Income current death-benefit estimate during MIP from paid premiums plus top-ups', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 1_000,
+      monthsAlreadyPaid: 36,
+      currentPolicyYear: 4,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 30_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      mipLength: 8,
+      bonuses: [],
+      chargeRules: [],
+      catalogSource: {
+        productId: 'manulife-smartretire-v-income',
+        productName: 'Manulife SmartRetire (V) - Income',
+        variantId: 'sgd-mip-8-flexi-3',
+        variantLabel: '8 Years Flexi 3',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['manulife-smartretire-v-income-post-mip-death-benefit-corridor'],
+      },
+      funds: [ZERO_RETURN_FUND],
+      policyEvents: [
+        {
+          id: 'smartretire-topup-history',
+          type: 'top-up',
+          startPolicyMonth: 20,
+          durationMonths: 1,
+          amount: 4_000,
+        },
+      ],
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBe(42_000)
+  })
+
+  it('reduces the SmartRetire Income current death-benefit estimate for historical withdrawals', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 1_000,
+      monthsAlreadyPaid: 36,
+      currentPolicyYear: 4,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 20_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      mipLength: 8,
+      bonuses: [],
+      chargeRules: [],
+      catalogSource: {
+        productId: 'manulife-smartretire-v-income',
+        productName: 'Manulife SmartRetire (V) - Income',
+        variantId: 'sgd-mip-8-flexi-3',
+        variantLabel: '8 Years Flexi 3',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['manulife-smartretire-v-income-post-mip-death-benefit-corridor'],
+      },
+      funds: [ZERO_RETURN_FUND],
+      policyEvents: [
+        {
+          id: 'smartretire-topup-history',
+          type: 'top-up',
+          startPolicyMonth: 20,
+          durationMonths: 1,
+          amount: 4_000,
+        },
+        {
+          id: 'smartretire-withdrawal-history',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 24,
+          durationMonths: 1,
+          amount: 12_000,
+        },
+      ],
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBeCloseTo(29_400, 2)
+  })
+
+  it('omits the SmartRetire Income current death-benefit estimate when scheduled redemptions can already affect the current policy year', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 1_000,
+      monthsAlreadyPaid: 48,
+      currentPolicyYear: 5,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 30_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      mipLength: 8,
+      bonuses: [],
+      chargeRules: [],
+      catalogSource: {
+        productId: 'manulife-smartretire-v-income',
+        productName: 'Manulife SmartRetire (V) - Income',
+        variantId: 'sgd-mip-8-flexi-3',
+        variantLabel: '8 Years Flexi 3',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['manulife-smartretire-v-income-benefit-payout-handling'],
+      },
+      funds: [ZERO_RETURN_FUND],
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        source: 'manual-assumption',
+        accountId: 'policy',
+        startPolicyYear: 5,
+        durationYears: 2,
+        annualPayoutAmount: 3_000,
+      },
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBeUndefined()
+  })
+
+  it('adds a SmartRetire Sum current death-benefit estimate during MIP', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 1_000,
+      monthsAlreadyPaid: 12,
+      currentPolicyYear: 2,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 20_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      mipLength: 8,
+      bonuses: [],
+      chargeRules: [],
+      catalogSource: {
+        productId: 'manulife-smartretire-v-sum',
+        productName: 'Manulife SmartRetire (V) - Sum',
+        variantId: 'sgd-mip-8-flexi-3',
+        variantLabel: '8 Years Flexi 3',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['manulife-smartretire-v-sum-post-mip-death-benefit-corridor'],
+      },
+      funds: [ZERO_RETURN_FUND],
+      policyEvents: [
+        {
+          id: 'smartretire-sum-topup-history',
+          type: 'top-up',
+          startPolicyMonth: 10,
+          durationMonths: 1,
+          amount: 1_000,
+        },
+      ],
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBe(20_000)
+  })
+
 })
 
 describe('full ILP analysis', () => {

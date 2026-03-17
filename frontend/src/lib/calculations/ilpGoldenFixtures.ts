@@ -11723,6 +11723,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
       'branch:manulife-smartretire-v-administrative-charge',
       'branch:manulife-smartretire-v-withdrawal-and-surrender-charge',
@@ -11793,6 +11794,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
       'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
       'branch:manulife-smartretire-v-administrative-charge',

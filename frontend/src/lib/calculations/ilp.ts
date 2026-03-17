@@ -474,6 +474,7 @@ export interface IlpFullAnalysis {
 
 const CONTRIBUTION_TOLERANCE = 0.001
 const HSBC_WEALTH_FOCUS_DEATH_BENEFIT_FLOOR_MULTIPLIER = 1.01
+const MANULIFE_SMARTRETIRE_DEATH_BENEFIT_FLOOR_MULTIPLIER = 1.05
 
 interface IlpSyntheticEvent {
   type: 'premium-holiday-repayment'
@@ -2804,6 +2805,56 @@ function computeCurrentDeathBenefitEstimate(
       totalCurrentValue,
       topUpAccountValue + Math.max(regularAccountValue, regularProtectedFloor),
     )
+  }
+
+  if (
+    input.catalogSource?.productId === 'manulife-smartretire-v-income'
+    || input.catalogSource?.productId === 'manulife-smartretire-v-sum'
+  ) {
+    if (!hasFiniteMip(input) || input.currentPolicyYear > input.mipLength) {
+      return undefined
+    }
+
+    if (input.catalogSource.productId === 'manulife-smartretire-v-income') {
+      const scheduledPayout = input.scheduledPayoutAssumption
+      if (
+        scheduledPayout?.mode === 'scheduled-redemption'
+        // Historical or currently active scheduled-redemption assumptions can imply
+        // prior policy-account withdrawals that the current-state shortcut cannot
+        // reconstruct exactly from today’s static snapshot.
+        && scheduledPayout.startPolicyYear <= input.currentPolicyYear
+      ) {
+        return undefined
+      }
+    }
+
+    const normalized = buildNormalizedPolicyInput(input)
+    const currentPolicyMonth = Number.isFinite(input.monthsAlreadyPaid)
+      ? Math.max(0, input.monthsAlreadyPaid)
+      : 0
+    const cumulativeRegularPremiumPaid = currentPolicyMonth > 0
+      ? getCumulativePaidRegularPremiumAtMonth(normalized, currentPolicyMonth)
+      : 0
+    const topUpAmount = normalized.events.topUps.reduce((sum, event) => (
+      event.amount != null
+      && event.amount > 0
+      && event.startPolicyMonth <= currentPolicyMonth
+        ? sum + event.amount
+        : sum
+    ), 0)
+    const withdrawalAmount = normalized.events.partialWithdrawals.reduce((sum, event) => (
+      event.amount != null
+      && event.amount > 0
+      && event.startPolicyMonth <= currentPolicyMonth
+        ? sum + event.amount
+        : sum
+    ), 0)
+    const protectedFloor = Math.max(
+      0,
+      (cumulativeRegularPremiumPaid + topUpAmount - withdrawalAmount) * MANULIFE_SMARTRETIRE_DEATH_BENEFIT_FLOOR_MULTIPLIER,
+    )
+
+    return Math.max(totalCurrentValue, protectedFloor)
   }
 
   const profile = input.assuranceProfile

@@ -30,13 +30,16 @@ describe('parseManulifeSmartRetireIncome', () => {
       'branch:manulife-smartretire-v-withdrawal-and-surrender-charge',
       'branch:manulife-smartretire-v-premium-shortfall-charge',
       'branch:manulife-smartretire-v-zero-top-up-charge',
+      'kernel:current-death-benefit-estimate',
       'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-death-benefit')
+    expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-post-mip-death-benefit-corridor')
+    expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-benefit-payout-handling')
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-coi-refund')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-reinvested-dividend-withdrawal')
+    expect(product.warnings.some((warning) => warning.includes('current-state MIP death-benefit estimate'))).toBe(true)
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-8-flexi-3',
       'sgd-mip-8-flexi-5',

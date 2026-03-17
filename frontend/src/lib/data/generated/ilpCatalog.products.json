@@ -21091,11 +21091,13 @@
       "branch:manulife-smartretire-v-withdrawal-and-surrender-charge",
       "branch:manulife-smartretire-v-premium-shortfall-charge",
       "branch:manulife-smartretire-v-zero-top-up-charge",
+      "kernel:current-death-benefit-estimate",
       "kernel:scheduled-payout-manual-assumption",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "manulife-smartretire-v-income-death-benefit",
+      "manulife-smartretire-v-income-post-mip-death-benefit-corridor",
+      "manulife-smartretire-v-income-benefit-payout-handling",
       "manulife-smartretire-v-income-waiver-of-premium-benefit",
       "manulife-smartretire-v-income-coi-refund",
       "manulife-smartretire-v-income-welcome-bonus",
@@ -21107,7 +21109,7 @@
       "manulife-smartretire-v-income-fund-switching-and-redirection"
     ],
     "warnings": [
-      "Manulife SmartRetire (V) - Income is cataloged as a supported V1 product for the regular-pay corridors. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface, while hybrid COI mechanics, TPD waiver, COI refund, bonuses, and fund-level charges remain outside the current engine."
+      "Manulife SmartRetire (V) - Income is cataloged as a supported V1 product for the regular-pay corridors. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, the current-state MIP death-benefit estimate, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface, while later death-benefit corridors, hybrid COI mechanics, TPD waiver, COI refund, bonuses, and fund-level charges remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -21352,17 +21354,17 @@
           0
         ],
         "warnings": [
-          "8 Years Flexi 3 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface.",
+          "8 Years Flexi 3 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the current-state MIP death-benefit estimate, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface.",
           "Hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, bonuses, flexi-start premium variation, and fund-level management charges remain outside the current engine.",
           "Withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
-          "Death-benefit formulas and monthly COI deductions remain informational only because they switch from a 105%-of-paid-premium floor during MIP to a fixed basic-sum-insured corridor during accumulation and then stop at the target retirement age.",
+          "Only the current-state MIP death-benefit estimate is modeled. The accumulation-period basic-sum-insured corridor, the post-target-retirement-age account-value-only corridor, amount-owed deductions, and claim-side handling remain informational only.",
           "Waiver of Premium benefit on TPD and its separate COI table remain informational only.",
           "Refund of Cost of Insurance at target retirement age remains informational only.",
           "Welcome Bonus and Loyalty Bonus remain informational only.",
           "Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.",
-          "Lapsing / reinstatement effects and benefit-payout handling remain informational only.",
+          "Lapsing / reinstatement effects remain informational only.",
           "Withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges, fund switching, premium redirection, and automatic fund rebalancing remain informational only."
         ],
@@ -21650,17 +21652,17 @@
           0
         ],
         "warnings": [
-          "8 Years Flexi 5 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface.",
+          "8 Years Flexi 5 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the current-state MIP death-benefit estimate, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface.",
           "Hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, bonuses, flexi-start premium variation, and fund-level management charges remain outside the current engine.",
           "Withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
-          "Death-benefit formulas and monthly COI deductions remain informational only because they switch from a 105%-of-paid-premium floor during MIP to a fixed basic-sum-insured corridor during accumulation and then stop at the target retirement age.",
+          "Only the current-state MIP death-benefit estimate is modeled. The accumulation-period basic-sum-insured corridor, the post-target-retirement-age account-value-only corridor, amount-owed deductions, and claim-side handling remain informational only.",
           "Waiver of Premium benefit on TPD and its separate COI table remain informational only.",
           "Refund of Cost of Insurance at target retirement age remains informational only.",
           "Welcome Bonus and Loyalty Bonus remain informational only.",
           "Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.",
-          "Lapsing / reinstatement effects and benefit-payout handling remain informational only.",
+          "Lapsing / reinstatement effects remain informational only.",
           "Withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges, fund switching, premium redirection, and automatic fund rebalancing remain informational only."
         ],
@@ -21987,17 +21989,17 @@
           0
         ],
         "warnings": [
-          "12 Years Flexi 8 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface.",
+          "12 Years Flexi 8 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the current-state MIP death-benefit estimate, scheduled retirement-income capability through the payout-state kernel, and the reinvest-default distribution-mode assumption surface.",
           "Hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, bonuses, flexi-start premium variation, and fund-level management charges remain outside the current engine.",
           "Withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
-          "Death-benefit formulas and monthly COI deductions remain informational only because they switch from a 105%-of-paid-premium floor during MIP to a fixed basic-sum-insured corridor during accumulation and then stop at the target retirement age.",
+          "Only the current-state MIP death-benefit estimate is modeled. The accumulation-period basic-sum-insured corridor, the post-target-retirement-age account-value-only corridor, amount-owed deductions, and claim-side handling remain informational only.",
           "Waiver of Premium benefit on TPD and its separate COI table remain informational only.",
           "Refund of Cost of Insurance at target retirement age remains informational only.",
           "Welcome Bonus and Loyalty Bonus remain informational only.",
           "Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.",
-          "Lapsing / reinstatement effects and benefit-payout handling remain informational only.",
+          "Lapsing / reinstatement effects remain informational only.",
           "Withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges, fund switching, premium redirection, and automatic fund rebalancing remain informational only."
         ],
@@ -22052,12 +22054,14 @@
       "branch:manulife-smartretire-v-withdrawal-and-surrender-charge",
       "branch:manulife-smartretire-v-premium-shortfall-charge",
       "branch:manulife-smartretire-v-zero-top-up-charge",
+      "kernel:current-death-benefit-estimate",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "manulife-smartretire-v-sum-target-retirement-sum-withdrawal",
       "manulife-smartretire-v-sum-regular-income-drawdown",
-      "manulife-smartretire-v-sum-death-benefit",
+      "manulife-smartretire-v-sum-post-mip-death-benefit-corridor",
+      "manulife-smartretire-v-sum-benefit-payout-handling",
       "manulife-smartretire-v-sum-waiver-of-premium-benefit",
       "manulife-smartretire-v-sum-coi-refund",
       "manulife-smartretire-v-sum-welcome-bonus",
@@ -22069,7 +22073,7 @@
       "manulife-smartretire-v-sum-fund-switching-and-redirection"
     ],
     "warnings": [
-      "Manulife SmartRetire (V) - Sum is cataloged as a supported V1 product for the regular-pay corridors. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface, while retirement-sum withdrawal handling, optional drawdown elections, hybrid COI mechanics, TPD waiver, COI refund, bonuses, and fund-level charges remain outside the current engine."
+      "Manulife SmartRetire (V) - Sum is cataloged as a supported V1 product for the regular-pay corridors. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, the current-state MIP death-benefit estimate, and the reinvest-default distribution-mode assumption surface, while retirement-sum withdrawal handling, optional drawdown elections, later death-benefit corridors, hybrid COI mechanics, TPD waiver, COI refund, bonuses, and fund-level charges remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -22298,19 +22302,19 @@
           0
         ],
         "warnings": [
-          "8 Years Flexi 3 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
+          "8 Years Flexi 3 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the current-state MIP death-benefit estimate, and the reinvest-default distribution-mode assumption surface.",
           "Target Retirement Sum withdrawal, optional regular-income drawdown elections, hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, bonuses, and fund-level management charges remain outside the current engine.",
           "Withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Target Retirement Sum withdrawal remains informational only and should be represented manually with withdrawal events if needed.",
           "Optional regular-income drawdown elections remain informational only.",
-          "Death-benefit formulas and monthly COI deductions remain informational only because they switch from a 105%-of-paid-premium floor during MIP to a fixed basic-sum-insured corridor during accumulation and then stop at the target retirement age.",
+          "Only the current-state MIP death-benefit estimate is modeled. The accumulation-period basic-sum-insured corridor, the post-target-retirement-age account-value-only corridor, amount-owed deductions, and claim-side handling remain informational only.",
           "Waiver of Premium benefit on TPD and its separate COI table remain informational only.",
           "Refund of Cost of Insurance at target retirement age remains informational only.",
           "Welcome Bonus and Loyalty Bonus remain informational only.",
           "Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.",
-          "Lapsing / reinstatement effects and benefit-payout handling remain informational only.",
+          "Lapsing / reinstatement effects remain informational only.",
           "Withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges, fund switching, premium redirection, and automatic fund rebalancing remain informational only."
         ],
@@ -22582,19 +22586,19 @@
           0
         ],
         "warnings": [
-          "8 Years Flexi 5 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
+          "8 Years Flexi 5 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the current-state MIP death-benefit estimate, and the reinvest-default distribution-mode assumption surface.",
           "Target Retirement Sum withdrawal, optional regular-income drawdown elections, hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, bonuses, and fund-level management charges remain outside the current engine.",
           "Withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Target Retirement Sum withdrawal remains informational only and should be represented manually with withdrawal events if needed.",
           "Optional regular-income drawdown elections remain informational only.",
-          "Death-benefit formulas and monthly COI deductions remain informational only because they switch from a 105%-of-paid-premium floor during MIP to a fixed basic-sum-insured corridor during accumulation and then stop at the target retirement age.",
+          "Only the current-state MIP death-benefit estimate is modeled. The accumulation-period basic-sum-insured corridor, the post-target-retirement-age account-value-only corridor, amount-owed deductions, and claim-side handling remain informational only.",
           "Waiver of Premium benefit on TPD and its separate COI table remain informational only.",
           "Refund of Cost of Insurance at target retirement age remains informational only.",
           "Welcome Bonus and Loyalty Bonus remain informational only.",
           "Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.",
-          "Lapsing / reinstatement effects and benefit-payout handling remain informational only.",
+          "Lapsing / reinstatement effects remain informational only.",
           "Withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges, fund switching, premium redirection, and automatic fund rebalancing remain informational only."
         ],
@@ -22905,19 +22909,19 @@
           0
         ],
         "warnings": [
-          "12 Years Flexi 8 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, and the reinvest-default distribution-mode assumption surface.",
+          "12 Years Flexi 8 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the current-state MIP death-benefit estimate, and the reinvest-default distribution-mode assumption surface.",
           "Target Retirement Sum withdrawal, optional regular-income drawdown elections, hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, bonuses, and fund-level management charges remain outside the current engine.",
           "Withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Target Retirement Sum withdrawal remains informational only and should be represented manually with withdrawal events if needed.",
           "Optional regular-income drawdown elections remain informational only.",
-          "Death-benefit formulas and monthly COI deductions remain informational only because they switch from a 105%-of-paid-premium floor during MIP to a fixed basic-sum-insured corridor during accumulation and then stop at the target retirement age.",
+          "Only the current-state MIP death-benefit estimate is modeled. The accumulation-period basic-sum-insured corridor, the post-target-retirement-age account-value-only corridor, amount-owed deductions, and claim-side handling remain informational only.",
           "Waiver of Premium benefit on TPD and its separate COI table remain informational only.",
           "Refund of Cost of Insurance at target retirement age remains informational only.",
           "Welcome Bonus and Loyalty Bonus remain informational only.",
           "Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.",
-          "Lapsing / reinstatement effects and benefit-payout handling remain informational only.",
+          "Lapsing / reinstatement effects remain informational only.",
           "Withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges, fund switching, premium redirection, and automatic fund rebalancing remain informational only."
         ],
