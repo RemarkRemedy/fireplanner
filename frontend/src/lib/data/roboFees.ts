@@ -21,6 +21,83 @@ export interface PlatformFees {
   notes?: string
 }
 
+/** Display-only comparison data for the /compare platform table */
+export interface PlatformComparison {
+  id: string
+  name: string
+  feeDisplay: string          // e.g. "0.20% - 0.80%"
+  terDisplay: string          // e.g. "~0.15 - 0.25%"
+  minInvestment: string       // e.g. "$1" or "$1,000"
+  investmentApproach: string  // e.g. "Passive ETFs"
+  portfolioThemes: string     // e.g. "Core, ESG, Income, REIT+"
+  autoRebalancing: boolean
+  withdrawalFees: string      // e.g. "Free" or "$1 USD per action"
+  bestFor: string             // one-liner summary
+}
+
+export const PLATFORM_COMPARISONS: PlatformComparison[] = [
+  {
+    id: 'endowus',
+    name: 'Endowus',
+    feeDisplay: '0.25% - 0.60%',
+    terDisplay: '~0.20 - 0.40%',
+    minInvestment: '$1,000',
+    investmentApproach: 'Unit trusts and funds (100% trailer fee cashback)',
+    portfolioThemes: 'Core, Income, Cash Smart, Fund Smart, ESG',
+    autoRebalancing: true,
+    withdrawalFees: 'Free',
+    bestFor: 'CPF-IS and SRS investors who want fund-level diversification',
+  },
+  {
+    id: 'stashaway',
+    name: 'StashAway',
+    feeDisplay: '0.20% - 0.80%',
+    terDisplay: '~0.15 - 0.25%',
+    minInvestment: '$1',
+    investmentApproach: 'Passive ETFs with proprietary ERAA strategy',
+    portfolioThemes: 'General, Income, Thematic (Tech, ESG, Healthcare), Flexible',
+    autoRebalancing: true,
+    withdrawalFees: '$1 USD per invest/withdraw action',
+    bestFor: 'Beginners who want a low barrier to entry and guided portfolios',
+  },
+  {
+    id: 'syfe',
+    name: 'Syfe',
+    feeDisplay: '0.25% - 0.65%',
+    terDisplay: '~0.10 - 0.20%',
+    minInvestment: '$1',
+    investmentApproach: 'UCITS ETFs (also offers Syfe Brokerage for DIY)',
+    portfolioThemes: 'Core, REIT+, Income+, Equity100, Thematic, Custom',
+    autoRebalancing: true,
+    withdrawalFees: 'Free',
+    bestFor: 'Investors who want thematic options (REITs, income) alongside core portfolios',
+  },
+  {
+    id: 'dbs-digiportfolio',
+    name: 'DBS digiPortfolio',
+    feeDisplay: '0.25% - 0.75%',
+    terDisplay: '~0.20%',
+    minInvestment: 'No minimum',
+    investmentApproach: 'Managed ETF portfolios by DBS CIO',
+    portfolioThemes: 'Saveup (0.25%), Asia, Global, Sustainability',
+    autoRebalancing: true,
+    withdrawalFees: 'Free',
+    bestFor: 'DBS customers who want a bank-integrated, no-minimum option',
+  },
+  {
+    id: 'diy-ibkr',
+    name: 'DIY (IBKR)',
+    feeDisplay: '$0 platform fee',
+    terDisplay: '~0.03 - 0.22%',
+    minInvestment: 'No minimum',
+    investmentApproach: 'Self-directed ETF/stock investing',
+    portfolioThemes: 'Unlimited (you pick your own ETFs)',
+    autoRebalancing: false,
+    withdrawalFees: 'Free',
+    bestFor: 'Experienced investors who want lowest costs and full control',
+  },
+]
+
 export const ROBO_FEES_LAST_VERIFIED = '2026-03-17'
 
 export const ROBO_FEES: PlatformFees[] = [

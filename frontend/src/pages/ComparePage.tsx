@@ -17,6 +17,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { PlatformComparisonTable } from '@/components/compare/PlatformComparisonTable'
 import { FeeComparisonCalculator } from '@/components/compare/FeeComparisonCalculator'
 
 // ---------------------------------------------------------------------------
@@ -156,16 +157,20 @@ export function ComparePage() {
         </p>
       </header>
 
-      {/* Fee comparison calculator — front and center */}
+      {/* Platform comparison table */}
       <section>
-        <FeeComparisonCalculator />
+        <PlatformComparisonTable />
       </section>
 
-      {/* Feature cards */}
+      {/* What SGFirePlanner adds */}
       <section className="space-y-6">
         <h2 className="text-2xl font-semibold text-center">
-          What SGFirePlanner adds that robo-advisors cannot
+          What a retirement planner adds
         </h2>
+        <p className="text-center text-muted-foreground max-w-2xl mx-auto">
+          Robo-advisors handle investing. A planner answers the bigger question:
+          is what you are investing enough to retire on?
+        </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {FEATURES.map(({ icon: Icon, title, description }) => (
             <Card key={title}>
@@ -185,48 +190,9 @@ export function ComparePage() {
         </div>
       </section>
 
-      {/* Robo-advisor context (collapsed for quick scanners) */}
-      <section className="space-y-4">
-        <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="robos-do-well">
-            <AccordionTrigger className="text-lg font-semibold">What robo-advisors do well</AccordionTrigger>
-            <AccordionContent className="prose prose-neutral dark:prose-invert max-w-none space-y-3 text-sm text-muted-foreground">
-              <p>
-                Robo-advisors like Endowus, StashAway, and Syfe have made investing
-                dramatically more accessible in Singapore. They handle portfolio
-                construction, automatic rebalancing, and dividend reinvestment for a
-                fraction of what traditional wealth managers charge.
-              </p>
-              <p>
-                They also provide access to tax-advantaged accounts. Endowus supports
-                both SRS and CPF-IS investing. StashAway and Syfe support SRS.
-                Automated monthly contributions keep you disciplined through downturns.
-              </p>
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="robos-cannot">
-            <AccordionTrigger className="text-lg font-semibold">What robo-advisors cannot tell you</AccordionTrigger>
-            <AccordionContent className="prose prose-neutral dark:prose-invert max-w-none space-y-3 text-sm text-muted-foreground">
-              <p>
-                A robo-advisor tells you how your portfolio is performing. It does not
-                tell you whether your portfolio, combined with your CPF, property, and
-                spending plans, is enough to retire on.
-              </p>
-              <p>
-                Retirement planning in Singapore involves CPF contribution rates that
-                change at age 55, 60, 65, and 70. CPF LIFE payouts. BRS/FRS/ERS
-                thresholds. Property loans. MediShield and CareShield premiums.
-                SRS tax reliefs. The interaction between all of these determines when
-                you can actually stop working.
-              </p>
-              <p>
-                The best approach: use a robo-advisor (or DIY ETFs) for execution,
-                and a retirement planner for strategy. SGFirePlanner is free, runs in
-                your browser, and works alongside any platform.
-              </p>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+      {/* Fee impact calculator */}
+      <section>
+        <FeeComparisonCalculator />
       </section>
 
       {/* FAQ */}
