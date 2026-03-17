@@ -4,8 +4,8 @@
  * Uses sessionStorage so it persists across page navigations but not across sessions.
  */
 
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { X } from 'lucide-react'
 
 const DEMO_FLAG_KEY = 'fireplanner-demo-active'
@@ -20,12 +20,39 @@ export function clearDemoActive() {
   try { sessionStorage.removeItem(DEMO_FLAG_KEY) } catch { /* private browsing */ }
 }
 
+/** Check if demo mode is active */
+export function isDemoActive(): boolean {
+  try { return sessionStorage.getItem(DEMO_FLAG_KEY) === '1' } catch { return false }
+}
+
+/** Clear demo data from localStorage, preserving scenarios */
+function clearDemoData() {
+  clearDemoActive()
+  const scenarios = localStorage.getItem('fireplanner-scenarios')
+  localStorage.clear()
+  if (scenarios) localStorage.setItem('fireplanner-scenarios', scenarios)
+}
+
 export function DemoBadge() {
   const [active, setActive] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    try { setActive(sessionStorage.getItem(DEMO_FLAG_KEY) === '1') } catch { /* */ }
+    setActive(isDemoActive())
+  }, [])
+
+  const handleStartPlan = useCallback(() => {
+    clearDemoData()
+    setActive(false)
+    // Full reload to reset all Zustand stores
+    window.location.href = '/setup'
+  }, [])
+
+  const handleBackToStart = useCallback(() => {
+    clearDemoData()
+    setActive(false)
+    window.location.href = '/'
   }, [])
 
   if (!active) return null
@@ -49,20 +76,18 @@ export function DemoBadge() {
             Viewing demo data
           </p>
           <div className="flex flex-col gap-1.5">
-            <Link
-              to="/setup"
-              onClick={() => { clearDemoActive(); setActive(false) }}
+            <button
+              onClick={handleStartPlan}
               className="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
             >
               Start your own plan
-            </Link>
-            <Link
-              to="/"
-              onClick={() => { clearDemoActive(); setActive(false) }}
+            </button>
+            <button
+              onClick={handleBackToStart}
               className="inline-flex items-center rounded-md border border-amber-300 dark:border-amber-600 px-3 py-1.5 text-xs font-medium text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900"
             >
               Back to start
-            </Link>
+            </button>
           </div>
         </div>
         <button
