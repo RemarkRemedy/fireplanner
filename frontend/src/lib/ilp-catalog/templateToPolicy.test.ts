@@ -4682,7 +4682,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-5-10-involuntary-unemployment-waiver')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-5-10-benefit-payout-handling')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-5-10-dividend-payout-threshold-and-record-date-instructions')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-5-10-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.accounts.find((account) => account.id === 'accumulation')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'after-icp', contributionShare: 1 },
@@ -4746,6 +4746,9 @@ describe('templateVariantToPolicySeed', () => {
         { startPolicyYear: 1, endPolicyYear: 5, accountIds: ['topup'] },
         { startPolicyYear: 6, endPolicyYear: null, accountIds: ['accumulation', 'topup'] },
       ],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -4758,6 +4761,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.eecTable).toEqual([1, 1, 0.92, 0.83, 0.58, 0.57, 0.49, 0.3, 0.12, 0.03])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('paid-up and no-withdrawal eligibility gates'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30-day record-date lead time'))).toBe(true)
   })
 
   it('maps Tokio Marine Wealth Flexi-Link 5.10 advanced-death into a supported seed with Tokio MPC inputs', () => {
@@ -4812,7 +4816,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-3-12-involuntary-unemployment-waiver')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-3-12-benefit-payout-handling')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-3-12-dividend-payout-threshold-and-record-date-instructions')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-3-12-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.accounts.find((account) => account.id === 'accumulation')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'after-icp', contributionShare: 1 },
@@ -4881,6 +4885,9 @@ describe('templateVariantToPolicySeed', () => {
         { startPolicyYear: 1, endPolicyYear: 3, accountIds: ['topup'] },
         { startPolicyYear: 4, endPolicyYear: null, accountIds: ['accumulation', 'topup'] },
       ],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -4909,6 +4916,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.eecTable).toEqual([1, 1, 0.92, 0.85, 0.78, 0.75, 0.68, 0.58, 0.48, 0.075, 0.015, 0.01])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('paid-up and no-withdrawal eligibility gates'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30-day record-date lead time'))).toBe(true)
   })
 
   it('maps Tokio Marine Wealth Flexi-Link 3.12 advanced-death into a supported seed with Tokio MPC inputs', () => {
