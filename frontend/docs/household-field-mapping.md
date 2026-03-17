@@ -269,6 +269,7 @@ Snapshot date: `2026-03-07`
 ### Indirect Route Surfaces
 
 - [DashboardPage.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/pages/DashboardPage.tsx)
+- [HealthCheckPage.tsx](/Users/tj/TJDevelopment/fireplanner/frontend/src/pages/HealthCheckPage.tsx)
 
 ## Deferred Work For PR 3+
 

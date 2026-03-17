@@ -1798,15 +1798,15 @@ export const APPROVED_GOLDEN_OUTPUTS = {
             ]
         },
         "fire": {
-            "fireNumber": 2572354.2424974726,
-            "progress": 0.2604617936872893,
-            "yearsToFire": 10.193853859676715,
-            "fireAge": 50.193853859676715,
+            "fireNumber": 1497699.5028707692,
+            "progress": 0.44735275582034545,
+            "yearsToFire": 4.708954282630779,
+            "fireAge": 44.70895428263078,
             "totalNWIncProperty": 1095000
         },
         "projection": {
             "summary": {
-                "fireAchievedAge": 48,
+                "fireAchievedAge": 44,
                 "peakTotalNW": 24316277.82340104,
                 "peakTotalNWAge": 95,
                 "terminalLiquidNW": 21427811.20700882,
@@ -5180,10 +5180,10 @@ export const APPROVED_GOLDEN_OUTPUTS = {
             ]
         },
         "fire": {
-            "fireNumber": 3785389.563472817,
-            "progress": 0.1471446969090794,
-            "yearsToFire": 25.295609500958342,
-            "fireAge": 82.29560950095834,
+            "fireNumber": 3117529.6563969585,
+            "progress": 0.17866710549395223,
+            "yearsToFire": 21.18426504168955,
+            "fireAge": 78.18426504168954,
             "totalNWIncProperty": 1317000
         },
         "projection": {
@@ -6345,15 +6345,15 @@ export const APPROVED_GOLDEN_OUTPUTS = {
             ]
         },
         "fire": {
-            "fireNumber": 2143153.621984049,
-            "progress": 0.21696998070045995,
-            "yearsToFire": 8.231596294412244,
-            "fireAge": 40.23159629441224,
+            "fireNumber": 0,
+            "progress": 0,
+            "yearsToFire": 0,
+            "fireAge": 32,
             "totalNWIncProperty": 715000
         },
         "projection": {
             "summary": {
-                "fireAchievedAge": 39,
+                "fireAchievedAge": 36,
                 "peakTotalNW": 99476594.06325555,
                 "peakTotalNWAge": 94,
                 "terminalLiquidNW": 95500473.94764337,
