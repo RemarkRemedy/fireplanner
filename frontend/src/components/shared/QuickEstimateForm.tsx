@@ -401,11 +401,19 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false }: Qu
         </div>
       )}
 
-      {/* Compact transition text */}
+      {/* Compact CTA */}
       {compact && hasInput && (
-        <p className="text-center text-sm text-muted-foreground">
-          Add CPF, property, and SG-specific calculations. Choose your path:
-        </p>
+        <div className="flex flex-col items-center gap-2 pt-2">
+          <Button asChild>
+            <Link to="/setup">
+              Build your full plan
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Add CPF, property, healthcare, and Monte Carlo stress testing
+          </p>
+        </div>
       )}
     </div>
   )
