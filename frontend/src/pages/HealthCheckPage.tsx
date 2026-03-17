@@ -29,18 +29,14 @@ export function HealthCheckPage() {
   const isMultiAdult = adults.length > 1
   const [selectedAdultId, setSelectedAdultId] = useState(adults[0]?.id ?? '')
 
+  // Fall back to first adult if selected ID is no longer valid (adult removed, plan changed)
+  const validAdultId = adults.find((a) => a.id === selectedAdultId) ? selectedAdultId : (adults[0]?.id ?? '')
+
   // Use the selected adult's age for life-stage guide (not useProfileStore, which is always the primary adult)
-  const selectedAdult = adults.find((a) => a.id === selectedAdultId)
+  const selectedAdult = adults.find((a) => a.id === validAdultId)
   const currentAge = selectedAdult?.currentAge ?? 30
 
-  const inputs = useHealthCheckInputs(selectedAdultId)
-
-  // Ensure selectedAdultId is valid if adults list changes
-  useEffect(() => {
-    if (adults.length > 0 && !adults.find((a) => a.id === selectedAdultId)) {
-      setSelectedAdultId(adults[0].id)
-    }
-  }, [adults, selectedAdultId])
+  const inputs = useHealthCheckInputs(validAdultId)
 
   const healthCheck: HealthCheckResult | null = useMemo(() => {
     if (!inputs) return null
@@ -116,7 +112,7 @@ export function HealthCheckPage() {
               <AccordionContent>
                 <div className="space-y-4 pt-2">
                   {HEALTH_RATIOS.map((meta) => {
-                    const computed = healthCheck.ratios.find((r) => r.id === meta.id)
+                    const computed = healthCheck!.ratios.find((r) => r.id === meta.id)
                     return (
                       <div key={meta.id} className="border-b pb-3 last:border-b-0 last:pb-0">
                         <div className="flex items-center gap-2 mb-1">

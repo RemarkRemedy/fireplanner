@@ -466,12 +466,13 @@ export function Sidebar() {
     if (sectionId) {
       // Expand the target section (and parent for sub-items) before scrolling
       expandSection(sectionId)
-      
-      const targetItem = allInputSections.find((s) => s.sectionId === sectionId)
-      if (targetItem?.isSubItem) {
+
+      // Sub-items live under the Expenses accordion — expand it so the section is visible
+      const SUB_ITEM_IDS = new Set(['section-healthcare', 'section-goals', 'section-protection'])
+      if (SUB_ITEM_IDS.has(sectionId)) {
         expandSection('section-expenses')
       }
-      
+
       // Wait for the section to appear in the DOM (accordion may need time to expand)
       let attempts = 0
       const tryScroll = () => {
