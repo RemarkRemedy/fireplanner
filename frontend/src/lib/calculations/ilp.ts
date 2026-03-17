@@ -1,10 +1,12 @@
 import {
   AIA_PLP2_DEATH_RATE_TABLE,
   FWD_FLEXI_ELITE_DEATH_RATE_TABLE,
+  GREAT_EASTERN_PRESTIGE_LEGACY_STANDARD_RATE_TABLE,
   GREAT_EASTERN_WA4_DEATH_TI_RATE_TABLE,
   HSBC_FLEXI_DEATH_TI_RATE_TABLE,
   INCOME_INVEST_FLEX_DEATH_TI_RATE_TABLE,
   INCOME_LEGACY_FLEX_SOLITAIRE_DEATH_TI_RATE_TABLE,
+  type IlpAssuranceRateTable,
   MANULIFE_INVESTREADY_III_DEATH_TI_RATE_TABLE,
   MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE,
   PRUACTIVE_LINKGUARD_COMBINED_RATE_TABLE,
@@ -176,6 +178,7 @@ export interface IlpAssuranceChargeConfig {
     | 'hsbc-flexi-max-death-ti'
     | 'great-eastern-wa4-death-ti'
     | 'great-eastern-gla4-death-ti'
+    | 'great-eastern-pla-death-ti'
     | 'fwd-invest-flexi-elite-death'
     | 'income-invest-flex-death-ti'
     | 'income-legacy-flex-solitaire-death-ti'
@@ -1483,6 +1486,7 @@ function getAssuranceFormulaFamily(
       return 'protected-base-paid-premium-floor'
     case 'great-eastern-gla4-death-ti':
       return 'protected-base-basic-sum-assured-with-topups'
+    case 'great-eastern-pla-death-ti':
     case 'income-legacy-flex-solitaire-death-ti':
       return 'protected-base-sum-assured'
     case 'manulife-investready-iii-death-ti':
@@ -1511,50 +1515,71 @@ function resolveAssuranceRate(
     return 0
   }
 
-  const ageIndex = Math.min(Math.max(Math.round(ageNextBirthday), 1), 120) - 1
   const riskClass = getAssuranceRiskClass(profile)
 
   switch (rule.assuranceConfig.formula) {
     case 'prudential-prosper-death':
-      return applyAssuranceRateMultipliers(rule, PRUVANTAGE_PROSPER_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+      return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(PRUVANTAGE_PROSPER_DEATH_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
     case 'prudential-prosper-accidental-death':
-      return applyAssuranceRateMultipliers(rule, PRUVANTAGE_PROSPER_ACCIDENTAL_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+      return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(PRUVANTAGE_PROSPER_ACCIDENTAL_DEATH_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
     case 'prudential-assure-ii-combined':
-      return applyAssuranceRateMultipliers(rule, PRUVANTAGE_ASSURE_II_COMBINED_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+      return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(PRUVANTAGE_ASSURE_II_COMBINED_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
     case 'prudential-linkguard-combined':
-      return applyAssuranceRateMultipliers(rule, PRUACTIVE_LINKGUARD_COMBINED_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+      return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(PRUACTIVE_LINKGUARD_COMBINED_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
     case 'aia-plp2-plus-death':
     case 'aia-plp2-max-death':
-      return applyAssuranceRateMultipliers(rule, AIA_PLP2_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+      return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(AIA_PLP2_DEATH_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
     case 'hsbc-flexi-choice-death-ti':
     case 'hsbc-flexi-max-death-ti':
-      return applyAssuranceRateMultipliers(rule, HSBC_FLEXI_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+      return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(HSBC_FLEXI_DEATH_TI_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
     case 'great-eastern-wa4-death-ti':
-      return applyAssuranceRateMultipliers(rule, GREAT_EASTERN_WA4_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+      return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(GREAT_EASTERN_WA4_DEATH_TI_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
     case 'great-eastern-gla4-death-ti':
-      return applyAssuranceRateMultipliers(rule, GREAT_EASTERN_WA4_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+      return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(GREAT_EASTERN_WA4_DEATH_TI_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
+    case 'great-eastern-pla-death-ti':
+      return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(GREAT_EASTERN_PRESTIGE_LEGACY_STANDARD_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
     case 'fwd-invest-flexi-elite-death':
-      return applyAssuranceRateMultipliers(rule, FWD_FLEXI_ELITE_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+      return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(FWD_FLEXI_ELITE_DEATH_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
     case 'income-invest-flex-death-ti':
-      return applyAssuranceRateMultipliers(rule, INCOME_INVEST_FLEX_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+      return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(INCOME_INVEST_FLEX_DEATH_TI_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
     case 'income-legacy-flex-solitaire-death-ti':
-      return applyAssuranceRateMultipliers(rule, INCOME_LEGACY_FLEX_SOLITAIRE_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+      return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(INCOME_LEGACY_FLEX_SOLITAIRE_DEATH_TI_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
     case 'manulife-investready-iii-death-ti':
-      return applyAssuranceRateMultipliers(rule, MANULIFE_INVESTREADY_III_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+      return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(MANULIFE_INVESTREADY_III_DEATH_TI_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
     case 'manulife-manuinvest-duo-death-ti-tpd':
-      return applyAssuranceRateMultipliers(rule, MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+      return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(MANULIFE_MANUINVEST_DUO_DEATH_TI_TPD_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
     case 'tokio-mpc-net-premium-floor':
     case 'tokio-mpc-locked-in-policy-value':
     case 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium':
       switch (rule.assuranceConfig.rateTable) {
         case 'tokio-mpc-unzo-death':
-          return applyAssuranceRateMultipliers(rule, TOKIO_MPC_UNZO_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+          return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(TOKIO_MPC_UNZO_DEATH_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
         default:
           return 0
       }
     default:
       return assertNever(rule.assuranceConfig.formula)
   }
+}
+
+function lookupAssuranceRate(
+  table: IlpAssuranceRateTable,
+  riskClass: 'male-smoker' | 'male-non-smoker' | 'female-smoker' | 'female-non-smoker',
+  ageNextBirthday: number,
+): number {
+  const rates = table[riskClass] ?? []
+  const ageIndex = Math.max(Math.round(ageNextBirthday), 1) - 1
+  if (rates[ageIndex] != null) {
+    return rates[ageIndex]!
+  }
+
+  for (let index = Math.min(ageIndex, rates.length - 1); index >= 0; index -= 1) {
+    if (rates[index] != null) {
+      return rates[index]!
+    }
+  }
+
+  return 0
 }
 
 function applyAssuranceRateMultipliers(
@@ -1656,7 +1681,7 @@ function computeAiaPlp2SumAtRisk(
 }
 
 function computeProtectedBaseSumAtRisk(
-  formula: Extract<IlpAssuranceChargeConfig['formula'], 'great-eastern-wa4-death-ti' | 'great-eastern-gla4-death-ti' | 'fwd-invest-flexi-elite-death' | 'income-invest-flex-death-ti' | 'income-legacy-flex-solitaire-death-ti' | 'manulife-investready-iii-death-ti' | 'manulife-manuinvest-duo-death-ti-tpd'>,
+  formula: Extract<IlpAssuranceChargeConfig['formula'], 'great-eastern-wa4-death-ti' | 'great-eastern-gla4-death-ti' | 'great-eastern-pla-death-ti' | 'fwd-invest-flexi-elite-death' | 'income-invest-flex-death-ti' | 'income-legacy-flex-solitaire-death-ti' | 'manulife-investready-iii-death-ti' | 'manulife-manuinvest-duo-death-ti-tpd'>,
   regularPremiumBaseAtStartOfYear: number,
   regularPremiumPaidThisYear: number,
   supplementaryPremiumBaseAtStartOfYear: number,
@@ -1680,6 +1705,7 @@ function computeProtectedBaseSumAtRisk(
       return Math.max(0, (midpointProtectedBase * MANULIFE_PROTECTED_BASE_FLOOR_MULTIPLIER) - midpointApplicableValue)
     }
 
+    case 'great-eastern-pla-death-ti':
     case 'income-legacy-flex-solitaire-death-ti':
       return Math.max(0, (sumAssuredAtStartOfYear ?? 0) - midpointApplicableValue)
 
@@ -2041,7 +2067,7 @@ function computeAssuranceChargeByAccount(
       case 'protected-base-sum-assured':
       case 'protected-base-basic-sum-assured-with-topups':
         sumAtRisk = computeProtectedBaseSumAtRisk(
-          rule.assuranceConfig.formula as Extract<IlpAssuranceChargeConfig['formula'], 'great-eastern-wa4-death-ti' | 'great-eastern-gla4-death-ti' | 'fwd-invest-flexi-elite-death' | 'income-invest-flex-death-ti' | 'income-legacy-flex-solitaire-death-ti' | 'manulife-investready-iii-death-ti' | 'manulife-manuinvest-duo-death-ti-tpd'>,
+          rule.assuranceConfig.formula as Extract<IlpAssuranceChargeConfig['formula'], 'great-eastern-wa4-death-ti' | 'great-eastern-gla4-death-ti' | 'great-eastern-pla-death-ti' | 'fwd-invest-flexi-elite-death' | 'income-invest-flex-death-ti' | 'income-legacy-flex-solitaire-death-ti' | 'manulife-investready-iii-death-ti' | 'manulife-manuinvest-duo-death-ti-tpd'>,
           regularPremiumBaseAtStartOfYear,
           regularPremiumPaidThisYear,
           supplementaryPremiumBaseAtStartOfYear,

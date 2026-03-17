@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseGreatEasternPrestigeLegacyAdvantage', () => {
-  it('builds a valid partial single-premium modeled subset from the source PDF', async () => {
+  it('builds a valid supported Standard Life single-premium corridor from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseGreatEasternPrestigeLegacyAdvantage({
       document,
@@ -23,22 +23,45 @@ describe('parseGreatEasternPrestigeLegacyAdvantage', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('great-eastern-prestige-legacy-advantage')
     expect(product.productName).toBe('Prestige Legacy Advantage')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
+      'kernel:protected-base-assurance',
       'branch:great-eastern-pla-single-premium-charge',
       'branch:great-eastern-pla-top-up-premium-charge',
+      'branch:great-eastern-pla-policy-fee-manual-input',
+      'branch:great-eastern-pla-standard-life-insurance-charge',
       'branch:great-eastern-pla-withdrawal-charge',
       'branch:great-eastern-pla-surrender-charge',
     ])
     expect(product.metadataOnlyBehaviors).toContain('great-eastern-pla-single-premium-principal-tracking')
+    expect(product.metadataOnlyBehaviors).toContain('great-eastern-pla-non-standard-insurance-rate-classes')
 
     const variant = product.variants[0]
     expect(variant?.id).toBe('sgd-mip-5-single-premium')
     expect(variant?.feeRules).toEqual([
       expect.objectContaining({
         id: 'single-premium-charge',
-        basis: 'annual-contribution',
+        basis: 'initial-single-premium',
         rate: 0.05,
+      }),
+      expect.objectContaining({
+        id: 'policy-fee',
+        basis: 'fixed-annual',
+        amount: 0,
+        requiresManualInput: true,
+      }),
+      expect.objectContaining({
+        id: 'insurance-charge',
+        basis: 'assurance-sum-at-risk',
+        rate: null,
+        amount: null,
+        requiresManualInput: true,
+        assuranceConfig: {
+          formula: 'great-eastern-pla-death-ti',
+          monthlyModalFactor: 1,
+          maxAgeNextBirthday: 122,
+        },
       }),
     ])
     expect(variant?.eventChargeRules).toEqual([
@@ -52,6 +75,7 @@ describe('parseGreatEasternPrestigeLegacyAdvantage', () => {
         id: 'partial-withdrawal-charge',
         trigger: 'partial-withdrawal',
         basis: 'event-amount',
+        rate: 0,
         rateSchedule: [
           { startPolicyYear: 1, endPolicyYear: 1, rate: 0.17 },
           { startPolicyYear: 2, endPolicyYear: 2, rate: 0.14 },

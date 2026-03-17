@@ -58,12 +58,13 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page3 = sourceRef(3, 'Partial withdrawal, free withdrawal facility, and surrender mechanics', snippetNear(document, 3, 'Partial withdrawal & free partial withdrawal facility', 24))
   const page4 = sourceRef(4, 'Policy fee and premium charge', snippetNear(document, 4, 'Policy fee', 24))
   const page5 = sourceRef(5, 'Partial withdrawal charge, surrender charge, and insurance charge', snippetNear(document, 5, 'Partial Withdrawal Charge', 24))
+  const page17 = sourceRef(17, 'Appendix standard-life insurance rates', snippetNear(document, 17, 'Standard Life - Non-Guaranteed Monthly Insurance Charge Rates', 20))
 
   const feeRules: IlpTemplateFeeRule[] = [
     {
       id: 'single-premium-charge',
       label: 'Single Premium Charge',
-      basis: 'annual-contribution',
+      basis: 'initial-single-premium',
       rate: 0.05,
       amount: 0,
       appliesTo: ['policy'],
@@ -72,6 +73,42 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
         'Models the published 5% premium charge deducted from the initial single premium at policy issue.',
       ],
       sourceRefs: [page1, page4],
+    },
+    {
+      id: 'policy-fee',
+      label: 'Policy Fee',
+      basis: 'fixed-annual',
+      rate: 0,
+      amount: 0,
+      requiresManualInput: true,
+      appliesTo: ['policy'],
+      activeWindow: 'during-mip',
+      notes: [
+        'Enter the actual annual policy-fee amount derived from the published entry-age and basic-sum-assured table before trusting the projection.',
+        'The published schedule applies only during the first five policy years and is based on the basic sum assured at policy commencement.',
+      ],
+      sourceRefs: [page4],
+    },
+    {
+      id: 'insurance-charge',
+      label: 'Insurance Charge',
+      basis: 'assurance-sum-at-risk',
+      rate: null,
+      amount: null,
+      requiresManualInput: true,
+      assuranceConfig: {
+        formula: 'great-eastern-pla-death-ti',
+        monthlyModalFactor: 1,
+        maxAgeNextBirthday: 122,
+      },
+      appliesTo: ['policy'],
+      activeWindow: 'policy-term',
+      notes: [
+        'Models the published Standard Life monthly insurance-charge appendix on net sum assured.',
+        'Enter the current sum assured before trusting the projection; current-sum-assured tracking after future top-ups, withdrawals, and free-withdrawal limits remains informational only.',
+        'Non-standard underwriting classes and region-specific insurance-charge rates remain informational only.',
+      ],
+      sourceRefs: [page5, page17],
     },
   ]
 
@@ -134,20 +171,19 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eventChargeRules,
     eecTable: [...WITHDRAWAL_AND_SURRENDER_CHARGE],
     warnings: [
-      'Prestige Legacy Advantage is modeled as a partial single-premium subset in V1. The parser captures the initial single-premium charge, single-premium top-up charge, and the first-five-policy-year withdrawal / surrender charge schedule.',
-      'Free partial withdrawal allowances, non-lapse privilege, policy fee, insurance charge, and death-benefit sum-assured tracking remain informational only in V1.',
+      'Prestige Legacy Advantage is cataloged as a supported Standard Life single-premium corridor in V1. The parser captures the initial single-premium charge, the first-five-policy-year withdrawal / surrender charge schedule, the entry-age-and-basic-sum-assured policy-fee surface through manual input, and the Standard Life monthly insurance-charge appendix on net sum assured.',
+      'Enter the actual first-five-year policy-fee amount and current sum assured before trusting the projection.',
     ],
     unsupportedItems: [
       'Single-premium principal tracking remains informational only in V1.',
-      'Policy fee remains informational only because it depends on entry-age and basic-sum-assured tables.',
-      'Insurance charge remains informational only because it depends on attained age, gender, smoker status, region, underwriting class, and net sum assured.',
-      'Death and terminal illness benefit formulas remain informational only, including current sum assured adjustments after withdrawals and top-ups.',
+      'Current-sum-assured tracking after future top-ups, partial withdrawals, and the free partial withdrawal annual limit from policy year 11 onward remains informational only.',
+      'Death and terminal illness benefit reductions remain informational only beyond the manual current-sum-assured corridor.',
       'Non-lapse privilege debt carry and lapse/reinstatement behavior remain informational only.',
-      'The free 5% partial withdrawal annual limit from policy year 11 onward remains informational only.',
+      'Non-standard underwriting classes and region-specific insurance-charge rates remain informational only.',
       'Fund-level management and custodian fees remain informational only.',
       'Sum assured reductions and fund switching remain informational only.',
     ],
-    sourceRefs: [page1, page3, page4, page5],
+    sourceRefs: [page1, page3, page4, page5, page17],
   }
 }
 
@@ -160,29 +196,31 @@ export function parseGreatEasternPrestigeLegacyAdvantage({ document, sourceCheck
     sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
+      'kernel:protected-base-assurance',
       'branch:great-eastern-pla-single-premium-charge',
       'branch:great-eastern-pla-top-up-premium-charge',
+      'branch:great-eastern-pla-policy-fee-manual-input',
+      'branch:great-eastern-pla-standard-life-insurance-charge',
       'branch:great-eastern-pla-withdrawal-charge',
       'branch:great-eastern-pla-surrender-charge',
     ],
     metadataOnlyBehaviors: [
       'great-eastern-pla-single-premium-principal-tracking',
-      'great-eastern-pla-policy-fee',
-      'great-eastern-pla-insurance-charge',
       'great-eastern-pla-current-sum-assured-tracking',
       'great-eastern-pla-death-and-terminal-illness-benefits',
       'great-eastern-pla-non-lapse-privilege',
       'great-eastern-pla-free-partial-withdrawal-annual-limit',
+      'great-eastern-pla-non-standard-insurance-rate-classes',
       'great-eastern-pla-fund-level-fees',
       'great-eastern-pla-sum-assured-reduction',
       'great-eastern-pla-fund-switching',
     ],
     warnings: [
-      'Prestige Legacy Advantage is cataloged as a partial modeled subset in V1. The parser captures the initial single-premium charge, single-premium top-up charge, and the first-five-policy-year withdrawal / surrender charge schedule, while non-lapse privilege, free-withdrawal limits, policy fee, insurance charge, and protection-side benefit formulas remain outside the current engine.',
+      'Prestige Legacy Advantage is cataloged as a supported Standard Life single-premium corridor in V1. The parser captures the initial single-premium charge, single-premium top-up charge, the first-five-policy-year withdrawal / surrender charge schedule, the entry-age-and-basic-sum-assured policy-fee surface through manual input, and the Standard Life monthly insurance-charge appendix on net sum assured, while non-lapse privilege, free-withdrawal-limit current-sum-assured adjustments, and non-standard insurance-rate classes remain metadata-only.',
     ],
     archived: false,
     variants: [buildVariant(document)],

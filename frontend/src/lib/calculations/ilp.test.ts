@@ -24,7 +24,7 @@ import {
   EEC_PRESET_MIP_30,
 } from '@/lib/data/ilpDefaults'
 import { TOKIO_MPC_PROTECTED_BASE_FLOOR_MULTIPLIER } from '@/lib/data/ilpAssuranceConfig'
-import { AIA_PLP2_DEATH_RATE_TABLE, FWD_FLEXI_ELITE_DEATH_RATE_TABLE, INCOME_LEGACY_FLEX_SOLITAIRE_DEATH_TI_RATE_TABLE, PRUACTIVE_LINKGUARD_COMBINED_RATE_TABLE, TOKIO_MPC_UNZO_DEATH_RATE_TABLE } from '@/lib/data/ilpAssuranceTables'
+import { AIA_PLP2_DEATH_RATE_TABLE, FWD_FLEXI_ELITE_DEATH_RATE_TABLE, GREAT_EASTERN_PRESTIGE_LEGACY_STANDARD_RATE_TABLE, INCOME_LEGACY_FLEX_SOLITAIRE_DEATH_TI_RATE_TABLE, PRUACTIVE_LINKGUARD_COMBINED_RATE_TABLE, TOKIO_MPC_UNZO_DEATH_RATE_TABLE } from '@/lib/data/ilpAssuranceTables'
 import { ilpPolicySeedSchema } from '@/lib/ilp-catalog/policySeedSchema'
 import { ilpPolicySchema } from '@/lib/validation/ilpSchema'
 
@@ -2805,6 +2805,118 @@ describe('projectIlpPolicy', () => {
     expect(basePolicy.accounts[0]?.currentValue).toBeGreaterThan(basePolicy.assuranceProfile?.currentSumAssured ?? 0)
     expect(accountRow(postExpiry.rows[0], 'policy').grossFee).toBeGreaterThan(0)
     expect(accountRow(preExpiry.rows[0], 'policy').grossFee).toBeLessThan(accountRow(postExpiry.rows[0], 'policy').grossFee)
+  })
+
+  it('applies Great Eastern Prestige Legacy standard-life insurance charges on net sum assured', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      initialSinglePremium: 100_000,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 1,
+      mipLength: 5,
+      postMipYears: 5,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      chargeRules: [
+        {
+          id: 'insurance-charge',
+          label: 'Insurance Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'great-eastern-pla-death-ti',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 122,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 150_000,
+      },
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+    const monthlyRate = GREAT_EASTERN_PRESTIGE_LEGACY_STANDARD_RATE_TABLE['male-non-smoker'][39] ?? 0
+    const expectedAnnualCharge = monthlyRate * 50 * 12
+
+    expect(accountRow(result.rows[0], 'policy').grossFee).toBeCloseTo(expectedAnnualCharge, 6)
+    expect(accountRow(result.rows[0], 'policy').grossFee).toBeGreaterThan(0)
+  })
+
+  it('uses the age-122 Great Eastern Prestige Legacy standard-life rate row when provided', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      initialSinglePremium: 100_000,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 1,
+      mipLength: 5,
+      postMipYears: 5,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 0,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      chargeRules: [
+        {
+          id: 'insurance-charge',
+          label: 'Insurance Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'great-eastern-pla-death-ti',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 122,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 122,
+        sex: 'female',
+        smokerStatus: 'smoker',
+        currentSumAssured: 150_000,
+      },
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+    const monthlyRate = GREAT_EASTERN_PRESTIGE_LEGACY_STANDARD_RATE_TABLE['female-smoker'][121] ?? 0
+    const expectedAnnualCharge = monthlyRate * 50 * 12
+
+    expect(monthlyRate).toBeGreaterThan(0)
+    expect(accountRow(result.rows[0], 'policy').grossFee).toBeCloseTo(expectedAnnualCharge, 6)
   })
 
   it('annualizes HSBC Flexi Choice and Max death/TI charges from the published yearly rate table', () => {

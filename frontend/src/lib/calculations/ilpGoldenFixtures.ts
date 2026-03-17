@@ -434,6 +434,12 @@ export type GoldenCoverageTag =
   | 'branch:great-eastern-prestige-portfolio-top-up-premium-charge-manual-input'
   | 'branch:great-eastern-prestige-portfolio-partial-withdrawal-zero-charge'
   | 'branch:great-eastern-prestige-portfolio-open-ended-zero-surrender-charge'
+  | 'branch:great-eastern-pla-single-premium-charge'
+  | 'branch:great-eastern-pla-top-up-premium-charge'
+  | 'branch:great-eastern-pla-policy-fee-manual-input'
+  | 'branch:great-eastern-pla-standard-life-insurance-charge'
+  | 'branch:great-eastern-pla-withdrawal-charge'
+  | 'branch:great-eastern-pla-surrender-charge'
   | 'tokio-initial-vs-accumulation-regular-premium-routing'
   | 'tokio-regular-premium-routing-to-accumulation-account'
   | 'tokio-initial-bonus-tiered-premium-allocation'
@@ -3535,6 +3541,88 @@ function greatEasternPrestigePortfolioStressPolicy(
 ): IlpPolicyInput {
   return greatEasternPrestigePortfolioBasePolicy(snapshot, 'sgd-open-ended-single-premium-srs', id, GREAT_STRESS_FUNDS, {
     name: 'Golden Prestige Portfolio (SGD / Open-ended Single Premium Srs OCF Stress)',
+  })
+}
+
+function greatEasternPrestigeLegacyAdvantageBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'great-eastern-prestige-legacy-advantage', 'sgd-mip-5-single-premium', id, {
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden Prestige Legacy Advantage (SGD / MIP 5 Standard Life)',
+      chargeRules: (base.chargeRules ?? []).map((rule) => {
+        if (rule.id === 'policy-fee') {
+          return { ...rule, amount: 250 }
+        }
+        return rule
+      }),
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 0,
+      })),
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 150_000,
+      },
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function greatEasternPrestigeLegacyAdvantageBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return greatEasternPrestigeLegacyAdvantageBasePolicy(snapshot, id, GREAT_BALANCED_FUNDS)
+}
+
+function greatEasternPrestigeLegacyAdvantageEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return greatEasternPrestigeLegacyAdvantageBasePolicy(snapshot, id, GREAT_BALANCED_FUNDS, {
+    name: 'Golden Prestige Legacy Advantage (SGD / MIP 5 Standard Life Event Heavy)',
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 2,
+        durationMonths: 1,
+        amount: 8_000,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 4,
+        durationMonths: 1,
+        amount: 5_000,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function greatEasternPrestigeLegacyAdvantageStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return greatEasternPrestigeLegacyAdvantageBasePolicy(snapshot, id, GREAT_STRESS_FUNDS, {
+    name: 'Golden Prestige Legacy Advantage (SGD / MIP 5 Standard Life OCF Stress)',
   })
 }
 
@@ -14035,6 +14123,53 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Prestige Portfolio alternate-fund stress scenario through the supported single-premium SRS corridor.',
   },
   {
+    productId: 'great-eastern-prestige-legacy-advantage',
+    variantId: 'sgd-mip-5-single-premium',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:protected-base-assurance',
+      'branch:great-eastern-pla-single-premium-charge',
+      'branch:great-eastern-pla-policy-fee-manual-input',
+      'branch:great-eastern-pla-standard-life-insurance-charge',
+      'branch:great-eastern-pla-surrender-charge',
+    ],
+    description: 'Prestige Legacy Advantage baseline scenario proving the supported Standard Life single-premium corridor with manual-input policy fee and appendix-backed insurance charge.',
+    integrityChecks: [
+      {
+        description: 'baseline carries positive upfront fees through the supported Standard Life corridor',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  },
+  {
+    productId: 'great-eastern-prestige-legacy-advantage',
+    variantId: 'sgd-mip-5-single-premium',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:great-eastern-pla-top-up-premium-charge',
+      'branch:great-eastern-pla-withdrawal-charge',
+    ],
+    description: 'Prestige Legacy Advantage event-heavy scenario covering charged top-up activity plus a later first-five-year partial withdrawal on the supported Standard Life corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy corridor records both a charged top-up and a later withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > 0 && row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'great-eastern-prestige-legacy-advantage',
+    variantId: 'sgd-mip-5-single-premium',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'Prestige Legacy Advantage alternate-fund high-OCF stress scenario through the supported Standard Life corridor.',
+  },
+  {
     productId: 'great-eastern-great-invest-advantage-sp',
     variantId: 'sgd-open-ended-cash-or-srs',
     scenarioId: 'baseline',
@@ -16410,6 +16545,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'great-eastern-prestige-portfolio' && definition.scenarioId === 'ocf-stress') {
     return greatEasternPrestigePortfolioStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'great-eastern-prestige-legacy-advantage' && definition.scenarioId === 'baseline') {
+    return greatEasternPrestigeLegacyAdvantageBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'great-eastern-prestige-legacy-advantage' && definition.scenarioId === 'event-heavy') {
+    return greatEasternPrestigeLegacyAdvantageEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'great-eastern-prestige-legacy-advantage' && definition.scenarioId === 'ocf-stress') {
+    return greatEasternPrestigeLegacyAdvantageStressPolicy(snapshot, id)
   }
   if (definition.productId === 'great-eastern-great-invest-advantage-sp' && definition.scenarioId === 'baseline') {
     return greatEasternGiaSpBaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended-cash-or-srs' | 'sgd-open-ended-cpfis', id)

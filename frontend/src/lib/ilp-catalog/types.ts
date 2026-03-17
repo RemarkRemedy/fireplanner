@@ -83,6 +83,7 @@ export interface IlpTemplateFeeRule {
       | 'hsbc-flexi-max-death-ti'
       | 'great-eastern-wa4-death-ti'
       | 'great-eastern-gla4-death-ti'
+      | 'great-eastern-pla-death-ti'
       | 'fwd-invest-flexi-elite-death'
       | 'income-invest-flex-death-ti'
       | 'income-legacy-flex-solitaire-death-ti'

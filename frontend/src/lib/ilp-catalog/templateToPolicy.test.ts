@@ -1952,6 +1952,66 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Open-ended products use a default 20-year review horizon'))).toBe(true)
   })
 
+  it('maps Prestige Legacy Advantage into a supported Standard Life single-premium seed', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'great-eastern-prestige-legacy-advantage')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-5-single-premium')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-pla-policy-fee-manual-input')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-pla-standard-life-insurance-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-pla-free-partial-withdrawal-annual-limit')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-pla-non-standard-insurance-rate-classes')
+    expect(seed.mipLength).toBe(5)
+    expect(seed.initialSinglePremium).toBe(0)
+    expect(seed.eecTable).toEqual([0.17, 0.14, 0.11, 0.07, 0.04])
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'single-premium-charge',
+          basis: 'initial-single-premium',
+          rate: 0.05,
+        }),
+        expect.objectContaining({
+          id: 'policy-fee',
+          basis: 'fixed-annual',
+          amount: 0,
+          requiresManualInput: true,
+        }),
+        expect.objectContaining({
+          id: 'insurance-charge',
+          basis: 'assurance-sum-at-risk',
+          requiresManualInput: true,
+          assuranceConfig: {
+            formula: 'great-eastern-pla-death-ti',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 122,
+          },
+        }),
+      ]),
+    )
+    expect(seed.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'single-premium-top-up-charge',
+          trigger: 'top-up',
+          rate: 0.03,
+        }),
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          trigger: 'partial-withdrawal',
+          rate: 0,
+        }),
+      ]),
+    )
+  })
+
   it('maps FWD Invest First Horizon into a finite-MIP multi-account supported seed', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'fwd-invest-first-horizon')

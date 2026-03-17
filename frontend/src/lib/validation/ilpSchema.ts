@@ -316,6 +316,7 @@ export const ilpChargeRuleSchema = z.object({
       'hsbc-flexi-max-death-ti',
       'great-eastern-wa4-death-ti',
       'great-eastern-gla4-death-ti',
+      'great-eastern-pla-death-ti',
       'fwd-invest-flexi-elite-death',
       'income-invest-flex-death-ti',
       'income-legacy-flex-solitaire-death-ti',
@@ -329,7 +330,7 @@ export const ilpChargeRuleSchema = z.object({
       'tokio-mpc-unzo-death',
     ]).optional(),
     monthlyModalFactor: z.number().min(0).max(1),
-    maxAgeNextBirthday: z.number().int().min(1).max(120).optional(),
+    maxAgeNextBirthday: z.number().int().min(1).max(122).optional(),
     policyYearRateMultiplierSchedule: z.array(z.object({
       startPolicyYear: z.number().int().min(1).max(100),
       endPolicyYear: z.number().int().min(1).max(100).nullable(),
