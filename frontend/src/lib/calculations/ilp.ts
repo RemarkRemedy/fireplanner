@@ -473,6 +473,7 @@ export interface IlpFullAnalysis {
 }
 
 const CONTRIBUTION_TOLERANCE = 0.001
+const HSBC_WEALTH_FOCUS_DEATH_BENEFIT_FLOOR_MULTIPLIER = 1.01
 
 interface IlpSyntheticEvent {
   type: 'premium-holiday-repayment'
@@ -2736,6 +2737,7 @@ function computeCurrentValueSnapshot(
   initialSinglePremiumState: IlpInitialSinglePremiumState = computeInitialSinglePremiumState(buildNormalizedPolicyInput(input)),
 ): {
   initialSinglePremiumState: IlpInitialSinglePremiumState
+  currentValueByAccount: Map<string, number>
   eecRateNow: number
   totalCurrentValue: number
   cancelNowPenalty: number
@@ -2749,6 +2751,7 @@ function computeCurrentValueSnapshot(
 
   return {
     initialSinglePremiumState,
+    currentValueByAccount,
     eecRateNow,
     totalCurrentValue,
     cancelNowPenalty,
@@ -2757,8 +2760,52 @@ function computeCurrentValueSnapshot(
 
 function computeCurrentDeathBenefitEstimate(
   input: IlpPolicyInput,
+  currentValueByAccount: Map<string, number>,
   totalCurrentValue: number,
 ): number | undefined {
+  if (input.catalogSource?.productId?.startsWith('hsbc-life-wealth-focus-flexi-')) {
+    const scheduledPayout = input.scheduledPayoutAssumption
+    if (
+      scheduledPayout?.mode === 'scheduled-redemption'
+      // Historical or currently active scheduled-redemption assumptions can imply
+      // prior Regular Premium Account withdrawals that the current-state shortcut
+      // cannot reconstruct exactly.
+      && scheduledPayout.startPolicyYear <= input.currentPolicyYear
+    ) {
+      return undefined
+    }
+
+    const normalized = buildNormalizedPolicyInput(input)
+    // monthsAlreadyPaid tracks the elapsed policy-month cursor for the current
+    // snapshot; the normalized regular-premium state already zeroes unpaid
+    // holiday months inside cumulative paid premium history.
+    const currentPolicyMonth = Number.isFinite(input.monthsAlreadyPaid)
+      ? Math.max(0, input.monthsAlreadyPaid)
+      : 0
+    const cumulativeRegularPremiumPaid = currentPolicyMonth > 0
+      ? getCumulativePaidRegularPremiumAtMonth(normalized, currentPolicyMonth)
+      : 0
+    const regularWithdrawalAmount = normalized.events.partialWithdrawals.reduce((sum, event) => (
+      event.accountId === 'regular'
+      && event.amount != null
+      && event.amount > 0
+      && event.startPolicyMonth <= currentPolicyMonth
+        ? sum + event.amount
+        : sum
+    ), 0)
+    const regularAccountValue = Math.max(0, currentValueByAccount.get('regular') ?? 0)
+    const topUpAccountValue = Math.max(0, currentValueByAccount.get('topup') ?? 0)
+    const regularProtectedFloor = Math.max(
+      0,
+      (cumulativeRegularPremiumPaid * HSBC_WEALTH_FOCUS_DEATH_BENEFIT_FLOOR_MULTIPLIER) - regularWithdrawalAmount,
+    )
+
+    return Math.max(
+      totalCurrentValue,
+      topUpAccountValue + Math.max(regularAccountValue, regularProtectedFloor),
+    )
+  }
+
   const profile = input.assuranceProfile
   const assuranceRules = input.chargeRules?.filter((rule) => (
     rule.basis === 'assurance-sum-at-risk'
@@ -4207,6 +4254,7 @@ export function computeSummaryMetrics(
   const currentValueSnapshot = computeCurrentValueSnapshot(input, initialSinglePremiumState)
   const currentDeathBenefitEstimate = computeCurrentDeathBenefitEstimate(
     input,
+    currentValueSnapshot.currentValueByAccount,
     currentValueSnapshot.totalCurrentValue,
   )
 

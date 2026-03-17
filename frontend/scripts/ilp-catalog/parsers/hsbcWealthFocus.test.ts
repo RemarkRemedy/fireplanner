@@ -78,12 +78,16 @@ describe('parseHsbcWealthFocus', () => {
       expect(product.productName).toBe(testCase.productName)
       expect(product.supportStatus).toBe('supported')
       expect(product.economicsStatus).toBe('supported')
+      expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
       expect(product.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
       expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
       expect(product.modeledEconomics).toContain('kernel:cumulative-free-partial-withdrawal-pool')
       expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-free-partial-withdrawal-benefit')
       expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-regular-withdrawal-facility')
+      expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-death-and-ti-benefits')
+      expect(product.metadataOnlyBehaviors).toContain('wealth-focus-benefit-payout-handling')
       expect(product.variants).toHaveLength(2)
+      expect(product.warnings.some((warning) => warning.includes('current-state death-benefit estimate'))).toBe(true)
 
       const sgdVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10')
       expect(sgdVariant).toBeDefined()
@@ -200,6 +204,12 @@ describe('parseHsbcWealthFocus', () => {
             })),
           }),
         ]),
+      )
+      expect(sgdVariant?.warnings).toContain(
+        'Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, the current-state death-benefit estimate from regular-premium-paid history and current account balances, manual top-up-first scheduled payout support for Regular Withdrawal, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.',
+      )
+      expect(sgdVariant?.unsupportedItems).toContain(
+        'Accidental Death uplift, Terminal Illness aggregate-cap and post-claim reduction mechanics, and claim-side payout settlement remain informational only beyond the current death-benefit estimate.',
       )
 
       const holidayCharge = sgdVariant?.eventChargeRules.find((rule) => rule.id === 'premium-holiday-charge')

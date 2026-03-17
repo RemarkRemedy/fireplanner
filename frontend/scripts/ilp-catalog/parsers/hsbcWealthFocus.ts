@@ -343,12 +343,12 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
     },
     eecTable: FLEXI_CONFIG[term].eecSchedule.map(roundRate),
     warnings: [
-      'Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, manual top-up-first scheduled payout support for Regular Withdrawal, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.',
+      'Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, the current-state death-benefit estimate from regular-premium-paid history and current account balances, manual top-up-first scheduled payout support for Regular Withdrawal, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.',
       'Life Replacement Option remains informational only in V1.',
     ],
     unsupportedItems: [
       'Life Replacement Option remains informational only.',
-      'Death, terminal illness, and accidental death payout mechanics remain informational only.',
+      'Accidental Death uplift, Terminal Illness aggregate-cap and post-claim reduction mechanics, and claim-side payout settlement remain informational only beyond the current death-benefit estimate.',
     ],
     sourceRefs: [page1, page4, page5, page6, page8, page10, page11, page12, page13, page15, page18],
   }
@@ -368,6 +368,7 @@ export function parseHsbcWealthFocus({ document, sourceChecksumSha256 }: ParseCo
     'branch:wealth-focus-eec',
     'branch:wealth-focus-ad-hoc-top-up-routing',
     'kernel:cumulative-free-partial-withdrawal-pool',
+    'kernel:current-death-benefit-estimate',
     'kernel:scheduled-payout-manual-assumption',
     'kernel:distribution-mode-assumption',
   ]
@@ -390,10 +391,10 @@ export function parseHsbcWealthFocus({ document, sourceChecksumSha256 }: ParseCo
     modeledEconomics,
     metadataOnlyBehaviors: [
       'wealth-focus-life-replacement-option',
-      'wealth-focus-death-and-ti-benefits',
+      'wealth-focus-benefit-payout-handling',
     ],
     warnings: [
-      `Wealth Focus Flexi ${flexiTerm} is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, the top-up-first manual scheduled-payout surface for Regular Withdrawal, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but protection-side options remain informational only.`,
+      `Wealth Focus Flexi ${flexiTerm} is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, the current-state death-benefit estimate, the top-up-first manual scheduled-payout surface for Regular Withdrawal, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, while Life Replacement Option and claim-side benefit settlement remain informational only.`,
     ],
     archived: false,
     variants: [

@@ -7679,6 +7679,296 @@ describe('computeSummaryMetrics', () => {
 
     expect(summary.currentDeathBenefitEstimate).toBeUndefined()
   })
+
+  it('adds a Wealth Focus current death-benefit estimate from paid regular premiums and account balances', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 1_000,
+      monthsAlreadyPaid: 36,
+      currentPolicyYear: 4,
+      accounts: [
+        {
+          id: 'regular',
+          label: 'Regular Premium Account',
+          feeRate: 0,
+          currentValue: 25_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Account',
+          feeRate: 0,
+          currentValue: 5_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      mipLength: 10,
+      eecTable: [1, 1, 0.8, 0.65, 0.5, 0.47, 0.44, 0.21, 0.16, 0.08],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'amf',
+          label: 'Account Maintenance Fee',
+          basis: 'premium-base-mip-multiplier',
+          activeWindow: 'policy-term',
+          appliesTo: ['regular'],
+          rate: 0.025,
+          amount: 0,
+          allocation: 'pro-rata-by-value',
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: false,
+            multiplierYearBasis: 'policy-year',
+            multiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: 3, mode: 'policy-year' },
+              { startPolicyYear: 4, endPolicyYear: null, mode: 'fixed', multiplier: 3 },
+            ],
+          },
+        },
+      ],
+      catalogSource: {
+        productId: 'hsbc-life-wealth-focus-flexi-3',
+        productName: 'Wealth Focus (Flexi 3)',
+        variantId: 'sgd-mip-10',
+        variantLabel: 'SGD / MIP 10',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['wealth-focus-benefit-payout-handling'],
+      },
+      funds: [ZERO_RETURN_FUND],
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 13,
+          durationMonths: 6,
+          repayMissedPremiums: false,
+        },
+      ],
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBeCloseTo(35_300, 2)
+  })
+
+  it('reduces the Wealth Focus current death-benefit estimate for Regular Premium Account withdrawals', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 1_000,
+      monthsAlreadyPaid: 36,
+      currentPolicyYear: 4,
+      accounts: [
+        {
+          id: 'regular',
+          label: 'Regular Premium Account',
+          feeRate: 0,
+          currentValue: 25_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Account',
+          feeRate: 0,
+          currentValue: 5_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      mipLength: 10,
+      eecTable: [1, 1, 0.8, 0.65, 0.5, 0.47, 0.44, 0.21, 0.16, 0.08],
+      bonuses: [],
+      chargeRules: [],
+      catalogSource: {
+        productId: 'hsbc-life-wealth-focus-flexi-3',
+        productName: 'Wealth Focus (Flexi 3)',
+        variantId: 'sgd-mip-10',
+        variantLabel: 'SGD / MIP 10',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['wealth-focus-benefit-payout-handling'],
+      },
+      funds: [ZERO_RETURN_FUND],
+      policyEvents: [
+        {
+          id: 'regular-withdrawal-history',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 24,
+          durationMonths: 1,
+          amount: 12_000,
+          accountId: 'regular',
+        },
+      ],
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBe(30_000)
+  })
+
+  it('does not reduce the Wealth Focus regular-premium floor for Top-up Account withdrawals', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 1_000,
+      monthsAlreadyPaid: 36,
+      currentPolicyYear: 4,
+      accounts: [
+        {
+          id: 'regular',
+          label: 'Regular Premium Account',
+          feeRate: 0,
+          currentValue: 25_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Account',
+          feeRate: 0,
+          currentValue: 4_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      mipLength: 10,
+      eecTable: [1, 1, 0.8, 0.65, 0.5, 0.47, 0.44, 0.21, 0.16, 0.08],
+      bonuses: [],
+      chargeRules: [],
+      catalogSource: {
+        productId: 'hsbc-life-wealth-focus-flexi-3',
+        productName: 'Wealth Focus (Flexi 3)',
+        variantId: 'sgd-mip-10',
+        variantLabel: 'SGD / MIP 10',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['wealth-focus-benefit-payout-handling'],
+      },
+      funds: [ZERO_RETURN_FUND],
+      policyEvents: [
+        {
+          id: 'topup-withdrawal-history',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 24,
+          durationMonths: 1,
+          amount: 12_000,
+          accountId: 'topup',
+        },
+      ],
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBeCloseTo(40_360, 2)
+  })
+
+  it('omits the Wealth Focus current death-benefit estimate when scheduled redemptions can already affect the current policy year', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 1_000,
+      monthsAlreadyPaid: 48,
+      currentPolicyYear: 5,
+      accounts: [
+        {
+          id: 'regular',
+          label: 'Regular Premium Account',
+          feeRate: 0,
+          currentValue: 25_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Account',
+          feeRate: 0,
+          currentValue: 5_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      mipLength: 10,
+      eecTable: [1, 1, 0.8, 0.65, 0.5, 0.47, 0.44, 0.21, 0.16, 0.08],
+      bonuses: [],
+      chargeRules: [],
+      catalogSource: {
+        productId: 'hsbc-life-wealth-focus-flexi-5',
+        productName: 'Wealth Focus (Flexi 5)',
+        variantId: 'sgd-mip-10',
+        variantLabel: 'SGD / MIP 10',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['wealth-focus-benefit-payout-handling'],
+      },
+      funds: [ZERO_RETURN_FUND],
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'topup',
+        fallbackAccountIds: ['regular'],
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        source: 'manual-assumption',
+        accountId: 'topup',
+        startPolicyYear: 5,
+        durationYears: 2,
+        annualPayoutAmount: 3_000,
+      },
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBeUndefined()
+  })
 })
 
 describe('full ILP analysis', () => {
