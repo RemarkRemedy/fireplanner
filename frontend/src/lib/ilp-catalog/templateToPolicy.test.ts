@@ -5778,6 +5778,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('singlife-legacy-invest-maturity-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('singlife-legacy-invest-dividend-cashout-threshold')
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
         id: 'administrative-charge',
@@ -5836,6 +5837,7 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 40,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',

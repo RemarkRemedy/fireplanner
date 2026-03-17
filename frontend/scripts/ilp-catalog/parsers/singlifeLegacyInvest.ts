@@ -238,12 +238,13 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 40,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: [
         'Dividend-paying ILP sub-funds may either reinvest declared dividends or pay them out in cash, with reinvestment as the default if no option is elected.',
-        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published $40 minimum cash-out threshold remains informational only.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published $40 minimum remain reinvested.',
       ],
       sourceRefs: [page12],
     },
@@ -251,7 +252,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     warnings: [
       'This supported template models the SGD / regular-pay-10-years / policy-term-15-years corridor only.',
       'This supported template models the welcome bonus tiers, the 0.30% annual loyalty bonus from policy years 11 to 14, the first-10-policy-years administrative charge, the 3% single-premium top-up charge, the published Appendix A surrender / withdrawal / premium-shortfall charge schedules, manual regular-withdrawal payout support, and the reinvest-default distribution-mode assumption surface.',
-      'Special Booster, Maturity Bonus, Free Partial Withdrawal Benefit sequencing, the $40 dividend cash-out threshold, and regular-withdrawal operational constraints remain informational only in V1.',
+      'Special Booster, Maturity Bonus, Free Partial Withdrawal Benefit sequencing, and regular-withdrawal operational constraints remain informational only in V1.',
     ],
     unsupportedItems: [
       'Special Booster remains informational only because it is a one-time bonus based on total basic regular premiums paid during the premium payment term.',
@@ -260,7 +261,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       'Extension Benefit elections and post-extension behavior remain informational only.',
       'Free Partial Withdrawal Benefit life-stage gating, penalty-free sequencing, and withdrawal limits remain informational only.',
       'Change of Life Assured, Secondary Life Assured, and policy-continuity mechanics remain informational only.',
-      'The published $40 minimum dividend cash-out threshold and cash-payment timing remain informational only.',
+      'Cash-payment timing remains informational only.',
       'Regular-withdrawal sub-fund selection, pending-transaction resumption, and operational constraints remain informational only.',
       'Single-premium corridor, USD corridor, and other premium-term / policy-term combinations remain informational only.',
       'Fund-level annual management charges and switching mechanics remain informational only.',
@@ -301,7 +302,6 @@ export function parseSinglifeLegacyInvest({ document, sourceChecksumSha256 }: Pa
       'singlife-legacy-invest-change-of-life-assured',
       'singlife-legacy-invest-secondary-life-assured',
       'singlife-legacy-invest-regular-withdrawal-operational-constraints',
-      'singlife-legacy-invest-dividend-cashout-threshold',
       'singlife-legacy-invest-non-sgd-and-other-term-corridors',
     ],
     warnings: [

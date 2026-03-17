@@ -29,6 +29,7 @@ describe('parseSinglifeLegacyInvest', () => {
     expect(product.modeledEconomics).toContain('branch:singlife-legacy-invest-premium-shortfall-charge')
     expect(product.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.metadataOnlyBehaviors).not.toContain('singlife-legacy-invest-dividend-cashout-threshold')
 
     const variant = product.variants[0]
     expect(variant?.id).toBe('sgd-mip-10-term-15')
@@ -112,11 +113,12 @@ describe('parseSinglifeLegacyInvest', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 40,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: expect.arrayContaining([
-        expect.stringContaining('$40 minimum cash-out threshold'),
+        expect.stringContaining('published $40 minimum remain reinvested'),
       ]),
       sourceRefs: [
         expect.objectContaining({
