@@ -317,12 +317,13 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 40,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: [
         'Dividend-paying ILP sub-funds may either reinvest declared dividends or pay them out in cash, with reinvestment as the default if no option is elected.',
-        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published S$40 minimum cash-out threshold remains informational only.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published S$40 minimum remain reinvested.',
       ],
       sourceRefs: [page12, page13],
     },
@@ -338,7 +339,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       'Change of Life Assured and rider continuity effects remain informational only.',
       'Flexible MIP variants, other fixed MIP variants, and other annualised-premium corridors remain informational only.',
       'Allowable partial withdrawal amount limits from Appendix B remain informational only.',
-      'Fund switching, fund-level annual management charges, the published S$40 dividend cash-out threshold, and future non-guaranteed top-up-charge changes remain informational only.',
+      'Fund switching, fund-level annual management charges, and future non-guaranteed top-up-charge changes remain informational only.',
     ],
     sourceRefs: [page1, page2, page3, page5, page6, page7, page8, page12, page13, page15],
   }
@@ -375,7 +376,6 @@ export function parseSinglifeSavvyInvestIi({ document, sourceChecksumSha256 }: P
       'singlife-savvy-invest-ii-change-of-life-assured',
       'singlife-savvy-invest-ii-appendix-b-withdrawal-limits',
       'singlife-savvy-invest-ii-flexible-and-other-mip-corridors',
-      'singlife-savvy-invest-ii-dividend-cashout-threshold',
       'singlife-savvy-invest-ii-fund-management-and-switching',
     ],
     warnings: [

@@ -5864,6 +5864,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:singlife-savvy-invest-ii-zero-top-up-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('singlife-savvy-invest-ii-cost-of-insurance')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('singlife-savvy-invest-ii-dividend-cashout-threshold')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -5928,6 +5929,7 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 40,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',

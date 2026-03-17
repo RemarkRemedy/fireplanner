@@ -27,6 +27,7 @@ describe('parseSinglifeSavvyInvestIi', () => {
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.modeledEconomics).toContain('branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift')
     expect(product.modeledEconomics).toContain('branch:singlife-savvy-invest-ii-premium-shortfall-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('singlife-savvy-invest-ii-dividend-cashout-threshold')
 
     const variant = product.variants[0]
     expect(variant?.id).toBe('sgd-mip-10-fixed')
@@ -97,11 +98,12 @@ describe('parseSinglifeSavvyInvestIi', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 40,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: expect.arrayContaining([
-        expect.stringContaining('S$40 minimum cash-out threshold'),
+        expect.stringContaining('published S$40 minimum remain reinvested'),
       ]),
       sourceRefs: [
         expect.objectContaining({
