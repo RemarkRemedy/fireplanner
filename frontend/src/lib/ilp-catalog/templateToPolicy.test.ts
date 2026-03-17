@@ -7183,6 +7183,17 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('establishment charges'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current locked-in value and adjusted single premium manually'))).toBe(true)
     expect(seed.accounts.find((account) => account.id === 'policy')?.feeRate).toBe(0.01)
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['policy', 'topup'],
+      defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
+      recordDateInstructionLeadDays: 30,
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

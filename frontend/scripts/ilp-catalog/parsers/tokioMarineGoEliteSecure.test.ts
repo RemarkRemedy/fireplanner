@@ -275,6 +275,8 @@ describe('parseTokioMarineGoEliteSecure', () => {
     ])
     expect(product.variants[0].distributionSupport).toMatchObject({
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
+      recordDateInstructionLeadDays: 30,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
     })
@@ -283,6 +285,8 @@ describe('parseTokioMarineGoEliteSecure', () => {
       cashPayoutAllowedDuringMip: false,
       cashPayoutAllowedAfterMip: false,
     })
+    expect(product.variants[1].distributionSupport).not.toHaveProperty('minimumAnnualPayoutAmount')
+    expect(product.variants[1].distributionSupport).not.toHaveProperty('recordDateInstructionLeadDays')
   })
 
   it('falls back to section-based source excerpts when pages for secure MPC evidence are unavailable', async () => {
