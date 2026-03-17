@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { createElement, useState, useMemo, useCallback, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -36,6 +36,10 @@ import { useUIStore } from '@/stores/useUIStore'
 import { trackEvent } from '@/lib/analytics'
 import { formatCurrency } from '@/lib/utils'
 import type { SectionId } from '@/lib/household/sectionOrder'
+import type { HouseholdPlanType } from '@/lib/household/types'
+import { PlanTypeSelector } from '@/components/household/PlanTypeSelector'
+import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
+import { toast } from 'sonner'
 import {
   ArrowRight,
   Calculator,
@@ -100,6 +104,8 @@ export function QuickEstimatePage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const setUIField = useUIStore((s) => s.setField)
+  const [selectedPlanType, setSelectedPlanType] = useState<HouseholdPlanType>('individual')
+  const [householdPlannerEnabled] = useState(() => isHouseholdPlannerV1Enabled())
 
   // ── Parse URL params on mount ────────────────────────────────────────────
   const urlParams = useMemo(() => parseUrlParams(searchParams), [searchParams])
@@ -187,6 +193,17 @@ export function QuickEstimatePage() {
     setUIField('setupPopulatedSections', ALL_SECTIONS)
     trackEvent('demo_loaded')
     navigate('/projection')
+    // Show a persistent toast so users can escape the demo
+    setTimeout(() => {
+      toast('Viewing demo data', {
+        description: createElement('span', null,
+          createElement(Link, { to: '/setup', className: 'underline font-medium', onClick: () => toast.dismiss() }, 'Start your own plan'),
+          ' or ',
+          createElement(Link, { to: '/quick-estimate', className: 'underline font-medium', onClick: () => toast.dismiss() }, 'back to quick estimate'),
+        ),
+        duration: 15000,
+      })
+    }, 500)
   }, [hasExistingData, setUIField, navigate])
 
   const DemoButton = useCallback(({ variant = 'outline' as const, size = 'default' as const }: { variant?: 'outline' | 'ghost'; size?: 'default' | 'sm' }) => {
@@ -461,9 +478,12 @@ export function QuickEstimatePage() {
                   12 withdrawal strategies, and more.
                 </p>
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col items-center gap-3 sm:items-end">
+                {householdPlannerEnabled && (
+                  <PlanTypeSelector value={selectedPlanType} onChange={setSelectedPlanType} />
+                )}
                 <Button asChild>
-                  <Link to="/setup">
+                  <Link to={`/setup?planType=${selectedPlanType}`}>
                     Get a personalized plan
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
