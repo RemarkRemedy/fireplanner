@@ -2956,7 +2956,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('goal-builder-ii-loyalty-bonus-supplementary-premium-exclusion')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('goal-builder-ii-dividend-payout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('goal-builder-ii-dividend-payout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('goal-builder-ii-no-dividend-insufficient-nav-gate')
     expect(seed.mipLength).toBe(10)
     expect(seed.eecYearBasis).toBe('premium-year')
     expect(seed.accounts).toEqual([
@@ -3029,6 +3030,7 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',

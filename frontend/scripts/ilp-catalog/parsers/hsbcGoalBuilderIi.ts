@@ -270,12 +270,13 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: [
         'Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash.',
-        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published $50 minimum payout threshold remains informational only.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.',
       ],
       sourceRefs: [page14Dividends],
     },
@@ -284,13 +285,13 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
     warnings: [
       'Goal Builder II is cataloged as a supported V1 product. The parser captures Welcome Bonus, Welcome Bonus recovery on premium reduction, Product Administration Fee, Loyalty Bonus cadence keyed to Premium Year, top-up / recurrent single premium charge, Premium-Year-based surrender / partial-withdrawal penalties, manual regular-withdrawal payout support, and the reinvest-default distribution-mode assumption surface.',
       'The Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only in V1.',
-      'The published $50 dividend-payout threshold, no-dividend-during-insufficient-NAV rule, and withdrawal minimum-balance gates remain informational only in V1.',
+      'The published no-dividend-during-insufficient-NAV rule and withdrawal minimum-balance gates remain informational only in V1.',
     ],
     unsupportedItems: [
       'Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months remains informational only.',
       'Death and terminal illness benefit payout mechanics remain informational only.',
       'Automatic paid-up / lapse state is not modeled beyond premium-holiday fee drag.',
-      'The published $50 dividend-payout threshold and no-dividend-during-insufficient-NAV rule remain informational only.',
+      'The published no-dividend-during-insufficient-NAV rule remains informational only.',
       'Regular withdrawal minimum-balance gates, minimum withdrawal amount, and per-fund proportional realization rules remain informational only.',
     ],
     sourceRefs: [page1, page4, page5, page8, page9, page11TopUps, page11Withdrawals, page14Dividends],
@@ -325,11 +326,11 @@ export function parseHsbcGoalBuilderIi({ document, sourceChecksumSha256 }: Parse
     metadataOnlyBehaviors: [
       'goal-builder-ii-loyalty-bonus-supplementary-premium-exclusion',
       'goal-builder-ii-death-ti-benefit',
-      'goal-builder-ii-dividend-payout-threshold',
+      'goal-builder-ii-no-dividend-insufficient-nav-gate',
       'goal-builder-ii-regular-withdrawal-minimums',
     ],
     warnings: [
-      'Goal Builder II is cataloged as a supported V1 product. Premium-Year-based Product Administration Fee, Loyalty Bonus cadence, surrender mechanics, manual regular-withdrawal payout support, and reinvest-default dividend-distribution support are modeled; the 24-month supplementary-premium exclusion inside the Loyalty Bonus formula, the dividend threshold / insufficient-NAV gates, and death/TI payout mechanics remain informational only.',
+      'Goal Builder II is cataloged as a supported V1 product. Premium-Year-based Product Administration Fee, Loyalty Bonus cadence, surrender mechanics, manual regular-withdrawal payout support, and reinvest-default dividend-distribution support with the published $50 minimum cash-payout threshold are modeled; the 24-month supplementary-premium exclusion inside the Loyalty Bonus formula, the insufficient-NAV gate, and death/TI payout mechanics remain informational only.',
     ],
     archived: false,
     variants: TERM_OPTIONS.flatMap((term) => [

@@ -36,7 +36,8 @@ describe('parseHsbcGoalBuilderIi', () => {
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('goal-builder-ii-loyalty-bonus-supplementary-premium-exclusion')
-    expect(product.metadataOnlyBehaviors).toContain('goal-builder-ii-dividend-payout-threshold')
+    expect(product.metadataOnlyBehaviors).not.toContain('goal-builder-ii-dividend-payout-threshold')
+    expect(product.metadataOnlyBehaviors).toContain('goal-builder-ii-no-dividend-insufficient-nav-gate')
     expect(product.metadataOnlyBehaviors).toContain('goal-builder-ii-regular-withdrawal-minimums')
     expect(product.variants).toHaveLength(6)
 
@@ -152,11 +153,12 @@ describe('parseHsbcGoalBuilderIi', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: expect.arrayContaining([
-        expect.stringContaining('$50 minimum payout threshold'),
+        expect.stringContaining('manual annual distribution-yield assumption'),
       ]),
       sourceRefs: [
         expect.objectContaining({
@@ -165,6 +167,7 @@ describe('parseHsbcGoalBuilderIi', () => {
         }),
       ],
     })
+    expect(term10?.warnings).toContain('The published no-dividend-during-insufficient-NAV rule and withdrawal minimum-balance gates remain informational only in V1.')
     expect(term10?.eecTable).toEqual([1, 1, 0.75, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.1])
   }, 30_000)
 })
