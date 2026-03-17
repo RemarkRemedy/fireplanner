@@ -119,7 +119,7 @@ Verified fee data (March 2026):
 | StashAway | 0.20-0.80% (tiered by total invested) + ~0.15-0.25% ETF TER. $1 USD per invest/withdraw action. | stashaway.sg/pricing |
 | Syfe | 0.25-0.65% (5 tiers: Blue 0.65%, Black 0.55% at $50K+, Gold 0.45% at $250K+, Platinum 0.35% at $1M+, Diamond 0.25% at $5M+). UCITS ETFs: $0 per trade. | syfe.com/pricing |
 | DIY (IBKR) | $0 platform fee. ETF TER only: 0.03-0.22%. Cannot use for SRS. | N/A |
-| DBS digiPortfolio | 0.25-0.75% (optional, large retail adoption via DBS app) | dbs.com.sg |
+| DBS digiPortfolio | 0.25% (Saveup Portfolio) or 0.75% (all other portfolios). No sales charges, platform fees, switching/withdrawal/closure fees. **No SRS or CPF-IS support.** No minimum investment. | dbs.com.sg/personal/investments/other-investments/dbs-digiportfolio |
 | SGFirePlanner | $0 (planning tool, not investment platform) | N/A |
 
 Fee drag formula: `portfolioSize * ((1 + returnRate) ^ years - (1 + returnRate - feeRate) ^ years)`
