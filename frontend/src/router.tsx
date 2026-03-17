@@ -22,7 +22,6 @@ const PrivacyPage = lazy(() => import('@/pages/PrivacyPage').then(m => ({ defaul
 const RetirementPlannerPage = lazy(() => import('@/pages/RetirementPlannerPage').then(m => ({ default: m.RetirementPlannerPage })))
 const RetirementCalculatorPage = lazy(() => import('@/pages/RetirementCalculatorPage').then(m => ({ default: m.RetirementCalculatorPage })))
 const HealthCheckPage = lazy(() => import('@/pages/HealthCheckPage').then(m => ({ default: m.HealthCheckPage })))
-const QuickEstimatePage = lazy(() => import('@/pages/QuickEstimatePage').then(m => ({ default: m.QuickEstimatePage })))
 
 function PageLoader() {
   return (
@@ -97,8 +96,8 @@ export const router = createBrowserRouter([
       { path: '/refine/*', element: <Navigate to="/projection" replace /> },
     ],
   },
-  // Quick estimate (outside PlannerRouteShell — standalone calculator)
-  { path: '/quick-estimate', element: page(QuickEstimatePage) },
+  // Quick estimate redirects to retirement calculator (which now has the actual calculator)
+  { path: '/quick-estimate', element: <Navigate to="/retirement-calculator" replace /> },
   // Main app routes (inside PlannerRouteShell)
   {
     element: <PlannerRouteShell />,

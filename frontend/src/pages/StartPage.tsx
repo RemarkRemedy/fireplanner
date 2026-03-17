@@ -15,13 +15,14 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useUIStore } from '@/stores/useUIStore'
 import { HOUSEHOLD_PLAN_STORAGE_KEY, useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
-import { Target, TrendingUp, CheckCircle, ArrowRight, Info, RotateCcw, Calculator, Play } from 'lucide-react'
+import { Target, TrendingUp, CheckCircle, ArrowRight, Info, RotateCcw, Calculator } from 'lucide-react'
 import type { HouseholdPlanType } from '@/lib/household/types'
 import { PlanTypeSelector } from '@/components/household/PlanTypeSelector'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 import { trackEvent } from '@/lib/analytics'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { LandingEmailSection } from '@/components/email/LandingEmailSection'
+import { QuickEstimateForm } from '@/components/shared/QuickEstimateForm'
 
 type ActivePathway = 'goal-first' | 'story-first' | 'already-fire' | null
 
@@ -113,7 +114,7 @@ export function StartPage() {
               <Link to="/projection">View projection</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/quick-estimate">
+              <Link to="/retirement-calculator">
                 <Calculator className="mr-1 h-3 w-3" />
                 Quick estimate
               </Link>
@@ -168,24 +169,6 @@ export function StartPage() {
           Plan your path to Financial Independence with Singapore-specific calculations.
         </p>
         <p className="mt-2 text-sm text-muted-foreground">Set up in under 3 minutes.</p>
-        {!isReturningUser && (
-          <>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/quick-estimate">
-                  <Calculator className="mr-1.5 h-3.5 w-3.5" />
-                  Quick estimate (10 sec)
-                </Link>
-              </Button>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/quick-estimate">
-                  <Play className="mr-1.5 h-3.5 w-3.5" />
-                  Explore a demo
-                </Link>
-              </Button>
-            </div>
-          </>
-        )}
       </div>
 
       {/* Returning user guidance */}
@@ -202,6 +185,16 @@ export function StartPage() {
             </p>
           </div>
         </div>
+      )}
+
+      {/* Quick estimate for new users */}
+      {!isReturningUser && (
+        <Card>
+          <CardContent className="py-6">
+            <p className="mb-4 text-sm font-medium text-muted-foreground">Quick estimate (10 seconds)</p>
+            <QuickEstimateForm compact />
+          </CardContent>
+        </Card>
       )}
 
       {householdPlannerEnabled && (
