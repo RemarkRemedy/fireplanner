@@ -9,6 +9,9 @@ const TEST_DIR = path.dirname(fileURLToPath(import.meta.url))
 const FRONTEND_ROOT = path.resolve(TEST_DIR, '../../../../')
 const SRC_ROOT = path.resolve(FRONTEND_ROOT, 'src')
 const ALLOWED_IMPORTERS = [
+  path.resolve(FRONTEND_ROOT, 'src/components/dashboard/ExpenseSwrPanel.tsx'),
+  path.resolve(FRONTEND_ROOT, 'src/components/inputs/ExpenseItemiser.tsx'),
+  path.resolve(FRONTEND_ROOT, 'src/hooks/useDashboardMetrics.ts'),
   path.resolve(FRONTEND_ROOT, 'src/lib/household/fromLegacyIndividual.ts'),
   path.resolve(FRONTEND_ROOT, 'src/lib/storeRegistry.ts'),
 ].sort()

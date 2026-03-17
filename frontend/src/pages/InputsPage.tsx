@@ -27,6 +27,7 @@ import { CpfSection } from '@/components/profile/CpfSection'
 import { WithdrawalStrategyCard } from '@/components/household/WithdrawalStrategyCard'
 import { ProtectionSection } from '@/components/household/ProtectionSection'
 import { SectionIntro } from '@/components/inputs/SectionIntro'
+import { ExpenseItemiser } from '@/components/inputs/ExpenseItemiser'
 
 const HOUSEHOLD_PLAN_LABELS = {
   individual: 'Individual',
@@ -341,6 +342,7 @@ export function InputsPage() {
         >
           <HouseholdAssumptionsSection mode="assumptions" />
           <WithdrawalStrategyCard />
+          <ExpenseItemiser />
         </HouseholdPrototypeSection>
       ),
     },

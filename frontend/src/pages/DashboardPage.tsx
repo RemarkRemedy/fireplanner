@@ -22,6 +22,7 @@ import { usePerAdultBreakdown } from '@/hooks/usePerAdultBreakdown'
 import { useSectionCompletion, type SectionId } from '@/hooks/useSectionCompletion'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { ExpenseSwrPanel } from '@/components/dashboard/ExpenseSwrPanel'
 import { ExpenseTrackerCard } from '@/components/email/ExpenseTrackerCard'
 import { useExpenseTrackerDwell } from '@/hooks/useExpenseTrackerDwell'
 import { useExpenseTracker } from '@/hooks/useExpenseTracker'
@@ -191,17 +192,20 @@ function JointPanels({ metrics, isEligible }: { metrics: ReturnType<typeof useDa
       <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         <StrategyCard />
       </div>
-      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '240ms' }}>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '220ms' }}>
+        <ExpenseSwrPanel />
+      </div>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '260ms' }}>
         <PassiveIncomePanel />
       </div>
-      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '320ms' }}>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '340ms' }}>
         <CashFlowPanel />
       </div>
-      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '420ms' }}>
         <RiskDashboard />
       </div>
       {isEligible && (
-        <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '440ms' }}>
+        <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '460ms' }}>
           <ExpenseTrackerCard />
         </div>
       )}
