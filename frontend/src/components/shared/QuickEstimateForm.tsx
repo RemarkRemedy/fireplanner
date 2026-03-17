@@ -36,6 +36,7 @@ import {
 import { computeHealthRatios, type HealthRatioResult } from '@/lib/calculations/healthCheck'
 import { QUICK_ESTIMATE_DEFAULTS } from '@/lib/data/quickEstimateDefaults'
 import { DEMO_SCENARIO_DRAFT, DEMO_PLAN_TYPE } from '@/lib/data/demoScenario'
+import { setDemoActive } from '@/components/shared/DemoBadge'
 import { applySetupDraft } from '@/lib/household/setupDraft'
 import { saveScenario } from '@/lib/scenarios'
 import { HOUSEHOLD_PLAN_STORAGE_KEY } from '@/stores/useHouseholdPlanStore'
@@ -221,6 +222,7 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false, onHa
     setUIField('setupCompleted', true)
     setUIField('setupPopulatedSections', ALL_SECTIONS)
     trackEvent('demo_loaded')
+    setDemoActive()
     navigate('/projection')
     setTimeout(() => {
       toast.warning('You are viewing demo data', {

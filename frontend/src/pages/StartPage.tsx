@@ -24,6 +24,7 @@ import { usePageMeta } from '@/hooks/usePageMeta'
 import { LandingEmailSection } from '@/components/email/LandingEmailSection'
 import { QuickEstimateForm } from '@/components/shared/QuickEstimateForm'
 import { DEMO_SCENARIO_DRAFT, DEMO_PLAN_TYPE } from '@/lib/data/demoScenario'
+import { setDemoActive } from '@/components/shared/DemoBadge'
 import { applySetupDraft } from '@/lib/household/setupDraft'
 import { saveScenario } from '@/lib/scenarios'
 import type { SectionId } from '@/lib/household/sectionOrder'
@@ -89,6 +90,7 @@ export function StartPage() {
     setUIField('setupCompleted', true)
     setUIField('setupPopulatedSections', ALL_DEMO_SECTIONS)
     trackEvent('demo_loaded')
+    setDemoActive()
     navigate('/projection')
     setTimeout(() => {
       toast.warning('You are viewing demo data', {

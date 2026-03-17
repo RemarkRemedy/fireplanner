@@ -16,6 +16,7 @@ import { ExpenseTrackerProvider } from '@/components/email/ExpenseTrackerProvide
 import { useExpenseTracker } from '@/hooks/useExpenseTracker'
 import { ExpenseTrackerBanner } from '@/components/email/ExpenseTrackerBanner'
 import { useExitIntent } from '@/hooks/useExitIntent'
+import { DemoBadge } from '@/components/shared/DemoBadge'
 
 // Lazy-load components that aren't needed for first paint
 const HelpPanel = lazy(() => import('./HelpPanel').then(m => ({ default: m.HelpPanel })))
@@ -211,6 +212,7 @@ export function AppLayout() {
           </Suspense>
         )}
       </ExpenseTrackerProvider>
+      <DemoBadge />
     </div>
   )
 }
