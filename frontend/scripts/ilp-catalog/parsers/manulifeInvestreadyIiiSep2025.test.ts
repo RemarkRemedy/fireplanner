@@ -37,12 +37,16 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
       'branch:manulife-investready-iii-full-surrender-charge',
       'kernel:distribution-mode-assumption',
     ])
+    expect(product.modeledEconomics).not.toContain('branch:manulife-investready-iii-fund-management-charge')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-policy-fee')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-step-up-booster-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-fund-management-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-annual-premium-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-welcome-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-loyalty-bonus')
+    expect(product.warnings.some((warning) => warning.includes('Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('fund-level charges remain outside the current engine.'))).toBe(false)
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-5-flexi-4-sep-2025',
       'sgd-mip-7-flexi-5-sep-2025',
@@ -206,5 +210,7 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
       }),
     ])
     expect(lastVariant?.warnings).toContain('Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.')
+    expect(lastVariant?.warnings).toContain('Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate.')
+    expect(lastVariant?.unsupportedItems).not.toContain('Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.')
   }, 30_000)
 })

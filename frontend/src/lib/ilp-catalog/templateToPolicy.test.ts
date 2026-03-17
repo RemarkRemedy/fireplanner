@@ -6205,6 +6205,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-benefit-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-annual-premium-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-dividend-payout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-fund-management-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-welcome-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-loyalty-bonus')
     expect(seed.regularPremiumPaymentFrequency).toBe('annual')
@@ -6293,6 +6294,7 @@ describe('templateVariantToPolicySeed', () => {
     })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current premium bases'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('policy fund OCF inputs'))).toBe(true)
   })
 
   it('maps Manulife InvestReady Growth into a supported seed with accumulated-minimum-premium administration charging', () => {
@@ -6418,6 +6420,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-life-stage-partial-withdrawal')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-annual-premium-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-dividend-payout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-fund-management-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-welcome-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-loyalty-bonus')
     expect(seed.regularPremiumPaymentFrequency).toBe('annual')
@@ -6507,6 +6510,7 @@ describe('templateVariantToPolicySeed', () => {
     })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('life-stage partial-withdrawal waivers remain outside the current engine'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('policy fund OCF inputs'))).toBe(true)
   })
 
   it('maps ManuInvest Duo into a supported seed with protected-base assurance and distribution support', () => {

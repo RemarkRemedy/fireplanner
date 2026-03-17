@@ -373,6 +373,7 @@ function buildVariant(
     warnings: [
       `${variantDefinition.label} is cataloged as a supported V1 corridor. The parser captures the published 2.50% / ${(variantDefinition.postMipFeeRate * 100).toFixed(2)}% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.`,
       'Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.',
+      'Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate.',
       'Withdrawals of accumulated reinvested dividends remain informational only.',
     ],
     unsupportedItems: [
@@ -382,7 +383,6 @@ function buildVariant(
       'Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.',
       'Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.',
       'Withdrawals of accumulated reinvested dividends remain informational only.',
-      'Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.',
       'Fund switching, premium redirection, automatic fund rebalancing, and change-of-mode-of-payment options remain informational only.',
       'Reinstatement underwriting and pre-existing-condition exclusions remain informational only.',
     ],
@@ -420,12 +420,11 @@ export function parseManulifeInvestreadyIiiSep2025(context: ParseContext): IlpCa
       'manulife-investready-iii-life-stage-partial-withdrawal',
       'manulife-investready-iii-reinvested-dividend-withdrawals',
       'manulife-investready-iii-benefit-payout-handling',
-      'manulife-investready-iii-fund-management-charge',
       'manulife-investready-iii-fund-switching-and-redirection',
       'manulife-investready-iii-reinstatement',
     ],
     warnings: [
-      'Manulife InvestReady (III) Sep-2025 summary cohort is cataloged as a separate supported corridor set in V1. The parser captures the published administration-charge path, the 101% paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the published Loyalty Bonus rates, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedules, the MIP full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface with the published S$40 minimum cash-payout threshold, while policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, life-stage withdrawal waivers, and fund-level charges remain outside the current engine.',
+      'Manulife InvestReady (III) Sep-2025 summary cohort is cataloged as a separate supported corridor set in V1. The parser captures the published administration-charge path, the 101% paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the published Loyalty Bonus rates, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedules, the MIP full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface with the published S$40 minimum cash-payout threshold. Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate, while policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage withdrawal waivers remain outside the current engine.',
     ],
     archived: false,
     variants: VARIANTS.map((variant) => buildVariant(context.document, variant)),

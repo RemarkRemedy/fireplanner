@@ -37,11 +37,15 @@ describe('parseManulifeInvestreadyIii', () => {
       'branch:manulife-investready-iii-full-surrender-charge',
       'kernel:distribution-mode-assumption',
     ])
+    expect(product.modeledEconomics).not.toContain('branch:manulife-investready-iii-fund-management-charge')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-benefit-payout-handling')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-fund-management-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-annual-premium-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-welcome-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-loyalty-bonus')
+    expect(product.warnings.some((warning) => warning.includes('Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('fund-level charges remain informational only.'))).toBe(false)
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-mip-5-flexi-4'])
 
     const variant = product.variants[0]
@@ -139,6 +143,9 @@ describe('parseManulifeInvestreadyIii', () => {
         rate: 0,
       }),
     ])
-    expect(variant?.warnings).toContain('Flexi-start premium variation, annual-mode clawback on later payment-mode changes, partial-withdrawal amount limits, and fund-level management charges remain informational only.')
+    expect(variant?.warnings).toContain('Flexi-start premium variation, annual-mode clawback on later payment-mode changes, and partial-withdrawal amount limits remain informational only.')
+    expect(variant?.warnings).toContain('Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate.')
+    expect(variant?.warnings).not.toContain('Flexi-start premium variation, annual-mode clawback on later payment-mode changes, partial-withdrawal amount limits, and fund-level management charges remain informational only.')
+    expect(variant?.unsupportedItems).not.toContain('Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.')
   }, 30_000)
 })
