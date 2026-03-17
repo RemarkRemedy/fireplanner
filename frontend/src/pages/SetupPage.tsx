@@ -171,7 +171,7 @@ const SCREENS: (NudgeFlowScreen & {
       {
         name: 'ispTier',
         label: 'Integrated Shield Plan tier',
-        type: 'select',
+        type: 'radio-cards',
         tooltip: 'Determines hospital ward class coverage. Higher tiers = higher premiums but lower out-of-pocket costs.',
         helperText: 'Your ISP tier determines hospital ward class coverage and premium costs.',
         options: [
@@ -199,17 +199,7 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'partner-income',
     title: "Partner's income",
     fields: [
-      { name: 'partnerMonthlyIncome', label: 'Monthly income', type: 'currency', required: true, validationKey: 'partnerIncome', tooltip: "Partner's monthly employment income." },
-      {
-        name: 'partnerIncomeType',
-        label: 'Income basis',
-        type: 'select',
-        options: [
-          { value: 'take-home', label: 'Take-home' },
-          { value: 'gross', label: 'Gross' },
-        ],
-        required: true,
-      },
+      // Rendered as custom MonthlyIncomeInput below SetupScreen (see customChildren)
     ],
     planTypes: ['couple', 'household'],
   },
@@ -224,7 +214,7 @@ const SCREENS: (NudgeFlowScreen & {
   },
   {
     id: 'partner-residency',
-    title: "Partner's residency & CPF",
+    title: "Partner's residency",
     fields: [
       {
         name: 'partnerResidency',
@@ -237,10 +227,17 @@ const SCREENS: (NudgeFlowScreen & {
         ],
         required: true,
       },
-      { name: 'partnerCpfKnown', label: 'Partner knows CPF balance', type: 'toggle', tooltip: "Check partner's CPF statement at my.cpf.gov.sg.", helperText: 'If unknown, the projection will exclude their CPF.' },
-      { name: 'partnerCpfTotal', label: 'Total CPF balance', type: 'currency', validationKey: 'partnerCpfTotal', tooltip: "Partner's total CPF across all accounts.", showWhen: { field: 'partnerCpfKnown', equals: true } },
     ],
     planTypes: ['couple', 'household'],
+  },
+  {
+    id: 'partner-cpf',
+    title: "Partner's CPF",
+    fields: [
+      // Rendered as custom CpfSetupInput below SetupScreen (see customChildren)
+    ],
+    planTypes: ['couple', 'household'],
+    skipWhen: { field: 'partnerResidency', equals: 'foreigner' },
   },
   {
     id: 'partner-joint',
@@ -330,12 +327,22 @@ const INITIAL_VALUES: Record<string, unknown> = {
   partnerAge: 30,
   partnerRetirementAge: 55,
   partnerMonthlyIncome: 4800,
-  partnerIncomeType: 'take-home',
+  partnerIncomeType: 'take-home' as 'take-home' | 'gross',
+  partnerHasBonusAws: false,
+  partnerBonusMonths: 1,
   partnerMonthlyExpenses: 2500,
   partnerNetWorth: 50000,
   partnerResidency: 'citizen',
   partnerCpfKnown: false,
+  partnerCpfMode: 'estimate' as 'estimate' | 'know',
+  partnerCpfEntryMode: 'total' as 'total' | 'breakdown',
   partnerCpfTotal: 0,
+  partnerCpfOA: 0,
+  partnerCpfSA: 0,
+  partnerCpfMA: 0,
+  partnerCpfRA: 0,
+  partnerUsedOaForMortgage: false,
+  partnerOaMortgageAmount: 0,
   jointMonthlyExpenses: 0,
   // Dependents defaults
   hasDependents: false,
@@ -412,17 +419,45 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
   }
 
   if (planType !== 'individual') {
+    const partnerMonthlyInc = values.partnerMonthlyIncome as number
+    const partnerIncType = (values.partnerIncomeType as 'take-home' | 'gross') ?? 'take-home'
+    const partnerAge = values.partnerAge as number
+    const partnerGrossMo = partnerIncType === 'take-home'
+      ? grossUpFromTakeHome(partnerMonthlyInc, partnerAge)
+      : partnerMonthlyInc
+    const partnerBonus = (values.partnerHasBonusAws ? (values.partnerBonusMonths as number) : 0) ?? 0
+    const partnerAnnualIncome = Math.round(partnerGrossMo * (12 + partnerBonus))
+    const partnerResidency = values.partnerResidency as 'citizen' | 'pr' | 'foreigner'
+    // Partner CPF: same 3 modes as main user (estimate, know/total, know/breakdown)
+    let partnerCpfTotal: number | undefined
+    let partnerCpfBreakdown: { oa: number; sa: number; ma: number; ra: number } | undefined
+    const partnerCpfMode = (values.partnerCpfMode as 'estimate' | 'know') ?? 'estimate'
+    if (partnerResidency === 'foreigner') {
+      // Foreigners have no CPF
+    } else if (partnerCpfMode === 'estimate' || !partnerCpfMode) {
+      const oaMortgage = values.partnerUsedOaForMortgage ? (values.partnerOaMortgageAmount as number) : undefined
+      const est = estimateCpfBalances(partnerAge, partnerAnnualIncome, partnerResidency, undefined, oaMortgage)
+      partnerCpfTotal = est.total
+      partnerCpfBreakdown = { oa: est.oa, sa: est.sa, ma: est.ma, ra: est.ra }
+    } else {
+      const oa = (values.partnerCpfOA as number) ?? 0
+      const sa = (values.partnerCpfSA as number) ?? 0
+      const ma = (values.partnerCpfMA as number) ?? 0
+      const ra = (values.partnerCpfRA as number) ?? 0
+      partnerCpfTotal = oa + sa + ma + ra
+      partnerCpfBreakdown = { oa, sa, ma, ra }
+    }
     draft.partner = {
       name: values.partnerName as string,
-      currentAge: values.partnerAge as number,
+      currentAge: partnerAge,
       retirementAge: values.partnerRetirementAge as number,
-      annualIncome: (values.partnerMonthlyIncome as number) * 12,
-      incomeType: values.partnerIncomeType as 'gross' | 'take-home',
+      annualIncome: partnerAnnualIncome,
+      incomeType: 'gross',
       annualExpenses: (values.partnerMonthlyExpenses as number) * 12,
       liquidNetWorth: values.partnerNetWorth as number,
-      residency: values.partnerResidency as 'citizen' | 'pr' | 'foreigner',
-      cpfKnown: values.partnerCpfKnown as boolean,
-      cpfTotal: values.partnerCpfKnown ? (values.partnerCpfTotal as number) : undefined,
+      residency: partnerResidency,
+      cpfKnown: partnerCpfTotal != null,
+      cpfTotal: partnerCpfTotal,
     }
     draft.jointMonthlyExpenses = values.jointMonthlyExpenses as number
 
@@ -479,7 +514,10 @@ function hydrateDraftToValues(draft: SetupDraft): Record<string, unknown> {
     values.partnerRetirementAge = draft.partner.retirementAge
     values.partnerMonthlyIncome = Math.round(draft.partner.annualIncome / 12)
     values.partnerIncomeType = draft.partner.incomeType
+    values.partnerHasBonusAws = false
+    values.partnerBonusMonths = 1
     values.partnerMonthlyExpenses = Math.round(draft.partner.annualExpenses / 12)
+    values.partnerCpfMode = draft.partner.cpfKnown ? 'know' : 'estimate'
     values.partnerNetWorth = draft.partner.liquidNetWorth
     values.partnerResidency = draft.partner.residency
     values.partnerCpfKnown = draft.partner.cpfKnown
@@ -714,6 +752,19 @@ export function SetupPage() {
     return estimateCpfBalances(age, grossAnnual, residency, undefined, oaMortgage)
   }, [state.values.currentAge, state.values.monthlyIncome, state.values.incomeType, state.values.hasBonusAws, state.values.bonusMonths, state.values.residency, state.values.usedOaForMortgage, state.values.oaMortgageAmount])
 
+  // Partner CPF estimate
+  const partnerCpfEstimate = useMemo(() => {
+    const age = (state.values.partnerAge as number) ?? 30
+    const monthlyInc = (state.values.partnerMonthlyIncome as number) ?? 0
+    const incType = (state.values.partnerIncomeType as 'take-home' | 'gross') ?? 'take-home'
+    const grossMo = incType === 'take-home' ? grossUpFromTakeHome(monthlyInc, age) : monthlyInc
+    const bonus = (state.values.partnerHasBonusAws ? (state.values.partnerBonusMonths as number) : 0) ?? 0
+    const grossAnnual = grossMo * (12 + bonus)
+    const residency = (state.values.partnerResidency as 'citizen' | 'pr' | 'foreigner') ?? 'citizen'
+    const oaMortgage = state.values.partnerUsedOaForMortgage ? (state.values.partnerOaMortgageAmount as number) : undefined
+    return estimateCpfBalances(age, grossAnnual, residency, undefined, oaMortgage)
+  }, [state.values.partnerAge, state.values.partnerMonthlyIncome, state.values.partnerIncomeType, state.values.partnerHasBonusAws, state.values.partnerBonusMonths, state.values.partnerResidency, state.values.partnerUsedOaForMortgage, state.values.partnerOaMortgageAmount])
+
   // Review screen
   if (isReview) {
     const draft = draftFromValues(state.values, planType, isRedo)
@@ -898,6 +949,65 @@ export function SetupPage() {
             if (updates.sa !== undefined) handleChange('cpfSA', updates.sa)
             if (updates.ma !== undefined) handleChange('cpfMA', updates.ma)
             if (updates.ra !== undefined) handleChange('cpfRA', updates.ra)
+          }}
+        />
+      )
+    }
+    if (currentScreen.id === 'partner-income') {
+      const monthlyInc = (state.values.partnerMonthlyIncome as number) ?? 0
+      const incType = (state.values.partnerIncomeType as 'take-home' | 'gross') ?? 'take-home'
+      const age = (state.values.partnerAge as number) ?? 30
+      const grossMo = incType === 'take-home' ? grossUpFromTakeHome(monthlyInc, age) : monthlyInc
+      const bonus = (state.values.partnerHasBonusAws ? (state.values.partnerBonusMonths as number) : 0) ?? 0
+      return (
+        <MonthlyIncomeInput
+          incomeType={incType}
+          onIncomeTypeChange={(type) => handleChange('partnerIncomeType', type)}
+          monthlyIncome={monthlyInc}
+          onMonthlyIncomeChange={(v) => handleChange('partnerMonthlyIncome', v)}
+          hasBonusAws={(state.values.partnerHasBonusAws as boolean) ?? false}
+          onHasBonusAwsChange={(v) => handleChange('partnerHasBonusAws', v)}
+          bonusMonths={(state.values.partnerBonusMonths as number) ?? 1}
+          onBonusMonthsChange={(v) => handleChange('partnerBonusMonths', v)}
+          grossMonthly={grossMo}
+          annualIncome={Math.round(grossMo * (12 + bonus))}
+          age={age}
+          idSuffix="-partner"
+        />
+      )
+    }
+    if (currentScreen.id === 'partner-cpf') {
+      const partnerAge = (state.values.partnerAge as number) ?? 30
+      return (
+        <CpfSetupInput
+          age={partnerAge}
+          showRA={partnerAge >= 55}
+          mode={(state.values.partnerCpfMode as 'estimate' | 'know') ?? 'estimate'}
+          onModeChange={(m) => handleChange('partnerCpfMode', m)}
+          estimate={{ total: partnerCpfEstimate.total, split: partnerCpfEstimate }}
+          mortgage={{
+            used: (state.values.partnerUsedOaForMortgage as boolean) ?? false,
+            amount: (state.values.partnerOaMortgageAmount as number) ?? 0,
+          }}
+          onMortgageChange={(m) => {
+            handleChange('partnerUsedOaForMortgage', m.used)
+            handleChange('partnerOaMortgageAmount', m.amount)
+          }}
+          manual={{
+            entryMode: 'breakdown',
+            total: 0,
+            oa: (state.values.partnerCpfOA as number) ?? 0,
+            sa: (state.values.partnerCpfSA as number) ?? 0,
+            ma: (state.values.partnerCpfMA as number) ?? 0,
+            ra: (state.values.partnerCpfRA as number) ?? 0,
+          }}
+          onManualChange={(updates) => {
+            if (updates.entryMode !== undefined) handleChange('partnerCpfEntryMode', updates.entryMode)
+            if (updates.total !== undefined) handleChange('partnerCpfTotal', updates.total)
+            if (updates.oa !== undefined) handleChange('partnerCpfOA', updates.oa)
+            if (updates.sa !== undefined) handleChange('partnerCpfSA', updates.sa)
+            if (updates.ma !== undefined) handleChange('partnerCpfMA', updates.ma)
+            if (updates.ra !== undefined) handleChange('partnerCpfRA', updates.ra)
           }}
         />
       )
