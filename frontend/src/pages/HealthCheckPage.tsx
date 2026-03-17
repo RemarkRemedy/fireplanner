@@ -3,9 +3,11 @@ import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useHealthCheckInputs } from '@/hooks/useHealthCheckInputs'
 import { computeHealthRatios, type HealthCheckResult } from '@/lib/calculations/healthCheck'
 import { computeInsuranceNeeds, type InsuranceNeedsResult } from '@/lib/calculations/insuranceNeeds'
+import { useTaxOptimization } from '@/hooks/useTaxOptimization'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { RatioGroup } from '@/components/health/RatioGroup'
+import { TaxOptimizationPanel } from '@/components/health/TaxOptimizationPanel'
 import { HEALTH_RATIOS } from '@/lib/data/healthBenchmarks'
 import { MONEYSENSE_AREAS, MONEYSENSE_DISCLAIMER, getLifeStageGuides } from '@/lib/data/moneySenseGuide'
 import { cn } from '@/lib/utils'
@@ -47,6 +49,8 @@ export function HealthCheckPage() {
     if (!inputs) return null
     return computeInsuranceNeeds(inputs.insuranceInputs)
   }, [inputs])
+
+  const taxOptimization = useTaxOptimization(validAdultId)
 
   const lifeStageGuides = getLifeStageGuides(currentAge)
 
@@ -103,6 +107,14 @@ export function HealthCheckPage() {
               showDivider={i > 0}
             />
           ))}
+
+          {/* Tax Optimisation */}
+          {taxOptimization?.isReady && (
+            <TaxOptimizationPanel
+              result={taxOptimization.result}
+              residencyStatus={selectedAdult?.residencyStatus ?? 'citizen'}
+            />
+          )}
 
           {/* Detailed ratio reference (collapsed) */}
           <Accordion type="single" collapsible>
