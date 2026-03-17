@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
   AlertDialog,
@@ -190,8 +190,10 @@ export function StartPage() {
       {/* Quick estimate for new users */}
       {!isReturningUser && (
         <Card>
-          <CardContent className="py-6">
-            <p className="mb-4 text-sm font-medium text-muted-foreground">Quick estimate (10 seconds)</p>
+          <CardHeader className="pb-2">
+            <p className="text-sm font-medium text-muted-foreground">Quick estimate (10 seconds)</p>
+          </CardHeader>
+          <CardContent>
             <QuickEstimateForm compact />
           </CardContent>
         </Card>
