@@ -646,6 +646,7 @@ export const ilpEventChargeRuleSchema = z.object({
   freeEventCount: z.number().int().min(1).max(10).optional(),
   freeEventStartPolicyYear: z.number().int().min(1).max(100).optional(),
   freeEventMaxAmountRate: z.number().min(0).max(1).optional(),
+  freeEventMaxAmountBasis: z.enum(['open-balance', 'initial-single-premium']).optional(),
   rate: z.number().min(0).max(5),
   rateSchedule: z.array(z.object({
     startPolicyYear: z.number().int().min(1).max(100),
@@ -734,6 +735,14 @@ export const ilpEventChargeRuleSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'Free-event withdrawal settings can only be used on partial-withdrawal event-amount rules',
       path: ['freeEventCount'],
+    })
+  }
+
+  if (rule.freeEventMaxAmountBasis && rule.freeEventMaxAmountRate == null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Free-event max-amount basis requires freeEventMaxAmountRate',
+      path: ['freeEventMaxAmountBasis'],
     })
   }
 

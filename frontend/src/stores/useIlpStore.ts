@@ -148,6 +148,7 @@ function cloneEventChargeRule(rule: IlpEventChargeRule): IlpEventChargeRule {
     appliesTo: [...rule.appliesTo],
     fallbackAppliesTo: rule.fallbackAppliesTo ? [...rule.fallbackAppliesTo] : undefined,
     freeLifetimeMonths: rule.freeLifetimeMonths,
+    freeEventMaxAmountBasis: rule.freeEventMaxAmountBasis,
     rateSchedule: rule.rateSchedule?.map((tier) => ({ ...tier })),
   }
 }

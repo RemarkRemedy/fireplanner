@@ -5733,6 +5733,75 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[0], 'growth').withdrawalAmount).toBe(150)
   })
 
+  it('uses original initial single premium as the free-withdrawal cap when configured', () => {
+    const policy = makeDefaultPolicy({
+      monthlyContribution: 0,
+      initialSinglePremium: 100_000,
+      currentPolicyYear: 3,
+      monthsAlreadyPaid: 24,
+      mipLength: 8,
+      postMipYears: 0,
+      eecTable: [0.12, 0.105, 0.09, 0.075, 0.06, 0.045, 0.03, 0.015],
+      accounts: [
+        {
+          id: 'iia',
+          label: 'Initial Investment Account',
+          feeRate: 0,
+          currentValue: 92_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'aia',
+          label: 'Additional Investment Account',
+          feeRate: 0,
+          currentValue: 8_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      policyEvents: [
+        {
+          id: 'withdrawal-1',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 25,
+          durationMonths: 1,
+          amount: 15_000,
+          accountId: 'iia',
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'partial-withdrawal-charge',
+          label: 'Partial Withdrawal Charge',
+          trigger: 'partial-withdrawal',
+          basis: 'event-amount',
+          appliesTo: ['iia'],
+          freeEventCount: 1,
+          freeEventMaxAmountRate: 0.1,
+          freeEventMaxAmountBasis: 'initial-single-premium',
+          rate: 0.12,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+      bonuses: [],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'iia').grossFee).toBeCloseTo(600, 6)
+    expect(accountRow(result.rows[0], 'iia').withdrawalAmount).toBe(15_000)
+  })
+
   it('suppresses a partial-withdrawal charge when the event is explicitly marked as waived', () => {
     const basePolicy = makeDefaultPolicy({
       currentPolicyYear: 10,

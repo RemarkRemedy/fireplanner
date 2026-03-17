@@ -284,6 +284,7 @@ export interface IlpEventChargeRule {
   freeEventCount?: number
   freeEventStartPolicyYear?: number
   freeEventMaxAmountRate?: number
+  freeEventMaxAmountBasis?: 'open-balance' | 'initial-single-premium'
   rate: number
   rateSchedule?: IlpEventChargeRateTier[]
   amount: number
@@ -3240,9 +3241,13 @@ function computeFreePartialWithdrawalAmount(
   }
 
   const maxFreeAmount = rule.freeEventMaxAmountRate != null
-    ? normalized.multiAccount.withdrawalChargeScopeAccountIds
-        .filter((accountId) => rule.appliesTo.includes(accountId))
-        .reduce((sum, accountId) => sum + (openBalances.get(accountId) ?? 0), 0) * rule.freeEventMaxAmountRate
+    ? (
+        rule.freeEventMaxAmountBasis === 'initial-single-premium'
+          ? Math.max(0, (normalized.input.initialSinglePremium ?? 0) * rule.freeEventMaxAmountRate)
+          : normalized.multiAccount.withdrawalChargeScopeAccountIds
+              .filter((accountId) => rule.appliesTo.includes(accountId))
+              .reduce((sum, accountId) => sum + (openBalances.get(accountId) ?? 0), 0) * rule.freeEventMaxAmountRate
+      )
     : event.amount
 
   return Math.max(0, Math.min(event.amount, maxFreeAmount))

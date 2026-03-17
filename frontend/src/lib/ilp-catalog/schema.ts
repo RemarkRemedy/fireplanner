@@ -206,6 +206,7 @@ export const ilpTemplateEventChargeRuleSchema = z.object({
   freeEventCount: z.number().int().min(1).max(10).optional(),
   freeEventStartPolicyYear: z.number().int().min(1).max(100).optional(),
   freeEventMaxAmountRate: z.number().min(0).max(1).optional(),
+  freeEventMaxAmountBasis: z.enum(['open-balance', 'initial-single-premium']).optional(),
   rate: z.number().min(0).max(5).nullable(),
   rateSchedule: z.array(z.object({
     startPolicyYear: z.number().int().min(1).max(100),

@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parsePrudentialPruVantageAssureSp', () => {
-  it('builds a valid partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parsePrudentialPruVantageAssureSp({
       document,
@@ -22,12 +22,13 @@ describe('parsePrudentialPruVantageAssureSp', () => {
 
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('prudential-pruvantage-assure-sp')
-    expect(product.supportStatus).toBe('partial')
-    expect(product.economicsStatus).toBe('partial-modeled-subset')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('branch:assure-sp-combined-assurance')
+    expect(product.modeledEconomics).toContain('branch:assure-sp-loyalty-bonus')
+    expect(product.modeledEconomics).toContain('branch:assure-sp-first-free-withdrawal')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain('pruvantage-assure-sp-loyalty-bonus-every-8-years')
-    expect(product.metadataOnlyBehaviors).toContain('pruvantage-assure-sp-first-withdrawal-free-up-to-10pct-single-premium')
+    expect(product.metadataOnlyBehaviors).toContain('pruvantage-assure-sp-single-premium-allocation-enhancement')
 
     expect(product.variants).toHaveLength(1)
     expect(product.variants[0]).toMatchObject({
@@ -72,6 +73,9 @@ describe('parsePrudentialPruVantageAssureSp', () => {
           trigger: 'partial-withdrawal',
           basis: 'event-amount',
           appliesTo: ['iia'],
+          freeEventCount: 1,
+          freeEventMaxAmountRate: 0.1,
+          freeEventMaxAmountBasis: 'initial-single-premium',
           rateSchedule: expect.arrayContaining([
             { startPolicyYear: 1, endPolicyYear: 1, rate: 0.12 },
             { startPolicyYear: 2, endPolicyYear: 2, rate: 0.105 },
@@ -85,6 +89,16 @@ describe('parsePrudentialPruVantageAssureSp', () => {
         }),
       ]),
     )
+    expect(product.variants[0].bonuses).toEqual([
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        mode: 'annual-rate',
+        appliesTo: ['iia'],
+        startPolicyYear: 8,
+        cadenceYears: 8,
+        rate: 0.008,
+      }),
+    ])
     expect(product.variants[0].eventChargeRules.find((rule) => rule.id === 'partial-withdrawal-charge')?.rateSchedule).toEqual([
       { startPolicyYear: 1, endPolicyYear: 1, rate: 0.12 },
       { startPolicyYear: 2, endPolicyYear: 2, rate: 0.105 },

@@ -189,6 +189,7 @@ describe('templateVariantToPolicySeed', () => {
           freeEventCount: 2,
           freeEventStartPolicyYear: 3,
           freeEventMaxAmountRate: 0.06,
+          freeEventMaxAmountBasis: undefined,
         }),
       ]),
     )
@@ -922,7 +923,7 @@ describe('templateVariantToPolicySeed', () => {
     )
   })
 
-  it('maps PRUVantage Assure (SP) into a partial single-premium seed with explicit unsupported economics warnings', () => {
+  it('maps PRUVantage Assure (SP) into a supported single-premium seed with loyalty and original-principal free-withdrawal support', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'prudential-pruvantage-assure-sp')
     expect(product).toBeDefined()
@@ -931,15 +932,17 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-sp-combined-assurance')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-sp-administration-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-sp-loyalty-bonus')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-sp-first-free-withdrawal')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('pruvantage-assure-sp-loyalty-bonus-every-8-years')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('pruvantage-assure-sp-first-withdrawal-free-up-to-10pct-single-premium')
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('single-premium product'))).toBe(true)
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('pruvantage-assure-sp-single-premium-allocation-enhancement')
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('supported V1 product'))).toBe(true)
     expect(seed.monthlyContribution).toBe(0)
+    expect(seed.initialSinglePremium).toBe(0)
     expect(seed.accounts.find((account) => account.id === 'iia')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
     ])
@@ -981,10 +984,20 @@ describe('templateVariantToPolicySeed', () => {
           trigger: 'partial-withdrawal',
           basis: 'event-amount',
           appliesTo: ['iia'],
+          freeEventCount: 1,
+          freeEventMaxAmountRate: 0.1,
+          freeEventMaxAmountBasis: 'initial-single-premium',
         }),
       ]),
     )
-    expect(seed.bonuses).toEqual([])
+    expect(seed.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        cadenceYears: 8,
+        appliesTo: ['iia'],
+        rate: 0.008,
+      }),
+    ])
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['iia', 'aia'],
@@ -6858,6 +6871,7 @@ describe('templateVariantToPolicySeed', () => {
         freeEventCount: undefined,
         freeEventStartPolicyYear: undefined,
         freeEventMaxAmountRate: undefined,
+        freeEventMaxAmountBasis: undefined,
         rate: 0.03,
         rateSchedule: undefined,
         amount: 0,

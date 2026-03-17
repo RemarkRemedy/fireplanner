@@ -60396,28 +60396,27 @@
     "sourceChecksumSha256": "326c0e61167c98ca4e725605ec54f8462c3ac5392410a0fdc985479af28d7db3",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
       "branch:assure-sp-administration-charge",
       "branch:assure-sp-combined-assurance",
+      "branch:assure-sp-loyalty-bonus",
       "branch:assure-sp-top-up-charge",
+      "branch:assure-sp-first-free-withdrawal",
       "branch:assure-sp-charged-withdrawal",
       "branch:assure-sp-iia-surrender-charge",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "pruvantage-assure-sp-single-premium-allocation-enhancement",
-      "pruvantage-assure-sp-loyalty-bonus-every-8-years",
-      "pruvantage-assure-sp-first-withdrawal-free-up-to-10pct-single-premium",
-      "pruvantage-assure-sp-single-premium-principal-tracking",
       "pruvantage-assure-sp-change-of-life-assured",
       "pruvantage-assure-sp-sum-assured-wealth-assure-reduction-resumption",
       "pruvantage-assure-sp-dividend-payout-yield-assumption"
     ],
     "warnings": [
-      "PRUVantage Assure (SP) is cataloged as a partial modeled subset in V1. The parser captures the two-account structure, administration charge, combined Appendix A assurance charge, top-up premium charge, Initial Investment Account withdrawal / surrender charge schedules, and reinvest-default distribution support, but the enhanced single-premium allocation, recurring 8-year loyalty bonus, first-withdrawal free cap, and single-premium principal tracking remain outside the current engine."
+      "PRUVantage Assure (SP) is cataloged as a supported V1 product. The parser captures the two-account structure, administration charge, combined Appendix A assurance charge, the recurring 8-year loyalty bonus on the Initial Investment Account, top-up premium charge, Initial Investment Account withdrawal / surrender charge schedules including the first-withdrawal free cap tied to original single premium, and reinvest-default distribution support, while the enhanced single-premium allocation tiers and policy-specific dividend-yield election remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -60480,7 +60479,34 @@
             ]
           }
         ],
-        "bonuses": [],
+        "bonuses": [
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "iia"
+            ],
+            "startPolicyYear": 8,
+            "endPolicyYear": null,
+            "cadenceYears": 8,
+            "rate": 0.008,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published 0.8% loyalty bonus on the latest Initial Investment Account value after every block of eight completed policy years.",
+              "Top-ups in the Additional Investment Account do not receive the Loyalty Bonus."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Premium Size and Loyalty Bonus",
+                "excerpt": "Premium Size: The minimum single premium is $50,000. When your single premium is between $50,000 and $149,999, we use 100% of your single premium to buy units at the bid price in the PRULink fund(s) you have chosen. When"
+              }
+            ]
+          }
+        ],
         "feeRules": [
           {
             "id": "administration-charge",
@@ -60583,6 +60609,9 @@
             "appliesTo": [
               "iia"
             ],
+            "freeEventCount": 1,
+            "freeEventMaxAmountRate": 0.1,
+            "freeEventMaxAmountBasis": "initial-single-premium",
             "rate": 0,
             "rateSchedule": [
               {
@@ -60632,7 +60661,7 @@
             "notes": [
               "Applies to Initial Investment Account withdrawals only during the first 8 policy years.",
               "There is no withdrawal charge on the Additional Investment Account.",
-              "The first Initial Investment Account withdrawal free up to 10% of original single premium is not modeled automatically in V1."
+              "The first Initial Investment Account withdrawal is charge-free up to 10% of the original single premium; any excess remains subject to the published withdrawal-charge table."
             ],
             "sourceRefs": [
               {
@@ -60677,15 +60706,13 @@
           0.015
         ],
         "warnings": [
-          "This single-premium product currently models administration charges, Appendix A combined assurance charges, top-up premium charges, Initial Investment Account withdrawal charges, Initial Investment Account surrender charges, and reinvest-default distribution support.",
-          "The enhanced single-premium allocation tiers, the recurring 8-year Loyalty Bonus, and the first Initial Investment Account withdrawal free up to 10% of original single premium remain informational only in V1.",
+          "This supported template models administration charges, Appendix A combined assurance charges, the recurring 8-year Loyalty Bonus on the Initial Investment Account, top-up premium charges, Initial Investment Account withdrawal / surrender charge schedules including the first-withdrawal 10%-of-original-single-premium free cap, and reinvest-default distribution support.",
+          "The enhanced single-premium allocation tiers remain informational only in V1.",
           "Enter insured-life details and use the current net regular premium base field as the current net single-premium base to activate the modeled assurance charge path.",
-          "The current ILP engine does not yet track original single-premium principal separately from recurring-premium inputs, so premiums-paid and opportunity-cost outputs should be treated as partial for this product."
+          "The current ILP engine does not yet model the published 100.5% / 101% single-premium allocation enhancements, so high-tier initial allocations remain conservative in V1."
         ],
         "unsupportedItems": [
-          "Enhanced single-premium allocation tiers (100% / 100.49999999999999% / 101%) remain informational only.",
-          "Loyalty Bonus paid every block of 8 completed policy years remains informational only.",
-          "First Initial Investment Account withdrawal free up to 10% of original single premium remains informational only.",
+          "Enhanced single-premium allocation tiers (100% / 100.5% / 101%) remain informational only.",
           "Change of life assured and sum assured / Wealth Assure Value reduction-resumption options remain informational only.",
           "The published dividend payout election remains informational only insofar as the policy-specific payout yield remains a manual assumption in V1."
         ],

@@ -162,6 +162,13 @@ export type GoldenCoverageTag =
   | 'branch:pru-top-up-charge'
   | 'branch:pru-free-withdrawal'
   | 'branch:pru-charged-withdrawal'
+  | 'branch:assure-sp-administration-charge'
+  | 'branch:assure-sp-combined-assurance'
+  | 'branch:assure-sp-top-up-charge'
+  | 'branch:assure-sp-first-free-withdrawal'
+  | 'branch:assure-sp-charged-withdrawal'
+  | 'branch:assure-sp-iia-surrender-charge'
+  | 'branch:assure-sp-loyalty-bonus'
   | 'branch:prulink-investgrowth-sp-single-premium-charge'
   | 'branch:prulink-investgrowth-sp-premium-assurance-charge'
   | 'branch:prulink-investgrowth-sp-top-up-charge'
@@ -835,6 +842,7 @@ function clonePolicySeedIntoInput(
       appliesTo: [...rule.appliesTo],
       fallbackAppliesTo: rule.fallbackAppliesTo ? [...rule.fallbackAppliesTo] : undefined,
       freeLifetimeMonths: rule.freeLifetimeMonths,
+      freeEventMaxAmountBasis: rule.freeEventMaxAmountBasis,
       rateSchedule: rule.rateSchedule?.map((tier) => ({ ...tier })),
     })) ?? [],
     catalogSource: seed.catalogSource ? { ...seed.catalogSource } : undefined,
@@ -1955,6 +1963,141 @@ function pruInvestGrowthSpStressPolicy(
 ): IlpPolicyInput {
   return pruInvestGrowthSpBasePolicy(snapshot, 'sgd-open-ended-cash', id, PRU_STRESS_FUNDS, {
     name: 'Golden PRULink InvestGrowth (SP) (SGD / Open-ended Cash OCF Stress)',
+  })
+}
+
+function pruVantageAssureSpBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'prudential-pruvantage-assure-sp', 'sgd-mip-8', id, {
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 7,
+    monthsAlreadyPaid: 72,
+    assuranceProfile: {
+      currentAgeNextBirthday: 53,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentNetRegularPremiumBase: 100_000,
+      currentSumAssured: 121_000,
+      currentWealthAssureValue: 110_000,
+    },
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden PRUVantage Assure (SP) (SGD / MIP 8)',
+      accounts: base.accounts.map((account) => {
+        if (account.id === 'iia') {
+          return { ...account, currentValue: 118_000 }
+        }
+        return { ...account, currentValue: 9_000 }
+      }),
+      distributionAssumption: {
+        mode: 'cash-payout',
+        source: 'manual-assumption',
+        annualYieldRate: 0.03,
+      },
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function pruVantageAssureSpBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return pruVantageAssureSpBasePolicy(snapshot, id, PRU_BALANCED_FUNDS, {
+    name: 'Golden PRUVantage Assure (SP) (SGD / MIP 8 Baseline)',
+  })
+}
+
+function pruVantageAssureSpEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return pruVantageAssureSpBasePolicy(snapshot, id, PRU_BALANCED_FUNDS, {
+    name: 'Golden PRUVantage Assure (SP) (SGD / MIP 8 Event Heavy)',
+    currentPolicyYear: 3,
+    monthsAlreadyPaid: 24,
+    assuranceProfile: {
+      currentAgeNextBirthday: 49,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentNetRegularPremiumBase: 100_000,
+      currentSumAssured: 109_000,
+      currentWealthAssureValue: 103_000,
+    },
+    accounts: [
+      {
+        id: 'iia',
+        label: 'Initial Investment Account',
+        feeRate: 0,
+        currentValue: 95_000,
+        contributionShare: 0,
+        subjectToEec: true,
+        postMipFeeRate: null,
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+        ],
+      },
+      {
+        id: 'aia',
+        label: 'Additional Investment Account',
+        feeRate: 0,
+        currentValue: 6_000,
+        contributionShare: 0,
+        subjectToEec: false,
+        postMipFeeRate: null,
+        contributionRules: [
+          { phase: 'top-up', contributionShare: 1 },
+        ],
+      },
+    ],
+    distributionAssumption: {
+      mode: 'reinvest',
+      source: 'catalog-default',
+    },
+    policyEvents: [
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 26,
+        durationMonths: 1,
+        amount: 8_000,
+      },
+      {
+        id: 'withdrawal-free',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 27,
+        durationMonths: 1,
+        amount: 8_000,
+        accountId: 'iia',
+      },
+      {
+        id: 'withdrawal-charged',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 29,
+        durationMonths: 1,
+        amount: 18_000,
+        accountId: 'iia',
+      },
+    ],
+  })
+}
+
+function pruVantageAssureSpStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return pruVantageAssureSpBasePolicy(snapshot, id, PRU_STRESS_FUNDS, {
+    name: 'Golden PRUVantage Assure (SP) (SGD / MIP 8 OCF Stress)',
   })
 }
 
@@ -10363,6 +10506,89 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     ],
   },
   {
+    productId: 'prudential-pruvantage-assure-sp',
+    variantId: 'sgd-mip-8',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'branch:assure-sp-administration-charge',
+      'branch:assure-sp-combined-assurance',
+      'branch:assure-sp-loyalty-bonus',
+      'branch:assure-sp-iia-surrender-charge',
+    ],
+    description: 'Baseline PRUVantage Assure (SP) scenario proving the first eligible loyalty-bonus credit and cash-payout distribution support.',
+    integrityChecks: [
+      {
+        description: 'credits a positive loyalty bonus on the Initial Investment Account at the first eligible 8-year block',
+        test: (_, artifact) => {
+          const iiaRow = artifact.expected.projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'iia')
+          return (iiaRow?.bonusCredit ?? 0) > 0
+        },
+      },
+      {
+        description: 'pays positive annual distributions under the cash-payout assumption',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'prudential-pruvantage-assure-sp',
+    variantId: 'sgd-mip-8',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:pru-top-up-charge',
+      'branch:pru-free-withdrawal',
+      'branch:pru-charged-withdrawal',
+      'branch:assure-sp-top-up-charge',
+      'branch:assure-sp-first-free-withdrawal',
+      'branch:assure-sp-charged-withdrawal',
+    ],
+    description: 'PRUVantage Assure (SP) event-heavy scenario covering top-up charge plus a first free Initial Investment Account withdrawal capped against original single premium and a later charged withdrawal.',
+    integrityChecks: [
+      {
+        description: 'records the seeded top-up in the projection year',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > 0),
+      },
+      {
+        description: 'records both seeded Initial Investment Account withdrawals in projection output',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals >= 26_000),
+      },
+      {
+        description: 'keeps the first free withdrawal materially cheaper than the later charged withdrawal',
+        test: (fixture, artifact) => {
+          const chargedOnly = ilpPolicySchema.parse({
+            ...fixture.policy,
+            eventChargeRules: fixture.policy.eventChargeRules?.map((rule) => (
+              rule.id === 'partial-withdrawal-charge'
+                ? {
+                    ...rule,
+                    freeEventCount: undefined,
+                    freeEventMaxAmountRate: undefined,
+                    freeEventMaxAmountBasis: undefined,
+                  }
+                : rule
+            )),
+          })
+          const withFreeFees = artifact.expected.projections.mid.rows.at(-1)?.cumulativeGrossFees ?? 0
+          const chargedOnlyFees = analyzeIlpPolicy(chargedOnly).projections.mid.rows.at(-1)?.cumulativeGrossFees ?? 0
+          return withFreeFees < chargedOnlyFees
+        },
+      },
+    ],
+  },
+  {
+    productId: 'prudential-pruvantage-assure-sp',
+    variantId: 'sgd-mip-8',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'PRUVantage Assure (SP) alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'prudential-prulink-investgrowth-sp',
     variantId: 'sgd-open-ended-cash',
     scenarioId: 'baseline',
@@ -14956,6 +15182,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'prudential-prulink-investgrowth-sp' && definition.scenarioId === 'ocf-stress') {
     return pruInvestGrowthSpStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-pruvantage-assure-sp' && definition.scenarioId === 'baseline') {
+    return pruVantageAssureSpBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-pruvantage-assure-sp' && definition.scenarioId === 'event-heavy') {
+    return pruVantageAssureSpEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'prudential-pruvantage-assure-sp' && definition.scenarioId === 'ocf-stress') {
+    return pruVantageAssureSpStressPolicy(snapshot, id)
   }
   if (definition.productId === 'manulife-manulink-investor-ii' && definition.scenarioId === 'baseline') {
     return manulinkInvestorIiBaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended-cash' | 'sgd-open-ended-srs', id)

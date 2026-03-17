@@ -20,6 +20,10 @@ function usesInitialSinglePremiumBase(variant: IlpTemplateVariant): boolean {
   )) || variant.exitChargeBasis === 'initial-single-premium-base'
 }
 
+function usesInitialSinglePremiumEventBase(variant: IlpTemplateVariant): boolean {
+  return variant.eventChargeRules.some((rule) => rule.freeEventMaxAmountBasis === 'initial-single-premium')
+}
+
 function usesOriginalSinglePremiumBase(variant: IlpTemplateVariant): boolean {
   return variant.feeRules.some((rule) => rule.basis === 'initial-single-premium-base')
     || variant.exitChargeBasis === 'initial-single-premium-base'
@@ -38,12 +42,14 @@ function supportsSeededRecurringContributionRouting(variant: IlpTemplateVariant)
 }
 
 function seedsInitialSinglePremiumRouting(variant: IlpTemplateVariant): boolean {
-  return usesInitialSinglePremiumBase(variant) || variant.feeRules.some((rule) => (
+  return usesInitialSinglePremiumBase(variant)
+    || usesInitialSinglePremiumEventBase(variant)
+    || variant.feeRules.some((rule) => (
     !usesInitialSinglePremiumBase(variant)
     && rule.basis === 'annual-contribution'
     && rule.id === 'single-premium-charge'
     && !supportsSeededRecurringContributionRouting(variant)
-  ))
+    ))
 }
 
 function deriveSeedMonthlyContribution(product: IlpCatalogProduct, variant: IlpTemplateVariant): number {
@@ -225,6 +231,7 @@ function mapEventChargeRules(variant: IlpTemplateVariant): NonNullable<IlpPolicy
       freeEventCount: rule.freeEventCount,
       freeEventStartPolicyYear: rule.freeEventStartPolicyYear,
       freeEventMaxAmountRate: rule.freeEventMaxAmountRate,
+      freeEventMaxAmountBasis: rule.freeEventMaxAmountBasis,
       rate: rule.rate ?? 0,
       rateSchedule: rule.rateSchedule?.map((tier) => ({ ...tier })),
       amount: rule.amount ?? 0,
