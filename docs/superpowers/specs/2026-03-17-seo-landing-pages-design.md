@@ -34,12 +34,14 @@ Two new SEO landing pages to capture search traffic from redirect domains and pr
   - Estimated CPF LIFE monthly payout at 65
   - The gap: "CPF LIFE gives you $X/month. If your expenses are $Y/month, your portfolio needs to cover the difference for N years."
   - **Disclaimer:** "This is a rough estimate based on heuristic assumptions. For a precise projection, enter your actual CPF balances in the full planner."
+- **Important:** Monthly salary input must be multiplied by 12 before passing to CPF functions (they all take annual salary).
 - **Calculation flow (actual function signatures):**
-  1. `estimateCpfBalances(currentAge, grossAnnualIncome, residencyStatus)` -> returns `{ oa, sa, ma, ra, total }`. This is a heuristic estimate (setup wizard level), not a precise projection.
-  2. `projectCpfBalances(currentAge, 55, oa, sa, ma, grossAnnualIncome, 0.03, residencyStatus)` -> returns `CpfProjection[]`. Extract final row's OA/SA/MA balances at 55.
-  3. `calculateBrsFrsErs(currentAge)` -> returns `{ brs, frs, ers }`. **Takes current age, not 55.** The function internally calculates years-until-55 and applies growth.
-  4. CPF LIFE payout: `estimateCpfLifePayout(retirementSumAt55, plan)` returns the **annual** payout based on the retirement sum at 55 multiplied by plan rates. Divide by 12 for monthly display. **Note:** this is a simplified estimate. The real engine grows RA from 55 to payout start age. For the landing page, this approximation is acceptable with the disclaimer.
-  5. Gap calculation: all values in **today's dollars** (real terms). Monthly expenses stay as entered (no inflation). CPF LIFE monthly = step 4 / 12. Gap = expenses - cpfLifeMonthly. Years = 90 - 65 = 25. This avoids the mixed-dollar-basis violation (CLAUDE.md).
+  1. `const balances = estimateCpfBalances(currentAge, monthlySalary * 12, residencyStatus)` -> returns `CpfBalanceEstimate { oa, sa, ma, ra, total }`. Destructure `.oa`, `.sa`, `.ma` for step 2. This is a heuristic estimate (setup wizard level), not a precise projection.
+  2. `const projections = projectCpfBalances(currentAge, 55, balances.oa, balances.sa, balances.ma, monthlySalary * 12, 0.03, residencyStatus)` -> returns `CpfProjection[]`. Extract final row: `const lastRow = projections[projections.length - 1]`. Get `lastRow.oaBalance`, `lastRow.saBalance`, `lastRow.maBalance`.
+  3. **Age-55 transfer:** `const { newRA } = performAge55Transfer(lastRow.oaBalance, lastRow.saBalance, frs)` where `frs` is from step 4. SA is capped at FRS and transferred to RA. Excess returns to OA. The `newRA` value is what feeds CPF LIFE.
+  4. `const { brs, frs, ers } = calculateBrsFrsErs(currentAge)` -> **takes current age, not 55.** The function internally calculates years-until-55 and applies 3.5% growth.
+  5. CPF LIFE payout: `estimateCpfLifePayout(newRA, plan)` returns the **annual** payout. Divide by 12 for monthly display. **Note:** this is a simplified estimate that applies the payout rate directly to the age-55 RA balance. The real engine grows RA from 55 to 65 before applying rates, so this understates payouts by roughly 40-55%. For the landing page, this approximation is acceptable with the disclaimer. The function's payout rates (5.4% Basic, 6.3% Standard, 4.8% Escalating) are calibrated to the balance at 55.
+  6. Gap calculation: all values in **today's dollars** (real terms). Monthly expenses stay as entered (no inflation). CPF LIFE monthly = step 5 / 12. Gap = expenses - cpfLifeMonthly. Years = 90 - 65 = 25. This avoids the mixed-dollar-basis violation (CLAUDE.md).
 - Self-contained component, no Zustand store reads
 - Use `formatCurrency(value, 0)` for all displays (whole dollars for clarity)
 
@@ -70,10 +72,11 @@ Two new SEO landing pages to capture search traffic from redirect domains and pr
 - `estimateCpfBalances(currentAge, grossAnnualIncome, residencyStatus, prMonths?, oaMortgageUsed?)` from `lib/calculations/cpf.ts` (heuristic estimate of current balances)
 - `projectCpfBalances(startAge, endAge, initialOA, initialSA, initialMA, annualSalary, salaryGrowth, residencyStatus?, prMonths?)` from `lib/calculations/cpf.ts` (year-by-year forward projection)
 - `calculateBrsFrsErs(currentAge, currentYear?)` from `lib/calculations/cpf.ts` (takes current age, not target age)
+- `performAge55Transfer(oaBalance, saBalance, retirementSumTarget)` from `lib/calculations/cpf.ts` (SA->RA transfer at 55, returns `{ newOA, newRA }`)
 - `estimateCpfLifePayout(retirementSumAt55, plan)` from `lib/calculations/cpf.ts` (returns annual payout, divide by 12)
 - CPF rate constants from `lib/data/cpfRates.ts`
 - `CurrencyInput` / `NumberInput` from `components/shared/`
-- Email signup: requires changes to `emailConstants.ts` (new source/feature values), `LandingEmailSection.tsx` (parameterize source), and awareness that the flow uses `EMAIL_WORKER_URL` + double opt-in, not a simple POST
+- Email signup: requires changes to `emailConstants.ts` (new source/feature values), `LandingEmailSection.tsx` (parameterize source), and `useEmailSignup.ts` (add optional `defaultFeatureInterest` param that auto-fires the feature-select step after email submission, skipping the dropdown). The current flow uses `EMAIL_WORKER_URL` + double opt-in + a separate feature-select POST. Server-side validation in `functions/api/email-signup.ts` also needs the new values.
 - `usePageMeta` hook for meta tags + breadcrumb
 
 ### Required updates to existing files
@@ -129,6 +132,8 @@ Verified fee data (March 2026):
 Fee drag formula: `portfolioSize * ((1 + returnRate) ^ years - (1 + returnRate - feeRate) ^ years)`
 where returnRate = 0.07 (7% nominal), years = 30.
 
+**Output labeling:** Display the result as "Lost portfolio growth over 30 years (opportunity cost)" not just "fee drag". Include a one-line explainer: "This is the difference in portfolio value between paying this fee and paying nothing, assuming 7% annual returns." Without this framing, the large numbers (often exceeding the initial portfolio) will seem unbelievable and erode trust.
+
 Tier selection: the calculator auto-selects the correct fee tier based on the slider value for each platform.
 
 **Data location:** Fee structures go in `lib/data/roboFees.ts` (not hardcoded in the component). Per CLAUDE.md: Singapore-specific financial data belongs in `lib/data/`.
@@ -169,7 +174,22 @@ Tier selection: the calculator auto-selects the correct fee tier based on the sl
 ### What we create
 - `src/pages/ComparePage.tsx` - route component
 - `src/components/compare/FeeComparisonCalculator.tsx` - interactive fee drag calculator
-- `src/lib/data/roboFees.ts` - fee tier data for ALL platforms in the comparison (Endowus, StashAway, Syfe, DBS digiPortfolio, DIY). Per CLAUDE.md: all Singapore-specific financial data in `lib/data/`, not inline in components. Include `lastVerified: '2026-03-17'` and source URLs per platform.
+- `src/lib/data/roboFees.ts` - fee tier data for ALL platforms in the comparison (Endowus, StashAway, Syfe, DBS digiPortfolio, DIY). Per CLAUDE.md: all Singapore-specific financial data in `lib/data/`, not inline in components. Include `lastVerified: '2026-03-17'` and source URLs per platform. Type interface:
+  ```typescript
+  interface FeeTier { minAmount: number; rate: number }
+  interface PlatformFees {
+    id: string
+    name: string
+    tiers: FeeTier[]       // sorted ascending by minAmount
+    estimatedTer: number   // average fund-level TER (0 for DIY ETFs)
+    supportsSrs: boolean
+    supportsCpfIs: boolean
+    sourceUrl: string
+    notes?: string
+  }
+  export const ROBO_FEES: PlatformFees[]
+  export const ROBO_FEES_LAST_VERIFIED = '2026-03-17'
+  ```
 - Route entry in `router.tsx`
 - Sitemap entry
 - Prerender entry
