@@ -107,16 +107,11 @@ const AFTER_INPUTS_GROUPS: { title: string; items: NavItem[] }[] = [
     ],
   },
   {
-    title: 'EXPLORE',
-    items: [
-      { label: 'Withdrawal Strategies', path: '/withdrawal', icon: <Banknote className="h-4 w-4" /> },
-    ],
-  },
-  {
     title: 'ANALYSIS',
     items: [
-      { label: 'Stress Test', path: '/stress-test', icon: <ShieldAlert className="h-4 w-4" /> },
       { label: 'Health Check', path: '/health-check', icon: <HeartPulse className="h-4 w-4" /> },
+      { label: 'Stress Test', path: '/stress-test', icon: <ShieldAlert className="h-4 w-4" /> },
+      { label: 'Withdrawal Strategies', path: '/withdrawal', icon: <Banknote className="h-4 w-4" /> },
     ],
   },
   {

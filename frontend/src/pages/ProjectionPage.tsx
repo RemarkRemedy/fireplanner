@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { AlertTriangle, PartyPopper } from 'lucide-react'
+import { AlertTriangle, HeartPulse, PartyPopper } from 'lucide-react'
 import { toast } from 'sonner'
 import { NWChartView } from '@/components/projection/NWChartView'
 import { Maximize2 } from 'lucide-react'
@@ -49,6 +49,7 @@ import { buildProjectionParams, buildFullProjectionParams } from '@/lib/calculat
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { generateProjection } from '@/lib/calculations/projection'
 import { NudgeSidebar } from '@/components/projection/NudgeSidebar'
+import { useHealthCheck } from '@/hooks/useHealthCheck'
 import { NudgeDrawer } from '@/components/projection/NudgeDrawer'
 import { MobileNudgeBar } from '@/components/projection/MobileNudgeBar'
 import { DeltaCard } from '@/components/projection/DeltaCard'
@@ -82,6 +83,7 @@ export function ProjectionPage() {
   const currentSnapshot = useMetricsSnapshot()
   const deltaProcessed = useRef(false)
   const nudgeSectionRef = useRef<HTMLDivElement>(null)
+  const { result: healthResult } = useHealthCheck()
 
   // Show welcome toast after completing guided setup
   useEffect(() => {
@@ -850,6 +852,8 @@ export function ProjectionPage() {
           narrative = `Your portfolio does not reach the FIRE number and depletes at age ${portfolioDepletedAge}. Consider increasing savings or extending your working years.`
         }
 
+        const healthIssueCount = (healthResult?.amberCount ?? 0) + (healthResult?.redCount ?? 0)
+
         return (
           <p className={cn(
             'text-sm rounded-md p-3 border',
@@ -858,6 +862,14 @@ export function ProjectionPage() {
               : 'text-green-800 dark:text-green-200 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
           )}>
             {narrative}
+            {healthIssueCount > 0 && (
+              <>
+                {' '}Your{' '}
+                <Link to="/health-check" className="underline font-medium">
+                  financial health check has {healthIssueCount} area{healthIssueCount === 1 ? '' : 's'} that could use attention
+                </Link>.
+              </>
+            )}
           </p>
         )
       })()}
@@ -980,6 +992,45 @@ export function ProjectionPage() {
     </div>
     <aside className="hidden md:block space-y-4">
       <NudgeSidebar onOpenDrawer={setDrawerFlowId} />
+      {healthResult && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <HeartPulse className="h-4 w-4" />
+              Financial Health
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground space-y-2">
+            <p>Check your emergency fund, debt ratios, and protection gaps against MoneySense benchmarks.</p>
+            <div className="flex items-center gap-3 text-xs">
+              {healthResult.greenCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  {healthResult.greenCount}
+                </span>
+              )}
+              {healthResult.amberCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                  {healthResult.amberCount}
+                </span>
+              )}
+              {healthResult.redCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-red-500" />
+                  {healthResult.redCount}
+                </span>
+              )}
+            </div>
+            <Link
+              to="/health-check"
+              className="inline-flex items-center rounded-full border px-3 py-1 text-sm text-primary hover:bg-primary/5 transition-colors"
+            >
+              Review health ratios →
+            </Link>
+          </CardContent>
+        </Card>
+      )}
     </aside>
     <NudgeDrawer
       flowId={drawerFlowId}
