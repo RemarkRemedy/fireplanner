@@ -374,6 +374,9 @@ function buildVariant(
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['accumulation', 'topup'],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -381,7 +384,8 @@ function buildVariant(
       notes: [
         'Dividend-paying funds default to reinvestment, while cash payout can be explored through the manual annual distribution-yield assumption.',
         'The published dividend election applies across the Accumulation Units Account and Top-up Units Account.',
-        'The published $50 minimum payout threshold and 30-day record-date instruction window remain informational only in V1.',
+        'Cash payouts below the published SGD 50 annual dividend threshold remain reinvested in V1.',
+        'Cash payout elections should be lodged at least 30 days before the dividend record date.',
       ],
       sourceRefs: [page8],
     },
@@ -396,7 +400,7 @@ function buildVariant(
         : []),
       'Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the administrative restart month.',
       'Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD corridor.',
-      'Harvest Flexi keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
+      'Harvest Flexi keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
       'Harvest Flexi is modeled with the published policy investment charge tied to the commencement-date premium commitment and the published admin charge on received regular premium.',
     ],
     unsupportedItems: [
@@ -408,7 +412,6 @@ function buildVariant(
             'Advanced Death Benefit selection, Monthly Protection Charge, Life Benefit Rider, life replacement administration, and multiple-life handling remain metadata-only for this product.',
           ]),
       'Partial-withdrawal limit gates and credit-card charge remain metadata-only for this product.',
-      'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product.',
     ],
     sourceRefs: [
       page1,
@@ -464,7 +467,6 @@ export function parseTokioMarineHarvestFlexi(context: ParseContext): IlpCatalogP
     metadataOnlyBehaviors: [
       'tokio-harvest-flexi-benefit-payout-handling',
       'tokio-harvest-flexi-life-benefit-rider',
-      'tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions',
       'tokio-harvest-flexi-partial-withdrawal-limit-gates',
       'tokio-harvest-flexi-credit-card-charge',
       'tokio-multiple-life-and-capital-guarantee-options',
@@ -473,6 +475,7 @@ export function parseTokioMarineHarvestFlexi(context: ParseContext): IlpCatalogP
       'Structured extraction validated against the Harvest Flexi product summary text layer.',
       'Harvest Flexi is modeled as split SGD / MIP 10 death-benefit-option variants with the published policy investment charge and admin charge on top of the existing routing and shortfall surfaces.',
       'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
+      'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
       'Performance investment bonus is modeled as three published policy-year windows: policy years 4 to 6, policy years 7 to 10, and after the minimum investment period.',
       'Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.',
       'Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.',

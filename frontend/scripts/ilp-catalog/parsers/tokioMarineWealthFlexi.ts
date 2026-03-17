@@ -398,6 +398,9 @@ function buildVariant(
           accountIds: ['accumulation', 'topup'],
         },
       ],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -406,7 +409,8 @@ function buildVariant(
         'Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.',
         'For the first three policy years, only dividends from the Top-up Units Account may be paid in cash.',
         'After the first three policy years, dividends from both the Accumulation Units Account and Top-up Units Account may be paid in cash.',
-        'The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1.',
+        'Cash payouts below the published SGD 50 annual dividend threshold remain reinvested in V1.',
+        'Cash payout elections should be lodged at least 30 days before the dividend record date.',
       ],
       sourceRefs: [page8Distribution],
     },
@@ -431,7 +435,6 @@ function buildVariant(
         : [
             'Advanced Death Benefit selection, Life Benefit Rider, multiple-life administration, and capital-guarantee options remain metadata-only for this product.',
           ]),
-      'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1.',
     ],
     sourceRefs: [
       page1,
@@ -487,14 +490,13 @@ export function parseTokioMarineWealthFlexi(context: ParseContext): IlpCatalogPr
     metadataOnlyBehaviors: [
       'tokio-wealth-flexi-benefit-payout-handling',
       'tokio-wealth-flexi-life-benefit-rider',
-      'tokio-wealth-flexi-dividend-payout-threshold-and-record-date-instructions',
       'tokio-multiple-life-and-capital-guarantee-options',
     ],
     warnings: [
       'Structured extraction validated against the Wealth Flexi product summary text layer.',
       'Wealth Flexi is modeled as split SGD / MIP 10 death-benefit-option variants with the published initial setup charge, policy investment charge, and admin charge on top of the existing routing and shortfall surfaces.',
       'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
-      'Dividend cash payouts are modeled through the manual distribution-mode assumption surface: only Top-up Units Account dividends may be paid in cash during the first three policy years, and Accumulation Units Account dividends join after policy year 3.',
+      'Dividend cash payouts are modeled through the manual distribution-mode assumption surface: only Top-up Units Account dividends may be paid in cash during the first three policy years, Accumulation Units Account dividends join after policy year 3, payouts below SGD 50 remain reinvested, and cash-payout elections should be made at least 30 days before the record date.',
       'Performance investment bonus is modeled as three published policy-year windows: policy years 4 to 6, policy years 7 to 10, and after the minimum investment period.',
       'Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.',
       'Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.',

@@ -396,7 +396,6 @@
       "metadataOnlyBehaviors": [
         "tokio-wealth-flexi-benefit-payout-handling",
         "tokio-wealth-flexi-life-benefit-rider",
-        "tokio-wealth-flexi-dividend-payout-threshold-and-record-date-instructions",
         "tokio-multiple-life-and-capital-guarantee-options"
       ]
     },
@@ -404,7 +403,7 @@
       "Structured extraction validated against the Wealth Flexi product summary text layer.",
       "Wealth Flexi is modeled as split SGD / MIP 10 death-benefit-option variants with the published initial setup charge, policy investment charge, and admin charge on top of the existing routing and shortfall surfaces.",
       "The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.",
-      "Dividend cash payouts are modeled through the manual distribution-mode assumption surface: only Top-up Units Account dividends may be paid in cash during the first three policy years, and Accumulation Units Account dividends join after policy year 3.",
+      "Dividend cash payouts are modeled through the manual distribution-mode assumption surface: only Top-up Units Account dividends may be paid in cash during the first three policy years, Accumulation Units Account dividends join after policy year 3, payouts below SGD 50 remain reinvested, and cash-payout elections should be made at least 30 days before the record date.",
       "Performance investment bonus is modeled as three published policy-year windows: policy years 4 to 6, policy years 7 to 10, and after the minimum investment period.",
       "Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.",
       "Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.",
@@ -413,9 +412,9 @@
       "Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the administrative restart month.",
       "Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.",
       "Wealth Flexi is modeled with the published initial setup charge, policy investment charge, and admin charge on top of the existing routing and shortfall surfaces.",
-      "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
-      "Advanced Death Benefit selection, Life Benefit Rider, multiple-life administration, and capital-guarantee options remain metadata-only for this product.",
-      "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1."
+      "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of S$50 remain reinvested.",
+      "Cash payout elections for dividend-paying funds should be submitted at least 30 days before the record date.",
+      "Advanced Death Benefit selection, Life Benefit Rider, multiple-life administration, and capital-guarantee options remain metadata-only for this product."
     ]
   },
   "expected": {

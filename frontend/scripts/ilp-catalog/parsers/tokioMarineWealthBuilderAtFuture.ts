@@ -365,6 +365,9 @@ function buildVariant(
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['accumulation', 'topup'],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -372,7 +375,8 @@ function buildVariant(
       notes: [
         'Dividend-paying funds default to reinvestment, while cash payout can be explored through the manual annual distribution-yield assumption.',
         'The published dividend election applies across the Accumulation Units Account and Top-up Units Account.',
-        'The published $50 minimum payout threshold and 30-day record-date instruction window remain informational only in V1.',
+        'Cash payouts below the published SGD 50 annual dividend threshold remain reinvested in V1.',
+        'Cash payout elections should be lodged at least 30 days before the dividend record date.',
       ],
       sourceRefs: [page8],
     },
@@ -387,7 +391,7 @@ function buildVariant(
         : []),
       'Premium bonus, power-up bonus, and loyalty bonus are modeled at the published rate windows, but their paid-up and no-withdrawal eligibility gates remain manual review assumptions.',
       'Recurring single premium stays blocked after a premium-holiday event until regular premium resumes at the commencement-date amount.',
-      'Wealth Builder@Future keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
+      'Wealth Builder@Future keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
     ],
     unsupportedItems: [
       ...(isAdvancedDeath
@@ -397,7 +401,6 @@ function buildVariant(
         : [
             'Advanced Death Benefit selection, Life Benefit Rider, monthly protection charge, credit-card charge, life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
           ]),
-      'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product.',
     ],
     sourceRefs: [page1, page2, page3, page4, page5, page6, page7, page8, page9, page10, ...(page14 ? [page14] : []), page15],
   }
@@ -435,7 +438,6 @@ export function parseTokioMarineWealthBuilderAtFuture(context: ParseContext): Il
     ],
     metadataOnlyBehaviors: [
       'tokio-wealth-builder-atfuture-advanced-death-benefit-and-life-benefit-rider',
-      'tokio-wealth-builder-atfuture-dividend-payout-threshold-and-record-date-instructions',
       'tokio-wealth-builder-atfuture-credit-card-charge',
       'tokio-wealth-builder-atfuture-life-replacement-option',
     ],
@@ -443,6 +445,7 @@ export function parseTokioMarineWealthBuilderAtFuture(context: ParseContext): Il
       'Structured extraction validated against the Wealth Builder@Future product summary text layer.',
       'Wealth Builder@Future is modeled as split SGD / MIP 10 death-benefit-option corridors with a published 2.50% policy charge during the minimum investment period and a 0.60% policy charge thereafter.',
       'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published Monthly Protection Charge during the minimum investment period using the Accumulation Units Account sum-at-risk basis and Top-up Units Account fallback.',
+      'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
       'Premium bonus, power-up bonus, and loyalty bonus retain the published paid-up and no-withdrawal eligibility gates as manual review assumptions.',
       'Recurring single premium stays blocked after a premium-holiday event until regular premium resumes at the commencement-date amount.',
     ],

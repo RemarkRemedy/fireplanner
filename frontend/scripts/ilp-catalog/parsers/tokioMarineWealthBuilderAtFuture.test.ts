@@ -31,7 +31,7 @@ describe('parseTokioMarineWealthBuilderAtFuture', () => {
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain(
+    expect(product.metadataOnlyBehaviors).not.toContain(
       'tokio-wealth-builder-atfuture-dividend-payout-threshold-and-record-date-instructions',
     )
 
@@ -43,6 +43,9 @@ describe('parseTokioMarineWealthBuilderAtFuture', () => {
     expect(basicVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['accumulation', 'topup'],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -110,7 +113,7 @@ describe('parseTokioMarineWealthBuilderAtFuture', () => {
     )
     expect(basicVariant?.eecTable).toEqual([1, 1, 0.8, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.03])
     expect(basicVariant?.warnings).toContain(
-      'Wealth Builder@Future keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
+      'Wealth Builder@Future keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
     )
     expect(advancedVariant?.feeRules).toEqual(
       expect.arrayContaining([

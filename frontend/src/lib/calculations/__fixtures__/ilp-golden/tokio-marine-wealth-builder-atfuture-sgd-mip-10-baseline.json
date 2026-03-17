@@ -379,7 +379,6 @@
       ],
       "metadataOnlyBehaviors": [
         "tokio-wealth-builder-atfuture-advanced-death-benefit-and-life-benefit-rider",
-        "tokio-wealth-builder-atfuture-dividend-payout-threshold-and-record-date-instructions",
         "tokio-wealth-builder-atfuture-credit-card-charge",
         "tokio-wealth-builder-atfuture-life-replacement-option"
       ]
@@ -388,16 +387,17 @@
       "Structured extraction validated against the Wealth Builder@Future product summary text layer.",
       "Wealth Builder@Future is modeled as split SGD / MIP 10 death-benefit-option corridors with a published 2.50% policy charge during the minimum investment period and a 0.60% policy charge thereafter.",
       "Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published Monthly Protection Charge during the minimum investment period using the Accumulation Units Account sum-at-risk basis and Top-up Units Account fallback.",
+      "Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.",
       "Premium bonus, power-up bonus, and loyalty bonus retain the published paid-up and no-withdrawal eligibility gates as manual review assumptions.",
       "Recurring single premium stays blocked after a premium-holiday event until regular premium resumes at the commencement-date amount.",
       "This partial template models the SGD / MIP 10 (Basic Death) corridor only.",
       "This partial template models regular-premium routing to the Accumulation Units Account, top-up routing, recurring single premium routing, the published premium-bonus windows, the end-of-MIP power-up bonus, the loyalty-bonus tail, a 2.50% account-value policy charge during the minimum investment period, a 0.60% account-value policy charge thereafter, and the published surrender, partial-withdrawal, and premium-shortfall charge schedules.",
       "Premium bonus, power-up bonus, and loyalty bonus are modeled at the published rate windows, but their paid-up and no-withdrawal eligibility gates remain manual review assumptions.",
       "Recurring single premium stays blocked after a premium-holiday event until regular premium resumes at the commencement-date amount.",
-      "Wealth Builder@Future keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.",
-      "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
-      "Advanced Death Benefit selection, Life Benefit Rider, monthly protection charge, credit-card charge, life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.",
-      "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product."
+      "Wealth Builder@Future keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.",
+      "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of S$50 remain reinvested.",
+      "Cash payout elections for dividend-paying funds should be submitted at least 30 days before the record date.",
+      "Advanced Death Benefit selection, Life Benefit Rider, monthly protection charge, credit-card charge, life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product."
     ]
   },
   "expected": {

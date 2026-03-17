@@ -363,6 +363,9 @@ function buildVariant(
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['accumulation', 'topup'],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -370,7 +373,8 @@ function buildVariant(
       notes: [
         'Dividend-paying funds default to reinvestment, while cash payout can be explored through the manual annual distribution-yield assumption.',
         'The published dividend election applies across the Accumulation Units Account and Top-up Units Account.',
-        'The published $50 minimum payout threshold and 30-day record-date instruction window remain informational only in V1.',
+        'Cash payouts below the published SGD 50 annual dividend threshold remain reinvested in V1.',
+        'Cash payout elections should be lodged at least 30 days before the dividend record date.',
       ],
       sourceRefs: [page8],
     },
@@ -385,7 +389,7 @@ function buildVariant(
         : []),
       'Premium bonus, power-up bonus, and loyalty bonus are modeled at the published rate windows, but their paid-up and no-withdrawal eligibility gates remain manual review assumptions.',
       'Recurring single premium stays blocked after a premium-holiday event until regular premium resumes at the commencement-date amount.',
-      'Harvest Builder@Future keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
+      'Harvest Builder@Future keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
     ],
     unsupportedItems: [
       ...(isAdvancedDeath
@@ -395,7 +399,6 @@ function buildVariant(
         : [
             'Advanced Death Benefit selection, Life Benefit Rider, credit-card charge, life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
           ]),
-      'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product.',
     ],
     sourceRefs: [
       page1,
@@ -447,13 +450,12 @@ export function parseTokioMarineHarvestBuilderAtFuture(context: ParseContext): I
     metadataOnlyBehaviors: [
       'tokio-harvest-builder-atfuture-benefit-payout-handling',
       'tokio-harvest-builder-atfuture-life-benefit-rider',
-      'tokio-harvest-builder-atfuture-dividend-payout-threshold-and-record-date-instructions',
       'tokio-harvest-builder-atfuture-credit-card-charge',
       'tokio-harvest-builder-atfuture-life-replacement-option',
     ],
     warnings: [
-      'Harvest Builder@Future is cataloged as a supported V1 product. The SGD / MIP 10 Basic Death and Advanced Death corridors model regular-premium routing to the Accumulation Units Account, top-up and recurring-single-premium routing and charges, the published premium-bonus / power-up-bonus / loyalty-bonus rate windows, policy-charge schedules, surrender / partial-withdrawal / premium-shortfall charge schedules, and reinvest-default distribution support; the Advanced Death variant also models the published Monthly Protection Charge corridor from insured-life inputs.',
-      'Bonus paid-up and no-withdrawal eligibility gates, benefit payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider, dividend payout threshold / record-date handling, credit-card charge, life-replacement administration, regular-withdrawal / minimum-account-value enforcement, rider premium-deduction handling, and premium-holiday resumption administration remain informational only.',
+      'Harvest Builder@Future is cataloged as a supported V1 product. The SGD / MIP 10 Basic Death and Advanced Death corridors model regular-premium routing to the Accumulation Units Account, top-up and recurring-single-premium routing and charges, the published premium-bonus / power-up-bonus / loyalty-bonus rate windows, policy-charge schedules, surrender / partial-withdrawal / premium-shortfall charge schedules, and reinvest-default distribution support with the published SGD 50 minimum payout threshold and 30-day record-date lead time; the Advanced Death variant also models the published Monthly Protection Charge corridor from insured-life inputs.',
+      'Bonus paid-up and no-withdrawal eligibility gates, benefit payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider, credit-card charge, life-replacement administration, regular-withdrawal / minimum-account-value enforcement, rider premium-deduction handling, and premium-holiday resumption administration remain informational only.',
     ],
     archived: false,
     variants: [

@@ -34,7 +34,7 @@ describe('parseTokioMarineWealthFlexi', () => {
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-benefit-payout-handling')
     expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-life-benefit-rider')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-dividend-payout-threshold-and-record-date-instructions')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-dividend-payout-threshold-and-record-date-instructions')
     expect(product.variants).toHaveLength(2)
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10')
@@ -120,6 +120,9 @@ describe('parseTokioMarineWealthFlexi', () => {
         { startPolicyYear: 1, endPolicyYear: 3, accountIds: ['topup'] },
         { startPolicyYear: 4, endPolicyYear: null, accountIds: ['accumulation', 'topup'] },
       ],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,

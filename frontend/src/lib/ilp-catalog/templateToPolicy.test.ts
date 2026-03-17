@@ -4296,12 +4296,15 @@ describe('templateVariantToPolicySeed', () => {
     )
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-benefit-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-life-benefit-rider')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
       'tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions',
     )
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['accumulation', 'topup'],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -4312,6 +4315,7 @@ describe('templateVariantToPolicySeed', () => {
       source: 'catalog-default',
     })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
   })
 
   it('maps Tokio Marine Harvest Flexi advanced-death into a supported seed with Tokio MPC inputs', () => {
@@ -4342,7 +4346,7 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Monthly Protection Charge during the minimum investment period'))).toBe(true)
   })
 
@@ -4361,7 +4365,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-admin-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
       'tokio-harvest-max-dividend-payout-threshold-and-record-date-instructions',
     )
     expect(seed.accounts.find((account) => account.id === 'initial')?.contributionRules).toEqual([
@@ -4460,6 +4464,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -4472,6 +4479,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.eecTable).toEqual([1, 1, 1, 0.99, 0.99, 0.98, 0.96, 0.95, 0.9, 0.89, 0.88, 0.83, 0.8, 0.75, 0.08])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('102% performance-growth-measure gate'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
   })
 
   it('maps Tokio Marine Harvest Max advanced-death into a supported seed with accrued Tokio MPC inputs', () => {
@@ -4507,7 +4515,7 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-dividend-payout-threshold-and-record-date-instructions')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-harvest-max-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('first-three-policy-years accrual window'))).toBe(true)
   })
 
@@ -4605,6 +4613,9 @@ describe('templateVariantToPolicySeed', () => {
         { startPolicyYear: 1, endPolicyYear: 3, accountIds: ['topup'] },
         { startPolicyYear: 4, endPolicyYear: null, accountIds: ['accumulation', 'topup'] },
       ],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -4615,8 +4626,9 @@ describe('templateVariantToPolicySeed', () => {
       source: 'catalog-default',
     })
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-benefit-payout-handling')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-dividend-payout-threshold-and-record-date-instructions')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
   })
 
   it('maps Tokio Marine Wealth Flexi advanced-death into a supported seed with Tokio MPC inputs', () => {
@@ -4950,7 +4962,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
       'tokio-wealth-builder-atfuture-dividend-payout-threshold-and-record-date-instructions',
     )
     expect(seed.accounts.find((account) => account.id === 'accumulation')?.contributionRules).toEqual([
@@ -5022,6 +5034,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['accumulation', 'topup'],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -5034,6 +5049,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.eecTable).toEqual([1, 1, 0.8, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.03])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('paid-up and no-withdrawal eligibility gates'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
   })
 
   it('maps Tokio Marine Wealth Builder@Future advanced-death into a supported seed with Tokio MPC inputs', () => {
@@ -5085,7 +5101,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-builder-atfuture-benefit-payout-handling')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
       'tokio-harvest-builder-atfuture-dividend-payout-threshold-and-record-date-instructions',
     )
     expect(seed.bonuses.map((bonus) => bonus.label)).toEqual([
@@ -5120,6 +5136,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['accumulation', 'topup'],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -5132,6 +5151,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.eecTable).toEqual([1, 1, 0.8, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.03])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('paid-up and no-withdrawal eligibility gates'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
   })
 
   it('maps Tokio Marine Harvest Builder@Future advanced-death into a supported seed with Tokio MPC and assurance inputs', () => {

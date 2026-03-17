@@ -455,6 +455,9 @@ function buildVariant(
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -462,7 +465,8 @@ function buildVariant(
       notes: [
         'Dividend-paying funds default to reinvestment, while cash payout can be explored through the manual annual distribution-yield assumption.',
         'The published dividend election applies across the Initial Units Account, Accumulation Units Account, and Top-up Units Account.',
-        'The published $50 minimum payout threshold and 30-day record-date instruction window remain informational only in V1.',
+        'Cash payouts below the published SGD 50 annual dividend threshold remain reinvested in V1.',
+        'Cash payout elections should be lodged at least 30 days before the dividend record date.',
       ],
       sourceRefs: [page8],
     },
@@ -478,7 +482,7 @@ function buildVariant(
       'Partial withdrawals from the Accumulation Units Account are not allowed in the first five policy years and are modeled only from policy year 6 onward.',
       'Performance investment bonus is modeled at the published 1.70% annual rate, but the 102% performance-growth-measure gate remains a manual review assumption.',
       'Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.',
-      'Harvest Max keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
+      'Harvest Max keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
     ],
     unsupportedItems: [
       ...(isAdvancedDeath
@@ -489,7 +493,6 @@ function buildVariant(
             'Advanced Death selection, Monthly Protection Charge, and multiple-life and capital-guarantee option administration remain metadata-only for this product.',
           ]),
       'Credit-card charge and add/remove/change-life-assured administration remain metadata-only for this product.',
-      'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product.',
     ],
     sourceRefs: [
       page1,
@@ -548,7 +551,6 @@ export function parseTokioMarineHarvestMax(context: ParseContext): IlpCatalogPro
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-harvest-max-dividend-payout-threshold-and-record-date-instructions',
       'tokio-harvest-max-credit-card-charge',
       'tokio-harvest-max-life-replacement-option',
     ],
@@ -556,6 +558,7 @@ export function parseTokioMarineHarvestMax(context: ParseContext): IlpCatalogPro
       'Structured extraction validated against the Harvest Max product summary text layer.',
       'Harvest Max is modeled as split SGD / MIP 15 death-benefit-option variants with published initial setup charge, policy charge, admin charge, bonuses, and appendix charge tables.',
       'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-three-policy-years accrual window and policy-year-4 lump-sum settlement after you enter the insured-life details and current net premium base.',
+      'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
       'Performance investment bonus retains the published 102% performance-growth-measure gate as a manual review assumption.',
       'Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.',
       'Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary.',
