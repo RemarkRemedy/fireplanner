@@ -208,6 +208,7 @@ Tier selection: the calculator auto-selects the correct fee tier based on the sl
 Both need entries in `scripts/prerender.mjs` for:
 - Route-specific `<title>` and meta description
 - Static body HTML with H1, feature list, and internal links (for crawlers that don't execute JS)
+- `/cpf-planner` prerender body should include current BRS/FRS/ERS values as static text (e.g. "2026 BRS: $110,200 / FRS: $220,400 / ERS: $440,800") since these are high-value SEO keywords that users searching "CPF retirement sum" want to find without JS execution
 
 ### Sitemap
 Add both routes to `public/sitemap.xml` with appropriate `<lastmod>`, `<changefreq>monthly`, and `<priority>0.8`.
