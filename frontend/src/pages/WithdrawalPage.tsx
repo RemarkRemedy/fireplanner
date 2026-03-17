@@ -62,8 +62,42 @@ function buildWithdrawalMonteCarloRunSignature(input: {
   ].join(':')
 }
 
+const withdrawalFaqQuestions = [
+  {
+    question: 'What is the 4% rule and does it work in Singapore?',
+    answer: 'The 4% rule says you can withdraw 4% of your portfolio in year one of retirement, then adjust for inflation each year. It was designed for US markets. In Singapore, CPF LIFE payouts and lower healthcare costs can reduce the withdrawal needed from your portfolio, so many planners use a lower safe withdrawal rate of 3-3.5%.',
+  },
+  {
+    question: 'What is Variable Percentage Withdrawal (VPW)?',
+    answer: 'VPW adjusts your withdrawal each year based on your remaining portfolio value and remaining life expectancy. It naturally spends more when markets are up and less when markets are down, reducing the risk of running out.',
+  },
+  {
+    question: 'Which withdrawal strategy is best for Singapore retirees?',
+    answer: 'There is no single best strategy. Guardrails (Guyton-Klinger) and VPW are popular because they adapt to market conditions. The right choice depends on your CPF LIFE income, risk tolerance, and whether you prefer stable or flexible spending. This page lets you compare all 12 strategies with your actual numbers.',
+  },
+]
+
+const withdrawalFaqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: withdrawalFaqQuestions.map(({ question, answer }) => ({
+    '@type': 'Question',
+    name: question,
+    acceptedAnswer: { '@type': 'Answer', text: answer },
+  })),
+}
+
 export function WithdrawalPage() {
   usePageMeta({ title: 'Withdrawal Strategies — SG FIRE Planner', description: 'Compare the 4% rule, VPW, Guyton-Klinger guardrails, CAPE-based, Vanguard Dynamic, and 7 more withdrawal strategies side by side with your actual numbers.', path: '/withdrawal' })
+
+  useEffect(() => {
+    const faqScript = document.createElement('script')
+    faqScript.type = 'application/ld+json'
+    faqScript.setAttribute('data-page-meta', 'faq')
+    faqScript.textContent = JSON.stringify(withdrawalFaqSchema)
+    document.head.appendChild(faqScript)
+    return () => { document.head.removeChild(faqScript) }
+  }, [])
   const { profile } = useHouseholdRuntimeInputs()
   // Normalized context for household-aware ages and revision tracking
   const normalized = useNormalizedLegacyAnalysisContext()

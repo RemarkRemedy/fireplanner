@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useHealthCheckInputs } from '@/hooks/useHealthCheckInputs'
 import { computeHealthRatios, type HealthCheckResult } from '@/lib/calculations/healthCheck'
@@ -17,8 +17,29 @@ function formatThreshold(value: number, unit: string): string {
   return value.toFixed(2)
 }
 
+const healthCheckAppSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'SG FIRE Planner — Financial Health Check',
+  url: 'https://sgfireplanner.com/health-check',
+  applicationCategory: 'FinanceApplication',
+  operatingSystem: 'Web',
+  description: 'Check your financial health with Singapore-specific ratios: savings rate, emergency fund, debt service (TDSR), liquidity, insurance coverage, and CPF adequacy.',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'SGD' },
+  browserRequirements: 'Requires JavaScript',
+}
+
 export function HealthCheckPage() {
   usePageMeta({ title: 'Health Check — SG FIRE Planner', description: 'Check your financial health with Singapore-specific ratios: savings rate, emergency fund, debt service (TDSR), liquidity, insurance coverage, and CPF adequacy.', path: '/health-check' })
+
+  useEffect(() => {
+    const appScript = document.createElement('script')
+    appScript.type = 'application/ld+json'
+    appScript.setAttribute('data-page-meta', 'app')
+    appScript.textContent = JSON.stringify(healthCheckAppSchema)
+    document.head.appendChild(appScript)
+    return () => { document.head.removeChild(appScript) }
+  }, [])
   const adults = useHouseholdPlanStore((s) => s.plan.adults)
   const isMultiAdult = adults.length > 1
 

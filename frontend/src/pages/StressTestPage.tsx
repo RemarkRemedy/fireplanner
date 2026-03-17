@@ -626,8 +626,42 @@ function SequenceRiskTab() {
   )
 }
 
+const stressTestFaqQuestions = [
+  {
+    question: 'What is a Monte Carlo simulation for retirement planning?',
+    answer: 'A Monte Carlo simulation runs thousands of randomised market scenarios against your retirement plan to estimate the probability that your portfolio lasts through retirement. Instead of one straight-line projection it shows the range of possible outcomes.',
+  },
+  {
+    question: 'How does backtesting differ from Monte Carlo?',
+    answer: 'Backtesting replays actual historical market periods (e.g. 1928-2025) against your plan. It tells you how your plan would have performed during real events like the Great Depression or the Global Financial Crisis, whereas Monte Carlo generates random scenarios.',
+  },
+  {
+    question: 'What is sequence-of-returns risk?',
+    answer: 'Sequence risk is the danger that poor market returns in the first few years of retirement permanently damage your portfolio, even if long-run average returns are fine. This page stress-tests your plan against specific crisis scenarios to show how vulnerable it is.',
+  },
+]
+
+const stressTestFaqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: stressTestFaqQuestions.map(({ question, answer }) => ({
+    '@type': 'Question',
+    name: question,
+    acceptedAnswer: { '@type': 'Answer', text: answer },
+  })),
+}
+
 export function StressTestPage() {
   usePageMeta({ title: 'Stress Test — SG FIRE Planner', description: 'Run 10,000 Monte Carlo simulations, historical rolling-window backtests, and sequence-of-returns stress tests on your Singapore retirement plan.', path: '/stress-test' })
+
+  useEffect(() => {
+    const faqScript = document.createElement('script')
+    faqScript.type = 'application/ld+json'
+    faqScript.setAttribute('data-page-meta', 'faq')
+    faqScript.textContent = JSON.stringify(stressTestFaqSchema)
+    document.head.appendChild(faqScript)
+    return () => { document.head.removeChild(faqScript) }
+  }, [])
   const stressMode = useEffectiveMode('section-stress-test')
   const stressNudge = useSectionNudge('section-stress-test')
   const setSectionMode = useUIStore((s) => s.setSectionMode)
