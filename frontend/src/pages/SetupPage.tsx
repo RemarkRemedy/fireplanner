@@ -240,6 +240,36 @@ const SCREENS: (NudgeFlowScreen & {
     skipWhen: { field: 'partnerResidency', equals: 'foreigner' },
   },
   {
+    id: 'partner-healthcare-toggle',
+    title: "Include partner's healthcare costs?",
+    subtitle: 'Healthcare costs grow with age and can significantly affect retirement spending.',
+    fields: [
+      { name: 'partnerHealthcareEnabled', label: "Include partner's healthcare costs", type: 'toggle', tooltip: "Healthcare costs grow with age and can significantly impact retirement spending.", helperText: "We've included basic healthcare costs. You can adjust the tier or disable this." },
+    ],
+    planTypes: ['couple', 'household'],
+  },
+  {
+    id: 'partner-healthcare-details',
+    title: "Partner's healthcare basics",
+    fields: [
+      {
+        name: 'partnerIspTier',
+        label: 'Integrated Shield Plan tier',
+        type: 'radio-cards',
+        tooltip: "Determines partner's hospital ward class coverage. Higher tiers = higher premiums but lower out-of-pocket costs.",
+        helperText: "Partner's ISP tier determines hospital ward class coverage and premium costs.",
+        options: [
+          { value: 'none', label: 'None (MediShield Life only)' },
+          { value: 'basic', label: 'Basic (Class B1 ward)' },
+          { value: 'standard', label: 'Standard (Class A ward)' },
+          { value: 'enhanced', label: 'Enhanced (Private hospital)' },
+        ],
+      },
+    ],
+    planTypes: ['couple', 'household'],
+    skipWhen: { field: 'partnerHealthcareEnabled', equals: false },
+  },
+  {
     id: 'partner-joint',
     title: 'Joint expenses',
     fields: [
@@ -343,6 +373,8 @@ const INITIAL_VALUES: Record<string, unknown> = {
   partnerCpfRA: 0,
   partnerUsedOaForMortgage: false,
   partnerOaMortgageAmount: 0,
+  partnerHealthcareEnabled: true,
+  partnerIspTier: 'basic',
   jointMonthlyExpenses: 0,
   // Dependents defaults
   hasDependents: false,
@@ -458,6 +490,8 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
       residency: partnerResidency,
       cpfKnown: partnerCpfTotal != null,
       cpfTotal: partnerCpfTotal,
+      healthcareEnabled: values.partnerHealthcareEnabled as boolean,
+      ispTier: (values.partnerHealthcareEnabled as boolean) ? (values.partnerIspTier as 'none' | 'basic' | 'enhanced') : undefined,
     }
     draft.jointMonthlyExpenses = values.jointMonthlyExpenses as number
 
@@ -518,6 +552,8 @@ function hydrateDraftToValues(draft: SetupDraft): Record<string, unknown> {
     values.partnerBonusMonths = 1
     values.partnerMonthlyExpenses = Math.round(draft.partner.annualExpenses / 12)
     values.partnerCpfMode = draft.partner.cpfKnown ? 'know' : 'estimate'
+    values.partnerHealthcareEnabled = draft.partner.healthcareEnabled ?? false
+    values.partnerIspTier = draft.partner.ispTier ?? 'basic'
     values.partnerNetWorth = draft.partner.liquidNetWorth
     values.partnerResidency = draft.partner.residency
     values.partnerCpfKnown = draft.partner.cpfKnown

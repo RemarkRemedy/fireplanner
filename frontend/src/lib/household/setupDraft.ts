@@ -52,6 +52,8 @@ export interface SetupDraft {
     residency: 'citizen' | 'pr' | 'foreigner'
     cpfKnown: boolean
     cpfTotal?: number
+    healthcareEnabled?: boolean
+    ispTier?: 'none' | 'basic' | 'enhanced'
   }
   // Joint
   jointMonthlyExpenses?: number
@@ -441,9 +443,9 @@ function applyPartnerDraft(draft: SetupDraft, selfAdultTemplate: PlanningAdult):
       funeralCosts: 15_000,
       ciRecoveryYears: 5,
       healthcare: {
-        enabled: false,
+        enabled: partner.healthcareEnabled ?? false,
         mediShieldLifeEnabled: true,
-        ispTier: 'none' as const,
+        ispTier: (partner.ispTier ?? 'none') as 'none' | 'basic' | 'standard' | 'enhanced',
         careShieldLifeEnabled: false,
         oopBaseAmount: 0,
         oopModel: 'fixed' as const,
@@ -531,6 +533,11 @@ function applyPartnerDraft(draft: SetupDraft, selfAdultTemplate: PlanningAdult):
       annualExpenses: partner.annualExpenses,
       liquidNetWorth: partner.liquidNetWorth,
       residencyStatus: partner.residency,
+      healthcare: {
+        ...existingPartner.healthcare,
+        enabled: partner.healthcareEnabled ?? existingPartner.healthcare.enabled,
+        ...(partner.ispTier != null ? { ispTier: partner.ispTier } : {}),
+      },
       cpf: {
         ...existingPartner.cpf,
         ...(partner.cpfKnown && partner.cpfTotal != null
@@ -658,6 +665,10 @@ export function hydrateSetupFromPlan(plan: HouseholdPlan): SetupDraft {
       partnerAdult.cpf.balances.ma +
       partnerAdult.cpf.balances.ra
 
+    const partnerIspTier = partnerAdult.healthcare.ispTier === 'standard'
+      ? 'enhanced'
+      : (partnerAdult.healthcare.ispTier as SetupDraft['ispTier'])
+
     partner = {
       name: partnerAdult.displayName,
       currentAge: partnerAdult.currentAge,
@@ -669,6 +680,8 @@ export function hydrateSetupFromPlan(plan: HouseholdPlan): SetupDraft {
       residency: partnerAdult.residencyStatus,
       cpfKnown: partnerCpfTotal > 0,
       cpfTotal: partnerCpfTotal > 0 ? partnerCpfTotal : undefined,
+      healthcareEnabled: partnerAdult.healthcare.enabled,
+      ispTier: partnerIspTier,
     }
   }
 
