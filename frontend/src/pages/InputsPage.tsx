@@ -28,6 +28,7 @@ import { WithdrawalStrategyCard } from '@/components/household/WithdrawalStrateg
 import { ProtectionSection } from '@/components/household/ProtectionSection'
 import { SectionIntro } from '@/components/inputs/SectionIntro'
 import { ExpenseItemiser } from '@/components/inputs/ExpenseItemiser'
+import { BucketAllocator } from '@/components/inputs/BucketAllocator'
 
 const HOUSEHOLD_PLAN_LABELS = {
   individual: 'Individual',
@@ -359,6 +360,7 @@ export function InputsPage() {
         >
           <SectionIntro sectionId="section-allocation" />
           <HouseholdAssumptionsSection mode="allocation" />
+          <BucketAllocator />
         </HouseholdPrototypeSection>
       ),
     },

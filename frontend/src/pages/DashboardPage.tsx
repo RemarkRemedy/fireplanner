@@ -30,6 +30,7 @@ import { useExpenseTrackerDwell } from '@/hooks/useExpenseTrackerDwell'
 import { useExpenseTracker } from '@/hooks/useExpenseTracker'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { BucketVisualization } from '@/components/dashboard/BucketVisualization'
 
 const INDIVIDUAL_KEY_SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'section-personal', label: 'Personal Details' },
@@ -202,6 +203,9 @@ function JointPanels({ metrics, isEligible }: { metrics: ReturnType<typeof useDa
       </div>
       <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '260ms' }}>
         <PassiveIncomePanel />
+      </div>
+      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+        <BucketVisualization />
       </div>
       <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '340ms' }}>
         <CashFlowPanel />

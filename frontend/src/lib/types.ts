@@ -506,6 +506,7 @@ export interface AllocationState {
   returnOverrides: (number | null)[]
   stdDevOverrides: (number | null)[]
   glidePathConfig: GlidePathConfig
+  bucketConfig: BucketConfig
   validationErrors: ValidationErrors
 }
 
