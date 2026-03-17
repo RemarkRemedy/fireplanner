@@ -26,7 +26,7 @@ describe('parseHsbcWealthVoyage', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-dividend-payout-threshold')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-regular-withdrawal-loyalty-suspension')
 
     const sgdMip20 = product.variants.find((variant) => variant.id === 'sgd-mip-20')

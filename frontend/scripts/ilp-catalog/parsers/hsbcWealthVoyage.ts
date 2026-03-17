@@ -445,7 +445,6 @@ export function parseHsbcWealthVoyage(context: ParseContext): IlpCatalogProduct 
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'hsbc-voyage-dividend-payout-threshold',
       'hsbc-voyage-premium-holiday-charge-after-free-duration',
       'hsbc-voyage-premium-holiday-backpay-amf-reconciliation',
       'hsbc-voyage-life-replacement-option',

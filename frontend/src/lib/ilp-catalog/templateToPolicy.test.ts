@@ -245,7 +245,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-voyage-premium-base-amf')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-voyage-premium-holiday-charge-after-free-duration')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-voyage-dividend-payout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-voyage-dividend-payout-threshold')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-voyage-regular-withdrawal-loyalty-suspension')
     expect(seed.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
