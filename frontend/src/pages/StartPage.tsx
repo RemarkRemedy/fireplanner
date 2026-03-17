@@ -133,8 +133,8 @@ export function StartPage() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Reset all data?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will permanently delete your current plan, all saved inputs, and any scenarios.
-                  This action cannot be undone.
+                  This will permanently delete your current plan and all saved inputs.
+                  Saved scenarios will be preserved. This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -142,7 +142,9 @@ export function StartPage() {
                 <AlertDialogAction
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   onClick={() => {
+                    const scenarios = localStorage.getItem('fireplanner-scenarios')
                     localStorage.clear()
+                    if (scenarios) localStorage.setItem('fireplanner-scenarios', scenarios)
                     window.location.href = '/'
                   }}
                 >
